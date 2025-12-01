@@ -26,6 +26,7 @@ type CommentWidgetOptions = {
   placeholder?: string;
   headerText?: string;
   onEvent?: (event: NostrEvent) => void;
+  onRelayInfo?: (info: { relays: string[]; mode: 'real' | 'mock' }) => void;
 };
 
 declare global {
@@ -260,6 +261,10 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     mockMode = true;
   }
   const threadId = opts.threadId ?? (location?.href ?? 'thread');
+  opts.onRelayInfo?.({
+    relays: mockMode ? ['mock'] : relays.map((r: any) => r.url ?? '').filter(Boolean),
+    mode: mockMode ? 'mock' : 'real'
+  });
 
   const header = document.createElement('h4');
   header.textContent = opts.headerText ?? 'Comments';

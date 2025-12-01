@@ -174,6 +174,7 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string) {
     const payHost = document.getElementById('pay-container');
     const unlockHost = document.getElementById('unlock-status');
     const commentsHost = document.getElementById('comments-container');
+    const relayStatus = document.getElementById('relay-status');
     if (!tipHost || !payHost || !commentsHost) return;
 
     tipHost.innerHTML = '';
@@ -198,7 +199,12 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string) {
 
     mountCommentWidget(commentsHost, {
       threadId: 'demo-thread',
-      relays: relays
+      relays: relays,
+      onRelayInfo: (info) => {
+        if (!relayStatus) return;
+        const list = info.relays.length ? info.relays.join(', ') : 'mock';
+        relayStatus.textContent = `Relays: ${list} (${info.mode})`;
+      }
     });
   }, [username, amount, relaysCsv]);
 }
@@ -299,6 +305,14 @@ function AppWithState(props: {
       </Card>
 
       <Card title="Comments (Nostr)">
+        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
+          Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
+          <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
+          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/mock comments, set relays to <code>mock</code>.
+        </div>
+        <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }}>
+          Relays: {relaysCsv || relaysEnvDefault.join(',')} (pending)
+        </div>
         <div id="comments-container" />
       </Card>
 
