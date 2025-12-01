@@ -1,14 +1,15 @@
+import { autoMount, mountCommentWidget,mountPayToAction, mountTipButton } from '@nostrstack/embed';
 import { useEffect, useMemo, useState } from 'react';
-import { autoMount, mountTipButton, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
-const relaysEnv = (import.meta.env.VITE_NOSTRSTACK_RELAYS ?? '')
-  .split(',')
-  .map((r) => r.trim())
-  .filter(Boolean);
+const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
+const relaysEnv = relaysEnvRaw
+  ? relaysEnvRaw.split(',').map((r) => r.trim()).filter(Boolean)
+  : [];
 const isMock = demoHost === 'mock' || apiBase === 'mock';
+const commentsRelays = relaysEnv.length ? relaysEnv : ['mock'];
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -42,9 +43,9 @@ function App() {
     try {
       const res = await fetch(`${apiBase}/api/pay`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', host: 'demo.nostrstack.lol' },
+        headers: { 'Content-Type': 'application/json', host: demoHost },
         body: JSON.stringify({
-          domain: 'demo.nostrstack.lol',
+          domain: demoHost,
           action: 'tip',
           amount: amount,
           metadata: { ui: 'gallery' }
@@ -170,7 +171,7 @@ function useMountWidgets(username: string, amount: number) {
     });
     mountCommentWidget(commentsHost, {
       threadId: 'demo-thread',
-      relays: relaysEnv.length ? relaysEnv : isMock ? ['mock'] : undefined
+      relays: commentsRelays
     });
   }, [username, amount]);
 }
