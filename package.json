@@ -9,7 +9,8 @@
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "dev": "pnpm --filter api dev",
-    "e2e": "pnpm --filter api test:e2e"
+    "e2e": "pnpm --filter api test:e2e",
+    "demo": "concurrently -k -n api,gallery \"pnpm --filter api dev\" \"pnpm --filter gallery dev -- --host --port 4173\""
   },
   "pnpm": {
     "overrides": {
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@beads/bd": "^0.26.0",
     "@nostrstack/config": "workspace:^",
+    "concurrently": "^9.2.1",
     "prettier": "3.2.5"
   }
 }
