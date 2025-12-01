@@ -1,8 +1,19 @@
 import type { FastifyBaseLogger } from 'fastify';
 
-export type LnbitsConfig = {
+type LnbitsConfig = {
   baseUrl: string;
   apiKey: string;
+};
+
+type CreateChargeResponse = {
+  payment_request?: string;
+  payment_hash?: string;
+  checking_id?: string;
+};
+
+type GetChargeResponse = {
+  paid?: boolean;
+  pending?: boolean;
 };
 
 export class LnbitsProvider {
@@ -25,7 +36,7 @@ export class LnbitsProvider {
       this.log.error({ status: res.status, text }, 'LNbits createCharge failed');
       throw new Error('LNbits createCharge failed');
     }
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as GetChargeResponse;
     const invoice = json?.payment_request;
     const id = json?.payment_hash || json?.checking_id;
     if (!invoice || !id) {
@@ -44,7 +55,7 @@ export class LnbitsProvider {
       this.log.warn({ status: res.status, text }, 'LNbits getCharge failed');
       throw new Error('LNbits getCharge failed');
     }
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as CreateChargeResponse;
     const paid = json?.paid === true;
     const status = paid ? 'paid' : json?.pending === false ? 'failed' : 'pending';
     return { status };

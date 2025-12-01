@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+
 import { env } from '../env.js';
 
 export function registerTelemetryRoutes(app: FastifyInstance) {

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+
 import { env } from '../env.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
@@ -127,7 +128,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
   }, async (request, reply) => {
     const { id, status } = request.body as { id: string; status: string };
     const tenant = await getTenantForRequest(app, request);
-    const raw = (request as any).rawBody as string | undefined;
+    const raw = request.rawBody;
     const sig = request.headers['x-signature'] as string | undefined;
     // OpenNode signature check (only if configured)
     if (env.LIGHTNING_PROVIDER === 'opennode' && env.OP_NODE_WEBHOOK_SECRET) {
@@ -223,7 +224,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
 
   // Optional LNbits webhook endpoint (paid notification). LNbits does not HMAC by default; can be fronted by proxy.
   app.post('/api/lnbits/webhook', async (request, reply) => {
-    const body = request.body as any;
+    const body = request.body as { payment_hash?: string };
     const hash = body?.payment_hash;
     if (!hash) return reply.code(400).send({ error: 'missing payment_hash' });
     const payment = await app.prisma.payment.findFirst({ where: { providerRef: hash, provider: 'lnbits' } });

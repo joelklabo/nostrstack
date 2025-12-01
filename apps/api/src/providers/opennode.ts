@@ -7,6 +7,20 @@ export type CreateChargeInput = {
   callbackUrl?: string;
 };
 
+type CreateChargeResponse = {
+  data?: {
+    id?: string;
+    lightning_invoice?: { payreq?: string };
+  };
+};
+
+type GetChargeResponse = {
+  data?: {
+    status?: string;
+    amount?: number;
+  };
+};
+
 export class OpenNodeProvider {
   private readonly apiKey: string;
   private readonly logger: FastifyBaseLogger;
@@ -52,7 +66,7 @@ export class OpenNodeProvider {
       throw new Error(`OpenNode createCharge failed: ${res.status}`);
     }
 
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as CreateChargeResponse;
     const invoice = json?.data?.lightning_invoice?.payreq;
     const id = json?.data?.id;
     if (!invoice || !id) {
@@ -77,7 +91,7 @@ export class OpenNodeProvider {
       this.logger.warn({ status: res.status, text }, 'OpenNode getCharge failed');
       throw new Error('OpenNode getCharge failed');
     }
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as GetChargeResponse;
     const status = json?.data?.status?.toLowerCase?.();
     const amount = json?.data?.amount;
     return { status, amount };

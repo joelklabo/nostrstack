@@ -1,8 +1,10 @@
 // @ts-nocheck
-import { test, expect } from '@playwright/test';
-import { waitForHealth } from './utils/wait-for-health.js';
-import { payInvoiceViaLNbits, waitForPaymentStatus, lnbitsBalance } from './utils/pay-and-settle.js';
 import { execSync } from 'node:child_process';
+
+import { expect,test } from '@playwright/test';
+
+import { lnbitsBalance,payInvoiceViaLNbits, waitForPaymentStatus } from './utils/pay-and-settle.js';
+import { waitForHealth } from './utils/wait-for-health.js';
 
 let api;
 let stopServer = null;
@@ -27,7 +29,7 @@ test.beforeAll(async ({ playwright }) => {
 
   const { buildServer } = await import('../src/server.js');
   const server = await buildServer();
-  const addr = await server.listen({ port: 0, host: '127.0.0.1' });
+  await server.listen({ port: 0, host: '127.0.0.1' });
   const port = server.server.address()?.port;
   const baseUrl = `http://127.0.0.1:${port}`;
   stopServer = async () => server.close();

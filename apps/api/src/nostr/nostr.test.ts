@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
+
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 process.env.NODE_ENV = 'test';

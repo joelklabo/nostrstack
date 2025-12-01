@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+
 import { env } from '../env.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
@@ -18,7 +19,7 @@ export async function registerPayRoutes(app: FastifyInstance) {
       }
     }
   }, async (request, reply) => {
-    const body = request.body as { domain: string; action: string; amount: number; metadata?: any };
+    const body = request.body as { domain: string; action: string; amount: number; metadata?: Record<string, unknown> };
     const tenant = await getTenantForRequest(app, request, body.domain);
     const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
 

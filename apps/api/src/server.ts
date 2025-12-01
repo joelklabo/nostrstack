@@ -1,22 +1,23 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import formbody from '@fastify/formbody';
 import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
-import formbody from '@fastify/formbody';
-import rateLimit from '@fastify/rate-limit';
+import Fastify from 'fastify';
+
 import { env } from './env.js';
+import { rawBodyPlugin } from './hooks/raw-body.js';
+import { NostrClient } from './nostr/nostr-client.js';
+import { prismaPlugin } from './plugins/prisma.js';
+import { buildLightningProvider, LightningProviderKind } from './providers/index.js';
+import { LnbitsProvider } from './providers/lnbits.js';
+import { OpenNodeProvider } from './providers/opennode.js';
+import { registerRoutes } from './routes/index.js';
 import { setupRoutes } from './setup-routes.js';
 import { metricsPlugin } from './telemetry/metrics.js';
-import { prismaPlugin } from './plugins/prisma.js';
-import { registerRoutes } from './routes/index.js';
-import { rawBodyPlugin } from './hooks/raw-body.js';
 import { requestIdHook } from './telemetry/request-id.js';
-import { buildLightningProvider, LightningProviderKind } from './providers/index.js';
-import { OpenNodeProvider } from './providers/opennode.js';
-import { LnbitsProvider } from './providers/lnbits.js';
-import { NostrClient } from './nostr/nostr-client.js';
 import { startTracing } from './telemetry/tracing.js';
 
 export async function buildServer() {
@@ -98,7 +99,7 @@ export async function buildServer() {
   server.setErrorHandler((err, req, reply) => {
     req.log.error({ err }, 'request errored');
     const status = err.statusCode && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : 500;
-    const body: any = {
+    const body: Record<string, unknown> = {
       error: err.code || 'internal_error',
       message: env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
       requestId: req.id

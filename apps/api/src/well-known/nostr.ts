@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+
 import { getTenantForRequest } from '../tenant-resolver.js';
 
 export async function nostrWellKnown(
@@ -42,7 +43,9 @@ export async function nostrWellKnown(
     return reply.code(404).send({ error: 'not found' });
   }
 
-  const payload: any = { names: { [name]: user.pubkey } };
+  const payload: { names: Record<string, string>; relays?: Record<string, string[]> } = {
+    names: { [name]: user.pubkey }
+  };
   if (relays.length) {
     payload.relays = { [name]: relays };
   }

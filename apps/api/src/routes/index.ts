@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import { registerLnurlCallback } from './lnurlp-callback.js';
-import { registerTenantRoutes } from './tenants.js';
+
 import { registerAdminTenantRoutes } from './admin-tenants.js';
 import { registerAdminUserRoutes } from './admin-users.js';
+import { registerLnurlCallback } from './lnurlp-callback.js';
 import { registerPayRoutes } from './pay.js';
+import { registerTenantRoutes } from './tenants.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await registerLnurlCallback(app);

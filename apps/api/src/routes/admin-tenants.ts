@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+
 import { requireAdminKey } from '../plugins/admin-guard.js';
 
 export async function registerAdminTenantRoutes(app: FastifyInstance) {

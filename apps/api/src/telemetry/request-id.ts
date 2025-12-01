@@ -1,5 +1,6 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
 import { randomUUID } from 'node:crypto';
+
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 export async function requestIdHook(request: FastifyRequest, _reply: FastifyReply) {
   const existing = request.headers['x-request-id'] as string | undefined;

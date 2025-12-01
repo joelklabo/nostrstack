@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+
 import { env } from '../env.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 

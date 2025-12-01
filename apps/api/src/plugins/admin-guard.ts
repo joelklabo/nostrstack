@@ -1,6 +1,8 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
 import { createSecretKey } from 'node:crypto';
+
+import type { FastifyReply,FastifyRequest } from 'fastify';
 import { jwtVerify } from 'jose';
+
 import { env } from '../env.js';
 
 export async function requireAdminKey(request: FastifyRequest, reply: FastifyReply) {

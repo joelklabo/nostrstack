@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { getTenantForRequest } from '../tenant-resolver.js';
+
 import { requireAdminKey } from '../plugins/admin-guard.js';
+import { getTenantForRequest } from '../tenant-resolver.js';
 
 export async function registerAdminUserRoutes(app: FastifyInstance) {
   app.post('/api/admin/users', {

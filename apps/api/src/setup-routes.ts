@@ -1,8 +1,9 @@
 import type { FastifyInstance } from 'fastify';
+
 import { env } from './env.js';
-import { nostrWellKnown } from './well-known/nostr.js';
-import { lnurlpHandler } from './well-known/lnurlp.js';
 import { registerTelemetryRoutes } from './telemetry/routes.js';
+import { lnurlpHandler } from './well-known/lnurlp.js';
+import { nostrWellKnown } from './well-known/nostr.js';
 
 export function setupRoutes(app: FastifyInstance) {
   app.get('/health', async () => ({
