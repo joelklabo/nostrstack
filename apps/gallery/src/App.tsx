@@ -163,6 +163,11 @@ function App() {
         button { cursor: pointer; }
         input, select, button, textarea { background: ${theme === 'dark' ? '#1e293b' : '#fff'}; color: ${themeStyles.color}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
         section { border-color: ${themeStyles.borderColor}; }
+        .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: #f1f5f9; color: #0f172a; font-size: 12px; border: 1px solid #e2e8f0; }
+        .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
+        .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+        .relay-pill .dot.mock { background: #94a3b8; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
       `}</style>
     </main>
   );
@@ -203,7 +208,16 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string) {
       onRelayInfo: (info) => {
         if (!relayStatus) return;
         const list = info.relays.length ? info.relays.join(', ') : 'mock';
-        relayStatus.textContent = `Relays: ${list} (${info.mode})`;
+        relayStatus.textContent = '';
+        const badge = document.createElement('span');
+        badge.className = 'relay-pill';
+        const dot = document.createElement('span');
+        dot.className = `dot ${info.mode}`;
+        badge.appendChild(dot);
+        const label = document.createElement('span');
+        label.textContent = list;
+        badge.appendChild(label);
+        relayStatus.appendChild(badge);
       }
     });
   }, [username, amount, relaysCsv]);
@@ -326,9 +340,7 @@ function AppWithState(props: {
           <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
           <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/mock comments, set relays to <code>mock</code>.
         </div>
-        <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }}>
-          Relays: {relaysCsv || relaysEnvDefault.join(',')} (pending)
-        </div>
+        <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
         <div id="comments-container" />
       </Card>
 
