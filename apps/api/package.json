@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx src/server.ts",
+    "dev": "pnpm run seed:dev && tsx src/server.ts",
     "build": "tsup src/server.ts --format esm --dts --clean --external @opentelemetry/api,@opentelemetry/sdk-node,@opentelemetry/auto-instrumentations-node,@opentelemetry/exporter-trace-otlp-http,@opentelemetry/resources,@opentelemetry/semantic-conventions,@opentelemetry/context-async-hooks",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
@@ -19,6 +19,7 @@
     "prisma:generate:pg": "sh scripts/prisma-generate-pg.sh",
     "postinstall": "pnpm prisma:generate",
     "seed": "DATABASE_URL=${DATABASE_URL:-file:./dev.db} tsx scripts/seed.ts",
+    "seed:dev": "DATABASE_URL=${DATABASE_URL:-file:./dev.db} tsx prisma/seed-dev.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
