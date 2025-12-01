@@ -15,21 +15,21 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 pnpm install
 docker compose up -d postgres
 cp apps/api/.env.example .env
-pnpm dev   # runs the API against Postgres on :55432
+pnpm dev   # runs the API against Postgres on :5432
 ```
 
 Database migrations (Postgres):
 ```sh
-DATABASE_URL=postgres://satoshis:satoshis@localhost:55432/satoshis pnpm --filter api prisma migrate deploy --schema apps/api/prisma/pg/schema.prisma
+DATABASE_URL=postgres://nostrstack:nostrstack@localhost:5432/nostrstack pnpm --filter api prisma migrate deploy --schema apps/api/prisma/pg/schema.prisma
 ```
 
 Seed demo tenant/user:
 ```sh
-DATABASE_URL=postgres://satoshis:satoshis@localhost:55432/satoshis pnpm --filter api seed
+DATABASE_URL=postgres://nostrstack:nostrstack@localhost:5432/nostrstack pnpm --filter api seed
 ```
 
 Deploy: see `deploy/azure/README.md` and `.github/workflows/azure-deploy.yml` for Azure Container Apps pipeline.
-- Staging pipeline: `.github/workflows/azure-deploy-staging.yml` (deploys to `satoshis-api-stg` with optional Log Analytics).
+- Staging pipeline: `.github/workflows/azure-deploy-staging.yml` (deploys to `nostrstack-api-stg` with optional Log Analytics).
 
 Funding sources / LNbits:
 - Switch providers via env: `LIGHTNING_PROVIDER=lnbits` with `LN_BITS_URL`, `LN_BITS_API_KEY`; default is OpenNode.
@@ -37,6 +37,6 @@ Funding sources / LNbits:
 
 Observability:
 - Prometheus metrics at `/metrics` (per-tenant labels), enabled by default.
-- OpenTelemetry traces/metrics optional: set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` (plus `OTEL_EXPORTER_OTLP_HEADERS` if needed). Service name defaults to `satoshis-api`.
+- OpenTelemetry traces/metrics optional: set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` (plus `OTEL_EXPORTER_OTLP_HEADERS` if needed). Service name defaults to `nostrstack-api`.
 
 See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.

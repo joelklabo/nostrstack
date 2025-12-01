@@ -8,7 +8,7 @@ set -euo pipefail
 #       lnd-mainnet-endpoint       (host:port)
 #       lnd-mainnet-macaroon-hex   (admin macaroon hex)
 #       lnd-mainnet-tls            (PEM cert content)
-#   - Container App name: lnbits-prod-west in RG: satoshis-stg-west-rg
+#   - Container App name: lnbits-prod-west in RG: nostrstack-stg-west-rg
 #   - Image already pushed (we reuse current tag)
 #
 # Usage:
@@ -23,7 +23,7 @@ if [ -z "$REV" ]; then
   exit 1
 fi
 
-RG="satoshis-stg-west-rg"
+RG="nostrstack-stg-west-rg"
 APP="lnbits-prod-west"
 
 echo "Setting LND_NETWORK=mainnet and bumping LNBITS_REV=${REV} on ${APP}..."

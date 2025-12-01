@@ -19,20 +19,20 @@ type CreateUserResponse =
 
 type HealthResponse = { status: string; env?: string; uptime?: number };
 
-export type SatoshisClientOptions = {
+export type NostrstackClientOptions = {
   baseURL?: string;
   apiKey?: string; // for admin routes
   host?: string; // for multi-tenant host header
   fetch?: Fetcher;
 };
 
-export class SatoshisClient {
+export class NostrstackClient {
   private readonly base: string;
   private readonly apiKey?: string;
   private readonly host?: string;
   private readonly fetcher: Fetcher;
 
-  constructor(opts: SatoshisClientOptions = {}) {
+  constructor(opts: NostrstackClientOptions = {}) {
     this.base = opts.baseURL ?? 'http://localhost:3001';
     this.apiKey = opts.apiKey;
     this.host = opts.host;

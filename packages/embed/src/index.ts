@@ -1,4 +1,4 @@
-import { SatoshisClient } from '@satoshis/sdk';
+import { NostrstackClient } from '@nostrstack/sdk';
 
 type TipWidgetOptions = {
   username: string;
@@ -49,16 +49,30 @@ type NostrEvent = {
 };
 
 function createClient(opts: { baseURL?: string; host?: string }) {
-  return new SatoshisClient({
+  return new NostrstackClient({
     baseURL: opts.baseURL,
     host: opts.host
   });
 }
 
+const ATTR_PREFIXES = ['nostrstack', 'satoshis'];
+
+function getBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments') {
+  for (const prefix of ATTR_PREFIXES) {
+    const val = (el.dataset as any)[`${prefix}${key}`];
+    if (val !== undefined) return val;
+  }
+  return undefined;
+}
+
+function setBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments', value: string) {
+  (el.dataset as any)[`nostrstack${key}`] = value;
+}
+
 export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) {
   const btn = document.createElement('button');
   btn.textContent = opts.text ?? 'Send sats';
-  btn.dataset.satoshisTip = opts.username;
+  setBrandAttr(btn, 'Tip', opts.username);
   const handler = async () => {
     btn.disabled = true;
     try {
@@ -290,9 +304,9 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 }
 
 export function autoMount() {
-  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-satoshis-tip]'));
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-tip],[data-satoshis-tip]'));
   nodes.forEach((el) => {
-    const username = el.dataset.satoshisTip;
+    const username = getBrandAttr(el, 'Tip');
     if (!username) return;
     const amount = el.dataset.amountMsat ? Number(el.dataset.amountMsat) : undefined;
     const baseURL = el.dataset.baseUrl;
@@ -300,17 +314,17 @@ export function autoMount() {
     renderTipButton(el, { username, amountMsat: amount, baseURL, host, text: el.dataset.label });
   });
 
-  const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-satoshis-pay]'));
+  const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-pay],[data-satoshis-pay]'));
   payNodes.forEach((el) => {
-    const username = el.dataset.satoshisPay;
+    const username = getBrandAttr(el, 'Pay');
     if (!username) return;
     const amount = el.dataset.amountMsat ? Number(el.dataset.amountMsat) : undefined;
     renderPayToAction(el, { username, amountMsat: amount, text: el.dataset.label, baseURL: el.dataset.baseUrl, host: el.dataset.host });
   });
 
-  const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-satoshis-comments]'));
+  const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-comments],[data-satoshis-comments]'));
   commentNodes.forEach((el) => {
-    const thread = el.dataset.satoshisComments || undefined;
+    const thread = getBrandAttr(el, 'Comments') || undefined;
     const relays = el.dataset.relays ? el.dataset.relays.split(',').map((r) => r.trim()) : undefined;
     renderCommentWidget(el, { threadId: thread, relays, headerText: el.dataset.header, placeholder: el.dataset.placeholder });
   });
@@ -325,7 +339,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export { SatoshisClient } from '@satoshis/sdk';
+export { NostrstackClient } from '@nostrstack/sdk';
 
 type MountTipOptions = {
   username?: string;
@@ -338,7 +352,7 @@ type MountTipOptions = {
 export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {}) {
   const amountMsat = opts.amountSats ? opts.amountSats * 1000 : undefined;
   return renderTipButton(container, {
-    username: opts.username ?? container.dataset.satoshisTip ?? 'anonymous',
+    username: opts.username ?? getBrandAttr(container, 'Tip') ?? 'anonymous',
     text: opts.text,
     amountMsat,
     baseURL: opts.baseURL,
@@ -367,7 +381,7 @@ type MountPayOptions = {
 export function mountPayToAction(container: HTMLElement, opts: MountPayOptions = {}) {
   const amountMsat = opts.amountSats ? opts.amountSats * 1000 : undefined;
   return renderPayToAction(container, {
-    username: opts.username ?? container.dataset.satoshisPay ?? 'anonymous',
+    username: opts.username ?? getBrandAttr(container, 'Pay') ?? 'anonymous',
     text: opts.text ?? container.dataset.label,
     amountMsat,
     baseURL: opts.baseURL,
@@ -394,7 +408,7 @@ type MountCommentOptions = {
 
 export function mountCommentWidget(container: HTMLElement, opts: MountCommentOptions = {}) {
   return renderCommentWidget(container, {
-    threadId: opts.threadId ?? container.dataset.satoshisComments,
+    threadId: opts.threadId ?? getBrandAttr(container, 'Comments'),
     relays: opts.relays,
     placeholder: opts.placeholder ?? container.dataset.placeholder,
     headerText: opts.headerText ?? container.dataset.header

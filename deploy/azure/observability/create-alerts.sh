@@ -9,7 +9,7 @@ set -euo pipefail
 #   - Action Group resource ID (for notifications)
 #
 # Usage:
-#   RG=satoshis-stg-west-rg \
+#   RG=nostrstack-stg-west-rg \
 #   WORKSPACE_ID="/subscriptions/<sub>/resourceGroups/.../providers/Microsoft.OperationalInsights/workspaces/<ws>" \
 #   ACTION_GROUP_ID="/subscriptions/<sub>/resourceGroups/.../providers/microsoft.insights/actionGroups/<ag>" \
 #   APP=lnbits-prod-west \

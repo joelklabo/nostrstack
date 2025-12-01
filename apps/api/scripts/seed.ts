@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const TENANT_DOMAIN = process.env.TENANT_DOMAIN || 'demo.satoshis.lol';
+const TENANT_DOMAIN = process.env.TENANT_DOMAIN || 'demo.nostrstack.lol';
 const TENANT_NAME = process.env.TENANT_NAME || 'Demo Tenant';
 const USER_PUBKEY = process.env.USER_PUBKEY || 'f'.repeat(64);
 const USER_NAME = process.env.USER_NAME || 'demo';

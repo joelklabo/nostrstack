@@ -3,11 +3,11 @@
 ## What’s running
 - **LNbits** v1.3.1 in Azure Container Apps: `lnbits-prod-west.thankfulwater-904823f2.westus3.azurecontainerapps.io`
 - **Funding source**: Voltage LND (currently mutinynet/signet) at `satoshis.u.voltageapp.io:10009`
-- **Database**: Azure Postgres `satoshis-pg-west`, DB `lnbitsprod` (user `satoshis`, pass stored in KV)
+- **Database**: Azure Postgres `nostrstack-pg-west`, DB `lnbitsprod` (user `nostrstack`, pass stored in KV)
 - **Storage**: container-local (/data) – no Azure Files
 
-## Secrets (Key Vault `satoshis-kv-west`)
-- `lnbits-prod-database-url` – postgres://satoshis:Poop7037X%21Z@satoshis-pg-west.postgres.database.azure.com:5432/lnbitsprod?sslmode=require
+## Secrets (Key Vault `nostrstack-kv-west`)
+- `lnbits-prod-database-url` – postgres://nostrstack:Poop7037X%21Z@nostrstack-pg-west.postgres.database.azure.com:5432/lnbitsprod?sslmode=require
 - `database-url-prod` – same as above for Prisma/overrides
 - `lnd-mainnet-endpoint` – `satoshis.u.voltageapp.io:10009`
 - `lnd-mainnet-macaroon-hex` – admin macaroon hex from Voltage (mutinynet)
@@ -16,15 +16,15 @@
 
 ## Container app config (`lnbits-prod-west`)
 - Env: `LNBITS_BACKEND_WALLET_CLASS=LndWallet`, `LND_NETWORK=signet` (switch to `mainnet` when we cut over), `LND_GRPC_PORT=10009`
-- Secrets wired via secretrefs above; image `satoshiswestacr.azurecr.io/lnbits:stg`
+- Secrets wired via secretrefs above; image `nostrstackwestacr.azurecr.io/lnbits:stg`
 - Health: `curl -s https://lnbits-prod-west.thankfulwater-904823f2.westus3.azurecontainerapps.io/status/health`
 
 ## Runbook
-1) **Rotate DB password** (if needed): `az postgres flexible-server update -g satoshis-stg-west-rg -n satoshis-pg-west --admin-password '<new>'`, then update KV `lnbits-prod-database-url` + `database-url-prod` and redeploy with a new `LNBITS_REV` stamp.
+1) **Rotate DB password** (if needed): `az postgres flexible-server update -g nostrstack-stg-west-rg -n nostrstack-pg-west --admin-password '<new>'`, then update KV `lnbits-prod-database-url` + `database-url-prod` and redeploy with a new `LNBITS_REV` stamp.
 2) **Swap LND to mainnet**:
    - Update KV secrets `lnd-mainnet-endpoint`, `lnd-mainnet-macaroon-hex`, `lnd-mainnet-tls` with mainnet values.
-   - `az containerapp update -n lnbits-prod-west -g satoshis-stg-west-rg --set-env-vars LND_NETWORK=mainnet LNBITS_REV=<stamp>`
-   - Check logs: `az containerapp logs show -n lnbits-prod-west -g satoshis-stg-west-rg --revision <rev> --type console --tail 100`
+   - `az containerapp update -n lnbits-prod-west -g nostrstack-stg-west-rg --set-env-vars LND_NETWORK=mainnet LNBITS_REV=<stamp>`
+   - Check logs: `az containerapp logs show -n lnbits-prod-west -g nostrstack-stg-west-rg --revision <rev> --type console --tail 100`
    - Confirm: `/status/health` returns `funding_source=LndWallet` and non-null balance/error.
 3) **Admin access**: use KV secrets above; reset via UI `/wallet` or CLI `uv run lnbits-cli superuser` inside the container (needs `az containerapp exec` from a TTY-enabled shell).
 4) **Smoke tests**:

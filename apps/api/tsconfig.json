@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "@satoshis/tsconfig/*": ["../../packages/tsconfig/*"]
+      "@nostrstack/tsconfig/*": ["../../packages/tsconfig/*"]
     }
   },
   "include": ["src"],

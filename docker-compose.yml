@@ -3,11 +3,11 @@ services:
     image: postgres:15
     restart: unless-stopped
     environment:
-      POSTGRES_USER: satoshis
-      POSTGRES_PASSWORD: satoshis
-      POSTGRES_DB: satoshis
+      POSTGRES_USER: nostrstack
+      POSTGRES_PASSWORD: nostrstack
+      POSTGRES_DB: nostrstack
     ports:
-      - "55432:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
   adminer:

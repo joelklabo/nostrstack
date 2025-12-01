@@ -1,20 +1,20 @@
-# @satoshis/sdk
+# @nostrstack/sdk
 
 Typed client for the nostrstack API.
 
 ## Install
 ```sh
-npm install @satoshis/sdk
+npm install @nostrstack/sdk
 # or
-pnpm add @satoshis/sdk
+pnpm add @nostrstack/sdk
 ```
 
 ## Usage
 ```ts
-import { SatoshisClient } from '@satoshis/sdk';
+import { NostrstackClient } from '@nostrstack/sdk';
 
-const client = new SatoshisClient({
-  host: 'api.satoshis.lol', // or baseURL if full
+const client = new NostrstackClient({
+  host: 'api.nostrstack.com', // or baseURL if full
   apiKey: 'your-admin-key'
 });
 

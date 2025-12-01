@@ -1,5 +1,5 @@
 {
-  "name": "@satoshis/config",
+  "name": "@nostrstack/config",
   "version": "0.0.0",
   "private": true,
   "main": "eslint.cjs",

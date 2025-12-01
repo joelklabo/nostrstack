@@ -1,10 +1,10 @@
 # Lightning Observability (prod)
 
-Workspace: `workspace-satoshisstgwestrg83os` (Log Analytics, westus3).
+Workspace: `workspace-nostrstackstgwestrg83os` (Log Analytics, westus3).
 
 Sources already flowing
-- ACA managed environment (`satoshis-env-stg-west`): `ContainerAppConsoleLogs`, `ContainerAppSystemLogs`, `AllMetrics`.
-- Postgres `satoshis-pg-west`: metrics + logs (existing diagnostic setting `pg-all`).
+- ACA managed environment (`nostrstack-env-stg-west`): `ContainerAppConsoleLogs`, `ContainerAppSystemLogs`, `AllMetrics`.
+- Postgres `nostrstack-pg-west`: metrics + logs (existing diagnostic setting `pg-all`).
 
 Useful KQL snippets
 - LNbits prod app logs (latest errors):
@@ -43,7 +43,7 @@ Useful KQL snippets
 - Postgres connections vs CPU:
   ```
   AzureMetrics
-  | where Resource == "satoshis-pg-west"
+  | where Resource == "nostrstack-pg-west"
   | where MetricName in ("cpu_percent", "connections")
   | summarize avgVal=avg(Total) by MetricName, bin(TimeGenerated, 5m)
   | render timechart
@@ -73,4 +73,4 @@ Automation helpers
 
 Notes
 - Current funding backend is Voltage mutinynet (signet). When switching to mainnet, keep the same workspace/queries; watch for new error patterns (macaroon/cert issues).
-- All diagnostic settings are in RG `satoshis-stg-west-rg`; adjust if a prod RG is added later.
+- All diagnostic settings are in RG `nostrstack-stg-west-rg`; adjust if a prod RG is added later.

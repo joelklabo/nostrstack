@@ -7,7 +7,7 @@ import { execSync } from 'node:child_process';
 let api;
 let stopServer = null;
 
-const DOMAIN = 'demo.satoshis.lol';
+const DOMAIN = 'demo.nostrstack.lol';
 const USER_PUBKEY = 'f'.repeat(64);
 
 test.beforeAll(async ({ playwright }) => {
@@ -17,7 +17,7 @@ test.beforeAll(async ({ playwright }) => {
   process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';
   process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';
   process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';
-  const dbPath = process.env.DATABASE_URL ?? 'postgresql://satoshis:satoshis@localhost:55432/satoshis';
+  const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
   process.env.DATABASE_URL = dbPath;
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
   execSync(`pnpm exec prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
@@ -43,7 +43,7 @@ test.beforeAll(async ({ playwright }) => {
     headers: { 'x-api-key': process.env.ADMIN_API_KEY ?? '' }
   });
   await api.post('/api/admin/users', {
-    data: { domain: DOMAIN, lightningAddress: 'demo@demo.satoshis.lol', pubkey: USER_PUBKEY },
+    data: { domain: DOMAIN, lightningAddress: 'demo@demo.nostrstack.lol', pubkey: USER_PUBKEY },
     headers: { 'x-api-key': process.env.ADMIN_API_KEY ?? '' }
   });
 });

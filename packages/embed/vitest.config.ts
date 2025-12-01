@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     alias: {
-      '@satoshis/sdk': path.resolve(__dirname, '../sdk/src')
+      '@nostrstack/sdk': path.resolve(__dirname, '../sdk/src')
     }
   }
 });

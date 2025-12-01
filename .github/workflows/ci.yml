@@ -14,11 +14,11 @@ jobs:
         image: postgres:15
         ports: ['5432:5432']
         env:
-          POSTGRES_USER: satoshis
-          POSTGRES_PASSWORD: satoshis
-          POSTGRES_DB: satoshis
+          POSTGRES_USER: nostrstack
+          POSTGRES_PASSWORD: nostrstack
+          POSTGRES_DB: nostrstack
         options: >-
-          --health-cmd "pg_isready -U satoshis" --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -34,14 +34,14 @@ jobs:
       - name: Prepare DB (Postgres)
         working-directory: apps/api
         env:
-          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
           PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
         run: |
           pnpm exec prisma migrate deploy --schema prisma/pg/schema.prisma
           pnpm prisma:generate
       - name: Lint & test (API)
         env:
-          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
           PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
           ADMIN_API_KEY: test-admin
           OP_NODE_API_KEY: test-key
@@ -51,7 +51,7 @@ jobs:
           pnpm --filter api test
       - name: E2E (Playwright LNURL)
         env:
-          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
           PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
           ADMIN_API_KEY: test-admin
           OP_NODE_API_KEY: test-key

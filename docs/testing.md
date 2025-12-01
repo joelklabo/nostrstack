@@ -17,4 +17,4 @@
 - Optional: `LNBITS_URL`, `LNBITS_ADMIN_KEY` — enables payer/balance assertions and real-payment gallery flows.
 
 ## Gallery real-payments
-- Set `VITE_API_BASE_URL` to the API origin, `VITE_SATOSHIS_HOST` to embed host (e.g., `lnbits-stg-west...`), and `VITE_ENABLE_REAL_PAYMENTS=true` to show real invoice requests. Without these, gallery uses mocks but e2e still pass.
+- Set `VITE_API_BASE_URL` to the API origin, `VITE_NOSTRSTACK_HOST` to embed host (e.g., `lnbits-stg-west...`), and `VITE_ENABLE_REAL_PAYMENTS=true` to show real invoice requests. Without these, gallery uses mocks but e2e still pass.

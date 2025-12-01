@@ -87,7 +87,7 @@ resource ca 'Microsoft.App/containerApps@2023-05-01' = {
             { name: 'LND_GRPC_PORT', value: '10009' }
             { name: 'LND_NETWORK', value: 'mainnet' }
             { name: 'LNBITS_REV', value: rev }
-            { name: 'PGHOST', value: 'satoshis-pg-west.postgres.database.azure.com' }
+            { name: 'PGHOST', value: 'nostrstack-pg-west.postgres.database.azure.com' }
           ]
           resources: {
             cpu: 1

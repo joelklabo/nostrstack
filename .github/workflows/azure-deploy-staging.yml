@@ -12,10 +12,10 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-api
-  AZURE_RG: satoshis-stg-rg
+  AZURE_RG: nostrstack-stg-rg
   AZURE_LOCATION: eastus
-  APP_NAME: satoshis-api-stg
-  ENV_NAME: satoshis-env-stg
+  APP_NAME: nostrstack-api-stg
+  ENV_NAME: nostrstack-env-stg
 
 jobs:
   deploy:
@@ -25,11 +25,11 @@ jobs:
         image: postgres:15
         ports: ["5432:5432"]
         env:
-          POSTGRES_USER: satoshis
-          POSTGRES_PASSWORD: satoshis
-          POSTGRES_DB: satoshis
+          POSTGRES_USER: nostrstack
+          POSTGRES_PASSWORD: nostrstack
+          POSTGRES_DB: nostrstack
         options: >-
-          --health-cmd "pg_isready -U satoshis" --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
     permissions:
       contents: read
       packages: write
@@ -52,7 +52,7 @@ jobs:
       - name: Run tests
         run: pnpm test
         env:
-          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
 
       - name: Set image tag
         id: vars

@@ -24,8 +24,8 @@ jobs:
           file: apps/api/Dockerfile
           push: true
           platforms: linux/amd64
-          tags: ghcr.io/${{ github.repository_owner }}/satoshis-api:${{ inputs.tag }}
+          tags: ghcr.io/${{ github.repository_owner }}/nostrstack-api:${{ inputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Show image
-        run: echo "ghcr.io/${{ github.repository_owner }}/satoshis-api:${{ inputs.tag }}"
+        run: echo "ghcr.io/${{ github.repository_owner }}/nostrstack-api:${{ inputs.tag }}"

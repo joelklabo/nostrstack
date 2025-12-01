@@ -4,7 +4,7 @@ import { waitForHealth } from './utils/wait-for-health.js';
 import { resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 
-const DEMO_ADDR = 'demo@demo.satoshis.lol';
+const DEMO_ADDR = 'demo@demo.nostrstack.lol';
 
 let api;
 let stopServer: (() => Promise<void>) | null = null;
@@ -16,7 +16,7 @@ test.beforeAll(async ({ playwright }) => {
   process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';
   process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';
   process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';
-  const dbPath = process.env.DATABASE_URL ?? 'postgresql://satoshis:satoshis@localhost:55432/satoshis';
+  const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
   process.env.DATABASE_URL = dbPath;
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
 
@@ -36,15 +36,15 @@ test.beforeAll(async ({ playwright }) => {
   await waitForHealth(`${baseUrl}/health`);
   api = await playwright.request.newContext({
     baseURL: baseUrl,
-    extraHTTPHeaders: { host: 'demo.satoshis.lol' }
+    extraHTTPHeaders: { host: 'demo.nostrstack.lol' }
   });
 
   await api.post('/api/admin/tenants', {
-    data: { domain: 'demo.satoshis.lol', displayName: 'Demo Tenant' },
+    data: { domain: 'demo.nostrstack.lol', displayName: 'Demo Tenant' },
     headers: { 'x-api-key': process.env.ADMIN_API_KEY ?? '' }
   });
   await api.post('/api/admin/users', {
-    data: { domain: 'demo.satoshis.lol', lightningAddress: DEMO_ADDR, pubkey: 'f'.repeat(64) },
+    data: { domain: 'demo.nostrstack.lol', lightningAddress: DEMO_ADDR, pubkey: 'f'.repeat(64) },
     headers: { 'x-api-key': process.env.ADMIN_API_KEY ?? '' }
   });
 });

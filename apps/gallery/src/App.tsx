@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { autoMount, mountTipButton, mountPayToAction, mountCommentWidget } from '@satoshis/embed';
+import { autoMount, mountTipButton, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
 
-const demoHost = import.meta.env.VITE_SATOSHIS_HOST ?? 'localhost:3001';
+const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost:3001';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
 
@@ -37,9 +37,9 @@ function App() {
     try {
       const res = await fetch(`${apiBase}/api/pay`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', host: 'demo.satoshis.lol' },
+        headers: { 'Content-Type': 'application/json', host: 'demo.nostrstack.lol' },
         body: JSON.stringify({
-          domain: 'demo.satoshis.lol',
+          domain: 'demo.nostrstack.lol',
           action: 'tip',
           amount: amount,
           metadata: { ui: 'gallery' }
@@ -57,7 +57,7 @@ function App() {
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'Inter, system-ui, sans-serif', background: themeStyles.background, color: themeStyles.color, minHeight: '100vh' }}>
-      <h1 style={{ marginTop: 0 }}>Satoshis.lol Demo</h1>
+      <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
       <p>Play with the widgets below. Host is assumed to be {demoHost} for local dev.</p>
       {!enableReal && (
         <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
@@ -193,7 +193,7 @@ function AppWithState(props: { username: string; amount: number; setUsername: (v
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'Inter, system-ui, sans-serif', background: themeStyles.background, color: themeStyles.color, minHeight: '100vh' }}>
-      <h1 style={{ marginTop: 0 }}>Satoshis.lol Demo</h1>
+      <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
       <p>Play with the widgets below. Host is assumed to be {demoHost} for local dev.</p>
 
       <Card title="Config">

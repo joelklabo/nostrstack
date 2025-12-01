@@ -6,9 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'node',
+    include: ['src/**/*.test.tsx'],
+    exclude: ['tests/**', '**/node_modules/**'],
     alias: {
-      '@satoshis/embed': path.resolve(__dirname, '../../packages/embed/src'),
-      '@satoshis/sdk': path.resolve(__dirname, '../../packages/sdk/src')
+      '@nostrstack/embed': path.resolve(__dirname, '../../packages/embed/src'),
+      '@nostrstack/sdk': path.resolve(__dirname, '../../packages/sdk/src')
     }
   }
 });

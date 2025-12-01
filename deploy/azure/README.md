@@ -1,9 +1,9 @@
-# Azure deployment (satoshis.lol)
+# Azure deployment (nostrstack.com)
 
 This folder provides a thin starting point for deploying the API to Azure Container Apps with Azure Database for PostgreSQL Flexible Server and Key Vault.
 
 ## Outline
-1. Build/push container image (e.g. GHCR `ghcr.io/yourorg/satoshis-api:latest`).
+1. Build/push container image (e.g. GHCR `ghcr.io/yourorg/nostrstack-api:latest`).
 2. Deploy infra via Bicep (`main.bicep`) – creates:
    - Container Apps environment + container app for the API
    - Postgres Flexible Server + firewall allowing Container Apps
@@ -13,11 +13,11 @@ This folder provides a thin starting point for deploying the API to Azure Contai
 ## Quick start
 ```bash
 # assumes az login + correct subscription
-az group create -n satoshis-rg -l eastus
+az group create -n nostrstack-rg -l eastus
 az deployment group create \
-  -g satoshis-rg \
+  -g nostrstack-rg \
   -f main.bicep \
-  -p containerImage=ghcr.io/yourorg/satoshis-api:latest adminApiKey=change-me opNodeApiKey=change-me opNodeWebhookSecret=change-me
+  -p containerImage=ghcr.io/yourorg/nostrstack-api:latest adminApiKey=change-me opNodeApiKey=change-me opNodeWebhookSecret=change-me
 ```
 
 Parameters (see `main.bicep`):
@@ -29,7 +29,7 @@ Parameters (see `main.bicep`):
 - `logAnalyticsWorkspaceId`, `logAnalyticsSharedKey` (optional) to enable Azure Log Analytics for app/environment logs
 
 After deploy:
-- Fetch container app FQDN: `az containerapp show -n satoshis-api -g satoshis-rg -o tsv --query properties.configuration.ingress.fqdn`
+- Fetch container app FQDN: `az containerapp show -n nostrstack-api -g nostrstack-rg -o tsv --query properties.configuration.ingress.fqdn`
 - Set DNS for tenant domains to this host (or front with Azure Front Door/Ingress if desired).
 - Run Prisma migrations against the Postgres connection string from Key Vault before first start (or during startup). The CI workflow already demonstrates `db push` for Postgres.
 
@@ -42,5 +42,5 @@ Required GitHub secrets:
 - `ADMIN_API_KEY`, `OP_NODE_API_KEY`, `OP_NODE_WEBHOOK_SECRET`
 
 Defaults:
-- Resource group `satoshis-rg`, location `eastus`, image tag = commit SHA. Override via workflow_dispatch input `image_tag` and envs in the workflow if desired.
+- Resource group `nostrstack-rg`, location `eastus`, image tag = commit SHA. Override via workflow_dispatch input `image_tag` and envs in the workflow if desired.
 - Registry: GHCR. Container Apps auth uses `registryUsername=github.actor` and `registryPassword=GITHUB_TOKEN`; switch to ACR by passing `registryServer/registryUsername/registryPassword` inputs/secrets.

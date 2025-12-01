@@ -8,7 +8,7 @@ config();
 // Resolve paths relative to the package root so DB defaults work whether run from src or dist.
 const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const sqliteDefault = `file:${resolve(packageRoot, 'dev.db')}`;
-const postgresDefault = 'postgres://satoshis:satoshis@localhost:55432/satoshis';
+const postgresDefault = 'postgres://nostrstack:nostrstack@localhost:5432/nostrstack';
 
 const defaultDatabaseUrl = process.env.NODE_ENV === 'test' ? sqliteDefault : postgresDefault;
 
@@ -33,7 +33,7 @@ const schema = z.object({
   OTEL_ENABLED: z.coerce.boolean().default(false),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
-  OTEL_SERVICE_NAME: z.string().default('satoshis-api')
+  OTEL_SERVICE_NAME: z.string().default('nostrstack-api')
 });
 
 export type Env = z.infer<typeof schema>;

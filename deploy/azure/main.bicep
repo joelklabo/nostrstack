@@ -8,10 +8,10 @@ param opNodeApiKey string
 param opNodeWebhookSecret string
 param postgresSku string = 'Standard_B1ms'
 param postgresStorageGb int = 32
-param appName string = 'satoshis-api'
-param envName string = 'satoshis-env'
-param kvName string = 'satoshis-kv'
-param pgName string = 'satoshis-pg'
+param appName string = 'nostrstack-api'
+param envName string = 'nostrstack-env'
+param kvName string = 'nostrstack-kv'
+param pgName string = 'nostrstack-pg'
 param registryServer string = ''
 param registryUsername string = ''
 @secure()
@@ -44,7 +44,7 @@ resource pg 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
   name: pgName
   location: location
   properties: {
-    administratorLogin: 'satoshis'
+    administratorLogin: 'nostrstack'
     administratorLoginPassword: adminApiKey
     version: '15'
     storage: { storageSizeGB: postgresStorageGb }
@@ -57,12 +57,12 @@ resource pg 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
 }
 
 resource pgDb 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
-  name: 'satoshis'
+  name: 'nostrstack'
   parent: pg
   properties: {}
 }
 
-var dbUrl = 'postgresql://satoshis:${adminApiKey}@${pg.name}.postgres.database.azure.com:5432/satoshis'
+var dbUrl = 'postgresql://nostrstack:${adminApiKey}@${pg.name}.postgres.database.azure.com:5432/nostrstack'
 
 resource secretDb 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${kv.name}/DATABASE_URL'

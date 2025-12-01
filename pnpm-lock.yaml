@@ -136,7 +136,7 @@ importers:
 
   apps/gallery:
     dependencies:
-      '@satoshis/embed':
+      '@nostrstack/embed':
         specifier: workspace:*
         version: link:../../packages/embed
       react:
@@ -191,7 +191,7 @@ importers:
 
   packages/embed:
     dependencies:
-      '@satoshis/sdk':
+      '@nostrstack/sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:

@@ -3,10 +3,10 @@
 ## What’s running
 - **LNbits** v1.3.1 in Azure Container Apps: `lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io`
 - **Funding source**: Voltage mutinynet LND (`satoshis.u.voltageapp.io:10009`)
-- **Database**: Azure Postgres `satoshis-pg-west`, DB name `lnbitsapp`
+- **Database**: Azure Postgres `nostrstack-pg-west`, DB name `lnbitsapp`
 - **Storage**: AzureFile volume `lnbitsfs`
 
-## Secrets & config (all in Key Vault `satoshis-kv-west`)
+## Secrets & config (all in Key Vault `nostrstack-kv-west`)
 - `lnbits-database-url` — postgres URL for LNbits
 - `database-url` — prisma/database fallback URL
 - `lnd-grpc-endpoint` — e.g. `satoshis.u.voltageapp.io:10009`
@@ -42,6 +42,6 @@ Returns funding backend name/error/balance; useful for probes/CI.
 - LND sometimes logs `invalid hash length of 1, want 32` on startup from the watcher; harmless so far.
 
 ## Admin/ops commands
-- Deploy image: `az acr build -r satoshiswestacr -t lnbits:stg -f deploy/lnbits/Dockerfile.azure .`
-- Redeploy app: `az containerapp update -n lnbits-stg-west -g satoshis-stg-west-rg --image satoshiswestacr.azurecr.io/lnbits:stg --set-env-vars LNBITS_REV=<stamp>`
-- Logs: `az containerapp logs show -n lnbits-stg-west -g satoshis-stg-west-rg --tail 100`
+- Deploy image: `az acr build -r nostrstackwestacr -t lnbits:stg -f deploy/lnbits/Dockerfile.azure .`
+- Redeploy app: `az containerapp update -n lnbits-stg-west -g nostrstack-stg-west-rg --image nostrstackwestacr.azurecr.io/lnbits:stg --set-env-vars LNBITS_REV=<stamp>`
+- Logs: `az containerapp logs show -n lnbits-stg-west -g nostrstack-stg-west-rg --tail 100`

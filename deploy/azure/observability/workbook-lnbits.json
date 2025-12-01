@@ -63,7 +63,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "AzureMetrics\n| where Resource == 'satoshis-pg-west'\n| where MetricName in ('cpu_percent','connections')\n| summarize avgVal=avg(Total) by MetricName, bin(TimeGenerated, 5m)\n| render timechart",
+        "query": "AzureMetrics\n| where Resource == 'nostrstack-pg-west'\n| where MetricName in ('cpu_percent','connections')\n| summarize avgVal=avg(Total) by MetricName, bin(TimeGenerated, 5m)\n| render timechart",
         "size": 1,
         "title": "Postgres CPU & connections"
       }

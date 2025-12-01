@@ -1,26 +1,26 @@
-# @satoshis/embed
+# @nostrstack/embed
 
 Embeddable widgets (tip, pay-to-action, comments) for nostrstack.
 
 ## Install
 ```sh
-npm install @satoshis/embed
+npm install @nostrstack/embed
 # or
-pnpm add @satoshis/embed
+pnpm add @nostrstack/embed
 ```
 
 ## Script-tag usage
 ```html
-<script src="https://unpkg.com/@satoshis/embed/dist/index.global.js"></script>
-<div data-satoshis-tip="alice" data-label="Send sats"></div>
-<div data-satoshis-pay="alice" data-label="Unlock"></div>
-<div data-satoshis-comments="post-123"></div>
+<script src="https://unpkg.com/@nostrstack/embed/dist/index.global.js"></script>
+<div data-nostrstack-tip="alice" data-label="Send sats"></div>
+<div data-nostrstack-pay="alice" data-label="Unlock"></div>
+<div data-nostrstack-comments="post-123"></div>
 ```
-Widgets auto-mount on elements with `data-satoshis-*` attributes.
+Widgets auto-mount on elements with `data-nostrstack-*` attributes.
 
 ## Module usage
 ```ts
-import { mountTipButton, mountPayToAction, mountCommentWidget } from '@satoshis/embed';
+import { mountTipButton, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
 
 const tipBtn = mountTipButton(container, { username: 'alice', amountSats: 5 });
 const payBtn = mountPayToAction(container, { username: 'alice', amountSats: 10, onUnlock: () => console.log('paid') });
