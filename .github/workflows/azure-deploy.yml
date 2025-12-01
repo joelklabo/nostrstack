@@ -17,7 +17,14 @@ env:
   AZURE_LOCATION: westus3
 
 jobs:
+  noop:
+    if: ${{ github.event_name != "workflow_dispatch" }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Skipping deploy (manual-only workflow)"
+
   deploy:
+
     if: ${{ github.event_name == "workflow_dispatch" && secrets.AZURE_CREDENTIALS != "" }}
     runs-on: ubuntu-latest
     env:
