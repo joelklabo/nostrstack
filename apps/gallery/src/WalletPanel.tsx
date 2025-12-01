@@ -1,6 +1,15 @@
 import React from 'react';
 
-export function WalletPanel({ lnbitsUrl, adminKey }: { lnbitsUrl: string; adminKey: string }) {
+export function WalletPanel({
+  lnbitsUrl,
+  adminKey,
+  visible = true
+}: {
+  lnbitsUrl: string;
+  adminKey: string;
+  visible?: boolean;
+}) {
+  if (!visible) return null;
   return (
     <div style={{ padding: '0.75rem 1rem', background: '#eef2ff', borderRadius: 10, marginBottom: '1rem', color: '#1e1b4b' }}>
       <strong>Test wallet (LNbits regtest)</strong>
