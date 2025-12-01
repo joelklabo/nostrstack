@@ -64,7 +64,6 @@ jobs:
       - name: Regtest e2e (SQLite)
         working-directory: apps/api
         env:
-          NODE_OPTIONS: "--no-experimental-strip-types"
           DATABASE_URL: file:./test-e2e.db
           ADMIN_API_KEY: test-admin
         run: pnpm test:e2e
@@ -72,7 +71,6 @@ jobs:
       - name: API pay-to-act e2e (skip payer if no LNbits)
         working-directory: apps/api
         env:
-          NODE_OPTIONS: "--no-experimental-strip-types"
           DATABASE_URL: file:./test-e2e.db
           ADMIN_API_KEY: test-admin
         run: pnpm test:e2e:pay
