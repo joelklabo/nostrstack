@@ -17,6 +17,7 @@ env:
 
 jobs:
   deploy:
+    if: ${{ secrets.AZURE_CREDENTIALS != "" }}
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--no-experimental-strip-types"
