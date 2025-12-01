@@ -1,0 +1,18 @@
+FROM lnbits/lnbits:v1.3.1
+
+# Default LNbits config tuned for our staging Container App.
+ENV LNBITS_DATA_FOLDER=/data \
+    LNBITS_BACKEND_WALLET_CLASS=LndWallet \
+    LNBITS_FUNDING_SOURCE=LndWallet \
+    LNBITS_PORT=5000 \
+    LNBITS_HOST=0.0.0.0
+
+COPY deploy/lnbits/sitecustomize.py /app/sitecustomize.py
+COPY deploy/lnbits/lndgrpc.py /app/lnbits/wallets/lndgrpc.py
+COPY deploy/lnbits/db.py /app/lnbits/db.py
+COPY deploy/lnbits/status_public.py /app/status_public.py
+
+COPY deploy/lnbits/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

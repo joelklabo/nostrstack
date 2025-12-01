@@ -1,0 +1,14 @@
+node_modules
+.pnpm-store
+.git
+npm-debug.log
+pnpm-debug.log
+apps/api/dev.db
+apps/api/test*.db
+apps/api/tmp-test.db
+apps/api/test-results
+apps/api/node_modules
+apps/gallery/node_modules
+packages/*/node_modules
+apps/api/playwright-report
+apps/api/test-results

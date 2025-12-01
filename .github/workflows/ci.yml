@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--no-experimental-strip-types"
+    services:
+      postgres:
+        image: postgres:15
+        ports: ['5432:5432']
+        env:
+          POSTGRES_USER: satoshis
+          POSTGRES_PASSWORD: satoshis
+          POSTGRES_DB: satoshis
+        options: >-
+          --health-cmd "pg_isready -U satoshis" \
+          --health-interval 10s \
+          --health-timeout 5s \
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.11.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Prepare DB (Postgres)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
+        run: |
+          pnpm exec prisma migrate deploy --schema prisma/pg/schema.prisma
+          pnpm prisma:generate
+      - name: Lint & test (API)
+        env:
+          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
+          ADMIN_API_KEY: test-admin
+          OP_NODE_API_KEY: test-key
+          OP_NODE_WEBHOOK_SECRET: whsec_test
+        run: |
+          pnpm --filter api lint
+          pnpm --filter api test
+      - name: E2E (Playwright LNURL)
+        env:
+          DATABASE_URL: postgresql://satoshis:satoshis@localhost:55432/satoshis
+          PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
+          ADMIN_API_KEY: test-admin
+          OP_NODE_API_KEY: test-key
+          OP_NODE_WEBHOOK_SECRET: whsec_test
+        run: pnpm --filter api test:e2e
+
+      - name: Regtest e2e (SQLite)
+        working-directory: apps/api
+        env:
+          NODE_OPTIONS: "--no-experimental-strip-types"
+          DATABASE_URL: file:./test-e2e.db
+          ADMIN_API_KEY: test-admin
+        run: pnpm test:e2e
+
+      - name: API pay-to-act e2e (skip payer if no LNbits)
+        working-directory: apps/api
+        env:
+          NODE_OPTIONS: "--no-experimental-strip-types"
+          DATABASE_URL: file:./test-e2e.db
+          ADMIN_API_KEY: test-admin
+        run: pnpm test:e2e:pay
+
+      - name: Mutinynet smoke (staging LNbits)
+        env:
+          LNBITS_URL: https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io
+          LNBITS_ADMIN_KEY: ${{ secrets.LNBITS_STG_ADMIN_KEY }}
+          AMOUNT: 100
+        run: |
+          ./scripts/lnbits-smoke.sh "${AMOUNT:-100}"
+      - name: Lint & test (SDK, embed, gallery)
+        run: pnpm -r --filter "./packages/..." --filter "./apps/gallery" test

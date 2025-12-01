@@ -1,0 +1,31 @@
+name: Build API GHCR amd64
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (default stg-amd64)"
+        required: false
+        default: "stg-amd64"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository_owner }}/satoshis-api:${{ inputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Show image
+        run: echo "ghcr.io/${{ github.repository_owner }}/satoshis-api:${{ inputs.tag }}"

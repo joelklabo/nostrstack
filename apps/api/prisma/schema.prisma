@@ -1,0 +1,52 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  domain      String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  payments    Payment[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  tenantId  String
+  pubkey    String
+  lightningAddress String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  payments  Payment[]
+
+  @@unique([tenantId, pubkey])
+  @@unique([tenantId, lightningAddress])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String?
+  provider    String
+  providerRef String
+  invoice     String   @unique
+  amountSats  Int
+  status      String   @default("PENDING")
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerRef, tenantId])
+  @@index([tenantId])
+  @@index([tenantId, userId])
+}

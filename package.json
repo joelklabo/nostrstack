@@ -1,0 +1,24 @@
+{
+  "name": "nostrstack",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@9.11.0",
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "dev": "pnpm --filter api dev",
+    "e2e": "pnpm --filter api test:e2e"
+  },
+  "pnpm": {
+    "overrides": {
+      "zod": "3.23.8",
+      "zod-to-json-schema": "3.23.0"
+    }
+  },
+  "devDependencies": {
+    "@beads/bd": "^0.26.0",
+    "prettier": "3.2.5"
+  }
+}

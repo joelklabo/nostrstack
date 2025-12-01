@@ -1,0 +1,73 @@
+{
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json",
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "app",
+            "version": "KqlParameterItem/1.0",
+            "name": "app",
+            "type": 1,
+            "label": "Container App name",
+            "value": "lnbits-prod-west"
+          },
+          {
+            "id": "timespan",
+            "version": "KqlParameterItem/1.0",
+            "name": "timespan",
+            "type": 4,
+            "label": "Timespan",
+            "value": "PT6H",
+            "queryTimeSpan": "PT6H"
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs\n| where ContainerAppName == '{app}'\n| where Log_s has_any ('ERROR', 'Exception')\n| project TimeGenerated, Log_s\n| order by TimeGenerated desc\n| take 200",
+        "size": 1,
+        "title": "Recent errors (console)",
+        "timeContext": {
+          "durationMs": 0,
+          "isUseDashboardTimeRange": true
+        }
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppSystemLogs\n| where ContainerAppName == '{app}'\n| where Log_s has \"Restarting\"\n| summarize Restarts=count() by bin(TimeGenerated, 1h)\n| order by TimeGenerated desc",
+        "size": 1,
+        "title": "Container restarts"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureMetrics\n| where Resource == '{app}'\n| where MetricName == 'IngressRequestDuration'\n| summarize p95LatencyMs=percentile(Total, 95) by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+        "size": 1,
+        "title": "p95 request latency (ms)"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureMetrics\n| where Resource == 'satoshis-pg-west'\n| where MetricName in ('cpu_percent','connections')\n| summarize avgVal=avg(Total) by MetricName, bin(TimeGenerated, 5m)\n| render timechart",
+        "size": 1,
+        "title": "Postgres CPU & connections"
+      }
+    }
+  ],
+  "fallbackResourceIds": []
+}

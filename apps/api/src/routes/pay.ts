@@ -1,0 +1,90 @@
+import type { FastifyInstance } from 'fastify';
+import { env } from '../env.js';
+import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
+
+export async function registerPayRoutes(app: FastifyInstance) {
+  app.post('/api/pay', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          domain: { type: 'string' },
+          action: { type: 'string' },
+          amount: { type: 'integer', minimum: 1 },
+          metadata: { type: 'object', additionalProperties: true }
+        },
+        required: ['domain', 'action', 'amount'],
+        additionalProperties: false
+      }
+    }
+  }, async (request, reply) => {
+    const body = request.body as { domain: string; action: string; amount: number; metadata?: any };
+    const tenant = await getTenantForRequest(app, request, body.domain);
+    const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
+
+    const charge = await app.lightningProvider.createCharge({
+      amount: body.amount,
+      description: `pay:${body.action} ${body.metadata?.path ?? ''}`.trim(),
+      callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent('pay')}/webhook`
+    });
+
+    await app.prisma.payment.create({
+      data: {
+        tenantId: tenant.id,
+        userId: null,
+        provider: env.LIGHTNING_PROVIDER,
+        providerRef: charge.id,
+        invoice: charge.invoice,
+        amountSats: body.amount,
+        status: 'PENDING'
+      }
+    });
+
+    return reply.code(201).send({
+      status: 'pending',
+      payment_request: charge.invoice,
+      pr: charge.invoice,
+      provider_ref: charge.id
+    });
+  });
+
+  app.get('/api/lnurlp/pay/status/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+        additionalProperties: false
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const tenant = await getTenantForRequest(app, request);
+    const payment = await app.prisma.payment.findFirst({
+      where: { providerRef: id, tenantId: tenant.id }
+    });
+    if (!payment) return reply.code(404).send({ status: 'unknown' });
+
+    const paidStates = ['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED'];
+    if (paidStates.includes(payment.status)) {
+      return reply.send({ status: payment.status, amountSats: payment.amountSats });
+    }
+
+    // If provider can't give status, return current known state
+    if (!app.lightningProvider.getCharge) {
+      return reply.send({ status: payment.status });
+    }
+
+    try {
+      const statusRes = await app.lightningProvider.getCharge(id);
+      const normalized = statusRes?.status?.toUpperCase?.() ?? payment.status;
+      if (paidStates.includes(normalized)) {
+        await app.prisma.payment.update({ where: { id: payment.id }, data: { status: normalized } });
+      }
+      return reply.send({ status: normalized });
+    } catch (err) {
+      app.log.warn({ err }, 'charge status check failed');
+      return reply.code(202).send({ status: payment.status, error: 'status_check_failed' });
+    }
+  });
+}

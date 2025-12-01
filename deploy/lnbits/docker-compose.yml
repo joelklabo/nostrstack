@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  lnbits:
+    image: lnbits/lnbits:latest
+    ports:
+      - "5000:5000"
+    environment:
+      LNBITS_DATA_FOLDER: /data
+      LNBITS_BACKEND_WALLET_CLASS: LNbitsWallet
+      LNBITS_FUNDING_SOURCE: dummy
+      LNBITS_SITE_TITLE: nostrstack LNbits
+      LNBITS_ADMIN_UI: true
+    volumes:
+      - lnbits-data:/data
+volumes:
+  lnbits-data: {}
