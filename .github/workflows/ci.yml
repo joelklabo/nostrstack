@@ -41,8 +41,8 @@ jobs:
           pnpm prisma:generate
       - name: Lint & test (API)
         env:
-          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
-          PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
+          DATABASE_URL: file:./test.db
+          PRISMA_SCHEMA_FILE: prisma/schema.prisma
           ADMIN_API_KEY: test-admin
           OP_NODE_API_KEY: test-key
           OP_NODE_WEBHOOK_SECRET: whsec_test
@@ -51,8 +51,8 @@ jobs:
           pnpm --filter api test
       - name: E2E (Playwright LNURL)
         env:
-          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
-          PRISMA_SCHEMA_FILE: prisma/pg/schema.prisma
+          DATABASE_URL: file:./test-e2e.db
+          PRISMA_SCHEMA_FILE: prisma/schema.prisma
           ADMIN_API_KEY: test-admin
           OP_NODE_API_KEY: test-key
           OP_NODE_WEBHOOK_SECRET: whsec_test
