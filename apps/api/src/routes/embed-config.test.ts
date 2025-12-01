@@ -1,7 +1,8 @@
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+import client from 'prom-client';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';
@@ -47,5 +48,21 @@ describe('/embed-config', () => {
     expect(body.embedScript).toBe('https://cdn.example.com/embed.js');
     expect(body.apiBase).toBe('https://demo.nostrstack.lol');
     expect(body.theme.accent).toBe('#ff00ff');
+    expect(body.mock).toBe(false);
+  });
+
+  it('honors mock flag', async () => {
+    process.env.DEV_MOCKS = 'true';
+    vi.resetModules();
+    client.register.clear();
+    const { buildServer } = await import('../server.js');
+    const mockServer = await buildServer();
+    const res = await mockServer.inject({ url: '/embed-config?tenant=bob' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.relays).toEqual(['mock']);
+    expect(body.apiBase).toBe('mock');
+    expect(body.mock).toBe(true);
+    await mockServer.close();
   });
 });

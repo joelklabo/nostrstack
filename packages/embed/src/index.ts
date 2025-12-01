@@ -55,6 +55,10 @@ function createClient(opts: { baseURL?: string; host?: string }) {
   });
 }
 
+function isMock(opts: { baseURL?: string; host?: string }) {
+  return opts.baseURL === 'mock' || opts.host === 'mock';
+}
+
 const ATTR_PREFIXES = ['nostrstack', 'satoshis'];
 
 function getBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments') {
@@ -76,6 +80,17 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
   const handler = async () => {
     btn.disabled = true;
     try {
+      if (isMock(opts)) {
+        const mockPr = 'lnbc1mock' + Math.random().toString(16).slice(2, 10);
+        await opts.onInvoice?.(mockPr);
+        if (!opts.onInvoice) {
+          const pre = document.createElement('pre');
+          pre.textContent = mockPr;
+          container.appendChild(pre);
+        }
+        return;
+      }
+
       const client = createClient(opts);
       const meta = await client.getLnurlpMetadata(opts.username);
       const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
@@ -132,27 +147,37 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     btn.disabled = true;
     status.textContent = 'Generating invoice…';
     try {
-      const client = createClient(opts);
-      const meta = await client.getLnurlpMetadata(opts.username);
-      const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
-      const invoice = await client.getLnurlpInvoice(opts.username, amount);
-      invoiceBox.textContent = invoice.pr;
+      const pr = isMock(opts)
+        ? 'lnbc1mock' + Math.random().toString(16).slice(2, 10)
+        : (await (async () => {
+            const client = createClient(opts);
+            const meta = await client.getLnurlpMetadata(opts.username);
+            const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
+            const invoice = await client.getLnurlpInvoice(opts.username, amount);
+            return invoice.pr;
+          })());
+
+      invoiceBox.textContent = pr;
       invoiceBox.style.display = 'block';
-      openWallet.href = `lightning:${invoice.pr}`;
+      openWallet.href = `lightning:${pr}`;
       openWallet.style.display = 'inline';
       paidBtn.style.display = 'inline';
       status.textContent = 'Pay invoice then confirm.';
 
-      if (opts.onInvoice) await opts.onInvoice(invoice.pr);
+      if (opts.onInvoice) await opts.onInvoice(pr);
       else if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(invoice.pr);
+        await navigator.clipboard.writeText(pr);
       }
 
       const verify = opts.verifyPayment;
-      if (!verify) return invoice.pr;
-      const ok = await verify(invoice.pr);
+      if (isMock(opts)) {
+        unlock();
+        return pr;
+      }
+      if (!verify) return pr;
+      const ok = await verify(pr);
       if (ok) unlock();
-      return invoice.pr;
+      return pr;
     } catch (e: any) {
       console.error('pay-to-action error', e);
       status.textContent = 'Failed to generate invoice';
@@ -200,6 +225,9 @@ function getRelayInit() {
 }
 
 async function connectRelays(urls: string[]) {
+  if (urls.includes('mock')) {
+    return [];
+  }
   const relayInit = getRelayInit();
   if (!relayInit) return [];
   const relays = await Promise.all(urls.map(async (url) => {
@@ -216,8 +244,10 @@ async function connectRelays(urls: string[]) {
 }
 
 export async function renderCommentWidget(container: HTMLElement, opts: CommentWidgetOptions = {}) {
-  const relays = await connectRelays(opts.relays ?? DEFAULT_RELAYS);
-  if (!relays.length) {
+  const isMockMode = opts.relays?.includes('mock');
+  const relays = isMockMode ? [] : await connectRelays(opts.relays ?? DEFAULT_RELAYS);
+  const mockEvents: NostrEvent[] = [];
+  if (!relays.length && !isMockMode) {
     const msg = document.createElement('div');
     msg.textContent = 'No relays reachable for comments.';
     container.appendChild(msg);
@@ -256,18 +286,20 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     list.appendChild(row);
   };
 
-  const filters = [{ kinds: [1], '#t': [threadId] }];
-  relays.forEach((relay: any) => {
-    const sub = relay.sub(filters);
-    sub.on('event', (ev: NostrEvent) => {
-      appendEvent(ev);
-      opts.onEvent?.(ev);
+  if (!isMockMode) {
+    const filters = [{ kinds: [1], '#t': [threadId] }];
+    relays.forEach((relay: any) => {
+      const sub = relay.sub(filters);
+      sub.on('event', (ev: NostrEvent) => {
+        appendEvent(ev);
+        opts.onEvent?.(ev);
+      });
     });
-  });
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!window.nostr) {
+    if (!window.nostr && !isMockMode) {
       alert('Nostr signer (NIP-07) required to post');
       return;
     }
@@ -275,20 +307,33 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     if (!content) return;
     submit.disabled = true;
     try {
-      const pubkey = await window.nostr.getPublicKey();
-      const unsigned: NostrEvent = {
-        kind: 1,
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [['t', threadId]],
-        content,
-        pubkey,
-        id: '',
-        sig: ''
-      };
-      const signed = await window.nostr.signEvent(unsigned);
-      await Promise.all(relays.map((relay) => relay.publish(signed)));
-      appendEvent(signed);
-      textarea.value = '';
+      if (isMockMode) {
+        const mockEvent: NostrEvent = {
+          kind: 1,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [['t', threadId]],
+          content,
+          pubkey: 'mock-' + Math.random().toString(16).slice(2, 8)
+        };
+        mockEvents.push(mockEvent);
+        appendEvent(mockEvent);
+        textarea.value = '';
+      } else {
+        const pubkey = await window.nostr.getPublicKey();
+        const unsigned: NostrEvent = {
+          kind: 1,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [['t', threadId]],
+          content,
+          pubkey,
+          id: '',
+          sig: ''
+        };
+        const signed = await window.nostr.signEvent(unsigned);
+        await Promise.all(relays.map((relay) => relay.publish(signed)));
+        appendEvent(signed);
+        textarea.value = '';
+      }
     } catch (err) {
       console.error('nostr post failed', err);
       alert('Failed to post comment');

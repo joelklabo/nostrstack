@@ -12,6 +12,7 @@ import { rawBodyPlugin } from './hooks/raw-body.js';
 import { NostrClient } from './nostr/nostr-client.js';
 import { prismaPlugin } from './plugins/prisma.js';
 import { buildLightningProvider, LightningProviderKind } from './providers/index.js';
+import { MockLightningProvider } from './providers/mock.js';
 import { LnbitsProvider } from './providers/lnbits.js';
 import { OpenNodeProvider } from './providers/opennode.js';
 import { registerRoutes } from './routes/index.js';
@@ -50,7 +51,11 @@ export async function buildServer() {
   await server.register(prismaPlugin);
 
    // Lightning provider (default OpenNode). Could later be per-tenant.
-  const providerKind = env.LIGHTNING_PROVIDER === 'lnbits' ? LightningProviderKind.Lnbits : LightningProviderKind.OpenNode;
+  const providerKind = env.LIGHTNING_PROVIDER === 'lnbits'
+    ? LightningProviderKind.Lnbits
+    : env.LIGHTNING_PROVIDER === 'mock'
+      ? LightningProviderKind.Mock
+      : LightningProviderKind.OpenNode;
   const lightningProvider = buildLightningProvider(providerKind, {
     openNode: () => new OpenNodeProvider(env.OP_NODE_API_KEY, server.log),
     lnbits: () => {
@@ -59,7 +64,8 @@ export async function buildServer() {
         throw new Error('LNbits config missing');
       }
       return new LnbitsProvider({ baseUrl: env.LN_BITS_URL, apiKey: env.LN_BITS_API_KEY }, server.log);
-    }
+    },
+    mock: () => new MockLightningProvider()
   });
   server.decorate('lightningProvider', lightningProvider);
 
