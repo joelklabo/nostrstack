@@ -68,6 +68,42 @@ export async function lnbitsBalance(opts: { url: string; key: string }) {
   return body?.balance ?? body?.balance_msat ?? 0;
 }
 
+export async function settleAssert(opts: {
+  api: APIRequestContext;
+  payerUrl: string;
+  payerKey: string;
+  payUrl: string;
+  amount: number; // sats
+  expectDecreaseMsat?: number;
+}) {
+  const { api, payerUrl, payerKey, payUrl, amount, expectDecreaseMsat = amount * 1000 } = opts;
+  const before = await lnbitsBalance({ url: payerUrl, key: payerKey });
+
+  const payRes = await api.post(payUrl, {
+    data: { out: false, amount, memo: 'settle-assert' },
+    headers: { 'X-Api-Key': payerKey, 'Content-Type': 'application/json' }
+  });
+  if (!payRes.ok()) throw new Error(`pay request failed ${payRes.status()}`);
+  const body = await payRes.json();
+  const hash = body?.payment_hash || body?.checking_id;
+  if (!hash) throw new Error('missing payment hash');
+
+  const deadline = Date.now() + 20_000;
+  while (Date.now() < deadline) {
+    const status = await fetch(`${payerUrl}/api/v1/payments/${hash}`, {
+      headers: { 'X-Api-Key': payerKey }
+    }).then((r) => r.json());
+    if (status?.paid) break;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  const after = await lnbitsBalance({ url: payerUrl, key: payerKey });
+  if (!(after < before - expectDecreaseMsat + 2000)) { // allow small fee variance
+    throw new Error(`balance did not drop enough: before=${before} after=${after}`);
+  }
+  return { before, after };
+}
+
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }

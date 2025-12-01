@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 
 import { expect,test } from '@playwright/test';
 
-import { lnbitsBalance,payInvoiceViaLNbits, waitForPaymentStatus } from './utils/pay-and-settle.js';
+import { lnbitsBalance,payInvoiceViaLNbits, waitForPaymentStatus, settleAssert } from './utils/pay-and-settle.js';
 import { waitForHealth } from './utils/wait-for-health.js';
 
 let api;
@@ -120,6 +120,40 @@ test('pay-to-action end-to-end with LNbits payer (mutinynet if configured)', asy
   // Balance should decrease by at least the invoice amount (allowing fee variance).
   const afterMsat = await lnbitsBalance({ url: payerUrl, key: payerKey });
   expect(afterMsat).toBeLessThan(beforeMsat - 50 * 1000); // 50 sats slack
+});
+
+test('lnbits balance settles for standalone invoice', async () => {
+  const payerUrl = process.env.LNBITS_URL;
+  const payerKey = process.env.LNBITS_ADMIN_KEY;
+  if (!payerUrl || !payerKey) test.skip(true, 'LNBITS_URL/KEY not set');
+
+  const res = await api.post('/api/lnurlp/alice/invoice?amount=2000');
+  expect(res.ok()).toBeTruthy();
+  const invoice = await res.json();
+  const bolt11 = invoice?.pr;
+  const providerRef = invoice?.id ?? invoice?.provider_ref;
+  expect(bolt11).toBeTruthy();
+
+  const payment = await payInvoiceViaLNbits({ payerUrl, payerKey, bolt11 });
+  expect(payment.status).toBe('paid');
+
+  const status = await waitForPaymentStatus({
+    api,
+    statusUrl: `/api/lnurlp/pay/status/${providerRef ?? ''}`,
+    expect: ['PAID', 'COMPLETED', 'SETTLED'],
+    timeoutMs: 15000
+  });
+  expect(status.status).toBeDefined();
+
+  // Assert wallet balance decreased roughly by invoice amount
+  await settleAssert({
+    api,
+    payerUrl,
+    payerKey,
+    payUrl: `${payerUrl}/api/v1/payments`,
+    amount: 20, // pay a small additional invoice to assert balance drop
+    expectDecreaseMsat: 15_000
+  });
 });
 
 test('rejects invalid payload', async () => {
