@@ -17,8 +17,8 @@ workflows:
   db-seed-pg:
     description: Seed demo tenant/user into Postgres
     steps:
-      - run: DATABASE_URL=postgres://satoshis:satoshis@localhost:55432/satoshis pnpm --filter api prisma migrate deploy --schema prisma/pg/schema.prisma
-      - run: DATABASE_URL=postgres://satoshis:satoshis@localhost:55432/satoshis pnpm --filter api seed
+      - run: DATABASE_URL=postgres://nostrstack:nostrstack@localhost:5432/nostrstack pnpm --filter api prisma migrate deploy --schema prisma/pg/schema.prisma
+      - run: DATABASE_URL=postgres://nostrstack:nostrstack@localhost:5432/nostrstack pnpm --filter api seed
   api-e2e:
     description: Run Playwright LNURL e2e (requires API running at localhost:3301 and PLAYWRIGHT_API_READY=1)
     steps:

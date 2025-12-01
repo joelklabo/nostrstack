@@ -1,5 +1,5 @@
 module.exports = {
   root: true,
-  extends: ['@satoshis/config/eslint'],
+  extends: [require.resolve('@nostrstack/config/eslint')],
   ignorePatterns: ['node_modules', 'dist', 'build']
 };

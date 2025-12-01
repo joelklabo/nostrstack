@@ -15,6 +15,9 @@ importers:
       '@beads/bd':
         specifier: ^0.26.0
         version: 0.26.0
+      '@nostrstack/config':
+        specifier: workspace:^
+        version: link:packages/config
       prettier:
         specifier: 3.2.5
         version: 3.2.5
@@ -336,6 +339,7 @@ packages:
   '@beads/bd@0.26.0':
     resolution: {integrity: sha512-Vpp+T+4MpoVjIoRhEty+JTRBwMuBBi1atSNDkkadOmIgasdy0bgk9tfm5B5sMv8cypy4KQNLAHKlS4Cpc+1EBA==}
     engines: {node: '>=14.0.0'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 

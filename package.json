@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@beads/bd": "^0.26.0",
+    "@nostrstack/config": "workspace:^",
     "prettier": "3.2.5"
   }
 }

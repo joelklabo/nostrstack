@@ -15,7 +15,11 @@ module.exports = {
     'simple-import-sort/imports': 'warn',
     'simple-import-sort/exports': 'warn',
     'import/order': 'off',
-    'import/no-unresolved': 'off'
+    'import/no-unresolved': 'off',
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/ban-types': 'warn'
   },
   ignorePatterns: ['dist', 'build', 'node_modules']
 };
