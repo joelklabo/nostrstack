@@ -1,0 +1,10 @@
+{
+  "name": "@nostrstack/injector",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "nostrstack-inject": "bin/nostrstack-inject.js"
+  },
+  "type": "module",
+  "main": "bin/nostrstack-inject.js"
+}

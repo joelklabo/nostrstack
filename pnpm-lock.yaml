@@ -217,6 +217,8 @@ importers:
         specifier: 2.1.4
         version: 2.1.4(@types/node@22.7.5)(jsdom@24.1.0)
 
+  packages/injector: {}
+
   packages/sdk:
     dependencies:
       openapi-typescript:
