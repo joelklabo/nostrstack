@@ -6,8 +6,6 @@ on:
       image_tag:
         description: "Image tag (default: commit SHA)"
         required: false
-  push:
-    branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
@@ -77,8 +75,6 @@ jobs:
         with:
           context: .
           file: apps/api/Dockerfile
-          push: true
-          tags: ${{ steps.vars.outputs.IMAGE }}
 
       - name: Azure login
         uses: azure/login@v2
