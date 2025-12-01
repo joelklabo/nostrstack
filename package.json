@@ -10,7 +10,15 @@
     "format": "prettier --write .",
     "dev": "pnpm --filter api dev",
     "e2e": "pnpm --filter api test:e2e",
-    "demo": "concurrently -k -n api,gallery \"pnpm --filter api dev\" \"pnpm --filter gallery dev -- --host --port 4173\""
+    "demo": "concurrently -k -n api,gallery \"pnpm --filter api dev\" \"pnpm --filter gallery dev -- --host --port 4173\"",
+    "build": "pnpm -r build",
+    "check": "pnpm lint && pnpm test && pnpm typecheck",
+    "deps": "pnpm install",
+    "deps:prod": "NODE_ENV=production pnpm install --frozen-lockfile --prod",
+    "dev:api": "pnpm --filter api dev",
+    "dev:gallery": "pnpm --filter gallery dev -- --host --port 4173",
+    "deploy:staging": "gh workflow run azure-deploy-staging.yml --repo joelklabo/nostrstack",
+    "deploy:prod": "gh workflow run azure-deploy.yml --repo joelklabo/nostrstack"
   },
   "pnpm": {
     "overrides": {
