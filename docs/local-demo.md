@@ -48,6 +48,13 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
    ./scripts/regtest-lndbits.sh down
    ```
 
+### Add spendable sats to LNbits (regtest)
+By default the merchant node has only inbound liquidity. To give LNbits outbound sats for sending/paying invoices:
+```sh
+./scripts/regtest-fund.sh
+```
+This mines coins to `lnd-merchant` and opens a 500k sat channel to the payer, leaving ~0.5M sats local on the merchant side for spending.
+
 Notes:
 - Ports: LNbits `15001`, merchant LND REST `18080`, payer LND REST `19080`.
 - The script is idempotent; rerun `up` to recreate wallets/channel if volumes were removed.
@@ -106,3 +113,7 @@ With the regtest stack and API running locally, verify end-to-end payment:
 pnpm smoke:regtest-demo
 ```
 This creates a real BOLT11 via `/api/pay`, pays it with the bundled `lnd-payer`, and checks status=PAID.
+
+### Nostr comments in the demo
+- For quick mock comments (no relays, no signer), start gallery with `VITE_NOSTRSTACK_RELAYS=mock`.
+- For real relays, set `VITE_NOSTRSTACK_RELAYS=wss://relay.damus.io,wss://relay.snort.social` (or your relays) and use a NIP-07 signer (browser extension).
