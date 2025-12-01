@@ -14,6 +14,13 @@ cd "$ROOT_DIR"
 : "${VITE_ENABLE_REAL_PAYMENTS:=true}"
 
 if [[ -z "$LN_BITS_API_KEY" ]]; then
+  # Try to source from existing api env file if present
+  if [[ -f "apps/api/.env.local" ]]; then
+    LN_BITS_API_KEY=$(grep -E "^LN_BITS_API_KEY=" apps/api/.env.local | cut -d= -f2- || true)
+  fi
+fi
+
+if [[ -z "$LN_BITS_API_KEY" ]]; then
   echo "LN_BITS_API_KEY is required (admin key from LNbits)." >&2
   exit 1
 fi
