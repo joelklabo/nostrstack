@@ -8,24 +8,24 @@ generator client {
 }
 
 model Tenant {
-  id          String   @id @default(cuid())
-  domain      String   @unique
+  id          String    @id @default(cuid())
+  domain      String    @unique
   displayName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   users       User[]
   payments    Payment[]
 }
 
 model User {
-  id        String   @id @default(cuid())
-  tenantId  String
-  pubkey    String
+  id               String    @id @default(cuid())
+  tenantId         String
+  pubkey           String
   lightningAddress String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  payments  Payment[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  tenant           Tenant    @relation(fields: [tenantId], references: [id])
+  payments         Payment[]
 
   @@unique([tenantId, pubkey])
   @@unique([tenantId, lightningAddress])

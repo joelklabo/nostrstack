@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect,test } from '@playwright/test';
 
 const amount = 100; // sats for smoke
 
