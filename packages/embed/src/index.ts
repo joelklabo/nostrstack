@@ -59,7 +59,7 @@ function isMock(opts: { baseURL?: string; host?: string }) {
   return opts.baseURL === 'mock' || opts.host === 'mock';
 }
 
-const ATTR_PREFIXES = ['nostrstack', 'satoshis'];
+const ATTR_PREFIXES = ['nostrstack'];
 
 function getBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments') {
   for (const prefix of ATTR_PREFIXES) {
@@ -353,7 +353,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 }
 
 export function autoMount() {
-  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-tip],[data-satoshis-tip]'));
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-tip]'));
   nodes.forEach((el) => {
     const username = getBrandAttr(el, 'Tip');
     if (!username) return;
@@ -363,7 +363,7 @@ export function autoMount() {
     renderTipButton(el, { username, amountMsat: amount, baseURL, host, text: el.dataset.label });
   });
 
-  const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-pay],[data-satoshis-pay]'));
+  const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-pay]'));
   payNodes.forEach((el) => {
     const username = getBrandAttr(el, 'Pay');
     if (!username) return;
@@ -371,7 +371,7 @@ export function autoMount() {
     renderPayToAction(el, { username, amountMsat: amount, text: el.dataset.label, baseURL: el.dataset.baseUrl, host: el.dataset.host });
   });
 
-  const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-comments],[data-satoshis-comments]'));
+  const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-comments]'));
   commentNodes.forEach((el) => {
     const thread = getBrandAttr(el, 'Comments') || undefined;
     const relays = el.dataset.relays ? el.dataset.relays.split(',').map((r) => r.trim()) : undefined;
