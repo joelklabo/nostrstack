@@ -1,5 +1,9 @@
 import { NostrstackClient } from '@nostrstack/sdk';
 import { renderInvoicePopover } from './invoicePopover.js';
+export { designTokens } from './tokens/designTokens.js';
+export { renderRelayBadge, updateRelayBadge, relayBadgeStyles } from './relayBadge.js';
+export { renderInvoicePopover, invoicePopoverStyles } from './invoicePopover.js';
+export { renderNostrUserCard, nostrUserCardStyles } from './nostrUserCard.js';
 
 type TipWidgetOptions = {
   username: string;
