@@ -31,6 +31,11 @@ const schema = z.object({
   ADMIN_JWT_SECRET: z.string().optional(),
   NOSTR_SECRET_KEY: z.string().optional(),
   NOSTR_RELAYS: z.string().optional(), // comma-separated
+  NOSTR_EMBED_CDN: z.string().url().default('https://unpkg.com/@nostrstack/embed/dist/index.global.js'),
+  NOSTR_THEME_ACCENT: z.string().optional(),
+  NOSTR_THEME_TEXT: z.string().optional(),
+  NOSTR_THEME_SURFACE: z.string().optional(),
+  NOSTR_THEME_BORDER: z.string().optional(),
   OTEL_ENABLED: z.coerce.boolean().default(false),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
