@@ -1,4 +1,5 @@
 import { NostrstackClient } from '@nostrstack/sdk';
+import { renderInvoicePopover } from './invoicePopover.js';
 
 type TipWidgetOptions = {
   username: string;
@@ -99,9 +100,7 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
       if (opts.onInvoice) {
         await opts.onInvoice(invoice.pr);
       } else {
-        const pre = document.createElement('pre');
-        pre.textContent = invoice.pr;
-        container.appendChild(pre);
+        renderInvoicePopover(invoice.pr);
       }
     } catch (e: any) {
       console.error('tip error', e);
