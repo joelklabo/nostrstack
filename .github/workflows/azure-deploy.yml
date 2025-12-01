@@ -11,7 +11,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-api
   AZURE_RG: nostrstack-rg
-  AZURE_LOCATION: eastus
+  AZURE_LOCATION: westus3
 
 jobs:
   deploy:

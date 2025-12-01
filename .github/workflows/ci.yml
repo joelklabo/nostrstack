@@ -76,12 +76,12 @@ jobs:
         run: pnpm test:e2e:pay
 
       - name: Mutinynet smoke (staging LNbits)
-        if: ${{ secrets.LNBITS_STG_ADMIN_KEY != "" }}
         env:
           LNBITS_URL: https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io
           LNBITS_ADMIN_KEY: ${{ secrets.LNBITS_STG_ADMIN_KEY }}
           AMOUNT: 100
         run: |
+          if [ -z "${LNBITS_ADMIN_KEY}" ]; then echo "Skipping LNbits smoke (no admin key)"; exit 0; fi
           ./scripts/lnbits-smoke.sh "${AMOUNT:-100}"
       - name: Lint & test (SDK, embed, gallery)
         run: pnpm -r --filter "./packages/..." --filter "./apps/gallery" test

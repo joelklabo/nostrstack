@@ -7,7 +7,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-api
   AZURE_RG: nostrstack-stg-rg
-  AZURE_LOCATION: eastus
+  AZURE_LOCATION: westus3
   APP_NAME: nostrstack-api-stg
   ENV_NAME: nostrstack-env-stg
 
