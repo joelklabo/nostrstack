@@ -115,5 +115,5 @@ pnpm smoke:regtest-demo
 This creates a real BOLT11 via `/api/pay`, pays it with the bundled `lnd-payer`, and checks status=PAID.
 
 ### Nostr comments in the demo
-- For quick mock comments (no relays, no signer), start gallery with `VITE_NOSTRSTACK_RELAYS=mock`.
-- For real relays, set `VITE_NOSTRSTACK_RELAYS=wss://relay.damus.io,wss://relay.snort.social` (or your relays) and use a NIP-07 signer (browser extension).
+- For quick mock comments (no relays, no signer), set relays to `mock` in the Config box (default).
+- For real relays, set `VITE_NOSTRSTACK_RELAYS` (or use the Config input) to a single relay like `wss://relay.damus.io` and enable a NIP-07 signer. See `docs/nip07-setup.md` for signer steps.
