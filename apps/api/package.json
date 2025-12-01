@@ -13,6 +13,7 @@
     "test:e2e:pay": "playwright test tests/pay-to-act.spec.ts",
     "test:e2e:nostr": "playwright test tests/nostr-auth.spec.ts",
     "test:mutinynet": "node --loader tsx scripts/mutinynet-smoke.ts",
+    "test:lnbits-prod": "node scripts/lnbits-prod-smoke.js",
     "e2e:serve": "ADMIN_API_KEY=${ADMIN_API_KEY:-test-admin} OP_NODE_API_KEY=${OP_NODE_API_KEY:-test-key} OP_NODE_WEBHOOK_SECRET=${OP_NODE_WEBHOOK_SECRET:-whsec_test} DATABASE_URL=${DATABASE_URL:-file:./test.db} tsx scripts/e2e-server.ts",
     "prisma:generate": "sh scripts/prisma-generate.sh",
     "prisma:generate:pg": "sh scripts/prisma-generate-pg.sh",
