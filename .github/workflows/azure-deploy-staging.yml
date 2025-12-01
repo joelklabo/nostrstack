@@ -6,6 +6,10 @@ on:
       image_tag:
         description: "Image tag (default: commit SHA)"
         required: false
+  push:
+    paths:
+      - '.github/workflows/azure-deploy-staging.yml'
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-api
@@ -15,9 +19,14 @@ env:
   ENV_NAME: nostrstack-env-stg
 
 jobs:
-  deploy:
+  meta:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Azure staging deploy workflow is manual-only; push run is a no-op."
 
-    if: ${{ github.event_name == "workflow_dispatch" }}
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -55,7 +64,10 @@ jobs:
 
       - name: Set image tag
         id: vars
-        run: echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag || github.sha }}" >> $GITHUB_OUTPUT
+        run: |
+          tag="${{ github.event.inputs.image_tag }}"
+          if [ -z "$tag" ]; then tag="${GITHUB_SHA}"; fi
+          echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}" >> $GITHUB_OUTPUT
 
       - name: Login to GHCR
         uses: docker/login-action@v3
