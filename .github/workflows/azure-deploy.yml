@@ -28,10 +28,10 @@ jobs:
           POSTGRES_USER: satoshis
           POSTGRES_PASSWORD: satoshis
           POSTGRES_DB: satoshis
-        options: >-
-          --health-cmd "pg_isready -U satoshis" \
-          --health-interval 10s \
-          --health-timeout 5s \
+        options: >
+          --health-cmd "pg_isready -U satoshis"
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
     permissions:
       contents: read

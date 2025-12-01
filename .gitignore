@@ -14,3 +14,7 @@ yarn-error.log*
 prisma/migrations
 apps/api/prisma/*.db
 apps/api/prisma/*.db-journal
+
+!.env.example
+!apps/api/.env.payer.example
+!apps/gallery/.env.example
