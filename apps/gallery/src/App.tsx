@@ -1,4 +1,5 @@
-import { autoMount, mountCommentWidget,mountPayToAction, mountTipButton } from '@nostrstack/embed';
+import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
+import { WalletPanel } from './WalletPanel';
 import { useEffect, useMemo, useState } from 'react';
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
@@ -10,6 +11,8 @@ const relaysEnv = relaysEnvRaw
   : [];
 const isMock = demoHost === 'mock' || apiBase === 'mock';
 const commentsRelays = relaysEnv.length ? relaysEnv : ['mock'];
+const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
+const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -65,6 +68,7 @@ function App() {
     <main style={{ padding: '2rem', fontFamily: 'Inter, system-ui, sans-serif', background: themeStyles.background, color: themeStyles.color, minHeight: '100vh' }}>
       <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
       <p>Play with the widgets below. Host is assumed to be {demoHost} for local dev.</p>
+      <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={lnbitsAdminKey} />
       {!enableReal && (
         <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
           Real payments are disabled. Set VITE_ENABLE_REAL_PAYMENTS=true and provide VITE_API_BASE_URL to request real invoices.
