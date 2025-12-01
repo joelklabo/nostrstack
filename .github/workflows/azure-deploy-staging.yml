@@ -2,6 +2,13 @@ name: Azure Deploy Staging
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag (default: commit SHA)"
+        required: false
+  push:
+    paths:
+      - '.github/workflows/azure-deploy-staging.yml'
 
 env:
   REGISTRY: ghcr.io
@@ -13,7 +20,7 @@ env:
 
 jobs:
   deploy:
-    if: ${{ secrets.AZURE_CREDENTIALS != "" }}
+    if: ${{ github.event_name == "workflow_dispatch" && secrets.AZURE_CREDENTIALS != "" }}
     runs-on: ubuntu-latest
     services:
       postgres:
