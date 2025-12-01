@@ -245,13 +245,17 @@ async function connectRelays(urls: string[]) {
 
 export async function renderCommentWidget(container: HTMLElement, opts: CommentWidgetOptions = {}) {
   const isMockMode = opts.relays?.includes('mock');
-  const relays = isMockMode ? [] : await connectRelays(opts.relays ?? DEFAULT_RELAYS);
+  let relays = isMockMode ? [] : await connectRelays(opts.relays ?? DEFAULT_RELAYS);
+  let mockMode = isMockMode;
   const mockEvents: NostrEvent[] = [];
   if (!relays.length && !isMockMode) {
-    const msg = document.createElement('div');
-    msg.textContent = 'No relays reachable for comments.';
-    container.appendChild(msg);
-    return container;
+    // Fall back to mock mode so the UI still works without relays/signers.
+    const note = document.createElement('div');
+    note.textContent = 'No relays reachable; using mock comments.';
+    note.style.marginBottom = '0.5rem';
+    container.appendChild(note);
+    relays = [];
+    mockMode = true;
   }
   const threadId = opts.threadId ?? (location?.href ?? 'thread');
 
@@ -286,7 +290,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     list.appendChild(row);
   };
 
-  if (!isMockMode) {
+  if (!mockMode) {
     const filters = [{ kinds: [1], '#t': [threadId] }];
     relays.forEach((relay: any) => {
       const sub = relay.sub(filters);
@@ -299,7 +303,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!window.nostr && !isMockMode) {
+    if (!window.nostr && !mockMode) {
       alert('Nostr signer (NIP-07) required to post');
       return;
     }
@@ -307,7 +311,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     if (!content) return;
     submit.disabled = true;
     try {
-      if (isMockMode) {
+      if (mockMode) {
         const mockEvent: NostrEvent = {
           kind: 1,
           created_at: Math.floor(Date.now() / 1000),
