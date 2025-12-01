@@ -19,6 +19,7 @@ test.beforeAll(async ({ playwright }) => {
   process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';
   process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';
   process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';
+  process.env.LIGHTNING_PROVIDER = process.env.LIGHTNING_PROVIDER ?? 'mock';
   const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
   process.env.DATABASE_URL = dbPath;
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
@@ -119,6 +120,52 @@ test('pay-to-action end-to-end with LNbits payer (mutinynet if configured)', asy
   // Balance should decrease by at least the invoice amount (allowing fee variance).
   const afterMsat = await lnbitsBalance({ url: payerUrl, key: payerKey });
   expect(afterMsat).toBeLessThan(beforeMsat - 50 * 1000); // 50 sats slack
+});
+
+test('rejects invalid payload', async () => {
+  const res = await api.post('/api/pay', {
+    data: {
+      domain: DOMAIN,
+      action: 'unlock'
+      // missing amount
+    }
+  });
+  expect(res.status()).toBe(400);
+});
+
+test('rejects amount below minimum', async () => {
+  const res = await api.post('/api/pay', {
+    data: {
+      domain: DOMAIN,
+      action: 'unlock',
+      amount: 0
+    }
+  });
+  expect(res.status()).toBe(400);
+});
+
+test('returns 404 for unknown payment status id', async () => {
+  const res = await api.get('/api/lnurlp/pay/status/does-not-exist');
+  expect(res.status()).toBe(404);
+});
+
+test('mock provider marks paid via status polling', async () => {
+  const res = await api.post('/api/pay', {
+    data: {
+      domain: DOMAIN,
+      action: 'unlock',
+      amount: 150,
+      metadata: { path: '/demo/mock' }
+    }
+  });
+  expect(res.ok()).toBeTruthy();
+  const body = await res.json();
+  const providerRef = body.provider_ref;
+
+  const statusRes = await api.get(`/api/lnurlp/pay/status/${providerRef}`);
+  expect(statusRes.ok()).toBeTruthy();
+  const status = await statusRes.json();
+  expect(status.status).toBeDefined();
 });
 
 test.afterAll(async () => {
