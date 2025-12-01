@@ -1,0 +1,122 @@
+services:
+  bitcoind:
+    platform: linux/amd64
+    image: ruimarinho/bitcoin-core:24-alpine
+    command:
+      - -regtest
+      - -txindex
+      - -fallbackfee=0.0002
+      - -rpcallowip=0.0.0.0/0
+      - -rpcbind=0.0.0.0
+      - -rpcuser=bitcoin
+      - -rpcpassword=bitcoin
+      - -zmqpubrawblock=tcp://0.0.0.0:28332
+      - -zmqpubrawtx=tcp://0.0.0.0:28333
+    ports:
+      - "18443:18443"  # RPC
+    expose:
+      - 28332
+      - 28333
+      - 18443
+      - 18444
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-regtest", "-rpcuser=bitcoin", "-rpcpassword=bitcoin", "getblockchaininfo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - bitcoin-data:/home/bitcoin/.bitcoin
+
+  lnd-merchant:
+    image: lightninglabs/lnd:v0.18.4-beta
+    restart: unless-stopped
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+    command:
+      - --lnddir=/data
+      - --bitcoin.active
+      - --bitcoin.regtest
+      - --bitcoin.node=bitcoind
+      - --bitcoind.rpchost=bitcoind
+      - --bitcoind.rpcuser=bitcoin
+      - --bitcoind.rpcpass=bitcoin
+      - --bitcoind.zmqpubrawblock=tcp://bitcoind:28332
+      - --bitcoind.zmqpubrawtx=tcp://bitcoind:28333
+      - --rpclisten=0.0.0.0:10009
+      - --restlisten=0.0.0.0:8080
+      - --listen=0.0.0.0:9735
+      - --protocol.wumbo-channels
+      - --tlsautorefresh
+      - --tlsextradomain=lnd-merchant
+      - --tlsextraip=0.0.0.0
+    ports:
+      - "18009:10009"
+      - "18080:8080"
+    expose:
+      - 8080
+      - 9735
+      - 10009
+    volumes:
+      - lnd-merchant-data:/data
+      - bitcoin-data:/root/.bitcoin:ro
+
+  lnd-payer:
+    image: lightninglabs/lnd:v0.18.4-beta
+    restart: unless-stopped
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+    command:
+      - --lnddir=/data
+      - --bitcoin.active
+      - --bitcoin.regtest
+      - --bitcoin.node=bitcoind
+      - --bitcoind.rpchost=bitcoind
+      - --bitcoind.rpcuser=bitcoin
+      - --bitcoind.rpcpass=bitcoin
+      - --bitcoind.zmqpubrawblock=tcp://bitcoind:28332
+      - --bitcoind.zmqpubrawtx=tcp://bitcoind:28333
+      - --rpclisten=0.0.0.0:10010
+      - --restlisten=0.0.0.0:8081
+      - --listen=0.0.0.0:9736
+      - --protocol.wumbo-channels
+      - --tlsautorefresh
+      - --tlsextradomain=lnd-payer
+      - --tlsextraip=0.0.0.0
+    ports:
+      - "19009:10010"
+      - "19080:8081"
+    expose:
+      - 8081
+      - 9736
+      - 10010
+    volumes:
+      - lnd-payer-data:/data
+      - bitcoin-data:/root/.bitcoin:ro
+
+  lnbits:
+    image: lnbits/lnbits:latest
+    depends_on:
+      lnd-merchant:
+        condition: service_started
+    environment:
+      LNBITS_DATA_FOLDER: /data
+      LNBITS_BACKEND_WALLET_CLASS: LndRestWallet
+      LNBITS_SITE_TITLE: nostrstack LNbits (regtest)
+      LNBITS_ADMIN_UI: true
+      LND_REST_ENDPOINT: https://lnd-merchant:8080/
+      LND_REST_CERT: /lnd-merchant/tls.cert
+      LND_REST_MACAROON: /lnd-merchant/data/chain/bitcoin/regtest/admin.macaroon
+      LNBITS_FORCE_https: "false"
+    ports:
+      - "15001:5000"
+    volumes:
+      - lnbits-data:/data
+      - lnd-merchant-data:/lnd-merchant:ro
+
+volumes:
+  bitcoin-data:
+  lnd-merchant-data:
+  lnd-payer-data:
+  lnbits-data:

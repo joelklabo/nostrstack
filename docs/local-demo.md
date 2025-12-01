@@ -1,21 +1,66 @@
-# Local demo with real invoices (LNbits)
+# Local demo: LNbits backends
 
-Goal: run nostrstack API + gallery locally and generate real Lightning invoices via LNbits (dummy backend is fine for testing).
+Two ways to run the demo locally:
+- **Regtest (real settlement)** – bitcoind + two LND nodes + LNbits wired to the merchant node.
+- **Dummy (no settlement)** – LNbits mock backend that only issues invoices.
 
-## Prereqs
-- Docker running (Docker Desktop).
-- pnpm deps installed (`pnpm install`).
+## A) Regtest (real payments)
 
-## Steps
-1) **Start LNbits (dummy funding)**
+Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
+
+1) **Start the stack + create channel + superuser**
+   ```sh
+   ./scripts/regtest-lndbits.sh up
+   ```
+   The script prints an admin key and URLs, e.g.:
+   ```
+   LNbits UI:        http://localhost:15001
+   Merchant LND REST: https://localhost:18080 (self-signed)
+   Admin key:         <ADMINKY>
+   ```
+2) **Run nostrstack API against regtest LNbits**
+   ```sh
+   cd apps/api
+   LN_BITS_URL=http://localhost:15001 \
+   LN_BITS_API_KEY=<ADMINKY> \
+   LIGHTNING_PROVIDER=lnbits \
+   PUBLIC_ORIGIN=http://localhost:3001 \
+   pnpm dev
+   ```
+3) **Run the gallery demo**
+   ```sh
+   cd apps/gallery
+   VITE_API_BASE_URL=http://localhost:3001 \
+   VITE_NOSTRSTACK_HOST=localhost:3001 \
+   pnpm dev -- --host --port 4173
+   ```
+   Open http://127.0.0.1:4173 and try tips/paywall/comments; invoices settle over the local regtest channel.
+4) **(Optional) Pay an invoice from the payer node**
+   ```sh
+   docker compose -f deploy/regtest/docker-compose.yml exec \
+     lnd-payer lncli --network=regtest --lnddir=/data \
+     --rpcserver=lnd-payer:10010 \
+     --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon \
+     --tlscertpath=/data/tls.cert payinvoice <BOLT11>
+   ```
+5) **Stop everything**
+   ```sh
+   ./scripts/regtest-lndbits.sh down
+   ```
+
+Notes:
+- Ports: LNbits `15001`, merchant LND REST `18080`, payer LND REST `19080`.
+- The script is idempotent; rerun `up` to recreate wallets/channel if volumes were removed.
+
+## B) Dummy backend (invoice-only)
+
+1) **Start LNbits (mock funding)**
    ```sh
    docker compose -f deploy/lnbits/docker-compose.yml up -d
    # ln service listens on http://localhost:5000
    ```
-2) **Create wallet + admin key**
-   - Open http://localhost:5000
-   - Create a new wallet; open the wallet menu → API Info → copy the *Admin API Key*.
-3) **Run nostrstack API pointed at LNbits**
+2) **Create a wallet + copy the Admin key** from http://localhost:5000 (Wallet → API Info).
+3) **Run API**
    ```sh
    cd apps/api
    LN_BITS_URL=http://localhost:5000 \
@@ -24,21 +69,10 @@ Goal: run nostrstack API + gallery locally and generate real Lightning invoices 
    PUBLIC_ORIGIN=http://localhost:3001 \
    pnpm dev
    ```
-   API runs at http://localhost:3001.
-4) **Run gallery demo against this API**
-   ```sh
-   cd apps/gallery
-   VITE_API_BASE_URL=http://localhost:3001 \
-   VITE_NOSTRSTACK_HOST=localhost:3001 \
-   pnpm dev -- --host --port 4173
-   ```
-   Open http://127.0.0.1:4173 and use the tip/pay widgets. Invoices come from your local LNbits instance.
-5) **Tear down**
+4) **Run gallery** (same as above, point to API).
+5) **Stop**
    ```sh
    docker compose -f deploy/lnbits/docker-compose.yml down -v
    ```
 
-Notes:
-- Dummy funding source won’t forward payments to real Lightning; invoices still generate for UI/testing.
-- For mutinynet, replace LN_BITS_URL/API_KEY with your staging instance/keys and set `LIGHTNING_PROVIDER=lnbits`.
-- Pay-to-act E2E with real settlement: export `LNBITS_URL` and `LNBITS_ADMIN_KEY` and run `pnpm --filter api test:e2e:pay` (payer).
+Mutinynet/mainnet: swap `LN_BITS_URL/API_KEY` to your staging/prod LNbits and keep `LIGHTNING_PROVIDER=lnbits`.

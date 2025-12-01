@@ -1,0 +1,4 @@
+services:
+  lnbits:
+    ports:
+      - "15000:5000"
