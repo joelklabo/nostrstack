@@ -76,6 +76,7 @@ jobs:
         run: pnpm test:e2e:pay
 
       - name: Mutinynet smoke (staging LNbits)
+        if: ${{ secrets.LNBITS_STG_ADMIN_KEY != "" }}
         env:
           LNBITS_URL: https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io
           LNBITS_ADMIN_KEY: ${{ secrets.LNBITS_STG_ADMIN_KEY }}
