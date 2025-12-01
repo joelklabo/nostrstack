@@ -9,8 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      NODE_OPTIONS: "--no-experimental-strip-types"
     services:
       postgres:
         image: postgres:15
