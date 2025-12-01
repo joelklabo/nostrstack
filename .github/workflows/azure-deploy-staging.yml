@@ -6,10 +6,6 @@ on:
       image_tag:
         description: "Image tag (default: commit SHA)"
         required: false
-  push:
-    paths:
-      - '.github/workflows/azure-deploy-staging.yml'
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-api
@@ -19,15 +15,9 @@ env:
   ENV_NAME: nostrstack-env-stg
 
 jobs:
-  noop:
-    if: ${{ github.event_name != "workflow_dispatch" }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Skipping deploy (manual-only workflow)"
-
   deploy:
 
-    if: ${{ github.event_name == "workflow_dispatch" && secrets.AZURE_CREDENTIALS != "" }}
+    if: ${{ github.event_name == "workflow_dispatch" }}
     runs-on: ubuntu-latest
     services:
       postgres:
