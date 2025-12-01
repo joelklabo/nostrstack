@@ -249,11 +249,13 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   let mockMode = isMockMode;
   const mockEvents: NostrEvent[] = [];
   if (!relays.length && !isMockMode) {
-    // Fall back to mock mode so the UI still works without relays/signers.
-    const note = document.createElement('div');
-    note.textContent = 'No relays reachable; using mock comments.';
-    note.style.marginBottom = '0.5rem';
-    container.appendChild(note);
+    // If caller explicitly asked for relays and none reachable, show note; otherwise stay quiet.
+    if (opts.relays && opts.relays.length) {
+      const note = document.createElement('div');
+      note.textContent = 'No relays reachable; using mock comments.';
+      note.style.marginBottom = '0.5rem';
+      container.appendChild(note);
+    }
     relays = [];
     mockMode = true;
   }

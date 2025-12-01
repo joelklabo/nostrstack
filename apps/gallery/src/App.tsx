@@ -6,13 +6,10 @@ const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
-const relaysEnv = relaysEnvRaw
+const relaysEnvDefault = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r) => r.trim()).filter(Boolean)
-  : [];
+  : ['mock'];
 const isMock = demoHost === 'mock' || apiBase === 'mock';
-const commentsRelays = relaysEnv.length
-  ? relaysEnv
-  : ['wss://relay.damus.io', 'wss://relay.snort.social'];
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 
@@ -29,6 +26,7 @@ function App() {
   const [username, setUsername] = useState('alice');
   const [amount, setAmount] = useState(5);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [relaysInput, setRelaysInput] = useState(relaysEnvDefault.join(','));
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
 
@@ -93,6 +91,18 @@ function App() {
             <option value="dark">Dark</option>
           </select>
         </label>
+        <label style={{ marginLeft: '1rem' }}>
+          Relays (comments):&nbsp;
+          <input
+            style={{ width: '18rem' }}
+            value={relaysCsv}
+            onChange={(e) => setRelaysCsv(e.target.value)}
+            placeholder="mock or wss://relay1,wss://relay2"
+          />
+        </label>
+        <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
+          Using relays: {relaysCsv || relaysEnvDefault.join(',') || 'mock'} {relaysCsv.includes('mock') ? '(mock mode)' : ''}
+        </div>
       </Card>
 
       <Card title="Tip button">
@@ -151,7 +161,7 @@ function App() {
   );
 }
 
-function useMountWidgets(username: string, amount: number) {
+function useMountWidgets(username: string, amount: number, relaysCsv: string) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
     const payHost = document.getElementById('pay-container');
@@ -175,24 +185,45 @@ function useMountWidgets(username: string, amount: number) {
       verifyPayment: isMock ? async () => true : undefined,
       onUnlock: () => unlockHost && (unlockHost.textContent = 'Unlocked!')
     });
+    const relays = relaysCsv
+      ? relaysCsv.split(',').map((r) => r.trim()).filter(Boolean)
+      : relaysEnvDefault;
+
     mountCommentWidget(commentsHost, {
       threadId: 'demo-thread',
-      relays: commentsRelays
+      relays: relays
     });
-  }, [username, amount]);
+  }, [username, amount, relaysCsv]);
 }
 
 function WrappedApp() {
   const [username, setUsername] = useState('alice');
   const [amount, setAmount] = useState(5);
-  useMountWidgets(username, amount);
+  const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
+  useMountWidgets(username, amount, relaysCsv);
 
-  return <AppWithState username={username} amount={amount} setUsername={setUsername} setAmount={setAmount} />;
+  return (
+    <AppWithState
+      username={username}
+      amount={amount}
+      setUsername={setUsername}
+      setAmount={setAmount}
+      relaysCsv={relaysCsv}
+      setRelaysCsv={setRelaysCsv}
+    />
+  );
 }
 
-function AppWithState(props: { username: string; amount: number; setUsername: (v: string) => void; setAmount: (n: number) => void }) {
+function AppWithState(props: {
+  username: string;
+  amount: number;
+  setUsername: (v: string) => void;
+  setAmount: (n: number) => void;
+  relaysCsv: string;
+  setRelaysCsv: (v: string) => void;
+}) {
   // reuse App but with lifted state
-  const { username, amount, setUsername, setAmount } = props;
+  const { username, amount, setUsername, setAmount, relaysCsv, setRelaysCsv } = props;
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mockInvoice, setMockInvoice] = useState<string | null>(null);
   const [locked, setLocked] = useState(true);
