@@ -13,10 +13,17 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'pnpm preview --host --port 4173',
+    command: 'pnpm dev -- --host --port 4173',
     url: 'http://localhost:4173',
     reuseExistingServer: true,
     stdout: 'pipe',
-    stderr: 'pipe'
+    stderr: 'pipe',
+    cwd: './apps/gallery',
+    env: {
+      ...process.env,
+      VITE_NOSTRSTACK_HOST: process.env.VITE_NOSTRSTACK_HOST ?? 'mock',
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL ?? 'mock',
+      VITE_NOSTRSTACK_RELAYS: process.env.VITE_NOSTRSTACK_RELAYS ?? 'mock'
+    }
   }
 });

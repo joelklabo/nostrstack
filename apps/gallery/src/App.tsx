@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { autoMount, mountTipButton, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
 
-const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost:3001';
-const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
+const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
+const relaysEnv = (import.meta.env.VITE_NOSTRSTACK_RELAYS ?? '')
+  .split(',')
+  .map((r) => r.trim())
+  .filter(Boolean);
+const isMock = demoHost === 'mock' || apiBase === 'mock';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -154,14 +159,19 @@ function useMountWidgets(username: string, amount: number) {
       unlockHost.textContent = 'Locked';
     }
 
-    mountTipButton(tipHost, { username, amountSats: amount, host: demoHost });
+    mountTipButton(tipHost, { username, amountSats: amount, host: demoHost, baseURL: apiBase });
     mountPayToAction(payHost, {
       username,
       amountSats: amount,
       host: demoHost,
+      baseURL: apiBase,
+      verifyPayment: isMock ? async () => true : undefined,
       onUnlock: () => unlockHost && (unlockHost.textContent = 'Unlocked!')
     });
-    mountCommentWidget(commentsHost, { threadId: 'demo-thread' });
+    mountCommentWidget(commentsHost, {
+      threadId: 'demo-thread',
+      relays: relaysEnv.length ? relaysEnv : isMock ? ['mock'] : undefined
+    });
   }, [username, amount]);
 }
 

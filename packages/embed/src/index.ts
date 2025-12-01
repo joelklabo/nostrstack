@@ -319,7 +319,11 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
         appendEvent(mockEvent);
         textarea.value = '';
       } else {
-        const pubkey = await window.nostr.getPublicKey();
+        const nostr = window.nostr;
+        if (!nostr?.getPublicKey || !nostr.signEvent) {
+          throw new Error('Nostr signer unavailable');
+        }
+        const pubkey = await nostr.getPublicKey();
         const unsigned: NostrEvent = {
           kind: 1,
           created_at: Math.floor(Date.now() / 1000),
@@ -329,7 +333,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
           id: '',
           sig: ''
         };
-        const signed = await window.nostr.signEvent(unsigned);
+        const signed = await nostr.signEvent(unsigned);
         await Promise.all(relays.map((relay) => relay.publish(signed)));
         appendEvent(signed);
         textarea.value = '';
