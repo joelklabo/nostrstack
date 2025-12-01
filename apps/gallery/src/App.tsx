@@ -8,7 +8,7 @@ const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r) => r.trim()).filter(Boolean)
-  : ['mock'];
+  : ['wss://relay.damus.io'];
 const isMock = demoHost === 'mock' || apiBase === 'mock';
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
@@ -250,6 +250,22 @@ function AppWithState(props: {
       : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' }
   ), [theme]);
 
+  // Persist relays in localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('nostrstack.relays');
+    if (saved) {
+      setRelaysCsv(saved);
+    }
+  }, [setRelaysCsv]);
+
+  useEffect(() => {
+    if (relaysCsv) {
+      localStorage.setItem('nostrstack.relays', relaysCsv);
+    } else {
+      localStorage.removeItem('nostrstack.relays');
+    }
+  }, [relaysCsv]);
+
   useMountWidgets(username, amount);
 
   return (
@@ -315,6 +331,10 @@ function AppWithState(props: {
         </div>
         <div id="comments-container" />
       </Card>
+
+      <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#475569' }}>
+        Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}
+      </div>
 
       <style>{`
         button { cursor: pointer; }
