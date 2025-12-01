@@ -76,3 +76,26 @@ Notes:
    ```
 
 Mutinynet/mainnet: swap `LN_BITS_URL/API_KEY` to your staging/prod LNbits and keep `LIGHTNING_PROVIDER=lnbits`.
+
+### Mutinynet (staging) quickstart
+If you have Azure Key Vault access, grab the staging admin key:
+```sh
+ADMIN_KEY=$(az keyvault secret show --vault-name satoshis-kv-west --name lnbits-api-key --query value -o tsv)
+```
+Then point API/gallery to staging:
+```sh
+cd apps/api
+LN_BITS_URL=https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io \
+LN_BITS_API_KEY=$ADMIN_KEY \
+LIGHTNING_PROVIDER=lnbits \
+PUBLIC_ORIGIN=http://localhost:3001 \
+DATABASE_URL=file:./dev.db \
+pnpm dev
+```
+Gallery:
+```sh
+cd apps/gallery
+VITE_API_BASE_URL=http://localhost:3001 \
+VITE_NOSTRSTACK_HOST=localhost:3001 \
+pnpm dev -- --host --port 4173
+```
