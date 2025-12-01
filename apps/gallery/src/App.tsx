@@ -10,7 +10,9 @@ const relaysEnv = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r) => r.trim()).filter(Boolean)
   : [];
 const isMock = demoHost === 'mock' || apiBase === 'mock';
-const commentsRelays = relaysEnv.length ? relaysEnv : ['mock'];
+const commentsRelays = relaysEnv.length
+  ? relaysEnv
+  : ['wss://relay.damus.io', 'wss://relay.snort.social'];
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 
