@@ -36,7 +36,10 @@ export class NostrstackClient {
     this.base = opts.baseURL ?? 'http://localhost:3001';
     this.apiKey = opts.apiKey;
     this.host = opts.host;
-    this.fetcher = opts.fetch ?? fetch;
+    const f = opts.fetch ?? globalThis.fetch;
+    if (!f) throw new Error('fetch is not available in this environment');
+    // Some browsers (Safari) require fetch to be called with the global this binding.
+    this.fetcher = f.bind ? f.bind(globalThis) : f;
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {

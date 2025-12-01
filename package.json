@@ -11,6 +11,7 @@
     "dev": "pnpm --filter api dev",
     "e2e": "pnpm --filter api test:e2e",
     "demo": "concurrently -k -n api,gallery \"pnpm --filter api dev\" \"pnpm --filter gallery dev -- --host --port 4173\"",
+    "smoke:regtest-demo": "pnpm dlx tsx apps/api/scripts/regtest-demo-smoke.ts",
     "build": "pnpm -r build",
     "check": "pnpm lint && pnpm test && pnpm typecheck",
     "deps": "pnpm install",

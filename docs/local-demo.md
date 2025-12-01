@@ -99,3 +99,10 @@ VITE_API_BASE_URL=http://localhost:3001 \
 VITE_NOSTRSTACK_HOST=localhost:3001 \
 pnpm dev -- --host --port 4173
 ```
+
+### Regtest smoke (CLI)
+With the regtest stack and API running locally, verify end-to-end payment:
+```sh
+pnpm smoke:regtest-demo
+```
+This creates a real BOLT11 via `/api/pay`, pays it with the bundled `lnd-payer`, and checks status=PAID.
