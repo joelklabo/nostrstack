@@ -3,7 +3,8 @@ import { execSync } from 'node:child_process';
 
 const shouldRun = process.env.REGTEST_SMOKE === 'true';
 const apiBase = process.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-const relays = process.env.VITE_NOSTRSTACK_RELAYS ?? 'mock';
+const relaysCsv = process.env.VITE_NOSTRSTACK_RELAYS ?? 'mock';
+const relays = relaysCsv.split(',').map((r) => r.trim()).filter(Boolean);
 
 const payInvoice = (bolt11: string) => {
   execSync(
@@ -20,8 +21,15 @@ test.describe('regtest demo (real payments + comments)', () => {
 
   test('comments, mock tip, pay unlock, real invoice + pay', async ({ page }) => {
     await page.goto('/');
+    // Set relays if provided (so we exercise the UI selector and avoid mock fallback note)
+    if (relaysCsv) {
+      const relayInput = page.locator('input[placeholder="mock or wss://relay1,wss://relay2"]').first();
+      if (await relayInput.count()) {
+        await relayInput.fill(relaysCsv);
+      }
+    }
 
-    // Comments (mock relays by default)
+    // Comments (relays from selector)
     const commentBox = page.locator('#comments-container textarea').first();
     await commentBox.waitFor({ timeout: 5000 });
     await commentBox.fill('hello from e2e');
