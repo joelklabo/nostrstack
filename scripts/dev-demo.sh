@@ -4,6 +4,20 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 # Defaults for demo
+# Load local API env if present (provides LN_BITS_API_KEY, DATABASE_URL, etc.)
+if [[ -f "apps/api/.env.local" ]]; then
+  set -a
+  source apps/api/.env.local
+  set +a
+fi
+
+# Load local gallery env if present (provides VITE_* overrides)
+if [[ -f "apps/gallery/.env.local" ]]; then
+  set -a
+  source apps/gallery/.env.local
+  set +a
+fi
+
 : "${PORT:=3001}"
 : "${DATABASE_URL:=postgres://nostrstack:nostrstack@localhost:5432/nostrstack}"
 : "${LN_BITS_URL:=https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io}"
@@ -25,21 +39,25 @@ if [[ -z "$LN_BITS_API_KEY" ]]; then
   exit 1
 fi
 
-echo "[demo] Starting Postgres via docker compose..."
-docker compose up -d postgres >/dev/null
+if [[ "$DATABASE_URL" != file:* ]]; then
+  echo "[demo] Starting Postgres via docker compose..."
+  docker compose up -d postgres >/dev/null
 
-echo "[demo] Waiting for Postgres to be ready..."
-for i in {1..30}; do
-  if docker compose exec -T postgres pg_isready -U nostrstack >/dev/null 2>&1; then
-    echo "[demo] Postgres is ready"
-    break
-  fi
-  sleep 1
-  if [[ $i -eq 30 ]]; then
-    echo "Postgres did not become ready in time" >&2
-    exit 1
-  fi
-done
+  echo "[demo] Waiting for Postgres to be ready..."
+  for i in {1..30}; do
+    if docker compose exec -T postgres pg_isready -U nostrstack >/dev/null 2>&1; then
+      echo "[demo] Postgres is ready"
+      break
+    fi
+    sleep 1
+    if [[ $i -eq 30 ]]; then
+      echo "Postgres did not become ready in time" >&2
+      exit 1
+    fi
+  done
+else
+  echo "[demo] Using SQLite (no Postgres needed)"
+fi
 
 # Write local env files if missing
 API_ENV="apps/api/.env.local"
