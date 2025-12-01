@@ -1,11 +1,11 @@
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import type { FastifyInstance } from 'fastify';
 
 // Lightweight raw-body capture for routes that opt in via config.rawBody = true
 export const rawBodyPlugin = fp(async (app: FastifyInstance) => {
   app.addHook('onRequest', async (request, _reply) => {
     if (process.env.VITEST === 'true') return;
-    const wantsRaw = (request.context.config as any)?.rawBody;
+    const wantsRaw = (request.context.config as { rawBody?: boolean } | undefined)?.rawBody;
     if (!wantsRaw) return;
 
     let data = '';
@@ -16,7 +16,7 @@ export const rawBodyPlugin = fp(async (app: FastifyInstance) => {
       request.raw.on('end', () => resolve());
       request.raw.on('error', reject);
     });
-    (request as any).rawBody = data;
+    request.rawBody = data;
     if (!request.body) {
       try {
         request.body = data ? JSON.parse(data) : undefined;

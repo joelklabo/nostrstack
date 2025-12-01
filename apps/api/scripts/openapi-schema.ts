@@ -1,17 +1,18 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import Fastify from 'fastify';
+
 import cors from '@fastify/cors';
-import sensible from '@fastify/sensible';
 import formbody from '@fastify/formbody';
-import swagger from '@fastify/swagger';
-import { setupRoutes } from '../src/setup-routes.js';
-import { registerRoutes } from '../src/routes/index.js';
-import { prismaPlugin } from '../src/plugins/prisma.js';
 import helmet from '@fastify/helmet';
-import { metricsPlugin } from '../src/telemetry/metrics.js';
+import sensible from '@fastify/sensible';
+import swagger from '@fastify/swagger';
+import Fastify from 'fastify';
+
 import { rawBodyPlugin } from '../src/hooks/raw-body.js';
-import { env } from '../src/env.js';
+import { prismaPlugin } from '../src/plugins/prisma.js';
+import { registerRoutes } from '../src/routes/index.js';
+import { setupRoutes } from '../src/setup-routes.js';
+import { metricsPlugin } from '../src/telemetry/metrics.js';
 
 async function main() {
   const app = Fastify();

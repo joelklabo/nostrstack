@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeAll, afterAll } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';
@@ -10,10 +10,10 @@ let client: (typeof import('./nostr-client.js'))['NostrClient'];
 let instance: InstanceType<typeof client>;
 
 vi.mock('nostr-tools', async () => {
-  const actual = await vi.importActual<any>('nostr-tools');
+  const actual = await vi.importActual<typeof import('nostr-tools')>('nostr-tools');
   return {
     ...actual,
-    finalizeEvent: (event: any, _sk: string) => ({
+    finalizeEvent: (event: { kind: number } & Record<string, unknown>, _sk: string) => ({
       ...event,
       id: `id-${event.kind}`,
       sig: `sig-${event.kind}`
@@ -32,9 +32,9 @@ vi.mock('nostr-tools/relay', () => {
 
       connect = vi.fn();
       close = vi.fn();
-      publish(event: any) {
+      publish(_event: { kind?: number }) {
         return {
-          on: (evt: string, cb: Function) => {
+          on: (evt: string, cb: () => void) => {
             if (evt === 'ok') cb();
           }
         };
@@ -47,7 +47,7 @@ describe('NIP-65 relay list', () => {
   beforeAll(async () => {
     const mod = await import('./nostr-client.js');
     client = mod.NostrClient;
-    instance = new client('1'.repeat(64), console as any);
+    instance = new client('1'.repeat(64), console);
   });
 
   afterAll(() => {

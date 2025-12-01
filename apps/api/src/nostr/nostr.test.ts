@@ -1,6 +1,6 @@
-import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vitest';
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';

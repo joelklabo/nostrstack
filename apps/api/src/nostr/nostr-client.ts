@@ -1,6 +1,7 @@
-import { Relay } from 'nostr-tools/relay';
-import { finalizeEvent, getPublicKey, type EventTemplate } from 'nostr-tools';
 import type { FastifyBaseLogger } from 'fastify';
+import { finalizeEvent, getPublicKey, type EventTemplate } from 'nostr-tools';
+import { Relay } from 'nostr-tools/relay';
+
 
 export type PublishInput = {
   template: EventTemplate;
