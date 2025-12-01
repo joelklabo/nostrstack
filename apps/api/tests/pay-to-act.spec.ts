@@ -165,7 +165,7 @@ test('mock provider marks paid via status polling', async () => {
   const statusRes = await api.get(`/api/lnurlp/pay/status/${providerRef}`);
   expect(statusRes.ok()).toBeTruthy();
   const status = await statusRes.json();
-  expect(status.status).toBeDefined();
+  expect(status.status).toBe('PAID');
 });
 
 test.afterAll(async () => {
