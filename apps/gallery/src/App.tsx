@@ -151,6 +151,11 @@ function App() {
       </Card>
 
       <Card title="Comments (Nostr)">
+        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
+          Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
+          <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
+          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/mock comments, set relays to <code>mock</code>.
+        </div>
         <div id="comments-container" />
       </Card>
 
