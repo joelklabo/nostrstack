@@ -1,0 +1,35 @@
+{
+  "name": "@nostrstack/blog-kit",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@nostrstack/embed": "workspace:*",
+    "nostr-tools": "^2.10.2"
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.1.0",
+    "@types/node": "22.7.5",
+    "@types/react": "19.0.1",
+    "@types/react-dom": "19.0.1",
+    "jsdom": "24.1.0",
+    "tsup": "8.1.0",
+    "typescript": "5.6.2",
+    "vitest": "2.1.4"
+  }
+}
