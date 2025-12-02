@@ -15,16 +15,16 @@
 - Admin creds (UI): `lnbits-prod-admin-user`, `lnbits-prod-admin-password`
 
 ## Container app config (`lnbits-prod-west`)
-- Env: `LNBITS_BACKEND_WALLET_CLASS=LndWallet`, `LND_NETWORK=signet` (switch to `mainnet` when we cut over), `LND_GRPC_PORT=10009`
-- Secrets wired via secretrefs above; image `nostrstackwestacr.azurecr.io/lnbits:stg`
+- Env: `LNBITS_BACKEND_WALLET_CLASS=LndWallet`, `LND_NETWORK=signet` by default (set to `mainnet` on cutover), `LND_GRPC_PORT=10009`
+- Secrets wired via secretrefs above; image `${acrServer}/lnbits:${imageTag}` (Bicep params `network`, `imageTag`, `rev`)
 - Health: `curl -s https://lnbits-prod-west.thankfulwater-904823f2.westus3.azurecontainerapps.io/status/health`
 
 ## Runbook
 1) **Rotate DB password** (if needed): `az postgres flexible-server update -g nostrstack-stg-west-rg -n nostrstack-pg-west --admin-password '<new>'`, then update KV `lnbits-prod-database-url` + `database-url-prod` and redeploy with a new `LNBITS_REV` stamp.
 2) **Swap LND to mainnet**:
-   - Update KV secrets `lnd-mainnet-endpoint`, `lnd-mainnet-macaroon-hex`, `lnd-mainnet-tls` with mainnet values.
-   - `az containerapp update -n lnbits-prod-west -g nostrstack-stg-west-rg --set-env-vars LND_NETWORK=mainnet LNBITS_REV=<stamp>`
-   - Check logs: `az containerapp logs show -n lnbits-prod-west -g nostrstack-stg-west-rg --revision <rev> --type console --tail 100`
+   - Update KV secrets `lnd-mainnet-endpoint`, `lnd-mainnet-macaroon-hex`, `lnd-mainnet-tls` with mainnet values (preflight will verify presence).
+   - Preferred: deploy Bicep with `network=mainnet imageTag=stg rev=<stamp>` or run the helper: `./scripts/lnbits-cutover-mainnet.sh --rev <stamp>` (preflight checks KV + current env, then flips `LND_NETWORK` and bumps `LNBITS_REV`).
+   - Check logs: `az containerapp logs show -n lnbits-prod-west -g nostrstack-stg-west-rg --type console --tail 100`
    - Confirm: `/status/health` returns `funding_source=LndWallet` and non-null balance/error.
 3) **Admin access**: use KV secrets above; reset via UI `/wallet` or CLI `uv run lnbits-cli superuser` inside the container (needs `az containerapp exec` from a TTY-enabled shell).
 4) **Smoke tests**:

@@ -15,7 +15,15 @@ param lndEndpointSecret string
 param lndMacHexSecret string
 @secure()
 param lndTlsSecret string
-param rev string = '20251130ad'
+
+@allowed([
+  'signet'
+  'mainnet'
+])
+param network string = 'signet'
+
+param imageTag string = 'stg'
+param rev string = '20251202a'
 
 resource ca 'Microsoft.App/containerApps@2023-05-01' = {
   name: name
@@ -71,7 +79,7 @@ resource ca 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           name: 'lnbits-prod'
-          image: '${acrServer}/lnbits:stg'
+          image: '${acrServer}/lnbits:${imageTag}'
           env: [
             { name: 'LNBITS_BACKEND_WALLET_CLASS', value: 'LndWallet' }
             { name: 'LNBITS_FUNDING_SOURCE', value: 'LndWallet' }
@@ -85,7 +93,7 @@ resource ca 'Microsoft.App/containerApps@2023-05-01' = {
             { name: 'LND_GRPC_ADMIN_MACAROON', secretRef: 'lnd-mainnet-macaroon-hex' }
             { name: 'LND_GRPC_CERT', secretRef: 'lnd-mainnet-tls' }
             { name: 'LND_GRPC_PORT', value: '10009' }
-            { name: 'LND_NETWORK', value: 'mainnet' }
+            { name: 'LND_NETWORK', value: network }
             { name: 'LNBITS_REV', value: rev }
             { name: 'PGHOST', value: 'nostrstack-pg-west.postgres.database.azure.com' }
           ]
