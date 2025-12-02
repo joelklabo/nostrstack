@@ -128,7 +128,8 @@ function useMountWidgets(
   setQrInvoice: (pr: string | null) => void,
   setQrAmount: (n?: number) => void,
   setUnlockedPayload: (v: string | null) => void,
-  setRelayStats: React.Dispatch<React.SetStateAction<Record<string, { recv: number }>>>
+  setRelayStats: React.Dispatch<React.SetStateAction<Record<string, { recv: number }>>>,
+  relaysList: string[]
 ) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
@@ -173,7 +174,7 @@ function useMountWidgets(
       }
     });
 
-    const relays = relaysCsv ? parseRelays(relaysCsv) : relaysEnvDefault;
+    const relays = relaysList.length ? relaysList : relaysEnvDefault;
 
     mountCommentWidget(commentsHost, {
       threadId: 'demo-thread',
@@ -210,6 +211,7 @@ export default function App() {
   const [amount, setAmount] = useState(5);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
+  const [relaysList, setRelaysList] = useState<string[]>(relaysEnvDefault);
   const [mockInvoice, setMockInvoice] = useState<string | null>(null);
   const [locked, setLocked] = useState(true);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
@@ -256,11 +258,10 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (relaysCsv) {
-      window.localStorage.setItem(RELAY_STORAGE_KEY, relaysCsv);
-    } else {
-      window.localStorage.removeItem(RELAY_STORAGE_KEY);
-    }
+    const list = relaysCsv ? parseRelays(relaysCsv) : relaysEnvDefault;
+    setRelaysList(list);
+    if (relaysCsv) window.localStorage.setItem(RELAY_STORAGE_KEY, relaysCsv);
+    else window.localStorage.removeItem(RELAY_STORAGE_KEY);
   }, [relaysCsv]);
 
   useEffect(() => {
@@ -332,7 +333,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload, (next) => setRelayStats((prev) => ({ ...prev, ...next })));
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload, setRelayStats, relaysList);
 
   const themeStyles = useMemo(
     () =>
@@ -456,6 +457,14 @@ export default function App() {
             <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>Use real defaults</button>
             <button type="button" onClick={() => setRelaysCsv('mock')}>Use mock/offline</button>
             <CopyButton text={relayLabel} label="Copy relays" />
+            <button type="button" onClick={() => {
+              const url = prompt('Add relay URL (wss://...)');
+              if (url) {
+                const next = Array.from(new Set([...relaysList, url.trim()])).filter(Boolean);
+                setRelaysList(next);
+                setRelaysCsv(next.join(','));
+              }
+            }}>Add relay</button>
           </div>
           <div style={{ fontSize: '0.9rem', color: '#475569' }}>
             Using: {relayLabel} {relayMode === 'mock' ? '(mock mode: local only)' : '(real Nostr relays)'}
