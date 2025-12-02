@@ -129,6 +129,9 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
         <button type="button" onClick={() => { eventSourceRef.current?.close(); setStatus('connecting'); setLastError(null); }}>
           Reconnect
         </button>
+        <span style={{ padding: '0.35rem 0.65rem', borderRadius: 999, border: '1px solid #e2e8f0', background: captureFront ? '#ecfdf3' : '#f8fafc' }}>
+          Frontend capture: {captureFront ? 'ON' : 'OFF'}
+        </span>
         <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <input type="checkbox" checked={captureFront} onChange={(e) => setCaptureFront(e.target.checked)} />
           Capture frontend console
