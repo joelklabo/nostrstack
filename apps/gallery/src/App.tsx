@@ -4,6 +4,7 @@ import { type EventTemplate, finalizeEvent, getPublicKey } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 
 import { CopyButton } from './CopyButton';
+import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { WalletPanel } from './WalletPanel';
 
@@ -381,6 +382,9 @@ export default function App() {
 
       {tab === 'lightning' && (
       <>
+      <div style={{ marginBottom: '1rem' }}>
+        <FaucetButton apiBase={apiBase} />
+      </div>
       <Card title="Config & presets">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
