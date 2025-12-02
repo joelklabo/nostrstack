@@ -7,8 +7,6 @@ import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LoggedInNostrCard } from './LoggedInNostrCard';
-import { KeyToggle } from './KeyToggle';
-import { Nip07Status } from './Nip07Status';
 import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
 import { RelayCard } from './RelayCard';
@@ -17,6 +15,16 @@ import { colors, layout } from './tokens';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
 type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'mock' | 'unknown'; detail?: string };
+type ProfileMeta = {
+  name?: string;
+  about?: string;
+  picture?: string;
+  banner?: string;
+  display_name?: string;
+  nip05?: string;
+  lud16?: string;
+  website?: string;
+};
 type CommentEvent = {
   id?: string;
   pubkey?: string;
@@ -40,6 +48,7 @@ const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
 type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
+const profileDefault: ProfileMeta = {};
 
 const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r: string) => {
   acc[r] = { recv: 0 };
@@ -109,6 +118,20 @@ function parseRelays(input: string): string[] {
 function compactRelaysLabel(relays: string, max = 32) {
   if (relays.length <= max) return relays;
   return `${relays.slice(0, max)}…`;
+}
+
+async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
+  try {
+    const [name, domain] = nip05.split('@');
+    if (!name || !domain) return false;
+    const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(name)}`;
+    const res = await fetch(url);
+    if (!res.ok) return false;
+    const body = await res.json();
+    return body.names?.[name]?.toLowerCase() === pubkey.toLowerCase();
+  } catch {
+    return false;
+  }
 }
 
 function relayDisplayName(url: string) {
@@ -257,8 +280,10 @@ export default function App() {
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
-  const [enableTestSigner] = useState<boolean>(false);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProfileMeta>(profileDefault);
+  const [profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
@@ -297,18 +322,46 @@ export default function App() {
     autoMount();
   }, []);
 
+  const fetchProfile = useCallback(async (pk: string) => {
+    if (!pk) return;
+    const relays = relaysList.length ? relaysList : relaysEnvDefault;
+    const target = relays[0] ?? 'wss://relay.damus.io';
+    setProfileStatus('loading');
+    try {
+      const relay = await Relay.connect(target);
+      const evs = (await (relay as any).list?.([{ kinds: [0], authors: [pk], limit: 1 }])) ?? [];
+      relay.close();
+      if (evs.length) {
+        const meta = JSON.parse(evs[0].content ?? '{}');
+        setProfile(meta);
+        setProfileStatus('ok');
+        if (meta.nip05) verifyNip05(meta.nip05, pk).then(setNip05Verified).catch(() => setNip05Verified(false));
+      } else {
+        setProfileStatus('error');
+      }
+    } catch (err) {
+      console.warn('profile fetch failed', err);
+      setProfileStatus('error');
+    }
+  }, [relaysList]);
+
   useEffect(() => {
     const load = async () => {
       if (typeof window === 'undefined' || !window.nostr?.getPublicKey) return;
       try {
         const pk = await window.nostr.getPublicKey();
         setActivePubkey(pk);
+        fetchProfile(pk);
       } catch (err) {
         console.warn('failed to read window.nostr pubkey', err);
       }
     };
     load();
-  }, []);
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (activePubkey) fetchProfile(activePubkey);
+  }, [relaysList, activePubkey, fetchProfile]);
 
   useEffect(() => {
     setLocked(true);
@@ -356,7 +409,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
 
   const themeStyles = useMemo(
     () =>
@@ -570,7 +623,9 @@ export default function App() {
               seckey={undefined}
               signerReady={Boolean((window as any).nostr)}
               relays={relaysList}
-              profile={undefined}
+              profile={profile}
+              fullProfile={profile}
+              nip05Verified={nip05Verified}
             />
           </Card>
           <Card title="Logged-in Nostr user">
