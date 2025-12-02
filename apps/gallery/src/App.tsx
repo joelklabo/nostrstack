@@ -1,11 +1,22 @@
 import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type EventTemplate, finalizeEvent, getPublicKey } from 'nostr-tools';
+import { Relay } from 'nostr-tools/relay';
 
 import { CopyButton } from './CopyButton';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
 type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'mock' | 'unknown'; detail?: string };
+type CommentEvent = {
+  id?: string;
+  pubkey?: string;
+  created_at?: number;
+  kind: number;
+  tags?: string[][];
+  content: string;
+  sig?: string;
+};
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
@@ -18,6 +29,9 @@ const isMock = demoHost === 'mock' || apiBase === 'mock';
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
+const TEST_SIGNER_STORAGE_KEY = 'nostrstack.test-signer';
+const defaultTestSignerSk = import.meta.env.VITE_TEST_SIGNER_SK ?? '2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c';
+const defaultTestSignerEnabled = import.meta.env.VITE_ENABLE_TEST_SIGNER === 'true';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -84,7 +98,7 @@ function compactRelaysLabel(relays: string, max = 32) {
   return `${relays.slice(0, max)}…`;
 }
 
-function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock?: () => void) {
+function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock?: () => void, enableTestSigner?: boolean) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
     const payHost = document.getElementById('pay-container');
@@ -133,7 +147,7 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string, on
         relayStatus.appendChild(badge);
       }
     });
-  }, [username, amount, relaysCsv, onUnlock]);
+  }, [username, amount, relaysCsv, onUnlock, enableTestSigner]);
 }
 
 export default function App() {
@@ -149,11 +163,35 @@ export default function App() {
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
+  const [enableTestSigner, setEnableTestSigner] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return defaultTestSignerEnabled;
+    const stored = window.localStorage.getItem(TEST_SIGNER_STORAGE_KEY);
+    if (stored === 'on') return true;
+    if (stored === 'off') return false;
+    return defaultTestSignerEnabled;
+  });
+
+  const testSignerPub = useMemo(() => {
+    try {
+      return getPublicKey(defaultTestSignerSk);
+    } catch (err) {
+      console.warn('invalid test signer key', err);
+      return null;
+    }
+  }, [defaultTestSignerSk]);
+
+  const nostrBackup = useRef<typeof window.nostr>();
+  const nostrToolsBackup = useRef<typeof window.NostrTools>();
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
     if (saved) setRelaysCsv(saved);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(TEST_SIGNER_STORAGE_KEY, enableTestSigner ? 'on' : 'off');
+  }, [enableTestSigner]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -167,6 +205,44 @@ export default function App() {
   useEffect(() => {
     autoMount();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (enableTestSigner && !testSignerPub) return;
+
+    if (enableTestSigner && testSignerPub) {
+      if (nostrBackup.current === undefined) nostrBackup.current = window.nostr;
+      if (nostrToolsBackup.current === undefined) nostrToolsBackup.current = window.NostrTools;
+      const signEvent = async (event: CommentEvent) => {
+        const template: EventTemplate = {
+          kind: event.kind,
+          created_at: event.created_at ?? Math.floor(Date.now() / 1000),
+          tags: event.tags ?? [],
+          content: event.content
+        };
+        return finalizeEvent(template, defaultTestSignerSk);
+      };
+      window.nostr = {
+        getPublicKey: async () => testSignerPub,
+        signEvent
+      };
+      window.NostrTools = { ...(window.NostrTools ?? {}), relayInit: (url: string) => new Relay(url) };
+    }
+
+    if (!enableTestSigner && nostrBackup.current !== undefined) {
+      window.nostr = nostrBackup.current;
+      window.NostrTools = nostrToolsBackup.current;
+    }
+
+    return () => {
+      if (nostrBackup.current !== undefined) {
+        window.nostr = nostrBackup.current;
+      }
+      if (nostrToolsBackup.current !== undefined) {
+        window.NostrTools = nostrToolsBackup.current;
+      }
+    };
+  }, [enableTestSigner, testSignerPub, defaultTestSignerSk]);
 
   useEffect(() => {
     setLocked(true);
@@ -195,7 +271,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner);
 
   const themeStyles = useMemo(
     () =>
@@ -305,6 +381,37 @@ export default function App() {
             Using: {relayLabel} {relayMode === 'mock' ? '(mock mode: local only)' : '(real Nostr relays)'}
           </div>
         </div>
+
+        <div
+          style={{
+            marginTop: '0.75rem',
+            padding: '0.75rem',
+            border: `1px dashed ${themeStyles.borderColor}`,
+            borderRadius: 10,
+            background: isDark ? '#0b1220' : '#f8fafc',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.4rem'
+          }}
+        >
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
+            <input
+              type="checkbox"
+              checked={enableTestSigner}
+              onChange={(e) => setEnableTestSigner(e.target.checked)}
+              disabled={!testSignerPub}
+            />
+            Built-in Nostr test signer (regtest/CI)
+          </label>
+          <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+            Deterministic key for posting to real relays. Test-only; do not use on mainnet.
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.9rem' }}>
+            <span>Pubkey: <code>{testSignerPub ? `${testSignerPub.slice(0, 12)}…${testSignerPub.slice(-6)}` : 'invalid key'}</code></span>
+            {testSignerPub ? <CopyButton text={testSignerPub} label="Copy pubkey" /> : null}
+            <CopyButton text={defaultTestSignerSk} label="Copy secret" />
+          </div>
+        </div>
       </Card>
 
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
@@ -361,7 +468,7 @@ export default function App() {
         <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
           Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
           <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
-          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/local comments, set relays to <code>mock</code> (no relay writes).
+          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. Or flip on the built-in test signer in Config for regtest/CI. For offline/local comments, set relays to <code>mock</code> (no relay writes).
         </div>
         <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
         <div id="comments-container" />

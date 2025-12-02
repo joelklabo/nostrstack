@@ -9,4 +9,9 @@ describe('App', () => {
     const html = renderToString(<App />);
     expect(html).toContain('nostrstack Demo');
   });
+
+  it('shows test signer toggle copy', () => {
+    const html = renderToString(<App />);
+    expect(html).toContain('Built-in Nostr test signer');
+  });
 });

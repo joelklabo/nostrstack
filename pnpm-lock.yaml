@@ -145,6 +145,9 @@ importers:
       '@nostrstack/embed':
         specifier: workspace:*
         version: link:../../packages/embed
+      nostr-tools:
+        specifier: ^2.18.2
+        version: 2.18.2(typescript@5.6.2)
       react:
         specifier: 18.3.1
         version: 18.3.1
