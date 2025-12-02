@@ -12,6 +12,7 @@ export type InvoicePopoverProps = {
 
 export function InvoicePopover({ invoice, amountSats, status = 'pending', onClose }: InvoicePopoverProps) {
   const [dataUrl, setDataUrl] = useState<string>('');
+  const [ageMs, setAgeMs] = useState(0);
 
   useEffect(() => {
     if (!invoice) return;
@@ -20,6 +21,14 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
       .catch((err: unknown) => console.warn('qr gen failed', err));
   }, [invoice]);
 
+  useEffect(() => {
+    if (!invoice) return;
+    const started = Date.now();
+    const id = setInterval(() => setAgeMs(Date.now() - started), 1000);
+    return () => clearInterval(id);
+  }, [invoice]);
+
+  const stale = status === 'pending' && ageMs > 120000;
   const displayAmount = useMemo(() => (amountSats ? `${amountSats} sats` : ''), [amountSats]);
   if (!invoice) return null;
 
@@ -28,11 +37,14 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
           <div style={{ fontWeight: 700 }}>Invoice</div>
-          <button onClick={onClose} style={closeBtnStyle}>×</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {stale && <span style={{ color: '#f97316', fontSize: '0.85rem' }}>Timed out</span>}
+            <button onClick={onClose} style={closeBtnStyle}>×</button>
+          </div>
         </div>
         {displayAmount && <div style={{ marginBottom: '0.5rem', color: '#64748b' }}>{displayAmount}</div>}
-        <div style={{ marginBottom: '0.5rem', fontWeight: 700, color: status === 'paid' ? '#22c55e' : '#f97316' }}>
-          {status === 'paid' ? 'Paid' : 'Waiting for payment'}
+        <div style={{ marginBottom: '0.5rem', fontWeight: 700, color: status === 'paid' ? '#22c55e' : status === 'error' ? '#ef4444' : stale ? '#f97316' : '#f59e0b' }}>
+          {status === 'paid' ? 'Paid' : status === 'error' ? 'Payment error' : stale ? 'Timed out' : 'Waiting for payment'}
         </div>
         {dataUrl ? (
           <img src={dataUrl} alt="Lightning invoice QR" style={{ width: '220px', height: '220px', borderRadius: 12, boxShadow: '0 12px 30px rgba(0,0,0,0.12)', marginBottom: '0.75rem' }} />
@@ -42,9 +54,14 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
         <div style={invoiceBox}>
           <code style={{ wordBreak: 'break-all', fontSize: '0.82rem' }}>{invoice}</code>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
           <CopyButton text={invoice} label="Copy" size="md" />
           <a href={`lightning:${invoice}`} style={walletLink}>Open in wallet</a>
+          {stale && (
+            <button type="button" onClick={onClose} style={{ padding: '0.4rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff' }}>
+              Dismiss
+            </button>
+          )}
         </div>
       </div>
     </div>
