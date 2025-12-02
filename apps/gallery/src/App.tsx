@@ -113,7 +113,7 @@ const tabBtn = (active: boolean, themeStyles: { background: string; color: strin
   boxShadow: active ? '0 6px 20px rgba(14,165,233,0.25)' : 'none'
 });
 
-function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock: () => void, enableTestSigner: boolean, setQrInvoice: (pr: string | null) => void, setQrAmount: (n?: number) => void) {
+function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock: () => void, enableTestSigner: boolean, setQrInvoice: (pr: string | null) => void, setQrAmount: (n?: number) => void, setUnlockedPayload: (v: string | null) => void) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
     const payHost = document.getElementById('pay-container');
@@ -153,6 +153,7 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string, on
       onUnlock: () => {
         if (unlockHost) unlockHost.textContent = 'Unlocked!';
         onUnlock?.();
+        setUnlockedPayload('Paid content unlocked');
       }
     });
 
@@ -191,6 +192,7 @@ export default function App() {
   const [qrInvoice, setQrInvoice] = useState<string | null>(null);
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
+  const [unlockedPayload, setUnlockedPayload] = useState<string | null>(null);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -303,7 +305,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload);
 
   const themeStyles = useMemo(
     () =>
@@ -335,6 +337,7 @@ export default function App() {
       const pr = body.payment_request ?? body.pr;
       setQrInvoice(pr);
       setQrAmount(amount);
+      setUnlockedPayload('Paid content unlocked');
       setRealInvoice(pr || 'invoice unavailable');
     } catch (err: unknown) {
       setRealInvoice(`error: ${formatError(err)}`);
@@ -493,6 +496,7 @@ export default function App() {
           <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
             {locked ? 'Locked' : 'Unlocked!'}
           </div>
+          {locked ? (
           <button
             data-testid="mock-unlock"
             onClick={() => {
@@ -502,6 +506,14 @@ export default function App() {
           >
             Simulate unlock (mock)
           </button>
+          ) : (
+            <div style={{ marginTop: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.75rem' }}>
+              <strong>Unlocked content:</strong>
+              <div style={{ marginTop: '0.35rem', fontFamily: 'monospace', fontSize: '0.9rem', color: '#0f172a' }}>
+                secrets/regtest.txt — "The quick brown fox pays 21 sats."
+              </div>
+            </div>
+          )}
         </Card>
       </div>
       </>
