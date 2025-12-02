@@ -28,6 +28,9 @@
 # Default actor for audit trails (overridden by BD_ACTOR or --actor)
 # actor: ""
 
+# Branch to sync .beads changes (set to main for single-branch workflow)
+sync-branch: main
+
 # Path to database (overridden by BEADS_DB or --db)
 # db: ""
 

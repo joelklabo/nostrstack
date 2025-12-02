@@ -13,8 +13,8 @@ importers:
   .:
     devDependencies:
       '@beads/bd':
-        specifier: ^0.26.0
-        version: 0.26.0
+        specifier: ^0.27.2
+        version: 0.27.2
       '@nostrstack/config':
         specifier: workspace:^
         version: link:packages/config
@@ -388,8 +388,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@beads/bd@0.26.0':
-    resolution: {integrity: sha512-Vpp+T+4MpoVjIoRhEty+JTRBwMuBBi1atSNDkkadOmIgasdy0bgk9tfm5B5sMv8cypy4KQNLAHKlS4Cpc+1EBA==}
+  '@beads/bd@0.27.2':
+    resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
     engines: {node: '>=14.0.0'}
     cpu: [x64, arm64]
     os: [darwin, linux, win32]
@@ -3952,7 +3952,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@beads/bd@0.26.0': {}
+  '@beads/bd@0.27.2': {}
 
   '@csstools/color-helpers@5.1.0': {}
 
