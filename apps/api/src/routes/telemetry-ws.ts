@@ -28,10 +28,12 @@ export async function registerTelemetryWs(app: FastifyInstance) {
 
   const execCli = (cmd: string) =>
     new Promise<string>((resolve, reject) => {
+      const composeFile = app.config?.REGTEST_COMPOSE ?? 'deploy/regtest/docker-compose.yml';
+      const cwd = app.config?.REGTEST_CWD ?? process.cwd();
       const p = spawn('docker', [
-        'compose', '-f', 'deploy/regtest/docker-compose.yml', 'exec', '-T', 'bitcoind',
+        'compose', '-f', composeFile, 'exec', '-T', 'bitcoind',
         'bitcoin-cli', '-regtest', '-rpcuser=bitcoin', '-rpcpassword=bitcoin', cmd
-      ], { cwd: process.cwd() });
+      ], { cwd });
       let out = '';
       let err = '';
       p.stdout.on('data', (d) => (out += d.toString()));

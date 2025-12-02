@@ -109,6 +109,10 @@ export async function buildServer() {
   await registerRoutes(server);
   await registerTelemetryWs(server);
   createPayEventHub(server);
+  server.decorate('config', {
+    REGTEST_COMPOSE: process.env.REGTEST_COMPOSE,
+    REGTEST_CWD: process.env.REGTEST_CWD
+  });
   await ensureDefaultTenant(server);
 
   if (stopTracing) {

@@ -27,5 +27,9 @@ declare module 'fastify' {
     nostrClient?: import('../nostr/nostr-client.js').NostrClient;
     nostrRelays?: string[];
     logHub: import('../services/log-hub.js').LogHub;
+    config?: {
+      REGTEST_COMPOSE?: string;
+      REGTEST_CWD?: string;
+    };
   }
 }
