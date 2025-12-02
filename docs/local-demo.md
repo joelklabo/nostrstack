@@ -49,9 +49,9 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
    ```
 
 ### Add spendable sats to LNbits (regtest)
-By default the merchant node has only inbound liquidity. To give LNbits outbound sats for sending/paying invoices:
+By default the merchant node has only inbound liquidity. To give LNbits outbound sats for sending/paying invoices, hit the faucet endpoint (or click “Fund regtest wallet” in the gallery):
 ```sh
-./scripts/regtest-fund.sh
+curl -X POST http://localhost:3001/regtest/fund
 ```
 This mines coins to `lnd-merchant` and opens a 500k sat channel to the payer, leaving ~0.5M sats local on the merchant side for spending.
 

@@ -28,7 +28,7 @@ export function WalletPanel({
           <CopyButton text={adminKey} label="Copy key" />
         </li>
         <li>
-          Need funds? Run <code>./scripts/regtest-fund.sh</code> (mines coins + opens outbound channel for spending).
+          Need funds? Click <em>Fund regtest wallet</em> above or POST <code>/regtest/fund</code> (mines coins + opens an outbound channel for spending).
         </li>
         <li>
           Create a wallet inside LNbits, then use its Admin key in the widgets (username defaults to the wallet name).
