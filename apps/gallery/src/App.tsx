@@ -26,6 +26,7 @@ type CommentEvent = {
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
+const networkLabel = import.meta.env.VITE_NETWORK ?? (demoHost === 'mock' ? 'mock' : 'regtest');
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r: string) => r.trim()).filter(Boolean)
@@ -193,6 +194,7 @@ export default function App() {
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
   const [unlockedPayload, setUnlockedPayload] = useState<string | null>(null);
+  const [network] = useState(networkLabel);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -361,7 +363,12 @@ export default function App() {
         minHeight: '100vh'
       }}
     >
-      <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <h1 style={{ marginTop: 0, marginBottom: 0 }}>nostrstack Demo</h1>
+        <span style={{ padding: '0.35rem 0.8rem', borderRadius: 999, background: '#0f172a', color: '#e2e8f0', fontWeight: 700, letterSpacing: '0.03em' }}>
+          {network.toUpperCase()}
+        </span>
+      </div>
       <p style={{ maxWidth: 780 }}>
         Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use the relays you set.
       </p>
