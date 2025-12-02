@@ -8,6 +8,7 @@ import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LoggedInNostrCard } from './LoggedInNostrCard';
 import { LogViewer } from './LogViewer';
+import { MockComments } from './MockComments';
 import { NostrProfileCard } from './NostrProfileCard';
 import { RelayCard } from './RelayCard';
 import { TelemetryCard } from './TelemetryCard';
@@ -467,7 +468,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
+  useMountWidgets(username, amount, relaysCsv.includes('mock') ? '' : relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
 
   const themeStyles = useMemo(
     () =>
@@ -720,7 +721,7 @@ export default function App() {
                 );
               })}
             </div>
-            <div id="comments-container" />
+            {relayMode === 'mock' ? <MockComments /> : <div id="comments-container" />}
           </Card>
         </div>
       )}
