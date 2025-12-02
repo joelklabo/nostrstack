@@ -1,9 +1,10 @@
 import { NostrstackClient } from '@nostrstack/sdk';
+
 import { renderInvoicePopover } from './invoicePopover.js';
+export { invoicePopoverStyles,renderInvoicePopover } from './invoicePopover.js';
+export { nostrUserCardStyles,renderNostrUserCard } from './nostrUserCard.js';
+export { relayBadgeStyles,renderRelayBadge, updateRelayBadge } from './relayBadge.js';
 export { designTokens } from './tokens/designTokens.js';
-export { renderRelayBadge, updateRelayBadge, relayBadgeStyles } from './relayBadge.js';
-export { renderInvoicePopover, invoicePopoverStyles } from './invoicePopover.js';
-export { renderNostrUserCard, nostrUserCardStyles } from './nostrUserCard.js';
 
 type TipWidgetOptions = {
   username: string;
@@ -40,7 +41,7 @@ declare global {
       getPublicKey: () => Promise<string>;
       signEvent: (event: NostrEvent) => Promise<NostrEvent>;
     };
-    NostrTools?: { relayInit?: (url: string) => any };
+    NostrTools?: { relayInit?: (url: string) => unknown };
   }
 }
 
@@ -69,14 +70,14 @@ const ATTR_PREFIXES = ['nostrstack'];
 
 function getBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments') {
   for (const prefix of ATTR_PREFIXES) {
-    const val = (el.dataset as any)[`${prefix}${key}`];
+    const val = (el.dataset as Record<string, string | undefined>)[`${prefix}${key}`];
     if (val !== undefined) return val;
   }
   return undefined;
 }
 
 function setBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments', value: string) {
-  (el.dataset as any)[`nostrstack${key}`] = value;
+  (el.dataset as Record<string, string>)[`nostrstack${key}`] = value;
 }
 
 export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) {
@@ -106,7 +107,7 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
       } else {
         renderInvoicePopover(invoice.pr);
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error('tip error', e);
       alert('Failed to generate invoice');
     } finally {
@@ -182,7 +183,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       const ok = await verify(pr);
       if (ok) unlock();
       return pr;
-    } catch (e: any) {
+    } catch (e) {
       console.error('pay-to-action error', e);
       status.textContent = 'Failed to generate invoice';
       alert('Failed to generate invoice');
@@ -265,7 +266,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   }
   const threadId = opts.threadId ?? (location?.href ?? 'thread');
   opts.onRelayInfo?.({
-    relays: mockMode ? ['mock'] : relays.map((r: any) => r.url ?? '').filter(Boolean),
+    relays: mockMode ? ['mock'] : relays.map((r: { url?: string }) => r.url ?? '').filter(Boolean),
     mode: mockMode ? 'mock' : 'real'
   });
 
@@ -302,7 +303,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 
   if (!mockMode) {
     const filters = [{ kinds: [1], '#t': [threadId] }];
-    relays.forEach((relay: any) => {
+    relays.forEach((relay: { sub: (f: unknown) => { on: (s: string, cb: (ev: NostrEvent) => void) => void } }) => {
       const sub = relay.sub(filters);
       sub.on('event', (ev: NostrEvent) => {
         appendEvent(ev);

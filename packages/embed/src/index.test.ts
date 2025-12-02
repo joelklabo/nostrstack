@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mountTipButton, mountPayToAction } from './index.js';
+
+import { mountPayToAction, mountTipButton } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -15,15 +16,17 @@ describe('mountTipButton', () => {
   it('copies invoice on click', async () => {
     const host = document.createElement('div');
     const pr = 'lnbc1testinvoice';
-    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValueOnce({
+    vi.spyOn(globalThis, 'fetch' as unknown as typeof fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
-    } as any).mockResolvedValueOnce({
+    } as Response).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ pr })
-    } as any);
+    } as Response);
     const write = vi.fn();
-    (globalThis.navigator as any).clipboard = { writeText: write };
+    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {
+      writeText: write
+    };
 
     const button = mountTipButton(host, { username: 'alice', amountSats: 5 });
     await button.onclick?.(new Event('click'));
@@ -40,16 +43,18 @@ describe('mountPayToAction', () => {
   it('copies invoice and unlocks when verify succeeds', async () => {
     const host = document.createElement('div');
     const pr = 'lnbc1payinvoice';
-    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValueOnce({
+    vi.spyOn(globalThis, 'fetch' as unknown as typeof fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
-    } as any).mockResolvedValueOnce({
+    } as Response).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ pr })
-    } as any);
+    } as Response);
 
     const write = vi.fn();
-    (globalThis.navigator as any).clipboard = { writeText: write };
+    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {
+      writeText: write
+    };
 
     const onUnlock = vi.fn();
     const button = mountPayToAction(host, {
