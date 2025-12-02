@@ -10,6 +10,7 @@ type Props = { wsUrl: string };
 export function TelemetryCard({ wsUrl }: Props) {
   const [height, setHeight] = useState<number | null>(null);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
+  const [nodeInfo, setNodeInfo] = useState<{ uri?: string; ip?: string }>({});
 
   useEffect(() => {
     const ws = new WebSocket(wsUrl);
@@ -25,11 +26,19 @@ export function TelemetryCard({ wsUrl }: Props) {
     return () => ws.close();
   }, [wsUrl]);
 
+  useEffect(() => {
+    // TODO: fetch static node info from API once exposed
+    setNodeInfo({ uri: 'lnd-merchant@localhost:9735', ip: '127.0.0.1' });
+  }, []);
+
   return (
     <div>
       <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <strong>Regtest telemetry</strong>
         <span style={{ fontSize: '0.9rem', color: '#475569' }}>Height: {height ?? '…'}</span>
+      </div>
+      <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.5rem' }}>
+        Node: {nodeInfo.uri ?? '…'} • IP: {nodeInfo.ip ?? '…'}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
         {events.map((ev, idx) => (
@@ -55,4 +64,3 @@ function detail(ev: TelemetryEvent) {
   if (ev.type === 'tx') return `Time ${ts}`;
   return `${ev.event} @ ${ts}`;
 }
-
