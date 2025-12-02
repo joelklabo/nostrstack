@@ -7,6 +7,7 @@ import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LoggedInNostrCard } from './LoggedInNostrCard';
+import { LogViewer } from './LogViewer';
 import { NostrProfileCard } from './NostrProfileCard';
 import { RelayCard } from './RelayCard';
 import { TelemetryCard } from './TelemetryCard';
@@ -267,7 +268,7 @@ export default function App() {
   const [qrInvoice, setQrInvoice] = useState<string | null>(null);
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [qrStatus, setQrStatus] = useState<'pending' | 'paid' | 'error'>('pending');
-  const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
+  const [tab, setTab] = useState<'lightning' | 'nostr' | 'logs'>('lightning');
   const [, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
@@ -544,6 +545,7 @@ export default function App() {
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
         <button onClick={() => setTab('lightning')} style={tabBtn(tab === 'lightning', themeStyles)}>Lightning</button>
         <button onClick={() => setTab('nostr')} style={tabBtn(tab === 'nostr', themeStyles)}>Nostr</button>
+        <button onClick={() => setTab('logs')} style={tabBtn(tab === 'logs', themeStyles)}>Logs</button>
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -721,6 +723,15 @@ export default function App() {
             <div id="comments-container" />
           </Card>
         </div>
+      )}
+
+      {tab === 'logs' && (
+        <Card title="Logs">
+          <div style={{ marginBottom: '0.5rem', color: '#475569', fontSize: '0.95rem' }}>
+            Streams backend logs from <code>{apiBase}/logs/stream</code> and captures frontend console (toggle to enable).
+          </div>
+          <LogViewer backendUrl={`${apiBase.replace(/\/$/, '')}/logs/stream`} />
+        </Card>
       )}
 
       <Card title="Status & build">
