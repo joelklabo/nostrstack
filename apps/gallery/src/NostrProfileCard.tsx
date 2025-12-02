@@ -59,8 +59,12 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
         {fullProfile ? (
           <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.55rem 0.7rem', background: '#fff' }}>
             <div style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Profile details</div>
-            <dl style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: '0.35rem', columnGap: '0.5rem', margin: 0 }}>
-              {fullProfile.display_name ? (<><dt style={dt}>Display</dt><dd style={dd}>{fullProfile.display_name as string}</dd></>) : null}
+            <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', rowGap: '0.35rem', columnGap: '0.5rem', margin: 0 }}>
+              {fullProfile.display_name ? (<><dt style={dt}>Display name</dt><dd style={dd}>{fullProfile.display_name as string}</dd></>) : null}
+              {fullProfile.name ? (<><dt style={dt}>Name</dt><dd style={dd}>{fullProfile.name as string}</dd></>) : null}
+              {fullProfile.nip05 ? (<><dt style={dt}>NIP-05</dt><dd style={dd}>{fullProfile.nip05 as string}</dd></>) : null}
+              {fullProfile.lud16 ? (<><dt style={dt}>Lightning</dt><dd style={dd}>{fullProfile.lud16 as string}</dd></>) : null}
+              {fullProfile.lud06 ? (<><dt style={dt}>LNURL (lud06)</dt><dd style={dd}>{fullProfile.lud06 as string}</dd></>) : null}
               {fullProfile.website ? (<><dt style={dt}>Website</dt><dd style={dd}><a href={fullProfile.website as string} target="_blank" rel="noreferrer">{fullProfile.website as string}</a></dd></>) : null}
               {fullProfile.banner ? (<><dt style={dt}>Banner</dt><dd style={dd}>{fullProfile.banner as string}</dd></>) : null}
               {fullProfile.about ? (<><dt style={dt}>About</dt><dd style={dd}>{fullProfile.about as string}</dd></>) : null}
