@@ -1,13 +1,23 @@
 "use client";
 
+import { type Relay,relayInit } from 'nostr-tools';
 import React, { useCallback, useMemo, useState } from 'react';
-import { relayInit, type Relay } from 'nostr-tools';
+
 import { useNostrstackConfig } from './context';
-import { parseRelays } from './utils';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
 
-async function publishToRelays(relays: string[], event: any) {
+type SignedEvent = {
+  kind: number;
+  created_at: number;
+  tags: string[][];
+  content: string;
+  pubkey: string;
+  id?: string;
+  sig?: string;
+};
+
+async function publishToRelays(relays: string[], event: SignedEvent) {
   const connections: Relay[] = [];
   try {
     for (const url of relays) {
@@ -65,13 +75,13 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className }: S
   const handleShare = useCallback(async () => {
     setError(null);
     setState('sharing');
-    const nostr = (globalThis as any).nostr;
+    const nostr = (globalThis as unknown as { nostr?: { getPublicKey: () => Promise<string>; signEvent: (ev: SignedEvent) => Promise<SignedEvent> } }).nostr;
 
     if (nostr && relayList.length) {
       try {
         const pubkey = await nostr.getPublicKey();
         const now = Math.floor(Date.now() / 1000);
-        const event = {
+        const event: Omit<SignedEvent, 'id' | 'sig'> = {
           kind: 1,
           created_at: now,
           tags: [
@@ -81,11 +91,11 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className }: S
           content: note,
           pubkey,
         };
-        const signed = await nostr.signEvent(event);
-        await publishToRelays(relayList, signed);
-        setState('copied');
-        return;
-      } catch (err: any) {
+      const signed = await nostr.signEvent(event as unknown as SignedEvent);
+      await publishToRelays(relayList, signed);
+      setState('copied');
+      return;
+      } catch (err) {
         console.warn('nostr share failed, falling back', err);
       }
     }
@@ -98,8 +108,8 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className }: S
       }
       await copyText(note);
       setState('copied');
-    } catch (err: any) {
-      setError(err?.message ?? 'Share failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Share failed');
       setState('error');
     }
   }, [note, title, url, tag, relayList]);

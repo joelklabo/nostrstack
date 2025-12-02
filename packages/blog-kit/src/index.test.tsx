@@ -1,7 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
-import { NostrstackProvider, TipButton, Comments, ShareButton } from './index';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { Comments, NostrstackProvider, ShareButton, TipButton } from './index';
 
 vi.mock('@nostrstack/embed', () => {
   return {
@@ -46,7 +47,10 @@ describe('blog-kit components', () => {
     await waitFor(() => {
       expect(mountTipButton).toHaveBeenCalled();
     });
-    const call = (mountTipButton as any).mock.calls[0][1];
+    const call = (mountTipButton as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      username: string;
+      host: string;
+    };
     expect(call.username).toBe('alice');
     expect(call.host).toBe('example.com');
   });
@@ -60,7 +64,10 @@ describe('blog-kit components', () => {
     await waitFor(() => {
       expect(mountCommentWidget).toHaveBeenCalled();
     });
-    const call = (mountCommentWidget as any).mock.calls[0][1];
+    const call = (mountCommentWidget as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      threadId: string;
+      relays: string[];
+    };
     expect(call.threadId).toBe('post-123');
     expect(call.relays).toEqual(['wss://relay.test']);
   });

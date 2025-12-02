@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
 import { mountCommentWidget } from '@nostrstack/embed';
+import React, { useEffect, useRef } from 'react';
+
 import { useNostrstackConfig } from './context';
-import { parseRelays } from './utils';
 
 export type CommentsProps = {
   threadId?: string;
