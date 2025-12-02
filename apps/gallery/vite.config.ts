@@ -1,6 +1,7 @@
+import { execSync } from 'node:child_process';
+
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { execSync } from 'node:child_process';
 
 function gitMeta() {
   try {

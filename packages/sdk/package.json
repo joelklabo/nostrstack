@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
     "generate": "pnpm --filter api exec tsx scripts/openapi-schema.ts && tsx scripts/generate.ts",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .ts --max-warnings=0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

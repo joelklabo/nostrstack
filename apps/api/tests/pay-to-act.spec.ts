@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 
 import { expect,test } from '@playwright/test';
 
-import { lnbitsBalance,payInvoiceViaLNbits, waitForPaymentStatus, settleAssert } from './utils/pay-and-settle.js';
+import { lnbitsBalance,payInvoiceViaLNbits, settleAssert,waitForPaymentStatus } from './utils/pay-and-settle.js';
 import { waitForHealth } from './utils/wait-for-health.js';
 
 let api;

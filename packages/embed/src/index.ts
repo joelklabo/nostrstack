@@ -229,14 +229,21 @@ function getRelayInit() {
   return window.NostrTools?.relayInit;
 }
 
-async function connectRelays(urls: string[]) {
+type RelayConnection = {
+  url?: string;
+  connect: () => Promise<void>;
+  sub: (filters: unknown) => { on: (type: string, cb: (ev: NostrEvent) => void) => void };
+  publish: (ev: NostrEvent) => Promise<unknown>;
+};
+
+async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
   if (urls.includes('mock')) {
     return [];
   }
   const relayInit = getRelayInit();
   if (!relayInit) return [];
   const relays = await Promise.all(urls.map(async (url) => {
-    const relay = relayInit(url);
+    const relay = relayInit(url) as RelayConnection;
     try {
       await relay.connect();
       return relay;
@@ -245,7 +252,7 @@ async function connectRelays(urls: string[]) {
       return null;
     }
   }));
-  return relays.filter(Boolean);
+  return relays.filter((r): r is RelayConnection => Boolean(r));
 }
 
 export async function renderCommentWidget(container: HTMLElement, opts: CommentWidgetOptions = {}) {
@@ -266,7 +273,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   }
   const threadId = opts.threadId ?? (location?.href ?? 'thread');
   opts.onRelayInfo?.({
-    relays: mockMode ? ['mock'] : relays.map((r: { url?: string }) => r.url ?? '').filter(Boolean),
+    relays: mockMode ? ['mock'] : relays.map((r) => r.url ?? '').filter(Boolean),
     mode: mockMode ? 'mock' : 'real'
   });
 
@@ -303,7 +310,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 
   if (!mockMode) {
     const filters = [{ kinds: [1], '#t': [threadId] }];
-    relays.forEach((relay: { sub: (f: unknown) => { on: (s: string, cb: (ev: NostrEvent) => void) => void } }) => {
+    relays.forEach((relay) => {
       const sub = relay.sub(filters);
       sub.on('event', (ev: NostrEvent) => {
         appendEvent(ev);
@@ -468,6 +475,7 @@ type MountCommentOptions = {
   relays?: string[];
   placeholder?: string;
   headerText?: string;
+  onRelayInfo?: (info: { relays: string[]; mode: 'real' | 'mock' }) => void;
 };
 
 export function mountCommentWidget(container: HTMLElement, opts: MountCommentOptions = {}) {
@@ -475,6 +483,7 @@ export function mountCommentWidget(container: HTMLElement, opts: MountCommentOpt
     threadId: opts.threadId ?? getBrandAttr(container, 'Comments'),
     relays: opts.relays,
     placeholder: opts.placeholder ?? container.dataset.placeholder,
-    headerText: opts.headerText ?? container.dataset.header
+    headerText: opts.headerText ?? container.dataset.header,
+    onRelayInfo: opts.onRelayInfo
   });
 }

@@ -8,7 +8,10 @@ const RELAY = process.env.REAL_RELAY ?? 'wss://relay.damus.io';
 test.describe('real relay comment', () => {
   test('posts when signer is available', async ({ page }) => {
     await page.goto('/');
-    const hasSigner = await page.evaluate(() => Boolean((window as any).nostr?.signEvent));
+    const hasSigner = await page.evaluate(() => {
+      const w = window as unknown as { nostr?: { signEvent?: unknown } };
+      return typeof w.nostr?.signEvent === 'function';
+    });
     test.skip(!hasSigner, 'No NIP-07 signer available in browser');
 
     // Set relay to single real relay

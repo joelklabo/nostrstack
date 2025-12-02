@@ -1,17 +1,21 @@
 import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { WalletPanel } from './WalletPanel';
-import { useEffect, useMemo, useState } from 'react';
+
+type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
-  ? relaysEnvRaw.split(',').map((r) => r.trim()).filter(Boolean)
+  ? relaysEnvRaw.split(',').map((r: string) => r.trim()).filter(Boolean)
   : ['wss://relay.damus.io'];
 const isMock = demoHost === 'mock' || apiBase === 'mock';
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
+const RELAY_STORAGE_KEY = 'nostrstack.relays';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -22,25 +26,121 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-function App() {
+function formatError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return 'unknown error';
+  }
+}
+
+function parseRelays(input: string): string[] {
+  return input
+    .split(',')
+    .map((r: string) => r.trim())
+    .filter(Boolean);
+}
+
+function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock?: () => void) {
+  useEffect(() => {
+    const tipHost = document.getElementById('tip-container');
+    const payHost = document.getElementById('pay-container');
+    const unlockHost = document.getElementById('unlock-status');
+    const commentsHost = document.getElementById('comments-container');
+    const relayStatus = document.getElementById('relay-status');
+    if (!tipHost || !payHost || !commentsHost) return;
+
+    tipHost.innerHTML = '';
+    payHost.innerHTML = '';
+    commentsHost.innerHTML = '';
+    if (unlockHost) {
+      unlockHost.textContent = 'Locked';
+    }
+
+    mountTipButton(tipHost, { username, amountSats: amount, host: demoHost, baseURL: apiBase });
+    mountPayToAction(payHost, {
+      username,
+      amountSats: amount,
+      host: demoHost,
+      baseURL: apiBase,
+      verifyPayment: isMock ? async () => true : undefined,
+      onUnlock: () => {
+        if (unlockHost) unlockHost.textContent = 'Unlocked!';
+        onUnlock?.();
+      }
+    });
+
+    const relays = relaysCsv ? parseRelays(relaysCsv) : relaysEnvDefault;
+
+    mountCommentWidget(commentsHost, {
+      threadId: 'demo-thread',
+      relays,
+      onRelayInfo: (info: RelayInfo) => {
+        if (!relayStatus) return;
+        const list = info.relays.length ? info.relays.join(', ') : 'mock';
+        relayStatus.textContent = '';
+        const badge = document.createElement('span');
+        badge.className = 'relay-pill';
+        const dot = document.createElement('span');
+        dot.className = `dot ${info.mode}`;
+        badge.appendChild(dot);
+        const label = document.createElement('span');
+        label.textContent = list;
+        badge.appendChild(label);
+        relayStatus.appendChild(badge);
+      }
+    });
+  }, [username, amount, relaysCsv, onUnlock]);
+}
+
+export default function App() {
   const [username, setUsername] = useState('alice');
   const [amount, setAmount] = useState(5);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [relaysInput, setRelaysInput] = useState(relaysEnvDefault.join(','));
+  const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
+  const [mockInvoice, setMockInvoice] = useState<string | null>(null);
+  const [locked, setLocked] = useState(true);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
 
-  const themeStyles = useMemo(() => (
-    theme === 'dark'
-      ? { background: '#0f172a', color: '#e2e8f0', borderColor: '#334155' }
-      : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' }
-  ), [theme]);
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
+    if (saved) setRelaysCsv(saved);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (relaysCsv) {
+      window.localStorage.setItem(RELAY_STORAGE_KEY, relaysCsv);
+    } else {
+      window.localStorage.removeItem(RELAY_STORAGE_KEY);
+    }
+  }, [relaysCsv]);
 
   useEffect(() => {
     autoMount();
   }, []);
 
-  const requestRealInvoice = async () => {
+  useEffect(() => {
+    setLocked(true);
+  }, [username, amount, relaysCsv]);
+
+  const handleUnlocked = useCallback(() => setLocked(false), []);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked);
+
+  const themeStyles = useMemo(
+    () =>
+      theme === 'dark'
+        ? { background: '#0f172a', color: '#e2e8f0', borderColor: '#334155' }
+        : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' },
+    [theme]
+  );
+
+  const makeBolt = useCallback(() => 'lntbs1u1p5demo' + Math.random().toString(16).slice(2), []);
+
+  const requestRealInvoice = useCallback(async () => {
     setRealBusy(true);
     setRealInvoice(null);
     try {
@@ -56,18 +156,27 @@ function App() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
-      setRealInvoice(body.payment_request || body.pr || 'invoice unavailable');
-    } catch (err: any) {
-      setRealInvoice(`error: ${err?.message ?? err}`);
+      const pr = body.payment_request ?? body.pr;
+      setRealInvoice(pr || 'invoice unavailable');
+    } catch (err: unknown) {
+      setRealInvoice(`error: ${formatError(err)}`);
     } finally {
       setRealBusy(false);
     }
-  };
+  }, [amount]);
 
   const walletKey = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'Inter, system-ui, sans-serif', background: themeStyles.background, color: themeStyles.color, minHeight: '100vh' }}>
+    <main
+      style={{
+        padding: '2rem',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        background: themeStyles.background,
+        color: themeStyles.color,
+        minHeight: '100vh'
+      }}
+    >
       <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
       <p>Play with the widgets below. Host is assumed to be {demoHost} for local dev.</p>
       <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} visible />
@@ -88,7 +197,7 @@ function App() {
         </label>
         <label style={{ marginLeft: '1rem' }}>
           Theme:&nbsp;
-          <select value={theme} onChange={(e) => setTheme(e.target.value as any)}>
+          <select value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
@@ -109,7 +218,6 @@ function App() {
 
       <Card title="Tip button">
         <div id="tip-container" />
-        {/* Test helper: mock invoice display */}
         <button data-testid="mock-tip" onClick={() => setMockInvoice(makeBolt())} style={{ marginTop: '0.5rem' }}>
           Generate tip invoice (mock)
         </button>
@@ -156,8 +264,13 @@ function App() {
           <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
           <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/mock comments, set relays to <code>mock</code>.
         </div>
+        <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
         <div id="comments-container" />
       </Card>
+
+      <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#475569' }}>
+        Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}
+      </div>
 
       <style>{`
         button { cursor: pointer; }
@@ -172,189 +285,3 @@ function App() {
     </main>
   );
 }
-
-function useMountWidgets(username: string, amount: number, relaysCsv: string) {
-  useEffect(() => {
-    const tipHost = document.getElementById('tip-container');
-    const payHost = document.getElementById('pay-container');
-    const unlockHost = document.getElementById('unlock-status');
-    const commentsHost = document.getElementById('comments-container');
-    const relayStatus = document.getElementById('relay-status');
-    if (!tipHost || !payHost || !commentsHost) return;
-
-    tipHost.innerHTML = '';
-    payHost.innerHTML = '';
-    commentsHost.innerHTML = '';
-    if (unlockHost) {
-      unlockHost.textContent = 'Locked';
-    }
-
-    mountTipButton(tipHost, { username, amountSats: amount, host: demoHost, baseURL: apiBase });
-    mountPayToAction(payHost, {
-      username,
-      amountSats: amount,
-      host: demoHost,
-      baseURL: apiBase,
-      verifyPayment: isMock ? async () => true : undefined,
-      onUnlock: () => unlockHost && (unlockHost.textContent = 'Unlocked!')
-    });
-    const relays = relaysCsv
-      ? relaysCsv.split(',').map((r) => r.trim()).filter(Boolean)
-      : relaysEnvDefault;
-
-    mountCommentWidget(commentsHost, {
-      threadId: 'demo-thread',
-      relays: relays,
-      onRelayInfo: (info) => {
-        if (!relayStatus) return;
-        const list = info.relays.length ? info.relays.join(', ') : 'mock';
-        relayStatus.textContent = '';
-        const badge = document.createElement('span');
-        badge.className = 'relay-pill';
-        const dot = document.createElement('span');
-        dot.className = `dot ${info.mode}`;
-        badge.appendChild(dot);
-        const label = document.createElement('span');
-        label.textContent = list;
-        badge.appendChild(label);
-        relayStatus.appendChild(badge);
-      }
-    });
-  }, [username, amount, relaysCsv]);
-}
-
-function WrappedApp() {
-  const [username, setUsername] = useState('alice');
-  const [amount, setAmount] = useState(5);
-  const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
-  useMountWidgets(username, amount, relaysCsv);
-
-  return (
-    <AppWithState
-      username={username}
-      amount={amount}
-      setUsername={setUsername}
-      setAmount={setAmount}
-      relaysCsv={relaysCsv}
-      setRelaysCsv={setRelaysCsv}
-    />
-  );
-}
-
-function AppWithState(props: {
-  username: string;
-  amount: number;
-  setUsername: (v: string) => void;
-  setAmount: (n: number) => void;
-  relaysCsv: string;
-  setRelaysCsv: (v: string) => void;
-}) {
-  // reuse App but with lifted state
-  const { username, amount, setUsername, setAmount, relaysCsv, setRelaysCsv } = props;
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [mockInvoice, setMockInvoice] = useState<string | null>(null);
-  const [locked, setLocked] = useState(true);
-
-  const makeBolt = () => 'lntbs1u1p5demo' + Math.random().toString(16).slice(2);
-  const setMockInvoiceSafe = (s: string | null) => setMockInvoice(s);
-
-  const themeStyles = useMemo(() => (
-    theme === 'dark'
-      ? { background: '#0f172a', color: '#e2e8f0', borderColor: '#334155' }
-      : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' }
-  ), [theme]);
-
-  // Persist relays in localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('nostrstack.relays');
-    if (saved) {
-      setRelaysCsv(saved);
-    }
-  }, [setRelaysCsv]);
-
-  useEffect(() => {
-    if (relaysCsv) {
-      localStorage.setItem('nostrstack.relays', relaysCsv);
-    } else {
-      localStorage.removeItem('nostrstack.relays');
-    }
-  }, [relaysCsv]);
-
-  useMountWidgets(username, amount);
-
-  return (
-    <main style={{ padding: '2rem', fontFamily: 'Inter, system-ui, sans-serif', background: themeStyles.background, color: themeStyles.color, minHeight: '100vh' }}>
-      <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
-      <p>Play with the widgets below. Host is assumed to be {demoHost} for local dev.</p>
-
-      <Card title="Config">
-        <label>
-          Username:&nbsp;
-          <input value={username} onChange={(e) => setUsername(e.target.value)} />
-        </label>
-        <label style={{ marginLeft: '1rem' }}>
-          Amount (sats):&nbsp;
-          <input type="number" min={1} value={amount} onChange={(e) => setAmount(Number(e.target.value) || 1)} />
-        </label>
-        <label style={{ marginLeft: '1rem' }}>
-          Theme:&nbsp;
-          <select value={theme} onChange={(e) => setTheme(e.target.value as any)}>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-      </Card>
-
-      <Card title="Tip button">
-        <div id="tip-container" />
-        <button data-testid="mock-tip" onClick={() => setMockInvoiceSafe(makeBolt())} style={{ marginTop: '0.5rem' }}>
-          Generate tip invoice (mock)
-        </button>
-        {mockInvoice && (
-          <div data-testid="invoice" style={{ marginTop: '0.5rem' }}>
-            <strong>BOLT11</strong>
-            <pre>{mockInvoice}</pre>
-          </div>
-        )}
-      </Card>
-
-      <Card title="Pay to unlock">
-        <div id="pay-container" />
-        <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
-          {locked ? 'Locked' : 'Unlocked!'}
-        </div>
-        <button
-          data-testid="mock-unlock"
-          onClick={() => {
-            setMockInvoiceSafe(makeBolt());
-            setLocked(false);
-          }}
-        >
-          Simulate unlock (mock)
-        </button>
-      </Card>
-
-      <Card title="Comments (Nostr)">
-        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
-          Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
-          <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
-          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/mock comments, set relays to <code>mock</code>.
-        </div>
-        <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
-        <div id="comments-container" />
-      </Card>
-
-      <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#475569' }}>
-        Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}
-      </div>
-
-      <style>{`
-        button { cursor: pointer; }
-        input, select, button, textarea { background: ${theme === 'dark' ? '#1e293b' : '#fff'}; color: ${themeStyles.color}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
-        section { border-color: ${themeStyles.borderColor}; }
-      `}</style>
-    </main>
-  );
-}
-
-export default WrappedApp;

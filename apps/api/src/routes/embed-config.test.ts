@@ -1,8 +1,8 @@
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import client from 'prom-client';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';

@@ -1,10 +1,9 @@
-import { expect, test } from '@playwright/test';
 import { execSync } from 'node:child_process';
 
+import { expect, test } from '@playwright/test';
+
 const shouldRun = process.env.REGTEST_SMOKE === 'true';
-const apiBase = process.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 const relaysCsv = process.env.VITE_NOSTRSTACK_RELAYS ?? 'mock';
-const relays = relaysCsv.split(',').map((r) => r.trim()).filter(Boolean);
 
 const payInvoice = (bolt11: string) => {
   execSync(

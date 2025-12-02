@@ -1,6 +1,4 @@
-import { expect,test } from '@playwright/test';
-
-const amount = 100; // sats for smoke
+import { expect, test } from '@playwright/test';
 
 test('tip button renders', async ({ page }) => {
   await page.goto('/');

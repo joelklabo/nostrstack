@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
 import { mountTipButton } from '@nostrstack/embed';
+import React, { useEffect, useRef } from 'react';
+
 import { useNostrstackConfig } from './context';
 import { parseLnAddress } from './utils';
 

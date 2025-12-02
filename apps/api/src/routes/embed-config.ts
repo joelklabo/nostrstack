@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+
 import { env } from '../env.js';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];

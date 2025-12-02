@@ -1,6 +1,6 @@
 import type { LnbitsProvider } from './lnbits.js';
-import type { OpenNodeProvider } from './opennode.js';
 import type { MockLightningProvider } from './mock.js';
+import type { OpenNodeProvider } from './opennode.js';
 
 export type LightningProvider = Pick<OpenNodeProvider | LnbitsProvider | MockLightningProvider, 'createCharge' | 'getCharge'>;
 
