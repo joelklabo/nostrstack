@@ -11,6 +11,7 @@ import { KeyToggle } from './KeyToggle';
 import { Nip07Status } from './Nip07Status';
 import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
+import { RelayCard } from './RelayCard';
 import { WalletPanel } from './WalletPanel';
 import { colors, layout } from './tokens';
 
@@ -669,30 +670,18 @@ export default function App() {
               <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
               <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. Or flip on the built-in test signer in Config for regtest/CI. For offline/local comments, set relays to <code>mock</code> (no relay writes).
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: '0.5rem' }}>
               {(relaysList.length ? relaysList : relaysEnvDefault).map((r: string) => {
                 const data = relayStats[r] ?? { recv: 0 };
-                const active = relayMode === 'mock' || r === 'mock' ? 'mock' : 'real';
-                const hot = data.last && Date.now() - data.last < 3000;
-                const sendTone = data.sendStatus === 'sending' ? '#0ea5e9' : data.sendStatus === 'ok' ? '#22c55e' : data.sendStatus === 'error' ? '#ef4444' : '#94a3b8';
                 return (
-                  <div key={r} className="relay-chip" style={{ background: isDark ? '#0b1220' : '#f8fafc', border: `1px solid ${themeStyles.borderColor}` }}>
-                    <span className={`chip-dot ${active}${hot ? ' pulse' : ''}`} />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem', minWidth: 0 }}>
-                      <strong style={{ fontSize: '0.95rem' }}>{relayDisplayName(r)}</strong>
-                      <span style={{ fontSize: '0.82rem', color: '#475569', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {(data.name || '—')}{data.software ? ` • ${data.software}` : ''}
-                      </span>
-                    </div>
-                    <span className="chip-count">
-                      recv {data.recv}
-                      {data.sendStatus ? (
-                        <span style={{ marginLeft: 6, color: sendTone, fontWeight: 700 }}>
-                          {data.sendStatus === 'sending' ? '…' : data.sendStatus === 'ok' ? '✓' : '!' }
-                        </span>
-                      ) : null}
-                    </span>
-                  </div>
+                  <RelayCard
+                    key={r}
+                    url={r}
+                    meta={{ name: data.name, software: data.software }}
+                    recv={data.recv}
+                    sendStatus={data.sendStatus}
+                    last={data.last ?? data.lastSentAt}
+                  />
                 );
               })}
             </div>
