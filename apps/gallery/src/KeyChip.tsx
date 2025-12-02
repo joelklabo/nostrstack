@@ -18,11 +18,11 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
     try {
       if (format === 'npub') {
         const encoded = showPriv ? nip19.nsecEncode(key as any) : nip19.npubEncode(key as any);
-        return truncate(encoded);
+        return truncate(encoded, 6);
       }
-      return truncate(key);
+      return truncate(key, 6);
     } catch {
-      return truncate(key);
+      return truncate(key, 6);
     }
   }, [format, pubkey, seckey, showPriv]);
 
@@ -38,7 +38,7 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: compact ? '6px 10px' : '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, fontSize: '0.9rem' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: compact ? '6px 10px' : '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, fontSize: '0.9rem', minWidth: 0, maxWidth: '100%' }}>
         <button
           type="button"
           onClick={() => setShowPriv((v) => !v)}
@@ -50,7 +50,7 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
           <option value="npub">npub/nsec</option>
           <option value="hex">hex</option>
         </select>
-        <code style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{display}</code>
+        <code style={{ fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{display}</code>
       </div>
       <button
         type="button"
