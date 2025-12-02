@@ -18,6 +18,7 @@
     "check": "pnpm lint && pnpm test && pnpm typecheck",
     "deps": "pnpm install",
     "deps:prod": "NODE_ENV=production pnpm install --frozen-lockfile --prod",
+    "demo:regtest": "./scripts/demo-regtest.sh",
     "dev:api": "pnpm --filter api dev",
     "dev:gallery": "pnpm --filter gallery dev -- --host --port 4173",
     "deploy:staging": "gh workflow run azure-deploy-staging.yml --repo joelklabo/nostrstack",

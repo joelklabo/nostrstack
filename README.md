@@ -39,4 +39,13 @@ Observability:
 - Prometheus metrics at `/metrics` (per-tenant labels), enabled by default.
 - OpenTelemetry traces/metrics optional: set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` (plus `OTEL_EXPORTER_OTLP_HEADERS` if needed). Service name defaults to `nostrstack-api`.
 
+## Demo modes (phased)
+- **Regtest (real nostr):** One command spins up bitcoind + LNDs + LNbits + Postgres + API + gallery with real invoices and real relay comments.
+  ```sh
+  pnpm demo:regtest   # requires colima + docker, opens API on :3001 and gallery on :4173
+  ```
+  The script prints the LNbits admin key and reuses Postgres on localhost:65432.
+- **Mutinynet (real nostr):** TODO (see epic lightning-8er).
+- **Mainnet (real nostr):** TODO with safety gates (see epic lightning-8er).
+
 See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.
