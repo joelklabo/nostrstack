@@ -21,9 +21,11 @@
     "demo:regtest": "./scripts/demo-regtest.sh",
     "dev:api": "pnpm --filter api dev",
     "dev:gallery": "pnpm --filter gallery dev -- --host --port 4173",
+    "demo:mutinynet": "./scripts/demo-mutinynet.sh",
     "deploy:staging": "gh workflow run azure-deploy-staging.yml --repo joelklabo/nostrstack",
     "deploy:prod": "gh workflow run azure-deploy.yml --repo joelklabo/nostrstack",
-    "nostrstack": "pnpm --filter @nostrstack/injector exec nostrstack-inject"
+    "nostrstack": "pnpm --filter @nostrstack/injector exec nostrstack-inject",
+    "demo:mainnet": "./scripts/demo-mainnet.sh"
   },
   "pnpm": {
     "overrides": {
