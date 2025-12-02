@@ -486,7 +486,10 @@ export default function App() {
             const bg = isDark ? '#0b1220' : '#f8fafc';
             return (
               <div key={h.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 0.75rem', borderRadius: 10, background: bg, border: `1px solid ${themeStyles.borderColor}` }}>
-                <span style={{ width: 12, height: 12, borderRadius: 999, background: color, boxShadow: h.status === 'ok' ? '0 0 0 6px rgba(34,197,94,0.2)' : 'none' }} />
+                <span
+                  className={h.status === 'ok' ? 'status-dot pulse' : 'status-dot'}
+                  style={{ width: 12, height: 12, borderRadius: 999, background: color }}
+                />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                   <span style={{ fontWeight: 700 }}>{h.label}</span>
                   <span style={{ fontSize: '0.9rem', color: '#475569' }}>{h.status}{h.detail ? ` – ${h.detail}` : ''}</span>
@@ -505,6 +508,7 @@ export default function App() {
         .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
         .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
         .relay-pill .dot.mock { background: #94a3b8; }
+        .status-dot.pulse { box-shadow: 0 0 0 0 rgba(34,197,94,0.25); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
       `}</style>
     </main>
