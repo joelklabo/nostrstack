@@ -13,6 +13,15 @@ const postgresDefault = 'postgres://nostrstack:nostrstack@localhost:5432/nostrst
 
 const defaultDatabaseUrl = process.env.NODE_ENV === 'test' ? sqliteDefault : postgresDefault;
 
+const bool = () =>
+  z.preprocess(
+    (val) => {
+      if (typeof val === 'string') return ['1', 'true', 'yes', 'on'].includes(val.toLowerCase());
+      return val;
+    },
+    z.boolean()
+  );
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3001),
@@ -36,8 +45,8 @@ const schema = z.object({
   NOSTR_THEME_TEXT: z.string().optional(),
   NOSTR_THEME_SURFACE: z.string().optional(),
   NOSTR_THEME_BORDER: z.string().optional(),
-  DEV_MOCKS: z.coerce.boolean().default(false),
-  OTEL_ENABLED: z.coerce.boolean().default(false),
+  DEV_MOCKS: bool().default(false),
+  OTEL_ENABLED: bool().default(false),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
   OTEL_SERVICE_NAME: z.string().default('nostrstack-api')

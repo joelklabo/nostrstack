@@ -12,6 +12,7 @@ process.env.PUBLIC_ORIGIN = 'https://demo.nostrstack.lol';
 process.env.NOSTR_RELAYS = 'wss://relay.one,wss://relay.two';
 process.env.NOSTR_EMBED_CDN = 'https://cdn.example.com/embed.js';
 process.env.NOSTR_THEME_ACCENT = '#ff00ff';
+process.env.DEV_MOCKS = 'false';
 
 type Server = Awaited<ReturnType<typeof import('../server.js')['buildServer']>>;
 let server: Server;
