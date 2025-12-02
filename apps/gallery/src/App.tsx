@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
+type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'mock' | 'unknown'; detail?: string };
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
@@ -104,6 +105,10 @@ export default function App() {
   const [locked, setLocked] = useState(true);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
+  const [health, setHealth] = useState<Health[]>([
+    { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
+    { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
+  ]);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
@@ -126,6 +131,28 @@ export default function App() {
   useEffect(() => {
     setLocked(true);
   }, [username, amount, relaysCsv]);
+
+  useEffect(() => {
+    const fetchHealth = async () => {
+      if (apiBase === 'mock') return;
+      const results: Health[] = [];
+      try {
+        const apiRes = await fetch(`${apiBase}/health`);
+        results.push({ label: 'API', status: apiRes.ok ? 'ok' : 'fail', detail: `http ${apiRes.status}` });
+      } catch (err) {
+        results.push({ label: 'API', status: 'error', detail: formatError(err) });
+      }
+      try {
+        const lnRes = await fetch(`${apiBase}/health/lnbits`);
+        const body = await lnRes.json();
+        results.push({ label: 'LNbits', status: body.status ?? (lnRes.ok ? 'ok' : 'fail'), detail: body.reason || body.error || `http ${lnRes.status}` });
+      } catch (err) {
+        results.push({ label: 'LNbits', status: 'error', detail: formatError(err) });
+      }
+      setHealth(results);
+    };
+    fetchHealth();
+  }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
   useMountWidgets(username, amount, relaysCsv, handleUnlocked);
@@ -268,8 +295,21 @@ export default function App() {
         <div id="comments-container" />
       </Card>
 
-      <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#475569' }}>
-        Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}
+      <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#475569', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <span>Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</span>
+        {health.map((h) => (
+          <span key={h.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{
+              width: 10,
+              height: 10,
+              borderRadius: 999,
+              background: h.status === 'ok' ? '#22c55e' : h.status === 'mock' ? '#94a3b8' : '#ef4444',
+              boxShadow: h.status === 'ok' ? '0 0 0 6px rgba(34,197,94,0.25)' : 'none'
+            }} />
+            <span>{h.label}: {h.status}</span>
+            {h.detail ? <span style={{ color: '#94a3b8' }}>({h.detail})</span> : null}
+          </span>
+        ))}
       </div>
 
       <style>{`
