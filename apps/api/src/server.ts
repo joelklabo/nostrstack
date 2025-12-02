@@ -16,6 +16,7 @@ import { LnbitsProvider } from './providers/lnbits.js';
 import { MockLightningProvider } from './providers/mock.js';
 import { OpenNodeProvider } from './providers/opennode.js';
 import { registerRoutes } from './routes/index.js';
+import { registerRegtestFaucetRoute } from './routes/regtest-faucet.js';
 import { setupRoutes } from './setup-routes.js';
 import { metricsPlugin } from './telemetry/metrics.js';
 import { requestIdHook } from './telemetry/request-id.js';
@@ -87,6 +88,7 @@ export async function buildServer() {
 
   setupRoutes(server);
   await registerRoutes(server);
+  await registerRegtestFaucetRoute(server);
   await ensureDefaultTenant(server);
 
   if (stopTracing) {
