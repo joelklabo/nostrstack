@@ -5,17 +5,6 @@ type LnbitsConfig = {
   apiKey: string;
 };
 
-type CreateChargeResponse = {
-  payment_request?: string;
-  payment_hash?: string;
-  checking_id?: string;
-};
-
-type GetChargeResponse = {
-  paid?: boolean;
-  pending?: boolean;
-};
-
 export class LnbitsProvider {
   constructor(private readonly cfg: LnbitsConfig, private readonly log: FastifyBaseLogger) {}
 

@@ -6,6 +6,7 @@ import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import Fastify from 'fastify';
+import type { LogFn } from 'pino';
 
 import { env } from './env.js';
 import { rawBodyPlugin } from './hooks/raw-body.js';
@@ -17,22 +18,39 @@ import { MockLightningProvider } from './providers/mock.js';
 import { OpenNodeProvider } from './providers/opennode.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryWs } from './routes/telemetry-ws.js';
+import { createLogHub } from './services/log-hub.js';
+import { createPayEventHub } from './services/pay-events.js';
 import { setupRoutes } from './setup-routes.js';
 import { metricsPlugin } from './telemetry/metrics.js';
 import { requestIdHook } from './telemetry/request-id.js';
 import { startTracing } from './telemetry/tracing.js';
-import { createPayEventHub } from './services/pay-events.js';
 
 export async function buildServer() {
   const stopTracing = startTracing(env);
+  const logHub = createLogHub({ bufferSize: 500 });
 
   const server = Fastify({
     logger: {
       level: env.LOG_LEVEL,
       transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
-      redact: ['req.headers.authorization']
+      redact: ['req.headers.authorization'],
+      hooks: {
+        logMethod(inputArgs, method: LogFn & { level?: string | number; levelVal?: number }) {
+          try {
+            const meta = method as { level?: string | number; levelVal?: number; apply: LogFn['apply'] };
+            const level = meta.level ?? meta.levelVal ?? 'info';
+            const msg = inputArgs.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+            logHub.publish({ ts: Date.now(), level, message: msg, data: inputArgs[0] });
+          } catch {
+            // swallow log hook errors
+          }
+          return method.apply(this, inputArgs as Parameters<LogFn>);
+        }
+      }
     }
   });
+
+  server.decorate('logHub', logHub);
 
   await server.register(sensible);
   await server.register(cors, { origin: true });

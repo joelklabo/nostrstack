@@ -4,6 +4,7 @@ import { registerAdminTenantRoutes } from './admin-tenants.js';
 import { registerAdminUserRoutes } from './admin-users.js';
 import { registerEmbedConfigRoute } from './embed-config.js';
 import { registerLnurlCallback } from './lnurlp-callback.js';
+import { registerLogStreamRoute } from './log-stream.js';
 import { registerPayRoutes } from './pay.js';
 import { registerRegtestFundRoute } from './regtest-fund.js';
 import { registerTenantRoutes } from './tenants.js';
@@ -16,6 +17,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerAdminUserRoutes(app);
   await registerPayRoutes(app);
   await registerRegtestFundRoute(app);
+  await registerLogStreamRoute(app);
 }
 
 declare module 'fastify' {
@@ -24,5 +26,6 @@ declare module 'fastify' {
     lightningProvider: import('../providers/index.js').LightningProvider;
     nostrClient?: import('../nostr/nostr-client.js').NostrClient;
     nostrRelays?: string[];
+    logHub: import('../services/log-hub.js').LogHub;
   }
 }

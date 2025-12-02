@@ -1,6 +1,7 @@
+import { spawn } from 'node:child_process';
+
 import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
-import { spawn } from 'node:child_process';
 
 type TelemetryEvent =
   | { type: 'block'; height: number; hash: string; time: number }

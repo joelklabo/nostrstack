@@ -1,9 +1,9 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance , FastifyReply, FastifyRequest } from 'fastify';
 
 import { regtestFund } from '../services/regtest-fund.js';
 
 export async function registerRegtestFundRoute(app: FastifyInstance) {
-  const handler = async (_req: any, reply: any) => {
+  const handler = async (_req: FastifyRequest, reply: FastifyReply) => {
     try {
       const res = await regtestFund();
       reply.send({ ok: true, ...res });
