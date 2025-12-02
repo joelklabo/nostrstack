@@ -586,10 +586,24 @@ export default function App() {
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             <span>Theme</span>
-            <select value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
+            <div role="group" aria-label="Theme" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setTheme('light')}
+                style={tabBtn(theme === 'light', themeStyles)}
+                aria-pressed={theme === 'light'}
+              >
+                Light
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme('dark')}
+                style={tabBtn(theme === 'dark', themeStyles)}
+                aria-pressed={theme === 'dark'}
+              >
+                Dark
+              </button>
+            </div>
           </label>
         </div>
 
