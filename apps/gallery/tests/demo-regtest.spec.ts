@@ -2,8 +2,13 @@ import { execSync } from 'node:child_process';
 
 import { expect, test } from '@playwright/test';
 
+import { enableTestSigner, expectRelayMode, postComment, setRelays } from './helpers';
+
 const shouldRun = process.env.REGTEST_SMOKE === 'true';
-const relaysCsv = process.env.VITE_NOSTRSTACK_RELAYS ?? 'mock';
+const relaysCsv =
+  process.env.REAL_RELAY ||
+  (process.env.VITE_NOSTRSTACK_RELAYS && process.env.VITE_NOSTRSTACK_RELAYS !== 'mock' ? process.env.VITE_NOSTRSTACK_RELAYS : undefined) ||
+  'wss://relay.damus.io';
 
 const payInvoice = (bolt11: string) => {
   execSync(
@@ -20,20 +25,15 @@ test.describe('regtest demo (real payments + comments)', () => {
 
   test('comments, mock tip, pay unlock, real invoice + pay', async ({ page }) => {
     await page.goto('/');
-    // Set relays if provided (so we exercise the UI selector and avoid mock fallback note)
-    if (relaysCsv) {
-      const relayInput = page.locator('input[placeholder="mock or wss://relay1,wss://relay2"]').first();
-      if (await relayInput.count()) {
-        await relayInput.fill(relaysCsv);
-      }
-    }
+    await setRelays(page, relaysCsv);
+    await enableTestSigner(page);
+    const relayMode = relaysCsv.includes('mock') ? 'mock' : 'real';
+    await expectRelayMode(page, relayMode);
 
-    // Comments (relays from selector)
-    const commentBox = page.locator('#comments-container textarea').first();
-    await commentBox.waitFor({ timeout: 5000 });
-    await commentBox.fill('hello from e2e');
-    await page.locator('#comments-container button', { hasText: 'Post' }).first().click();
-    await expect(page.locator('#comments-container')).toContainText('hello from e2e');
+    // Comments (real relay if provided)
+    const commentText = `hello from regtest ${Date.now()}`;
+    await postComment(page, commentText);
+    await expect(page.locator('#comments-container')).toContainText(commentText, { timeout: 15000 });
 
     // Mock tip invoice
     await page.getByTestId('mock-tip').click();

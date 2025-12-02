@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { expectRelayMode, toggleTheme } from './helpers';
+
 test('tip button renders', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('mock-tip')).toBeVisible();
@@ -56,4 +58,18 @@ test('embed comments accept mock post', async ({ page }) => {
   await commentBox.first().fill('Hello comments');
   await page.locator('#comments-container button', { hasText: 'Post' }).click();
   await expect(page.locator('#comments-container')).toContainText('Hello comments');
+});
+
+test('relay badge renders in mock mode', async ({ page }) => {
+  await page.goto('/');
+  await expectRelayMode(page, 'mock');
+});
+
+test('theme toggle flips background', async ({ page }) => {
+  await page.goto('/');
+  const main = page.locator('main');
+  const lightBg = await main.evaluate((el) => getComputedStyle(el).backgroundColor);
+  await toggleTheme(page, 'dark');
+  const darkBg = await main.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(darkBg).not.toBe(lightBg);
 });
