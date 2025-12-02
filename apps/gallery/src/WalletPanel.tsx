@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { CopyButton } from './CopyButton';
+
 export function WalletPanel({
   lnbitsUrl,
   adminKey,
@@ -15,9 +17,16 @@ export function WalletPanel({
       <strong>Test wallet (LNbits regtest)</strong>
       <ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
         <li>
-          Open LNbits UI: <a href={lnbitsUrl} target="_blank" rel="noreferrer">{lnbitsUrl}</a>
+          Open LNbits UI:&nbsp;
+          <a href={lnbitsUrl} target="_blank" rel="noreferrer">{lnbitsUrl}</a>
+          <span style={{ marginLeft: '0.5rem' }}>
+            <CopyButton text={lnbitsUrl} label="Copy URL" />
+          </span>
         </li>
-        <li>Admin key: <code>{adminKey}</code></li>
+        <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span>Admin key: <code>{adminKey}</code></span>
+          <CopyButton text={adminKey} label="Copy key" />
+        </li>
         <li>
           Need funds? Run <code>./scripts/regtest-fund.sh</code> (mines coins + opens outbound channel for spending).
         </li>

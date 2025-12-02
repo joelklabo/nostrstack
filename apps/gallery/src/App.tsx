@@ -1,6 +1,7 @@
 import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { CopyButton } from './CopyButton';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
@@ -27,6 +28,40 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
+type PillTone = 'info' | 'success' | 'warn' | 'muted';
+
+function Pill({ label, value, tone = 'info', theme }: { label: string; value: string; tone?: PillTone; theme: 'light' | 'dark' }) {
+  const toneColor: Record<PillTone, string> = {
+    info: '#3b82f6',
+    success: '#22c55e',
+    warn: '#f59e0b',
+    muted: '#94a3b8'
+  };
+  const background = theme === 'dark' ? '#111827' : '#fff';
+  const border = `${toneColor[tone]}33`;
+  const textColor = theme === 'dark' ? '#e2e8f0' : '#0f172a';
+  const subColor = theme === 'dark' ? '#cbd5e1' : '#475569';
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.4rem',
+        padding: '0.4rem 0.75rem',
+        borderRadius: 999,
+        border: `1px solid ${border}`,
+        background,
+        color: textColor,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+      }}
+    >
+      <span style={{ fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: subColor, fontWeight: 700 }}>{label}</span>
+      <span style={{ fontWeight: 700 }}>{value}</span>
+    </span>
+  );
+}
+
 function formatError(err: unknown): string {
   if (err instanceof Error) return err.message;
   if (typeof err === 'string') return err;
@@ -42,6 +77,11 @@ function parseRelays(input: string): string[] {
     .split(',')
     .map((r: string) => r.trim())
     .filter(Boolean);
+}
+
+function compactRelaysLabel(relays: string, max = 32) {
+  if (relays.length <= max) return relays;
+  return `${relays.slice(0, max)}…`;
 }
 
 function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock?: () => void) {
@@ -193,6 +233,9 @@ export default function App() {
   }, [amount]);
 
   const walletKey = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
+  const relayMode = relaysCsv.includes('mock') ? 'mock' : 'real';
+  const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
+  const isDark = theme === 'dark';
 
   return (
     <main
@@ -205,7 +248,18 @@ export default function App() {
       }}
     >
       <h1 style={{ marginTop: 0 }}>nostrstack Demo</h1>
-      <p>Play with the widgets below. Host is assumed to be {demoHost} for local dev.</p>
+      <p style={{ maxWidth: 780 }}>
+        Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use the relays you set.
+      </p>
+
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <Pill label="Host" value={demoHost} tone={isMock ? 'muted' : 'info'} theme={theme} />
+        <Pill label="API" value={apiBase === 'mock' ? 'mock' : apiBase} tone={apiBase === 'mock' ? 'muted' : 'info'} theme={theme} />
+        <Pill label="Payments" value={enableReal ? 'real invoices' : 'mock only'} tone={enableReal ? 'success' : 'warn'} theme={theme} />
+        <Pill label="Comments" value={relayMode === 'mock' ? 'mock relays' : 'real Nostr'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
+        <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" theme={theme} />
+      </div>
+
       <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} visible />
       {!enableReal && (
         <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
@@ -213,104 +267,128 @@ export default function App() {
         </div>
       )}
 
-      <Card title="Config">
-        <label>
-          Username:&nbsp;
-          <input value={username} onChange={(e) => setUsername(e.target.value)} />
-        </label>
-        <label style={{ marginLeft: '1rem' }}>
-          Amount (sats):&nbsp;
-          <input type="number" min={1} value={amount} onChange={(e) => setAmount(Number(e.target.value) || 1)} />
-        </label>
-        <label style={{ marginLeft: '1rem' }}>
-          Theme:&nbsp;
-          <select value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <label style={{ marginLeft: '1rem' }}>
-          Relays (comments):&nbsp;
-          <input
-            style={{ width: '18rem' }}
-            value={relaysCsv}
-            onChange={(e) => setRelaysCsv(e.target.value)}
-            placeholder="mock or wss://relay1,wss://relay2"
-          />
-        </label>
-        <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
-          Using relays: {relaysCsv || relaysEnvDefault.join(',') || 'mock'} {relaysCsv.includes('mock') ? '(mock mode)' : ''}
+      <Card title="Config & presets">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <span>Username</span>
+            <input value={username} onChange={(e) => setUsername(e.target.value)} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <span>Amount (sats)</span>
+            <input type="number" min={1} value={amount} onChange={(e) => setAmount(Number(e.target.value) || 1)} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <span>Theme</span>
+            <select value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </div>
+
+        <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <span>Relays (comments)</span>
+            <input
+              style={{ width: '100%' }}
+              value={relaysCsv}
+              onChange={(e) => setRelaysCsv(e.target.value)}
+              placeholder="mock or wss://relay1,wss://relay2"
+            />
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>Use real defaults</button>
+            <button type="button" onClick={() => setRelaysCsv('mock')}>Use mock/offline</button>
+            <CopyButton text={relayLabel} label="Copy relays" />
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+            Using: {relayLabel} {relayMode === 'mock' ? '(mock mode: local only)' : '(real Nostr relays)'}
+          </div>
         </div>
       </Card>
 
-      <Card title="Tip button">
-        <div id="tip-container" />
-        <button data-testid="mock-tip" onClick={() => setMockInvoice(makeBolt())} style={{ marginTop: '0.5rem' }}>
-          Generate tip invoice (mock)
-        </button>
-        {mockInvoice && (
-          <div data-testid="invoice" style={{ marginTop: '0.5rem' }}>
-            <strong>BOLT11</strong>
-            <pre>{mockInvoice}</pre>
-          </div>
-        )}
-        {enableReal && (
-          <div style={{ marginTop: '0.75rem' }}>
-            <button onClick={requestRealInvoice} disabled={realBusy}>
-              {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
-            </button>
-            {realInvoice && (
-              <div data-testid="real-invoice" style={{ marginTop: '0.5rem' }}>
-                <strong>BOLT11</strong>
-                <pre>{realInvoice}</pre>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
+      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+        <Card title="Tip button">
+          <div style={{ marginBottom: '0.5rem', color: '#475569' }}>LNURLp flow. Mock button is instant; real invoice hits the API.</div>
+          <div id="tip-container" />
+          <button data-testid="mock-tip" onClick={() => setMockInvoice(makeBolt())} style={{ marginTop: '0.5rem' }}>
+            Generate tip invoice (mock)
+          </button>
+          {mockInvoice && (
+            <div data-testid="invoice" style={{ marginTop: '0.5rem' }}>
+              <strong>BOLT11</strong>
+              <pre>{mockInvoice}</pre>
+            </div>
+          )}
+          {enableReal && (
+            <div style={{ marginTop: '0.75rem' }}>
+              <button onClick={requestRealInvoice} disabled={realBusy}>
+                {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
+              </button>
+              {realInvoice && (
+                <div data-testid="real-invoice" style={{ marginTop: '0.5rem' }}>
+                  <strong>BOLT11</strong>
+                  <pre>{realInvoice}</pre>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
 
-      <Card title="Pay to unlock">
-        <div id="pay-container" />
-        <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
-          {locked ? 'Locked' : 'Unlocked!'}
-        </div>
-        <button
-          data-testid="mock-unlock"
-          onClick={() => {
-            setMockInvoice(makeBolt());
-            setLocked(false);
-          }}
-        >
-          Simulate unlock (mock)
-        </button>
-      </Card>
+        <Card title="Pay to unlock">
+          <div style={{ marginBottom: '0.5rem', color: '#475569' }}>Creates an invoice and unlocks after verification (mock auto-verifies).</div>
+          <div id="pay-container" />
+          <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
+            {locked ? 'Locked' : 'Unlocked!'}
+          </div>
+          <button
+            data-testid="mock-unlock"
+            onClick={() => {
+              setMockInvoice(makeBolt());
+              setLocked(false);
+            }}
+          >
+            Simulate unlock (mock)
+          </button>
+        </Card>
+      </div>
 
       <Card title="Comments (Nostr)">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+          <Pill label="Mode" value={relayMode === 'mock' ? 'mock (local)' : 'real relays'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
+          <span style={{ fontSize: '0.9rem', color: '#475569' }}>Relays: {relayLabel}</span>
+        </div>
         <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
           Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
           <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
-          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/mock comments, set relays to <code>mock</code>.
+          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. For offline/local comments, set relays to <code>mock</code> (no relay writes).
         </div>
         <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
         <div id="comments-container" />
       </Card>
 
-      <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#475569', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <span>Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</span>
-        {health.map((h) => (
-          <span key={h.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{
-              width: 10,
-              height: 10,
-              borderRadius: 999,
-              background: h.status === 'ok' ? '#22c55e' : h.status === 'mock' ? '#94a3b8' : '#ef4444',
-              boxShadow: h.status === 'ok' ? '0 0 0 6px rgba(34,197,94,0.25)' : 'none'
-            }} />
-            <span>{h.label}: {h.status}</span>
-            {h.detail ? <span style={{ color: '#94a3b8' }}>({h.detail})</span> : null}
-          </span>
-        ))}
-      </div>
+      <Card title="Status & build">
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem', color: '#475569' }}>
+          <span>Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</span>
+          <span>Host: {demoHost}</span>
+          <span>API base: {apiBase}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.6rem' }}>
+          {health.map((h) => {
+            const color = h.status === 'ok' ? '#22c55e' : h.status === 'mock' ? '#94a3b8' : '#ef4444';
+            const bg = isDark ? '#0b1220' : '#f8fafc';
+            return (
+              <div key={h.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 0.75rem', borderRadius: 10, background: bg, border: `1px solid ${themeStyles.borderColor}` }}>
+                <span style={{ width: 12, height: 12, borderRadius: 999, background: color, boxShadow: h.status === 'ok' ? '0 0 0 6px rgba(34,197,94,0.2)' : 'none' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                  <span style={{ fontWeight: 700 }}>{h.label}</span>
+                  <span style={{ fontSize: '0.9rem', color: '#475569' }}>{h.status}{h.detail ? ` – ${h.detail}` : ''}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
 
       <style>{`
         button { cursor: pointer; }
