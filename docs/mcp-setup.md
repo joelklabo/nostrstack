@@ -1,8 +1,8 @@
 # Chrome DevTools MCP setup (local demo)
 
-## Install
+## Install / run
 - Start Chrome with remote debugging: `./scripts/mcp-chrome.sh` (defaults port 9222).
-- Run MCP server: `npx -y chrome-devtools-mcp@latest --browser-url=http://127.0.0.1:9222`.
+- Start the MCP server: `./scripts/mcp-devtools-server.sh` (wraps `chrome-devtools-mcp@latest`).
 
 ## Client config (example)
 ```json
@@ -15,6 +15,7 @@
   }
 }
 ```
+You can also copy `mcp.config.json` from the repo root into your MCP client config location (e.g., `~/.config/claude/claude_desktop_config.json` or `~/Library/Application Support/Code/User/globalStorage/mcp.json`) and merge it.
 
 ## Targets
 - Demo UI: http://localhost:4173
