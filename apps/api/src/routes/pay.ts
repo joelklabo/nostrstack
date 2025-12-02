@@ -41,12 +41,17 @@ export async function registerPayRoutes(app: FastifyInstance) {
       }
     });
 
-    return reply.code(201).send({
+    const response = {
       status: 'pending',
       payment_request: charge.invoice,
       pr: charge.invoice,
       provider_ref: charge.id
-    });
+    };
+
+    // emit WS event for front-end to subscribe
+    app.payEventHub?.broadcast({ type: 'invoice-paid', pr: charge.invoice, providerRef: charge.id, amount: body.amount });
+
+    return reply.code(201).send(response);
   });
 
   app.get('/api/lnurlp/pay/status/:id', {

@@ -21,6 +21,7 @@ import { setupRoutes } from './setup-routes.js';
 import { metricsPlugin } from './telemetry/metrics.js';
 import { requestIdHook } from './telemetry/request-id.js';
 import { startTracing } from './telemetry/tracing.js';
+import { createPayEventHub } from './services/pay-events.js';
 
 export async function buildServer() {
   const stopTracing = startTracing(env);
@@ -89,6 +90,7 @@ export async function buildServer() {
   setupRoutes(server);
   await registerRoutes(server);
   await registerTelemetryWs(server);
+  createPayEventHub(server);
   await ensureDefaultTenant(server);
 
   if (stopTracing) {

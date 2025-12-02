@@ -6,10 +6,11 @@ import { CopyButton } from './CopyButton';
 export type InvoicePopoverProps = {
   invoice: string | null;
   amountSats?: number;
+  status?: 'pending' | 'paid' | 'error';
   onClose: () => void;
 };
 
-export function InvoicePopover({ invoice, amountSats, onClose }: InvoicePopoverProps) {
+export function InvoicePopover({ invoice, amountSats, status = 'pending', onClose }: InvoicePopoverProps) {
   const [dataUrl, setDataUrl] = useState<string>('');
 
   useEffect(() => {
@@ -30,6 +31,9 @@ export function InvoicePopover({ invoice, amountSats, onClose }: InvoicePopoverP
           <button onClick={onClose} style={closeBtnStyle}>×</button>
         </div>
         {displayAmount && <div style={{ marginBottom: '0.5rem', color: '#64748b' }}>{displayAmount}</div>}
+        <div style={{ marginBottom: '0.5rem', fontWeight: 700, color: status === 'paid' ? '#22c55e' : '#f97316' }}>
+          {status === 'paid' ? 'Paid' : 'Waiting for payment'}
+        </div>
         {dataUrl ? (
           <img src={dataUrl} alt="Lightning invoice QR" style={{ width: '220px', height: '220px', borderRadius: 12, boxShadow: '0 12px 30px rgba(0,0,0,0.12)', marginBottom: '0.75rem' }} />
         ) : (

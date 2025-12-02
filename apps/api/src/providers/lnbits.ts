@@ -36,9 +36,9 @@ export class LnbitsProvider {
       this.log.error({ status: res.status, text }, 'LNbits createCharge failed');
       throw new Error('LNbits createCharge failed');
     }
-    const json = (await res.json()) as GetChargeResponse;
-    const invoice = json?.payment_request;
-    const id = json?.payment_hash || json?.checking_id;
+    const json = (await res.json()) as Record<string, unknown>;
+    const invoice = (json.payment_request as string) || (json.pr as string);
+    const id = (json.payment_hash as string) || (json.checking_id as string);
     if (!invoice || !id) {
       this.log.error({ json }, 'LNbits createCharge missing fields');
       throw new Error('LNbits createCharge missing fields');
@@ -55,9 +55,10 @@ export class LnbitsProvider {
       this.log.warn({ status: res.status, text }, 'LNbits getCharge failed');
       throw new Error('LNbits getCharge failed');
     }
-    const json = (await res.json()) as CreateChargeResponse;
+    const json = (await res.json()) as Record<string, unknown>;
     const paid = json?.paid === true;
-    const status = paid ? 'paid' : json?.pending === false ? 'failed' : 'pending';
+    const pending = json?.pending === true || json?.pending === undefined;
+    const status = paid ? 'paid' : pending ? 'pending' : 'failed';
     return { status };
   }
 }
