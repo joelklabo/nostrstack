@@ -4,7 +4,12 @@ export default defineConfig({
   testDir: './tests',
   timeout: 60_000,
   use: {
-    baseURL: process.env.GALLERY_BASE_URL || 'http://localhost:4173'
+    baseURL: process.env.GALLERY_BASE_URL || 'http://localhost:4173',
+    launchOptions: {
+      args: process.env.CHROMIUM_USER_DATA_DIR
+        ? [`--user-data-dir=${process.env.CHROMIUM_USER_DATA_DIR}`]
+        : undefined
+    }
   },
   projects: [
     {

@@ -85,3 +85,36 @@ jobs:
           ./scripts/lnbits-smoke.sh "${AMOUNT:-100}"
       - name: Lint & test (SDK, embed, gallery)
         run: pnpm -r --filter "./packages/..." --filter "./apps/gallery" test
+
+  real-relay-comment:
+    name: Real relay comment (opt-in)
+    if: ${{ secrets.REAL_RELAY && secrets.NIP07_PROFILE_B64 }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.11.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Restore NIP-07 profile
+        run: |
+          echo "$NIP07_PROFILE_B64" | base64 -d > /tmp/nip07-profile.zip
+          mkdir -p /tmp/nip07-profile
+          unzip -q /tmp/nip07-profile.zip -d /tmp/nip07-profile
+        env:
+          NIP07_PROFILE_B64: ${{ secrets.NIP07_PROFILE_B64 }}
+      - name: Real relay comment test
+        working-directory: apps/gallery
+        env:
+          REAL_RELAY: ${{ secrets.REAL_RELAY }}
+          VITE_NOSTRSTACK_RELAYS: ${{ secrets.REAL_RELAY }}
+          VITE_API_BASE_URL: mock
+          VITE_NOSTRSTACK_HOST: mock
+          CHROMIUM_USER_DATA_DIR: /tmp/nip07-profile
+        run: pnpm exec playwright test tests/comment-relay.spec.ts --project=chromium --reporter=line
