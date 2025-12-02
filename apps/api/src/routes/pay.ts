@@ -88,4 +88,9 @@ export async function registerPayRoutes(app: FastifyInstance) {
       return reply.code(202).send({ status: payment.status, error: 'status_check_failed' });
     }
   });
+
+  app.get('/api/pay/ws-placeholder', async (_req, reply) => {
+    // Placeholder: front-end can switch to /ws/telemetry for now
+    return reply.send({ ok: true });
+  });
 }
