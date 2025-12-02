@@ -27,15 +27,15 @@ type ProfileMeta = {
   lud16?: string;
   website?: string;
 };
-const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
-const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
+const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost';
+const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
-const networkLabel = import.meta.env.VITE_NETWORK ?? (demoHost === 'mock' ? 'mock' : 'regtest');
+const networkLabel = import.meta.env.VITE_NETWORK ?? 'regtest';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r: string) => r.trim()).filter(Boolean)
   : ['wss://relay.damus.io'];
-const isMock = demoHost === 'mock' || apiBase === 'mock';
+const isMock = false;
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
