@@ -20,7 +20,6 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
   const about = profile?.about || (fullProfile?.about as string) || '—';
   const avatar = profile?.picture || (fullProfile?.picture as string) || `https://robohash.org/${(pubkey ?? 'nostr').slice(0, 8)}?set=set3&size=120x120`;
   const npub = pubkey ? safe(() => nip19.npubEncode(pubkey)) : null;
-  const relayLabel = relays.length ? relays.join(', ') : 'mock';
   const nip05 = (fullProfile?.nip05 as string) || undefined;
   const lud16 = (fullProfile?.lud16 as string) || undefined;
 

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { nip19, Relay } from 'nostr-tools';
 import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
+import { nip19, Relay } from 'nostr-tools';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 import { colors, layout } from './tokens';
@@ -9,14 +9,14 @@ type SendStatus = 'idle' | 'sending' | 'ok' | 'error';
 
 type Status = 'idle' | 'working' | 'ok' | 'error';
 
-export function LoggedInNostrCard({ relays, onRelayStatus }: { relays: string[]; onRelayStatus?: (relay: string, status: SendStatus, message?: string) => void }) {
-  const [pubkey, setPubkey] = useState<string | null>(null);
-  const [npub, setNpub] = useState<string | null>(null);
+export function LoggedInNostrCard({ relays, onRelayStatus, pubkey: externalPubkey, signerReady }: { relays: string[]; pubkey?: string | null; signerReady?: boolean; onRelayStatus?: (relay: string, status: SendStatus, message?: string) => void }) {
+  const [pubkey, setPubkey] = useState<string | null>(externalPubkey ?? null);
+  const [npub, setNpub] = useState<string | null>(externalPubkey ? safe(() => nip19.npubEncode(externalPubkey)) : null);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState<string>('Hello from nostrstack demo 👋');
   const [lastResult, setLastResult] = useState<string | null>(null);
 
-  const hasSigner = typeof window !== 'undefined' && Boolean(window.nostr?.getPublicKey);
+  const hasSigner = signerReady ?? (typeof window !== 'undefined' && Boolean(window.nostr?.getPublicKey));
 
   const relayUrl = useMemo(() => {
     const first = relays.find((r) => r.startsWith('wss://') || r.startsWith('ws://'));
@@ -24,6 +24,11 @@ export function LoggedInNostrCard({ relays, onRelayStatus }: { relays: string[];
   }, [relays]);
 
   useEffect(() => {
+    if (externalPubkey) {
+      setPubkey(externalPubkey);
+      setNpub(safe(() => nip19.npubEncode(externalPubkey)));
+      return;
+    }
     const load = async () => {
       if (!hasSigner) return;
       try {
@@ -35,7 +40,7 @@ export function LoggedInNostrCard({ relays, onRelayStatus }: { relays: string[];
       }
     };
     load();
-  }, [hasSigner]);
+  }, [externalPubkey, hasSigner]);
 
   const sendNote = async () => {
     if (!hasSigner) {
@@ -52,7 +57,7 @@ export function LoggedInNostrCard({ relays, onRelayStatus }: { relays: string[];
         tags: [],
         content: message || 'nostrstack ping'
       };
-      const signed = (await window.nostr!.signEvent(template as any)) as NostrEvent;
+      const signed = (await window.nostr!.signEvent(template)) as NostrEvent;
 
       onRelayStatus?.(relayUrl, 'sending', 'publishing');
       const relay = await Relay.connect(relayUrl);

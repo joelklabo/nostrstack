@@ -1,17 +1,17 @@
 import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type EventTemplate, finalizeEvent, getPublicKey } from 'nostr-tools';
+import type { Event as NostrEvent } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LoggedInNostrCard } from './LoggedInNostrCard';
 import { NostrProfileCard } from './NostrProfileCard';
-import { TelemetryCard } from './TelemetryCard';
 import { RelayCard } from './RelayCard';
+import { TelemetryCard } from './TelemetryCard';
+import { layout } from './tokens';
 import { WalletPanel } from './WalletPanel';
-import { colors, layout } from './tokens';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
 type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'mock' | 'unknown'; detail?: string };
@@ -25,16 +25,6 @@ type ProfileMeta = {
   lud16?: string;
   website?: string;
 };
-type CommentEvent = {
-  id?: string;
-  pubkey?: string;
-  created_at?: number;
-  kind: number;
-  tags?: string[][];
-  content: string;
-  sig?: string;
-};
-
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'mock';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'mock';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
@@ -120,6 +110,20 @@ function compactRelaysLabel(relays: string, max = 32) {
   return `${relays.slice(0, max)}…`;
 }
 
+function isRelayUrl(url: string) {
+  return /^wss?:\/\//.test(url);
+}
+
+function uniqueRelays(relays: string[]) {
+  return Array.from(new Set(relays.filter(Boolean)));
+}
+
+function mergeRelays(prev: string[], next: string[]) {
+  const merged = uniqueRelays([...prev, ...next]);
+  if (merged.length === prev.length && merged.every((v, i) => v === prev[i])) return prev;
+  return merged;
+}
+
 async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
   try {
     const [name, domain] = nip05.split('@');
@@ -131,15 +135,6 @@ async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
     return body.names?.[name]?.toLowerCase() === pubkey.toLowerCase();
   } catch {
     return false;
-  }
-}
-
-function relayDisplayName(url: string) {
-  try {
-    const u = new URL(url.replace(/^ws/, 'http'));
-    return u.host;
-  } catch {
-    return url;
   }
 }
 
@@ -184,7 +179,7 @@ function useMountWidgets(
       unlockHost.textContent = 'Locked';
     }
 
-    const tipOpts: any = {
+    const tipOpts: Record<string, unknown> = {
       username,
       amountSats: amount,
       host: demoHost,
@@ -273,7 +268,7 @@ export default function App() {
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [qrStatus, setQrStatus] = useState<'pending' | 'paid' | 'error'>('pending');
   const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
-  const [unlockedPayload, setUnlockedPayload] = useState<string | null>(null);
+  const [, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
   const [health, setHealth] = useState<Health[]>([
@@ -281,9 +276,19 @@ export default function App() {
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
+  const [signerReady, setSignerReady] = useState(false);
+  const [signerRelays, setSignerRelays] = useState<string[]>([]);
   const [profile, setProfile] = useState<ProfileMeta>(profileDefault);
-  const [profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
+
+  const profileRelays = useMemo(() => {
+    const preferred = signerRelays.filter(isRelayUrl);
+    const configured = relaysList.filter(isRelayUrl);
+    const defaults = relaysEnvDefault.filter(isRelayUrl);
+    const merged = uniqueRelays([...preferred, ...configured, ...defaults]);
+    return merged.length ? merged : ['wss://relay.damus.io'];
+  }, [signerRelays, relaysList]);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
@@ -322,46 +327,90 @@ export default function App() {
     autoMount();
   }, []);
 
+  const loadSignerRelays = useCallback(async (): Promise<string[]> => {
+    if (typeof window === 'undefined' || !window.nostr?.getRelays) return [];
+    try {
+      const relays = await window.nostr.getRelays();
+      if (!relays || typeof relays !== 'object') return [];
+      return Object.entries(relays)
+        .filter(([, info]: { read?: boolean; write?: boolean }) => (info?.read || info?.write) && typeof info === 'object')
+        .map(([url]) => url)
+        .filter(isRelayUrl);
+    } catch {
+      return [];
+    }
+  }, []);
+
   const fetchProfile = useCallback(async (pk: string) => {
     if (!pk) return;
-    const relays = relaysList.length ? relaysList : relaysEnvDefault;
-    const target = relays[0] ?? 'wss://relay.damus.io';
+    const target = profileRelays.find(isRelayUrl) ?? relaysEnvDefault.find(isRelayUrl);
+    if (!target) return;
     setProfileStatus('loading');
     try {
       const relay = await Relay.connect(target);
-      const evs = (await (relay as any).list?.([{ kinds: [0], authors: [pk], limit: 1 }])) ?? [];
+      type RelayListFn = (filters: Array<{ kinds: number[]; authors: string[]; limit: number }>) => Promise<NostrEvent[]>;
+      const list = (relay as Relay & { list?: RelayListFn }).list;
+      const evs = (await list?.([{ kinds: [0, 10002], authors: [pk], limit: 2 }])) ?? [];
       relay.close();
-      if (evs.length) {
-        const meta = JSON.parse(evs[0].content ?? '{}');
+
+      const metaEv = evs.find((e) => e.kind === 0);
+      if (metaEv?.content) {
+        const meta = JSON.parse(metaEv.content ?? '{}');
         setProfile(meta);
         setProfileStatus('ok');
         if (meta.nip05) verifyNip05(meta.nip05, pk).then(setNip05Verified).catch(() => setNip05Verified(false));
       } else {
         setProfileStatus('error');
       }
+
+      const relayEv = evs.find((e) => e.kind === 10002);
+      const relayTags = relayEv?.tags?.filter?.((t: string[]) => t[0] === 'r' && t[1]).map((t: string[]) => t[1]).filter(isRelayUrl) ?? [];
+      if (relayTags.length) {
+        setSignerRelays((prev) => mergeRelays(prev, relayTags));
+      }
     } catch (err) {
       console.warn('profile fetch failed', err);
       setProfileStatus('error');
     }
-  }, [relaysList]);
+  }, [profileRelays]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+    let attempts = 0;
+
     const load = async () => {
-      if (typeof window === 'undefined' || !window.nostr?.getPublicKey) return;
+      if (cancelled || !window.nostr?.getPublicKey) return;
+      attempts += 1;
       try {
         const pk = await window.nostr.getPublicKey();
+        if (cancelled) return;
         setActivePubkey(pk);
-        fetchProfile(pk);
+        setSignerReady(true);
+        loadSignerRelays().then((urls) => {
+          if (!cancelled && urls.length) setSignerRelays((prev) => mergeRelays(prev, urls));
+        });
       } catch (err) {
-        console.warn('failed to read window.nostr pubkey', err);
+        if (!cancelled) console.warn('failed to read window.nostr pubkey', err);
       }
     };
+
+    const id = window.setInterval(() => {
+      if (activePubkey || attempts >= 3) return;
+      load();
+    }, 1200);
+
     load();
-  }, [fetchProfile]);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [activePubkey, loadSignerRelays]);
 
   useEffect(() => {
     if (activePubkey) fetchProfile(activePubkey);
-  }, [relaysList, activePubkey, fetchProfile]);
+  }, [activePubkey, fetchProfile]);
 
   useEffect(() => {
     setLocked(true);
@@ -621,15 +670,20 @@ export default function App() {
             <NostrProfileCard
               pubkey={activePubkey ?? undefined}
               seckey={undefined}
-              signerReady={Boolean((window as any).nostr)}
-              relays={relaysList}
+              signerReady={signerReady}
+              relays={profileRelays}
               profile={profile}
               fullProfile={profile}
               nip05Verified={nip05Verified}
             />
           </Card>
           <Card title="Logged-in Nostr user">
-            <LoggedInNostrCard relays={relaysList} onRelayStatus={handleRelaySendStatus} />
+            <LoggedInNostrCard
+              relays={profileRelays}
+              pubkey={activePubkey}
+              signerReady={signerReady}
+              onRelayStatus={handleRelaySendStatus}
+            />
           </Card>
           <Card title="Comments (Nostr)">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>

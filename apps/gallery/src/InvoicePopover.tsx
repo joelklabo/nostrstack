@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 

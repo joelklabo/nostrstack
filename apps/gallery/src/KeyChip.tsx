@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
 import { nip19 } from 'nostr-tools';
+import { useMemo, useState } from 'react';
 
 type Props = {
   pubkey?: string | null;
@@ -17,7 +17,7 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
     if (!key) return '—';
     try {
       if (format === 'npub') {
-        const encoded = showPriv ? nip19.nsecEncode(key as any) : nip19.npubEncode(key as any);
+        const encoded = showPriv ? nip19.nsecEncode(key) : nip19.npubEncode(key);
         return truncate(encoded, 6);
       }
       return truncate(key, 6);
@@ -30,7 +30,7 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
     const key = showPriv ? seckey : pubkey;
     if (!key) return '';
     try {
-      return format === 'npub' ? (showPriv ? nip19.nsecEncode(key as any) : nip19.npubEncode(key as any)) : key;
+      return format === 'npub' ? (showPriv ? nip19.nsecEncode(key) : nip19.npubEncode(key)) : key;
     } catch {
       return key;
     }

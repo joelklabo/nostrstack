@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { nip19 } from 'nostr-tools';
+import { useCallback, useEffect, useState } from 'react';
 
 type Props = {
   npub?: string | null;

@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
 import { nip19 } from 'nostr-tools';
+import { useMemo, useState } from 'react';
+
 import { CopyButton } from './CopyButton';
 
 type Props = {
@@ -16,7 +17,7 @@ export function KeyToggle({ pubkey, seckey }: Props) {
     if (!key) return '—';
     if (format === 'npub') {
       try {
-        const encoded = showPriv ? nip19.nsecEncode(key as any) : nip19.npubEncode(key as any);
+        const encoded = showPriv ? nip19.nsecEncode(key) : nip19.npubEncode(key);
         return middleTruncate(encoded, 12);
       } catch {
         return middleTruncate(key, 12);
