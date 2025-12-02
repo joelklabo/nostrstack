@@ -5,9 +5,11 @@ import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { CopyButton } from './CopyButton';
 import { colors, layout } from './tokens';
 
+type SendStatus = 'idle' | 'sending' | 'ok' | 'error';
+
 type Status = 'idle' | 'working' | 'ok' | 'error';
 
-export function LoggedInNostrCard({ relays }: { relays: string[] }) {
+export function LoggedInNostrCard({ relays, onRelayStatus }: { relays: string[]; onRelayStatus?: (relay: string, status: SendStatus, message?: string) => void }) {
   const [pubkey, setPubkey] = useState<string | null>(null);
   const [npub, setNpub] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
@@ -52,6 +54,7 @@ export function LoggedInNostrCard({ relays }: { relays: string[] }) {
       };
       const signed = (await window.nostr!.signEvent(template as any)) as NostrEvent;
 
+      onRelayStatus?.(relayUrl, 'sending', 'publishing');
       const relay = await Relay.connect(relayUrl);
       await relay.publish(signed);
       relay.close();
@@ -60,14 +63,16 @@ export function LoggedInNostrCard({ relays }: { relays: string[] }) {
       setLastResult(`Published note to ${relayUrl}`);
       setPubkey(pk);
       setNpub(safe(() => nip19.npubEncode(pk)));
+      onRelayStatus?.(relayUrl, 'ok', 'published');
     } catch (err) {
       setStatus('error');
       setLastResult(err instanceof Error ? err.message : String(err));
+      onRelayStatus?.(relayUrl, 'error', err instanceof Error ? err.message : String(err));
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', wordBreak: 'break-word' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <span style={{ width: 10, height: 10, borderRadius: 999, background: hasSigner ? '#22c55e' : '#ef4444' }} />
         <strong>{hasSigner ? 'Signer available' : 'No NIP-07 signer detected'}</strong>
@@ -75,7 +80,7 @@ export function LoggedInNostrCard({ relays }: { relays: string[] }) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <span style={{ color: colors.subtle, fontSize: '0.9rem' }}>Pubkey:</span>
-        <code style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{npub ?? pubkey ?? '—'}</code>
+        <code style={{ fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: '100%' }}>{npub ?? pubkey ?? '—'}</code>
         {pubkey ? <CopyButton text={pubkey} label="Copy hex" size="sm" /> : null}
         {npub ? <CopyButton text={npub} label="Copy npub" size="sm" /> : null}
       </div>

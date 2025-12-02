@@ -41,7 +41,7 @@ const RELAY_STORAGE_KEY = 'nostrstack.relays';
 const TEST_SIGNER_STORAGE_KEY = 'nostrstack.test-signer';
 const defaultTestSignerSk = import.meta.env.VITE_TEST_SIGNER_SK ?? '2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c';
 const defaultTestSignerEnabled = import.meta.env.VITE_ENABLE_TEST_SIGNER === 'true';
-type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string }>;
+type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
 
 const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r: string) => {
   acc[r] = { recv: 0 };
@@ -278,6 +278,7 @@ export default function App() {
 
   const nostrBackup = useRef<typeof window.nostr>();
   const nostrToolsBackup = useRef<typeof window.NostrTools>();
+  const builtInRef = useRef<typeof window.nostr | null>(null);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
@@ -323,9 +324,9 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (enableTestSigner && !testSignerPub) return;
+    const externalSigner = window.nostr && window.nostr !== builtInRef.current && typeof window.nostr.getPublicKey === 'function';
 
-    if (enableTestSigner && testSignerPub) {
+    if (enableTestSigner && testSignerPub && !externalSigner) {
       if (nostrBackup.current === undefined) nostrBackup.current = window.nostr;
       if (nostrToolsBackup.current === undefined) nostrToolsBackup.current = window.NostrTools;
       const signEvent = async (event: CommentEvent) => {
@@ -337,20 +338,23 @@ export default function App() {
         };
         return finalizeEvent(template, defaultTestSignerSk);
       };
-      window.nostr = {
+      const builtIn = {
         getPublicKey: async () => testSignerPub,
         signEvent
       };
+      builtInRef.current = builtIn;
+      window.nostr = builtIn;
       window.NostrTools = { ...(window.NostrTools ?? {}), relayInit: (url: string) => new Relay(url) };
     }
 
-    if (!enableTestSigner && nostrBackup.current !== undefined) {
+    if ((!enableTestSigner || externalSigner) && builtInRef.current && nostrBackup.current !== undefined) {
       window.nostr = nostrBackup.current;
       window.NostrTools = nostrToolsBackup.current;
+      builtInRef.current = null;
     }
 
     return () => {
-      if (nostrBackup.current !== undefined) {
+      if (builtInRef.current && nostrBackup.current !== undefined) {
         window.nostr = nostrBackup.current;
       }
       if (nostrToolsBackup.current !== undefined) {
@@ -414,6 +418,13 @@ export default function App() {
         : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' },
     [theme]
   );
+
+  const handleRelaySendStatus = useCallback((relay: string, status: RelayStats[string]['sendStatus'], message?: string) => {
+    setRelayStats((prev) => ({
+      ...prev,
+      [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: status, sendMessage: message, lastSentAt: Date.now() }
+    }));
+  }, []);
 
   const makeBolt = useCallback(() => 'lntbs1u1p5demo' + Math.random().toString(16).slice(2), []);
 
@@ -646,7 +657,7 @@ export default function App() {
             />
           </Card>
           <Card title="Logged-in Nostr user">
-            <LoggedInNostrCard relays={relaysList} />
+            <LoggedInNostrCard relays={relaysList} onRelayStatus={handleRelaySendStatus} />
           </Card>
           <Card title="Comments (Nostr)">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
@@ -663,6 +674,7 @@ export default function App() {
                 const data = relayStats[r] ?? { recv: 0 };
                 const active = relayMode === 'mock' || r === 'mock' ? 'mock' : 'real';
                 const hot = data.last && Date.now() - data.last < 3000;
+                const sendTone = data.sendStatus === 'sending' ? '#0ea5e9' : data.sendStatus === 'ok' ? '#22c55e' : data.sendStatus === 'error' ? '#ef4444' : '#94a3b8';
                 return (
                   <div key={r} className="relay-chip" style={{ background: isDark ? '#0b1220' : '#f8fafc', border: `1px solid ${themeStyles.borderColor}` }}>
                     <span className={`chip-dot ${active}${hot ? ' pulse' : ''}`} />
@@ -672,7 +684,14 @@ export default function App() {
                         {(data.name || '—')}{data.software ? ` • ${data.software}` : ''}
                       </span>
                     </div>
-                    <span className="chip-count">recv {data.recv}</span>
+                    <span className="chip-count">
+                      recv {data.recv}
+                      {data.sendStatus ? (
+                        <span style={{ marginLeft: 6, color: sendTone, fontWeight: 700 }}>
+                          {data.sendStatus === 'sending' ? '…' : data.sendStatus === 'ok' ? '✓' : '!' }
+                        </span>
+                      ) : null}
+                    </span>
                   </div>
                 );
               })}
