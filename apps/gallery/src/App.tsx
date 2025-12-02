@@ -6,6 +6,7 @@ import { Relay } from 'nostr-tools/relay';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
+import { TelemetryCard } from './TelemetryCard';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
@@ -544,6 +545,11 @@ export default function App() {
             );
           })}
         </div>
+        {tab === 'lightning' && (
+          <div style={{ marginTop: '1rem' }}>
+            <TelemetryCard wsUrl={`${apiBase.replace(/\/$/, '')}/ws/telemetry`.replace('http', 'ws')} />
+          </div>
+        )}
       </Card>
 
       <style>{`
