@@ -363,6 +363,25 @@ export default function App() {
   }, [username, amount, relaysCsv]);
 
   useEffect(() => {
+    if (!qrInvoice || apiBase === 'mock') return;
+    const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
+    const ws = new WebSocket(wsUrl);
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data as string);
+        if (msg.type === 'invoice-paid' && msg.pr === qrInvoice) {
+          setQrStatus('paid');
+          setUnlockedPayload('Paid content unlocked');
+          setLocked(false);
+        }
+      } catch {
+        // ignore malformed frames
+      }
+    };
+    return () => ws.close();
+  }, [qrInvoice, apiBase]);
+
+  useEffect(() => {
     const fetchHealth = async () => {
       if (apiBase === 'mock') return;
       const results: Health[] = [];

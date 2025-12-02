@@ -48,9 +48,6 @@ export async function registerPayRoutes(app: FastifyInstance) {
       provider_ref: charge.id
     };
 
-    // emit WS event for front-end to subscribe
-    app.payEventHub?.broadcast({ type: 'invoice-paid', pr: charge.invoice, providerRef: charge.id, amount: body.amount });
-
     return reply.code(201).send(response);
   });
 
@@ -86,6 +83,7 @@ export async function registerPayRoutes(app: FastifyInstance) {
       const normalized = statusRes?.status?.toUpperCase?.() ?? payment.status;
       if (paidStates.includes(normalized)) {
         await app.prisma.payment.update({ where: { id: payment.id }, data: { status: normalized } });
+        app.payEventHub?.broadcast({ type: 'invoice-paid', pr: payment.invoice, providerRef: id, amount: payment.amountSats });
       }
       return reply.send({ status: normalized });
     } catch (err) {

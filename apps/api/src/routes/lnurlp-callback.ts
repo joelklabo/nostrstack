@@ -181,6 +181,15 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       }
     }
 
+    if (successStates.includes(normalizedStatus)) {
+      app.payEventHub?.broadcast({
+        type: 'invoice-paid',
+        pr: payment.invoice,
+        providerRef: id,
+        amount: payment.amountSats
+      });
+    }
+
     return reply.send({ ok: true });
   });
 
