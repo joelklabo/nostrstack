@@ -290,6 +290,11 @@ export default function App() {
     return merged.length ? merged : ['wss://relay.damus.io'];
   }, [signerRelays, relaysList]);
 
+  // Reset NIP-05 status whenever a new profile load starts
+  useEffect(() => {
+    setNip05Verified(null);
+  }, [activePubkey]);
+
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
     if (saved) setRelaysCsv(saved);
@@ -346,6 +351,7 @@ export default function App() {
     const target = profileRelays.find(isRelayUrl) ?? relaysEnvDefault.find(isRelayUrl);
     if (!target) return;
     setProfileStatus('loading');
+    setNip05Verified(null);
     try {
       const relay = await Relay.connect(target);
       type RelayListFn = (filters: Array<{ kinds: number[]; authors: string[]; limit: number }>) => Promise<NostrEvent[]>;
@@ -359,6 +365,7 @@ export default function App() {
         setProfile(meta);
         setProfileStatus('ok');
         if (meta.nip05) verifyNip05(meta.nip05, pk).then(setNip05Verified).catch(() => setNip05Verified(false));
+        else setNip05Verified(null);
       } else {
         setProfileStatus('error');
       }
@@ -371,6 +378,7 @@ export default function App() {
     } catch (err) {
       console.warn('profile fetch failed', err);
       setProfileStatus('error');
+      setNip05Verified(null);
     }
   }, [profileRelays]);
 

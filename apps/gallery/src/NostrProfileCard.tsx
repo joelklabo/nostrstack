@@ -22,6 +22,8 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
   const npub = pubkey ? safe(() => nip19.npubEncode(pubkey)) : null;
   const nip05 = (fullProfile?.nip05 as string) || undefined;
   const lud16 = (fullProfile?.lud16 as string) || undefined;
+  const nip05Tone = nip05Verified === true ? '#22c55e' : nip05Verified === false ? '#f97316' : '#94a3b8';
+  const nip05Label = nip05Verified === true ? 'Verified NIP-05' : nip05Verified === false ? 'Not verified' : 'NIP-05';
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.9rem', alignItems: 'start' }}>
@@ -36,8 +38,9 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {nip05 ? (
             <span style={{ padding: '0.3rem 0.6rem', borderRadius: 999, border: '1px solid #e2e8f0', background: '#f8fafc', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: nip05Verified ? '#22c55e' : '#f59e0b' }} />
+              <span style={{ width: 8, height: 8, borderRadius: 999, background: nip05Tone }} />
               <span style={{ fontSize: '0.9rem' }}>{nip05}</span>
+              <span style={{ fontSize: '0.8rem', color: '#475569' }}>{nip05Label}</span>
               <CopyButton text={nip05} label="Copy" />
             </span>
           ) : null}
