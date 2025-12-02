@@ -40,7 +40,9 @@ const RELAY_STORAGE_KEY = 'nostrstack.relays';
 const TEST_SIGNER_STORAGE_KEY = 'nostrstack.test-signer';
 const defaultTestSignerSk = import.meta.env.VITE_TEST_SIGNER_SK ?? '2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c';
 const defaultTestSignerEnabled = import.meta.env.VITE_ENABLE_TEST_SIGNER === 'true';
-const relayMetaDefault: Record<string, { recv: number }> = relaysEnvDefault.reduce((acc: Record<string, { recv: number }>, r: string) => {
+type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string }>;
+
+const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r: string) => {
   acc[r] = { recv: 0 };
   return acc;
 }, {});
@@ -110,6 +112,19 @@ function compactRelaysLabel(relays: string, max = 32) {
   return `${relays.slice(0, max)}…`;
 }
 
+function relayDisplayName(url: string) {
+  try {
+    const u = new URL(url.replace(/^ws/, 'http'));
+    return u.host;
+  } catch {
+    return url;
+  }
+}
+
+function nip11Url(url: string) {
+  return url.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
+}
+
 const tabBtn = (active: boolean, themeStyles: { background: string; color: string; borderColor: string }) => ({
   padding: '0.55rem 1.1rem',
   borderRadius: 10,
@@ -130,7 +145,7 @@ function useMountWidgets(
   setQrAmount: (n?: number) => void,
   setUnlockedPayload: (v: string | null) => void,
   setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
-  setRelayStats: React.Dispatch<React.SetStateAction<Record<string, { recv: number }>>>,
+  setRelayStats: React.Dispatch<React.SetStateAction<RelayStats>>,
   relaysList: string[]
 ) {
   useEffect(() => {
@@ -138,7 +153,6 @@ function useMountWidgets(
     const payHost = document.getElementById('pay-container');
     const unlockHost = document.getElementById('unlock-status');
     const commentsHost = document.getElementById('comments-container');
-    const relayStatus = document.getElementById('relay-status');
     if (!tipHost || !payHost || !commentsHost) return;
 
     tipHost.innerHTML = '<button>Loading…</button>';
@@ -201,26 +215,22 @@ function useMountWidgets(
       threadId: 'demo-thread',
       relays,
       onRelayInfo: (info: RelayInfo) => {
-        if (!relayStatus) return;
-        const list = info.relays.length ? info.relays.join(', ') : 'mock';
-        relayStatus.textContent = '';
-        const badge = document.createElement('span');
-        badge.className = 'relay-pill';
-        const dot = document.createElement('span');
-        dot.className = `dot ${info.mode}`;
-        badge.appendChild(dot);
-        const label = document.createElement('span');
-        label.textContent = list;
-        badge.appendChild(label);
-        relayStatus.appendChild(badge);
+        const active = info.relays.length ? info.relays : ['mock'];
+        setRelayStats((prev) => {
+          const next = { ...prev };
+          active.forEach((r) => {
+            next[r] = next[r] ?? { recv: 0 };
+          });
+          return next;
+        });
       },
       // @ts-expect-error onEvent not in upstream types yet
       onEvent: (ev: { content?: string }) => {
         if (!ev?.content) return;
         const relay = relays[0] || 'mock';
-        setRelayStats((prev: Record<string, { recv: number }>) => ({
+        setRelayStats((prev: RelayStats) => ({
           ...prev,
-          [relay]: { recv: (prev[relay]?.recv ?? 0) + 1 }
+          [relay]: { ...(prev[relay] ?? { recv: 0 }), recv: (prev[relay]?.recv ?? 0) + 1, last: Date.now() }
         }));
       }
     });
@@ -243,7 +253,7 @@ export default function App() {
   const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
   const [unlockedPayload, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
-  const [relayStats, setRelayStats] = useState<Record<string, { recv: number }>>(relayMetaDefault);
+  const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -285,6 +295,26 @@ export default function App() {
     if (relaysCsv) window.localStorage.setItem(RELAY_STORAGE_KEY, relaysCsv);
     else window.localStorage.removeItem(RELAY_STORAGE_KEY);
   }, [relaysCsv]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchMeta = async (relay: string) => {
+      if (relay === 'mock') return;
+      try {
+        const res = await fetch(nip11Url(relay), { headers: { Accept: 'application/nostr+json' }, signal: controller.signal });
+        if (!res.ok) return;
+        const body = await res.json();
+        setRelayStats((prev) => ({
+          ...prev,
+          [relay]: { ...(prev[relay] ?? { recv: 0 }), name: body.name, software: body.software }
+        }));
+      } catch {
+        // ignore fetch errors / CORS
+      }
+    };
+    relaysList.forEach(fetchMeta);
+    return () => controller.abort();
+  }, [relaysList]);
 
   useEffect(() => {
     autoMount();
@@ -605,7 +635,25 @@ export default function App() {
               <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
               <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. Or flip on the built-in test signer in Config for regtest/CI. For offline/local comments, set relays to <code>mock</code> (no relay writes).
             </div>
-            <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              {(relaysList.length ? relaysList : relaysEnvDefault).map((r: string) => {
+                const data = relayStats[r] ?? { recv: 0 };
+                const active = relayMode === 'mock' || r === 'mock' ? 'mock' : 'real';
+                const hot = data.last && Date.now() - data.last < 3000;
+                return (
+                  <div key={r} className="relay-chip" style={{ background: isDark ? '#0b1220' : '#f8fafc', border: `1px solid ${themeStyles.borderColor}` }}>
+                    <span className={`chip-dot ${active}${hot ? ' pulse' : ''}`} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem', minWidth: 0 }}>
+                      <strong style={{ fontSize: '0.95rem' }}>{relayDisplayName(r)}</strong>
+                      <span style={{ fontSize: '0.82rem', color: '#475569', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {(data.name || '—')}{data.software ? ` • ${data.software}` : ''}
+                      </span>
+                    </div>
+                    <span className="chip-count">recv {data.recv}</span>
+                  </div>
+                );
+              })}
+            </div>
             <div id="comments-container" />
           </Card>
         </div>
@@ -651,6 +699,12 @@ export default function App() {
         .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
         .relay-pill .dot.mock { background: #94a3b8; }
         .status-dot.pulse { box-shadow: 0 0 0 0 rgba(34,197,94,0.25); animation: pulse 2s infinite; }
+        .relay-chip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.45rem; padding: 0.45rem 0.6rem; border-radius: 12px; min-width: 220px; }
+        .chip-dot { width: 10px; height: 10px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.4); }
+        .chip-dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+        .chip-dot.mock { background: #94a3b8; }
+        .chip-dot.pulse { animation: pulse 1.8s infinite; }
+        .chip-count { font-size: 0.78rem; color: #0f172a; background: #e2e8f0; padding: 0.2rem 0.45rem; border-radius: 999px; border: 1px solid #cbd5e1; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
