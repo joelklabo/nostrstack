@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { nip19 } from 'nostr-tools';
+import { CopyButton } from './CopyButton';
 
 type Props = {
   pubkey?: string | null;
@@ -25,15 +26,59 @@ export function KeyToggle({ pubkey, seckey }: Props) {
   }, [format, pubkey, seckey, showPriv]);
 
   return (
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.5rem 0.75rem', background: '#f8fafc' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.35rem', alignItems: 'center' }}>
-        <button onClick={() => setShowPriv((v) => !v)}>{showPriv ? 'Show pub' : 'Show priv'}</button>
-        <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')}>
+    <div style={wrapper}>
+      <div style={toolbar}>
+        <button onClick={() => setShowPriv((v) => !v)} style={pillBtn}>
+          {showPriv ? 'Show pub' : 'Show priv'}
+        </button>
+        <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={selectStyle}>
           <option value="npub">npub/nsec</option>
           <option value="hex">hex</option>
         </select>
+        <CopyButton text={display ?? ''} label="Copy" />
       </div>
-      <div style={{ fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.9rem', color: '#0f172a' }}>{display}</div>
+      <div style={codeBox}>{display}</div>
     </div>
   );
 }
+
+const wrapper: React.CSSProperties = {
+  border: '1px solid #e2e8f0',
+  borderRadius: 12,
+  padding: '0.75rem',
+  background: '#f8fafc'
+};
+
+const toolbar: React.CSSProperties = {
+  display: 'flex',
+  gap: '0.5rem',
+  marginBottom: '0.35rem',
+  alignItems: 'center',
+  flexWrap: 'wrap'
+};
+
+const pillBtn: React.CSSProperties = {
+  padding: '0.4rem 0.9rem',
+  borderRadius: 999,
+  border: '1px solid #cbd5e1',
+  background: '#fff',
+  fontWeight: 700
+};
+
+const selectStyle: React.CSSProperties = {
+  padding: '0.45rem 0.75rem',
+  borderRadius: 10,
+  border: '1px solid #cbd5e1',
+  background: '#fff'
+};
+
+const codeBox: React.CSSProperties = {
+  fontFamily: 'monospace',
+  wordBreak: 'break-all',
+  fontSize: '0.95rem',
+  color: '#0f172a',
+  padding: '0.5rem 0.75rem',
+  background: '#fff',
+  borderRadius: 10,
+  border: '1px solid #e2e8f0'
+};

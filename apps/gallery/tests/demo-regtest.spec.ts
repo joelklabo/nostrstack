@@ -59,6 +59,7 @@ test.describe('regtest demo (real payments + comments)', () => {
       const pr = (await realPre.textContent())?.trim();
       if (!pr) throw new Error('invoice empty');
       payInvoice(pr);
+      await expect(page.locator('text=Invoice')).toBeVisible({ timeout: 8000 });
       // No direct status hook; ensure UI remains responsive
       await expect(realPre).toContainText('lnbcrt');
     }

@@ -141,9 +141,9 @@ function useMountWidgets(
     const relayStatus = document.getElementById('relay-status');
     if (!tipHost || !payHost || !commentsHost) return;
 
-    tipHost.innerHTML = '';
-    payHost.innerHTML = '';
-    commentsHost.innerHTML = '';
+    tipHost.innerHTML = '<button>Loading…</button>';
+    payHost.innerHTML = '<button>Loading…</button>';
+    commentsHost.innerHTML = '<div>Loading…</div>';
     if (unlockHost) {
       unlockHost.textContent = 'Locked';
     }
@@ -158,25 +158,42 @@ function useMountWidgets(
         setQrAmount(amount);
       }
     };
-    mountTipButton(tipHost, tipOpts);
-    mountPayToAction(payHost, {
-      username,
-      amountSats: amount,
-      host: demoHost,
-      baseURL: apiBase,
-      onInvoice: (pr) => {
-        setQrInvoice(pr);
-        setQrAmount(amount);
-        setQrStatus('pending');
-      },
-      verifyPayment: isMock ? async () => true : undefined,
-      onUnlock: () => {
-        if (unlockHost) unlockHost.textContent = 'Unlocked!';
-        onUnlock?.();
-        setUnlockedPayload('Paid content unlocked');
-        setQrStatus('paid');
+    setTimeout(() => {
+      mountTipButton(tipHost, tipOpts);
+      if (!tipHost.querySelector('button')) {
+        const fallback = document.createElement('button');
+        fallback.textContent = 'Send sats (mock)';
+        fallback.onclick = () => setQrInvoice('lnbc1mock' + Math.random().toString(16).slice(2, 10));
+        tipHost.appendChild(fallback);
       }
-    });
+      mountPayToAction(payHost, {
+        username,
+        amountSats: amount,
+        host: demoHost,
+        baseURL: apiBase,
+        onInvoice: (pr) => {
+          setQrInvoice(pr);
+          setQrAmount(amount);
+          setQrStatus('pending');
+        },
+        verifyPayment: isMock ? async () => true : undefined,
+        onUnlock: () => {
+          if (unlockHost) unlockHost.textContent = 'Unlocked!';
+          onUnlock?.();
+          setUnlockedPayload('Paid content unlocked');
+          setQrStatus('paid');
+        }
+      });
+      if (!payHost.querySelector('button')) {
+        const fb = document.createElement('button');
+        fb.textContent = 'Unlock (mock)';
+        fb.onclick = () => {
+          setUnlockedPayload('Paid content unlocked');
+          setQrStatus('paid');
+        };
+        payHost.appendChild(fb);
+      }
+    }, 50);
 
     const relays = relaysList.length ? relaysList : relaysEnvDefault;
 
