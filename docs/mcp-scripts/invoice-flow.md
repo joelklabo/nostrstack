@@ -13,6 +13,7 @@
    - Click "Send sats" (tip button).
    - Wait for invoice popover; read BOLT11 text from `<pre>` inside popover.
    - Save it as `invoice` variable.
+   - Copy the `provider_ref` field from the POST /api/pay response JSON (needed to poll status).
    - Take screenshot of popover.
 4) Pay via regtest payer (shell):
    ```sh
@@ -22,5 +23,10 @@
      --tlscertpath=/data/tls.cert payinvoice --force "$invoice"
    ```
 5) In DevTools, poll `/api/lnurlp/pay/status/<provider_ref>`:
-   - Capture network log; expect status=PAID.
+   - Use `fetch` in console:  
+     ```js
+     await (await fetch(`/api/lnurlp/pay/status/${provider_ref}`)).json();
+     ```
+   - Assert `status === 'PAID'`. If not paid after 20s, flag failure.
+   - Capture the Network request showing 200 + status=PAID.
 6) Export trace/screenshot for evidence.

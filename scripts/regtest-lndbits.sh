@@ -89,6 +89,17 @@ ensure_miner_wallet() {
   $COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin createwallet miner >/dev/null 2>&1 || true
 }
 
+maybe_mine_initial() {
+  local height
+  height=$($COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin getblockcount)
+  if (( height < 101 )); then
+    echo "[+] Mining $((101 - height)) blocks to bootstrap chain (current height: $height)"
+    mine_blocks $((101 - height))
+  else
+    echo "[=] Chain already bootstrapped (height $height); skipping initial mine"
+  fi
+}
+
 mine_blocks() {
   local n="$1"
   local addr
@@ -97,6 +108,12 @@ mine_blocks() {
 }
 
 fund_payer() {
+  local balance
+  balance=$($COMPOSE exec -T lnd-payer lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:$(rpc_port lnd-payer) --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert walletbalance | jq -r '.total_balance | tonumber')
+  if (( balance > 200000000 )); then
+    echo "[=] Payer already funded (balance: ${balance} sats); skipping onchain top-up"
+    return
+  fi
   echo "[+] Funding lnd-payer onchain"
   local addr
   addr=$($COMPOSE exec -T lnd-payer lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:$(rpc_port lnd-payer) --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert newaddress p2wkh | jq -r '.address')
@@ -155,7 +172,7 @@ if [[ ${1:-} == "up" ]]; then
   $COMPOSE up -d
   wait_for_bitcoind
   ensure_miner_wallet
-  mine_blocks 101
+  maybe_mine_initial
 
   maybe_init_wallet lnd-merchant
   maybe_init_wallet lnd-payer
