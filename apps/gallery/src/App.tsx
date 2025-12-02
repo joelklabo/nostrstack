@@ -128,6 +128,7 @@ function useMountWidgets(
   setQrInvoice: (pr: string | null) => void,
   setQrAmount: (n?: number) => void,
   setUnlockedPayload: (v: string | null) => void,
+  setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
   setRelayStats: React.Dispatch<React.SetStateAction<Record<string, { recv: number }>>>,
   relaysList: string[]
 ) {
@@ -165,12 +166,14 @@ function useMountWidgets(
       onInvoice: (pr) => {
         setQrInvoice(pr);
         setQrAmount(amount);
+        setQrStatus('pending');
       },
       verifyPayment: isMock ? async () => true : undefined,
       onUnlock: () => {
         if (unlockHost) unlockHost.textContent = 'Unlocked!';
         onUnlock?.();
         setUnlockedPayload('Paid content unlocked');
+        setQrStatus('paid');
       }
     });
 
@@ -218,6 +221,7 @@ export default function App() {
   const [realBusy, setRealBusy] = useState(false);
   const [qrInvoice, setQrInvoice] = useState<string | null>(null);
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
+  const [qrStatus, setQrStatus] = useState<'pending' | 'paid' | 'error'>('pending');
   const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
   const [unlockedPayload, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
@@ -333,7 +337,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload, setRelayStats, relaysList);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
 
   const themeStyles = useMemo(
     () =>
@@ -349,6 +353,7 @@ export default function App() {
     setRealBusy(true);
     setRealInvoice(null);
     setQrInvoice(null);
+    setQrStatus('pending');
     try {
       const res = await fetch(`${apiBase}/api/pay`, {
         method: 'POST',
@@ -365,6 +370,7 @@ export default function App() {
       const pr = body.payment_request ?? body.pr;
       setQrInvoice(pr);
       setQrAmount(amount);
+      setQrStatus('pending');
       setUnlockedPayload('Paid content unlocked');
       setRealInvoice(pr || 'invoice unavailable');
     } catch (err: unknown) {
@@ -629,7 +635,7 @@ export default function App() {
         @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       `}</style>
 
-      {qrInvoice && <InvoicePopover invoice={qrInvoice} amountSats={qrAmount} onClose={() => setQrInvoice(null)} />}
+      {qrInvoice && <InvoicePopover invoice={qrInvoice} amountSats={qrAmount} status={qrStatus} onClose={() => setQrInvoice(null)} />}
     </main>
   );
 }
