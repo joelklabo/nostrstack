@@ -10,6 +10,7 @@ import { KeyToggle } from './KeyToggle';
 import { Nip07Status } from './Nip07Status';
 import { TelemetryCard } from './TelemetryCard';
 import { WalletPanel } from './WalletPanel';
+import { colors, layout } from './tokens';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
 type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'mock' | 'unknown'; detail?: string };
@@ -45,7 +46,7 @@ const relayMetaDefault: Record<string, { recv: number }> = relaysEnvDefault.redu
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ border: '1px solid #e3e3e3', borderRadius: 12, padding: '1rem', marginBottom: '1rem' }}>
+    <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem' }}>
       <h2 style={{ marginTop: 0 }}>{title}</h2>
       {children}
     </section>
