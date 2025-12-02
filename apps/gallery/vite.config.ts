@@ -21,7 +21,14 @@ export default defineConfig({
   server: {
     port: 4173,
     host: true,
-    https: true
+    https: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   define: {
     'import.meta.env.VITE_APP_COMMIT': JSON.stringify(process.env.VITE_APP_COMMIT ?? meta.hash),

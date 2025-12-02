@@ -18,11 +18,13 @@ const levelColors: Record<string, string> = {
 export function LogViewer({ backendUrl, enabled = true }: Props) {
   const [backendLines, setBackendLines] = useState<LogLine[]>([]);
   const [frontendLines, setFrontendLines] = useState<LogLine[]>([]);
-  const [status, setStatus] = useState<'idle' | 'open' | 'error' | 'closed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error' | 'closed'>('idle');
+  const [lastError, setLastError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [captureFront, setCaptureFront] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const originalConsole = useRef<Partial<Console> | null>(null);
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filteredBackend = useMemo(() => {
     if (!filter.trim()) return backendLines;
@@ -38,24 +40,34 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
 
   useEffect(() => {
     if (!enabled) return;
+    setStatus('connecting');
+    setLastError(null);
     const es = new EventSource(backendUrl);
     eventSourceRef.current = es;
-    setStatus('open');
     es.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data) as LogLine;
         setBackendLines((prev) => [...prev.slice(-499), data]);
+        setStatus('open');
       } catch {
         // ignore
       }
     };
     es.onerror = () => {
       setStatus('error');
+      setLastError('Stream connection failed. Is the API running and reachable?');
+      if (retryRef.current) clearTimeout(retryRef.current);
+      retryRef.current = setTimeout(() => {
+        setStatus('connecting');
+        setLastError(null);
+        es.close();
+      }, 3000);
     };
     es.onopen = () => setStatus('open');
     return () => {
       es.close();
       setStatus('closed');
+      if (retryRef.current) clearTimeout(retryRef.current);
     };
   }, [backendUrl, enabled]);
 
@@ -112,8 +124,11 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
     <div style={{ display: 'grid', gap: '0.75rem' }}>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ padding: '0.35rem 0.65rem', borderRadius: 999, border: '1px solid #e2e8f0', background: '#f8fafc' }}>
-          Backend: {status}
+          Backend: {status}{lastError ? ' – ' + lastError : ''}
         </span>
+        <button type="button" onClick={() => { eventSourceRef.current?.close(); setStatus('connecting'); setLastError(null); }}>
+          Reconnect
+        </button>
         <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <input type="checkbox" checked={captureFront} onChange={(e) => setCaptureFront(e.target.checked)} />
           Capture frontend console
@@ -145,4 +160,3 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
     </div>
   );
 }
-

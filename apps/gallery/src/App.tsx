@@ -47,6 +47,11 @@ const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r
   return acc;
 }, {});
 
+function resolveLogStreamUrl(base: string) {
+  if (base.includes('localhost:3001')) return '/api/logs/stream';
+  return `${base.replace(/\/$/, '')}/logs/stream`;
+}
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem' }}>
@@ -729,9 +734,9 @@ export default function App() {
       {tab === 'logs' && (
         <Card title="Logs">
           <div style={{ marginBottom: '0.5rem', color: '#475569', fontSize: '0.95rem' }}>
-            Streams backend logs from <code>{apiBase}/logs/stream</code> and captures frontend console (toggle to enable).
+            Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures frontend console (toggle to enable).
           </div>
-          <LogViewer backendUrl={`${apiBase.replace(/\/$/, '')}/logs/stream`} />
+          <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
         </Card>
       )}
 
