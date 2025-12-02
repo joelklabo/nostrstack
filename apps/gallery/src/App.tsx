@@ -38,6 +38,10 @@ const RELAY_STORAGE_KEY = 'nostrstack.relays';
 const TEST_SIGNER_STORAGE_KEY = 'nostrstack.test-signer';
 const defaultTestSignerSk = import.meta.env.VITE_TEST_SIGNER_SK ?? '2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c';
 const defaultTestSignerEnabled = import.meta.env.VITE_ENABLE_TEST_SIGNER === 'true';
+const relayMetaDefault: Record<string, { recv: number }> = relaysEnvDefault.reduce((acc: Record<string, { recv: number }>, r: string) => {
+  acc[r] = { recv: 0 };
+  return acc;
+}, {});
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -114,7 +118,17 @@ const tabBtn = (active: boolean, themeStyles: { background: string; color: strin
   boxShadow: active ? '0 6px 20px rgba(14,165,233,0.25)' : 'none'
 });
 
-function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock: () => void, enableTestSigner: boolean, setQrInvoice: (pr: string | null) => void, setQrAmount: (n?: number) => void, setUnlockedPayload: (v: string | null) => void) {
+function useMountWidgets(
+  username: string,
+  amount: number,
+  relaysCsv: string,
+  onUnlock: () => void,
+  enableTestSigner: boolean,
+  setQrInvoice: (pr: string | null) => void,
+  setQrAmount: (n?: number) => void,
+  setUnlockedPayload: (v: string | null) => void,
+  setRelayStats: React.Dispatch<React.SetStateAction<Record<string, { recv: number }>>>
+) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
     const payHost = document.getElementById('pay-container');
@@ -176,6 +190,15 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string, on
         label.textContent = list;
         badge.appendChild(label);
         relayStatus.appendChild(badge);
+      },
+      // @ts-expect-error onEvent not in upstream types yet
+      onEvent: (ev: { content?: string }) => {
+        if (!ev?.content) return;
+        const relay = relays[0] || 'mock';
+        setRelayStats((prev: Record<string, { recv: number }>) => ({
+          ...prev,
+          [relay]: { recv: (prev[relay]?.recv ?? 0) + 1 }
+        }));
       }
     });
   }, [username, amount, relaysCsv, onUnlock, enableTestSigner]);
@@ -195,6 +218,7 @@ export default function App() {
   const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
   const [unlockedPayload, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
+  const [relayStats, setRelayStats] = useState<Record<string, { recv: number }>>(relayMetaDefault);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -307,7 +331,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount, setUnlockedPayload, (next) => setRelayStats((prev) => ({ ...prev, ...next })));
 
   const themeStyles = useMemo(
     () =>
