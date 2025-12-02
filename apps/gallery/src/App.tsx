@@ -289,13 +289,16 @@ export default function App() {
   const [, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
 
+  const relayMode = relaysCsv.includes('mock') ? 'mock' : 'real';
+
   const profileRelays = useMemo(() => {
+    if (relayMode === 'mock') return [];
     const preferred = signerRelays.filter(isRelayUrl);
     const configured = relaysList.filter(isRelayUrl);
     const defaults = relaysEnvDefault.filter(isRelayUrl);
     const merged = uniqueRelays([...preferred, ...configured, ...defaults]);
     return merged.length ? merged : ['wss://relay.damus.io'];
-  }, [signerRelays, relaysList]);
+  }, [signerRelays, relaysList, relayMode]);
 
   // Reset NIP-05 status whenever a new profile load starts
   useEffect(() => {
@@ -524,7 +527,6 @@ export default function App() {
   }, [amount]);
 
   const walletKey = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
-  const relayMode = relaysCsv.includes('mock') ? 'mock' : 'real';
   const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
   const isDark = theme === 'dark';
 
