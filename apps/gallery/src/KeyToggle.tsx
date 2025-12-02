@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { nip19 } from 'nostr-tools';
 
 type Props = {
   pubkey?: string | null;
@@ -12,7 +13,14 @@ export function KeyToggle({ pubkey, seckey }: Props) {
   const display = useMemo(() => {
     const key = showPriv ? seckey : pubkey;
     if (!key) return '—';
-    if (format === 'npub') return toBech(showPriv ? 'nsec' : 'npub', key);
+    if (format === 'npub') {
+      try {
+        const encoded = showPriv ? nip19.nsecEncode(key as any) : nip19.npubEncode(key as any);
+        return encoded;
+      } catch {
+        return key;
+      }
+    }
     return key;
   }, [format, pubkey, seckey, showPriv]);
 
@@ -29,10 +37,3 @@ export function KeyToggle({ pubkey, seckey }: Props) {
     </div>
   );
 }
-
-// Minimal bech32 helper (placeholder). Replace with real NIP19 later.
-function toBech(prefix: 'npub' | 'nsec', hex: string) {
-  // This is placeholder; a real conversion will be added with nostr-tools nip19.
-  return `${prefix}1${hex.slice(0, 10)}…`;
-}
-

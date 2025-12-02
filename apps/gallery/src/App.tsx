@@ -8,6 +8,7 @@ import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { KeyToggle } from './KeyToggle';
 import { Nip07Status } from './Nip07Status';
+import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
 import { WalletPanel } from './WalletPanel';
 import { colors, layout } from './tokens';
@@ -569,10 +570,13 @@ export default function App() {
       {tab === 'nostr' && (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
           <Card title="Profile & signer">
-            <div style={{ marginBottom: '0.75rem' }}>
-              <Nip07Status npub={testSignerPub ? `npub1${testSignerPub.slice(0, 10)}…` : null} hasSigner={enableTestSigner || Boolean((window as any).nostr)} />
-            </div>
-            <KeyToggle pubkey={testSignerPub ?? undefined} seckey={enableTestSigner ? defaultTestSignerSk : undefined} />
+            <NostrProfileCard
+              pubkey={testSignerPub ?? undefined}
+              seckey={enableTestSigner ? defaultTestSignerSk : undefined}
+              signerReady={enableTestSigner || Boolean((window as any).nostr)}
+              relays={relaysList}
+              profile={undefined}
+            />
           </Card>
           <Card title="Comments (Nostr)">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
