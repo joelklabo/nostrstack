@@ -9,9 +9,9 @@ Phased approach with three presets that all support tip, paywall, and comments.
 
 ## 2) Mutinynet (real Nostr)
 - One command: `pnpm demo:mutinynet`
-- Expects env to point to staging LNbits/LND (set `LN_BITS_URL`, `LN_BITS_API_KEY`, `VITE_NOSTRSTACK_RELAYS`).
+- Required env: `LN_BITS_URL`, `LN_BITS_API_KEY`; optional `VITE_NOSTRSTACK_RELAYS` (default damus).
 - Starts Postgres, runs migrations, launches API/gallery with those endpoints.
-- TODO: add staging values + smoke script.
+- Smoke (no payment settlement): `pnpm smoke:mutinynet-demo` (expects API running).
 
 ## 3) Mainnet (real Nostr)
 - Gated preset (WIP):
@@ -22,4 +22,5 @@ Phased approach with three presets that all support tip, paywall, and comments.
 
 Common:
 - Smoke: `pnpm smoke:regtest-demo` (regtest). Mutinynet/mainnet smoke TODO.
+- Mainnet is gated by `MAINNET_DEMO_OK=true` and requires real LNbits URL/key and relays; built-in test signer is disabled.
 - Logs: `/tmp/nostrstack-api.log`, `/tmp/nostrstack-gallery.log`.

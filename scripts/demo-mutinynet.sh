@@ -13,9 +13,9 @@ PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
 GALLERY_PORT="${GALLERY_PORT:-4173}"
 
-# Expected env inputs (export beforehand or edit here)
-export LN_BITS_URL="${LN_BITS_URL:-https://lnbits-mutinynet.example.com}"  # TODO: set real staging URL
-export LN_BITS_API_KEY="${LN_BITS_API_KEY:-set-me}"                          # TODO: set staging admin key
+require() { [[ -n "${!1:-}" ]] || { echo "Missing env $1" >&2; exit 1; }; }
+require LN_BITS_URL
+require LN_BITS_API_KEY
 export VITE_NOSTRSTACK_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
 export VITE_ENABLE_TEST_SIGNER="${VITE_ENABLE_TEST_SIGNER:-false}"
 
