@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { enableTestSigner, expectRelayMode, postComment, setRelays } from './helpers';
+import { enableTestSigner, expectRelayMode, postComment, setRelays } from './helpers.ts';
 
 const RELAY = process.env.REAL_RELAY ?? 'wss://relay.damus.io';
 const shouldRun = process.env.RUN_REAL_RELAY === 'true';

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { expectRelayMode, toggleTheme } from './helpers';
+import { expectRelayMode, toggleTheme } from './helpers.ts';
 
 test('tip button renders', async ({ page }) => {
   await page.goto('/');

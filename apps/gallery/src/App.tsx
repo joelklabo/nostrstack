@@ -4,6 +4,7 @@ import { type EventTemplate, finalizeEvent, getPublicKey } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 
 import { CopyButton } from './CopyButton';
+import { InvoicePopover } from './InvoicePopover';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
@@ -98,7 +99,17 @@ function compactRelaysLabel(relays: string, max = 32) {
   return `${relays.slice(0, max)}…`;
 }
 
-function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock?: () => void, enableTestSigner?: boolean) {
+const tabBtn = (active: boolean, themeStyles: { background: string; color: string; borderColor: string }) => ({
+  padding: '0.55rem 1.1rem',
+  borderRadius: 10,
+  border: `1px solid ${themeStyles.borderColor}`,
+  background: active ? '#0ea5e9' : themeStyles.background,
+  color: active ? '#fff' : themeStyles.color,
+  fontWeight: 700,
+  boxShadow: active ? '0 6px 20px rgba(14,165,233,0.25)' : 'none'
+});
+
+function useMountWidgets(username: string, amount: number, relaysCsv: string, onUnlock: () => void, enableTestSigner: boolean, setQrInvoice: (pr: string | null) => void, setQrAmount: (n?: number) => void) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
     const payHost = document.getElementById('pay-container');
@@ -114,12 +125,26 @@ function useMountWidgets(username: string, amount: number, relaysCsv: string, on
       unlockHost.textContent = 'Locked';
     }
 
-    mountTipButton(tipHost, { username, amountSats: amount, host: demoHost, baseURL: apiBase });
+    const tipOpts: any = {
+      username,
+      amountSats: amount,
+      host: demoHost,
+      baseURL: apiBase,
+      onInvoice: (pr: string) => {
+        setQrInvoice(pr);
+        setQrAmount(amount);
+      }
+    };
+    mountTipButton(tipHost, tipOpts);
     mountPayToAction(payHost, {
       username,
       amountSats: amount,
       host: demoHost,
       baseURL: apiBase,
+      onInvoice: (pr) => {
+        setQrInvoice(pr);
+        setQrAmount(amount);
+      },
       verifyPayment: isMock ? async () => true : undefined,
       onUnlock: () => {
         if (unlockHost) unlockHost.textContent = 'Unlocked!';
@@ -159,6 +184,9 @@ export default function App() {
   const [locked, setLocked] = useState(true);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
+  const [qrInvoice, setQrInvoice] = useState<string | null>(null);
+  const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
+  const [tab, setTab] = useState<'lightning' | 'nostr'>('lightning');
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -271,7 +299,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, enableTestSigner, setQrInvoice, setQrAmount);
 
   const themeStyles = useMemo(
     () =>
@@ -286,6 +314,7 @@ export default function App() {
   const requestRealInvoice = useCallback(async () => {
     setRealBusy(true);
     setRealInvoice(null);
+    setQrInvoice(null);
     try {
       const res = await fetch(`${apiBase}/api/pay`, {
         method: 'POST',
@@ -300,6 +329,8 @@ export default function App() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
       const pr = body.payment_request ?? body.pr;
+      setQrInvoice(pr);
+      setQrAmount(amount);
       setRealInvoice(pr || 'invoice unavailable');
     } catch (err: unknown) {
       setRealInvoice(`error: ${formatError(err)}`);
@@ -328,6 +359,11 @@ export default function App() {
         Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use the relays you set.
       </p>
 
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+        <button onClick={() => setTab('lightning')} style={tabBtn(tab === 'lightning', themeStyles)}>Lightning</button>
+        <button onClick={() => setTab('nostr')} style={tabBtn(tab === 'nostr', themeStyles)}>Nostr</button>
+      </div>
+
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <Pill label="Host" value={demoHost} tone={isMock ? 'muted' : 'info'} theme={theme} />
         <Pill label="API" value={apiBase === 'mock' ? 'mock' : apiBase} tone={apiBase === 'mock' ? 'muted' : 'info'} theme={theme} />
@@ -343,6 +379,8 @@ export default function App() {
         </div>
       )}
 
+      {tab === 'lightning' && (
+      <>
       <Card title="Config & presets">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -459,7 +497,10 @@ export default function App() {
           </button>
         </Card>
       </div>
+      </>
+      )}
 
+      {tab === 'nostr' && (
       <Card title="Comments (Nostr)">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
           <Pill label="Mode" value={relayMode === 'mock' ? 'mock (local)' : 'real relays'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
@@ -473,6 +514,7 @@ export default function App() {
         <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
         <div id="comments-container" />
       </Card>
+      )}
 
       <Card title="Status & build">
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem', color: '#475569' }}>
@@ -510,7 +552,11 @@ export default function App() {
         .relay-pill .dot.mock { background: #94a3b8; }
         .status-dot.pulse { box-shadow: 0 0 0 0 rgba(34,197,94,0.25); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       `}</style>
+
+      {qrInvoice && <InvoicePopover invoice={qrInvoice} amountSats={qrAmount} onClose={() => setQrInvoice(null)} />}
     </main>
   );
 }

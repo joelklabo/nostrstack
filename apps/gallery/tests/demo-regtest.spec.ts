@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process';
 
 import { expect, test } from '@playwright/test';
 
-import { enableTestSigner, expectRelayMode, postComment, setRelays } from './helpers';
+import { enableTestSigner, expectRelayMode, postComment, setRelays } from './helpers.ts';
 
 const shouldRun = process.env.REGTEST_SMOKE === 'true';
 const relaysCsv =
