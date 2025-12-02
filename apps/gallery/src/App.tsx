@@ -6,6 +6,8 @@ import { Relay } from 'nostr-tools/relay';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
+import { KeyToggle } from './KeyToggle';
+import { Nip07Status } from './Nip07Status';
 import { TelemetryCard } from './TelemetryCard';
 import { WalletPanel } from './WalletPanel';
 
@@ -506,19 +508,27 @@ export default function App() {
       )}
 
       {tab === 'nostr' && (
-      <Card title="Comments (Nostr)">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-          <Pill label="Mode" value={relayMode === 'mock' ? 'mock (local)' : 'real relays'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
-          <span style={{ fontSize: '0.9rem', color: '#475569' }}>Relays: {relayLabel}</span>
+        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+          <Card title="Profile & signer">
+            <div style={{ marginBottom: '0.75rem' }}>
+              <Nip07Status npub={testSignerPub ? `npub1${testSignerPub.slice(0, 10)}…` : null} hasSigner={enableTestSigner || Boolean((window as any).nostr)} />
+            </div>
+            <KeyToggle pubkey={testSignerPub ?? undefined} seckey={enableTestSigner ? defaultTestSignerSk : undefined} />
+          </Card>
+          <Card title="Comments (Nostr)">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+              <Pill label="Mode" value={relayMode === 'mock' ? 'mock (local)' : 'real relays'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
+              <span style={{ fontSize: '0.9rem', color: '#475569' }}>Relays: {relayLabel}</span>
+            </div>
+            <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
+              Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
+              <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
+              <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. Or flip on the built-in test signer in Config for regtest/CI. For offline/local comments, set relays to <code>mock</code> (no relay writes).
+            </div>
+            <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
+            <div id="comments-container" />
+          </Card>
         </div>
-        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
-          Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
-          <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
-          <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. Or flip on the built-in test signer in Config for regtest/CI. For offline/local comments, set relays to <code>mock</code> (no relay writes).
-        </div>
-        <div id="relay-status" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#334155' }} />
-        <div id="comments-container" />
-      </Card>
       )}
 
       <Card title="Status & build">
