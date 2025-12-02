@@ -17,12 +17,12 @@ export function KeyToggle({ pubkey, seckey }: Props) {
     if (format === 'npub') {
       try {
         const encoded = showPriv ? nip19.nsecEncode(key as any) : nip19.npubEncode(key as any);
-        return encoded;
+        return middleTruncate(encoded, 12);
       } catch {
-        return key;
+        return middleTruncate(key, 12);
       }
     }
-    return key;
+    return middleTruncate(key, 12);
   }, [format, pubkey, seckey, showPriv]);
 
   return (
@@ -37,7 +37,9 @@ export function KeyToggle({ pubkey, seckey }: Props) {
         </select>
         <CopyButton text={display ?? ''} label="Copy" />
       </div>
-      <div style={codeBox}>{display}</div>
+      <div style={codeBox}>
+        <code>{display}</code>
+      </div>
     </div>
   );
 }
@@ -74,11 +76,18 @@ const selectStyle: React.CSSProperties = {
 
 const codeBox: React.CSSProperties = {
   fontFamily: 'monospace',
-  wordBreak: 'break-all',
-  fontSize: '0.95rem',
+  wordBreak: 'break-word',
+  fontSize: '0.9rem',
   color: '#0f172a',
-  padding: '0.5rem 0.75rem',
+  padding: '0.35rem 0.6rem',
   background: '#fff',
   borderRadius: 10,
-  border: '1px solid #e2e8f0'
+  border: '1px solid #e2e8f0',
+  minHeight: 34
 };
+
+function middleTruncate(value: string, keep = 10) {
+  if (!value) return value;
+  if (value.length <= keep * 2 + 3) return value;
+  return `${value.slice(0, keep)}…${value.slice(-keep)}`;
+}
