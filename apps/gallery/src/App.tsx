@@ -39,9 +39,6 @@ const isMock = demoHost === 'mock' || apiBase === 'mock';
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
-const TEST_SIGNER_STORAGE_KEY = 'nostrstack.test-signer';
-const defaultTestSignerSk = import.meta.env.VITE_TEST_SIGNER_SK ?? '2b7e151628aed2a6abf7158809cf4f3c2b7e151628aed2a6abf7158809cf4f3c';
-const defaultTestSignerEnabled = import.meta.env.VITE_ENABLE_TEST_SIGNER === 'true';
 type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
 
 const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r: string) => {
@@ -260,36 +257,13 @@ export default function App() {
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
-  const [enableTestSigner, setEnableTestSigner] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return defaultTestSignerEnabled;
-    const stored = window.localStorage.getItem(TEST_SIGNER_STORAGE_KEY);
-    if (stored === 'on') return true;
-    if (stored === 'off') return false;
-    return defaultTestSignerEnabled;
-  });
-
-  const testSignerPub = useMemo(() => {
-    try {
-      return getPublicKey(defaultTestSignerSk);
-    } catch (err) {
-      console.warn('invalid test signer key', err);
-      return null;
-    }
-  }, [defaultTestSignerSk]);
-
-  const nostrBackup = useRef<typeof window.nostr>();
-  const nostrToolsBackup = useRef<typeof window.NostrTools>();
-  const builtInRef = useRef<typeof window.nostr | null>(null);
+  const [enableTestSigner] = useState<boolean>(false);
+  const [activePubkey, setActivePubkey] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
     if (saved) setRelaysCsv(saved);
   }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(TEST_SIGNER_STORAGE_KEY, enableTestSigner ? 'on' : 'off');
-  }, [enableTestSigner]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -324,45 +298,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const externalSigner = window.nostr && window.nostr !== builtInRef.current && typeof window.nostr.getPublicKey === 'function';
-
-    if (enableTestSigner && testSignerPub && !externalSigner) {
-      if (nostrBackup.current === undefined) nostrBackup.current = window.nostr;
-      if (nostrToolsBackup.current === undefined) nostrToolsBackup.current = window.NostrTools;
-      const signEvent = async (event: CommentEvent) => {
-        const template: EventTemplate = {
-          kind: event.kind,
-          created_at: event.created_at ?? Math.floor(Date.now() / 1000),
-          tags: event.tags ?? [],
-          content: event.content
-        };
-        return finalizeEvent(template, defaultTestSignerSk);
-      };
-      const builtIn = {
-        getPublicKey: async () => testSignerPub,
-        signEvent
-      };
-      builtInRef.current = builtIn;
-      window.nostr = builtIn;
-      window.NostrTools = { ...(window.NostrTools ?? {}), relayInit: (url: string) => new Relay(url) };
-    }
-
-    if ((!enableTestSigner || externalSigner) && builtInRef.current && nostrBackup.current !== undefined) {
-      window.nostr = nostrBackup.current;
-      window.NostrTools = nostrToolsBackup.current;
-      builtInRef.current = null;
-    }
-
-    return () => {
-      if (builtInRef.current && nostrBackup.current !== undefined) {
-        window.nostr = nostrBackup.current;
-      }
-      if (nostrToolsBackup.current !== undefined) {
-        window.NostrTools = nostrToolsBackup.current;
+    const load = async () => {
+      if (typeof window === 'undefined' || !window.nostr?.getPublicKey) return;
+      try {
+        const pk = await window.nostr.getPublicKey();
+        setActivePubkey(pk);
+      } catch (err) {
+        console.warn('failed to read window.nostr pubkey', err);
       }
     };
-  }, [enableTestSigner, testSignerPub, defaultTestSignerSk]);
+    load();
+  }, []);
 
   useEffect(() => {
     setLocked(true);
@@ -557,36 +503,6 @@ export default function App() {
           </div>
         </div>
 
-        <div
-          style={{
-            marginTop: '0.75rem',
-            padding: '0.75rem',
-            border: `1px dashed ${themeStyles.borderColor}`,
-            borderRadius: 10,
-            background: isDark ? '#0b1220' : '#f8fafc',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.4rem'
-          }}
-        >
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
-            <input
-              type="checkbox"
-              checked={enableTestSigner}
-              onChange={(e) => setEnableTestSigner(e.target.checked)}
-              disabled={!testSignerPub}
-            />
-            Built-in Nostr test signer (regtest/CI)
-          </label>
-          <div style={{ fontSize: '0.9rem', color: '#475569' }}>
-            Deterministic key for posting to real relays. Test-only; do not use on mainnet.
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.9rem' }}>
-            <span>Pubkey: <code>{testSignerPub ? `${testSignerPub.slice(0, 12)}…${testSignerPub.slice(-6)}` : 'invalid key'}</code></span>
-            {testSignerPub ? <CopyButton text={testSignerPub} label="Copy pubkey" /> : null}
-            <CopyButton text={defaultTestSignerSk} label="Copy secret" />
-          </div>
-        </div>
       </Card>
 
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
@@ -650,9 +566,9 @@ export default function App() {
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
           <Card title="Profile & signer">
             <NostrProfileCard
-              pubkey={testSignerPub ?? undefined}
-              seckey={enableTestSigner ? defaultTestSignerSk : undefined}
-              signerReady={enableTestSigner || Boolean((window as any).nostr)}
+              pubkey={activePubkey ?? undefined}
+              seckey={undefined}
+              signerReady={Boolean((window as any).nostr)}
               relays={relaysList}
               profile={undefined}
             />

@@ -10,8 +10,8 @@ describe('App', () => {
     expect(html).toContain('nostrstack Demo');
   });
 
-  it('shows test signer toggle copy', () => {
+  it('shows relays input copy', () => {
     const html = renderToString(<App />);
-    expect(html).toContain('Built-in Nostr test signer');
+    expect(html).toContain('Relays (comments)');
   });
 });
