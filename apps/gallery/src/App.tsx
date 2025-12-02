@@ -6,6 +6,7 @@ import { Relay } from 'nostr-tools/relay';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
+import { LoggedInNostrCard } from './LoggedInNostrCard';
 import { KeyToggle } from './KeyToggle';
 import { Nip07Status } from './Nip07Status';
 import { NostrProfileCard } from './NostrProfileCard';
@@ -643,6 +644,9 @@ export default function App() {
               relays={relaysList}
               profile={undefined}
             />
+          </Card>
+          <Card title="Logged-in Nostr user">
+            <LoggedInNostrCard relays={relaysList} />
           </Card>
           <Card title="Comments (Nostr)">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
