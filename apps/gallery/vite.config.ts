@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 
 import react from '@vitejs/plugin-react';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig } from 'vite';
 
 function gitMeta() {
@@ -16,9 +17,11 @@ function gitMeta() {
 const meta = gitMeta();
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), basicSsl()],
   server: {
-    port: 4173
+    port: 4173,
+    host: true,
+    https: true
   },
   define: {
     'import.meta.env.VITE_APP_COMMIT': JSON.stringify(process.env.VITE_APP_COMMIT ?? meta.hash),
