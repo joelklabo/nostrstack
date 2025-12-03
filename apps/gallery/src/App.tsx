@@ -35,7 +35,6 @@ const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r: string) => r.trim()).filter(Boolean)
   : ['wss://relay.damus.io'];
-const isMock = false;
 const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
@@ -214,7 +213,6 @@ function useMountWidgets(
           setQrAmount(amount);
           setQrStatus('pending');
         },
-        verifyPayment: isMock ? async () => true : undefined,
         onUnlock: () => {
           if (unlockHost) unlockHost.textContent = 'Unlocked!';
           onUnlock?.();
@@ -222,15 +220,6 @@ function useMountWidgets(
           setQrStatus('paid');
         }
       });
-      if (!payHost.querySelector('button')) {
-        const fb = document.createElement('button');
-        fb.textContent = 'Unlock (mock)';
-        fb.onclick = () => {
-          setUnlockedPayload('Paid content unlocked');
-          setQrStatus('paid');
-        };
-        payHost.appendChild(fb);
-      }
     }, 50);
 
     const relays = relaysList.length ? relaysList : relaysEnvDefault;
@@ -267,7 +256,6 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
   const [relaysList, setRelaysList] = useState<string[]>(relaysEnvDefault);
-  const [mockInvoice, setMockInvoice] = useState<string | null>(null);
   const [locked, setLocked] = useState(true);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
@@ -492,8 +480,6 @@ export default function App() {
     }));
   }, []);
 
-  const makeBolt = useCallback(() => 'lntbs1u1p5demo' + Math.random().toString(16).slice(2), []);
-
   const requestRealInvoice = useCallback(async () => {
     setRealBusy(true);
     setRealInvoice(null);
@@ -556,7 +542,7 @@ export default function App() {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <Pill label="Host" value={demoHost} tone={isMock ? 'muted' : 'info'} theme={theme} />
+        <Pill label="Host" value={demoHost} tone="info" theme={theme} />
         <Pill label="API" value={apiBase === 'mock' ? 'mock' : apiBase} tone={apiBase === 'mock' ? 'muted' : 'info'} theme={theme} />
         <Pill label="Payments" value={enableReal ? 'real invoices' : 'mock only'} tone={enableReal ? 'success' : 'warn'} theme={theme} />
         <Pill label="Comments" value={relayMode === 'mock' ? 'mock relays' : 'real Nostr'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
@@ -657,7 +643,7 @@ export default function App() {
             </div>
           </div>
           <div style={{ fontSize: '0.9rem', color: '#475569' }}>
-            Using: {relayLabel} {relayMode === 'mock' ? '(mock mode: local only)' : '(real Nostr relays)'}
+            Using: {relayLabel} (real Nostr relays)
           </div>
         </div>
 
@@ -665,17 +651,8 @@ export default function App() {
 
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
         <Card title="Tip button">
-          <div style={{ marginBottom: '0.5rem', color: '#475569' }}>LNURLp flow. Mock button is instant; real invoice hits the API.</div>
+          <div style={{ marginBottom: '0.5rem', color: '#475569' }}>LNURLp flow. Request a real invoice from the API.</div>
           <div id="tip-container" />
-          <button data-testid="mock-tip" onClick={() => setMockInvoice(makeBolt())} style={{ marginTop: '0.5rem' }}>
-            Generate tip invoice (mock)
-          </button>
-          {mockInvoice && (
-            <div data-testid="invoice" style={{ marginTop: '0.5rem' }}>
-              <strong>BOLT11</strong>
-              <pre>{mockInvoice}</pre>
-            </div>
-          )}
           {enableReal && (
             <div style={{ marginTop: '0.75rem' }}>
               <button onClick={requestRealInvoice} disabled={realBusy}>
@@ -692,22 +669,18 @@ export default function App() {
         </Card>
 
         <Card title="Pay to unlock">
-          <div style={{ marginBottom: '0.5rem', color: '#475569' }}>Creates an invoice and unlocks after verification (mock auto-verifies).</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem', color: '#475569' }}>
+            <span>Creates an invoice; unlocks after real payment confirmation.</span>
+            <span className={locked ? 'pay-status pay-status--pending' : 'pay-status pay-status--paid'}>
+              <span className="dot" />
+              {locked ? 'Waiting for payment' : 'Unlocked'}
+            </span>
+          </div>
           <div id="pay-container" />
           <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
             {locked ? 'Locked' : 'Unlocked!'}
           </div>
-          {locked ? (
-          <button
-            data-testid="mock-unlock"
-            onClick={() => {
-              setMockInvoice(makeBolt());
-              setLocked(false);
-            }}
-          >
-            Simulate unlock (mock)
-          </button>
-          ) : (
+          {!locked && (
             <div style={{ marginTop: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.75rem' }}>
               <strong>Unlocked content:</strong>
               <div style={{ marginTop: '0.35rem', fontFamily: 'monospace', fontSize: '0.9rem', color: '#0f172a' }}>
@@ -826,6 +799,12 @@ export default function App() {
         .chip-dot.mock { background: #94a3b8; }
         .chip-dot.pulse { animation: pulse 1.8s infinite; }
         .chip-count { font-size: 0.78rem; color: #0f172a; background: #e2e8f0; padding: 0.2rem 0.45rem; border-radius: 999px; border: 1px solid #cbd5e1; }
+        .pay-status { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; }
+        .pay-status .dot { width: 10px; height: 10px; border-radius: 999px; }
+        .pay-status--pending { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+        .pay-status--pending .dot { background: #fb923c; box-shadow: 0 0 0 0 rgba(251,146,60,0.35); animation: pulse 1.6s infinite; }
+        .pay-status--paid { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+        .pay-status--paid .dot { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.3); animation: pulse 1.6s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
