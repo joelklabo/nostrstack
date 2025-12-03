@@ -70,6 +70,17 @@ function describeWsError(ev: Event) {
   return ev.type || 'error';
 }
 
+function suggestFix(url: string, err: string | null) {
+  const isLocal = isLocalhostUrl(url);
+  if (url.startsWith('wss://') && isLocal) {
+    return 'Self-signed localhost cert? Open the URL in a new tab and accept the certificate, then retry.';
+  }
+  if (err?.includes('blocked') && url.startsWith('ws://') && typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    return 'Page is HTTPS so ws:// is blocked; use wss:// or load the app over http://localhost.';
+  }
+  return null;
+}
+
 export function TelemetryCard({ wsUrl }: Props) {
   const [height, setHeight] = useState<number | null>(null);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
@@ -175,7 +186,8 @@ export function TelemetryCard({ wsUrl }: Props) {
           return;
         }
         setStatus('error');
-        setErrorMsg(`closed (${e.code})`);
+        const msg = `closed (${e.code})`;
+        setErrorMsg(msg);
         const jitter = 0.6 + Math.random() * 0.8; // 0.6x–1.4x jitter
         const delay = Math.min(15000, Math.round(backoffRef.current * jitter));
         backoffRef.current *= 1.6;
@@ -243,8 +255,9 @@ export function TelemetryCard({ wsUrl }: Props) {
         {attemptNote && <span style={{ color: '#c2410c' }}>{attemptNote}</span>}
       </div>
       {status === 'error' && (
-        <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10 }}>
-          Stream error: {errorMsg ?? 'disconnected'} — retrying…
+        <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10, display: 'grid', gap: 4 }}>
+          <span>Stream error: {errorMsg ?? 'disconnected'} — retrying…</span>
+          {suggestFix(activeUrl, errorMsg)?.length ? <span style={{ color: '#9f1239' }}>{suggestFix(activeUrl, errorMsg)}</span> : null}
         </div>
       )}
       <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'minmax(260px, 320px) 1fr', alignItems: 'stretch', flexWrap: 'wrap' }}>
