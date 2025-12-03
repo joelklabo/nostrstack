@@ -14,14 +14,18 @@ export function Nip07Status({ npub, hasSigner }: Props) {
   const [demoOff, setDemoOff] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
+  const [nostrPresent, setNostrPresent] = useState<boolean | null>(null);
 
-  const detect = useCallback(async () => {
+  const tryOnce = useCallback(async () => {
     if (demoOff) {
       setStatus('missing');
       setError(null);
       return;
     }
-    if (typeof window === 'undefined' || !window.nostr?.getPublicKey) {
+    if (typeof window === 'undefined') return;
+    const has = Boolean(window.nostr?.getPublicKey);
+    setNostrPresent(has);
+    if (!has) {
       setStatus('missing');
       setError(null);
       return;
@@ -32,7 +36,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
     try {
       const pub = await Promise.race([
         window.nostr.getPublicKey(),
-        new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+        new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;
       setDetectedNpub(encoded);
@@ -45,6 +49,15 @@ export function Nip07Status({ npub, hasSigner }: Props) {
     }
   }, [demoOff]);
 
+  const detect = useCallback(async () => {
+    // run up to 3 attempts quickly; stop if ready
+    for (let i = 0; i < 3; i += 1) {
+      await tryOnce();
+      if (status === 'ready') break;
+      if (i < 2) await new Promise((r) => setTimeout(r, 500));
+    }
+  }, [tryOnce, status]);
+
   useEffect(() => {
     detect();
   }, [detect, hasSigner]);
@@ -52,7 +65,14 @@ export function Nip07Status({ npub, hasSigner }: Props) {
   useEffect(() => {
     const onFocus = () => detect();
     window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') detect();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [detect]);
 
   const stateColor =
@@ -88,6 +108,9 @@ export function Nip07Status({ npub, hasSigner }: Props) {
             <li>Enable the extension and refresh</li>
             <li>Use https or localhost so the extension can inject</li>
           </ul>
+          {nostrPresent === false && (
+            <div style={{ color: '#ef4444' }}>No window.nostr detected on this origin.</div>
+          )}
         </div>
       )}
 
@@ -97,6 +120,11 @@ export function Nip07Status({ npub, hasSigner }: Props) {
           {error === 'timeout' && (
             <div style={{ color: '#475569', marginTop: 4 }}>
               Extension may be waiting for permission — click request or allow in your NIP-07 wallet.
+            </div>
+          )}
+          {error && (
+            <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: 4 }}>
+              Raw: {error}
             </div>
           )}
         </div>
