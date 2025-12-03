@@ -3,20 +3,18 @@ import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CommentsPanel } from './comments/CommentsPanel';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
-import { MockComments } from './MockComments';
 import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
 import { layout } from './tokens';
 import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
-type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
-type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'mock' | 'unknown'; detail?: string };
+type RelayInfo = { relays: string[]; mode: 'real' };
+type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'unknown'; detail?: string };
 type ProfileMeta = {
   name?: string;
   about?: string;
@@ -277,7 +275,7 @@ function useMountWidgets(
       threadId: 'demo-thread',
       relays,
       onRelayInfo: (info: RelayInfo) => {
-        const active = info.relays.length ? info.relays : ['mock'];
+        const active = info.relays.length ? info.relays : relaysEnvDefault;
         setRelayStats((prev) => {
           const next = { ...prev };
           const now = Date.now();
@@ -291,7 +289,7 @@ function useMountWidgets(
       onEvent: (ev: { content?: string }) => {
         if (!ev?.content) return;
         const now = Date.now();
-        const targets = relays.length ? relays : ['mock'];
+        const targets = relays.length ? relays : relaysEnvDefault;
         setRelayStats((prev: RelayStats) => {
           const next = { ...prev };
           targets.forEach((relay) => {
@@ -331,8 +329,8 @@ export default function App() {
   const [lnbitsWalletIdOverride, setLnbitsWalletIdOverride] = useState<string | null>(null);
   const [telemetryWsOverride, setTelemetryWsOverride] = useState<string | null>(null);
   const [health, setHealth] = useState<Health[]>([
-    { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
-    { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
+    { label: 'API', status: 'unknown' },
+    { label: 'LNbits', status: 'unknown' }
   ]);
   const [walletRefresh, setWalletRefresh] = useState(0);
   const adminKeyRef = useRef<HTMLInputElement | null>(null);
@@ -371,8 +369,6 @@ export default function App() {
   const [lastNoteResult, setLastNoteResult] = useState<string | null>(null);
   const [lastNoteOk, setLastNoteOk] = useState(false);
 
-  const relayMode: 'mock' | 'real' = (import.meta.env.VITE_RELAY_MODE as 'mock' | 'real') ?? 'real';
-
   const profileRelays = useMemo(() => {
     const preferred = signerRelays.filter(isRelayUrl);
     const configured = relaysList.filter(isRelayUrl);
@@ -402,7 +398,6 @@ export default function App() {
   useEffect(() => {
     const controller = new AbortController();
     const fetchMeta = async (relay: string) => {
-      if (relay === 'mock') return;
       try {
         const res = await fetch(nip11Url(relay), { headers: { Accept: 'application/nostr+json' }, signal: controller.signal });
         if (!res.ok) return;
@@ -594,7 +589,7 @@ export default function App() {
   }, [signerReady, activePubkey, profileRelays, message]);
 
   useEffect(() => {
-    if (!qrInvoice || apiBase === 'mock') return;
+    if (!qrInvoice) return;
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
     const ws = new WebSocket(wsUrl);
     ws.onmessage = (ev) => {
@@ -614,7 +609,7 @@ export default function App() {
 
   useEffect(() => {
     const fetchHealth = async () => {
-      if (apiBase === 'mock') return;
+      // always check against real API
       const results: Health[] = [];
       try {
         const apiRes = await fetch(apiBase.startsWith('/api') ? '/api/health' : `${apiBase}/health`);
@@ -708,7 +703,7 @@ export default function App() {
   const walletIdOverride = lnbitsWalletIdOverride ?? undefined;
   const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
   const telemetryWsUrl = telemetryWsOverride ?? resolveTelemetryWs(apiBase);
-  const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
+  const relayLabel = relaysCsv || relaysEnvDefault.join(',');
   const isDark = theme === 'dark';
 
   return (
@@ -748,9 +743,9 @@ export default function App() {
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <Pill label="Host" value={demoHost} tone="info" theme={theme} />
-        <Pill label="API" value={apiBase === 'mock' ? 'mock' : apiBase} tone={apiBase === 'mock' ? 'muted' : 'info'} theme={theme} />
+        <Pill label="API" value={apiBase} tone="info" theme={theme} />
         <Pill label="Payments" value="real invoices" tone="success" theme={theme} />
-        <Pill label="Comments" value={relayMode === 'mock' ? 'mock relays' : 'real Nostr'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
+        <Pill label="Comments" value="real Nostr" tone="success" theme={theme} />
         <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" theme={theme} />
       </div>
 
@@ -1070,14 +1065,13 @@ export default function App() {
           </Card>
           <Card title="Comments (Nostr)" themeStyles={themeStyles}>
             <CommentsPanel
-              relayMode={relayMode}
               relayLabel={relayLabel}
               relaysEnvDefault={relaysEnvDefault}
               relaysList={relaysList}
               relayStats={relayStats}
               theme={theme}
             />
-            {relayMode === 'mock' ? <MockComments /> : <div id="comments-container" />}
+            <div id="comments-container" />
           </Card>
         </div>
       )}
@@ -1099,7 +1093,7 @@ export default function App() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.6rem' }}>
           {health.map((h) => {
-            const color = h.status === 'ok' ? '#22c55e' : h.status === 'mock' ? '#94a3b8' : '#ef4444';
+            const color = h.status === 'ok' ? '#22c55e' : '#ef4444';
             const bg = isDark ? themeStyles.inset : '#f8fafc';
             return (
               <div key={h.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 0.75rem', borderRadius: 10, background: bg, border: `1px solid ${themeStyles.borderColor}` }}>
@@ -1156,12 +1150,10 @@ export default function App() {
         .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'}; color: ${theme === 'dark' ? '#e2e8f0' : '#0f172a'}; font-size: 12px; border: 1px solid ${themeStyles.borderColor}; }
         .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
         .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
-        .relay-pill .dot.mock { background: #94a3b8; }
         .status-dot.pulse { box-shadow: 0 0 0 0 rgba(34,197,94,0.25); animation: pulse 2s infinite; }
         .relay-chip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.45rem; padding: 0.45rem 0.6rem; border-radius: 12px; min-width: 220px; }
         .chip-dot { width: 10px; height: 10px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.4); }
         .chip-dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-        .chip-dot.mock { background: #94a3b8; }
         .chip-dot.pulse { animation: pulse 1.8s infinite; }
         .chip-count { font-size: 0.78rem; color: #0f172a; background: #e2e8f0; padding: 0.2rem 0.45rem; border-radius: 999px; border: 1px solid #cbd5e1; }
         .pay-status { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; }
