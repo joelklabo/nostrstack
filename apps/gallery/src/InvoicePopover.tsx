@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 
@@ -15,6 +15,8 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   const [ageMs, setAgeMs] = useState(0);
   const [celebrate, setCelebrate] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const fmtAge = useMemo(() => {
     const secs = Math.max(0, Math.floor(ageMs / 1000));
@@ -41,6 +43,14 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
     const started = Date.now();
     const id = setInterval(() => setAgeMs(Date.now() - started), 1000);
     return () => clearInterval(id);
+  }, [invoice]);
+
+  useEffect(() => {
+    if (invoice) {
+      // focus dialog for accessibility
+      closeBtnRef.current?.focus();
+      cardRef.current?.focus();
+    }
   }, [invoice]);
 
   const stale = status === 'pending' && ageMs > 120000;
@@ -77,13 +87,21 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   return (
     <div style={overlayStyle} onClick={onClose}>
       <style>{pulseCss}</style>
-      <div style={cardStyle} onClick={(e) => e.stopPropagation()} aria-live="polite">
+      <div
+        style={cardStyle}
+        onClick={(e) => e.stopPropagation()}
+        aria-live="polite"
+        role="dialog"
+        aria-modal="true"
+        ref={cardRef}
+        tabIndex={-1}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>Invoice</div>
             {displayAmount && <div style={{ color: '#475569', fontWeight: 700 }}>{displayAmount}</div>}
           </div>
-          <button onClick={onClose} style={closeBtnStyle} aria-label="Close invoice">×</button>
+          <button onClick={onClose} style={closeBtnStyle} aria-label="Close invoice" ref={closeBtnRef}>×</button>
         </div>
 
         <div style={{ display: 'grid', gap: '0.9rem' }}>
