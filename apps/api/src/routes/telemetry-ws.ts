@@ -68,13 +68,10 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   let lastHash: string | null = null;
   let lastBlockTime: number | null = null;
 
-  const fetchBlock = async (height: number): Promise<TelemetryEvent> => {
+  const fetchBlock = async (height: number): Promise<TelemetryEvent | null> => {
     try {
       const hash = (await execCli(`getblockhash ${height}`)).trim();
-      if (hash && hash === lastHash) {
-        lastHeight = height;
-        return { type: 'block', height, hash, time: Date.now() / 1000 };
-      }
+      if (!hash) return null;
 
       const blockRaw = await execCli(`getblock ${hash} 1`);
       const block = JSON.parse(blockRaw);
@@ -88,10 +85,6 @@ export async function registerTelemetryWs(app: FastifyInstance) {
 
       const interval = lastBlockTime ? Math.max(0, time - lastBlockTime) : null;
 
-      lastHeight = height;
-      lastHash = hash || null;
-      lastBlockTime = time;
-
       return {
         type: 'block',
         height,
@@ -104,10 +97,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         mempoolTxs: mempool?.size,
         mempoolBytes: mempool?.bytes
       };
-    } catch (err) {
-      const now = Date.now() / 1000;
-      // do not mark height as processed so we retry on next poll
-      return { type: 'block', height, hash: '', time: now };
+    } catch {
+      // retry on next poll; do not broadcast incomplete data
+      return null;
     }
   };
 
@@ -117,12 +109,12 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       const height = Number(out.trim());
       if (Number.isFinite(height) && height !== lastHeight) {
         const event = await fetchBlock(height);
-        // Extra guard against accidental duplicates
-        if (event.type === 'block' && (event.height !== lastHeight || event.hash !== lastHash)) {
+        if (event) {
           lastHeight = event.height;
           lastHash = event.hash || lastHash;
+          lastBlockTime = event.time;
+          broadcast(event);
         }
-        broadcast(event);
       }
       lastError = null;
       lastErrorAt = 0;

@@ -85,7 +85,24 @@ export function TelemetryCard({ wsUrl }: Props) {
   }, [status]);
 
   const latest = events.length ? events[0] : null;
-  const latestBlock = useMemo(() => events.find(isBlockEvent), [events]);
+  const [blockCache, setBlockCache] = useState<Extract<TelemetryEvent, { type: 'block' }> | null>(null);
+
+  useEffect(() => {
+    const blk = events.find(isBlockEvent);
+    if (blk) {
+      setBlockCache((prev) => ({
+        ...prev,
+        ...blk,
+        txs: blk.txs ?? prev?.txs,
+        size: blk.size ?? prev?.size,
+        weight: blk.weight ?? prev?.weight,
+        mempoolTxs: blk.mempoolTxs ?? prev?.mempoolTxs,
+        mempoolBytes: blk.mempoolBytes ?? prev?.mempoolBytes
+      }) as Extract<TelemetryEvent, { type: 'block' }>);
+    }
+  }, [events]);
+
+  const latestBlock = useMemo(() => blockCache ?? (events.find(isBlockEvent) as Extract<TelemetryEvent, { type: 'block' }> | undefined), [blockCache, events]);
   const lastBlockAgeSec = latestBlock ? Math.max(0, Math.floor((now - latestBlock.time * 1000) / 1000)) : null;
   const sinceLabel = lastBlockAgeSec !== null ? formatDuration(lastBlockAgeSec) : '—';
   const blockInterval = latestBlock?.interval ? formatDuration(Math.floor(latestBlock.interval)) : '—';
@@ -116,16 +133,9 @@ export function TelemetryCard({ wsUrl }: Props) {
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Chip label="Txs" value={latestBlock?.txs ?? '—'} />
-                <Chip label="Size" value={latestBlock?.size ? `${(latestBlock.size / 1024).toFixed(1)} KB` : '—'} />
-                <Chip label="Weight" value={latestBlock?.weight ? `${latestBlock.weight}` : '—'} />
-                <Chip
-                  label="Mempool"
-                  value={
-                    latestBlock?.mempoolTxs != null
-                      ? `${latestBlock.mempoolTxs} tx / ${((latestBlock.mempoolBytes ?? 0) / 1024).toFixed(0)} KB`
-                      : '—'
-                  }
-                />
+                <Chip label="Size" value={latestBlock?.size != null ? `${(latestBlock.size / 1024).toFixed(1)} KB` : '—'} />
+                <Chip label="Weight" value={latestBlock?.weight != null ? `${latestBlock.weight}` : '—'} />
+                <Chip label="Mempool" value={formatMempool(latestBlock)} />
               </div>
               <code style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e1', wordBreak: 'break-all' }}>
                 {latestBlock?.hash ? latestBlock.hash : 'hash unavailable'}
@@ -216,8 +226,8 @@ function detail(ev: TelemetryEvent) {
   if (ev.type === 'block') {
     const parts = [`Time ${ts}`];
     if (ev.txs != null) parts.push(`${ev.txs} txs`);
-    if (ev.size) parts.push(`${(ev.size / 1024).toFixed(1)} KB`);
-    if (ev.weight) parts.push(`${ev.weight} wu`);
+    if (ev.size != null) parts.push(`${(ev.size / 1024).toFixed(1)} KB`);
+    if (ev.weight != null) parts.push(`${ev.weight} wu`);
     if (ev.interval != null) parts.push(`+${formatDuration(Math.floor(ev.interval))}`);
     return parts.join(' • ');
   }
@@ -242,4 +252,12 @@ function formatDuration(secs: number) {
   if (m < 60) return `${m}m ${secs % 60}s`;
   const h = Math.floor(m / 60);
   return `${h}h ${m % 60}m`;
+}
+
+function formatMempool(block?: Extract<TelemetryEvent, { type: 'block' }>) {
+  if (!block) return '—';
+  if (block.mempoolTxs == null && block.mempoolBytes == null) return '—';
+  const txs = block.mempoolTxs ?? 0;
+  const kb = ((block.mempoolBytes ?? 0) / 1024).toFixed(0);
+  return `${txs} tx / ${kb} KB`;
 }
