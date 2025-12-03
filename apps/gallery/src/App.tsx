@@ -546,6 +546,13 @@ export default function App() {
     [theme]
   );
 
+  const colors = useMemo(
+    () => ({
+      subtle: theme === 'dark' ? '#cbd5e1' : '#475569'
+    }),
+    [theme]
+  );
+
   const requestRealInvoice = useCallback(async () => {
     setRealBusy(true);
     setRealInvoice(null);

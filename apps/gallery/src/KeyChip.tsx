@@ -38,8 +38,22 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, m
   }, [format, pubkey, seckey, showPriv]);
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: compact ? '6px 10px' : '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, fontSize: '0.9rem', minWidth: 0, maxWidth: '100%' }}>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', maxWidth: '100%' }}>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: compact ? '6px 10px' : '8px 12px',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: 999,
+          fontSize: '0.9rem',
+          minWidth: 0,
+          maxWidth: '100%',
+          overflow: 'hidden'
+        }}
+      >
         {mode === 'toggle' ? (
           <button
             type="button"
@@ -60,12 +74,24 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, m
             <option value="hex">hex</option>
           </select>
         )}
-        <code style={{ fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{display}</code>
+        <code
+          style={{
+            fontFamily: 'monospace',
+            fontSize: '0.9rem',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '100%',
+            display: 'block'
+          }}
+        >
+          {display}
+        </code>
       </div>
       <button
         type="button"
         onClick={() => navigator.clipboard?.writeText(fullValue)}
-        style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
+        style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
       >
         Copy
       </button>

@@ -63,9 +63,9 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       </div>
 
       {status === 'ready' && (
-        <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minWidth: 0 }}>
           <span>Pubkey:</span>
-          <code style={{ background: '#fff', padding: '0.25rem 0.45rem', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <code style={{ background: '#fff', padding: '0.25rem 0.45rem', borderRadius: 8, border: '1px solid #e2e8f0', wordBreak: 'break-all', maxWidth: '100%', display: 'block' }}>
             {npub ?? detectedNpub ?? 'unknown'}
           </code>
         </div>
