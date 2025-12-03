@@ -70,22 +70,23 @@ export function NpubBar({ pubkey, seckey }: Props) {
 
   return (
     <div style={wrap}>
-      <div style={chip}>
+      <div style={bar} aria-label="Public key">
         <button
           type="button"
           onClick={() => setFormat((f) => (f === 'npub' ? 'hex' : 'npub'))}
-          style={{ ...toggle, background: format === 'npub' ? '#eef2ff' : '#fff' }}
+          style={{ ...toggle, background: format === 'npub' ? '#e0e7ff' : '#fff' }}
           aria-label="Toggle npub/hex"
         >
           {format === 'npub' ? 'npub' : 'hex'}
         </button>
-        <div style={bar} aria-label="Public key">
-          <span style={text}>{short || '—'}</span>
-          <button type="button" onClick={handleCopy} style={copy} aria-live="polite">
-            <span style={{ opacity: copied ? 0 : 1, transition: 'opacity 120ms ease' }}>⧉</span>
-            <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: copied ? 1 : 0, color: '#22c55e', fontWeight: 800, transition: 'opacity 120ms ease' }}>✓</span>
-          </button>
-        </div>
+        <span style={text}>{short || '—'}</span>
+        <button type="button" onClick={handleCopy} style={copy} aria-live="polite" aria-label="Copy key">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={copied ? '#22c55e' : '#0f172a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke 120ms ease', opacity: copied ? 0.9 : 1 }}>
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: copied ? 1 : 0, color: '#22c55e', fontWeight: 800, transition: 'opacity 120ms ease' }}>✓</span>
+        </button>
       </div>
     </div>
   );
@@ -95,30 +96,26 @@ const wrap: React.CSSProperties = {
   width: '100%'
 };
 
-const chip: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
-  gap: 10,
-  alignItems: 'center'
-};
-
 const toggle: React.CSSProperties = {
-  padding: '0.4rem 0.65rem',
-  borderRadius: 12,
+  padding: '0.45rem 0.75rem',
+  borderRadius: 10,
   border: '1px solid #cbd5e1',
   cursor: 'pointer',
   fontWeight: 700,
-  color: '#0f172a'
+  color: '#0f172a',
+  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+  minWidth: 70
 };
 
 const bar: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr auto',
+  gridTemplateColumns: 'auto 1fr auto',
   alignItems: 'center',
+  gap: 10,
   background: '#f8fafc',
-  borderRadius: 12,
+  borderRadius: 14,
   border: '1px solid #e2e8f0',
-  padding: '0.45rem 0.6rem',
+  padding: '0.45rem 0.65rem',
   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 6px 16px rgba(15,23,42,0.06)',
   position: 'relative',
   overflow: 'hidden'
@@ -135,8 +132,8 @@ const text: React.CSSProperties = {
 
 const copy: React.CSSProperties = {
   position: 'relative',
-  width: 34,
-  height: 34,
+  width: 38,
+  height: 38,
   borderRadius: 10,
   border: '1px solid #cbd5e1',
   background: '#fff',
