@@ -16,7 +16,7 @@ type TelemetryEvent =
   | { type: 'tx'; txid: string; time: number }
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number };
 
-type Props = { wsUrl: string };
+type Props = { wsUrl: string; network?: string };
 
 function normalizeTelemetryUrl(raw: string) {
   const fallbackOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4173';
@@ -92,10 +92,9 @@ function suggestFix(url: string, err: string | null) {
   return null;
 }
 
-export function TelemetryCard({ wsUrl }: Props) {
+export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
   const [height, setHeight] = useState<number | null>(null);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
-  const [nodeInfo, setNodeInfo] = useState<{ uri?: string; ip?: string }>({});
   const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -177,7 +176,7 @@ export function TelemetryCard({ wsUrl }: Props) {
           const ev = JSON.parse(msg.data) as TelemetryEvent;
           if (ev.type === 'block' && typeof ev.height === 'number') {
             setHeight(ev.height);
-            setBlockFlashKey(`${ev.height}-${ev.hash ?? 'hashless'}`);
+            setBlockFlashKey(eventKey(ev));
           }
           setEvents((prev) => {
             const key = eventKey(ev);
@@ -240,11 +239,6 @@ export function TelemetryCard({ wsUrl }: Props) {
     };
   }, [wsUrl]);
 
-  useEffect(() => {
-    // TODO: fetch static node info from API once exposed
-    setNodeInfo({ uri: 'lnd-merchant@localhost:9735', ip: '127.0.0.1' });
-  }, []);
-
   const tone = useMemo(() => {
     if (status === 'open') return { label: 'Streaming', bg: '#ecfdf3', fg: '#166534', dot: '#22c55e' };
     if (status === 'connecting') return { label: 'Connecting…', bg: '#fff7ed', fg: '#c2410c', dot: '#fb923c' };
@@ -252,34 +246,17 @@ export function TelemetryCard({ wsUrl }: Props) {
     return { label: 'Idle', bg: '#e2e8f0', fg: '#475569', dot: '#94a3b8' };
   }, [status]);
 
-  const latest = events.length ? events[0] : null;
-  const [blockCache, setBlockCache] = useState<Extract<TelemetryEvent, { type: 'block' }> | null>(null);
-
-  useEffect(() => {
-    const blk = events.find(isBlockEvent);
-    if (blk) {
-      setBlockCache((prev) => ({
-        ...prev,
-        ...blk,
-        txs: blk.txs ?? prev?.txs,
-        size: blk.size ?? prev?.size,
-        weight: blk.weight ?? prev?.weight,
-        mempoolTxs: blk.mempoolTxs ?? prev?.mempoolTxs,
-        mempoolBytes: blk.mempoolBytes ?? prev?.mempoolBytes
-      }) as Extract<TelemetryEvent, { type: 'block' }>);
-    }
-  }, [events]);
-
-  const latestBlock = useMemo(() => blockCache ?? (events.find(isBlockEvent) as Extract<TelemetryEvent, { type: 'block' }> | undefined), [blockCache, events]);
-  const lastBlockAgeSec = latestBlock ? Math.max(0, Math.floor((now - latestBlock.time * 1000) / 1000)) : null;
-  const sinceLabel = lastBlockAgeSec !== null ? formatDuration(lastBlockAgeSec) : '—';
-  const blockInterval = latestBlock?.interval ? formatDuration(Math.floor(latestBlock.interval)) : '—';
+  const blockEvents = useMemo(
+    () => events.filter(isBlockEvent).sort((a, b) => (b.height ?? 0) - (a.height ?? 0)).slice(0, 8),
+    [events]
+  );
 
   return (
     <div style={{ display: 'grid', gap: '0.6rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800 }}>
-          <span>Regtest telemetry</span>
+          <span>Telemetry</span>
+          <span style={{ padding: '0.2rem 0.6rem', borderRadius: 999, background: '#eef2ff', color: '#4338ca', fontWeight: 700, letterSpacing: '0.03em' }}>{network.toUpperCase()}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.3rem 0.65rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: `1px solid ${tone.bg}` }}>
             <span style={{ width: 10, height: 10, borderRadius: 999, background: tone.dot, boxShadow: status === 'open' ? '0 0 0 0 rgba(34,197,94,0.3)' : 'none', animation: status === 'open' ? 'telemetry-pulse 1.8s infinite' : 'none' }} />
             {tone.label}
@@ -299,120 +276,60 @@ export function TelemetryCard({ wsUrl }: Props) {
           <span style={{ color: '#9f1239' }}>If you are in dev, ensure API is running (`pnpm dev:logs`) and check API logs for `/ws/telemetry` errors.</span>
         </div>
       )}
-      <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'minmax(260px, 320px) 1fr', alignItems: 'stretch', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid #e2e8f0', background: '#0f172a', color: '#e2e8f0', padding: '1rem' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(14,165,233,0.2), transparent 40%), radial-gradient(ellipse at 80% 20%, rgba(34,197,94,0.16), transparent 42%)' }} />
-          <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.75rem', alignItems: 'center' }}>
-            <BlockIcon flashKey={blockFlashKey} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: '0.95rem', color: '#cbd5e1' }}>Last block</div>
-              <div style={{ fontWeight: 800, fontSize: '1.2rem' }}>#{latestBlock?.height ?? '—'}</div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', color: '#cbd5e1', fontSize: '0.95rem' }}>
-                <span>Since: {sinceLabel}</span>
-                <span>• Interval: {blockInterval}</span>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Chip label="Txs" value={latestBlock?.txs ?? '—'} />
-                <Chip label="Size" value={latestBlock?.size != null ? `${(latestBlock.size / 1024).toFixed(1)} KB` : '—'} />
-                <Chip label="Weight" value={latestBlock?.weight != null ? `${latestBlock.weight}` : '—'} />
-                <Chip label="Mempool" value={formatMempool(latestBlock)} />
-              </div>
-              <code style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e1', wordBreak: 'break-all' }}>
-                {latestBlock?.hash ? latestBlock.hash : 'hash unavailable'}
-              </code>
-            </div>
+      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'minmax(360px, 1fr)' }}>
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden', background: '#0f172a', color: '#e2e8f0' }}>
+          <div style={{ padding: '0.75rem 1rem', display: 'grid', gridTemplateColumns: '1fr 80px 80px 90px 90px 140px', gap: 8, fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', background: '#0c1326' }}>
+            <span>Height</span>
+            <span>Txs</span>
+            <span>Size</span>
+            <span>Weight</span>
+            <span>Since</span>
+            <span>Hash</span>
           </div>
-        </div>
-
-        <div style={{ fontSize: '0.95rem', color: '#475569', display: 'grid', gap: '0.4rem', alignContent: 'start' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, color: '#0f172a' }}>Node</span>
-            <span style={{ color: '#475569' }}>{nodeInfo.uri ?? '…'}</span>
-            <span style={{ color: '#475569' }}>• IP: {nodeInfo.ip ?? '…'}</span>
-            {latest && <span style={{ color: '#475569' }}>• Last event: {detail(latest)}</span>}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            {events.map((ev) => (
-              <div key={eventKey(ev)} style={{ padding: '0.55rem 0.7rem', border: '1px solid #e2e8f0', borderRadius: 10, background: '#f8fafc' }}>
-                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ display: 'inline-flex', width: 8, height: 8, borderRadius: 999, background: ev.type === 'block' ? '#22c55e' : ev.type === 'tx' ? '#0ea5e9' : '#f59e0b' }} />
-                  {label(ev)}
+          {blockEvents.length === 0 ? (
+            <div style={{ padding: '0.9rem 1rem', color: '#cbd5e1' }}>Waiting for blocks…</div>
+          ) : (
+            blockEvents.map((b) => {
+              const isNew = blockFlashKey === eventKey(b);
+              const since = Math.max(0, Math.floor((now - b.time * 1000) / 1000));
+              return (
+                <div
+                  key={eventKey(b)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 80px 80px 90px 90px 140px',
+                    gap: 8,
+                    padding: '0.65rem 1rem',
+                    alignItems: 'center',
+                    borderTop: '1px solid rgba(255,255,255,0.06)',
+                    background: isNew ? 'rgba(14,165,233,0.12)' : 'transparent',
+                    animation: isNew ? 'slideDown 320ms ease-out' : undefined
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 999, background: '#22c55e' }} />
+                    <strong>#{b.height}</strong>
+                  </div>
+                  <span>{b.txs ?? '—'}</span>
+                  <span>{b.size != null ? `${(b.size / 1024).toFixed(1)} KB` : '—'}</span>
+                  <span>{b.weight ?? '—'}</span>
+                  <span>{formatDuration(since)}</span>
+                  <code style={{ color: '#93c5fd', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {(b.hash ?? '').slice(0, 18) || 'hash'}
+                  </code>
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#475569' }}>{detail(ev)}</div>
-              </div>
-            ))}
-            {events.length === 0 && <div style={{ color: '#94a3b8' }}>Waiting for events…</div>}
-          </div>
+              );
+            })
+          )}
         </div>
       </div>
       <style>{`
         @keyframes telemetry-pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.35);} 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
         @keyframes block-pop { 0% { transform: translateY(4px) scale(0.96); opacity: 0.4; } 70% { transform: translateY(-2px) scale(1.02); opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+        @keyframes slideDown { 0% { transform: translateY(-6px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
       `}</style>
     </div>
   );
-}
-
-function Chip({ label, value }: { label: string; value: string | number }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.25rem 0.55rem', borderRadius: 10, background: '#0f172a', color: '#e2e8f0', border: '1px solid #1f2937', fontSize: '0.85rem' }}>
-      <span style={{ letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.75rem', color: '#cbd5e1' }}>{label}</span>
-      <strong>{value}</strong>
-    </span>
-  );
-}
-
-function BlockIcon({ flashKey }: { flashKey: string | null }) {
-  return (
-    <div style={{ position: 'relative', width: 74, height: 74 }}>
-      <div
-        key={flashKey ?? 'block'}
-        style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: 18,
-          background: 'linear-gradient(135deg, #22c55e, #0ea5e9)',
-          boxShadow: '0 18px 50px rgba(14,165,233,0.25)',
-          position: 'relative',
-          overflow: 'hidden',
-          animation: flashKey ? 'block-pop 420ms ease-out' : undefined
-        }}
-      >
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(255,255,255,0.25), rgba(255,255,255,0))' }} />
-        <div style={{ position: 'absolute', inset: '16%', borderRadius: 12, border: '2px solid rgba(255,255,255,0.45)' }} />
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          inset: -12,
-          borderRadius: 999,
-          border: '1px solid rgba(14,165,233,0.4)',
-          opacity: flashKey ? 1 : 0.25,
-          boxShadow: flashKey ? '0 0 0 0 rgba(34,197,94,0.32)' : 'none',
-          animation: flashKey ? 'telemetry-pulse 1.6s infinite' : 'none'
-        }}
-      />
-    </div>
-  );
-}
-
-function label(ev: TelemetryEvent) {
-  if (ev.type === 'block') return `New block #${ev.height}`;
-  if (ev.type === 'tx') return `Tx ${ev.txid.slice(0, 10)}…`;
-  return `LND (${ev.role})`;
-}
-function detail(ev: TelemetryEvent) {
-  const ts = new Date(ev.time * 1000).toLocaleTimeString();
-  if (ev.type === 'block') {
-    const parts = [`Time ${ts}`];
-    if (ev.txs != null) parts.push(`${ev.txs} txs`);
-    if (ev.size != null) parts.push(`${(ev.size / 1024).toFixed(1)} KB`);
-    if (ev.weight != null) parts.push(`${ev.weight} wu`);
-    if (ev.interval != null) parts.push(`+${formatDuration(Math.floor(ev.interval))}`);
-    return parts.join(' • ');
-  }
-  if (ev.type === 'tx') return `Time ${ts}`;
-  return `${ev.event} @ ${ts}`;
 }
 
 function eventKey(ev: TelemetryEvent) {
@@ -432,12 +349,4 @@ function formatDuration(secs: number) {
   if (m < 60) return `${m}m ${secs % 60}s`;
   const h = Math.floor(m / 60);
   return `${h}h ${m % 60}m`;
-}
-
-function formatMempool(block?: Extract<TelemetryEvent, { type: 'block' }>) {
-  if (!block) return '—';
-  if (block.mempoolTxs == null && block.mempoolBytes == null) return '—';
-  const txs = block.mempoolTxs ?? 0;
-  const kb = ((block.mempoolBytes ?? 0) / 1024).toFixed(0);
-  return `${txs} tx / ${kb} KB`;
 }

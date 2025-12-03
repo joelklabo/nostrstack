@@ -6,6 +6,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const COMPOSE_FILE = process.env.REGTEST_COMPOSE ?? path.join(ROOT, 'deploy/regtest/docker-compose.yml');
 const COMPOSE_CWD = process.env.REGTEST_CWD ?? path.dirname(COMPOSE_FILE);
 const COMPOSE = ['compose', '-f', COMPOSE_FILE];
+const LNBITS_URL = process.env.LN_BITS_URL ?? 'http://localhost:15001';
+const LNBITS_API_KEY = process.env.LN_BITS_API_KEY;
 
 async function ensureMinerWallet() {
   const hasWallet = await runCompose([
@@ -30,6 +32,7 @@ export type FundResult = {
   sentToMerchant: number;
   channelOpened: boolean;
   output: string;
+  lnbitsTopup?: number;
 };
 
 export async function regtestFund(): Promise<FundResult> {
@@ -53,11 +56,25 @@ export async function regtestFund(): Promise<FundResult> {
     "dest=$(lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:10010 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert getinfo | jq -r .identity_pubkey); lncli --network=regtest --lnddir=/data --rpcserver=lnd-merchant:10009 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert listchannels | jq -e --arg pk $dest '.channels[] | select(.remote_pubkey==$pk)' >/dev/null || lncli --network=regtest --lnddir=/data --rpcserver=lnd-merchant:10009 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert openchannel --node_key=$dest --local_amt=500000 --sat_per_vbyte=1"
   ]).catch(() => '');
 
+  let lnbitsTopup: number | undefined;
+  if (LNBITS_API_KEY) {
+    try {
+      const amount = 100_000; // sats
+      const invoice = await createLnbitsInvoice(amount);
+      await payInvoiceWithPayer(invoice);
+      lnbitsTopup = amount;
+    } catch (err) {
+      // swallow LNbits topup failures so faucet still succeeds
+      console.warn('LNbits topup failed', err);
+    }
+  }
+
   return {
     minedBlocks: mined + 6,
     sentToMerchant: 1_00000000,
     channelOpened: !chan.includes('already'),
-    output: chan
+    output: chan,
+    lnbitsTopup
   };
 }
 
@@ -68,4 +85,26 @@ function runCompose(args: string[]): Promise<string> {
       resolve(stdout.toString());
     });
   });
+}
+
+async function createLnbitsInvoice(amount: number): Promise<string> {
+  const res = await fetch(`${LNBITS_URL.replace(/\/$/, '')}/api/v1/payments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': LNBITS_API_KEY ?? ''
+    },
+    body: JSON.stringify({ out: false, amount, memo: 'regtest faucet topup' })
+  });
+  if (!res.ok) throw new Error(`lnbits invoice http ${res.status}`);
+  const body = (await res.json()) as { payment_request?: string };
+  if (!body.payment_request) throw new Error('lnbits invoice missing payment_request');
+  return body.payment_request;
+}
+
+async function payInvoiceWithPayer(invoice: string) {
+  await runCompose([
+    'exec', '-T', 'lnd-payer', 'sh', '-lc',
+    `lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:10010 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert payinvoice --force --json ${invoice}`
+  ]);
 }

@@ -1171,7 +1171,7 @@ export default function App() {
                 Reset WS
               </button>
             </div>
-            <TelemetryCard wsUrl={telemetryWsUrl} />
+            <TelemetryCard wsUrl={telemetryWsUrl} network={network} />
           </div>
         )}
       </Card>
