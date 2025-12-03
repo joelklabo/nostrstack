@@ -56,6 +56,10 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       if (status === 'ready') break;
       if (i < 2) await new Promise((r) => setTimeout(r, 500));
     }
+    if (status === 'checking') {
+      setStatus('missing');
+      setError('timeout');
+    }
   }, [tryOnce, status]);
 
   useEffect(() => {
