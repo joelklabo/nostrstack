@@ -93,7 +93,7 @@ function suggestFix(url: string, err: string | null) {
   return null;
 }
 
-export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
+export function BlockList({ wsUrl, network = 'regtest' }: Props) {
   const [height, setHeight] = useState<number | null>(null);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
   const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
@@ -302,37 +302,9 @@ export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
           {blockEvents.length === 0 ? (
             <div style={{ padding: '0.9rem 1rem', color: '#cbd5e1' }}>Waiting for blocks…</div>
           ) : (
-            blockEvents.map((b) => {
-              const isNew = blockFlashKey === eventKey(b);
-              const since = Math.max(0, Math.floor((now - b.time * 1000) / 1000));
-              return (
-                <div
-                  key={eventKey(b)}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 80px 80px 90px 90px 140px',
-                    gap: 8,
-                    padding: '0.65rem 1rem',
-                    alignItems: 'center',
-                    borderTop: '1px solid rgba(255,255,255,0.06)',
-                    background: isNew ? 'rgba(14,165,233,0.12)' : 'transparent',
-                    animation: isNew ? 'slideDown 320ms ease-out' : undefined
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 999, background: '#22c55e' }} />
-                    <strong>#{b.height}</strong>
-                  </div>
-                  <span>{b.txs ?? '—'}</span>
-                  <span>{b.size != null ? `${(b.size / 1024).toFixed(1)} KB` : '—'}</span>
-                  <span>{b.weight ?? '—'}</span>
-                  <span>{formatDuration(since)}</span>
-                  <code style={{ color: '#93c5fd', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {(b.hash ?? '').slice(0, 18) || 'hash'}
-                  </code>
-                </div>
-              );
-            })
+            blockEvents.map((b) => (
+              <BlockRow key={eventKey(b)} block={b} isNew={blockFlashKey === eventKey(b)} now={now} />
+            ))
           )}
         </div>
       </div>
@@ -350,6 +322,38 @@ function eventKey(ev: TelemetryEvent) {
   if (ev.type === 'tx') return `tx-${ev.txid}`;
   if (ev.type === 'lnd') return `lnd-${ev.role}-${ev.event}-${ev.time}`;
   return `error-${ev.time}-${ev.message}`;
+}
+
+type BlockEvent = Extract<TelemetryEvent, { type: 'block' }>;
+
+function BlockRow({ block, isNew, now }: { block: BlockEvent; isNew: boolean; now: number }) {
+  const since = Math.max(0, Math.floor((now - block.time * 1000) / 1000));
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 80px 80px 90px 90px 140px',
+        gap: 8,
+        padding: '0.65rem 1rem',
+        alignItems: 'center',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        background: isNew ? 'rgba(14,165,233,0.12)' : 'transparent',
+        animation: isNew ? 'slideDown 320ms ease-out' : undefined
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 999, background: '#22c55e' }} />
+        <strong>#{block.height}</strong>
+      </div>
+      <span>{block.txs ?? '—'}</span>
+      <span>{block.size != null ? `${(block.size / 1024).toFixed(1)} KB` : '—'}</span>
+      <span>{block.weight ?? '—'}</span>
+      <span>{formatDuration(since)}</span>
+      <code style={{ color: '#93c5fd', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {(block.hash ?? '').slice(0, 18) || 'hash'}
+      </code>
+    </div>
+  );
 }
 
 function isBlockEvent(ev: TelemetryEvent): ev is Extract<TelemetryEvent, { type: 'block' }> {

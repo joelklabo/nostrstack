@@ -9,7 +9,7 @@ import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
 import { NostrProfileCard } from './NostrProfileCard';
-import { TelemetryCard } from './TelemetryCard';
+import { BlockList } from './TelemetryCard';
 import { layout } from './tokens';
 import type { RelayStats } from './types/relay';
 import { WalletBalance } from './WalletBalance';
@@ -1172,7 +1172,7 @@ export default function App() {
                 Reset WS
               </button>
             </div>
-            <TelemetryCard wsUrl={telemetryWsUrl} network={network} />
+            <BlockList wsUrl={telemetryWsUrl} network={network} />
           </div>
         )}
       </Card>
