@@ -846,6 +846,7 @@ export default function App() {
         adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
         readKey={walletReadKey || undefined}
         walletId={walletIdOverride}
+        apiBase={apiBase}
         refreshSignal={walletRefresh}
         onManualRefresh={() => setWalletRefresh((n) => n + 1)}
         network={networkLabel}

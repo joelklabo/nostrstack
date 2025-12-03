@@ -5,6 +5,7 @@ type Props = {
   adminKey?: string;
   readKey?: string;
   walletId?: string;
+  apiBase?: string;
   refreshSignal?: number;
   onManualRefresh?: () => void;
   network?: string;
@@ -15,7 +16,7 @@ type WalletInfo = { name?: string; balance?: number; id?: string };
 
 type KeyStatus = { kind: 'admin' | 'read'; status: 'idle' | 'ok' | 'error'; message?: string; url?: string };
 
-export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshSignal = 0, onManualRefresh, network = 'regtest', payerLabel = 'lnd-payer (test wallet)' }: Props) {
+export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase, refreshSignal = 0, onManualRefresh, network = 'regtest', payerLabel = 'lnd-payer (test wallet)' }: Props) {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,20 +38,38 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
   useEffect(() => {
     // live wallet stream via /ws/wallet
     if (typeof window === 'undefined') return;
-    const wsUrl = (() => {
+    const buildVariants = () => {
+      const list: string[] = [];
+      const origin = (() => {
+        try {
+          return apiBase ? new URL(apiBase).origin : window.location.origin;
+        } catch {
+          return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+        }
+      })();
       try {
-        const origin = window.location.origin;
-        const url = new URL('/ws/wallet', origin);
-        url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-        return url.toString();
-      } catch {
-        return '/ws/wallet';
-      }
-    })();
-    let cancelled = false;
+        const primary = new URL('/ws/wallet', origin);
+        primary.protocol = primary.protocol === 'https:' ? 'wss:' : 'ws:';
+        list.push(primary.toString());
+      } catch {/* ignore */}
+      list.push('ws://localhost:3001/ws/wallet');
+      list.push('wss://localhost:3001/ws/wallet');
+      return Array.from(new Set(list));
+    };
+    const variants = buildVariants();
     let ws: WebSocket | null = null;
-    try {
-      ws = new WebSocket(wsUrl);
+    let idx = 0;
+    const connect = () => {
+      const target = variants[idx];
+      try {
+        ws = new WebSocket(target);
+      } catch {
+        if (idx < variants.length - 1) {
+          idx += 1;
+          connect();
+        }
+        return;
+      }
       ws.onmessage = (ev) => {
         try {
           const msg = JSON.parse(ev.data as string) as { type?: string; balance?: number; id?: string; name?: string; time?: number };
@@ -65,14 +84,21 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
       ws.onerror = () => {
         if (!cancelled) ws?.close();
       };
-    } catch {
-      /* ignore */
-    }
+      ws.onclose = () => {
+        if (cancelled) return;
+        if (idx < variants.length - 1) {
+          idx += 1;
+          connect();
+        }
+      };
+    };
+    connect();
+    let cancelled = false;
     return () => {
       cancelled = true;
       ws?.close();
     };
-  }, [lnbitsUrl]);
+  }, [lnbitsUrl, apiBase]);
 
   useEffect(() => {
     if (!canFetch) {
