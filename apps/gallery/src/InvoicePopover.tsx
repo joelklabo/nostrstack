@@ -39,12 +39,12 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   const displayAmount = useMemo(() => (amountSats ? `${amountSats} sats` : ''), [amountSats]);
   const tone =
     status === 'paid'
-      ? { bg: '#ecfdf3', fg: '#166534', border: '#bbf7d0' }
+      ? { bg: '#ecfdf3', fg: '#166534', border: '#bbf7d0', icon: 'check' }
       : status === 'error'
-        ? { bg: '#fef2f2', fg: '#b91c1c', border: '#fecdd3' }
+        ? { bg: '#fef2f2', fg: '#b91c1c', border: '#fecdd3', icon: 'x' }
         : stale
-          ? { bg: '#fff7ed', fg: '#c2410c', border: '#fed7aa' }
-          : { bg: '#f8fafc', fg: '#0f172a', border: '#e2e8f0' };
+          ? { bg: '#fff7ed', fg: '#c2410c', border: '#fed7aa', icon: 'x' }
+          : { bg: '#e0f2fe', fg: '#0369a1', border: '#bae6fd', icon: 'dot' };
   if (!invoice) return null;
 
   return (
@@ -62,24 +62,33 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: '0.3rem 0.65rem',
+                padding: '0.35rem 0.8rem',
                 borderRadius: 999,
                 background: tone.bg,
                 color: tone.fg,
                 border: `1px solid ${tone.border}`,
-                fontWeight: 700
+                fontWeight: 800,
+                boxShadow: status === 'pending' ? '0 10px 30px rgba(14,165,233,0.18)' : 'none',
+                transition: 'all 150ms ease'
               }}
             >
               <span
                 style={{
-                  width: 10,
-                  height: 10,
+                  width: 12,
+                  height: 12,
                   borderRadius: 999,
                   background: tone.fg,
                   boxShadow: status === 'pending' && !stale ? '0 0 0 0 rgba(14,165,233,0.35)' : 'none',
-                  animation: status === 'pending' && !stale ? 'invoice-pulse 1.5s infinite' : 'none'
+                  animation: status === 'pending' && !stale ? 'invoice-pulse 1.5s infinite' : 'none',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 900
                 }}
-              />
+              >
+                {tone.icon === 'check' ? '✓' : tone.icon === 'x' ? '×' : ''}
+              </span>
               {status === 'paid' ? 'Paid' : status === 'error' ? 'Payment error' : stale ? 'Timed out' : 'Waiting for payment'}
             </span>
             <button onClick={onClose} style={closeBtnStyle} aria-label="Close invoice">×</button>
@@ -87,13 +96,13 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
         </div>
 
         <div style={{ display: 'grid', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'center', gap: '0.75rem' }}>
             {dataUrl ? (
               <img src={dataUrl} alt="Lightning invoice QR" style={{ width: '220px', height: '220px', borderRadius: 12, boxShadow: '0 12px 30px rgba(0,0,0,0.12)' }} />
             ) : (
               <div style={{ height: 220, width: 220, display: 'grid', placeItems: 'center' }}>Generating…</div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 160 }}>
               <div style={{ color: '#475569', fontSize: '0.95rem' }}>Elapsed: {fmtAge}</div>
               <CopyButton text={invoice} label="Copy BOLT11" size="md" />
               <a href={`lightning:${invoice}`} style={walletLink}>Open in wallet</a>
