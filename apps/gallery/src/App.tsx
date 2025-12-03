@@ -1,7 +1,7 @@
 import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
 import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CommentsPanel } from './comments/CommentsPanel';
 import { CopyButton } from './CopyButton';
@@ -336,6 +336,9 @@ export default function App() {
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
   const [walletRefresh, setWalletRefresh] = useState(0);
+  const adminKeyRef = useRef<HTMLInputElement | null>(null);
+  const readKeyRef = useRef<HTMLInputElement | null>(null);
+  const walletIdRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (import.meta.env.DEV) {
       // Expose helpers for MCP-driven UI testing
@@ -763,6 +766,9 @@ export default function App() {
       />
       <div style={{ display: 'grid', gap: '0.4rem', padding: '0.6rem 0.8rem', background: '#f1f5f9', border: `1px solid ${layout.border}`, borderRadius: layout.radius, marginBottom: '1rem' }}>
         <strong>Use a custom LNbits wallet</strong>
+        <div style={{ color: '#475569', fontSize: '0.95rem' }}>
+          Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
+        </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <input
             style={{ minWidth: 220, flex: 1 }}
@@ -781,6 +787,7 @@ export default function App() {
             style={{ minWidth: 220, flex: 1 }}
             placeholder="LNbits admin key"
             type="password"
+            ref={adminKeyRef}
             defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
             onBlur={(e) => {
               const v = e.target.value.trim();
@@ -791,10 +798,30 @@ export default function App() {
               }
             }}
           />
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const txt = await navigator.clipboard.readText();
+                const v = txt.trim();
+                if (adminKeyRef.current) adminKeyRef.current.value = v;
+                setLnbitsKeyOverride(v || null);
+                if (typeof window !== 'undefined') {
+                  if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
+                  else window.localStorage.removeItem('nostrstack.lnbits.key');
+                }
+              } catch {
+                // ignore clipboard failures
+              }
+            }}
+          >
+            Paste admin key
+          </button>
           <input
             style={{ minWidth: 220, flex: 1 }}
             placeholder="LNbits read key (optional)"
             type="password"
+            ref={readKeyRef}
             defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
             onBlur={(e) => {
               const v = e.target.value.trim();
@@ -808,6 +835,7 @@ export default function App() {
           <input
             style={{ minWidth: 160, flex: 1 }}
             placeholder="Wallet ID (for ?usr= fallback)"
+            ref={walletIdRef}
             defaultValue={lnbitsWalletIdOverride ?? ''}
             onBlur={(e) => {
               const v = e.target.value.trim();
