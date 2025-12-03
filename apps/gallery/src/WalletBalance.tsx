@@ -27,8 +27,10 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
     { kind: 'read', status: 'idle' }
   ]);
   const [masked, setMasked] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const canFetch = Boolean(lnbitsUrl && (adminKey || readKey) && (adminKey !== 'set VITE_LNBITS_ADMIN_KEY' || readKey));
+  const isPlaceholderKey = (k?: string | null) => !k || k === 'changeme' || k === 'set-me' || k.startsWith('set VITE');
+  const canFetch = Boolean(lnbitsUrl && (!isPlaceholderKey(adminKey) || !isPlaceholderKey(readKey)));
 
   useEffect(() => {
     if (!canFetch) {
