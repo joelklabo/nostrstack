@@ -5,7 +5,18 @@ import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
 type TelemetryEvent =
-  | { type: 'block'; height: number; hash: string; time: number }
+  | {
+    type: 'block';
+    height: number;
+    hash: string;
+    time: number;
+    txs?: number;
+    size?: number;
+    weight?: number;
+    interval?: number;
+    mempoolTxs?: number;
+    mempoolBytes?: number;
+  }
   | { type: 'tx'; txid: string; time: number }
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number };
 
@@ -54,14 +65,64 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   let lastErrorAt = 0;
 
   let lastHeight = -1;
+  let lastHash: string | null = null;
+  let lastBlockTime: number | null = null;
+
+  const fetchBlock = async (height: number): Promise<TelemetryEvent> => {
+    try {
+      const hash = (await execCli(`getblockhash ${height}`)).trim();
+      if (hash && hash === lastHash) {
+        lastHeight = height;
+        return { type: 'block', height, hash, time: Date.now() / 1000 };
+      }
+
+      const blockRaw = await execCli(`getblock ${hash} 1`);
+      const block = JSON.parse(blockRaw);
+      const time = Number(block.time) || Date.now() / 1000;
+      const txs = Array.isArray(block.tx) ? block.tx.length : Number(block.nTx) || 0;
+      const size = Number(block.size) || 0;
+      const weight = Number(block.weight) || 0;
+      const mempool = await execCli('getmempoolinfo')
+        .then((out) => JSON.parse(out))
+        .catch(() => null);
+
+      const interval = lastBlockTime ? Math.max(0, time - lastBlockTime) : null;
+
+      lastHeight = height;
+      lastHash = hash || null;
+      lastBlockTime = time;
+
+      return {
+        type: 'block',
+        height,
+        hash,
+        time,
+        txs,
+        size,
+        weight,
+        interval: interval ?? undefined,
+        mempoolTxs: mempool?.size,
+        mempoolBytes: mempool?.bytes
+      };
+    } catch (err) {
+      const now = Date.now() / 1000;
+      lastHeight = height;
+      return { type: 'block', height, hash: '', time: now };
+    }
+  };
 
   const interval = setInterval(async () => {
     try {
       const out = await execCli('getblockcount');
       const height = Number(out.trim());
       if (Number.isFinite(height) && height !== lastHeight) {
-        lastHeight = height;
-        broadcast({ type: 'block', height, hash: '', time: Date.now() / 1000 });
+        const event = await fetchBlock(height);
+        // Extra guard against accidental duplicates
+        if (event.type === 'block' && (event.height !== lastHeight || event.hash !== lastHash)) {
+          lastHeight = event.height;
+          lastHash = event.hash || lastHash;
+        }
+        broadcast(event);
       }
       lastError = null;
       lastErrorAt = 0;
