@@ -37,9 +37,16 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
   useEffect(() => {
     // live wallet stream via /ws/wallet
     if (typeof window === 'undefined') return;
-    const base = lnbitsUrl ? lnbitsUrl : undefined;
-    const wsBase = base && base.startsWith('http') ? base.replace(/^http/, 'ws') : undefined;
-    const wsUrl = wsBase ? `${wsBase.replace(/\/$/, '')}/ws/wallet` : '/ws/wallet';
+    const wsUrl = (() => {
+      try {
+        const origin = window.location.origin;
+        const url = new URL('/ws/wallet', origin);
+        url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+        return url.toString();
+      } catch {
+        return '/ws/wallet';
+      }
+    })();
     let cancelled = false;
     let ws: WebSocket | null = null;
     try {
