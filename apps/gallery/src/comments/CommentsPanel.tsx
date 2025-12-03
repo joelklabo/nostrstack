@@ -70,7 +70,8 @@ export function CommentsPanel({
               meta={{ name: data.name, software: data.software }}
               recv={data.recv}
               sendStatus={data.sendStatus}
-              last={data.last ?? data.lastSentAt}
+              last={data.last}
+              lastSentAt={data.lastSentAt}
               theme={theme}
             />
           );

@@ -6,10 +6,11 @@ type Props = {
   recv?: number;
   sendStatus?: 'idle' | 'sending' | 'ok' | 'error';
   last?: number;
+  lastSentAt?: number;
   theme?: 'light' | 'dark';
 };
 
-export function RelayCard({ url, meta, recv = 0, sendStatus, last, theme = 'light' }: Props) {
+export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, theme = 'light' }: Props) {
   const host = useMemo(() => {
     try {
       return new URL(url.replace(/^ws/, 'http')).host;
@@ -23,7 +24,9 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, theme = 'ligh
       ? { card: '#0f172a', text: '#e2e8f0', sub: '#cbd5e1', border: '#1f2937', chip: '#111827' }
       : { card: '#fff', text: '#0f172a', sub: '#475569', border: '#e2e8f0', chip: '#f8fafc' };
 
-  const hot = last && Date.now() - last < 3000;
+  const now = Date.now();
+  const recvHot = last && now - last < 4000;
+  const sendHot = lastSentAt && now - lastSentAt < 4000;
   const tone =
     sendStatus === 'sending'
       ? { dot: '#0ea5e9', shadow: 'rgba(14,165,233,0.35)', badge: '• sending' }
@@ -34,6 +37,8 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, theme = 'ligh
           : { dot: '#94a3b8', shadow: 'rgba(148,163,184,0.35)', badge: '' };
 
   const lastLabel = last ? timeAgo(last) : 'no recent activity';
+  const sendLabel = lastSentAt ? `${timeAgo(lastSentAt)} (send)` : null;
+  const activityBars = buildSpark(recv);
 
   return (
     <div
@@ -51,14 +56,14 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, theme = 'ligh
       `}</style>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: '0.55rem' }}>
         <span
-          className={hot ? 'pulse' : ''}
+          className={recvHot || sendHot ? 'pulse' : ''}
           style={{
             width: 10,
             height: 10,
             borderRadius: 999,
             background: tone.dot,
-            boxShadow: hot ? `0 0 0 6px ${tone.shadow}` : undefined,
-            animation: hot ? 'relay-pulse 1.8s infinite' : undefined
+            boxShadow: recvHot || sendHot ? `0 0 0 6px ${tone.shadow}` : undefined,
+            animation: recvHot || sendHot ? 'relay-pulse 1.8s infinite' : undefined
           }}
         />
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -71,10 +76,16 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, theme = 'ligh
           <span style={{ fontSize: '0.8rem', color: palette.text, background: palette.chip, border: `1px solid ${palette.border}`, padding: '0.2rem 0.55rem', borderRadius: 999 }}>
             recv {recv}
           </span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {activityBars.map((h, idx) => (
+              <span key={idx} style={{ width: 5, height: h, borderRadius: 2, background: tone.dot, opacity: 0.8 }} />
+            ))}
+          </div>
           {tone.badge && (
             <span style={{ fontSize: '0.75rem', color: tone.dot }}>{tone.badge}</span>
           )}
           <span style={{ fontSize: '0.75rem', color: palette.sub, whiteSpace: 'nowrap' }}>{lastLabel}</span>
+          {sendLabel && <span style={{ fontSize: '0.75rem', color: palette.sub, whiteSpace: 'nowrap' }}>{sendLabel}</span>}
         </div>
       </div>
     </div>
@@ -90,4 +101,10 @@ function timeAgo(ts: number) {
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   return `${h}h ago`;
+}
+
+function buildSpark(recv: number) {
+  const bars = 8;
+  const level = Math.min(bars, Math.max(1, Math.ceil(Math.log10(recv + 1) * 3)));
+  return Array.from({ length: bars }, (_, i) => (i < level ? 10 + i * 2 : 6));
 }

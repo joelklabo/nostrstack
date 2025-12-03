@@ -456,6 +456,10 @@ export default function App() {
         return;
       }
       const relay = profileRelays[0] ?? 'wss://relay.damus.io';
+      setRelayStats((prev) => ({
+        ...prev,
+        [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'sending', lastSentAt: Date.now() }
+      }));
       const template: EventTemplate = {
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -466,9 +470,18 @@ export default function App() {
       const r = await Relay.connect(relay);
       await r.publish(signed);
       r.close();
+      setRelayStats((prev) => ({
+        ...prev,
+        [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'ok', lastSentAt: Date.now() }
+      }));
       setLastNoteOk(true);
       setLastNoteResult(`Published note to ${relay}`);
     } catch (err) {
+      const relay = profileRelays[0] ?? 'wss://relay.damus.io';
+      setRelayStats((prev) => ({
+        ...prev,
+        [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'error', lastSentAt: Date.now() }
+      }));
       setLastNoteOk(false);
       setLastNoteResult(err instanceof Error ? err.message : String(err));
     }
