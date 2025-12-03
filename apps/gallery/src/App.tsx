@@ -480,8 +480,26 @@ export default function App() {
   const themeStyles = useMemo(
     () =>
       theme === 'dark'
-        ? { background: '#0b1021', color: '#e2e8f0', borderColor: '#1f2937' }
-        : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' },
+        ? {
+            background: '#0b1021',
+            card: '#0f172a',
+            inset: '#111827',
+            text: '#e2e8f0',
+            muted: '#94a3b8',
+            borderColor: '#1f2937',
+            accent: '#38bdf8',
+            shadow: '0 10px 40px rgba(0,0,0,0.35)'
+          }
+        : {
+            background: '#f8fafc',
+            card: '#fff',
+            inset: '#f8fafc',
+            text: '#0f172a',
+            muted: '#475569',
+            borderColor: '#e2e8f0',
+            accent: '#0ea5e9',
+            shadow: '0 10px 30px rgba(15,23,42,0.08)'
+          },
     [theme]
   );
 
@@ -537,13 +555,13 @@ export default function App() {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <h1 style={{ marginTop: 0, marginBottom: 0 }}>nostrstack Demo</h1>
+        <h1 style={{ marginTop: 0, marginBottom: 0, color: themeStyles.text }}>nostrstack Demo</h1>
         <span
           style={{
             padding: '0.35rem 0.8rem',
             borderRadius: 999,
-            background: theme === 'dark' ? '#38bdf8' : '#0f172a',
-            color: theme === 'dark' ? '#0b1220' : '#e2e8f0',
+            background: themeStyles.accent,
+            color: isDark ? '#0b1220' : '#e2e8f0',
             fontWeight: 700,
             letterSpacing: '0.03em'
           }}
@@ -551,7 +569,7 @@ export default function App() {
           {network.toUpperCase()}
         </span>
       </div>
-      <p style={{ maxWidth: 780 }}>
+      <p style={{ maxWidth: 780, color: themeStyles.muted }}>
         Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use the relays you set.
       </p>
 
@@ -772,17 +790,17 @@ export default function App() {
         </div>
       )}
 
-      {tab === 'logs' && (
+      <div style={{ display: tab === 'logs' ? 'block' : 'none' }}>
         <Card title="Logs">
           <div style={{ marginBottom: '0.5rem', color: '#475569', fontSize: '0.95rem' }}>
             Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures frontend console (toggle to enable).
           </div>
           <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} theme={theme} />
         </Card>
-      )}
+      </div>
 
       <Card title="Status & build">
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem', color: '#475569' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem', color: themeStyles.muted }}>
           <span>Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</span>
           <span>Host: {demoHost}</span>
           <span>API base: {apiBase}</span>
@@ -790,7 +808,7 @@ export default function App() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.6rem' }}>
           {health.map((h) => {
             const color = h.status === 'ok' ? '#22c55e' : h.status === 'mock' ? '#94a3b8' : '#ef4444';
-            const bg = isDark ? '#0b1220' : '#f8fafc';
+            const bg = isDark ? themeStyles.inset : '#f8fafc';
             return (
               <div key={h.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 0.75rem', borderRadius: 10, background: bg, border: `1px solid ${themeStyles.borderColor}` }}>
                 <span
