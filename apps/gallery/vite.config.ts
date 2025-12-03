@@ -36,6 +36,13 @@ export default defineConfig({
         secure: false,
         ws: true,
         rewrite: (path) => path
+      },
+      '/ws/wallet': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        rewrite: (path) => path
       }
     }
   },
