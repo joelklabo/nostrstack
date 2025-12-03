@@ -247,8 +247,9 @@ function useMountWidgets(
         const active = info.relays.length ? info.relays : ['mock'];
         setRelayStats((prev) => {
           const next = { ...prev };
+          const now = Date.now();
           active.forEach((r) => {
-            next[r] = next[r] ?? { recv: 0 };
+            next[r] = { ...(next[r] ?? { recv: 0 }), last: now, sendStatus: 'ok' };
           });
           return next;
         });
@@ -256,11 +257,20 @@ function useMountWidgets(
       // @ts-expect-error onEvent not in upstream types yet
       onEvent: (ev: { content?: string }) => {
         if (!ev?.content) return;
-        const relay = relays[0] || 'mock';
-        setRelayStats((prev: RelayStats) => ({
-          ...prev,
-          [relay]: { ...(prev[relay] ?? { recv: 0 }), recv: (prev[relay]?.recv ?? 0) + 1, last: Date.now() }
-        }));
+        const now = Date.now();
+        const targets = relays.length ? relays : ['mock'];
+        setRelayStats((prev: RelayStats) => {
+          const next = { ...prev };
+          targets.forEach((relay) => {
+            next[relay] = {
+              ...(next[relay] ?? { recv: 0 }),
+              recv: (next[relay]?.recv ?? 0) + 1,
+              last: now,
+              sendStatus: 'ok'
+            };
+          });
+          return next;
+        });
       }
     });
   }, [username, amount, relaysCsv, onUnlock, enableTestSigner]);
