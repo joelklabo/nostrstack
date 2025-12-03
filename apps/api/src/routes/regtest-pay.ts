@@ -20,7 +20,7 @@ function runCompose(args: string[], cwd?: string): Promise<string> {
 }
 
 export async function registerRegtestPayRoute(app: FastifyInstance) {
-  app.post('/regtest/pay', {
+  const handlerOpts = {
     schema: {
       body: {
         type: 'object',
@@ -29,7 +29,9 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
         additionalProperties: false
       }
     }
-  }, async (request, reply) => {
+  } as const;
+
+  const handler = async (request: Parameters<FastifyInstance['post']>[1], reply: Parameters<FastifyInstance['post']>[2]) => {
     const { invoice } = request.body as { invoice: string };
     if (!invoice || invoice.length < 10) return reply.code(400).send({ ok: false, error: 'invalid_invoice' });
 
@@ -66,5 +68,8 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
       request.log.error({ err }, 'regtest payinvoice exec failed');
       return reply.code(500).send({ ok: false, error: 'pay_failed', detail: err instanceof Error ? err.message : String(err) });
     }
-  });
+  };
+
+  app.post('/regtest/pay', handlerOpts, handler);
+  app.post('/api/regtest/pay', handlerOpts, handler);
 }
