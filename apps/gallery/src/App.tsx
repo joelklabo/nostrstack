@@ -60,7 +60,7 @@ function resolveTelemetryWs(base: string) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem' }}>
+    <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem', background: themeStyles.card, color: themeStyles.text, boxShadow: themeStyles.shadow }}>
       <h2 style={{ marginTop: 0 }}>{title}</h2>
       {children}
     </section>
@@ -485,6 +485,7 @@ export default function App() {
             card: '#0f172a',
             inset: '#111827',
             text: '#e2e8f0',
+            color: '#e2e8f0',
             muted: '#94a3b8',
             borderColor: '#1f2937',
             accent: '#38bdf8',
@@ -495,6 +496,7 @@ export default function App() {
             card: '#fff',
             inset: '#f8fafc',
             text: '#0f172a',
+            color: '#0f172a',
             muted: '#475569',
             borderColor: '#e2e8f0',
             accent: '#0ea5e9',
@@ -832,7 +834,7 @@ export default function App() {
 
       <style>{`
         button { cursor: pointer; }
-        input, select, button, textarea { background: ${theme === 'dark' ? '#111827' : '#fff'}; color: ${themeStyles.color}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
+        input, select, button, textarea { background: ${theme === 'dark' ? '#111827' : '#fff'}; color: ${themeStyles.text}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
         section { border-color: ${themeStyles.borderColor}; }
         .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: ${theme === 'dark' ? '#111827' : '#f1f5f9'}; color: ${theme === 'dark' ? '#e2e8f0' : '#0f172a'}; font-size: 12px; border: 1px solid ${themeStyles.borderColor}; }
         .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
