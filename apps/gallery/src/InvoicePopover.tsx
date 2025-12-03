@@ -159,7 +159,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                       style={{
                         ...beam,
                         background: visualState === 'paid' ? 'linear-gradient(90deg, #22c55e, #0ea5e9)' : 'linear-gradient(90deg, #0ea5e9, #6366f1)',
-                        animation: visualState === 'paid' ? 'beam-slide 1s ease-out 1' : 'beam-slide 1.2s linear infinite'
+                        animation: visualState === 'paid' ? 'beam-slide 1s ease-out 1' : visualState === 'timeout' || visualState === 'error' ? 'none' : 'beam-slide 1.2s linear infinite'
                       }}
                     />
                   </div>
