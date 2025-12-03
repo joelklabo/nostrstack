@@ -47,7 +47,7 @@ const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
   ? relaysEnvRaw.split(',').map((r: string) => r.trim()).filter(Boolean)
   : ['wss://relay.damus.io'];
-const lnbitsUrl = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
+const lnbitsUrlRaw = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
 type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
@@ -64,10 +64,19 @@ function resolveLogStreamUrl(base: string) {
 }
 
 function resolveTelemetryWs(base: string) {
-  // When proxied through Vite (/api rewrites), keep /api prefix so ws proxy matches
-  if (base.startsWith('/')) return `${base.replace(/\/$/, '')}/ws/telemetry`;
-  // Otherwise build absolute ws URL
-  return `${base.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/telemetry`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const baseClean = base.replace(/\/$/, '');
+  if (baseClean.startsWith('http')) return `${baseClean.replace(/^http/, 'ws')}/ws/telemetry`;
+  if (origin) return `${origin.replace(/^http/, 'ws')}${baseClean}/ws/telemetry`;
+  return `ws://localhost:3001${baseClean}/ws/telemetry`;
+}
+
+function normalizeUrl(url: string) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('//')) return `http:${url}`;
+  if (url.startsWith(':')) return `http://localhost${url}`;
+  return `http://${url}`;
 }
 
 function Card({ title, children, themeStyles }: { title: string; children: React.ReactNode; themeStyles: ThemeStyles }) {
@@ -650,6 +659,7 @@ export default function App() {
   }, [amount]);
 
   const walletKey = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
+  const lnbitsUrl = normalizeUrl(lnbitsUrlRaw);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
   const isDark = theme === 'dark';
 

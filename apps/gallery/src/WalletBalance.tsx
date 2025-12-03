@@ -27,7 +27,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManual
       setLoading(true);
       setError(null);
       try {
-        const target = `${lnbitsUrl!.replace(/\/$/, '')}/api/v1/wallet`;
+        const target = `${normalizeUrl(lnbitsUrl!).replace(/\/$/, '')}/api/v1/wallet`;
         const res = await fetch(target, { headers: { 'X-Api-Key': adminKey!, Accept: 'application/json' } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const body = await res.json();
@@ -109,3 +109,11 @@ const btn: React.CSSProperties = {
   background: '#fff',
   cursor: 'pointer'
 };
+
+function normalizeUrl(url: string) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('//')) return `http:${url}`;
+  if (url.startsWith(':')) return `http://localhost${url}`;
+  return `http://${url}`;
+}
