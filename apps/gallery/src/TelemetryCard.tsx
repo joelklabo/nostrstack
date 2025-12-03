@@ -27,6 +27,8 @@ export function TelemetryCard({ wsUrl }: Props) {
   const wsRef = useRef<WebSocket | null>(null);
   const [now, setNow] = useState(Date.now());
   const [blockFlashKey, setBlockFlashKey] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const backoffRef = useRef(1500);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -38,6 +40,7 @@ export function TelemetryCard({ wsUrl }: Props) {
     const connect = () => {
       if (cancelled) return;
       setStatus('connecting');
+      setErrorMsg(null);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       ws.onmessage = (msg) => {
@@ -56,12 +59,21 @@ export function TelemetryCard({ wsUrl }: Props) {
           console.warn('telemetry parse', err);
         }
       };
-      ws.onopen = () => setStatus('open');
-      ws.onerror = () => setStatus('error');
-      ws.onclose = () => {
+      ws.onopen = () => {
+        setStatus('open');
+        backoffRef.current = 1500;
+      };
+      ws.onerror = (e) => {
         setStatus('error');
+        setErrorMsg(String((e as Event)?.type ?? 'WebSocket error'));
+      };
+      ws.onclose = (e) => {
+        setStatus('error');
+        setErrorMsg(`closed (${e.code})`);
         if (retryRef.current) clearTimeout(retryRef.current);
-        retryRef.current = setTimeout(connect, 2500);
+        const delay = Math.min(15000, backoffRef.current);
+        retryRef.current = setTimeout(connect, delay);
+        backoffRef.current *= 1.6;
       };
     };
     connect();
@@ -119,6 +131,11 @@ export function TelemetryCard({ wsUrl }: Props) {
         </div>
         <span style={{ fontSize: '0.95rem', color: '#475569' }}>Height: {height ?? '…'}</span>
       </div>
+      {status === 'error' && (
+        <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10 }}>
+          Stream error: {errorMsg ?? 'disconnected'} — retrying…
+        </div>
+      )}
       <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'minmax(260px, 320px) 1fr', alignItems: 'stretch', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid #e2e8f0', background: '#0f172a', color: '#e2e8f0', padding: '1rem' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(14,165,233,0.2), transparent 40%), radial-gradient(ellipse at 80% 20%, rgba(34,197,94,0.16), transparent 42%)' }} />
