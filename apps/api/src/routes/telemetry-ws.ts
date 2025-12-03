@@ -53,11 +53,16 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   let lastError: string | null = null;
   let lastErrorAt = 0;
 
+  let lastHeight = -1;
+
   const interval = setInterval(async () => {
     try {
       const out = await execCli('getblockcount');
       const height = Number(out.trim());
-      broadcast({ type: 'block', height, hash: '', time: Date.now() / 1000 });
+      if (Number.isFinite(height) && height !== lastHeight) {
+        lastHeight = height;
+        broadcast({ type: 'block', height, hash: '', time: Date.now() / 1000 });
+      }
       lastError = null;
       lastErrorAt = 0;
     } catch (err) {
