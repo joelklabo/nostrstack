@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Pill } from '../App';
 import { RelayCard } from '../RelayCard';
+import { RelayRibbon } from '../RelayRibbon';
 
  type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
 
@@ -24,6 +25,7 @@ export function CommentsPanel({
   const [liveBadge, setLiveBadge] = useState<'listening' | 'idle'>('idle');
   const [events, setEvents] = useState<Array<{ relay: string; ts: number; recv?: number; sendStatus?: string }>>([]);
   const lastSeenRef = useRef<Record<string, number>>({});
+  const [ribbonEvents, setRibbonEvents] = useState<Array<{ relay: string; ts: number; kind: 'recv' | 'send'; detail?: string }>>([]);
 
   useEffect(() => {
     const latest = relaysToShow.map((r) => relayStats[r]?.last ?? relayStats[r]?.lastSentAt).filter(Boolean);
@@ -39,6 +41,7 @@ export function CommentsPanel({
       const prev = lastSeenRef.current[r];
       if (!prev || last !== prev) {
         setEvents((evts) => [{ relay: r, ts: last, recv: stat?.recv, sendStatus: stat?.sendStatus }, ...evts].slice(0, 40));
+        setRibbonEvents((evts) => [{ relay: r, ts: last, kind: stat?.sendStatus === 'sending' || stat?.sendStatus === 'ok' ? 'send' : 'recv' }, ...evts].slice(0, 30));
         lastSeenRef.current[r] = last;
       }
     });
@@ -77,6 +80,7 @@ export function CommentsPanel({
           );
         })}
       </div>
+      <RelayRibbon events={ribbonEvents} />
       <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.65rem 0.75rem', background: theme === 'dark' ? '#0f172a' : '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.35rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

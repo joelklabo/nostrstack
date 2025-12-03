@@ -39,6 +39,7 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, t
   const lastLabel = last ? timeAgo(last) : 'no recent activity';
   const sendLabel = lastSentAt ? `${timeAgo(lastSentAt)} (send)` : null;
   const activityBars = buildSpark(recv);
+  const tooltip = last ? new Date(last).toLocaleTimeString() : '—';
 
   return (
     <div
@@ -78,7 +79,7 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, t
           </span>
           <div style={{ display: 'flex', gap: 4 }}>
             {activityBars.map((h, idx) => (
-              <span key={idx} style={{ width: 5, height: h, borderRadius: 2, background: tone.dot, opacity: 0.8 }} />
+              <span key={idx} title={tooltip} style={{ width: 5, height: h, borderRadius: 2, background: tone.dot, opacity: 0.8 }} />
             ))}
           </div>
           {tone.badge && (
