@@ -3,13 +3,13 @@ import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { CommentsPanel } from './comments/CommentsPanel';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
 import { MockComments } from './MockComments';
 import { NostrProfileCard } from './NostrProfileCard';
-import { RelayCard } from './RelayCard';
 import { TelemetryCard } from './TelemetryCard';
 import { layout } from './tokens';
 import { WalletPanel } from './WalletPanel';
@@ -822,31 +822,14 @@ export default function App() {
             </div>
           </Card>
           <Card title="Comments (Nostr)">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-              <Pill label="Mode" value={relayMode === 'mock' ? 'mock (local)' : 'real relays'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
-              <span style={{ fontSize: '0.9rem', color: '#475569' }}>Relays: {relayLabel}</span>
-            </div>
-            <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
-              Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
-              <a href="https://getalby.com" target="_blank" rel="noreferrer">Get Alby</a> or use{' '}
-              <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noreferrer">nos2x</a>. Or flip on the built-in test signer in Config for regtest/CI. For offline/local comments, set relays to <code>mock</code> (no relay writes).
-            </div>
-            <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: '0.5rem' }}>
-              {(relaysList.length ? relaysList : relaysEnvDefault).map((r: string) => {
-                const data = relayStats[r] ?? { recv: 0 };
-                return (
-                  <RelayCard
-                    key={r}
-                    url={r}
-                    meta={{ name: data.name, software: data.software }}
-                    recv={data.recv}
-                    sendStatus={data.sendStatus}
-                    last={data.last ?? data.lastSentAt}
-                    theme={theme}
-                  />
-                );
-              })}
-            </div>
+            <CommentsPanel
+              relayMode={relayMode}
+              relayLabel={relayLabel}
+              relaysEnvDefault={relaysEnvDefault}
+              relaysList={relaysList}
+              relayStats={relayStats}
+              theme={theme}
+            />
             {relayMode === 'mock' ? <MockComments /> : <div id="comments-container" />}
           </Card>
         </div>
