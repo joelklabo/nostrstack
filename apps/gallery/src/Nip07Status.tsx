@@ -16,19 +16,19 @@ export function Nip07Status({ npub, hasSigner }: Props) {
   const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
   const [nostrPresent, setNostrPresent] = useState<boolean | null>(null);
 
-  const tryOnce = useCallback(async () => {
+  const tryOnce = useCallback(async (): Promise<Status> => {
     if (demoOff) {
       setStatus('missing');
       setError(null);
-      return;
+      return 'missing';
     }
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return 'missing';
     const has = Boolean(window.nostr?.getPublicKey);
     setNostrPresent(has);
     if (!has) {
       setStatus('missing');
       setError(null);
-      return;
+      return 'missing';
     }
 
     setStatus('checking');
@@ -42,25 +42,29 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       setDetectedNpub(encoded);
       setStatus('ready');
       setLastCheckedAt(Date.now());
+      return 'ready';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus('error');
       setLastCheckedAt(Date.now());
+      return 'error';
     }
   }, [demoOff]);
 
   const detect = useCallback(async () => {
+    if (status === 'ready') return;
+    let finalStatus: Status = 'checking';
     // run up to 3 attempts quickly; stop if ready
     for (let i = 0; i < 3; i += 1) {
-      await tryOnce();
-      if (status === 'ready') break;
+      finalStatus = await tryOnce();
+      if (finalStatus === 'ready') break;
       if (i < 2) await new Promise((r) => setTimeout(r, 500));
     }
-    if (status === 'checking') {
+    if (finalStatus === 'checking') {
       setStatus('missing');
       setError('timeout');
     }
-  }, [tryOnce, status]);
+  }, [status, tryOnce]);
 
   useEffect(() => {
     detect();
