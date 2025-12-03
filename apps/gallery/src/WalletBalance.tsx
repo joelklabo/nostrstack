@@ -39,18 +39,15 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
     // live wallet stream via /ws/wallet
     if (typeof window === 'undefined') return;
     const buildVariants = () => {
-      const list: string[] = [];
       const origin = (() => {
         try {
           return apiBase ? new URL(apiBase).origin : window.location.origin;
         } catch {
-          return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+          return typeof window !== 'undefined' ? window.location.origin : 'https://localhost:3001';
         }
       })();
       const primary = `${origin.replace(/^http/, 'ws')}/ws/wallet`;
-      list.push(primary);
-      list.push('ws://localhost:3001/ws/wallet');
-      return Array.from(new Set(list));
+      return [primary];
     };
     const variants = buildVariants();
     let ws: WebSocket | null = null;
