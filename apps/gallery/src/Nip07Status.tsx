@@ -10,6 +10,7 @@ type Props = {
 type Status = 'checking' | 'ready' | 'missing' | 'error';
 
 export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
+  const timeoutMs = 12000;
   const [status, setStatus] = useState<Status>('checking');
   const [detectedNpub, setDetectedNpub] = useState<string | null>(npub ?? null);
   const [demoOff, setDemoOff] = useState(false);
@@ -48,24 +49,29 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
 
     setStatus('checking');
     setError(null);
+    const started = Date.now();
     try {
       const pub = await Promise.race([
         nostr!.getPublicKey(),
-        new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;
       setDetectedNpub(encoded);
       setStatus('ready');
       setLastCheckedAt(Date.now());
       setLastHint(null);
-      console.info('[nip07] signer detected', { pubkey: pub });
+      console.info('[nip07] signer detected', { pubkey: pub, ms: Date.now() - started });
       return 'ready';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus('error');
       setLastCheckedAt(Date.now());
-      setLastHint('Signer responded with error. It may need you to approve access in the extension popup or settings.');
-      console.warn('[nip07] signer error', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const hint = errMsg === 'timeout'
+        ? 'Signer did not respond. Open your NIP-07 extension, unlock it, and allow https://localhost:4173 then retry.'
+        : 'Signer responded with error. It may need you to approve access in the extension popup or settings.';
+      setLastHint(hint);
+      console.warn('[nip07] signer error', { err, ms: Date.now() - started });
       return 'error';
     }
   }, [demoOff, nostr]);
