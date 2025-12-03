@@ -50,7 +50,10 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
   const [frontendLines, setFrontendLines] = useState<LogLine[]>([]);
   const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error' | 'closed'>('idle');
   const [lastError, setLastError] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('nostrstack.logviewer.filter') ?? '';
+  });
   const [captureFront, setCaptureFront] = useState(() => {
     if (typeof window === 'undefined') return false;
     const stored = window.localStorage.getItem('nostrstack.logviewer.captureFront');
@@ -215,7 +218,10 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
               <span className="logv__filter-icon">🔍</span>
               <input
                 value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                onChange={(e) => {
+                  setFilter(e.target.value);
+                  if (typeof window !== 'undefined') window.localStorage.setItem('nostrstack.logviewer.filter', e.target.value);
+                }}
                 placeholder="Filter log text"
                 aria-label="Filter logs"
                 style={{ background: palette.inputBg, color: palette.text, borderColor: palette.border }}

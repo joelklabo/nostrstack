@@ -783,6 +783,7 @@ export default function App() {
                     recv={data.recv}
                     sendStatus={data.sendStatus}
                     last={data.last ?? data.lastSentAt}
+                    theme={theme}
                   />
                 );
               })}
