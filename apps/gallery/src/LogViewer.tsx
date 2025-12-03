@@ -233,7 +233,7 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
 
       <div className="logv__grid">
         <section className="logv__panel logv__stack" aria-live="polite">
-          <header className="logv__header">
+          <header className="logv__header logv__header--sticky">
             <div className="logv__title">
               <strong>Backend logs</strong>
               <span className="logv__count">{filteredBackend.length}</span>
@@ -250,7 +250,7 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
         </section>
 
         <section className="logv__panel logv__stack" aria-live="polite">
-          <header className="logv__header">
+          <header className="logv__header logv__header--sticky">
             <div className="logv__title">
               <strong>Frontend logs</strong>
               <span className="logv__count">{filteredFront.length}</span>
@@ -292,11 +292,12 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
         .logv__filter input { border: none; outline: none; width: 100%; background: transparent; color: ${palette.text}; }
         .logv__filter-icon { opacity: 0.7; }
         .logv__grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-        .logv__stack { display: flex; flex-direction: column; gap: 0.55rem; min-height: 240px; }
+        .logv__stack { display: flex; flex-direction: column; gap: 0.55rem; min-height: 240px; max-height: 45vh; }
         .logv__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .logv__header--sticky { position: sticky; top: 0; padding-top: 0.1rem; padding-bottom: 0.1rem; background: ${palette.panel}; z-index: 2; }
         .logv__title { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 1.05rem; }
         .logv__count { background: ${palette.codeBg}; color: ${palette.sub}; border: 1px solid ${palette.border}; border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.85rem; }
-        .logv__scroll { display: flex; flex-direction: column; gap: 0.25rem; max-height: 340px; overflow: auto; padding: 0.15rem; border: 1px dashed ${palette.border}; border-radius: 10px; background: ${palette.codeBg}; }
+        .logv__scroll { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-height: 180px; max-height: 100%; overflow: auto; padding: 0.15rem; border: 1px dashed ${palette.border}; border-radius: 10px; background: ${palette.codeBg}; }
         .logv__line { display: grid; grid-template-columns: 96px 70px 1fr; gap: 0.45rem; font-family: SFMono-Regular, Menlo, monospace; font-size: 0.88rem; padding: 0.25rem 0.4rem; border-left: 3px solid ${palette.sub}; }
         .logv__ts { color: ${palette.muted}; }
         .logv__lvl { font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
