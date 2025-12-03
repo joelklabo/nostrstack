@@ -13,6 +13,7 @@ export type InvoicePopoverProps = {
 export function InvoicePopover({ invoice, amountSats, status = 'pending', onClose }: InvoicePopoverProps) {
   const [dataUrl, setDataUrl] = useState<string>('');
   const [ageMs, setAgeMs] = useState(0);
+  const [celebrate, setCelebrate] = useState(false);
 
   const fmtAge = useMemo(() => {
     const secs = Math.max(0, Math.floor(ageMs / 1000));
@@ -36,6 +37,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   }, [invoice]);
 
   const stale = status === 'pending' && ageMs > 120000;
+  const progress = Math.min(1, ageMs / 120000);
   const displayAmount = useMemo(() => (amountSats ? `${amountSats} sats` : ''), [amountSats]);
   const visualState = stale ? 'timeout' : status;
   const tone =
@@ -53,6 +55,15 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
         : visualState === 'timeout'
           ? 'Timed out'
           : 'Waiting for payment';
+
+  useEffect(() => {
+    if (visualState === 'paid') {
+      setCelebrate(true);
+      const t = setTimeout(() => setCelebrate(false), 1400);
+      return () => clearTimeout(t);
+    }
+  }, [visualState]);
+
   if (!invoice) return null;
 
   return (
@@ -120,11 +131,41 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                 Scan or tap to pay
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 200 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontSize: '0.95rem' }}>
-                <span style={{ fontWeight: 700 }}>Elapsed:</span> <time>{fmtAge}</time>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 220 }}>
+              <div style={statusVizWrapper}>
+                <div style={ringShell}>
+                  <div
+                    style={{
+                      ...ring,
+                      background: `conic-gradient(${tone.fg} ${Math.max(8, progress * 360)}deg, #e2e8f0 ${Math.max(8, progress * 360)}deg)`,
+                      boxShadow: visualState === 'pending' ? '0 0 0 10px rgba(14,165,233,0.08)' : visualState === 'paid' ? '0 0 0 12px rgba(34,197,94,0.12)' : 'none'
+                    }}
+                    aria-hidden
+                  >
+                    <div style={{ ...ringInner, color: tone.fg }}>{statusLabel}</div>
+                  </div>
+                  {celebrate && <div style={burst} aria-hidden />}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, color: '#0f172a' }} aria-live="polite">
+                    {statusLabel}
+                  </div>
+                  <div style={{ color: '#475569', fontSize: '0.95rem', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <span>Elapsed {fmtAge}</span>
+                    {!stale && <span>• Expires 02:00</span>}
+                    {visualState === 'timeout' && <span>• Expired</span>}
+                  </div>
+                  <div style={beamWrap}>
+                    <div
+                      style={{
+                        ...beam,
+                        background: visualState === 'paid' ? 'linear-gradient(90deg, #22c55e, #0ea5e9)' : 'linear-gradient(90deg, #0ea5e9, #6366f1)',
+                        animation: visualState === 'paid' ? 'beam-slide 1s ease-out 1' : 'beam-slide 2s linear infinite'
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-              <CopyButton text={invoice} label="Copy BOLT11" size="md" />
               <a href={`lightning:${invoice}`} style={walletLink}>Open in wallet</a>
               {stale && (
                 <button type="button" onClick={onClose} style={{ padding: '0.45rem 0.85rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontWeight: 600 }}>
@@ -181,6 +222,60 @@ const invoiceBox: React.CSSProperties = {
   overflow: 'auto'
 };
 
+const statusVizWrapper: React.CSSProperties = {
+  border: '1px solid #e2e8f0',
+  borderRadius: 14,
+  padding: '0.75rem 0.85rem',
+  background: '#f8fafc',
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  gap: '0.85rem',
+  alignItems: 'center',
+  position: 'relative',
+  overflow: 'hidden'
+};
+
+const ringShell: React.CSSProperties = { position: 'relative', width: 86, height: 86, display: 'grid', placeItems: 'center' };
+const ring: React.CSSProperties = {
+  width: 72,
+  height: 72,
+  borderRadius: '50%',
+  display: 'grid',
+  placeItems: 'center',
+  transition: 'all 220ms ease'
+};
+const ringInner: React.CSSProperties = {
+  width: 52,
+  height: 52,
+  borderRadius: '50%',
+  background: '#fff',
+  display: 'grid',
+  placeItems: 'center',
+  padding: '0.4rem',
+  textAlign: 'center',
+  fontSize: '0.82rem',
+  fontWeight: 800,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 6px 18px rgba(15,23,42,0.08)'
+};
+
+const beamWrap: React.CSSProperties = { width: '100%', height: 12, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden', position: 'relative' };
+const beam: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(90deg, #0ea5e9, #6366f1)',
+  backgroundSize: '200% 100%',
+  animation: 'beam-slide 2s linear infinite'
+};
+
+const burst: React.CSSProperties = {
+  position: 'absolute',
+  inset: -6,
+  borderRadius: '50%',
+  background: 'radial-gradient(circle, rgba(34,197,94,0.35) 0%, rgba(34,197,94,0) 60%)',
+  animation: 'burst 650ms ease-out'
+};
+
 const closeBtnStyle: React.CSSProperties = {
   border: 'none',
   background: 'transparent',
@@ -208,5 +303,16 @@ const pulseCss = `
     0% { transform: scale(0.6); opacity: 0.4; }
     70% { transform: scale(1.1); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes beam-slide {
+    0% { transform: translateX(-40%); }
+    100% { transform: translateX(40%); }
+  }
+
+  @keyframes burst {
+    0% { transform: scale(0.6); opacity: 0.55; }
+    70% { transform: scale(1.1); opacity: 0.35; }
+    100% { transform: scale(1.25); opacity: 0; }
   }
 `;
