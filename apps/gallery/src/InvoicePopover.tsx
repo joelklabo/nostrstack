@@ -132,17 +132,21 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 220 }}>
-              <div style={statusVizWrapper}>
+                <div style={statusVizWrapper}>
                 <div style={ringShell}>
                   <div
                     style={{
                       ...ring,
-                      background: `conic-gradient(${tone.fg} ${Math.max(8, progress * 360)}deg, #e2e8f0 ${Math.max(8, progress * 360)}deg)`,
-                      boxShadow: visualState === 'pending' ? '0 0 0 10px rgba(14,165,233,0.08)' : visualState === 'paid' ? '0 0 0 12px rgba(34,197,94,0.12)' : 'none'
+                      background: `conic-gradient(${tone.fg} ${Math.max(10, progress * 360)}deg, #e2e8f0 ${Math.max(10, progress * 360)}deg)`,
+                      boxShadow: visualState === 'pending' ? '0 0 0 10px rgba(14,165,233,0.12)' : visualState === 'paid' ? '0 0 0 12px rgba(34,197,94,0.18)' : 'none',
+                      animation: visualState === 'pending' ? 'ring-spin 2.4s linear infinite' : undefined
                     }}
                     aria-hidden
                   >
-                    <div style={{ ...ringInner, color: tone.fg }}>{statusLabel}</div>
+                    <div style={{ ...ringInner, color: tone.fg }}>
+                      <span style={{ fontWeight: 800 }}>{statusLabel}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#475569' }}>{fmtAge}</span>
+                    </div>
                   </div>
                   {celebrate && <div style={burst} aria-hidden />}
                 </div>
@@ -155,12 +159,21 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                     {!stale && <span>• Expires 02:00</span>}
                     {visualState === 'timeout' && <span>• Expired</span>}
                   </div>
-                  <div style={beamWrap}>
+                  <div style={beamWrap} aria-label="Time remaining">
+                    <div style={{ ...beamTrack }}>
+                      <div
+                        style={{
+                          ...beamFill,
+                          width: `${(1 - progress) * 100}%`,
+                          background: visualState === 'paid' ? '#22c55e' : visualState === 'timeout' ? '#ef4444' : '#0ea5e9'
+                        }}
+                      />
+                    </div>
                     <div
                       style={{
                         ...beam,
                         background: visualState === 'paid' ? 'linear-gradient(90deg, #22c55e, #0ea5e9)' : 'linear-gradient(90deg, #0ea5e9, #6366f1)',
-                        animation: visualState === 'paid' ? 'beam-slide 1s ease-out 1' : 'beam-slide 2s linear infinite'
+                        animation: visualState === 'paid' ? 'beam-slide 1s ease-out 1' : 'beam-slide 1.2s linear infinite'
                       }}
                     />
                   </div>
@@ -265,7 +278,16 @@ const beam: React.CSSProperties = {
   inset: 0,
   background: 'linear-gradient(90deg, #0ea5e9, #6366f1)',
   backgroundSize: '200% 100%',
+  opacity: 0.35,
   animation: 'beam-slide 2s linear infinite'
+};
+const beamTrack: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', background: 'transparent' };
+const beamFill: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  borderRadius: 999,
+  transition: 'width 300ms ease',
+  background: '#0ea5e9'
 };
 
 const burst: React.CSSProperties = {
@@ -314,5 +336,10 @@ const pulseCss = `
     0% { transform: scale(0.6); opacity: 0.55; }
     70% { transform: scale(1.1); opacity: 0.35; }
     100% { transform: scale(1.25); opacity: 0; }
+  }
+
+  @keyframes ring-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
