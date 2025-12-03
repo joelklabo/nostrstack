@@ -3,8 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pill } from '../App';
 import { RelayCard } from '../RelayCard';
 import { RelayRibbon } from '../RelayRibbon';
-
- type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
+import type { RelayStats } from '../types/relay';
 
 export function CommentsPanel({
   relayLabel,
@@ -68,11 +67,14 @@ export function CommentsPanel({
             <RelayCard
               key={r}
               url={r}
-              meta={{ name: data.name, software: data.software }}
+              meta={{ name: data.name, software: data.software, version: data.version }}
               recv={data.recv}
               sendStatus={data.sendStatus}
               last={data.last}
               lastSentAt={data.lastSentAt}
+              latencyMs={data.latencyMs}
+              online={data.online}
+              lastProbeAt={data.lastProbeAt}
               theme={theme}
             />
           );

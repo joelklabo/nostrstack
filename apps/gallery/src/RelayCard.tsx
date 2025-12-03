@@ -1,16 +1,30 @@
 import { useMemo } from 'react';
 
+type RelayMeta = {
+  name?: string;
+  software?: string;
+  version?: string;
+  description?: string;
+  supportedNips?: number[];
+  icon?: string;
+  paymentRequired?: boolean;
+  authRequired?: boolean;
+};
+
 type Props = {
   url: string;
-  meta?: { name?: string; software?: string };
+  meta?: RelayMeta;
   recv?: number;
   sendStatus?: 'idle' | 'sending' | 'ok' | 'error';
   last?: number;
   lastSentAt?: number;
+  latencyMs?: number;
+  online?: boolean;
+  lastProbeAt?: number;
   theme?: 'light' | 'dark';
 };
 
-export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, theme = 'light' }: Props) {
+export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, latencyMs, online, lastProbeAt, theme = 'light' }: Props) {
   const host = useMemo(() => {
     try {
       return new URL(url.replace(/^ws/, 'http')).host;
@@ -40,6 +54,11 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, t
   const sendLabel = lastSentAt ? `${timeAgo(lastSentAt)} (send)` : null;
   const activityBars = buildSpark(recv);
   const tooltip = last ? new Date(last).toLocaleTimeString() : '—';
+  const statusState = online === false ? 'offline' : online === true ? 'online' : 'unknown';
+  const statusColor = statusState === 'offline' ? '#ef4444' : statusState === 'online' ? '#15803d' : palette.sub;
+  const statusBg = statusState === 'offline' ? '#fef2f2' : statusState === 'online' ? '#ecfdf3' : palette.chip;
+  const statusLabel = latencyMs != null && statusState !== 'unknown' ? `${statusState} • ${latencyMs}ms` : statusState;
+  const statusTitle = lastProbeAt ? `last probe ${new Date(lastProbeAt).toLocaleTimeString()}` : undefined;
 
   return (
     <div
@@ -70,10 +89,24 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, t
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <strong style={{ fontSize: '0.95rem', color: palette.text, overflow: 'hidden', textOverflow: 'ellipsis' }}>{host}</strong>
           <span style={{ fontSize: '0.8rem', color: palette.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {(meta?.name || '—')}{meta?.software ? ` • ${meta.software}` : ''}
+            {(meta?.name || '—')}{meta?.software ? ` • ${meta.software}${meta?.version ? ` ${meta.version}` : ''}` : meta?.version ? ` • v${meta.version}` : ''}
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, minWidth: 110 }}>
+          <span
+            title={statusTitle}
+            style={{
+              fontSize: '0.78rem',
+              color: statusColor,
+              background: statusBg,
+              border: `1px solid ${palette.border}`,
+              padding: '0.18rem 0.55rem',
+              borderRadius: 999,
+              textTransform: 'capitalize'
+            }}
+          >
+            {statusLabel}
+          </span>
           <span style={{ fontSize: '0.8rem', color: palette.text, background: palette.chip, border: `1px solid ${palette.border}`, padding: '0.2rem 0.55rem', borderRadius: 999 }}>
             recv {recv}
           </span>

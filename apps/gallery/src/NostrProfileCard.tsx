@@ -5,13 +5,14 @@ import { CopyButton } from './CopyButton';
 import { Nip07Status } from './Nip07Status';
 import { NpubBar } from './NpubBar';
 import { RelayCard } from './RelayCard';
+import type { RelayStats } from './types/relay';
 
 type Props = {
   pubkey?: string | null;
   seckey?: string | null;
   signerReady: boolean;
   relays: string[];
-  relayStats?: Record<string, { recv: number; last?: number; lastSentAt?: number; name?: string; software?: string }>;
+  relayStats?: RelayStats;
   profile?: { name?: string; about?: string; picture?: string };
   fullProfile?: {
     name?: string;
@@ -117,11 +118,14 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
           <RelayCard
             key={r}
             url={r}
-            meta={{ name: relayStats?.[r]?.name, software: relayStats?.[r]?.software }}
+            meta={{ name: relayStats?.[r]?.name, software: relayStats?.[r]?.software, version: relayStats?.[r]?.version }}
             recv={relayStats?.[r]?.recv ?? 0}
             sendStatus={relayStats?.[r]?.sendStatus}
             last={relayStats?.[r]?.last}
             lastSentAt={relayStats?.[r]?.lastSentAt}
+            latencyMs={relayStats?.[r]?.latencyMs}
+            online={relayStats?.[r]?.online}
+            lastProbeAt={relayStats?.[r]?.lastProbeAt}
           />
         ))}
       </div>

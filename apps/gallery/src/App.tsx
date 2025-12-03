@@ -3,14 +3,15 @@ import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { CommentsPanel } from './comments/CommentsPanel';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
-import { CommentsPanel } from './comments/CommentsPanel';
 import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
 import { layout } from './tokens';
+import type { RelayStats } from './types/relay';
 import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
@@ -49,7 +50,6 @@ const lnbitsUrlRaw = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001'
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const lnbitsReadKeyEnv = (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_READ_KEY ?? '';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
-type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
 const profileDefault: ProfileMeta = {};
 
 const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r: string) => {
@@ -402,9 +402,32 @@ export default function App() {
         const res = await fetch(nip11Url(relay), { headers: { Accept: 'application/nostr+json' }, signal: controller.signal });
         if (!res.ok) return;
         const body = await res.json();
+        const limitation = body.limitation ?? {};
+        const supportedNips: number[] | undefined = Array.isArray(body.supported_nips)
+          ? body.supported_nips
+          : Array.isArray(body.supports_nips)
+            ? body.supports_nips
+            : undefined;
         setRelayStats((prev) => ({
           ...prev,
-          [relay]: { ...(prev[relay] ?? { recv: 0 }), name: body.name, software: body.software }
+          [relay]: {
+            ...(prev[relay] ?? { recv: 0 }),
+            name: body.name,
+            description: body.description,
+            software: body.software,
+            version: body.version,
+            supportedNips,
+            contact: body.contact,
+            pubkey: body.pubkey,
+            icon: body.icon,
+            paymentsUrl: body.payments_url,
+            language: (body.language_tags?.[0] as string | undefined) ?? body.language,
+            tags: Array.isArray(body.tags) ? body.tags.slice(0, 8) : prev[relay]?.tags,
+            limitation,
+            paymentRequired: limitation.payment_required ?? prev[relay]?.paymentRequired,
+            authRequired: limitation.auth_required ?? prev[relay]?.authRequired,
+            updatedAt: Date.now()
+          }
         }));
       } catch {
         // ignore fetch errors / CORS
@@ -421,21 +444,36 @@ export default function App() {
       await Promise.all(
         sample.map(async (url) => {
           try {
+            const started = performance.now();
             const relay = await Relay.connect(url);
+            const latencyMs = Math.round(performance.now() - started);
             if (cancelled) {
               relay.close();
               return;
             }
             setRelayStats((prev) => ({
               ...prev,
-              [url]: { ...(prev[url] ?? { recv: 0 }), last: Date.now(), sendStatus: 'ok' }
+              [url]: {
+                ...(prev[url] ?? { recv: 0 }),
+                last: Date.now(),
+                sendStatus: 'ok',
+                online: true,
+                latencyMs,
+                lastProbeAt: Date.now()
+              }
             }));
             relay.close();
           } catch {
             if (cancelled) return;
             setRelayStats((prev) => ({
               ...prev,
-              [url]: { ...(prev[url] ?? { recv: 0 }), sendStatus: 'error' }
+              [url]: {
+                ...(prev[url] ?? { recv: 0 }),
+                sendStatus: 'error',
+                online: false,
+                latencyMs: undefined,
+                lastProbeAt: Date.now()
+              }
             }));
           }
         })

@@ -80,8 +80,6 @@ export function NpubBar({ pubkey, seckey }: Props) {
     setThumbPos(format === 'npub' ? 'left' : 'right');
   }, [format]);
 
-  const short = useMemo(() => middleTruncate(full, keep), [full, keep]);
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard?.writeText(full);
