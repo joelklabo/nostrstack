@@ -106,7 +106,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       };
     } catch (err) {
       const now = Date.now() / 1000;
-      lastHeight = height;
+      // do not mark height as processed so we retry on next poll
       return { type: 'block', height, hash: '', time: now };
     }
   };
