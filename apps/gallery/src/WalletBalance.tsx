@@ -3,40 +3,77 @@ import { useEffect, useState } from 'react';
 type Props = {
   lnbitsUrl?: string;
   adminKey?: string;
+  readKey?: string;
+  walletId?: string;
   refreshSignal?: number;
   onManualRefresh?: () => void;
 };
 
 type WalletInfo = { name?: string; balance?: number; id?: string };
 
-export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManualRefresh }: Props) {
+type KeyStatus = { kind: 'admin' | 'read'; status: 'idle' | 'ok' | 'error'; message?: string; url?: string };
+
+export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshSignal = 0, onManualRefresh }: Props) {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const [lastResponse, setLastResponse] = useState<string | null>(null);
+  const [lastRequest, setLastRequest] = useState<string | null>(null);
+  const [lastHeaders, setLastHeaders] = useState<string | null>(null);
   const [lastWalletId, setLastWalletId] = useState<string | null>(() => (typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.walletId') : null));
+  const [keyStatuses, setKeyStatuses] = useState<KeyStatus[]>([
+    { kind: 'admin', status: 'idle' },
+    { kind: 'read', status: 'idle' }
+  ]);
   const [masked, setMasked] = useState(true);
 
-  const canFetch = Boolean(lnbitsUrl && adminKey && adminKey !== 'set VITE_LNBITS_ADMIN_KEY');
+  const canFetch = Boolean(lnbitsUrl && (adminKey || readKey) && (adminKey !== 'set VITE_LNBITS_ADMIN_KEY' || readKey));
 
   useEffect(() => {
     if (!canFetch) {
       setWallet(null);
-      setError('Wallet URL or admin key missing.');
+      setError('Wallet URL or keys missing.');
       return;
     }
     const fetchBalance = async () => {
       setLoading(true);
       setError(null);
       setLastResponse(null);
+      setKeyStatuses((prev) => prev.map((k) => ({ ...k, status: 'idle', message: undefined, url: undefined })));
+      const base = `${normalizeUrl(lnbitsUrl!).replace(/\/$/, '')}/api/v1/wallet`;
+
+      const attempt = async (key: string, kind: 'admin' | 'read') => {
+        const urls = [base, walletId || lastWalletId ? `${base}?usr=${encodeURIComponent(walletId || lastWalletId || '')}` : null].filter(Boolean) as string[];
+        for (const url of urls) {
+          try {
+            setLastRequest(`${kind} → GET ${url}`);
+            setLastHeaders('X-Api-Key: <provided>');
+            const res = await fetch(url, { headers: { 'X-Api-Key': key, Accept: 'application/json' } });
+            const text = await res.text();
+            setLastResponse(text.slice(0, 400));
+            if (!res.ok) {
+              if (res.status === 404 && url === base && urls.length > 1) {
+                continue; // fallback to ?usr
+              }
+              throw new Error(`HTTP ${res.status}`);
+            }
+            const body = JSON.parse(text);
+            setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'ok', url } : k)));
+            return body as WalletInfo;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'error', message: msg, url: urls.at(-1) } : k)));
+          }
+        }
+        return null;
+      };
+
       try {
-        const target = `${normalizeUrl(lnbitsUrl!).replace(/\/$/, '')}/api/v1/wallet`;
-        const res = await fetch(target, { headers: { 'X-Api-Key': adminKey!, Accept: 'application/json' } });
-        const text = await res.text();
-        setLastResponse(text.slice(0, 400));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const body = JSON.parse(text);
+        let body: WalletInfo | null = null;
+        if (adminKey) body = await attempt(adminKey, 'admin');
+        if (!body && readKey) body = await attempt(readKey, 'read');
+        if (!body) throw new Error('Wallet not reachable with provided keys.');
         setWallet({ name: body.name, balance: body.balance, id: body.id });
         if (body.id && typeof window !== 'undefined') {
           window.localStorage.setItem('nostrstack.lnbits.walletId', body.id);
@@ -46,7 +83,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManual
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.includes('404')) {
-            setError('Wallet not found (HTTP 404). Is the LNbits URL/admin key correct?');
+          setError('Wallet not found (HTTP 404). Add wallet ID or verify keys/URL.');
         } else {
           setError(msg);
         }
@@ -55,7 +92,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManual
       }
     };
     fetchBalance();
-  }, [canFetch, lnbitsUrl, adminKey, refreshSignal]);
+  }, [canFetch, lnbitsUrl, adminKey, readKey, walletId, lastWalletId, refreshSignal]);
 
   if (!canFetch) {
     return (
@@ -83,6 +120,17 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManual
         </button>
       </div>
       {error && <div style={{ color: '#b91c1c', fontSize: '0.9rem' }}>Error: {error}</div>}
+      <div style={{ display: 'grid', gap: 4, fontSize: '0.9rem', color: '#475569', marginBottom: 4 }}>
+        {keyStatuses.map((s) => (
+          <div key={s.kind} style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 700, minWidth: 70 }}>{s.kind === 'admin' ? 'Admin key' : 'Read key'}</span>
+            <StatusPill status={s.status} message={s.message} />
+            {s.url && <code style={pillCode}>{s.url}</code>}
+          </div>
+        ))}
+        {lastRequest && <div style={{ color: '#94a3b8' }}>Last request: {lastRequest}</div>}
+        {lastHeaders && <div style={{ color: '#94a3b8' }}>Headers: {lastHeaders}</div>}
+      </div>
       {lastResponse && (
         <details style={{ fontSize: '0.85rem', color: '#475569' }}>
           <summary>Last response</summary>
@@ -115,7 +163,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManual
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
         <code style={{ padding: '0.25rem 0.45rem', borderRadius: 8, background: '#e2e8f0', color: '#0f172a' }}>{normalizeUrl(lnbitsUrl || '')}</code>
         <code style={{ padding: '0.25rem 0.45rem', borderRadius: 8, background: '#e2e8f0', color: '#0f172a' }}>
-          {masked ? '••••••••' : adminKey || ''}
+          {masked ? '••••••••' : adminKey || readKey || ''}
         </code>
         <button type="button" onClick={() => setMasked((v) => !v)} style={btn}>
           {masked ? 'Show key' : 'Hide key'}
@@ -140,10 +188,34 @@ const btn: React.CSSProperties = {
   cursor: 'pointer'
 };
 
+const pillCode: React.CSSProperties = {
+  padding: '0.15rem 0.4rem',
+  borderRadius: 8,
+  background: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  color: '#0f172a',
+  fontSize: '0.8rem'
+};
+
 function normalizeUrl(url: string) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
   if (url.startsWith('//')) return `http:${url}`;
   if (url.startsWith(':')) return `http://localhost${url}`;
   return `http://${url}`;
+}
+
+function StatusPill({ status, message }: { status: KeyStatus['status']; message?: string }) {
+  const palette: Record<KeyStatus['status'], { bg: string; fg: string; label: string }> = {
+    idle: { bg: '#e2e8f0', fg: '#475569', label: 'idle' },
+    ok: { bg: '#ecfdf3', fg: '#166534', label: 'ok' },
+    error: { bg: '#fef2f2', fg: '#b91c1c', label: message || 'error' }
+  };
+  const tone = palette[status];
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: '1px solid #e2e8f0', fontWeight: 700 }}>
+      <span style={{ width: 8, height: 8, borderRadius: 999, background: tone.fg }} />
+      {tone.label}
+    </span>
+  );
 }

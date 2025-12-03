@@ -49,6 +49,7 @@ const relaysEnvDefault = relaysEnvRaw
   : ['wss://relay.damus.io'];
 const lnbitsUrlRaw = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
+const lnbitsReadKeyEnv = (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_READ_KEY ?? '';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
 type RelayStats = Record<string, { recv: number; last?: number; name?: string; software?: string; sendStatus?: 'idle' | 'sending' | 'ok' | 'error'; sendMessage?: string; lastSentAt?: number }>;
 const profileDefault: ProfileMeta = {};
@@ -327,6 +328,8 @@ export default function App() {
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
   const [lnbitsUrlOverride, setLnbitsUrlOverride] = useState<string | null>(null);
   const [lnbitsKeyOverride, setLnbitsKeyOverride] = useState<string | null>(null);
+  const [lnbitsReadKeyOverride, setLnbitsReadKeyOverride] = useState<string | null>(null);
+  const [lnbitsWalletIdOverride, setLnbitsWalletIdOverride] = useState<string | null>(null);
   const [telemetryWsOverride, setTelemetryWsOverride] = useState<string | null>(null);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
@@ -347,8 +350,12 @@ export default function App() {
   useEffect(() => {
     const url = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
     const key = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.key') : null;
+    const readKey = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.readKey') : null;
+    const walletId = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.walletId.manual') : null;
     if (url) setLnbitsUrlOverride(url);
     if (key) setLnbitsKeyOverride(key);
+    if (readKey) setLnbitsReadKeyOverride(readKey);
+    if (walletId) setLnbitsWalletIdOverride(walletId);
     const tws = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
     if (tws) setTelemetryWsOverride(tws);
   }, []);
@@ -695,6 +702,8 @@ export default function App() {
 
   const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
   const walletKey = (lnbitsKeyOverride ?? walletKeyEnv) || 'set VITE_LNBITS_ADMIN_KEY';
+  const walletReadKey = lnbitsReadKeyOverride ?? lnbitsReadKeyEnv ?? '';
+  const walletIdOverride = lnbitsWalletIdOverride ?? undefined;
   const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
   const telemetryWsUrl = telemetryWsOverride ?? resolveTelemetryWs(apiBase);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
@@ -747,6 +756,8 @@ export default function App() {
       <WalletBalance
         lnbitsUrl={lnbitsUrl}
         adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+        readKey={walletReadKey || undefined}
+        walletId={walletIdOverride}
         refreshSignal={walletRefresh}
         onManualRefresh={() => setWalletRefresh((n) => n + 1)}
       />
@@ -779,15 +790,45 @@ export default function App() {
               }
             }}
           />
+          <input
+            style={{ minWidth: 220, flex: 1 }}
+            placeholder="LNbits read key (optional)"
+            defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              setLnbitsReadKeyOverride(v || null);
+              if (typeof window !== 'undefined') {
+                if (v) window.localStorage.setItem('nostrstack.lnbits.readKey', v);
+                else window.localStorage.removeItem('nostrstack.lnbits.readKey');
+              }
+            }}
+          />
+          <input
+            style={{ minWidth: 160, flex: 1 }}
+            placeholder="Wallet ID (for ?usr= fallback)"
+            defaultValue={lnbitsWalletIdOverride ?? ''}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              setLnbitsWalletIdOverride(v || null);
+              if (typeof window !== 'undefined') {
+                if (v) window.localStorage.setItem('nostrstack.lnbits.walletId.manual', v);
+                else window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
+              }
+            }}
+          />
           <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>Save & refresh</button>
           <button
             type="button"
             onClick={() => {
               setLnbitsUrlOverride(null);
               setLnbitsKeyOverride(null);
+              setLnbitsReadKeyOverride(null);
+              setLnbitsWalletIdOverride(null);
               if (typeof window !== 'undefined') {
                 window.localStorage.removeItem('nostrstack.lnbits.url');
                 window.localStorage.removeItem('nostrstack.lnbits.key');
+                window.localStorage.removeItem('nostrstack.lnbits.readKey');
+                window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
               }
               setWalletRefresh((n) => n + 1);
             }}
