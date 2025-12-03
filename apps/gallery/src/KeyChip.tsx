@@ -9,8 +9,8 @@ type Props = {
   mode?: 'toggle' | 'npub-hex-toggle';
 };
 
-export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, mode = 'toggle' }: Props) {
-  const [showPriv, setShowPriv] = useState(defaultPriv);
+export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }: Props) {
+  const [showPriv] = useState(defaultPriv);
   const [format, setFormat] = useState<'hex' | 'npub'>('npub');
 
   const display = useMemo(() => {
@@ -54,26 +54,16 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, m
           overflow: 'hidden'
         }}
       >
-        {mode === 'toggle' ? (
-          <button
-            type="button"
-            onClick={() => setShowPriv((v) => !v)}
-            style={{ border: 'none', background: '#e2e8f0', borderRadius: 999, padding: '2px 10px', fontWeight: 700, cursor: 'pointer' }}
-          >
-            {showPriv ? 'Priv' : 'Pub'}
-          </button>
-        ) : (
-          <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={{ border: 'none', background: 'transparent', fontWeight: 600, cursor: 'pointer' }}>
-            <option value="npub">npub</option>
-            <option value="hex">hex</option>
-          </select>
-        )}
-        {mode === 'toggle' && (
-          <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={{ border: 'none', background: 'transparent', fontWeight: 600, cursor: 'pointer' }}>
-            <option value="npub">npub/nsec</option>
-            <option value="hex">hex</option>
-          </select>
-        )}
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, cursor: 'pointer' }}>
+          <span style={{ fontSize: '0.85rem', color: '#475569' }}>{format === 'npub' ? 'npub/nsec' : 'hex'}</span>
+          <input
+            type="checkbox"
+            aria-label="Toggle key format"
+            checked={format === 'hex'}
+            onChange={(e) => setFormat(e.target.checked ? 'hex' : 'npub')}
+            style={{ accentColor: '#2563eb', width: 16, height: 16, cursor: 'pointer' }}
+          />
+        </label>
         <code
           style={{
             fontFamily: 'monospace',
