@@ -77,6 +77,7 @@ export function CommentsPanel({
                 authRequired: data.authRequired
               }}
               recv={data.recv}
+              recvPerMin={data.recvPerMin}
               sendStatus={data.sendStatus}
               last={data.last}
               lastSentAt={data.lastSentAt}

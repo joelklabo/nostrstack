@@ -12,6 +12,8 @@ export type RelayLimits = {
 
 export type RelayStat = {
   recv: number;
+  recvPerMin?: number;
+  recvHistory?: Array<{ ts: number }>;
   last?: number;
   lastSentAt?: number;
   name?: string;

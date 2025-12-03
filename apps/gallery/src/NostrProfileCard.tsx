@@ -128,6 +128,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
               authRequired: relayStats?.[r]?.authRequired
             }}
             recv={relayStats?.[r]?.recv ?? 0}
+            recvPerMin={relayStats?.[r]?.recvPerMin}
             sendStatus={relayStats?.[r]?.sendStatus}
             last={relayStats?.[r]?.last}
             lastSentAt={relayStats?.[r]?.lastSentAt}

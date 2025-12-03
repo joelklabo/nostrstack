@@ -17,6 +17,7 @@ type Props = {
   url: string;
   meta?: RelayMeta;
   recv?: number;
+  recvPerMin?: number;
   sendStatus?: 'idle' | 'sending' | 'ok' | 'error';
   last?: number;
   lastSentAt?: number;
@@ -26,7 +27,7 @@ type Props = {
   theme?: 'light' | 'dark';
 };
 
-export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, latencyMs, online, lastProbeAt, theme = 'light' }: Props) {
+export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, lastSentAt, latencyMs, online, lastProbeAt, theme = 'light' }: Props) {
   const host = useMemo(() => {
     try {
       return new URL(url.replace(/^ws/, 'http')).host;
@@ -141,6 +142,11 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, l
             <span style={{ fontSize: '0.85rem', color: palette.text, background: palette.chip, border: `1px solid ${palette.border}`, padding: '0.2rem 0.55rem', borderRadius: 999 }}>
               recv {recv}
             </span>
+            {recvPerMin != null && (
+              <span style={{ fontSize: '0.82rem', color: palette.sub, background: palette.chip, border: `1px solid ${palette.border}`, padding: '0.18rem 0.55rem', borderRadius: 999 }}>
+                {recvPerMin}/min
+              </span>
+            )}
             {tone.badge && <span style={{ fontSize: '0.78rem', color: tone.dot }}>{tone.badge}</span>}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>

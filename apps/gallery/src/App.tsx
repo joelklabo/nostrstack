@@ -58,6 +58,19 @@ const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r
   return acc;
 }, {});
 
+function bumpRecv(stat: RelayStats[string] | undefined, now: number): RelayStats[string] {
+  const history = (stat?.recvHistory ?? []).filter((h) => now - h.ts <= 60000);
+  history.unshift({ ts: now });
+  const recvPerMin = history.length;
+  return {
+    ...stat,
+    recv: (stat?.recv ?? 0) + 1,
+    last: now,
+    recvHistory: history.slice(0, 120),
+    recvPerMin
+  };
+}
+
 function resolveLogStreamUrl(base: string) {
   if (base.includes('localhost:3001')) return '/api/logs/stream';
   return `${base.replace(/\/$/, '')}/logs/stream`;
@@ -280,12 +293,7 @@ function useMountWidgets(
         setRelayStats((prev: RelayStats) => {
           const next = { ...prev };
           targets.forEach((relay) => {
-            next[relay] = {
-              ...(next[relay] ?? { recv: 0 }),
-              recv: (next[relay]?.recv ?? 0) + 1,
-              last: now,
-              sendStatus: 'ok'
-            };
+            next[relay] = { ...bumpRecv(next[relay], now), sendStatus: 'ok' };
           });
           return next;
         });
