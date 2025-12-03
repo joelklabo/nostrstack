@@ -77,7 +77,6 @@ export function Nip07Status({ npub, hasSigner }: Props) {
           <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
             <li>Install Alby or nos2x</li>
             <li>Enable the extension and refresh</li>
-            <li>Use mock relays if you just want local posts</li>
           </ul>
         </div>
       )}

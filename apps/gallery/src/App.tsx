@@ -289,16 +289,15 @@ export default function App() {
   const [, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
 
-  const relayMode = relaysCsv.includes('mock') ? 'mock' : 'real';
+  const relayMode = 'real';
 
   const profileRelays = useMemo(() => {
-    if (relayMode === 'mock') return [];
     const preferred = signerRelays.filter(isRelayUrl);
     const configured = relaysList.filter(isRelayUrl);
     const defaults = relaysEnvDefault.filter(isRelayUrl);
     const merged = uniqueRelays([...preferred, ...configured, ...defaults]);
     return merged.length ? merged : ['wss://relay.damus.io'];
-  }, [signerRelays, relaysList, relayMode]);
+  }, [signerRelays, relaysList]);
 
   // Reset NIP-05 status whenever a new profile load starts
   useEffect(() => {
@@ -476,7 +475,7 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv.includes('mock') ? '' : relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
 
   const themeStyles = useMemo(
     () =>
