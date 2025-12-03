@@ -301,6 +301,8 @@ export default function App() {
   const [, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
+  const [lnbitsUrlOverride, setLnbitsUrlOverride] = useState<string | null>(null);
+  const [lnbitsKeyOverride, setLnbitsKeyOverride] = useState<string | null>(null);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -316,6 +318,12 @@ export default function App() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).__setInvoiceAmount = setQrAmount;
     }
+  }, []);
+  useEffect(() => {
+    const url = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
+    const key = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.key') : null;
+    if (url) setLnbitsUrlOverride(url);
+    if (key) setLnbitsKeyOverride(key);
   }, []);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
   const [signerReady, setSignerReady] = useState(false);
@@ -658,8 +666,9 @@ export default function App() {
     }
   }, [amount]);
 
-  const walletKey = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
-  const lnbitsUrl = normalizeUrl(lnbitsUrlRaw);
+  const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
+  const walletKey = (lnbitsKeyOverride ?? walletKeyEnv) || 'set VITE_LNBITS_ADMIN_KEY';
+  const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
   const isDark = theme === 'dark';
 
@@ -713,6 +722,52 @@ export default function App() {
         refreshSignal={walletRefresh}
         onManualRefresh={() => setWalletRefresh((n) => n + 1)}
       />
+      <div style={{ display: 'grid', gap: '0.4rem', padding: '0.6rem 0.8rem', background: '#f1f5f9', border: `1px solid ${layout.border}`, borderRadius: layout.radius, marginBottom: '1rem' }}>
+        <strong>Use a custom LNbits wallet</strong>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input
+            style={{ minWidth: 220, flex: 1 }}
+            placeholder="LNbits URL (e.g. http://localhost:15001)"
+            defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              setLnbitsUrlOverride(v || null);
+              if (typeof window !== 'undefined') {
+                if (v) window.localStorage.setItem('nostrstack.lnbits.url', v);
+                else window.localStorage.removeItem('nostrstack.lnbits.url');
+              }
+            }}
+          />
+          <input
+            style={{ minWidth: 220, flex: 1 }}
+            placeholder="LNbits admin key"
+            defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              setLnbitsKeyOverride(v || null);
+              if (typeof window !== 'undefined') {
+                if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
+                else window.localStorage.removeItem('nostrstack.lnbits.key');
+              }
+            }}
+          />
+          <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>Save & refresh</button>
+          <button
+            type="button"
+            onClick={() => {
+              setLnbitsUrlOverride(null);
+              setLnbitsKeyOverride(null);
+              if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('nostrstack.lnbits.url');
+                window.localStorage.removeItem('nostrstack.lnbits.key');
+              }
+              setWalletRefresh((n) => n + 1);
+            }}
+          >
+            Reset to env
+          </button>
+        </div>
+      </div>
       {!enableReal && (
         <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
           Real payments are disabled. Set VITE_ENABLE_REAL_PAYMENTS=true and provide VITE_API_BASE_URL to request real invoices.
