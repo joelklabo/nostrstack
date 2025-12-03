@@ -18,6 +18,58 @@ type TelemetryEvent =
 
 type Props = { wsUrl: string };
 
+function normalizeTelemetryUrl(raw: string) {
+  const fallbackOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4173';
+  try {
+    const url = new URL(raw, fallbackOrigin);
+    const pathNoSlash = url.pathname.replace(/\/$/, '');
+    if (pathNoSlash === '/api/ws/telemetry') {
+      url.pathname = '/ws/telemetry';
+    } else if (pathNoSlash === '/api') {
+      url.pathname = '/ws/telemetry';
+    } else if (url.pathname === '/') {
+      url.pathname = '/ws/telemetry';
+    }
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    }
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
+function isLocalhostUrl(url: string) {
+  try {
+    const host = new URL(url).hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  } catch {
+    return false;
+  }
+}
+
+function buildWsVariants(url: string) {
+  const primary = normalizeTelemetryUrl(url);
+  const variants = [primary];
+  if (primary.startsWith('wss://') && isLocalhostUrl(primary)) {
+    variants.push(primary.replace(/^wss:/, 'ws:'));
+  }
+  return variants;
+}
+
+function mixedContentBlock(url: string) {
+  if (typeof window === 'undefined') return null;
+  if (window.location.protocol === 'https:' && url.startsWith('ws://')) {
+    return 'Blocked by browser: insecure ws:// from an HTTPS page. Use wss:// or load the app over http://.';
+  }
+  return null;
+}
+
+function describeWsError(ev: Event) {
+  if (ev instanceof ErrorEvent && ev.message) return ev.message;
+  return ev.type || 'error';
+}
+
 export function TelemetryCard({ wsUrl }: Props) {
   const [height, setHeight] = useState<number | null>(null);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
@@ -28,6 +80,8 @@ export function TelemetryCard({ wsUrl }: Props) {
   const [now, setNow] = useState(Date.now());
   const [blockFlashKey, setBlockFlashKey] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [activeUrl, setActiveUrl] = useState<string>(wsUrl);
+  const [attemptNote, setAttemptNote] = useState<string | null>(null);
   const backoffRef = useRef(1500);
 
   useEffect(() => {
@@ -37,12 +91,48 @@ export function TelemetryCard({ wsUrl }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    const variants = buildWsVariants(wsUrl);
+    let variantIdx = 0;
+    backoffRef.current = 1500;
+
+    const clearRetry = () => {
+      if (retryRef.current) {
+        clearTimeout(retryRef.current);
+        retryRef.current = null;
+      }
+    };
+
     const connect = () => {
       if (cancelled) return;
+      clearRetry();
+      const target = variants[variantIdx];
+      if (!target) {
+        setStatus('error');
+        setErrorMsg('No telemetry endpoint available');
+        return;
+      }
+
+      const mixed = mixedContentBlock(target);
+      if (mixed) {
+        setStatus('error');
+        setErrorMsg(mixed);
+        if (variantIdx < variants.length - 1) {
+          variantIdx += 1;
+          setAttemptNote('HTTPS blocked ws://; trying fallback');
+          connect();
+        }
+        return;
+      }
+
       setStatus('connecting');
+      setAttemptNote(variantIdx > 0 ? 'Using fallback endpoint' : null);
+      setActiveUrl(target);
       setErrorMsg(null);
-      const ws = new WebSocket(wsUrl);
+
+      let opened = false;
+      const ws = new WebSocket(target);
       wsRef.current = ws;
+
       ws.onmessage = (msg) => {
         try {
           const ev = JSON.parse(msg.data) as TelemetryEvent;
@@ -60,27 +150,42 @@ export function TelemetryCard({ wsUrl }: Props) {
         }
       };
       ws.onopen = () => {
+        opened = true;
         setStatus('open');
         backoffRef.current = 1500;
+        setErrorMsg(null);
       };
       ws.onerror = (e) => {
+        if (!opened && variantIdx < variants.length - 1) {
+          setErrorMsg(`Handshake failed (${describeWsError(e as Event)})`);
+          variantIdx += 1;
+          ws.close();
+          return;
+        }
         setStatus('error');
-        setErrorMsg(String((e as Event)?.type ?? 'WebSocket error'));
+        setErrorMsg(describeWsError(e as Event));
       };
       ws.onclose = (e) => {
+        if (cancelled) return;
+        if (!opened && variantIdx < variants.length - 1) {
+          variantIdx += 1;
+          setAttemptNote('Switching to fallback endpoint');
+          setErrorMsg(`Closed (${e.code}); retrying…`);
+          setTimeout(connect, 75);
+          return;
+        }
         setStatus('error');
         setErrorMsg(`closed (${e.code})`);
-        if (retryRef.current) clearTimeout(retryRef.current);
         const delay = Math.min(15000, backoffRef.current);
-        retryRef.current = setTimeout(connect, delay);
         backoffRef.current *= 1.6;
+        retryRef.current = setTimeout(connect, delay);
       };
     };
     connect();
     return () => {
       cancelled = true;
       wsRef.current?.close();
-      if (retryRef.current) clearTimeout(retryRef.current);
+      clearRetry();
     };
   }, [wsUrl]);
 
@@ -130,6 +235,11 @@ export function TelemetryCard({ wsUrl }: Props) {
           </span>
         </div>
         <span style={{ fontSize: '0.95rem', color: '#475569' }}>Height: {height ?? '…'}</span>
+      </div>
+      <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontWeight: 700 }}>Endpoint</span>
+        <code style={{ background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: 8 }}>{activeUrl}</code>
+        {attemptNote && <span style={{ color: '#c2410c' }}>{attemptNote}</span>}
       </div>
       {status === 'error' && (
         <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10 }}>

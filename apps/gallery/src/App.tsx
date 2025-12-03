@@ -64,11 +64,35 @@ function resolveLogStreamUrl(base: string) {
 }
 
 function resolveTelemetryWs(base: string) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const baseClean = base.replace(/\/$/, '');
-  if (baseClean.startsWith('http')) return `${baseClean.replace(/^http/, 'ws')}/ws/telemetry`;
-  if (origin) return `${origin.replace(/^http/, 'ws')}${baseClean}/ws/telemetry`;
-  return `ws://localhost:3001${baseClean}/ws/telemetry`;
+  const loc = typeof window !== 'undefined' ? window.location : null;
+  const normalizeHost = (input?: string | null) => {
+    if (!input) return null;
+    const stripped = input.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    if ((stripped === 'localhost' || stripped === '127.0.0.1' || stripped === '[::1]') && !stripped.includes(':')) {
+      return `${stripped}:3001`;
+    }
+    return stripped || null;
+  };
+
+  const previewFallback = import.meta.env.PROD && loc?.port === '4173' ? `${loc.hostname}:3001` : null;
+
+  let apiUrl: URL | null = null;
+  try {
+    apiUrl = loc ? new URL(base, loc.origin) : new URL(base);
+  } catch {
+    apiUrl = null;
+  }
+
+  const host =
+    normalizeHost(import.meta.env.VITE_NOSTRSTACK_HOST as string | undefined) ??
+    previewFallback ??
+    (apiUrl ? normalizeHost(apiUrl.host) : null) ??
+    (loc ? normalizeHost(loc.host) : null) ??
+    'localhost:3001';
+
+  const preferSecure = loc?.protocol === 'https:' || apiUrl?.protocol === 'https:';
+  const scheme = preferSecure ? 'wss' : 'ws';
+  return `${scheme}://${host}/ws/telemetry`;
 }
 
 function normalizeUrl(url: string) {
