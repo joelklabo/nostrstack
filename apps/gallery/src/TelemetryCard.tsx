@@ -209,7 +209,16 @@ export function TelemetryCard({ wsUrl }: Props) {
     connect();
     return () => {
       cancelled = true;
-      wsRef.current?.close();
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      } else if (wsRef.current && wsRef.current.readyState === WebSocket.CONNECTING) {
+        // abort in-flight connection politely
+        try {
+          wsRef.current.close();
+        } catch {
+          /* ignore */
+        }
+      }
       clearRetry();
     };
   }, [wsUrl]);
