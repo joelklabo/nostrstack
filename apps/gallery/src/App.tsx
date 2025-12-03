@@ -312,6 +312,7 @@ export default function App() {
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
   const [qrInvoice, setQrInvoice] = useState<string | null>(null);
+  const [paymentRef, setPaymentRef] = useState<string | null>(null);
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [qrStatus, setQrStatus] = useState<'pending' | 'paid' | 'error'>('pending');
   const [tab, setTab] = useState<'lightning' | 'nostr' | 'logs'>('lightning');
@@ -323,6 +324,9 @@ export default function App() {
   const [lnbitsReadKeyOverride, setLnbitsReadKeyOverride] = useState<string | null>(null);
   const [lnbitsWalletIdOverride, setLnbitsWalletIdOverride] = useState<string | null>(null);
   const [telemetryWsOverride, setTelemetryWsOverride] = useState<string | null>(null);
+  const [payerInvoice, setPayerInvoice] = useState('');
+  const [payerStatus, setPayerStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
+  const [payerMessage, setPayerMessage] = useState<string | null>(null);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: 'unknown' },
     { label: 'LNbits', status: 'unknown' }
@@ -623,16 +627,17 @@ export default function App() {
   }, [signerReady, activePubkey, profileRelays, message]);
 
   useEffect(() => {
-    if (!qrInvoice) return;
+    if (!qrInvoice || !paymentRef) return;
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
     const ws = new WebSocket(wsUrl);
     const pr = qrInvoice;
+    const ref = paymentRef;
     const poll = async () => {
       try {
-        const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef || '')}`);
+        const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(ref)}`);
         if (res.ok) {
           const body = await res.json();
-          if (['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'paid'].includes((body.status || '').toUpperCase?.() ?? '')) {
+          if (['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'PAID'].includes(String(body.status || '').toUpperCase())) {
             setQrStatus('paid');
             setUnlockedPayload('Paid content unlocked');
             setLocked(false);
@@ -655,9 +660,11 @@ export default function App() {
       }
     };
     const pollId = window.setInterval(poll, 2000);
-    return () => ws.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qrInvoice, apiBase]);
+    return () => {
+      ws.close();
+      window.clearInterval(pollId);
+    };
+  }, [qrInvoice, apiBase, paymentRef]);
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -723,6 +730,7 @@ export default function App() {
     setRealBusy(true);
     setRealInvoice(null);
     setQrInvoice(null);
+    setPaymentRef(null);
     setQrStatus('pending');
     try {
       const res = await fetch(`${apiBase}/api/pay`, {
@@ -738,6 +746,7 @@ export default function App() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
       const pr = body.payment_request ?? body.pr;
+      setPaymentRef(body.provider_ref ?? body.payment_hash ?? null);
       setQrInvoice(pr);
       setQrAmount(amount);
       setQrStatus('pending');
@@ -748,6 +757,36 @@ export default function App() {
       setRealBusy(false);
     }
   }, [amount]);
+
+  const payWithTestPayer = useCallback(async () => {
+    const inv = payerInvoice.trim();
+    if (!inv) {
+      setPayerStatus('error');
+      setPayerMessage('Paste a BOLT11 invoice first');
+      return;
+    }
+    setPayerStatus('paying');
+    setPayerMessage(null);
+    try {
+      const res = await fetch(`${apiBase}/regtest/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice: inv })
+      });
+      const body = await res.json();
+      if (!res.ok || body?.ok === false) throw new Error(body?.error || `HTTP ${res.status}`);
+      setPayerStatus('paid');
+      setPayerMessage('Paid via test payer');
+      setWalletRefresh((n) => n + 1);
+      if (qrInvoice && inv.includes(qrInvoice.slice(0, 12))) {
+        setQrStatus('paid');
+        setLocked(false);
+      }
+    } catch (err) {
+      setPayerStatus('error');
+      setPayerMessage(formatError(err));
+    }
+  }, [payerInvoice, apiBase, qrInvoice]);
 
   const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
   const walletKey = (lnbitsKeyOverride ?? walletKeyEnv) || 'set VITE_LNBITS_ADMIN_KEY';
@@ -916,6 +955,39 @@ export default function App() {
       </div>
       {tab === 'lightning' && (
       <>
+      <div style={{ display: 'grid', gap: '0.4rem', padding: '0.75rem 0.85rem', background: '#eef2ff', border: `1px solid ${layout.border}`, borderRadius: layout.radius, marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <strong>Pay an invoice with Test payer (lnd-payer)</strong>
+          <span style={{ color: '#475569', fontSize: '0.9rem' }}>Prefunded LND node paying outbound; use this to settle demo invoices instantly.</span>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input
+            style={{ flex: 1, minWidth: 260 }}
+            placeholder="Paste BOLT11"
+            value={payerInvoice}
+            onChange={(e) => setPayerInvoice(e.target.value)}
+          />
+          <button type="button" onClick={payWithTestPayer} disabled={payerStatus === 'paying'}>
+            {payerStatus === 'paying' ? 'Paying…' : 'Pay with test payer'}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const txt = await navigator.clipboard.readText();
+                setPayerInvoice(txt.trim());
+              } catch {
+                setPayerMessage('Clipboard not available');
+              }
+            }}
+          >
+            Paste
+          </button>
+        </div>
+        {payerMessage && (
+          <div style={{ color: payerStatus === 'error' ? '#b91c1c' : '#166534', fontSize: '0.9rem' }}>{payerMessage}</div>
+        )}
+      </div>
       <div style={{ marginBottom: '1rem' }}>
         <FaucetButton apiBase={apiBase} onFunded={() => setWalletRefresh((n) => n + 1)} />
       </div>

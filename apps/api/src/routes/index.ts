@@ -7,6 +7,7 @@ import { registerLnurlCallback } from './lnurlp-callback.js';
 import { registerLogStreamRoute } from './log-stream.js';
 import { registerPayRoutes } from './pay.js';
 import { registerRegtestFundRoute } from './regtest-fund.js';
+import { registerRegtestPayRoute } from './regtest-pay.js';
 import { registerTenantRoutes } from './tenants.js';
 
 export async function registerRoutes(app: FastifyInstance) {
@@ -17,6 +18,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerAdminUserRoutes(app);
   await registerPayRoutes(app);
   await registerRegtestFundRoute(app);
+  await registerRegtestPayRoute(app);
   await registerLogStreamRoute(app);
 }
 
