@@ -357,6 +357,41 @@ export default function App() {
   }, [relaysList]);
 
   useEffect(() => {
+    let cancelled = false;
+    const probe = async () => {
+      const sample = relaysList.slice(0, 3);
+      await Promise.all(
+        sample.map(async (url) => {
+          try {
+            const relay = await Relay.connect(url);
+            if (cancelled) {
+              relay.close();
+              return;
+            }
+            setRelayStats((prev) => ({
+              ...prev,
+              [url]: { ...(prev[url] ?? { recv: 0 }), last: Date.now(), sendStatus: 'ok' }
+            }));
+            relay.close();
+          } catch {
+            if (cancelled) return;
+            setRelayStats((prev) => ({
+              ...prev,
+              [url]: { ...(prev[url] ?? { recv: 0 }), sendStatus: 'error' }
+            }));
+          }
+        })
+      );
+    };
+    probe();
+    const id = window.setInterval(probe, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [relaysList]);
+
+  useEffect(() => {
     autoMount();
   }, []);
 
