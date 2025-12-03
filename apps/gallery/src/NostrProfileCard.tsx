@@ -118,7 +118,15 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
           <RelayCard
             key={r}
             url={r}
-            meta={{ name: relayStats?.[r]?.name, software: relayStats?.[r]?.software, version: relayStats?.[r]?.version }}
+            meta={{
+              name: relayStats?.[r]?.name,
+              software: relayStats?.[r]?.software,
+              version: relayStats?.[r]?.version,
+              description: relayStats?.[r]?.description,
+              supportedNips: relayStats?.[r]?.supportedNips,
+              paymentRequired: relayStats?.[r]?.paymentRequired,
+              authRequired: relayStats?.[r]?.authRequired
+            }}
             recv={relayStats?.[r]?.recv ?? 0}
             sendStatus={relayStats?.[r]?.sendStatus}
             last={relayStats?.[r]?.last}

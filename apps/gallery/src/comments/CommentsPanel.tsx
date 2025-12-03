@@ -67,7 +67,15 @@ export function CommentsPanel({
             <RelayCard
               key={r}
               url={r}
-              meta={{ name: data.name, software: data.software, version: data.version }}
+              meta={{
+                name: data.name,
+                software: data.software,
+                version: data.version,
+                description: data.description,
+                supportedNips: data.supportedNips,
+                paymentRequired: data.paymentRequired,
+                authRequired: data.authRequired
+              }}
               recv={data.recv}
               sendStatus={data.sendStatus}
               last={data.last}
