@@ -1,5 +1,5 @@
 import { nip19 } from 'nostr-tools';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type Props = {
   npub?: string | null;
@@ -9,7 +9,7 @@ type Props = {
 
 type Status = 'checking' | 'ready' | 'missing' | 'error';
 
-export function Nip07Status({ npub, hasSigner }: Props) {
+export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
   const [status, setStatus] = useState<Status>('checking');
   const [detectedNpub, setDetectedNpub] = useState<string | null>(npub ?? null);
   const [demoOff, setDemoOff] = useState(false);
@@ -68,7 +68,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       console.warn('[nip07] signer error', err);
       return 'error';
     }
-  }, [demoOff]);
+  }, [demoOff, nostr]);
 
   const detect = useCallback(async () => {
     if (status === 'ready') return;
