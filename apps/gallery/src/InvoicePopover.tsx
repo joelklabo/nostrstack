@@ -21,6 +21,12 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
     const s = (secs % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   }, [ageMs]);
+  const fmtRemaining = useMemo(() => {
+    const rem = Math.max(0, 120 - Math.floor(ageMs / 1000));
+    const m = Math.floor(rem / 60).toString().padStart(2, '0');
+    const s = (rem % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }, [ageMs]);
 
   useEffect(() => {
     if (!invoice) return;
@@ -131,21 +137,22 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                 Scan or tap to pay
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 220 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 240 }}>
                 <div style={statusVizWrapper}>
                 <div style={ringShell}>
                   <div
                     style={{
                       ...ring,
-                      background: `conic-gradient(${tone.fg} ${Math.max(10, progress * 360)}deg, #e2e8f0 ${Math.max(10, progress * 360)}deg)`,
-                      boxShadow: visualState === 'pending' ? '0 0 0 10px rgba(14,165,233,0.12)' : visualState === 'paid' ? '0 0 0 12px rgba(34,197,94,0.18)' : 'none',
-                      animation: visualState === 'pending' ? 'ring-spin 2.4s linear infinite' : undefined
+                      background: `conic-gradient(${tone.fg} ${Math.max(14, progress * 360)}deg, #e2e8f0 ${Math.max(14, progress * 360)}deg)`,
+                      boxShadow: visualState === 'pending' ? '0 0 0 12px rgba(14,165,233,0.14)' : visualState === 'paid' ? '0 0 0 14px rgba(34,197,94,0.2)' : 'none',
+                      animation: visualState === 'pending' ? 'ring-spin 1.6s linear infinite' : visualState === 'paid' ? 'status-pop 260ms ease-out' : undefined
                     }}
                     aria-hidden
                   >
-                    <div style={{ ...ringInner, color: tone.fg }}>
-                      <span style={{ fontWeight: 800 }}>{statusLabel}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#475569' }}>{fmtAge}</span>
+                    <div style={{ ...ringInner, color: tone.fg, position: 'relative' }}>
+                      <span style={{ fontWeight: 800, textAlign: 'center' }}>{statusLabel}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#475569' }}>{fmtRemaining} left</span>
+                      {visualState === 'pending' && <div style={ringHalo} />}
                     </div>
                   </div>
                   {celebrate && <div style={burst} aria-hidden />}
@@ -156,7 +163,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                   </div>
                   <div style={{ color: '#475569', fontSize: '0.95rem', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <span>Elapsed {fmtAge}</span>
-                    {!stale && <span>• Expires 02:00</span>}
+                    {!stale && <span>• Expires {fmtRemaining}</span>}
                     {visualState === 'timeout' && <span>• Expired</span>}
                   </div>
                   <div style={beamWrap} aria-label="Time remaining">
@@ -270,6 +277,13 @@ const ringInner: React.CSSProperties = {
   fontWeight: 800,
   border: '1px solid #e2e8f0',
   boxShadow: '0 6px 18px rgba(15,23,42,0.08)'
+};
+const ringHalo: React.CSSProperties = {
+  position: 'absolute',
+  inset: -8,
+  borderRadius: '50%',
+  border: '2px solid rgba(14,165,233,0.25)',
+  animation: 'ring-spin 2.4s linear infinite'
 };
 
 const beamWrap: React.CSSProperties = { width: '100%', height: 12, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden', position: 'relative' };
