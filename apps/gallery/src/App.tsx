@@ -7,6 +7,7 @@ import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
+import { CommentsPanel } from './comments/CommentsPanel';
 import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
 import { layout } from './tokens';
