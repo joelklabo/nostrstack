@@ -51,8 +51,19 @@ function isLocalhostUrl(url: string) {
 function buildWsVariants(url: string) {
   const primary = normalizeTelemetryUrl(url);
   const variants = [primary];
-  if (primary.startsWith('wss://') && isLocalhostUrl(primary)) {
+  const host = (() => {
+    try {
+      return new URL(primary).host;
+    } catch {
+      return null;
+    }
+  })();
+  const isLocal = host?.startsWith('localhost') || host?.startsWith('127.') || host?.startsWith('[::1]');
+  if (primary.startsWith('wss://') && isLocal) {
     variants.push(primary.replace(/^wss:/, 'ws:'));
+  }
+  if (isLocal && host !== 'localhost:3001') {
+    variants.push('ws://localhost:3001/ws/telemetry');
   }
   return variants;
 }
@@ -167,14 +178,15 @@ export function TelemetryCard({ wsUrl }: Props) {
         setErrorMsg(null);
       };
       ws.onerror = (e) => {
+        const msg = describeWsError(e as Event);
         if (!opened && variantIdx < variants.length - 1) {
-          setErrorMsg(`Handshake failed (${describeWsError(e as Event)})`);
+          setErrorMsg(`Handshake failed (${msg})`);
           variantIdx += 1;
           ws.close();
           return;
         }
         setStatus('error');
-        setErrorMsg(describeWsError(e as Event));
+        setErrorMsg(msg || 'connection error');
       };
       ws.onclose = (e) => {
         if (cancelled) return;
