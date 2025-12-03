@@ -258,6 +258,7 @@ export function TelemetryCard({ wsUrl }: Props) {
         <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10, display: 'grid', gap: 4 }}>
           <span>Stream error: {errorMsg ?? 'disconnected'} — retrying…</span>
           {suggestFix(activeUrl, errorMsg)?.length ? <span style={{ color: '#9f1239' }}>{suggestFix(activeUrl, errorMsg)}</span> : null}
+          <span style={{ color: '#9f1239' }}>If you are in dev, ensure API is running (`pnpm dev:logs`) and check API logs for `/ws/telemetry` errors.</span>
         </div>
       )}
       <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: 'minmax(260px, 320px) 1fr', alignItems: 'stretch', flexWrap: 'wrap' }}>

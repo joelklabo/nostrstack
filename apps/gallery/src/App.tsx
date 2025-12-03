@@ -92,7 +92,9 @@ function resolveTelemetryWs(base: string) {
     previewFallback ??
     'localhost:3001';
 
-  const preferSecure = loc?.protocol === 'https:' || apiUrl?.protocol === 'https:';
+  const isLocal = host?.startsWith('localhost') || host?.startsWith('127.0.0.1') || host?.startsWith('[::1]');
+  const forceSecure = (import.meta.env.VITE_TELEMETRY_FORCE_SECURE as string | undefined) === 'true';
+  const preferSecure = forceSecure || (!isLocal && (loc?.protocol === 'https:' || apiUrl?.protocol === 'https:'));
   const scheme = preferSecure ? 'wss' : 'ws';
   return `${scheme}://${host}/ws/telemetry`;
 }

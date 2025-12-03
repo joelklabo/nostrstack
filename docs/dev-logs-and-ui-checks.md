@@ -4,6 +4,7 @@
 - Use `pnpm dev:logs` (wrapper for `scripts/dev-logs.sh`) when developing. It starts API + gallery with prefixed, timestamped output and writes to `.logs/dev/api.log` and `.logs/dev/gallery.log`.
 - Keep a terminal pane tailing logs: `tail -f .logs/dev/api.log .logs/dev/gallery.log`.
 - Include log snippets in issue notes when you hit errors.
+- Telemetry websocket: defaults to `ws://localhost:3001/ws/telemetry` for dev. If you run the app over HTTPS and have TLS on the API host, set `VITE_TELEMETRY_FORCE_SECURE=true` to use wss.
 
 ## UI changes must be confirmed in MCP Chrome
 - Launch Chrome DevTools MCP bridge: `./scripts/mcp-devtools-server.sh` (server) and `./scripts/mcp-chrome.sh` (client) while the gallery is running.
