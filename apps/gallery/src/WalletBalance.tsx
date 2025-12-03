@@ -47,16 +47,9 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
           return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
         }
       })();
-      try {
-        const primary = new URL('/ws/wallet', origin);
-        primary.protocol = primary.protocol === 'https:' ? 'wss:' : 'ws:';
-        list.push(primary.toString());
-      } catch {/* ignore */}
-      // Only add localhost fallbacks when page is http (avoid mixed content on https)
-      if (typeof window !== 'undefined' && window.location.protocol === 'http:') {
-        list.push('ws://localhost:3001/ws/wallet');
-        list.push('wss://localhost:3001/ws/wallet');
-      }
+      const primary = `${origin.replace(/^http/, 'ws')}/ws/wallet`;
+      list.push(primary);
+      list.push('ws://localhost:3001/ws/wallet');
       return Array.from(new Set(list));
     };
     const variants = buildVariants();
