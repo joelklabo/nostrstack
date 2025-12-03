@@ -113,7 +113,12 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
     return (
       <div style={card}>
         <strong>Wallet</strong>
-        <div style={{ color: '#475569', marginTop: 4 }}>Set VITE_LNBITS_URL and VITE_LNBITS_ADMIN_KEY to show balance.</div>
+        <div style={{ color: '#475569', marginTop: 4 }}>Wallet config missing. Set env vars or paste values above.</div>
+        <ul style={{ color: '#475569', marginTop: 4, paddingLeft: '1.1rem' }}>
+          <li>Required: <code>VITE_LNBITS_URL</code> and either <code>VITE_LNBITS_ADMIN_KEY</code> or <code>VITE_LNBITS_READ_KEY</code>.</li>
+          <li>Optional: <code>VITE_LNBITS_WALLET_ID</code> to prefill the wallet ID field.</li>
+          <li>You can also paste keys/URL in the controls above and click “Save & refresh”.</li>
+        </ul>
       </div>
     );
   }

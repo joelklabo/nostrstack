@@ -49,6 +49,7 @@ const relaysEnvDefault = relaysEnvRaw
 const lnbitsUrlRaw = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
 const lnbitsReadKeyEnv = (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_READ_KEY ?? '';
+const lnbitsWalletIdEnv = (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_WALLET_ID ?? '';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
 const profileDefault: ProfileMeta = {};
 
@@ -359,6 +360,7 @@ export default function App() {
     if (key) setLnbitsKeyOverride(key);
     if (readKey) setLnbitsReadKeyOverride(readKey);
     if (walletId) setLnbitsWalletIdOverride(walletId);
+    else if (lnbitsWalletIdEnv) setLnbitsWalletIdOverride(lnbitsWalletIdEnv);
     const tws = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
     if (tws) setTelemetryWsOverride(tws);
   }, []);
@@ -741,7 +743,7 @@ export default function App() {
   const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
   const walletKey = (lnbitsKeyOverride ?? walletKeyEnv) || 'set VITE_LNBITS_ADMIN_KEY';
   const walletReadKey = lnbitsReadKeyOverride ?? lnbitsReadKeyEnv ?? '';
-  const walletIdOverride = lnbitsWalletIdOverride ?? undefined;
+  const walletIdOverride = lnbitsWalletIdOverride ?? (lnbitsWalletIdEnv || undefined);
   const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
   const telemetryWsUrl = telemetryWsOverride ?? resolveTelemetryWs(apiBase);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',');
@@ -871,7 +873,7 @@ export default function App() {
             style={{ minWidth: 160, flex: 1 }}
             placeholder="Wallet ID (for ?usr= fallback)"
             ref={walletIdRef}
-            defaultValue={lnbitsWalletIdOverride ?? ''}
+            defaultValue={lnbitsWalletIdOverride ?? lnbitsWalletIdEnv ?? ''}
             onBlur={(e) => {
               const v = e.target.value.trim();
               setLnbitsWalletIdOverride(v || null);
