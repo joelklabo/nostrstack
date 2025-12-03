@@ -1,6 +1,14 @@
 import { getPublicKey, nip19, utils } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
 
+function widthBasedKeep(w: number) {
+  if (!Number.isFinite(w)) return 10;
+  if (w < 480) return 6;
+  if (w < 768) return 8;
+  if (w < 1200) return 10;
+  return 12;
+}
+
 type Props = {
   pubkey?: string | null;
   seckey?: string | null;
@@ -49,14 +57,6 @@ export function NpubBar({ pubkey, seckey }: Props) {
   }, [format, hexPub]);
 
   const short = useMemo(() => middleTruncate(full, keep), [full, keep]);
-
-  function widthBasedKeep(w: number) {
-    if (!Number.isFinite(w)) return 10;
-    if (w < 480) return 6;
-    if (w < 768) return 8;
-    if (w < 1200) return 10;
-    return 12;
-  }
 
   const handleCopy = async () => {
     try {
