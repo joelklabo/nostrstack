@@ -7,9 +7,11 @@ type Props = {
   defaultPriv?: boolean;
   compact?: boolean;
   mode?: 'toggle' | 'npub-hex-toggle';
+  style?: React.CSSProperties;
+  className?: string;
 };
 
-export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }: Props) {
+export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, style, className }: Props) {
   const [showPriv] = useState(defaultPriv);
   const [format, setFormat] = useState<'hex' | 'npub'>('npub');
 
@@ -38,7 +40,7 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
   }, [format, pubkey, seckey, showPriv]);
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', maxWidth: '100%' }}>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', maxWidth: '100%', ...style }} className={className}>
       <div
         style={{
           display: 'inline-flex',

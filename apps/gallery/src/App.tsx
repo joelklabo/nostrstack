@@ -790,6 +790,7 @@ export default function App() {
               seckey={undefined}
               signerReady={signerReady}
               relays={profileRelays}
+              relayStats={relayStats}
               profile={profile}
               fullProfile={profile}
               nip05Verified={nip05Verified}
