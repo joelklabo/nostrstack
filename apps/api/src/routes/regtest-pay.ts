@@ -31,7 +31,7 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
     }
   } as const;
 
-  const handler = async (request: Parameters<FastifyInstance['post']>[1], reply: Parameters<FastifyInstance['post']>[2]) => {
+  const handler: Parameters<FastifyInstance['post']>[1] = async (request, reply) => {
     const { invoice } = request.body as { invoice: string };
     if (!invoice || invoice.length < 10) return reply.code(400).send({ ok: false, error: 'invalid_invoice' });
 
