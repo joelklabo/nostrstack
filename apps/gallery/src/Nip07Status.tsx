@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 type Props = {
   npub?: string | null;
   hasSigner?: boolean;
+  enableMock?: boolean;
 };
 
 type Status = 'checking' | 'ready' | 'missing' | 'error';
@@ -17,6 +18,17 @@ export function Nip07Status({ npub, hasSigner }: Props) {
   const [nostrPresent, setNostrPresent] = useState<boolean | null>(null);
   const [lastHint, setLastHint] = useState<string | null>(null);
 
+  // Dev shim: allows overriding signer for demos/tests if enableMock=true
+  const nostr = useMemo(() => {
+    if (enableMock && typeof window !== 'undefined') {
+      // minimal mock signer that returns fixed key
+      return {
+        getPublicKey: async () => 'f'.repeat(64)
+      } as Partial<typeof window.nostr>;
+    }
+    return typeof window !== 'undefined' ? window.nostr : undefined;
+  }, [enableMock]);
+
   const tryOnce = useCallback(async (): Promise<Status> => {
     if (demoOff) {
       setStatus('missing');
@@ -24,7 +36,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       return 'missing';
     }
     if (typeof window === 'undefined') return 'missing';
-    const has = Boolean(window.nostr?.getPublicKey);
+    const has = Boolean(nostr?.getPublicKey);
     setNostrPresent(has);
     if (!has) {
       setStatus('missing');
@@ -38,7 +50,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
     setError(null);
     try {
       const pub = await Promise.race([
-        window.nostr.getPublicKey(),
+        nostr!.getPublicKey(),
         new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;
