@@ -26,6 +26,18 @@ type ProfileMeta = {
   lud16?: string;
   website?: string;
 };
+type ThemeStyles = {
+  background: string;
+  card: string;
+  inset: string;
+  text: string;
+  color: string;
+  muted: string;
+  borderColor: string;
+  accent: string;
+  shadow: string;
+};
+
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
@@ -57,7 +69,7 @@ function resolveTelemetryWs(base: string) {
   return `${base.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/telemetry`;
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({ title, children, themeStyles }: { title: string; children: React.ReactNode; themeStyles: ThemeStyles }) {
   return (
     <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem', background: themeStyles.card, color: themeStyles.text, boxShadow: themeStyles.shadow }}>
       <h2 style={{ marginTop: 0 }}>{title}</h2>
@@ -66,9 +78,9 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-type PillTone = 'info' | 'success' | 'warn' | 'muted';
+export type PillTone = 'info' | 'success' | 'warn' | 'muted';
 
-function Pill({ label, value, tone = 'info', theme }: { label: string; value: string; tone?: PillTone; theme: 'light' | 'dark' }) {
+export function Pill({ label, value, tone = 'info', theme }: { label: string; value: string; tone?: PillTone; theme: 'light' | 'dark' }) {
   const toneColor: Record<PillTone, string> = {
     info: '#3b82f6',
     success: '#22c55e',
@@ -623,7 +635,7 @@ export default function App() {
       <div style={{ marginBottom: '1rem' }}>
         <FaucetButton apiBase={apiBase} />
       </div>
-      <Card title="Config & presets">
+      <Card title="Config & presets" themeStyles={themeStyles}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             <span>Username</span>
@@ -712,7 +724,7 @@ export default function App() {
       </Card>
 
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-        <Card title="Tip button">
+        <Card title="Tip button" themeStyles={themeStyles}>
           <div style={{ marginBottom: '0.5rem', color: '#475569' }}>LNURLp flow. Request a real invoice from the API.</div>
           <div id="tip-container" />
           {enableReal && (
@@ -738,7 +750,7 @@ export default function App() {
           )}
         </Card>
 
-        <Card title="Pay to unlock">
+        <Card title="Pay to unlock" themeStyles={themeStyles}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem', color: '#475569' }}>
             <span>Creates an invoice; unlocks after real payment confirmation.</span>
             <span className={locked ? 'pay-status pay-status--pending' : 'pay-status pay-status--paid'}>
@@ -765,7 +777,7 @@ export default function App() {
 
       {tab === 'nostr' && (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-          <Card title="Nostr profile">
+          <Card title="Nostr profile" themeStyles={themeStyles}>
             <NostrProfileCard
               pubkey={activePubkey ?? undefined}
               seckey={undefined}
@@ -821,7 +833,7 @@ export default function App() {
               )}
             </div>
           </Card>
-          <Card title="Comments (Nostr)">
+          <Card title="Comments (Nostr)" themeStyles={themeStyles}>
             <CommentsPanel
               relayMode={relayMode}
               relayLabel={relayLabel}
@@ -836,7 +848,7 @@ export default function App() {
       )}
 
       <div style={{ display: tab === 'logs' ? 'block' : 'none' }}>
-        <Card title="Logs">
+        <Card title="Logs" themeStyles={themeStyles}>
           <div style={{ marginBottom: '0.5rem', color: '#475569', fontSize: '0.95rem' }}>
             Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures frontend console (toggle to enable).
           </div>
@@ -844,7 +856,7 @@ export default function App() {
         </Card>
       </div>
 
-      <Card title="Status & build">
+      <Card title="Status & build" themeStyles={themeStyles}>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem', color: themeStyles.muted }}>
           <span>Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</span>
           <span>Host: {demoHost}</span>
