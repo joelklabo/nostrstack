@@ -776,7 +776,7 @@ export default function App() {
           <div style={{ marginBottom: '0.5rem', color: '#475569', fontSize: '0.95rem' }}>
             Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures frontend console (toggle to enable).
           </div>
-          <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
+          <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} theme={theme} />
         </Card>
       )}
 
