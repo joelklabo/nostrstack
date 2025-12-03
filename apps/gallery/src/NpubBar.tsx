@@ -1,5 +1,5 @@
-import { nip19, utils } from 'nostr-tools';
-import { useMemo, useState } from 'react';
+import { getPublicKey, nip19, utils } from 'nostr-tools';
+import { useEffect, useMemo, useState } from 'react';
 
 type Props = {
   pubkey?: string | null;
@@ -9,30 +9,54 @@ type Props = {
 export function NpubBar({ pubkey, seckey }: Props) {
   const [format, setFormat] = useState<'npub' | 'hex'>('npub');
   const [copied, setCopied] = useState(false);
+  const [keep, setKeep] = useState(() => widthBasedKeep(typeof window !== 'undefined' ? window.innerWidth : 1024));
+
+  useEffect(() => {
+    const handler = () => setKeep(widthBasedKeep(window.innerWidth));
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handler);
+      return () => window.removeEventListener('resize', handler);
+    }
+    return () => {};
+  }, []);
+
+  const hexPub = useMemo(() => {
+    const candidate = pubkey || seckey || '';
+    if (!candidate) return '';
+    try {
+      if (candidate.startsWith('npub')) {
+        return utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
+      }
+      if (candidate.startsWith('nsec')) {
+        const priv = utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
+        return getPublicKey(priv);
+      }
+      if (/^[0-9a-fA-F]{64}$/.test(candidate)) return candidate.toLowerCase();
+      return '';
+    } catch {
+      return '';
+    }
+  }, [pubkey, seckey]);
 
   const full = useMemo(() => {
-    const key = seckey || pubkey || '';
-    if (!key) return '';
+    if (!hexPub) return '';
     try {
-      if (format === 'npub') {
-        const hex = key.startsWith('npub') ? utils.bytesToHex(nip19.decode(key).data as Uint8Array) : key;
-        return nip19.npubEncode(utils.hexToBytes(hex));
-      }
-      return key;
+      if (format === 'npub') return nip19.npubEncode(utils.hexToBytes(hexPub));
+      return hexPub;
     } catch {
-      return key;
+      return hexPub;
     }
-  }, [format, pubkey, seckey]);
+  }, [format, hexPub]);
 
-  const short = useMemo(() => middleTruncate(full, widthBasedKeep()), [full]);
+  const short = useMemo(() => middleTruncate(full, keep), [full, keep]);
 
-  const widthBasedKeep = () => {
-    if (typeof window === 'undefined') return 10;
-    const w = window.innerWidth;
+  function widthBasedKeep(w: number) {
+    if (!Number.isFinite(w)) return 10;
     if (w < 480) return 6;
     if (w < 768) return 8;
-    return 10;
-  };
+    if (w < 1200) return 10;
+    return 12;
+  }
 
   const handleCopy = async () => {
     try {
