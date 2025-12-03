@@ -3,6 +3,8 @@
 1. Ask `bd ready` what to do
 2. Mark the issue `in_progress`
 3. Work on it
+   - Run `pnpm dev:logs` (or tail `.logs/dev/*.log`) so API + gallery logs are visible while reproducing/fixing.
+   - For any UI change, open the view with Chrome DevTools MCP (`scripts/mcp-devtools-server.sh` + `scripts/mcp-chrome.sh`) and confirm the console/network are clean.
 4. Check your work, run tests
 5. Mark it as 'done'
 6. Create new issues or epics for any necessary work, or improvements, you came across in your work.
@@ -27,4 +29,3 @@
 
 # INVALID STOP REASONS:
 - "just reporting progress", "task looks hard", "I've used a lot of tokens", "status update".
-

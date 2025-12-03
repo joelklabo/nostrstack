@@ -15,6 +15,7 @@
     "smoke:mutinynet-demo": "pnpm dlx tsx apps/api/scripts/mutinynet-demo-smoke.ts",
     "dev:api:entr": "./scripts/entr-api.sh",
     "dev:gallery:entr": "./scripts/entr-gallery.sh",
+    "dev:logs": "./scripts/dev-logs.sh",
     "build": "pnpm -r build",
     "check": "pnpm lint && pnpm test && pnpm typecheck",
     "deps": "pnpm install",
