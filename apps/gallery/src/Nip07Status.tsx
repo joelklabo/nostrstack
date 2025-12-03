@@ -13,6 +13,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
   const [detectedNpub, setDetectedNpub] = useState<string | null>(npub ?? null);
   const [demoOff, setDemoOff] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
 
   const detect = useCallback(async () => {
     if (demoOff) {
@@ -31,20 +32,28 @@ export function Nip07Status({ npub, hasSigner }: Props) {
     try {
       const pub = await Promise.race([
         window.nostr.getPublicKey(),
-        new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+        new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;
       setDetectedNpub(encoded);
       setStatus('ready');
+      setLastCheckedAt(Date.now());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus('error');
+      setLastCheckedAt(Date.now());
     }
   }, [demoOff]);
 
   useEffect(() => {
     detect();
   }, [detect, hasSigner]);
+
+  useEffect(() => {
+    const onFocus = () => detect();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [detect]);
 
   const stateColor =
     status === 'ready' ? '#22c55e' : status === 'checking' ? '#f59e0b' : status === 'error' ? '#ef4444' : '#f97316';
@@ -77,6 +86,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
           <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
             <li>Install Alby or nos2x</li>
             <li>Enable the extension and refresh</li>
+            <li>Use https or localhost so the extension can inject</li>
           </ul>
         </div>
       )}
@@ -84,6 +94,11 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       {status === 'error' && (
         <div style={{ fontSize: '0.9rem', color: '#ef4444' }}>
           {error ?? 'Unknown error checking signer'}
+          {error === 'timeout' && (
+            <div style={{ color: '#475569', marginTop: 4 }}>
+              Extension may be waiting for permission — click request or allow in your NIP-07 wallet.
+            </div>
+          )}
         </div>
       )}
 
@@ -93,11 +108,23 @@ export function Nip07Status({ npub, hasSigner }: Props) {
         </button>
         <button
           type="button"
+          onClick={() => window.nostr?.getPublicKey && detect()}
+          style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: '1px solid #cbd5e1', background: '#eef2ff' }}
+        >
+          Request permission
+        </button>
+        <button
+          type="button"
           onClick={() => setDemoOff((v) => !v)}
           style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: '1px solid #cbd5e1', background: demoOff ? '#fee2e2' : '#fff' }}
         >
           {demoOff ? 'Show detected state' : 'Preview missing state'}
         </button>
+        {lastCheckedAt && (
+          <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+            Checked {new Date(lastCheckedAt).toLocaleTimeString()}
+          </span>
+        )}
       </div>
     </div>
   );
