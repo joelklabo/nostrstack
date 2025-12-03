@@ -84,9 +84,8 @@ function resolveTelemetryWs(base: string) {
 
   const host =
     normalizeHost(import.meta.env.VITE_NOSTRSTACK_HOST as string | undefined) ??
-    previewFallback ??
     (apiUrl ? normalizeHost(apiUrl.host) : null) ??
-    (loc ? normalizeHost(loc.host) : null) ??
+    previewFallback ??
     'localhost:3001';
 
   const preferSecure = loc?.protocol === 'https:' || apiUrl?.protocol === 'https:';
