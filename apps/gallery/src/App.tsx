@@ -82,8 +82,11 @@ function resolveTelemetryWs(base: string) {
     apiUrl = null;
   }
 
+  const devPreviewHost = loc?.port === '4173' ? `${loc.hostname}:3001` : null;
+
   const host =
     normalizeHost(import.meta.env.VITE_NOSTRSTACK_HOST as string | undefined) ??
+    devPreviewHost ??
     (apiUrl ? normalizeHost(apiUrl.host) : null) ??
     previewFallback ??
     'localhost:3001';
