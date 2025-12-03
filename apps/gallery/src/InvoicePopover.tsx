@@ -262,7 +262,7 @@ const ringHalo: React.CSSProperties = {
   inset: -8,
   borderRadius: '50%',
   border: '2px solid rgba(14,165,233,0.25)',
-  animation: 'ring-spin 2.4s linear infinite'
+  animation: 'ring-breathe 2.6s ease-in-out infinite'
 };
 
 const beamWrap: React.CSSProperties = { width: '100%', height: 12, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden', position: 'relative' };
@@ -331,8 +331,9 @@ const pulseCss = `
     100% { transform: scale(1.25); opacity: 0; }
   }
 
-  @keyframes ring-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  @keyframes ring-breathe {
+    0% { transform: scale(0.98); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(0.98); }
   }
 `;
