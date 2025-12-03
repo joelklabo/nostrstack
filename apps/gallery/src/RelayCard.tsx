@@ -31,7 +31,7 @@ export function RelayCard({ url, meta, recv = 0, sendStatus, last, lastSentAt, t
     sendStatus === 'sending'
       ? { dot: '#0ea5e9', shadow: 'rgba(14,165,233,0.35)', badge: '• sending' }
       : sendStatus === 'ok'
-        ? { dot: '#22c55e', shadow: 'rgba(34,197,94,0.35)', badge: '✓ sent' }
+        ? { dot: '#22c55e', shadow: 'rgba(34,197,94,0.35)', badge: sendHot ? '✓ sent' : '' }
         : sendStatus === 'error'
           ? { dot: '#ef4444', shadow: 'rgba(239,68,68,0.35)', badge: '! error' }
           : { dot: '#94a3b8', shadow: 'rgba(148,163,184,0.35)', badge: '' };
