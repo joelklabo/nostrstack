@@ -51,6 +51,13 @@ function resolveLogStreamUrl(base: string) {
   return `${base.replace(/\/$/, '')}/logs/stream`;
 }
 
+function resolveTelemetryWs(base: string) {
+  // When proxied through Vite (/api rewrites), keep /api prefix so ws proxy matches
+  if (base.startsWith('/')) return `${base.replace(/\/$/, '')}/ws/telemetry`;
+  // Otherwise build absolute ws URL
+  return `${base.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/telemetry`;
+}
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem' }}>
@@ -788,9 +795,9 @@ export default function App() {
             );
           })}
         </div>
-        {tab === 'lightning' && (
+            {tab === 'lightning' && (
           <div style={{ marginTop: '1rem' }}>
-            <TelemetryCard wsUrl={`${apiBase.replace(/\/$/, '')}/ws/telemetry`.replace('http', 'ws')} />
+            <TelemetryCard wsUrl={resolveTelemetryWs(apiBase)} />
           </div>
         )}
       </Card>
