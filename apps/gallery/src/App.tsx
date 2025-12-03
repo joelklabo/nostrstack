@@ -626,10 +626,26 @@ export default function App() {
     if (!qrInvoice) return;
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
     const ws = new WebSocket(wsUrl);
+    const pr = qrInvoice;
+    const poll = async () => {
+      try {
+        const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef || '')}`);
+        if (res.ok) {
+          const body = await res.json();
+          if (['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'paid'].includes((body.status || '').toUpperCase?.() ?? '')) {
+            setQrStatus('paid');
+            setUnlockedPayload('Paid content unlocked');
+            setLocked(false);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    };
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data as string);
-        if (msg.type === 'invoice-paid' && msg.pr === qrInvoice) {
+        if (msg.type === 'invoice-paid' && msg.pr === pr) {
           setQrStatus('paid');
           setUnlockedPayload('Paid content unlocked');
           setLocked(false);
@@ -638,7 +654,9 @@ export default function App() {
         // ignore malformed frames
       }
     };
+    const pollId = window.setInterval(poll, 2000);
     return () => ws.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrInvoice, apiBase]);
 
   useEffect(() => {
