@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function FaucetButton({ apiBase }: { apiBase: string }) {
+export function FaucetButton({ apiBase, onFunded }: { apiBase: string; onFunded?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -13,6 +13,7 @@ export function FaucetButton({ apiBase }: { apiBase: string }) {
       const body = await res.json();
       if (!res.ok || !body.ok) throw new Error(body.error || `HTTP ${res.status}`);
       setMsg('Funded & mined; balances updating.');
+      onFunded?.();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setMsg(`Failed: ${msg}`);

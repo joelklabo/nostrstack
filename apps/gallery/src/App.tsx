@@ -12,6 +12,7 @@ import { MockComments } from './MockComments';
 import { NostrProfileCard } from './NostrProfileCard';
 import { TelemetryCard } from './TelemetryCard';
 import { layout } from './tokens';
+import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'mock' | 'real' };
@@ -285,6 +286,7 @@ export default function App() {
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
+  const [walletRefresh, setWalletRefresh] = useState(0);
   useEffect(() => {
     if (import.meta.env.DEV) {
       // Expose helpers for MCP-driven UI testing
@@ -650,6 +652,7 @@ export default function App() {
       </div>
 
       <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} visible />
+      <WalletBalance lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} refreshSignal={walletRefresh} />
       {!enableReal && (
         <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
           Real payments are disabled. Set VITE_ENABLE_REAL_PAYMENTS=true and provide VITE_API_BASE_URL to request real invoices.
@@ -659,7 +662,7 @@ export default function App() {
       {tab === 'lightning' && (
       <>
       <div style={{ marginBottom: '1rem' }}>
-        <FaucetButton apiBase={apiBase} />
+        <FaucetButton apiBase={apiBase} onFunded={() => setWalletRefresh((n) => n + 1)} />
       </div>
       <Card title="Config & presets" themeStyles={themeStyles}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
