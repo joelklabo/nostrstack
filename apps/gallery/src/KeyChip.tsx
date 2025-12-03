@@ -6,9 +6,10 @@ type Props = {
   seckey?: string | null;
   defaultPriv?: boolean;
   compact?: boolean;
+  mode?: 'toggle' | 'npub-hex-toggle';
 };
 
-export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }: Props) {
+export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, mode = 'toggle' }: Props) {
   const [showPriv, setShowPriv] = useState(defaultPriv);
   const [format, setFormat] = useState<'hex' | 'npub'>('npub');
 
@@ -39,17 +40,26 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true }:
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: compact ? '6px 10px' : '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, fontSize: '0.9rem', minWidth: 0, maxWidth: '100%' }}>
-        <button
-          type="button"
-          onClick={() => setShowPriv((v) => !v)}
-          style={{ border: 'none', background: '#e2e8f0', borderRadius: 999, padding: '2px 10px', fontWeight: 700, cursor: 'pointer' }}
-        >
-          {showPriv ? 'Priv' : 'Pub'}
-        </button>
-        <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={{ border: 'none', background: 'transparent', fontWeight: 600, cursor: 'pointer' }}>
-          <option value="npub">npub/nsec</option>
-          <option value="hex">hex</option>
-        </select>
+        {mode === 'toggle' ? (
+          <button
+            type="button"
+            onClick={() => setShowPriv((v) => !v)}
+            style={{ border: 'none', background: '#e2e8f0', borderRadius: 999, padding: '2px 10px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            {showPriv ? 'Priv' : 'Pub'}
+          </button>
+        ) : (
+          <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={{ border: 'none', background: 'transparent', fontWeight: 600, cursor: 'pointer' }}>
+            <option value="npub">npub</option>
+            <option value="hex">hex</option>
+          </select>
+        )}
+        {mode === 'toggle' && (
+          <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={{ border: 'none', background: 'transparent', fontWeight: 600, cursor: 'pointer' }}>
+            <option value="npub">npub/nsec</option>
+            <option value="hex">hex</option>
+          </select>
+        )}
         <code style={{ fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{display}</code>
       </div>
       <button

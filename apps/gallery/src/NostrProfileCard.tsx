@@ -43,7 +43,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
             <div style={{ fontWeight: 800, fontSize: '1.05rem' }}>{name}</div>
             <div style={{ color: '#475569', fontSize: '0.9rem', maxWidth: '100%', wordBreak: 'break-word' }}>{about}</div>
           </div>
-          <KeyChip pubkey={pubkey ?? undefined} seckey={seckey ?? undefined} compact style={{ maxWidth: '100%', overflow: 'hidden' }} />
+          <KeyChip pubkey={pubkey ?? undefined} seckey={seckey ?? undefined} compact style={{ maxWidth: '100%', overflow: 'hidden' }} mode="npub-hex-toggle" />
         <Nip07Status npub={npub} hasSigner={signerReady} />
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {nip05 ? (
