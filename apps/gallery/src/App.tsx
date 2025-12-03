@@ -270,6 +270,17 @@ export default function App() {
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
   ]);
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      // Expose helpers for MCP-driven UI testing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__setInvoice = setQrInvoice;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__setInvoiceStatus = setQrStatus;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__setInvoiceAmount = setQrAmount;
+    }
+  }, []);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
   const [signerReady, setSignerReady] = useState(false);
   const [signerRelays, setSignerRelays] = useState<string[]>([]);

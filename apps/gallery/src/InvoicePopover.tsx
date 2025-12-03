@@ -14,6 +14,13 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   const [dataUrl, setDataUrl] = useState<string>('');
   const [ageMs, setAgeMs] = useState(0);
 
+  const fmtAge = useMemo(() => {
+    const secs = Math.max(0, Math.floor(ageMs / 1000));
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }, [ageMs]);
+
   useEffect(() => {
     if (!invoice) return;
     QRCode.toDataURL(invoice, { errorCorrectionLevel: 'M', margin: 1, scale: 6 })
@@ -30,38 +37,77 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
 
   const stale = status === 'pending' && ageMs > 120000;
   const displayAmount = useMemo(() => (amountSats ? `${amountSats} sats` : ''), [amountSats]);
+  const tone =
+    status === 'paid'
+      ? { bg: '#ecfdf3', fg: '#166534', border: '#bbf7d0' }
+      : status === 'error'
+        ? { bg: '#fef2f2', fg: '#b91c1c', border: '#fecdd3' }
+        : stale
+          ? { bg: '#fff7ed', fg: '#c2410c', border: '#fed7aa' }
+          : { bg: '#f8fafc', fg: '#0f172a', border: '#e2e8f0' };
   if (!invoice) return null;
 
   return (
     <div style={overlayStyle} onClick={onClose}>
-      <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <div style={{ fontWeight: 700 }}>Invoice</div>
+      <style>{pulseCss}</style>
+      <div style={cardStyle} onClick={(e) => e.stopPropagation()} aria-live="polite">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ fontWeight: 800, fontSize: '1.05rem' }}>Invoice</div>
+            {displayAmount && <div style={{ color: '#64748b', fontWeight: 600 }}>{displayAmount}</div>}
+          </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {stale && <span style={{ color: '#f97316', fontSize: '0.85rem' }}>Timed out</span>}
-            <button onClick={onClose} style={closeBtnStyle}>×</button>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '0.3rem 0.65rem',
+                borderRadius: 999,
+                background: tone.bg,
+                color: tone.fg,
+                border: `1px solid ${tone.border}`,
+                fontWeight: 700
+              }}
+            >
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 999,
+                  background: tone.fg,
+                  boxShadow: status === 'pending' && !stale ? '0 0 0 0 rgba(14,165,233,0.35)' : 'none',
+                  animation: status === 'pending' && !stale ? 'invoice-pulse 1.5s infinite' : 'none'
+                }}
+              />
+              {status === 'paid' ? 'Paid' : status === 'error' ? 'Payment error' : stale ? 'Timed out' : 'Waiting for payment'}
+            </span>
+            <button onClick={onClose} style={closeBtnStyle} aria-label="Close invoice">×</button>
           </div>
         </div>
-        {displayAmount && <div style={{ marginBottom: '0.5rem', color: '#64748b' }}>{displayAmount}</div>}
-        <div style={{ marginBottom: '0.5rem', fontWeight: 700, color: status === 'paid' ? '#22c55e' : status === 'error' ? '#ef4444' : stale ? '#f97316' : '#f59e0b' }}>
-          {status === 'paid' ? 'Paid' : status === 'error' ? 'Payment error' : stale ? 'Timed out' : 'Waiting for payment'}
-        </div>
-        {dataUrl ? (
-          <img src={dataUrl} alt="Lightning invoice QR" style={{ width: '220px', height: '220px', borderRadius: 12, boxShadow: '0 12px 30px rgba(0,0,0,0.12)', marginBottom: '0.75rem' }} />
-        ) : (
-          <div style={{ height: 220, width: 220, display: 'grid', placeItems: 'center', marginBottom: '0.75rem' }}>Generating…</div>
-        )}
-        <div style={invoiceBox}>
-          <code style={{ wordBreak: 'break-all', fontSize: '0.82rem' }}>{invoice}</code>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-          <CopyButton text={invoice} label="Copy" size="md" />
-          <a href={`lightning:${invoice}`} style={walletLink}>Open in wallet</a>
-          {stale && (
-            <button type="button" onClick={onClose} style={{ padding: '0.4rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff' }}>
-              Dismiss
-            </button>
-          )}
+
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {dataUrl ? (
+              <img src={dataUrl} alt="Lightning invoice QR" style={{ width: '220px', height: '220px', borderRadius: 12, boxShadow: '0 12px 30px rgba(0,0,0,0.12)' }} />
+            ) : (
+              <div style={{ height: 220, width: 220, display: 'grid', placeItems: 'center' }}>Generating…</div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120 }}>
+              <div style={{ color: '#475569', fontSize: '0.95rem' }}>Elapsed: {fmtAge}</div>
+              <CopyButton text={invoice} label="Copy BOLT11" size="md" />
+              <a href={`lightning:${invoice}`} style={walletLink}>Open in wallet</a>
+              {stale && (
+                <button type="button" onClick={onClose} style={{ padding: '0.4rem 0.75rem', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff' }}>
+                  Dismiss
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div style={invoiceBox}>
+            <code style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{invoice}</code>
+          </div>
         </div>
       </div>
     </div>
@@ -84,7 +130,7 @@ const cardStyle: React.CSSProperties = {
   color: '#0f172a',
   borderRadius: 16,
   padding: '1rem 1.2rem',
-  width: 320,
+  width: 360,
   boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
   animation: 'popIn 140ms ease-out'
 };
@@ -93,8 +139,8 @@ const invoiceBox: React.CSSProperties = {
   background: '#f8fafc',
   border: '1px solid #e2e8f0',
   borderRadius: 10,
-  padding: '0.6rem',
-  maxHeight: 110,
+  padding: '0.75rem',
+  maxHeight: 140,
   overflow: 'auto'
 };
 
@@ -113,3 +159,11 @@ const walletLink: React.CSSProperties = {
   textDecoration: 'none',
   fontWeight: 600
 };
+
+const pulseCss = `
+  @keyframes invoice-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(14,165,233,0.45); }
+    70% { box-shadow: 0 0 0 10px rgba(14,165,233,0); }
+    100% { box-shadow: 0 0 0 0 rgba(14,165,233,0); }
+  }
+`;
