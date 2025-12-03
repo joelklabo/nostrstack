@@ -15,6 +15,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
   const [nostrPresent, setNostrPresent] = useState<boolean | null>(null);
+  const [lastHint, setLastHint] = useState<string | null>(null);
 
   const tryOnce = useCallback(async (): Promise<Status> => {
     if (demoOff) {
@@ -28,6 +29,8 @@ export function Nip07Status({ npub, hasSigner }: Props) {
     if (!has) {
       setStatus('missing');
       setError(null);
+      setLastHint('No window.nostr found. Ensure a NIP-07 extension (Alby, nos2x, etc.) is installed and enabled for this site.');
+      console.info('[nip07] window.nostr missing; check extension permission/host allowlist');
       return 'missing';
     }
 
@@ -42,11 +45,15 @@ export function Nip07Status({ npub, hasSigner }: Props) {
       setDetectedNpub(encoded);
       setStatus('ready');
       setLastCheckedAt(Date.now());
+      setLastHint(null);
+      console.info('[nip07] signer detected', { pubkey: pub });
       return 'ready';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus('error');
       setLastCheckedAt(Date.now());
+      setLastHint('Signer responded with error. It may need you to approve access in the extension popup or settings.');
+      console.warn('[nip07] signer error', err);
       return 'error';
     }
   }, [demoOff]);
@@ -63,6 +70,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
     if (finalStatus === 'checking') {
       setStatus('missing');
       setError('timeout');
+      setLastHint('No response after 5s. Open your NIP-07 extension and allow this site.');
     }
   }, [status, tryOnce]);
 
@@ -113,12 +121,14 @@ export function Nip07Status({ npub, hasSigner }: Props) {
           <span>Tips to enable:</span>
           <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
             <li>Install Alby or nos2x</li>
-            <li>Enable the extension and refresh</li>
+            <li>Enable NIP-07 in the extension settings and refresh</li>
+            <li>Allow this origin (https://localhost:4173) in the extension permissions</li>
             <li>Use https or localhost so the extension can inject</li>
           </ul>
           {nostrPresent === false && (
             <div style={{ color: '#ef4444' }}>No window.nostr detected on this origin.</div>
           )}
+          {lastHint && <div style={{ color: '#9f1239' }}>{lastHint}</div>}
         </div>
       )}
 
@@ -135,6 +145,7 @@ export function Nip07Status({ npub, hasSigner }: Props) {
               Raw: {error}
             </div>
           )}
+          {lastHint && <div style={{ color: '#9f1239', marginTop: 4 }}>{lastHint}</div>}
         </div>
       )}
 
