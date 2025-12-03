@@ -14,13 +14,25 @@ export function NpubBar({ pubkey, seckey }: Props) {
     const key = seckey || pubkey || '';
     if (!key) return '';
     try {
-      return format === 'npub' ? nip19.npubEncode(utils.hexToBytes(key)) : key;
+      if (format === 'npub') {
+        const hex = key.startsWith('npub') ? utils.bytesToHex(nip19.decode(key).data as Uint8Array) : key;
+        return nip19.npubEncode(utils.hexToBytes(hex));
+      }
+      return key;
     } catch {
       return key;
     }
   }, [format, pubkey, seckey]);
 
-  const short = useMemo(() => middleTruncate(full, 10), [full]);
+  const short = useMemo(() => middleTruncate(full, widthBasedKeep()), [full]);
+
+  const widthBasedKeep = () => {
+    if (typeof window === 'undefined') return 10;
+    const w = window.innerWidth;
+    if (w < 480) return 6;
+    if (w < 768) return 8;
+    return 10;
+  };
 
   const handleCopy = async () => {
     try {
