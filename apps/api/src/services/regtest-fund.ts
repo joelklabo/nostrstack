@@ -1,17 +1,27 @@
 import { execFile } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const COMPOSE = ['compose', '-f', 'deploy/regtest/docker-compose.yml'];
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
+const COMPOSE_FILE = process.env.REGTEST_COMPOSE ?? path.join(ROOT, 'deploy/regtest/docker-compose.yml');
+const COMPOSE_CWD = process.env.REGTEST_CWD ?? path.dirname(COMPOSE_FILE);
+const COMPOSE = ['compose', '-f', COMPOSE_FILE];
 
 async function ensureMinerWallet() {
-  await runCompose(['exec', '-T', 'bitcoind', 'bash', '-lc', "bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin loadwallet miner >/dev/null 2>&1 || bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin createwallet miner"]);
+  const hasWallet = await runCompose([
+    'exec', '-T', 'bitcoind', 'sh', '-lc',
+    "bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin listwallets | grep -q '\"miner\"'"
+  ]).then(() => true).catch(() => false);
+  if (hasWallet) return;
+  await runCompose(['exec', '-T', 'bitcoind', 'sh', '-lc', "bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin loadwallet miner >/dev/null 2>&1 || bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin createwallet miner"]);
 }
 
 async function maybeBootstrapBlocks() {
-  const heightRaw = await runCompose(['exec', '-T', 'bitcoind', 'bash', '-lc', 'bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin getblockcount']);
+  const heightRaw = await runCompose(['exec', '-T', 'bitcoind', 'sh', '-lc', 'bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin getblockcount']);
   const height = Number(heightRaw.trim());
   if (height >= 101) return 0;
   const toMine = 101 - height;
-  await runCompose(['exec', '-T', 'bitcoind', 'bash', '-lc', `bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner generatetoaddress ${toMine} $(bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner getnewaddress)`]);
+  await runCompose(['exec', '-T', 'bitcoind', 'sh', '-lc', `bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner generatetoaddress ${toMine} $(bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner getnewaddress)`]);
   return toMine;
 }
 
@@ -27,19 +37,19 @@ export async function regtestFund(): Promise<FundResult> {
   const mined = await maybeBootstrapBlocks();
 
   const addr = await runCompose([
-    'exec', '-T', 'lnd-merchant', 'bash', '-lc',
+    'exec', '-T', 'lnd-merchant', 'sh', '-lc',
     "lncli --network=regtest --lnddir=/data --rpcserver=lnd-merchant:10009 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert newaddress p2wkh | jq -r .address"
   ]);
   await runCompose([
-    'exec', '-T', 'bitcoind', 'bash', '-lc',
+    'exec', '-T', 'bitcoind', 'sh', '-lc',
     `bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner sendtoaddress ${addr.trim()} 1`]);
   await runCompose([
-    'exec', '-T', 'bitcoind', 'bash', '-lc',
+    'exec', '-T', 'bitcoind', 'sh', '-lc',
     'bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner generatetoaddress 6 $(bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner getnewaddress)'
   ]);
 
   const chan = await runCompose([
-    'exec', '-T', 'lnd-merchant', 'bash', '-lc',
+    'exec', '-T', 'lnd-merchant', 'sh', '-lc',
     "dest=$(lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:10010 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert getinfo | jq -r .identity_pubkey); lncli --network=regtest --lnddir=/data --rpcserver=lnd-merchant:10009 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert listchannels | jq -e --arg pk $dest '.channels[] | select(.remote_pubkey==$pk)' >/dev/null || lncli --network=regtest --lnddir=/data --rpcserver=lnd-merchant:10009 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert openchannel --node_key=$dest --local_amt=500000 --sat_per_vbyte=1"
   ]).catch(() => '');
 
@@ -53,7 +63,7 @@ export async function regtestFund(): Promise<FundResult> {
 
 function runCompose(args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile('docker', [...COMPOSE, ...args], { cwd: process.cwd() }, (err, stdout, stderr) => {
+    execFile('docker', [...COMPOSE, ...args], { cwd: COMPOSE_CWD }, (err, stdout, stderr) => {
       if (err) return reject(stderr || err.message);
       resolve(stdout.toString());
     });
