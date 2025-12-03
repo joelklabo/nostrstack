@@ -303,6 +303,7 @@ export default function App() {
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
   const [lnbitsUrlOverride, setLnbitsUrlOverride] = useState<string | null>(null);
   const [lnbitsKeyOverride, setLnbitsKeyOverride] = useState<string | null>(null);
+  const [telemetryWsOverride, setTelemetryWsOverride] = useState<string | null>(null);
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: apiBase === 'mock' ? 'mock' : 'unknown' },
     { label: 'LNbits', status: apiBase === 'mock' ? 'mock' : 'unknown' }
@@ -324,6 +325,8 @@ export default function App() {
     const key = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.key') : null;
     if (url) setLnbitsUrlOverride(url);
     if (key) setLnbitsKeyOverride(key);
+    const tws = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
+    if (tws) setTelemetryWsOverride(tws);
   }, []);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
   const [signerReady, setSignerReady] = useState(false);
@@ -669,6 +672,7 @@ export default function App() {
   const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
   const walletKey = (lnbitsKeyOverride ?? walletKeyEnv) || 'set VITE_LNBITS_ADMIN_KEY';
   const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
+  const telemetryWsUrl = telemetryWsOverride ?? resolveTelemetryWs(apiBase);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',') || 'mock';
   const isDark = theme === 'dark';
 
@@ -1027,7 +1031,33 @@ export default function App() {
         </div>
             {tab === 'lightning' && (
           <div style={{ marginTop: '1rem' }}>
-            <TelemetryCard wsUrl={resolveTelemetryWs(apiBase)} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 240 }}>
+                <span style={{ fontSize: '0.9rem', color: '#475569' }}>Telemetry WS override</span>
+                <input
+                  defaultValue={telemetryWsOverride ?? ''}
+                  placeholder="ws://localhost:4173/api/ws/telemetry"
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    setTelemetryWsOverride(v || null);
+                    if (typeof window !== 'undefined') {
+                      if (v) window.localStorage.setItem('nostrstack.telemetry.ws', v);
+                      else window.localStorage.removeItem('nostrstack.telemetry.ws');
+                    }
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setTelemetryWsOverride(null);
+                  if (typeof window !== 'undefined') window.localStorage.removeItem('nostrstack.telemetry.ws');
+                }}
+              >
+                Reset WS
+              </button>
+            </div>
+            <TelemetryCard wsUrl={telemetryWsUrl} />
           </div>
         )}
       </Card>
