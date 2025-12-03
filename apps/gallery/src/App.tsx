@@ -457,13 +457,13 @@ export default function App() {
       if (apiBase === 'mock') return;
       const results: Health[] = [];
       try {
-        const apiRes = await fetch(`${apiBase}/health`);
+        const apiRes = await fetch(apiBase.startsWith('/api') ? '/api/health' : `${apiBase}/health`);
         results.push({ label: 'API', status: apiRes.ok ? 'ok' : 'fail', detail: `http ${apiRes.status}` });
       } catch (err) {
         results.push({ label: 'API', status: 'error', detail: formatError(err) });
       }
       try {
-        const lnRes = await fetch(`${apiBase}/health/lnbits`);
+        const lnRes = await fetch(apiBase.startsWith('/api') ? '/api/health/lnbits' : `${apiBase}/health/lnbits`);
         const body = await lnRes.json();
         results.push({ label: 'LNbits', status: body.status ?? (lnRes.ok ? 'ok' : 'fail'), detail: body.reason || body.error || `http ${lnRes.status}` });
       } catch (err) {
