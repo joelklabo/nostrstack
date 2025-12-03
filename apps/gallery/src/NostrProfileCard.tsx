@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { CopyButton } from './CopyButton';
 import { Nip07Status } from './Nip07Status';
 import { NpubBar } from './NpubBar';
+import { RelayCard } from './RelayCard';
 
 type Props = {
   pubkey?: string | null;
@@ -111,6 +112,19 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
       </div>
 
       <ProfileDetails fullProfile={fullProfile} />
+      <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        {relays.map((r) => (
+          <RelayCard
+            key={r}
+            url={r}
+            meta={{ name: relayStats?.[r]?.name, software: relayStats?.[r]?.software }}
+            recv={relayStats?.[r]?.recv ?? 0}
+            sendStatus={relayStats?.[r]?.sendStatus}
+            last={relayStats?.[r]?.last}
+            lastSentAt={relayStats?.[r]?.lastSentAt}
+          />
+        ))}
+      </div>
     </div>
   );
 }
