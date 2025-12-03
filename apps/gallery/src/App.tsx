@@ -1,12 +1,11 @@
 import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
-import type { Event as NostrEvent } from 'nostr-tools';
+import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
-import { LoggedInNostrCard } from './LoggedInNostrCard';
 import { LogViewer } from './LogViewer';
 import { MockComments } from './MockComments';
 import { NostrProfileCard } from './NostrProfileCard';
@@ -288,6 +287,9 @@ export default function App() {
   const [profile, setProfile] = useState<ProfileMeta>(profileDefault);
   const [, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
+  const [message, setMessage] = useState<string>('Hello from nostrstack demo 👋');
+  const [lastNoteResult, setLastNoteResult] = useState<string | null>(null);
+  const [lastNoteOk, setLastNoteOk] = useState(false);
 
   const relayMode = 'real';
 
@@ -433,6 +435,33 @@ export default function App() {
     setLocked(true);
   }, [username, amount, relaysCsv]);
 
+  const handleSendNote = useCallback(async () => {
+    try {
+      setLastNoteResult(null);
+      setLastNoteOk(false);
+      if (!signerReady) {
+        setLastNoteResult('No NIP-07 signer detected');
+        return;
+      }
+      const relay = profileRelays[0] ?? 'wss://relay.damus.io';
+      const template: EventTemplate = {
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [],
+        content: message || 'nostrstack ping'
+      };
+      const signed = (await window.nostr!.signEvent(template)) as NostrEvent;
+      const r = await Relay.connect(relay);
+      await r.publish(signed);
+      r.close();
+      setLastNoteOk(true);
+      setLastNoteResult(`Published note to ${relay}`);
+    } catch (err) {
+      setLastNoteOk(false);
+      setLastNoteResult(err instanceof Error ? err.message : String(err));
+    }
+  }, [signerReady, activePubkey, profileRelays, message]);
+
   useEffect(() => {
     if (!qrInvoice || apiBase === 'mock') return;
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
@@ -504,13 +533,6 @@ export default function App() {
           },
     [theme]
   );
-
-  const handleRelaySendStatus = useCallback((relay: string, status: RelayStats[string]['sendStatus'], message?: string) => {
-    setRelayStats((prev) => ({
-      ...prev,
-      [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: status, sendMessage: message, lastSentAt: Date.now() }
-    }));
-  }, []);
 
   const requestRealInvoice = useCallback(async () => {
     setRealBusy(true);
@@ -743,7 +765,7 @@ export default function App() {
 
       {tab === 'nostr' && (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-          <Card title="Profile & signer">
+          <Card title="Nostr profile">
             <NostrProfileCard
               pubkey={activePubkey ?? undefined}
               seckey={undefined}
@@ -753,14 +775,51 @@ export default function App() {
               fullProfile={profile}
               nip05Verified={nip05Verified}
             />
-          </Card>
-          <Card title="Logged-in Nostr user">
-            <LoggedInNostrCard
-              relays={profileRelays}
-              pubkey={activePubkey}
-              signerReady={signerReady}
-              onRelayStatus={handleRelaySendStatus}
-            />
+            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', padding: '0.75rem', borderRadius: layout.radius, border: `1px solid ${layout.border}`, background: themeStyles.inset }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ width: 10, height: 10, borderRadius: 999, background: signerReady ? '#22c55e' : '#ef4444' }} />
+                <strong>{signerReady ? 'Signer available' : 'No NIP-07 signer detected'}</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ color: colors.subtle, fontSize: '0.9rem' }}>Pubkey:</span>
+                <code style={{ fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: '100%' }}>{activePubkey ?? '—'}</code>
+              </div>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                <span style={{ fontWeight: 600 }}>Demo message</span>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={2}
+                  style={{
+                    borderRadius: layout.radius,
+                    border: `1px solid ${layout.border}`,
+                    padding: '0.6rem',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+              </label>
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button type="button" onClick={handleSendNote} disabled={!signerReady} style={{ padding: '0.55rem 1rem' }}>
+                  Send signed note
+                </button>
+                <span style={{ fontSize: '0.9rem', color: colors.subtle }}>Relay: {profileRelays[0] ?? '—'}</span>
+              </div>
+              {lastNoteResult && (
+                <div
+                  style={{
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: layout.radius,
+                    border: `1px solid ${lastNoteOk ? '#22c55e44' : '#ef444444'}`,
+                    background: lastNoteOk ? '#ecfdf3' : '#fef2f2',
+                    color: lastNoteOk ? '#166534' : '#b91c1c',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  {lastNoteResult}
+                </div>
+              )}
+            </div>
           </Card>
           <Card title="Comments (Nostr)">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
