@@ -1,5 +1,5 @@
-import { nip19 } from 'nostr-tools';
-import { useMemo } from 'react';
+import { nip19, utils } from 'nostr-tools';
+import React, { useMemo } from 'react';
 
 import { CopyButton } from './CopyButton';
 import { KeyBar } from './KeyBar';

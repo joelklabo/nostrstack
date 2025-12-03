@@ -1,4 +1,4 @@
-import { nip19 } from 'nostr-tools';
+import { nip19, utils } from 'nostr-tools';
 import { useMemo, useState } from 'react';
 
 type Props = {
@@ -15,7 +15,7 @@ export function KeyBar({ pubkey, seckey, defaultFormat = 'npub' }: Props) {
     const key = pubkey || seckey || '';
     if (!key) return '';
     try {
-      if (format === 'npub') return seckey ? nip19.nsecEncode(key) : nip19.npubEncode(key);
+      if (format === 'npub') return seckey ? nip19.nsecEncode(utils.hexToBytes(key)) : nip19.npubEncode(key);
       return key;
     } catch {
       return key;

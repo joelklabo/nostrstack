@@ -148,6 +148,9 @@ function mergeRelays(prev: string[], next: string[]) {
   return merged;
 }
 
+type NostrRelayInfo = { read?: boolean; write?: boolean };
+type NostrWithRelays = typeof window.nostr & { getRelays?: () => Promise<Record<string, NostrRelayInfo>> };
+
 async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
   try {
     const [name, domain] = nip05.split('@');
@@ -303,7 +306,7 @@ export default function App() {
   const [lastNoteResult, setLastNoteResult] = useState<string | null>(null);
   const [lastNoteOk, setLastNoteOk] = useState(false);
 
-  const relayMode = 'real';
+  const relayMode: 'mock' | 'real' = (import.meta.env.VITE_RELAY_MODE as 'mock' | 'real') ?? 'real';
 
   const profileRelays = useMemo(() => {
     const preferred = signerRelays.filter(isRelayUrl);
@@ -356,12 +359,14 @@ export default function App() {
   }, []);
 
   const loadSignerRelays = useCallback(async (): Promise<string[]> => {
-    if (typeof window === 'undefined' || !window.nostr?.getRelays) return [];
+    if (typeof window === 'undefined') return [];
+    const nostr = window.nostr as NostrWithRelays | undefined;
+    if (!nostr?.getRelays) return [];
     try {
-      const relays = await window.nostr.getRelays();
+      const relays = await nostr.getRelays();
       if (!relays || typeof relays !== 'object') return [];
       return Object.entries(relays)
-        .filter(([, info]: { read?: boolean; write?: boolean }) => (info?.read || info?.write) && typeof info === 'object')
+        .filter(([, info]) => !!(info?.read || info?.write))
         .map(([url]) => url)
         .filter(isRelayUrl);
     } catch {
@@ -460,11 +465,12 @@ export default function App() {
         ...prev,
         [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'sending', lastSentAt: Date.now() }
       }));
-      const template: EventTemplate = {
+      const template: EventTemplate & { pubkey: string } = {
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        content: message || 'nostrstack ping'
+        content: message || 'nostrstack ping',
+        pubkey: activePubkey ?? ''
       };
       const signed = (await window.nostr!.signEvent(template)) as NostrEvent;
       const r = await Relay.connect(relay);

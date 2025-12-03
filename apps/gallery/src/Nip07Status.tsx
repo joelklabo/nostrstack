@@ -1,4 +1,4 @@
-import { nip19 } from 'nostr-tools';
+import { nip19, utils } from 'nostr-tools';
 import { useCallback, useEffect, useState } from 'react';
 
 type Props = {
