@@ -616,13 +616,12 @@ export default function App() {
               style={{ width: '100%' }}
               value={relaysCsv}
               onChange={(e) => setRelaysCsv(e.target.value)}
-              placeholder="mock or wss://relay1,wss://relay2"
+              placeholder="wss://relay1,wss://relay2"
             />
           </label>
           <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>Use real defaults</button>
-              <button type="button" onClick={() => setRelaysCsv('mock')}>Use mock/offline</button>
               <CopyButton text={relayLabel} label="Copy relays" />
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>

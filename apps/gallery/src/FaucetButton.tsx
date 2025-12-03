@@ -8,12 +8,8 @@ export function FaucetButton({ apiBase }: { apiBase: string }) {
     setBusy(true);
     setMsg(null);
     try {
-      const target = `${apiBase}/api/regtest/fund`;
-      let res = await fetch(target, { method: 'POST' });
-      if (res.status === 404) {
-        // fallback for older API route
-        res = await fetch(`${apiBase}/regtest/fund`, { method: 'POST' });
-      }
+      const target = `${apiBase.replace(/\/$/, '')}/regtest/fund`;
+      const res = await fetch(target, { method: 'POST' });
       const body = await res.json();
       if (!res.ok || !body.ok) throw new Error(body.error || `HTTP ${res.status}`);
       setMsg('Funded & mined; balances updating.');

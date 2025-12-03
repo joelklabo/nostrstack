@@ -11,7 +11,7 @@ const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const sqliteDefault = `file:${resolve(packageRoot, 'dev.db')}`;
 const postgresDefault = 'postgres://nostrstack:nostrstack@localhost:5432/nostrstack';
 
-const defaultDatabaseUrl = process.env.NODE_ENV === 'test' ? sqliteDefault : postgresDefault;
+const defaultDatabaseUrl = process.env.NODE_ENV === 'production' ? postgresDefault : sqliteDefault;
 
 const bool = () =>
   z.preprocess(
