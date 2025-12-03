@@ -780,6 +780,7 @@ export default function App() {
           <input
             style={{ minWidth: 220, flex: 1 }}
             placeholder="LNbits admin key"
+            type="password"
             defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
             onBlur={(e) => {
               const v = e.target.value.trim();
@@ -793,6 +794,7 @@ export default function App() {
           <input
             style={{ minWidth: 220, flex: 1 }}
             placeholder="LNbits read key (optional)"
+            type="password"
             defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
             onBlur={(e) => {
               const v = e.target.value.trim();

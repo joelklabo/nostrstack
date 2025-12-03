@@ -36,6 +36,9 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
       setError('Wallet URL or keys missing.');
       return;
     }
+    let cancelled = false;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
     const fetchBalance = async () => {
       setLoading(true);
       setError(null);
@@ -56,7 +59,8 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
               if (res.status === 404 && url === base && urls.length > 1) {
                 continue; // fallback to ?usr
               }
-              throw new Error(`HTTP ${res.status}`);
+              const friendly = res.status === 401 || res.status === 403 ? 'unauthorized (HTTP 401)' : `HTTP ${res.status}`;
+              throw new Error(friendly);
             }
             const body = JSON.parse(text);
             setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'ok', url } : k)));
@@ -74,6 +78,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
         if (adminKey) body = await attempt(adminKey, 'admin');
         if (!body && readKey) body = await attempt(readKey, 'read');
         if (!body) throw new Error('Wallet not reachable with provided keys.');
+        if (cancelled) return;
         setWallet({ name: body.name, balance: body.balance, id: body.id });
         if (body.id && typeof window !== 'undefined') {
           window.localStorage.setItem('nostrstack.lnbits.walletId', body.id);
@@ -81,17 +86,25 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
         }
         setUpdatedAt(Date.now());
       } catch (err) {
+        if (cancelled) return;
         const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes('404')) {
+        if (msg.includes('unauthorized')) {
+          setError('Admin/read key rejected (HTTP 401). Verify you are using the correct wallet keys.');
+        } else if (msg.includes('404')) {
           setError('Wallet not found (HTTP 404). Add wallet ID or verify keys/URL.');
         } else {
           setError(msg);
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    fetchBalance();
+
+    debounceRef.current = setTimeout(fetchBalance, 120);
+    return () => {
+      cancelled = true;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [canFetch, lnbitsUrl, adminKey, readKey, walletId, lastWalletId, refreshSignal]);
 
   if (!canFetch) {
@@ -106,7 +119,10 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
   return (
     <div style={card}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <strong>Wallet</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <strong>Wallet</strong>
+          <ConnectionPill state={loading ? 'checking' : error ? 'error' : wallet ? 'ok' : 'idle'} />
+        </div>
         <button
           type="button"
           onClick={() => {
@@ -141,7 +157,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-              {wallet?.balance != null ? `${wallet.balance} sats` : loading ? 'Loading…' : '—'}
+              {wallet?.balance != null ? `${wallet.balance} sats` : loading ? <span style={skeleton} /> : '—'}
             </span>
             {wallet?.name && <span style={{ color: '#475569' }}>{wallet.name}</span>}
           </div>
@@ -197,6 +213,15 @@ const pillCode: React.CSSProperties = {
   fontSize: '0.8rem'
 };
 
+const skeleton: React.CSSProperties = {
+  display: 'inline-block',
+  width: 80,
+  height: 16,
+  background: '#e2e8f0',
+  borderRadius: 6,
+  animation: 'pulse 1.6s ease-in-out infinite'
+};
+
 function normalizeUrl(url: string) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
@@ -214,6 +239,22 @@ function StatusPill({ status, message }: { status: KeyStatus['status']; message?
   const tone = palette[status];
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: '1px solid #e2e8f0', fontWeight: 700 }}>
+      <span style={{ width: 8, height: 8, borderRadius: 999, background: tone.fg }} />
+      {tone.label}
+    </span>
+  );
+}
+
+function ConnectionPill({ state }: { state: 'idle' | 'checking' | 'ok' | 'error' }) {
+  const palette: Record<'idle' | 'checking' | 'ok' | 'error', { bg: string; fg: string; label: string }> = {
+    idle: { bg: '#e2e8f0', fg: '#475569', label: 'idle' },
+    checking: { bg: '#fff7ed', fg: '#c2410c', label: 'checking' },
+    ok: { bg: '#ecfdf3', fg: '#166534', label: 'connected' },
+    error: { bg: '#fef2f2', fg: '#b91c1c', label: 'error' }
+  };
+  const tone = palette[state];
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.85rem' }}>
       <span style={{ width: 8, height: 8, borderRadius: 999, background: tone.fg }} />
       {tone.label}
     </span>
