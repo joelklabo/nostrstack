@@ -93,7 +93,7 @@ export function TelemetryCard({ wsUrl }: Props) {
     let cancelled = false;
     const variants = buildWsVariants(wsUrl);
     let variantIdx = 0;
-    backoffRef.current = 1500;
+    backoffRef.current = 1400;
 
     const clearRetry = () => {
       if (retryRef.current) {
@@ -176,7 +176,8 @@ export function TelemetryCard({ wsUrl }: Props) {
         }
         setStatus('error');
         setErrorMsg(`closed (${e.code})`);
-        const delay = Math.min(15000, backoffRef.current);
+        const jitter = 0.6 + Math.random() * 0.8; // 0.6x–1.4x jitter
+        const delay = Math.min(15000, Math.round(backoffRef.current * jitter));
         backoffRef.current *= 1.6;
         retryRef.current = setTimeout(connect, delay);
       };
