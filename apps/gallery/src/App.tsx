@@ -687,7 +687,12 @@ export default function App() {
       </div>
 
       <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} visible />
-      <WalletBalance lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} refreshSignal={walletRefresh} />
+      <WalletBalance
+        lnbitsUrl={lnbitsUrl}
+        adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+        refreshSignal={walletRefresh}
+        onManualRefresh={() => setWalletRefresh((n) => n + 1)}
+      />
       {!enableReal && (
         <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
           Real payments are disabled. Set VITE_ENABLE_REAL_PAYMENTS=true and provide VITE_API_BASE_URL to request real invoices.

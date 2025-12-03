@@ -4,11 +4,12 @@ type Props = {
   lnbitsUrl?: string;
   adminKey?: string;
   refreshSignal?: number;
+  onManualRefresh?: () => void;
 };
 
 type WalletInfo = { name?: string; balance?: number; id?: string };
 
-export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0 }: Props) {
+export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0, onManualRefresh }: Props) {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,12 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0 }: Props)
         setWallet({ name: body.name, balance: body.balance, id: body.id });
         setUpdatedAt(Date.now());
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes('404')) {
+          setError('Wallet not found (HTTP 404). Is the LNbits URL/admin key correct?');
+        } else {
+          setError(msg);
+        }
       } finally {
         setLoading(false);
       }
@@ -54,7 +60,15 @@ export function WalletBalance({ lnbitsUrl, adminKey, refreshSignal = 0 }: Props)
     <div style={card}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <strong>Wallet</strong>
-        <button type="button" onClick={() => setUpdatedAt(Date.now())} style={btn} disabled={loading}>
+        <button
+          type="button"
+          onClick={() => {
+            setUpdatedAt(Date.now());
+            onManualRefresh?.();
+          }}
+          style={btn}
+          disabled={loading}
+        >
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
