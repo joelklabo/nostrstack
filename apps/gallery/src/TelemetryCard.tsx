@@ -14,7 +14,8 @@ type TelemetryEvent =
     mempoolBytes?: number;
   }
   | { type: 'tx'; txid: string; time: number }
-  | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number };
+  | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
+  | { type: 'error'; message: string; time: number };
 
 type Props = { wsUrl: string; network?: string };
 
@@ -101,6 +102,7 @@ export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
   const [now, setNow] = useState(Date.now());
   const [blockFlashKey, setBlockFlashKey] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [backendIssue, setBackendIssue] = useState<string | null>(null);
   const [activeUrl, setActiveUrl] = useState<string>(wsUrl);
   const [attemptNote, setAttemptNote] = useState<string | null>(null);
   const backoffRef = useRef(1500);
@@ -174,9 +176,14 @@ export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
       ws.onmessage = (msg) => {
         try {
           const ev = JSON.parse(msg.data) as TelemetryEvent;
+          if (ev.type === 'error') {
+            setBackendIssue(ev.message || 'Telemetry backend error');
+            return;
+          }
           if (ev.type === 'block' && typeof ev.height === 'number') {
             setHeight(ev.height);
             setBlockFlashKey(eventKey(ev));
+            setBackendIssue(null);
           }
           setEvents((prev) => {
             const key = eventKey(ev);
@@ -269,6 +276,12 @@ export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
         <code style={{ background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: 8 }}>{activeUrl}</code>
         {attemptNote && <span style={{ color: '#c2410c' }}>{attemptNote}</span>}
       </div>
+      {backendIssue && (
+        <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10, display: 'grid', gap: 4 }}>
+          <span>Telemetry backend issue: {backendIssue}</span>
+          <span style={{ color: '#9f1239' }}>Check API logs (.logs/dev/api.log) and bitcoind RPC health.</span>
+        </div>
+      )}
       {status === 'error' && (
         <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10, display: 'grid', gap: 4 }}>
           <span>Stream error: {errorMsg ?? 'disconnected'} — retrying…</span>
@@ -335,7 +348,8 @@ export function TelemetryCard({ wsUrl, network = 'regtest' }: Props) {
 function eventKey(ev: TelemetryEvent) {
   if (ev.type === 'block') return `block-${ev.height}-${ev.hash ?? ''}`;
   if (ev.type === 'tx') return `tx-${ev.txid}`;
-  return `lnd-${ev.role}-${ev.event}-${ev.time}`;
+  if (ev.type === 'lnd') return `lnd-${ev.role}-${ev.event}-${ev.time}`;
+  return `error-${ev.time}-${ev.message}`;
 }
 
 function isBlockEvent(ev: TelemetryEvent): ev is Extract<TelemetryEvent, { type: 'block' }> {

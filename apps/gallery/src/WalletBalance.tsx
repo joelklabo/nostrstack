@@ -7,13 +7,15 @@ type Props = {
   walletId?: string;
   refreshSignal?: number;
   onManualRefresh?: () => void;
+  network?: string;
+  payerLabel?: string;
 };
 
 type WalletInfo = { name?: string; balance?: number; id?: string };
 
 type KeyStatus = { kind: 'admin' | 'read'; status: 'idle' | 'ok' | 'error'; message?: string; url?: string };
 
-export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshSignal = 0, onManualRefresh }: Props) {
+export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshSignal = 0, onManualRefresh, network = 'regtest', payerLabel = 'lnd-payer (test wallet)' }: Props) {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,10 +127,14 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
 
   return (
     <div style={card}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <strong>Wallet</strong>
-          <ConnectionPill state={loading ? 'checking' : error ? 'error' : wallet ? 'ok' : 'idle'} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <strong>Wallets</strong>
+            <ConnectionPill state={loading ? 'checking' : error ? 'error' : wallet ? 'ok' : 'idle'} />
+          </div>
+          <span style={{ padding: '0.2rem 0.55rem', borderRadius: 999, background: '#eef2ff', color: '#4338ca', fontWeight: 700, letterSpacing: '0.02em' }}>{(network ?? 'regtest').toUpperCase()}</span>
+          <span style={{ fontSize: '0.9rem', color: '#475569' }}>Add funds mines blocks then pays an LNbits invoice so the balance below is real.</span>
         </div>
         <button
           type="button"
@@ -141,6 +147,21 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
         >
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
+      </div>
+
+      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', marginBottom: 10 }}>
+        <RoleCard
+          title="Receiver"
+          accent="#0ea5e9"
+          subtitle="LNbits (you)"
+          body="Invoices and faucet payments land here. The balance and wallet ID come directly from LNbits over X-Api-Key."
+        />
+        <RoleCard
+          title="Test payer"
+          accent="#22c55e"
+          subtitle={payerLabel}
+          body="Prefunded LND node that pays invoices (including the faucet top-up) so you can bounce sats back and forth."
+        />
       </div>
       {error && <div style={{ color: '#b91c1c', fontSize: '0.9rem' }}>Error: {error}</div>}
       <div style={{ display: 'grid', gap: 4, fontSize: '0.9rem', color: '#475569', marginBottom: 4 }}>
@@ -235,6 +256,19 @@ function normalizeUrl(url: string) {
   if (url.startsWith('//')) return `http:${url}`;
   if (url.startsWith(':')) return `http://localhost${url}`;
   return `http://${url}`;
+}
+
+function RoleCard({ title, subtitle, body, accent }: { title: string; subtitle: string; body: string; accent: string }) {
+  return (
+    <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.65rem 0.75rem', background: '#fff', display: 'grid', gap: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0f172a' }}>
+        <span style={{ width: 10, height: 10, borderRadius: 999, background: accent, boxShadow: `0 0 0 6px ${accent}1a` }} />
+        {title}
+      </div>
+      <div style={{ color: '#0f172a', fontWeight: 600 }}>{subtitle}</div>
+      <div style={{ color: '#475569', fontSize: '0.9rem' }}>{body}</div>
+    </div>
+  );
 }
 
 function StatusPill({ status, message }: { status: KeyStatus['status']; message?: string }) {

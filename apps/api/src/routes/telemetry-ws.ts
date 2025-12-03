@@ -17,7 +17,8 @@ type TelemetryEvent =
     mempoolBytes?: number;
   }
   | { type: 'tx'; txid: string; time: number }
-  | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number };
+  | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
+  | { type: 'error'; message: string; time: number };
 
 export async function registerTelemetryWs(app: FastifyInstance) {
   const server = app.server;
@@ -48,23 +49,23 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   };
 
   let lastEvent: TelemetryEvent | null = null;
+  let lastErrorEvent: TelemetryEvent | null = null;
+
+  const broadcastError = (message: string) => {
+    const ev: TelemetryEvent = { type: 'error', message, time: Math.floor(Date.now() / 1000) };
+    lastErrorEvent = ev;
+    broadcast(ev);
+  };
 
   wss.on('connection', (ws) => {
     app.log.info({ clientCount: wss.clients.size }, 'telemetry ws connection');
     if (ws.readyState === WebSocket.OPEN) {
       if (lastEvent) {
         ws.send(JSON.stringify(lastEvent));
+      } else if (lastErrorEvent) {
+        ws.send(JSON.stringify(lastErrorEvent));
       } else {
-        const fallback: TelemetryEvent = {
-          type: 'block',
-          height: lastHeight >= 0 ? lastHeight : 0,
-          hash: lastHash ?? 'hash-unavailable',
-          time: Math.floor(Date.now() / 1000),
-          txs: 0,
-          size: 0,
-          weight: 0
-        };
-        ws.send(JSON.stringify(fallback));
+        ws.send(JSON.stringify({ type: 'error', message: 'Waiting for block data…', time: Math.floor(Date.now() / 1000) } satisfies TelemetryEvent));
       }
     }
   });
@@ -84,7 +85,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   };
 
   // lightweight poll: getblockcount every 5s
-  let lastError: string | null = null;
+  let lastErrorMsg: string | null = null;
   let lastErrorAt = 0;
 
   let lastHeight = -1;
@@ -124,21 +125,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         mempoolBytes: mempool?.bytes
       };
     } catch (err) {
-      // retry on next poll; supply synthetic block so UI has data
       app.log.warn({ err }, 'telemetry fetchBlock failed');
-      const nowSec = Math.floor(Date.now() / 1000);
-      return {
-        type: 'block',
-        height: (lastHeight ?? 0) + 1,
-        hash: `synthetic-${nowSec}`,
-        time: nowSec,
-        txs: 1,
-        size: 250,
-        weight: 1000,
-        interval: lastBlockTime ? Math.max(0, nowSec - lastBlockTime) : undefined,
-        mempoolTxs: undefined,
-        mempoolBytes: undefined
-      };
+      broadcastError('bitcoind RPC call failed; check node status');
+      return null;
     }
   };
 
@@ -153,9 +142,12 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         lastBlockTime = ev.time;
         lastEvent = ev;
       }
+    } else {
+      broadcastError('bitcoind returned non-numeric block height');
     }
   } catch (err) {
     app.log.warn({ err }, 'telemetry initial tip fetch failed');
+    broadcastError('telemetry init failed; check bitcoind connection');
   }
 
   const interval = setInterval(async () => {
@@ -168,34 +160,22 @@ export async function registerTelemetryWs(app: FastifyInstance) {
           lastHash = event.hash || lastHash;
           lastBlockTime = event.time;
           lastEvent = event;
+          lastErrorEvent = null;
           broadcast(event);
         }
       } else if (!Number.isFinite(height)) {
-        const nowSec = Math.floor(Date.now() / 1000);
-        const synthetic: TelemetryEvent = {
-          type: 'block',
-          height: (lastHeight ?? 0) + 1,
-          hash: `synthetic-${nowSec}`,
-          time: nowSec,
-          txs: 1,
-          size: 250,
-          weight: 1000
-        };
-        lastHeight = synthetic.height;
-        lastHash = synthetic.hash;
-        lastBlockTime = synthetic.time;
-        lastEvent = synthetic;
-        broadcast(synthetic);
+        broadcastError('bitcoind block height unavailable');
       }
-      lastError = null;
+      lastErrorMsg = null;
       lastErrorAt = 0;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const now = Date.now();
-      if (msg !== lastError || now - lastErrorAt > 60000) {
+      if (msg !== lastErrorMsg || now - lastErrorAt > 60000) {
         app.log.warn({ err }, 'telemetry block poll failed');
-        lastError = msg;
+        lastErrorMsg = msg;
         lastErrorAt = now;
+        broadcastError('telemetry poll failed; see API logs');
       }
     }
   }, 5000);

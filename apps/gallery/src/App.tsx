@@ -791,6 +791,7 @@ export default function App() {
         walletId={walletIdOverride}
         refreshSignal={walletRefresh}
         onManualRefresh={() => setWalletRefresh((n) => n + 1)}
+        network={networkLabel}
       />
       <div style={{ display: 'grid', gap: '0.4rem', padding: '0.6rem 0.8rem', background: '#f1f5f9', border: `1px solid ${layout.border}`, borderRadius: layout.radius, marginBottom: '1rem' }}>
         <strong>Use a custom LNbits wallet</strong>
