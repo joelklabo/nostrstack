@@ -40,33 +40,40 @@ export function NpubBar({ pubkey, seckey }: Props) {
     return () => obs.disconnect();
   }, []);
 
-  const hexPub = useMemo(() => {
+  const keys = useMemo(() => {
     const candidate = pubkey || seckey || '';
-    if (!candidate) return '';
+    if (!candidate) return { hex: '', npub: '' };
+
+    let hex = '';
     try {
       if (candidate.startsWith('npub')) {
-        return utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
-      }
-      if (candidate.startsWith('nsec')) {
+        hex = utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
+      } else if (candidate.startsWith('nsec')) {
         const priv = utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
-        return getPublicKey(priv);
+        hex = getPublicKey(priv);
+      } else if (/^[0-9a-fA-F]{64}$/.test(candidate)) {
+        hex = candidate.toLowerCase();
       }
-      if (/^[0-9a-fA-F]{64}$/.test(candidate)) return candidate.toLowerCase();
-      return '';
     } catch {
-      return '';
+      hex = '';
     }
+
+    let npub = '';
+    if (hex) {
+      try {
+        npub = nip19.npubEncode(hex);
+      } catch {
+        npub = '';
+      }
+    }
+
+    return { hex, npub };
   }, [pubkey, seckey]);
 
   const full = useMemo(() => {
-    if (!hexPub) return '';
-    try {
-      if (format === 'npub') return nip19.npubEncode(utils.hexToBytes(hexPub));
-      return hexPub;
-    } catch {
-      return hexPub;
-    }
-  }, [format, hexPub]);
+    if (format === 'npub') return keys.npub || keys.hex;
+    return keys.hex;
+  }, [format, keys.hex, keys.npub]);
 
   const short = useMemo(() => middleTruncate(full, keep), [full, keep]);
 
