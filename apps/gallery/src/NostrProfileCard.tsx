@@ -2,7 +2,7 @@ import { nip19 } from 'nostr-tools';
 import { useMemo } from 'react';
 
 import { CopyButton } from './CopyButton';
-import { KeyChip } from './KeyChip';
+import { KeyBar } from './KeyBar';
 import { Nip07Status } from './Nip07Status';
 
 type Props = {
@@ -59,7 +59,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
             {npub && <span style={{ padding: '0.25rem 0.55rem', borderRadius: 999, background: '#eef2ff', color: '#4338ca', fontSize: '0.78rem', fontWeight: 700 }}>npub</span>}
           </div>
           <div style={{ color: '#475569', fontSize: '0.92rem', maxWidth: '100%', wordBreak: 'break-word' }}>{about}</div>
-          <KeyChip pubkey={pubkey ?? undefined} seckey={seckey ?? undefined} compact style={{ maxWidth: '100%', overflow: 'hidden' }} />
+          <KeyBar pubkey={pubkey ?? undefined} seckey={seckey ?? undefined} />
         </div>
       </div>
 
