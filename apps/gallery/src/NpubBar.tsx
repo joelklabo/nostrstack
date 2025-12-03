@@ -17,6 +17,7 @@ type Props = {
 export function NpubBar({ pubkey, seckey }: Props) {
   const [format, setFormat] = useState<'npub' | 'hex'>('npub');
   const [copied, setCopied] = useState(false);
+  const [thumbPos, setThumbPos] = useState<'left' | 'right'>('left');
   const [keep, setKeep] = useState(() => widthBasedKeep(typeof window !== 'undefined' ? window.innerWidth : 1024));
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const barRef = useRef<HTMLDivElement | null>(null);
@@ -75,6 +76,10 @@ export function NpubBar({ pubkey, seckey }: Props) {
     return keys.hex;
   }, [format, keys.hex, keys.npub]);
 
+  useEffect(() => {
+    setThumbPos(format === 'npub' ? 'left' : 'right');
+  }, [format]);
+
   const short = useMemo(() => middleTruncate(full, keep), [full, keep]);
 
   const handleCopy = async () => {
@@ -87,7 +92,6 @@ export function NpubBar({ pubkey, seckey }: Props) {
     }
   };
 
-  const toggleLabel = format === 'npub' ? 'npub' : 'hex';
   const truncated = useMemo(() => {
     if (!full) return '—';
     // approximate character width 8px for monospace; leave room for buttons (~200px)
@@ -102,10 +106,11 @@ export function NpubBar({ pubkey, seckey }: Props) {
     <div style={wrap}>
       <div style={bar} aria-label="Public key" ref={barRef}>
         <div style={toggleShell} role="group" aria-label="Key format">
+          <span aria-hidden style={{ ...thumb, transform: thumbPos === 'left' ? 'translateX(0)' : 'translateX(100%)' }} />
           <button
             type="button"
             onClick={() => setFormat('npub')}
-            style={{ ...toggle, ...(format === 'npub' ? toggleActive : toggleInactive) }}
+            style={{ ...toggleBtn, color: format === 'npub' ? '#0f172a' : '#64748b' }}
             aria-pressed={format === 'npub'}
           >
             npub
@@ -113,13 +118,13 @@ export function NpubBar({ pubkey, seckey }: Props) {
           <button
             type="button"
             onClick={() => setFormat('hex')}
-            style={{ ...toggle, ...(format === 'hex' ? toggleActive : toggleInactive) }}
+            style={{ ...toggleBtn, color: format === 'hex' ? '#0f172a' : '#64748b' }}
             aria-pressed={format === 'hex'}
           >
             hex
           </button>
         </div>
-        <span style={text} aria-label={`${toggleLabel} key`}>
+        <span style={text} aria-label={`${format} key`}>
           {truncated}
         </span>
         <button type="button" onClick={handleCopy} style={copy} aria-live="polite" aria-label="Copy key">
@@ -136,17 +141,6 @@ export function NpubBar({ pubkey, seckey }: Props) {
 
 const wrap: React.CSSProperties = {
   width: '100%'
-};
-
-const toggle: React.CSSProperties = {
-  padding: '0.45rem 0.75rem',
-  borderRadius: 10,
-  border: '1px solid #cbd5e1',
-  cursor: 'pointer',
-  fontWeight: 700,
-  color: '#0f172a',
-  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-  minWidth: 70
 };
 
 const bar: React.CSSProperties = {
@@ -187,23 +181,40 @@ const copy: React.CSSProperties = {
 };
 
 const toggleShell: React.CSSProperties = {
-  display: 'inline-flex',
-  border: '1px solid #cbd5e1',
-  borderRadius: 12,
-  overflow: 'hidden',
-  background: '#fff',
-  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+  display: 'inline-grid',
+  gridTemplateColumns: '1fr 1fr',
+  position: 'relative',
+  borderRadius: 14,
+  background: '#e2e8f0',
+  padding: 4,
+  gap: 4,
+  minWidth: 140,
+  boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.08)',
+  alignItems: 'center'
 };
 
-const toggleActive: React.CSSProperties = {
-  background: '#e0e7ff',
-  color: '#111827',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)'
+const thumb: React.CSSProperties = {
+  position: 'absolute',
+  inset: 4,
+  width: 'calc(50% - 4px)',
+  borderRadius: 10,
+  background: 'linear-gradient(145deg, #fff, #dbeafe)',
+  boxShadow: '2px 2px 6px rgba(0,0,0,0.12), -1px -1px 4px rgba(255,255,255,0.9)',
+  transition: 'transform 150ms ease, box-shadow 150ms ease',
+  zIndex: 0
 };
 
-const toggleInactive: React.CSSProperties = {
-  background: '#fff',
-  color: '#475569'
+const toggleBtn: React.CSSProperties = {
+  position: 'relative',
+  zIndex: 1,
+  border: 'none',
+  background: 'transparent',
+  fontWeight: 800,
+  cursor: 'pointer',
+  padding: '0.35rem 0.4rem',
+  borderRadius: 10,
+  fontSize: '0.92rem',
+  letterSpacing: '0.01em'
 };
 
 function middleTruncate(value: string, keep = 10) {
