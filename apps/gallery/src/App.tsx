@@ -204,12 +204,6 @@ function useMountWidgets(
     };
     setTimeout(() => {
       mountTipButton(tipHost, tipOpts);
-      if (!tipHost.querySelector('button')) {
-        const fallback = document.createElement('button');
-        fallback.textContent = 'Send sats (mock)';
-        fallback.onclick = () => setQrInvoice('lnbc1mock' + Math.random().toString(16).slice(2, 10));
-        tipHost.appendChild(fallback);
-      }
       mountPayToAction(payHost, {
         username,
         amountSats: amount,
@@ -520,7 +514,6 @@ export default function App() {
       setQrInvoice(pr);
       setQrAmount(amount);
       setQrStatus('pending');
-      setUnlockedPayload('Paid content unlocked');
       setRealInvoice(pr || 'invoice unavailable');
     } catch (err: unknown) {
       setRealInvoice(`error: ${formatError(err)}`);
@@ -677,9 +670,17 @@ export default function App() {
                 {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
               </button>
               {realInvoice && (
-                <div data-testid="real-invoice" style={{ marginTop: '0.5rem' }}>
+                <div data-testid="real-invoice" style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}>
                   <strong>BOLT11</strong>
-                  <pre>{realInvoice}</pre>
+                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.6rem' }}>
+                    {realInvoice}
+                  </pre>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <CopyButton text={realInvoice} label="Copy" />
+                    <a href={`lightning:${realInvoice}`} style={{ padding: '0.35rem 0.7rem', borderRadius: 10, border: '1px solid #e2e8f0', textDecoration: 'none', color: '#0f172a', background: '#fff' }}>
+                      Open in wallet
+                    </a>
+                  </div>
                 </div>
               )}
             </div>

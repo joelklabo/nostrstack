@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 
 import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
@@ -30,8 +31,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     new Promise<string>((resolve, reject) => {
       const composeFile = app.config?.REGTEST_COMPOSE ?? 'deploy/regtest/docker-compose.yml';
       const cwd = app.config?.REGTEST_CWD ?? process.cwd();
+      const composeResolved = path.isAbsolute(composeFile) ? composeFile : path.resolve(cwd, composeFile);
       const p = spawn('docker', [
-        'compose', '-f', composeFile, 'exec', '-T', 'bitcoind',
+        'compose', '-f', composeResolved, 'exec', '-T', 'bitcoind',
         'bitcoin-cli', '-regtest', '-rpcuser=bitcoin', '-rpcpassword=bitcoin', cmd
       ], { cwd });
       let out = '';
