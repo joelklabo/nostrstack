@@ -4,50 +4,48 @@ import { useMemo, useState } from 'react';
 type Props = {
   pubkey?: string | null;
   seckey?: string | null;
-  defaultFormat?: 'npub' | 'hex';
 };
 
-export function KeyBar({ pubkey, seckey, defaultFormat = 'npub' }: Props) {
-  const [format, setFormat] = useState<'npub' | 'hex'>(defaultFormat);
+export function NpubBar({ pubkey, seckey }: Props) {
+  const [format, setFormat] = useState<'npub' | 'hex'>('npub');
   const [copied, setCopied] = useState(false);
 
-  const display = useMemo(() => {
-    const key = pubkey || seckey || '';
+  const full = useMemo(() => {
+    const key = seckey || pubkey || '';
     if (!key) return '';
     try {
-      if (format === 'npub') return seckey ? nip19.nsecEncode(utils.hexToBytes(key)) : nip19.npubEncode(key);
-      return key;
+      return format === 'npub' ? nip19.npubEncode(utils.hexToBytes(key)) : key;
     } catch {
       return key;
     }
   }, [format, pubkey, seckey]);
 
-  const short = useMemo(() => middleTruncate(display, format === 'npub' ? 12 : 10), [display, format]);
+  const short = useMemo(() => middleTruncate(full, 10), [full]);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard?.writeText(display);
+      await navigator.clipboard?.writeText(full);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // ignore copy failure
+      // ignore
     }
   };
 
   return (
-    <div style={wrapper}>
-      <div style={pill}>
+    <div style={wrap}>
+      <div style={chip}>
         <button
           type="button"
           onClick={() => setFormat((f) => (f === 'npub' ? 'hex' : 'npub'))}
-          style={{ ...toggleBtn, background: format === 'npub' ? '#eef2ff' : '#fff' }}
-          aria-label="Toggle key format npub/hex"
+          style={{ ...toggle, background: format === 'npub' ? '#eef2ff' : '#fff' }}
+          aria-label="Toggle npub/hex"
         >
-          {format === 'npub' ? 'npub/nsec' : 'hex'}
+          {format === 'npub' ? 'npub' : 'hex'}
         </button>
-        <div style={bar} role="group" aria-label="Public key">
-          <span style={keyText}>{short || '—'}</span>
-          <button type="button" onClick={handleCopy} style={copyBtn} aria-live="polite" aria-label="Copy key">
+        <div style={bar} aria-label="Public key">
+          <span style={text}>{short || '—'}</span>
+          <button type="button" onClick={handleCopy} style={copy} aria-live="polite">
             <span style={{ opacity: copied ? 0 : 1, transition: 'opacity 120ms ease' }}>⧉</span>
             <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: copied ? 1 : 0, color: '#22c55e', fontWeight: 800, transition: 'opacity 120ms ease' }}>✓</span>
           </button>
@@ -57,23 +55,19 @@ export function KeyBar({ pubkey, seckey, defaultFormat = 'npub' }: Props) {
   );
 }
 
-const wrapper: React.CSSProperties = {
-  width: '100%',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 10
-};
-
-const pill: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
-  alignItems: 'center',
-  gap: 8,
+const wrap: React.CSSProperties = {
   width: '100%'
 };
 
-const toggleBtn: React.CSSProperties = {
-  padding: '0.45rem 0.65rem',
+const chip: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  gap: 10,
+  alignItems: 'center'
+};
+
+const toggle: React.CSSProperties = {
+  padding: '0.4rem 0.65rem',
   borderRadius: 12,
   border: '1px solid #cbd5e1',
   cursor: 'pointer',
@@ -94,7 +88,7 @@ const bar: React.CSSProperties = {
   overflow: 'hidden'
 };
 
-const keyText: React.CSSProperties = {
+const text: React.CSSProperties = {
   fontFamily: 'monospace',
   fontSize: '0.92rem',
   color: '#0f172a',
@@ -103,7 +97,7 @@ const keyText: React.CSSProperties = {
   textOverflow: 'ellipsis'
 };
 
-const copyBtn: React.CSSProperties = {
+const copy: React.CSSProperties = {
   position: 'relative',
   width: 34,
   height: 34,
