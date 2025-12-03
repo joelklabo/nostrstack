@@ -14,6 +14,39 @@ echo "💡 view live: tail -f $API_LOG $GALLERY_LOG"
 
 cd "$ROOT"
 
+# Start regtest stack (bitcoind + LND + LNbits) and export LNbits admin key for dev
+if command -v docker >/dev/null 2>&1; then
+  echo "🚀 starting regtest stack (docker compose)"
+  ./scripts/regtest-lndbits.sh up >/tmp/lnbits-up.log 2>&1 || true
+
+  echo "🔑 ensuring LNbits superuser (admin/changeme)"
+  curl -s -o /dev/null -X PUT http://localhost:15001/api/v1/auth/first_install \
+    -H 'Content-Type: application/json' \
+    -d '{"username":"admin","password":"changeme","password_repeat":"changeme"}' || true
+
+  ADMIN_COOKIE=$(mktemp)
+  curl -s -c "$ADMIN_COOKIE" -X POST http://localhost:15001/api/v1/auth \
+    -H 'Content-Type: application/json' \
+    -d '{"username":"admin","password":"changeme"}' >/dev/null || true
+  ADMIN_JSON=$(curl -s -b "$ADMIN_COOKIE" http://localhost:15001/api/v1/wallets)
+  ADMIN_KEY=$(printf '%s' "$ADMIN_JSON" | jq -r '.[0].adminkey // empty')
+  WALLET_ID=$(printf '%s' "$ADMIN_JSON" | jq -r '.[0].id // empty')
+  rm -f "$ADMIN_COOKIE"
+
+  if [[ -n "$ADMIN_KEY" ]]; then
+    export LN_BITS_URL=${LN_BITS_URL:-http://localhost:15001}
+    export LN_BITS_API_KEY=${LN_BITS_API_KEY:-$ADMIN_KEY}
+    export VITE_LNBITS_URL=${VITE_LNBITS_URL:-http://localhost:15001}
+    export VITE_LNBITS_ADMIN_KEY=${VITE_LNBITS_ADMIN_KEY:-$ADMIN_KEY}
+    [[ -n "$WALLET_ID" ]] && export VITE_LNBITS_WALLET_ID=${VITE_LNBITS_WALLET_ID:-$WALLET_ID}
+    echo "✅ LNbits admin key exported"
+  else
+    echo "⚠️ could not fetch LNbits admin key; check http://localhost:15001" >&2
+  fi
+else
+  echo "⚠️ docker not found; skipping regtest stack startup" >&2
+fi
+
 concurrently -k -p "[{name} {time}]" -n api,gallery \
   "stdbuf -oL pnpm --filter api dev | tee -a $API_LOG" \
   "stdbuf -oL pnpm --filter gallery dev -- --host --port 4173 | tee -a $GALLERY_LOG"

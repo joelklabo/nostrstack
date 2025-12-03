@@ -2,9 +2,10 @@
 
 ## Always run with logs visible
 - Use `make dev` (or `pnpm dev:logs`, wrapper for `scripts/dev-logs.sh`) when developing. It starts API + gallery with prefixed, timestamped output and writes to `.logs/dev/api.log` and `.logs/dev/gallery.log`.
+- `make dev` also brings up the regtest stack (bitcoind + lnd-merchant + lnd-payer + LNbits) and auto-exports the LNbits admin key and first wallet id (`LN_BITS_API_KEY`, `VITE_LNBITS_ADMIN_KEY`, `VITE_LNBITS_WALLET_ID`) so the wallet panel works out of the box.
 - Keep a terminal pane tailing logs: `tail -f .logs/dev/api.log .logs/dev/gallery.log`.
 - Include log snippets in issue notes when you hit errors.
-- Telemetry websocket: the gallery connects via the current page origin (`wss://<host>/ws/telemetry` in dev). Run `make dev` (or `pnpm dev:logs`) so the Vite proxy forwards to the API.
+- Telemetry websocket: the gallery connects via the current page origin (`wss://<host>/ws/telemetry` in dev). Run `make dev` so the Vite proxy forwards to the API.
 
 ## UI changes must be confirmed in MCP Chrome
 - Launch Chrome DevTools MCP bridge: `./scripts/mcp-devtools-server.sh` (server) and `./scripts/mcp-chrome.sh` (client) while the gallery is running.
