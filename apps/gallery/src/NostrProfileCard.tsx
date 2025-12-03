@@ -81,7 +81,14 @@ function safe<T>(fn: () => T): T | null {
 }
 
 function ProfileDetails({ fullProfile }: { fullProfile?: Props['fullProfile'] }) {
-  if (!fullProfile) return null;
+  if (!fullProfile) {
+    return (
+      <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.55rem 0.7rem', background: '#fff', color: '#475569' }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: '#0f172a' }}>Profile details</div>
+        <div>Loading profile…</div>
+      </div>
+    );
+  }
   const rows = [
     ['Display name', fullProfile.display_name],
     ['Name', fullProfile.name],

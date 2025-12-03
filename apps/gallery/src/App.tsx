@@ -297,7 +297,7 @@ export default function App() {
   const [signerReady, setSignerReady] = useState(false);
   const [signerRelays, setSignerRelays] = useState<string[]>([]);
   const [profile, setProfile] = useState<ProfileMeta>(profileDefault);
-  const [, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [_profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
   const [message, setMessage] = useState<string>('Hello from nostrstack demo 👋');
   const [lastNoteResult, setLastNoteResult] = useState<string | null>(null);
