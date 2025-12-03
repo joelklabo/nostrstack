@@ -480,7 +480,7 @@ export default function App() {
   const themeStyles = useMemo(
     () =>
       theme === 'dark'
-        ? { background: '#0f172a', color: '#e2e8f0', borderColor: '#334155' }
+        ? { background: '#0b1021', color: '#e2e8f0', borderColor: '#1f2937' }
         : { background: '#f8fafc', color: '#0f172a', borderColor: '#e2e8f0' },
     [theme]
   );
@@ -538,7 +538,16 @@ export default function App() {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <h1 style={{ marginTop: 0, marginBottom: 0 }}>nostrstack Demo</h1>
-        <span style={{ padding: '0.35rem 0.8rem', borderRadius: 999, background: '#0f172a', color: '#e2e8f0', fontWeight: 700, letterSpacing: '0.03em' }}>
+        <span
+          style={{
+            padding: '0.35rem 0.8rem',
+            borderRadius: 999,
+            background: theme === 'dark' ? '#38bdf8' : '#0f172a',
+            color: theme === 'dark' ? '#0b1220' : '#e2e8f0',
+            fontWeight: 700,
+            letterSpacing: '0.03em'
+          }}
+        >
           {network.toUpperCase()}
         </span>
       </div>
@@ -805,9 +814,9 @@ export default function App() {
 
       <style>{`
         button { cursor: pointer; }
-        input, select, button, textarea { background: ${theme === 'dark' ? '#1e293b' : '#fff'}; color: ${themeStyles.color}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
+        input, select, button, textarea { background: ${theme === 'dark' ? '#111827' : '#fff'}; color: ${themeStyles.color}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
         section { border-color: ${themeStyles.borderColor}; }
-        .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: #f1f5f9; color: #0f172a; font-size: 12px; border: 1px solid #e2e8f0; }
+        .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: ${theme === 'dark' ? '#111827' : '#f1f5f9'}; color: ${theme === 'dark' ? '#e2e8f0' : '#0f172a'}; font-size: 12px; border: 1px solid ${themeStyles.borderColor}; }
         .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
         .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
         .relay-pill .dot.mock { background: #94a3b8; }
