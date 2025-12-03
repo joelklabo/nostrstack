@@ -1,7 +1,7 @@
 PNPM=pnpm
 REPO=joelklabo/nostrstack
 
-.PHONY: deps deps-prod build lint test typecheck check dev-api dev-gallery dev-demo e2e deploy-staging deploy-prod
+.PHONY: deps deps-prod build lint test typecheck check dev dev-api dev-gallery dev-demo e2e deploy-staging deploy-prod
 
 deps:
 	$(PNPM) install
@@ -28,6 +28,10 @@ dev-api:
 
 dev-gallery:
 	$(PNPM) --filter gallery dev -- --host --port 4173
+
+dev:
+	@echo "Starting API + gallery with HTTPS via Vite and logging to .logs/dev" 
+	./scripts/dev-logs.sh
 
 dev-demo:
 	./scripts/dev-demo.sh
