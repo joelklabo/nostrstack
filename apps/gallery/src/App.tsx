@@ -876,10 +876,11 @@ export default function App() {
       </Card>
 
       <style>{`
-        button { cursor: pointer; }
-        input, select, button, textarea { background: ${theme === 'dark' ? '#111827' : '#fff'}; color: ${themeStyles.text}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; }
+        button { cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(15,23,42,0.12); }
+        input, select, button, textarea { background: ${theme === 'dark' ? '#111827' : '#fff'}; color: ${themeStyles.text}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; transition: border-color 120ms ease, background 120ms ease; }
         section { border-color: ${themeStyles.borderColor}; }
-        .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: ${theme === 'dark' ? '#111827' : '#f1f5f9'}; color: ${theme === 'dark' ? '#e2e8f0' : '#0f172a'}; font-size: 12px; border: 1px solid ${themeStyles.borderColor}; }
+        .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'}; color: ${theme === 'dark' ? '#e2e8f0' : '#0f172a'}; font-size: 12px; border: 1px solid ${themeStyles.borderColor}; }
         .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
         .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
         .relay-pill .dot.mock { background: #94a3b8; }
