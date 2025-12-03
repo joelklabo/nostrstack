@@ -14,6 +14,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   const [dataUrl, setDataUrl] = useState<string>('');
   const [ageMs, setAgeMs] = useState(0);
   const [celebrate, setCelebrate] = useState(false);
+  const [burstKey, setBurstKey] = useState(0);
 
   const fmtAge = useMemo(() => {
     const secs = Math.max(0, Math.floor(ageMs / 1000));
@@ -65,6 +66,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
   useEffect(() => {
     if (visualState === 'paid') {
       setCelebrate(true);
+      setBurstKey((k) => k + 1);
       const t = setTimeout(() => setCelebrate(false), 1400);
       return () => clearTimeout(t);
     }
@@ -81,48 +83,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
             <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>Invoice</div>
             {displayAmount && <div style={{ color: '#475569', fontWeight: 700 }}>{displayAmount}</div>}
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '0.4rem 0.9rem',
-                borderRadius: 999,
-                background: tone.bg,
-                color: tone.fg,
-                border: `1px solid ${tone.border}`,
-                fontWeight: 800,
-                boxShadow: visualState === 'pending' || visualState === 'paid' ? tone.glow : 'none',
-                transition: 'all 180ms ease'
-              }}
-            >
-              <span
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 999,
-                  background: tone.fg,
-                  boxShadow: status === 'pending' && !stale ? tone.pulse : 'none',
-                  animation:
-                    status === 'pending' && !stale
-                      ? 'invoice-pulse 1.4s infinite'
-                      : visualState === 'paid' || visualState === 'error' || visualState === 'timeout'
-                        ? 'status-pop 240ms ease-out'
-                        : 'none',
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: '#fff',
-                  fontSize: 10,
-                  fontWeight: 900
-                }}
-              >
-                {tone.icon === 'check' ? '✓' : tone.icon === 'x' ? '×' : ''}
-              </span>
-              {statusLabel}
-            </span>
-            <button onClick={onClose} style={closeBtnStyle} aria-label="Close invoice">×</button>
-          </div>
+          <button onClick={onClose} style={closeBtnStyle} aria-label="Close invoice">×</button>
         </div>
 
         <div style={{ display: 'grid', gap: '0.9rem' }}>
@@ -155,7 +116,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                       {visualState === 'pending' && <div style={ringHalo} />}
                     </div>
                   </div>
-                  {celebrate && <div style={burst} aria-hidden />}
+                  {celebrate && <div key={burstKey} style={burst} aria-hidden />}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
                   <div style={{ fontWeight: 800, color: '#0f172a' }} aria-live="polite">
