@@ -113,6 +113,7 @@ export function TelemetryCard({ wsUrl }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    let healthOk = false;
     const variants = buildWsVariants(wsUrl);
     let variantIdx = 0;
     backoffRef.current = 1400;
@@ -124,9 +125,25 @@ export function TelemetryCard({ wsUrl }: Props) {
       }
     };
 
-    const connect = () => {
+    const connect = async () => {
       if (cancelled) return;
       clearRetry();
+
+      // lightweight health probe to avoid noisy failed handshakes when API isn't up yet
+      try {
+        const res = await fetch('/api/health', { method: 'GET' });
+        healthOk = res.ok;
+      } catch {
+        healthOk = false;
+      }
+
+      if (!healthOk) {
+        setStatus('error');
+        setErrorMsg('API health check failed; waiting to retry…');
+        retryRef.current = setTimeout(connect, 2000);
+        return;
+      }
+
       const target = variants[variantIdx];
       if (!target) {
         setStatus('error');
