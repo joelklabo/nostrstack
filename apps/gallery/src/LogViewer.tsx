@@ -51,7 +51,11 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
   const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error' | 'closed'>('idle');
   const [lastError, setLastError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
-  const [captureFront, setCaptureFront] = useState(false);
+  const [captureFront, setCaptureFront] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = window.localStorage.getItem('nostrstack.logviewer.captureFront');
+    return stored === 'true';
+  });
   const [connectSeq, setConnectSeq] = useState(0);
   const eventSourceRef = useRef<EventSource | null>(null);
   const originalConsole = useRef<Partial<Console> | null>(null);
@@ -108,8 +112,10 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
         Object.assign(console, originalConsole.current);
         originalConsole.current = null;
       }
+      if (typeof window !== 'undefined') window.localStorage.setItem('nostrstack.logviewer.captureFront', 'false');
       return;
     }
+    if (typeof window !== 'undefined') window.localStorage.setItem('nostrstack.logviewer.captureFront', 'true');
     if (!originalConsole.current) {
       originalConsole.current = {
         log: console.log,
