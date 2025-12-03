@@ -41,7 +41,6 @@ type ThemeStyles = {
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
-const enableReal = import.meta.env.VITE_ENABLE_REAL_PAYMENTS === 'true';
 const networkLabel = import.meta.env.VITE_NETWORK ?? 'regtest';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
@@ -750,7 +749,7 @@ export default function App() {
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <Pill label="Host" value={demoHost} tone="info" theme={theme} />
         <Pill label="API" value={apiBase === 'mock' ? 'mock' : apiBase} tone={apiBase === 'mock' ? 'muted' : 'info'} theme={theme} />
-        <Pill label="Payments" value={enableReal ? 'real invoices' : 'mock only'} tone={enableReal ? 'success' : 'warn'} theme={theme} />
+        <Pill label="Payments" value="real invoices" tone="success" theme={theme} />
         <Pill label="Comments" value={relayMode === 'mock' ? 'mock relays' : 'real Nostr'} tone={relayMode === 'mock' ? 'muted' : 'success'} theme={theme} />
         <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" theme={theme} />
       </div>
@@ -867,12 +866,6 @@ export default function App() {
           </button>
         </div>
       </div>
-      {!enableReal && (
-        <div style={{ padding: '0.75rem 1rem', background: '#fff3c4', color: '#7c4400', borderRadius: 10, marginBottom: '1rem' }}>
-          Real payments are disabled. Set VITE_ENABLE_REAL_PAYMENTS=true and provide VITE_API_BASE_URL to request real invoices.
-        </div>
-      )}
-
       {tab === 'lightning' && (
       <>
       <div style={{ marginBottom: '1rem' }}>
@@ -970,27 +963,25 @@ export default function App() {
         <Card title="Tip button" themeStyles={themeStyles}>
           <div style={{ marginBottom: '0.5rem', color: '#475569' }}>LNURLp flow. Request a real invoice from the API.</div>
           <div id="tip-container" />
-          {enableReal && (
-            <div style={{ marginTop: '0.75rem' }}>
-              <button onClick={requestRealInvoice} disabled={realBusy}>
-                {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
-              </button>
-              {realInvoice && (
-                <div data-testid="real-invoice" style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}>
-                  <strong>BOLT11</strong>
-                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.6rem' }}>
-                    {realInvoice}
-                  </pre>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <CopyButton text={realInvoice} label="Copy" />
-                    <a href={`lightning:${realInvoice}`} style={{ padding: '0.35rem 0.7rem', borderRadius: 10, border: '1px solid #e2e8f0', textDecoration: 'none', color: '#0f172a', background: '#fff' }}>
-                      Open in wallet
-                    </a>
-                  </div>
+          <div style={{ marginTop: '0.75rem' }}>
+            <button onClick={requestRealInvoice} disabled={realBusy}>
+              {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
+            </button>
+            {realInvoice && (
+              <div data-testid="real-invoice" style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}>
+                <strong>BOLT11</strong>
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.6rem' }}>
+                  {realInvoice}
+                </pre>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <CopyButton text={realInvoice} label="Copy" />
+                  <a href={`lightning:${realInvoice}`} style={{ padding: '0.35rem 0.7rem', borderRadius: 10, border: '1px solid #e2e8f0', textDecoration: 'none', color: '#0f172a', background: '#fff' }}>
+                    Open in wallet
+                  </a>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </Card>
 
         <Card title="Pay to unlock" themeStyles={themeStyles}>

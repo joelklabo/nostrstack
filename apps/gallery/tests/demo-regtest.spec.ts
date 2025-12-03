@@ -50,7 +50,7 @@ test.describe('regtest demo (real payments + comments)', () => {
       await expect(unlockStatus).toContainText(/unlocked/i, { timeout: 3000 });
     }
 
-    // Real invoice request + payment (requires VITE_ENABLE_REAL_PAYMENTS=true)
+    // Real invoice request + payment
     const realBtn = page.getByText('Request real invoice', { exact: false });
     if (await realBtn.count()) {
       await realBtn.click();
