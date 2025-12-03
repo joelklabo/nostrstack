@@ -659,7 +659,7 @@ export default function App() {
         // ignore malformed frames
       }
     };
-    const pollId = window.setInterval(poll, 2000);
+    const pollId = window.setInterval(poll, 5000);
     return () => {
       ws.close();
       window.clearInterval(pollId);

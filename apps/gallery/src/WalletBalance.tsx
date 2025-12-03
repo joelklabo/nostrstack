@@ -35,6 +35,39 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, refreshS
   const canFetch = Boolean(lnbitsUrl && (!isPlaceholderKey(adminKey) || !isPlaceholderKey(readKey)));
 
   useEffect(() => {
+    // live wallet stream via /ws/wallet
+    if (typeof window === 'undefined') return;
+    const base = lnbitsUrl ? lnbitsUrl : undefined;
+    const wsBase = base && base.startsWith('http') ? base.replace(/^http/, 'ws') : undefined;
+    const wsUrl = wsBase ? `${wsBase.replace(/\/$/, '')}/ws/wallet` : '/ws/wallet';
+    let cancelled = false;
+    let ws: WebSocket | null = null;
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as { type?: string; balance?: number; id?: string; name?: string; time?: number };
+          if (msg.type === 'wallet') {
+            setWallet({ name: msg.name, balance: msg.balance, id: msg.id });
+            setUpdatedAt(msg.time ? msg.time * 1000 : Date.now());
+          }
+        } catch {
+          /* ignore */
+        }
+      };
+      ws.onerror = () => {
+        if (!cancelled) ws?.close();
+      };
+    } catch {
+      /* ignore */
+    }
+    return () => {
+      cancelled = true;
+      ws?.close();
+    };
+  }, [lnbitsUrl]);
+
+  useEffect(() => {
     if (!canFetch) {
       setWallet(null);
       setError('Wallet URL or keys missing.');

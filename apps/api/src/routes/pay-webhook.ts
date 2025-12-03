@@ -1,0 +1,21 @@
+import type { FastifyInstance } from 'fastify';
+
+export async function registerPayWebhook(app: FastifyInstance) {
+  app.post('/api/pay/webhook/lnbits', async (request, reply) => {
+    const body = (request.body || {}) as Record<string, unknown>;
+    const paymentHash = (body.payment_hash as string | undefined) || (body.id as string | undefined);
+    if (!paymentHash) return reply.code(400).send({ ok: false, error: 'missing_payment_hash' });
+
+    try {
+      const payment = await app.prisma.payment.findFirst({ where: { providerRef: paymentHash } });
+      if (!payment) return reply.code(200).send({ ok: true, ignored: true });
+
+      await app.prisma.payment.update({ where: { id: payment.id }, data: { status: 'PAID' } });
+      app.payEventHub?.broadcast({ type: 'invoice-paid', pr: payment.invoice, providerRef: payment.providerRef, amount: payment.amountSats });
+      return reply.send({ ok: true });
+    } catch (err) {
+      request.log.error({ err }, 'lnbits webhook handling failed');
+      return reply.code(500).send({ ok: false });
+    }
+  });
+}

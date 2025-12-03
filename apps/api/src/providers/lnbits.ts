@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 type LnbitsConfig = {
   baseUrl: string;
   apiKey: string;
+  webhookUrl?: string;
 };
 
 export class LnbitsProvider {
@@ -12,9 +13,11 @@ export class LnbitsProvider {
     return { 'Content-Type': 'application/json', 'X-Api-Key': this.cfg.apiKey };
   }
 
-  async createCharge(input: { amount: number; description: string }) {
+  async createCharge(input: { amount: number; description: string; webhookUrl?: string }) {
     // amount in sats
-    const body = { out: false, amount: input.amount, memo: input.description };
+    const body: Record<string, unknown> = { out: false, amount: input.amount, memo: input.description };
+    const webhook = input.webhookUrl || this.cfg.webhookUrl;
+    if (webhook) body.webhook = webhook;
     const res = await fetch(`${this.cfg.baseUrl}/api/v1/payments`, {
       method: 'POST',
       headers: this.headers(),

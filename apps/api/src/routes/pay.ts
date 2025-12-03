@@ -26,7 +26,8 @@ export async function registerPayRoutes(app: FastifyInstance) {
     const charge = await app.lightningProvider.createCharge({
       amount: body.amount,
       description: `pay:${body.action} ${body.metadata?.path ?? ''}`.trim(),
-      callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent('pay')}/webhook`
+      callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent('pay')}/webhook`,
+      webhookUrl: `${origin}/api/pay/webhook/lnbits`
     });
 
     await app.prisma.payment.create({

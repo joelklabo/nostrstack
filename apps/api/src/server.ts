@@ -18,6 +18,7 @@ import { MockLightningProvider } from './providers/mock.js';
 import { OpenNodeProvider } from './providers/opennode.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryWs } from './routes/telemetry-ws.js';
+import { registerWalletWs } from './routes/wallet-ws.js';
 import { createLogHub } from './services/log-hub.js';
 import { createPayEventHub } from './services/pay-events.js';
 import { setupRoutes } from './setup-routes.js';
@@ -108,6 +109,7 @@ export async function buildServer() {
   setupRoutes(server);
   await registerRoutes(server);
   await registerTelemetryWs(server);
+  await registerWalletWs(server);
   createPayEventHub(server);
   server.decorate('config', {
     REGTEST_COMPOSE: process.env.REGTEST_COMPOSE,
