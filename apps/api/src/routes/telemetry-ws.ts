@@ -12,6 +12,9 @@ type TelemetryEvent =
 export async function registerTelemetryWs(app: FastifyInstance) {
   const server = app.server;
   const wss = new WebSocketServer({ noServer: true });
+  const defaultRoot = path.resolve(process.cwd(), '..', '..');
+  const defaultCompose = path.join(defaultRoot, 'deploy/regtest/docker-compose.yml');
+  const defaultCwd = path.dirname(defaultCompose);
 
   server.on('upgrade', (req, socket, head) => {
     if (req.url !== '/ws/telemetry') return;
@@ -29,8 +32,8 @@ export async function registerTelemetryWs(app: FastifyInstance) {
 
   const execCli = (cmd: string) =>
     new Promise<string>((resolve, reject) => {
-      const composeFile = app.config?.REGTEST_COMPOSE ?? 'deploy/regtest/docker-compose.yml';
-      const cwd = app.config?.REGTEST_CWD ?? process.cwd();
+      const composeFile = app.config?.REGTEST_COMPOSE ?? defaultCompose;
+      const cwd = app.config?.REGTEST_CWD ?? defaultCwd;
       const composeResolved = path.isAbsolute(composeFile) ? composeFile : path.resolve(cwd, composeFile);
       const p = spawn('docker', [
         'compose', '-f', composeResolved, 'exec', '-T', 'bitcoind',
@@ -47,13 +50,24 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     });
 
   // lightweight poll: getblockcount every 5s
+  let lastError: string | null = null;
+  let lastErrorAt = 0;
+
   const interval = setInterval(async () => {
     try {
       const out = await execCli('getblockcount');
       const height = Number(out.trim());
       broadcast({ type: 'block', height, hash: '', time: Date.now() / 1000 });
+      lastError = null;
+      lastErrorAt = 0;
     } catch (err) {
-      app.log.warn({ err }, 'telemetry block poll failed');
+      const msg = err instanceof Error ? err.message : String(err);
+      const now = Date.now();
+      if (msg !== lastError || now - lastErrorAt > 60000) {
+        app.log.warn({ err }, 'telemetry block poll failed');
+        lastError = msg;
+        lastErrorAt = now;
+      }
     }
   }, 5000);
 
