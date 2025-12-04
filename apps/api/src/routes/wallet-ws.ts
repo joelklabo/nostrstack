@@ -22,6 +22,7 @@ export async function registerWalletWs(app: FastifyInstance) {
 
   server.on('upgrade', (req, socket, head) => {
     if (req.url !== '/ws/wallet') return;
+    app.log.info('wallet ws upgrade');
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit('connection', ws, req);
     });
@@ -85,4 +86,6 @@ export async function registerWalletWs(app: FastifyInstance) {
     clearInterval(interval);
     wss.close();
   });
+
+  app.get('/debug/ws-wallet', async () => ({ enabled: true, url: '/ws/wallet' }));
 }

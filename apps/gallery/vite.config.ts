@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 
 import react from '@vitejs/plugin-react';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig } from 'vite';
 
 function gitMeta() {
@@ -23,7 +24,7 @@ export default defineConfig({
     https: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://localhost:3001',
         changeOrigin: true,
         secure: false,
         ws: true,

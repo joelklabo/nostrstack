@@ -14,6 +14,20 @@ echo "💡 view live: tail -f $API_LOG $GALLERY_LOG"
 
 cd "$ROOT"
 
+# Default to one secure origin for dev
+export USE_HTTPS="${USE_HTTPS:-true}"
+export HTTPS_CERT="${HTTPS_CERT:-$ROOT/certs/dev-cert.pem}"
+export HTTPS_KEY="${HTTPS_KEY:-$ROOT/certs/dev-key.pem}"
+export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:3001}"
+export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
+export LIGHTNING_PROVIDER="${LIGHTNING_PROVIDER:-lnbits}"
+
+if [[ ! -f "$HTTPS_CERT" || ! -f "$HTTPS_KEY" ]]; then
+  echo "🔐 generating self-signed dev certs at $HTTPS_CERT / $HTTPS_KEY"
+  mkdir -p "$(dirname "$HTTPS_CERT")"
+  openssl req -x509 -newkey rsa:2048 -nodes -keyout "$HTTPS_KEY" -out "$HTTPS_CERT" -subj "/CN=localhost" -days 365 >/tmp/dev-cert.log 2>&1 || true
+fi
+
 # Start regtest stack (bitcoind + LND + LNbits) and export LNbits admin key for dev
 if command -v docker >/dev/null 2>&1; then
   echo "🚀 starting regtest stack (docker compose)"
@@ -47,6 +61,6 @@ else
   echo "⚠️ docker not found; skipping regtest stack startup" >&2
 fi
 
-concurrently -k -p "[{name} {time}]" -n api,gallery \
-  "stdbuf -oL pnpm --filter api dev | tee -a $API_LOG" \
-  "stdbuf -oL pnpm --filter gallery dev -- --host --port 4173 | tee -a $GALLERY_LOG"
+pnpm concurrently -k -p "[{name} {time}]" -n api,gallery \
+  "pnpm --filter api dev | tee -a $API_LOG" \
+  "pnpm --filter gallery dev -- --host --port 4173 | tee -a $GALLERY_LOG"

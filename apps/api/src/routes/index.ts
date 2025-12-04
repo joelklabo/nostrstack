@@ -10,6 +10,7 @@ import { registerPayWebhook } from './pay-webhook.js';
 import { registerRegtestFundRoute } from './regtest-fund.js';
 import { registerRegtestPayRoute } from './regtest-pay.js';
 import { registerTenantRoutes } from './tenants.js';
+import { registerWalletRoutes } from './wallet.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await registerLnurlCallback(app);
@@ -22,6 +23,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerRegtestFundRoute(app);
   await registerRegtestPayRoute(app);
   await registerLogStreamRoute(app);
+  await registerWalletRoutes(app);
 }
 
 declare module 'fastify' {

@@ -107,33 +107,37 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
       setError(null);
       setLastResponse(null);
       setKeyStatuses((prev) => prev.map((k) => ({ ...k, status: 'idle', message: undefined, url: undefined })));
-      const base = `${normalizeUrl(lnbitsUrl!).replace(/\/$/, '')}/api/v1/wallet`;
+      const target = `${(apiBase || '/api').replace(/\/$/, '')}/wallet/info`;
 
       const attempt = async (key: string, kind: 'admin' | 'read') => {
-        const urls = [base, walletId || lastWalletId ? `${base}?usr=${encodeURIComponent(walletId || lastWalletId || '')}` : null].filter(Boolean) as string[];
-        for (const url of urls) {
-          try {
-            setLastRequest(`${kind} → GET ${url}`);
-            setLastHeaders('X-Api-Key: <provided>');
-            const res = await fetch(url, { headers: { 'X-Api-Key': key, Accept: 'application/json' } });
-            const text = await res.text();
-            setLastResponse(text.slice(0, 400));
-            if (!res.ok) {
-              if (res.status === 404 && url === base && urls.length > 1) {
-                continue; // fallback to ?usr
-              }
-              const friendly = res.status === 401 || res.status === 403 ? 'unauthorized (HTTP 401)' : `HTTP ${res.status}`;
-              throw new Error(friendly);
-            }
-            const body = JSON.parse(text);
-            setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'ok', url } : k)));
-            return body as WalletInfo;
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'error', message: msg, url: urls.at(-1) } : k)));
+        const payload = {
+          baseUrl: lnbitsUrl,
+          apiKey: key,
+          walletId: walletId || lastWalletId || undefined
+        };
+        try {
+          setLastRequest(`${kind} → POST ${target}`);
+          setLastHeaders('Content-Type: application/json');
+          const res = await fetch(target, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const text = await res.text();
+          setLastResponse(text.slice(0, 400));
+          if (!res.ok) {
+            const friendly = res.status === 401 || res.status === 403 ? 'unauthorized (HTTP 401)' : `HTTP ${res.status}`;
+            throw new Error(friendly);
           }
+          const body = JSON.parse(text);
+          if (!body?.wallet) throw new Error('missing wallet in response');
+          setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'ok', url: target } : k)));
+          return body.wallet as WalletInfo;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'error', message: msg, url: target } : k)));
+          return null;
         }
-        return null;
       };
 
       try {
@@ -168,7 +172,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
       cancelled = true;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [canFetch, lnbitsUrl, adminKey, readKey, walletId, lastWalletId, refreshSignal]);
+  }, [canFetch, lnbitsUrl, adminKey, readKey, walletId, lastWalletId, refreshSignal, apiBase]);
 
   if (!canFetch) {
     return (

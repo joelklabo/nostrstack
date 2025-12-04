@@ -6,6 +6,8 @@ import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import Fastify from 'fastify';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { LogFn } from 'pino';
 
 import { env } from './env.js';
@@ -27,10 +29,24 @@ import { requestIdHook } from './telemetry/request-id.js';
 import { startTracing } from './telemetry/tracing.js';
 
 export async function buildServer() {
+  const httpsOpts = (() => {
+    const certPath = process.env.HTTPS_CERT || path.join(process.cwd(), 'certs', 'dev-cert.pem');
+    const keyPath = process.env.HTTPS_KEY || path.join(process.cwd(), 'certs', 'dev-key.pem');
+    if (process.env.USE_HTTPS === 'true' && fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+      return {
+        https: {
+          key: fs.readFileSync(keyPath),
+          cert: fs.readFileSync(certPath)
+        }
+      };
+    }
+    return {};
+  })();
   const stopTracing = startTracing(env);
   const logHub = createLogHub({ bufferSize: 500 });
 
   const server = Fastify({
+    ...httpsOpts,
     logger: {
       level: env.LOG_LEVEL,
       transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,

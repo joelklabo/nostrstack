@@ -187,7 +187,7 @@ if [[ ${1:-} == "up" ]]; then
 
   echo "[+] Restarting LNbits so it sees LND macaroons"
   $COMPOSE restart lnbits >/dev/null
-  until curl -sf http://localhost:15001/status/health >/dev/null 2>&1; do sleep 2; done
+  until curl -s http://localhost:15001 >/dev/null 2>&1; do sleep 2; done
 
   ensure_lnbits_superuser
   ADMIN_KEY=$(fetch_admin_key)
