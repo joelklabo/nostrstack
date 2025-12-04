@@ -51,7 +51,7 @@ check_port() {
     else
       echo "⚠️  port $port already in use. Stop the other process or rerun with FORCE_KILL_PORTS=1." >&2
       exit 1
-    }
+    fi
   fi
 }
 
