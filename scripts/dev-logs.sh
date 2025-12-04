@@ -30,10 +30,13 @@ export LIGHTNING_PROVIDER="${LIGHTNING_PROVIDER:-lnbits}"
 export PORT="${PORT:-3001}"
 export DEV_SERVER_PORT="${DEV_SERVER_PORT:-4173}"
 
-if [[ ! -f "$HTTPS_CERT" || ! -f "$HTTPS_KEY" ]]; then
-  echo "🔐 generating self-signed dev certs at $HTTPS_CERT / $HTTPS_KEY"
+if [[ ! -f "$HTTPS_CERT" || ! -f "$HTTPS_KEY" || "${REGEN_CERTS:-0}" == "1" ]]; then
+  echo "🔐 generating self-signed dev certs with SAN=localhost at $HTTPS_CERT / $HTTPS_KEY"
   mkdir -p "$(dirname "$HTTPS_CERT")"
-  openssl req -x509 -newkey rsa:2048 -nodes -keyout "$HTTPS_KEY" -out "$HTTPS_CERT" -subj "/CN=localhost" -days 365 >/tmp/dev-cert.log 2>&1 || true
+  openssl req -x509 -newkey rsa:2048 -nodes \
+    -keyout "$HTTPS_KEY" -out "$HTTPS_CERT" \
+    -subj "/CN=localhost" -days 365 \
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/tmp/dev-cert.log 2>&1 || true
 fi
 
 check_port() {
