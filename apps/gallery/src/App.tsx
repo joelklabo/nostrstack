@@ -348,6 +348,14 @@ export default function App() {
     }
   }, []);
   useEffect(() => {
+    // clear stale payment state on fresh load to avoid 404 polling spam
+    setPaymentRef(null);
+    setQrInvoice(null);
+    setQrAmount(undefined);
+    setQrStatus('pending');
+  }, []);
+
+  useEffect(() => {
     const url = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
     const key = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.key') : null;
     const readKey = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.readKey') : null;
@@ -638,6 +646,10 @@ export default function App() {
           setUnlockedPayload('Paid content unlocked');
           setLocked(false);
         }
+      } else if (res.status === 404) {
+        // stop polling if provider no longer knows about this ref
+        setPaymentRef(null);
+        setQrStatus('pending');
       }
     } catch {
       /* ignore */
