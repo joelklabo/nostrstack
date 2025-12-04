@@ -38,29 +38,19 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
   useEffect(() => {
     // live wallet stream via /ws/wallet
     if (typeof window === 'undefined') return;
-    const buildVariants = () => {
-      const origin = (() => {
-        try {
-          return apiBase ? new URL(apiBase).origin : window.location.origin;
-        } catch {
-          return typeof window !== 'undefined' ? window.location.origin : 'https://localhost:3001';
-        }
-      })();
-      const primary = `${origin.replace(/^http/, 'ws')}/ws/wallet`;
-      return [primary];
-    };
-    const variants = buildVariants();
-    let ws: WebSocket | null = null;
-    let idx = 0;
-    const connect = () => {
-      const target = variants[idx];
+    const origin = (() => {
       try {
-        ws = new WebSocket(target);
+        return apiBase ? new URL(apiBase).origin : window.location.origin;
       } catch {
-        if (idx < variants.length - 1) {
-          idx += 1;
-          connect();
-        }
+        return window.location.origin;
+      }
+    })();
+    const wsUrl = `${origin.replace(/^http/, 'ws')}/ws/wallet`;
+    let ws: WebSocket | null = null;
+    const connect = () => {
+      try {
+        ws = new WebSocket(wsUrl);
+      } catch {
         return;
       }
       ws.onmessage = (ev) => {
@@ -79,10 +69,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
       };
       ws.onclose = () => {
         if (cancelled) return;
-        if (idx < variants.length - 1) {
-          idx += 1;
-          connect();
-        }
+        connect();
       };
     };
     connect();
