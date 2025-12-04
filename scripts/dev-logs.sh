@@ -11,6 +11,12 @@ GALLERY_LOG="$LOG_DIR/gallery.log"
 
 echo "🪵 writing logs to $LOG_DIR (api.log, gallery.log)"
 echo "💡 view live: tail -f $API_LOG $GALLERY_LOG"
+if [[ "${LOG_TAIL:-1}" != "0" ]]; then
+  echo "👀 auto-following logs (set LOG_TAIL=0 to disable)"
+  tail -F "$API_LOG" "$GALLERY_LOG" &
+  TAIL_PID=$!
+  trap 'kill $TAIL_PID >/dev/null 2>&1 || true' EXIT
+fi
 
 cd "$ROOT"
 
@@ -64,3 +70,5 @@ fi
 pnpm concurrently -k -p "[{name} {time}]" -n api,gallery \
   "pnpm --filter api dev | tee -a $API_LOG" \
   "pnpm --filter gallery dev -- --host --port 4173 | tee -a $GALLERY_LOG"
+
+echo "🧭 Reminder: verify UI changes with Chrome DevTools MCP (check console & network) and keep the tails above running while you test."
