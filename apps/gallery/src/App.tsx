@@ -327,6 +327,7 @@ export default function App() {
   const [payerInvoice, setPayerInvoice] = useState('');
   const [payerStatus, setPayerStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
   const [payerMessage, setPayerMessage] = useState<string | null>(null);
+  const [payWsState, setPayWsState] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: 'unknown' },
     { label: 'LNbits', status: 'unknown' }
@@ -626,27 +627,32 @@ export default function App() {
     }
   }, [signerReady, activePubkey, profileRelays, message]);
 
+  const pollPayment = useCallback(async () => {
+    if (!paymentRef) return;
+    try {
+      const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef)}`);
+      if (res.ok) {
+        const body = await res.json();
+        if (['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'PAID'].includes(String(body.status || '').toUpperCase())) {
+          setQrStatus('paid');
+          setUnlockedPayload('Paid content unlocked');
+          setLocked(false);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [apiBase, paymentRef]);
+
   useEffect(() => {
     if (!qrInvoice || !paymentRef) return;
+    setPayWsState('connecting');
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
     const ws = new WebSocket(wsUrl);
     const pr = qrInvoice;
-    const ref = paymentRef;
-    const poll = async () => {
-      try {
-        const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(ref)}`);
-        if (res.ok) {
-          const body = await res.json();
-          if (['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'PAID'].includes(String(body.status || '').toUpperCase())) {
-            setQrStatus('paid');
-            setUnlockedPayload('Paid content unlocked');
-            setLocked(false);
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-    };
+    ws.onopen = () => setPayWsState('open');
+    ws.onerror = () => setPayWsState('error');
+    ws.onclose = () => setPayWsState((prev) => (prev === 'error' ? prev : 'idle'));
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data as string);
@@ -659,12 +665,12 @@ export default function App() {
         // ignore malformed frames
       }
     };
-    const pollId = window.setInterval(poll, 5000);
+    const pollId = window.setInterval(pollPayment, 5000);
     return () => {
       ws.close();
       window.clearInterval(pollId);
     };
-  }, [qrInvoice, apiBase, paymentRef]);
+  }, [qrInvoice, apiBase, paymentRef, pollPayment]);
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -836,8 +842,14 @@ export default function App() {
         <Pill label="Host" value={demoHost} tone="info" theme={theme} />
         <Pill label="API" value={apiBase} tone="info" theme={theme} />
         <Pill label="Payments" value="real invoices" tone="success" theme={theme} />
+        <Pill label="Pay WS" value={payWsState} tone={payWsState === 'open' ? 'success' : payWsState === 'connecting' ? 'warn' : 'muted'} theme={theme} />
         <Pill label="Comments" value="real Nostr" tone="success" theme={theme} />
         <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" theme={theme} />
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <button onClick={pollPayment} style={{ padding: '0.35rem 0.75rem', borderRadius: 8, border: `1px solid ${layout.border}`, background: themeStyles.card, color: themeStyles.text, cursor: 'pointer' }}>
+          Recheck payment status
+        </button>
       </div>
 
       <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} visible />
