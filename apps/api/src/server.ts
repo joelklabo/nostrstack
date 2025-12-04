@@ -23,6 +23,7 @@ import { registerTelemetryWs } from './routes/telemetry-ws.js';
 import { registerWalletWs } from './routes/wallet-ws.js';
 import { createLogHub } from './services/log-hub.js';
 import { createPayEventHub } from './services/pay-events.js';
+import { startPaymentReconciler } from './services/payment-reconciler.js';
 import { setupRoutes } from './setup-routes.js';
 import { metricsPlugin } from './telemetry/metrics.js';
 import { requestIdHook } from './telemetry/request-id.js';
@@ -137,6 +138,7 @@ export async function buildServer() {
   await registerTelemetryWs(server);
   await registerWalletWs(server);
   createPayEventHub(server);
+  const stopReconciler = startPaymentReconciler(server);
   server.decorate('config', {
     REGTEST_COMPOSE: process.env.REGTEST_COMPOSE,
     REGTEST_CWD: process.env.REGTEST_CWD
@@ -148,6 +150,9 @@ export async function buildServer() {
       await stopTracing();
     });
   }
+  server.addHook('onClose', async () => {
+    stopReconciler();
+  });
 
   server.addHook('onSend', async (_req, reply, payload) => {
     if (!reply.getHeader('x-request-id') && reply.request.id) {
