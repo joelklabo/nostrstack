@@ -353,6 +353,7 @@ export default function App() {
     setQrInvoice(null);
     setQrAmount(undefined);
     setQrStatus('pending');
+    setLocked(true);
   }, []);
 
   useEffect(() => {
@@ -650,6 +651,7 @@ export default function App() {
         // stop polling if provider no longer knows about this ref
         setPaymentRef(null);
         setQrStatus('pending');
+        setQrInvoice(null);
       }
     } catch {
       /* ignore */
