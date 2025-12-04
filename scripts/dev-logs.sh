@@ -42,8 +42,14 @@ fi
 check_port() {
   local port="$1"
   if lsof -i :"$port" >/dev/null 2>&1; then
-    echo "⚠️  port $port already in use. Please stop the other process (e.g. kill the api/gallery dev) and re-run." >&2
-    exit 1
+    if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
+      echo "⚠️  port $port in use; FORCE_KILL_PORTS=1, terminating owner..." >&2
+      lsof -i :"$port" -t | xargs -r kill
+      sleep 1
+    else
+      echo "⚠️  port $port already in use. Stop the other process or rerun with FORCE_KILL_PORTS=1." >&2
+      exit 1
+    }
   fi
 }
 
