@@ -28,14 +28,24 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         ws: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            /* swallow noisy dev proxy errors when API restarts */
+          });
+        }
       },
       '/ws': {
         target: 'https://localhost:3001',
         changeOrigin: true,
         secure: false,
         ws: true,
-        rewrite: (path) => path
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            /* swallow noisy dev proxy errors when API restarts */
+          });
+        }
       }
     }
   },
