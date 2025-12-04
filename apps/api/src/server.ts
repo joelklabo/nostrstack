@@ -30,9 +30,19 @@ import { startTracing } from './telemetry/tracing.js';
 
 export async function buildServer() {
   const httpsOpts = (() => {
-    const certPath = process.env.HTTPS_CERT || path.join(process.cwd(), 'certs', 'dev-cert.pem');
-    const keyPath = process.env.HTTPS_KEY || path.join(process.cwd(), 'certs', 'dev-key.pem');
-    if (process.env.USE_HTTPS === 'true' && fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+    const useHttps = env.USE_HTTPS;
+    const certPath = env.HTTPS_CERT || path.join(process.cwd(), 'certs', 'dev-cert.pem');
+    const keyPath = env.HTTPS_KEY || path.join(process.cwd(), 'certs', 'dev-key.pem');
+    const certExists = fs.existsSync(certPath);
+    const keyExists = fs.existsSync(keyPath);
+
+    if (useHttps) {
+      if (!certExists || !keyExists) {
+        throw new Error(`USE_HTTPS=true but cert/key missing (${certPath}, ${keyPath})`);
+      }
+      if (!env.PUBLIC_ORIGIN.startsWith('https://')) {
+        console.warn(`USE_HTTPS=true but PUBLIC_ORIGIN is not https: ${env.PUBLIC_ORIGIN}`);
+      }
       return {
         https: {
           key: fs.readFileSync(keyPath),
