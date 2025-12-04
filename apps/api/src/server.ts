@@ -32,14 +32,33 @@ import { startTracing } from './telemetry/tracing.js';
 export async function buildServer() {
   const httpsOpts = (() => {
     const useHttps = env.USE_HTTPS;
-    const certPath = env.HTTPS_CERT || path.join(process.cwd(), 'certs', 'dev-cert.pem');
-    const keyPath = env.HTTPS_KEY || path.join(process.cwd(), 'certs', 'dev-key.pem');
-    const certExists = fs.existsSync(certPath);
-    const keyExists = fs.existsSync(keyPath);
+    const expand = (p?: string) => {
+      if (!p) return [];
+      if (path.isAbsolute(p)) return [p];
+      return [
+        path.resolve(process.cwd(), p),
+        path.resolve(process.cwd(), '..', p),
+        path.resolve(process.cwd(), '..', '..', p)
+      ];
+    };
+    const defaultCerts = [
+      ...expand(env.HTTPS_CERT || 'certs/dev-cert.pem'),
+      path.resolve(process.cwd(), 'certs', 'dev-cert.pem'),
+      path.resolve(process.cwd(), '..', 'certs', 'dev-cert.pem'),
+      path.resolve(process.cwd(), '..', '..', 'certs', 'dev-cert.pem')
+    ];
+    const defaultKeys = [
+      ...expand(env.HTTPS_KEY || 'certs/dev-key.pem'),
+      path.resolve(process.cwd(), 'certs', 'dev-key.pem'),
+      path.resolve(process.cwd(), '..', 'certs', 'dev-key.pem'),
+      path.resolve(process.cwd(), '..', '..', 'certs', 'dev-key.pem')
+    ];
+    const certPath = defaultCerts.find((p) => fs.existsSync(p));
+    const keyPath = defaultKeys.find((p) => fs.existsSync(p));
 
     if (useHttps) {
-      if (!certExists || !keyExists) {
-        throw new Error(`USE_HTTPS=true but cert/key missing (${certPath}, ${keyPath})`);
+      if (!certPath || !keyPath) {
+        throw new Error(`USE_HTTPS=true but cert/key missing (checked: ${defaultCerts.join(', ')} / ${defaultKeys.join(', ')})`);
       }
       if (!env.PUBLIC_ORIGIN.startsWith('https://')) {
         console.warn(`USE_HTTPS=true but PUBLIC_ORIGIN is not https: ${env.PUBLIC_ORIGIN}`);
