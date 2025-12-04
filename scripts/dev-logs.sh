@@ -27,12 +27,25 @@ export HTTPS_KEY="${HTTPS_KEY:-$ROOT/certs/dev-key.pem}"
 export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:3001}"
 export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
 export LIGHTNING_PROVIDER="${LIGHTNING_PROVIDER:-lnbits}"
+export PORT="${PORT:-3001}"
+export DEV_SERVER_PORT="${DEV_SERVER_PORT:-4173}"
 
 if [[ ! -f "$HTTPS_CERT" || ! -f "$HTTPS_KEY" ]]; then
   echo "🔐 generating self-signed dev certs at $HTTPS_CERT / $HTTPS_KEY"
   mkdir -p "$(dirname "$HTTPS_CERT")"
   openssl req -x509 -newkey rsa:2048 -nodes -keyout "$HTTPS_KEY" -out "$HTTPS_CERT" -subj "/CN=localhost" -days 365 >/tmp/dev-cert.log 2>&1 || true
 fi
+
+check_port() {
+  local port="$1"
+  if lsof -i :"$port" >/dev/null 2>&1; then
+    echo "⚠️  port $port already in use. Please stop the other process (e.g. kill the api/gallery dev) and re-run." >&2
+    exit 1
+  fi
+}
+
+check_port "$PORT"
+check_port "$DEV_SERVER_PORT"
 
 # Start regtest stack (bitcoind + LND + LNbits) and export LNbits admin key for dev
 if command -v docker >/dev/null 2>&1; then

@@ -1,7 +1,8 @@
 import { execSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig } from 'vite';
 
 function gitMeta() {
@@ -15,13 +16,23 @@ function gitMeta() {
 }
 
 const meta = gitMeta();
+const root = path.resolve(__dirname, '..', '..');
+const devCert = path.resolve(root, 'certs', 'dev-cert.pem');
+const devKey = path.resolve(root, 'certs', 'dev-key.pem');
+const httpsConfig =
+  fs.existsSync(devCert) && fs.existsSync(devKey)
+    ? {
+        key: fs.readFileSync(devKey),
+        cert: fs.readFileSync(devCert)
+      }
+    : true; // fallback to vite self-signed
 
 export default defineConfig({
-  plugins: [react(), basicSsl()],
+  plugins: [react()],
   server: {
     port: 4173,
     host: true,
-    https: true,
+    https: httpsConfig,
     proxy: {
       '/api': {
         target: 'https://localhost:3001',
