@@ -37,6 +37,8 @@ if [[ ! -f "$HTTPS_CERT" || ! -f "$HTTPS_KEY" || "${REGEN_CERTS:-0}" == "1" ]]; 
     -keyout "$HTTPS_KEY" -out "$HTTPS_CERT" \
     -subj "/CN=localhost" -days 365 \
     -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/tmp/dev-cert.log 2>&1 || true
+else
+  echo "🔐 using existing certs at $HTTPS_CERT / $HTTPS_KEY"
 fi
 
 check_port() {
