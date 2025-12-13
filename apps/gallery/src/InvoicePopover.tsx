@@ -158,7 +158,7 @@ export function InvoicePopover({ invoice, amountSats, status = 'pending', onClos
                     <div
                       style={{
                         ...beam,
-                        background: visualState === 'paid' ? 'linear-gradient(90deg, #22c55e, #0ea5e9)' : 'linear-gradient(90deg, #0ea5e9, #6366f1)',
+                        backgroundImage: visualState === 'paid' ? 'linear-gradient(90deg, #22c55e, #0ea5e9)' : 'linear-gradient(90deg, #0ea5e9, #6366f1)',
                         animation: visualState === 'paid' ? 'beam-slide 1s ease-out 1' : visualState === 'timeout' || visualState === 'error' ? 'none' : 'beam-slide 1.2s linear infinite'
                       }}
                     />
@@ -269,7 +269,7 @@ const beamWrap: React.CSSProperties = { width: '100%', height: 12, borderRadius:
 const beam: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
-  background: 'linear-gradient(90deg, #0ea5e9, #6366f1)',
+  backgroundImage: 'linear-gradient(90deg, #0ea5e9, #6366f1)',
   backgroundSize: '200% 100%',
   opacity: 0.35,
   animation: 'beam-slide 2s linear infinite'
