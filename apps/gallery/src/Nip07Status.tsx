@@ -37,7 +37,8 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       return 'missing';
     }
     if (typeof window === 'undefined') return 'missing';
-    const has = Boolean(nostr?.getPublicKey);
+    const getPublicKey = nostr?.getPublicKey;
+    const has = typeof getPublicKey === 'function';
     setNostrPresent(has);
     if (!has) {
       setStatus('missing');
@@ -49,10 +50,10 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
 
     setStatus('checking');
     setError(null);
-    const started = Date.now();
-    try {
-      const pub = await Promise.race([
-        nostr!.getPublicKey(),
+      const started = Date.now();
+      try {
+        const pub = await Promise.race([
+        getPublicKey(),
         new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;

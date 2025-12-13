@@ -50,8 +50,8 @@ export function NpubBar({ pubkey, seckey }: Props) {
       if (candidate.startsWith('npub')) {
         hex = utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
       } else if (candidate.startsWith('nsec')) {
-        const priv = utils.bytesToHex(nip19.decode(candidate).data as Uint8Array);
-        hex = getPublicKey(priv);
+        const sk = nip19.decode(candidate).data as Uint8Array;
+        hex = getPublicKey(sk);
       } else if (/^[0-9a-fA-F]{64}$/.test(candidate)) {
         hex = candidate.toLowerCase();
       }

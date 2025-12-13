@@ -38,7 +38,8 @@ export function CommentsPanel({
       const prev = lastSeenRef.current[r];
       if (!prev || last !== prev) {
         setEvents((evts) => [{ relay: r, ts: last, recv: stat?.recv, sendStatus: stat?.sendStatus }, ...evts].slice(0, 40));
-        setRibbonEvents((evts) => [{ relay: r, ts: last, kind: stat?.sendStatus === 'sending' || stat?.sendStatus === 'ok' ? 'send' : 'recv' }, ...evts].slice(0, 30));
+        const kind: 'recv' | 'send' = stat?.sendStatus === 'sending' || stat?.sendStatus === 'ok' ? 'send' : 'recv';
+        setRibbonEvents((evts) => [{ relay: r, ts: last, kind }, ...evts].slice(0, 30));
         lastSeenRef.current[r] = last;
       }
     });
@@ -130,7 +131,6 @@ export function CommentsPanel({
           )}
         </div>
       </div>
-      <div id="comments-container" />
     </div>
   );
 }

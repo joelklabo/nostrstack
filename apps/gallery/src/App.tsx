@@ -15,7 +15,7 @@ import type { RelayStats } from './types/relay';
 import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
-type RelayInfo = { relays: string[]; mode: 'real' };
+type RelayInfo = { relays: string[]; mode: 'real' | 'mock' };
 type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'unknown'; detail?: string };
 type ProfileMeta = {
   name?: string;
@@ -288,7 +288,7 @@ function useMountWidgets(
           setRelayStats((prev) => {
             const next = { ...prev };
             const now = Date.now();
-            active.forEach((r) => {
+            active.forEach((r: string) => {
               next[r] = { ...(next[r] ?? { recv: 0 }), last: now, sendStatus: 'ok' };
             });
             return next;
@@ -301,7 +301,7 @@ function useMountWidgets(
           const targets = relays.length ? relays : relaysEnvDefault;
           setRelayStats((prev: RelayStats) => {
             const next = { ...prev };
-            targets.forEach((relay) => {
+            targets.forEach((relay: string) => {
               next[relay] = { ...bumpRecv(next[relay], now), sendStatus: 'ok' };
             });
             return next;
@@ -459,14 +459,14 @@ export default function App() {
         // ignore fetch errors / CORS
       }
     };
-    relaysList.forEach(fetchMeta);
+    relaysList.filter(isRelayUrl).forEach(fetchMeta);
     return () => controller.abort();
   }, [relaysList]);
 
   useEffect(() => {
     let cancelled = false;
     const probe = async () => {
-      const sample = relaysList.slice(0, 3);
+      const sample = relaysList.filter(isRelayUrl).slice(0, 3);
       await Promise.all(
         sample.map(async (url) => {
           try {
