@@ -46,11 +46,22 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
       }
     })();
     const wsUrl = `${origin.replace(/^http/, 'ws')}/ws/wallet`;
+    let cancelled = false;
     let ws: WebSocket | null = null;
+    let reconnectTimer: number | null = null;
+
+    const scheduleReconnect = (delayMs = 500) => {
+      if (cancelled) return;
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+      reconnectTimer = window.setTimeout(connect, delayMs);
+    };
+
     const connect = () => {
+      if (cancelled) return;
       try {
         ws = new WebSocket(wsUrl);
       } catch {
+        scheduleReconnect(1000);
         return;
       }
       ws.onmessage = (ev) => {
@@ -64,21 +75,27 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
           /* ignore */
         }
       };
-      ws.onerror = () => {
-        if (!cancelled) ws?.close();
-      };
       ws.onclose = () => {
         if (cancelled) return;
-        connect();
+        scheduleReconnect(500);
       };
     };
     connect();
-    let cancelled = false;
     return () => {
       cancelled = true;
-      ws?.close();
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+      if (!ws) return;
+      // Avoid React/StrictMode warnings from closing a CONNECTING socket.
+      if (ws.readyState === WebSocket.CONNECTING) {
+        const pending = ws;
+        pending.onopen = () => pending.close();
+        pending.onerror = null;
+        pending.onclose = null;
+        return;
+      }
+      ws.close();
     };
-  }, [lnbitsUrl, apiBase]);
+  }, [apiBase]);
 
   useEffect(() => {
     if (!canFetch) {
