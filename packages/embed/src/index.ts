@@ -418,6 +418,7 @@ type MountTipOptions = {
   amountSats?: number;
   baseURL?: string;
   host?: string;
+  onInvoice?: (pr: string) => void;
 };
 
 export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {}) {
@@ -430,7 +431,8 @@ export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {
     host: opts.host,
     onInvoice: async (pr) => {
       try {
-        if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(pr);
+        if (opts.onInvoice) await opts.onInvoice(pr);
+        else if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(pr);
       } catch (e) {
         console.warn('clipboard copy failed', e);
       }

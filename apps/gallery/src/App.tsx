@@ -222,21 +222,21 @@ function useMountWidgets(
   setUnlockedPayload: (v: string | null) => void,
   setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
   setRelayStats: React.Dispatch<React.SetStateAction<RelayStats>>,
-  relaysList: string[]
+  relaysList: string[],
+  tab: 'lightning' | 'nostr' | 'logs',
+  verifyPayment: (pr: string) => Promise<boolean>
 ) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
     const payHost = document.getElementById('pay-container');
     const unlockHost = document.getElementById('unlock-status');
     const commentsHost = document.getElementById('comments-container');
-    if (!tipHost || !payHost || !commentsHost) return;
+    const timeouts: number[] = [];
 
-    tipHost.innerHTML = '<button>Loading…</button>';
-    payHost.innerHTML = '<button>Loading…</button>';
-    commentsHost.innerHTML = '<div>Loading…</div>';
-    if (unlockHost) {
-      unlockHost.textContent = 'Locked';
-    }
+    if (tipHost) tipHost.innerHTML = '';
+    if (payHost) payHost.innerHTML = '';
+    if (commentsHost) commentsHost.innerHTML = '';
+    if (unlockHost) unlockHost.textContent = 'Locked';
 
     const tipOpts: Record<string, unknown> = {
       username,
@@ -246,60 +246,74 @@ function useMountWidgets(
       onInvoice: (pr: string) => {
         setQrInvoice(pr);
         setQrAmount(amount);
+        setQrStatus('pending');
       }
     };
-    setTimeout(() => {
-      mountTipButton(tipHost, tipOpts);
-      mountPayToAction(payHost, {
-        username,
-        amountSats: amount,
-        host: demoHost,
-        baseURL: apiBase,
-        onInvoice: (pr) => {
-          setQrInvoice(pr);
-          setQrAmount(amount);
-          setQrStatus('pending');
+    if (tipHost) {
+      timeouts.push(window.setTimeout(() => mountTipButton(tipHost, tipOpts), 50));
+    }
+    if (payHost) {
+      timeouts.push(
+        window.setTimeout(() => {
+          mountPayToAction(payHost, {
+            username,
+            amountSats: amount,
+            host: demoHost,
+            baseURL: apiBase,
+            verifyPayment,
+            onInvoice: (pr) => {
+              setQrInvoice(pr);
+              setQrAmount(amount);
+              setQrStatus('pending');
+            },
+            onUnlock: () => {
+              if (unlockHost) unlockHost.textContent = 'Unlocked!';
+              onUnlock?.();
+              setUnlockedPayload('Paid content unlocked');
+              setQrStatus('paid');
+            }
+          });
+        }, 50)
+      );
+    }
+
+    if (commentsHost) {
+      const relays = relaysList.length ? relaysList : relaysEnvDefault;
+
+      mountCommentWidget(commentsHost, {
+        threadId: 'demo-thread',
+        relays,
+        onRelayInfo: (info: RelayInfo) => {
+          const active = info.relays.length ? info.relays : relaysEnvDefault;
+          setRelayStats((prev) => {
+            const next = { ...prev };
+            const now = Date.now();
+            active.forEach((r) => {
+              next[r] = { ...(next[r] ?? { recv: 0 }), last: now, sendStatus: 'ok' };
+            });
+            return next;
+          });
         },
-        onUnlock: () => {
-          if (unlockHost) unlockHost.textContent = 'Unlocked!';
-          onUnlock?.();
-          setUnlockedPayload('Paid content unlocked');
-          setQrStatus('paid');
+        // @ts-expect-error onEvent not in upstream types yet
+        onEvent: (ev: { content?: string }) => {
+          if (!ev?.content) return;
+          const now = Date.now();
+          const targets = relays.length ? relays : relaysEnvDefault;
+          setRelayStats((prev: RelayStats) => {
+            const next = { ...prev };
+            targets.forEach((relay) => {
+              next[relay] = { ...bumpRecv(next[relay], now), sendStatus: 'ok' };
+            });
+            return next;
+          });
         }
       });
-    }, 50);
+    }
 
-    const relays = relaysList.length ? relaysList : relaysEnvDefault;
-
-    mountCommentWidget(commentsHost, {
-      threadId: 'demo-thread',
-      relays,
-      onRelayInfo: (info: RelayInfo) => {
-        const active = info.relays.length ? info.relays : relaysEnvDefault;
-        setRelayStats((prev) => {
-          const next = { ...prev };
-          const now = Date.now();
-          active.forEach((r) => {
-            next[r] = { ...(next[r] ?? { recv: 0 }), last: now, sendStatus: 'ok' };
-          });
-          return next;
-        });
-      },
-      // @ts-expect-error onEvent not in upstream types yet
-      onEvent: (ev: { content?: string }) => {
-        if (!ev?.content) return;
-        const now = Date.now();
-        const targets = relays.length ? relays : relaysEnvDefault;
-        setRelayStats((prev: RelayStats) => {
-          const next = { ...prev };
-          targets.forEach((relay) => {
-            next[relay] = { ...bumpRecv(next[relay], now), sendStatus: 'ok' };
-          });
-          return next;
-        });
-      }
-    });
-  }, [username, amount, relaysCsv, onUnlock, enableTestSigner]);
+    return () => {
+      timeouts.forEach((id) => window.clearTimeout(id));
+    };
+  }, [username, amount, relaysCsv, onUnlock, enableTestSigner, relaysList, tab, verifyPayment]);
 }
 
 export default function App() {
@@ -328,6 +342,8 @@ export default function App() {
   const [payerStatus, setPayerStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
   const [payerMessage, setPayerMessage] = useState<string | null>(null);
   const [payWsState, setPayWsState] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
+  const paidInvoicesRef = useRef<Set<string>>(new Set());
+  const payWaitersRef = useRef<Map<string, Set<(ok: boolean) => void>>>(new Map());
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: 'unknown' },
     { label: 'LNbits', status: 'unknown' }
@@ -646,6 +662,14 @@ export default function App() {
           setQrStatus('paid');
           setUnlockedPayload('Paid content unlocked');
           setLocked(false);
+          if (qrInvoice) {
+            paidInvoicesRef.current.add(qrInvoice);
+            const waiters = payWaitersRef.current.get(qrInvoice);
+            if (waiters) {
+              waiters.forEach((fn) => fn(true));
+              payWaitersRef.current.delete(qrInvoice);
+            }
+          }
         }
       } else if (res.status === 404) {
         // stop polling if provider no longer knows about this ref
@@ -656,10 +680,10 @@ export default function App() {
     } catch {
       /* ignore */
     }
-  }, [apiBase, paymentRef]);
+  }, [apiBase, paymentRef, qrInvoice]);
 
   useEffect(() => {
-    if (!qrInvoice || !paymentRef) return;
+    if (!qrInvoice) return;
     setPayWsState('connecting');
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
     const ws = new WebSocket(wsUrl);
@@ -674,15 +698,21 @@ export default function App() {
           setQrStatus('paid');
           setUnlockedPayload('Paid content unlocked');
           setLocked(false);
+          paidInvoicesRef.current.add(pr);
+          const waiters = payWaitersRef.current.get(pr);
+          if (waiters) {
+            waiters.forEach((fn) => fn(true));
+            payWaitersRef.current.delete(pr);
+          }
         }
       } catch {
         // ignore malformed frames
       }
     };
-    const pollId = window.setInterval(pollPayment, 5000);
+    const pollId = paymentRef ? window.setInterval(pollPayment, 5000) : null;
     return () => {
       ws.close();
-      window.clearInterval(pollId);
+      if (pollId) window.clearInterval(pollId);
     };
   }, [qrInvoice, apiBase, paymentRef, pollPayment]);
 
@@ -709,7 +739,32 @@ export default function App() {
   }, []);
 
   const handleUnlocked = useCallback(() => setLocked(false), []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList);
+  const verifyPayment = useCallback(async (pr: string) => {
+    if (!pr) return false;
+    if (paidInvoicesRef.current.has(pr)) return true;
+    return await new Promise<boolean>((resolve) => {
+      const existing = payWaitersRef.current.get(pr) ?? new Set<(ok: boolean) => void>();
+      payWaitersRef.current.set(pr, existing);
+      let settled = false;
+      const timeout = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        existing.delete(resolveFn);
+        if (existing.size === 0) payWaitersRef.current.delete(pr);
+        resolve(false);
+      }, 90_000);
+      const resolveFn = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        existing.delete(resolveFn);
+        if (existing.size === 0) payWaitersRef.current.delete(pr);
+        resolve(ok);
+      };
+      existing.add(resolveFn);
+    });
+  }, []);
+  useMountWidgets(username, amount, relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList, tab, verifyPayment);
 
   const themeStyles = useMemo(
     () =>

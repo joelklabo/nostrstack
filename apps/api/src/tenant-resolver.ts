@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 export async function getTenantForRequest(app: FastifyInstance, request: FastifyRequest) {
-  const host = (request.headers.host || 'default').split(':')[0].toLowerCase();
-  const domain = host || 'default';
+  const hostHeader = (request.headers['x-forwarded-host'] ?? request.headers.host ?? 'default').toString();
+  const domain = hostHeader.split(',')[0].trim().toLowerCase() || 'default';
   const found = await app.prisma.tenant.findUnique({ where: { domain } });
   if (found) return found;
   // Fallback to default tenant to avoid hard failures on new domains; real domains should be provisioned explicitly.

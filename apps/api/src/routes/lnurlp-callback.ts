@@ -85,7 +85,9 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     const charge = await app.lightningProvider.createCharge({
       amount: amountSats,
       description: `nostrstack payment to ${identifier}`,
-      callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(username)}/webhook`
+      callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(username)}/webhook`,
+      // LNbits uses a `webhook` field rather than OpenNode-style callbacks; our webhook handler updates Payment + broadcasts /ws/pay.
+      webhookUrl: `${origin}/api/pay/webhook/lnbits`
     });
 
     await app.prisma.payment.create({
