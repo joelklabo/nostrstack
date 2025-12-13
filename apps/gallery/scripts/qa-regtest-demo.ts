@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { chromium, expect } from '@playwright/test';
+import { chromium, expect, type Page } from '@playwright/test';
 
 type Failure = { kind: string; detail: string };
 
@@ -16,6 +16,17 @@ function isLocalUrl(url: string) {
   } catch {
     return false;
   }
+}
+
+async function payWithTestPayer(page: Page) {
+  const payBtn = page.getByTestId('test-payer-pay');
+  await expect(payBtn).toBeVisible({ timeout: 30_000 });
+  await expect(payBtn).toBeEnabled({ timeout: 30_000 });
+  // The invoice dialog can overlay parts of the page; click via DOM to avoid hit-target flakiness.
+  await payBtn.evaluate((el) => (el as HTMLButtonElement).click());
+  await expect(payBtn).toHaveText(/Paying/i, { timeout: 10_000 });
+  await expect(payBtn).toHaveText(/Pay with test payer/i, { timeout: 30_000 });
+  await expect(payBtn).toBeEnabled({ timeout: 30_000 });
 }
 
 async function main() {
@@ -143,11 +154,7 @@ async function main() {
     }, bolt11);
     const payerInput = page.locator('input[placeholder="Paste BOLT11"]').first();
     await expect(payerInput).toHaveValue(bolt11, { timeout: 10_000 });
-    await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Pay with test payer') as HTMLButtonElement | undefined;
-      if (!btn) throw new Error('Pay with test payer button not found');
-      btn.click();
-    });
+    await payWithTestPayer(page);
     await expect(dialog).toContainText(/Paid|Payment confirmed/i, { timeout: 30_000 });
     await dialog.getByRole('button', { name: 'Close invoice' }).click();
     await expect(dialog).toBeHidden({ timeout: 10_000 });
@@ -163,11 +170,7 @@ async function main() {
       paste?.click();
     }, bolt11Unlock);
     await expect(payerInput).toHaveValue(bolt11Unlock, { timeout: 10_000 });
-    await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Pay with test payer') as HTMLButtonElement | undefined;
-      if (!btn) throw new Error('Pay with test payer button not found');
-      btn.click();
-    });
+    await payWithTestPayer(page);
     await expect(page.getByTestId('unlock-status')).toContainText(/Unlocked/i, { timeout: 30_000 });
     await dialog.getByRole('button', { name: 'Close invoice' }).click();
 
@@ -189,11 +192,7 @@ async function main() {
       paste?.click();
     }, bolt11Real);
     await expect(payerInput).toHaveValue(bolt11Real, { timeout: 10_000 });
-    await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Pay with test payer') as HTMLButtonElement | undefined;
-      if (!btn) throw new Error('Pay with test payer button not found');
-      btn.click();
-    });
+    await payWithTestPayer(page);
     await expect(dialog).toContainText(/Paid|Payment confirmed/i, { timeout: 30_000 });
     await dialog.getByRole('button', { name: 'Close invoice' }).click();
 

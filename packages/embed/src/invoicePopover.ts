@@ -1,55 +1,138 @@
-export function renderInvoicePopover(pr: string) {
+import QRCode from 'qrcode';
+
+import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles, type NostrstackThemeMode } from './styles.js';
+
+export type InvoicePopoverOptions = {
+  mount?: HTMLElement;
+  mode?: NostrstackThemeMode;
+  title?: string;
+  subtitle?: string;
+};
+
+export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {}) {
+  const mount = opts.mount ?? document.body;
+  ensureNostrstackEmbedStyles(mount.ownerDocument);
+
   const overlay = document.createElement('div');
-  overlay.className = 'nostrstack-popover-overlay';
+  overlay.className = 'nostrstack nostrstack-popover-overlay';
+  if (!mount.closest?.('.nostrstack-theme')) {
+    overlay.classList.add('nostrstack-theme');
+    if (opts.mode) overlay.setAttribute('data-nostrstack-theme', opts.mode);
+  }
+  overlay.tabIndex = -1;
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', opts.title ?? 'Invoice');
+
   const pop = document.createElement('div');
   pop.className = 'nostrstack-popover';
+  pop.addEventListener('click', (e) => e.stopPropagation());
+
+  const header = document.createElement('div');
+  header.className = 'nostrstack-popover-header';
+
+  const titleWrap = document.createElement('div');
+  titleWrap.style.display = 'flex';
+  titleWrap.style.flexDirection = 'column';
+  titleWrap.style.gap = '4px';
 
   const title = document.createElement('div');
-  title.className = 'popover-title';
-  title.textContent = 'Lightning Invoice';
+  title.className = 'nostrstack-popover-title';
+  title.textContent = opts.title ?? 'Invoice';
 
-  const qr = document.createElement('img');
-  qr.alt = 'Invoice QR';
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pr)}`;
+  const subtitle = document.createElement('div');
+  subtitle.className = 'nostrstack-popover-sub';
+  subtitle.textContent = opts.subtitle ?? 'Lightning (BOLT11)';
 
-  const code = document.createElement('pre');
-  code.className = 'popover-code';
-  code.textContent = pr;
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-popover-close';
+  closeBtn.type = 'button';
+  closeBtn.textContent = 'Close';
+
+  titleWrap.append(title, subtitle);
+  header.append(titleWrap, closeBtn);
+
+  const grid = document.createElement('div');
+  grid.className = 'nostrstack-popover-grid';
+
+  const qrWrap = document.createElement('div');
+  qrWrap.className = 'nostrstack-qr';
+  const qrImg = document.createElement('img');
+  qrImg.alt = 'Lightning invoice QR';
+  qrImg.decoding = 'async';
+  qrImg.loading = 'lazy';
+  qrWrap.appendChild(qrImg);
+
+  const right = document.createElement('div');
+  right.style.display = 'flex';
+  right.style.flexDirection = 'column';
+  right.style.gap = '10px';
+  right.style.minWidth = '240px';
 
   const actions = document.createElement('div');
-  actions.className = 'popover-actions';
+  actions.className = 'nostrstack-popover-actions';
+
   const copyBtn = document.createElement('button');
-  copyBtn.textContent = 'Copy';
+  copyBtn.className = 'nostrstack-btn nostrstack-btn--sm';
+  copyBtn.type = 'button';
+  copyBtn.textContent = 'Copy invoice';
   copyBtn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(pr);
-      copyBtn.textContent = 'Copied!';
-      setTimeout(() => (copyBtn.textContent = 'Copy'), 1200);
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
     } catch (e) {
-      alert('Copy failed');
+      console.warn('copy failed', e);
+      copyBtn.textContent = 'Copy failed';
+      setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
     }
   };
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Close';
-  closeBtn.onclick = () => overlay.remove();
-  actions.append(copyBtn, closeBtn);
 
-  pop.append(title, qr, code, actions);
+  const openWallet = document.createElement('a');
+  openWallet.href = `lightning:${pr}`;
+  openWallet.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm';
+  openWallet.textContent = 'Open in wallet';
+  openWallet.rel = 'noreferrer';
+
+  actions.append(copyBtn, openWallet);
+
+  const invoiceBox = document.createElement('div');
+  invoiceBox.className = 'nostrstack-invoice-box';
+  const code = document.createElement('code');
+  code.className = 'nostrstack-code';
+  code.textContent = pr;
+  invoiceBox.appendChild(code);
+
+  right.append(actions, invoiceBox);
+  grid.append(qrWrap, right);
+
+  pop.append(header, grid);
   overlay.appendChild(pop);
+
+  const remove = () => overlay.remove();
   overlay.onclick = (e) => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) remove();
   };
-  document.body.appendChild(overlay);
+  closeBtn.onclick = remove;
+
+  const keydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') remove();
+  };
+  overlay.addEventListener('keydown', keydown);
+
+  mount.appendChild(overlay);
+  closeBtn.focus();
+
+  QRCode.toDataURL(pr, { errorCorrectionLevel: 'M', margin: 1, scale: 6 })
+    .then((dataUrl) => {
+      qrImg.src = dataUrl;
+    })
+    .catch((err) => {
+      console.warn('qr gen failed', err);
+    });
+
   return overlay;
 }
 
-export const invoicePopoverStyles = `
-.nostrstack-popover-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.nostrstack-popover { background: #fff; color: #0f172a; border-radius: 16px; padding: 1.2rem; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); text-align: center; }
-.nostrstack-popover .popover-title { font-weight: 700; margin-bottom: 0.75rem; }
-.nostrstack-popover img { border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; background: #f8fafc; }
-.nostrstack-popover .popover-code { white-space: pre-wrap; word-break: break-all; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 12px; font-size: 12px; margin: 0.75rem 0; text-align: left; }
-.nostrstack-popover .popover-actions { display: flex; gap: 0.5rem; justify-content: center; }
-.nostrstack-popover button { border: 1px solid #e2e8f0; background: #0f172a; color: #fff; border-radius: 10px; padding: 0.45rem 0.9rem; cursor: pointer; }
-.nostrstack-popover button:hover { opacity: 0.9; }
-`;
+// For SSR / manual inclusion (includes tokens + base primitives + popover styles).
+export const invoicePopoverStyles = nostrstackEmbedStyles;

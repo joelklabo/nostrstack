@@ -1,9 +1,20 @@
 import { NostrstackClient } from '@nostrstack/sdk';
 
 import { renderInvoicePopover } from './invoicePopover.js';
-export { invoicePopoverStyles,renderInvoicePopover } from './invoicePopover.js';
-export { nostrUserCardStyles,renderNostrUserCard } from './nostrUserCard.js';
-export { relayBadgeStyles,renderRelayBadge, updateRelayBadge } from './relayBadge.js';
+import { renderRelayBadge } from './relayBadge.js';
+import { ensureNostrstackRoot } from './styles.js';
+
+export { invoicePopoverStyles, renderInvoicePopover } from './invoicePopover.js';
+export { nostrUserCardStyles, renderNostrUserCard } from './nostrUserCard.js';
+export { relayBadgeStyles, renderRelayBadge, updateRelayBadge } from './relayBadge.js';
+export {
+  applyNostrstackTheme,
+  ensureNostrstackEmbedStyles,
+  ensureNostrstackRoot,
+  nostrstackComponentsCss,
+  nostrstackEmbedStyles,
+  nostrstackTokensCss
+} from './styles.js';
 export { designTokens } from './tokens/designTokens.js';
 
 type TipWidgetOptions = {
@@ -81,19 +92,22 @@ function setBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments', value: s
 }
 
 export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) {
+  ensureNostrstackRoot(container);
+  container.replaceChildren();
   const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nostrstack-btn nostrstack-btn--primary';
   btn.textContent = opts.text ?? 'Send sats';
   setBrandAttr(btn, 'Tip', opts.username);
   const handler = async () => {
     btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
     try {
       if (isMock(opts)) {
         const mockPr = 'lnbc1mock' + Math.random().toString(16).slice(2, 10);
         await opts.onInvoice?.(mockPr);
         if (!opts.onInvoice) {
-          const pre = document.createElement('pre');
-          pre.textContent = mockPr;
-          container.appendChild(pre);
+          renderInvoicePopover(mockPr, { mount: container, title: 'Invoice', subtitle: 'Mock payment' });
         }
         return;
       }
@@ -105,13 +119,14 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
       if (opts.onInvoice) {
         await opts.onInvoice(invoice.pr);
       } else {
-        renderInvoicePopover(invoice.pr);
+        renderInvoicePopover(invoice.pr, { mount: container, title: 'Invoice', subtitle: `Pay @${opts.username}` });
       }
     } catch (e) {
       console.error('tip error', e);
       alert('Failed to generate invoice');
     } finally {
       btn.disabled = false;
+      btn.removeAttribute('aria-busy');
     }
   };
 
@@ -123,33 +138,52 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
 }
 
 export function renderPayToAction(container: HTMLElement, opts: PayToActionOptions) {
-  const btn = document.createElement('button');
-  btn.textContent = opts.text ?? 'Unlock';
-  const status = document.createElement('div');
-  status.style.marginTop = '0.5rem';
+  ensureNostrstackRoot(container);
+  container.classList.add('nostrstack-card', 'nostrstack-pay');
+  container.replaceChildren();
 
-  const invoiceBox = document.createElement('pre');
-  invoiceBox.style.whiteSpace = 'pre-wrap';
-  invoiceBox.style.wordBreak = 'break-all';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nostrstack-btn nostrstack-btn--primary';
+  btn.textContent = opts.text ?? 'Unlock';
+
+  const status = document.createElement('div');
+  status.className = 'nostrstack-pay-status nostrstack-muted';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+
+  const invoiceBox = document.createElement('div');
+  invoiceBox.className = 'nostrstack-invoice-box';
   invoiceBox.style.display = 'none';
+  const invoiceCode = document.createElement('code');
+  invoiceCode.className = 'nostrstack-code';
+  invoiceBox.appendChild(invoiceCode);
 
   const openWallet = document.createElement('a');
   openWallet.textContent = 'Open in wallet';
+  openWallet.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm';
+  openWallet.rel = 'noreferrer';
   openWallet.style.display = 'none';
 
   const paidBtn = document.createElement('button');
+  paidBtn.type = 'button';
   paidBtn.textContent = "I've paid";
+  paidBtn.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-pay-confirm';
   paidBtn.style.display = 'none';
 
   const unlock = () => {
     status.textContent = 'Unlocked';
     btn.disabled = true;
     paidBtn.disabled = true;
+    container.classList.add('nostrstack-pay--unlocked');
     opts.onUnlock?.();
   };
 
+  let currentInvoice: string | null = null;
+
   const getInvoice = async () => {
     btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
     status.textContent = 'Generating invoice…';
     try {
       const pr = isMock(opts)
@@ -162,7 +196,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
             return invoice.pr;
           })());
 
-      invoiceBox.textContent = pr;
+      currentInvoice = pr;
+      invoiceCode.textContent = pr;
       invoiceBox.style.display = 'block';
       openWallet.href = `lightning:${pr}`;
       openWallet.style.display = 'inline';
@@ -189,6 +224,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       alert('Failed to generate invoice');
     } finally {
       btn.disabled = false;
+      btn.removeAttribute('aria-busy');
     }
   };
 
@@ -196,7 +232,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     try {
       paidBtn.disabled = true;
       if (opts.verifyPayment) {
-        const ok = await opts.verifyPayment(invoiceBox.textContent ?? '');
+        const ok = await opts.verifyPayment(currentInvoice ?? '');
         if (!ok) {
           status.textContent = 'Payment not detected yet';
           paidBtn.disabled = false;
@@ -218,8 +254,10 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   container.appendChild(btn);
   container.appendChild(status);
   container.appendChild(invoiceBox);
-  container.appendChild(openWallet);
-  container.appendChild(paidBtn);
+  const actions = document.createElement('div');
+  actions.className = 'nostrstack-pay-actions';
+  actions.append(openWallet, paidBtn);
+  container.appendChild(actions);
   return btn;
 }
 
@@ -244,6 +282,7 @@ async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
   if (!relayInit) return [];
   const relays = await Promise.all(urls.map(async (url) => {
     const relay = relayInit(url) as RelayConnection;
+    relay.url = relay.url ?? url;
     try {
       await relay.connect();
       return relay;
@@ -256,6 +295,10 @@ async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
 }
 
 export async function renderCommentWidget(container: HTMLElement, opts: CommentWidgetOptions = {}) {
+  ensureNostrstackRoot(container);
+  container.classList.add('nostrstack-card', 'nostrstack-comments');
+  container.replaceChildren();
+
   const isMockMode = opts.relays?.includes('mock');
   let relays = isMockMode ? [] : await connectRelays(opts.relays ?? DEFAULT_RELAYS);
   let mockMode = isMockMode;
@@ -265,7 +308,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     if (opts.relays && opts.relays.length) {
       const note = document.createElement('div');
       note.textContent = 'No relays reachable; using mock comments.';
-      note.style.marginBottom = '0.5rem';
+      note.className = 'nostrstack-muted';
       container.appendChild(note);
     }
     relays = [];
@@ -277,33 +320,39 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     mode: mockMode ? 'mock' : 'real'
   });
 
-  const header = document.createElement('h4');
-  header.textContent = opts.headerText ?? 'Comments';
+  const header = document.createElement('div');
+  header.className = 'nostrstack-comments-header';
+
+  const headerText = document.createElement('div');
+  headerText.className = 'nostrstack-comments-title';
+  headerText.textContent = opts.headerText ?? 'Comments';
+
+  const relayBadge = renderRelayBadge(
+    mockMode ? ['mock'] : relays.map((r) => r.url ?? '').filter(Boolean),
+    mockMode ? 'mock' : 'real'
+  );
+  relayBadge.classList.add('nostrstack-comments-relays');
 
   const list = document.createElement('div');
-  list.style.display = 'flex';
-  list.style.flexDirection = 'column';
-  list.style.gap = '0.5rem';
+  list.className = 'nostrstack-comments-list';
 
   const form = document.createElement('form');
-  form.style.display = 'flex';
-  form.style.flexDirection = 'column';
-  form.style.gap = '0.5rem';
+  form.className = 'nostrstack-comments-form';
   const textarea = document.createElement('textarea');
+  textarea.className = 'nostrstack-textarea';
   textarea.placeholder = opts.placeholder ?? 'Add a comment (Nostr)';
   textarea.required = true;
   textarea.rows = 3;
   const submit = document.createElement('button');
   submit.type = 'submit';
+  submit.className = 'nostrstack-btn nostrstack-btn--primary';
   submit.textContent = 'Post';
   form.appendChild(textarea);
   form.appendChild(submit);
 
   const appendEvent = (ev: NostrEvent) => {
     const row = document.createElement('div');
-    row.style.border = '1px solid #ddd';
-    row.style.padding = '0.5rem';
-    row.style.borderRadius = '6px';
+    row.className = 'nostrstack-comment';
     row.textContent = ev.content;
     list.appendChild(row);
   };
@@ -368,6 +417,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     }
   });
 
+  header.append(headerText, relayBadge);
   container.appendChild(header);
   container.appendChild(list);
   container.appendChild(form);

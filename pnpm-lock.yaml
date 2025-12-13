@@ -258,10 +258,16 @@ importers:
       '@nostrstack/sdk':
         specifier: workspace:*
         version: link:../sdk
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
     devDependencies:
       '@types/node':
         specifier: 22.7.5
         version: 22.7.5
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.6
       jsdom:
         specifier: 24.1.0
         version: 24.1.0
@@ -406,7 +412,6 @@ packages:
   '@beads/bd@0.27.2':
     resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
     engines: {node: '>=14.0.0'}
-    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 

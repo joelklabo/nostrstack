@@ -1049,7 +1049,7 @@ export default function App() {
             value={payerInvoice}
             onChange={(e) => setPayerInvoice(e.target.value)}
           />
-          <button type="button" onClick={payWithTestPayer} disabled={payerStatus === 'paying'}>
+          <button type="button" data-testid="test-payer-pay" onClick={payWithTestPayer} disabled={payerStatus === 'paying'}>
             {payerStatus === 'paying' ? 'Paying…' : 'Pay with test payer'}
           </button>
           <button

@@ -16,7 +16,7 @@ describe('mountTipButton', () => {
   it('copies invoice on click', async () => {
     const host = document.createElement('div');
     const pr = 'lnbc1testinvoice';
-    vi.spyOn(globalThis, 'fetch' as unknown as typeof fetch).mockResolvedValueOnce({
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
     } as Response).mockResolvedValueOnce({
@@ -29,7 +29,7 @@ describe('mountTipButton', () => {
     };
 
     const button = mountTipButton(host, { username: 'alice', amountSats: 5 });
-    await button.onclick?.(new Event('click'));
+    await button.onclick?.(new MouseEvent('click'));
 
     expect(write).toHaveBeenCalledWith(pr);
   });
@@ -43,7 +43,7 @@ describe('mountPayToAction', () => {
   it('copies invoice and unlocks when verify succeeds', async () => {
     const host = document.createElement('div');
     const pr = 'lnbc1payinvoice';
-    vi.spyOn(globalThis, 'fetch' as unknown as typeof fetch).mockResolvedValueOnce({
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
     } as Response).mockResolvedValueOnce({
@@ -64,11 +64,11 @@ describe('mountPayToAction', () => {
       onUnlock
     });
 
-    await button.onclick?.(new Event('click'));
+    await button.onclick?.(new MouseEvent('click'));
 
     // Simulate user confirming payment
-    const confirm = host.querySelector('button:last-of-type') as HTMLButtonElement;
-    await confirm.onclick?.(new Event('click'));
+    const confirm = host.querySelector('.nostrstack-pay-confirm') as HTMLButtonElement;
+    await confirm.onclick?.(new MouseEvent('click'));
 
     expect(write).toHaveBeenCalledWith(pr);
     expect(onUnlock).toHaveBeenCalled();
