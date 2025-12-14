@@ -129,36 +129,113 @@ async function main() {
     await refreshBtn.click();
     // Should return to enabled "Refresh" after any fetch completes.
     await expect(refreshBtn).toBeEnabled({ timeout: 30_000 });
+    await expect(refreshBtn).toHaveText('Refresh', { timeout: 30_000 });
 
     // Custom wallet: paste admin key + reset + save.
-    await page.locator('summary', { hasText: 'Advanced: LNbits wallet override' }).click();
+    const walletOverrideSummary = page.locator('summary', { hasText: 'Advanced: LNbits wallet override' });
+    await walletOverrideSummary.click();
     await page.evaluate(async (k) => navigator.clipboard.writeText(k), adminKey);
     await page.getByRole('button', { name: 'Paste admin key' }).click();
     await page.getByRole('button', { name: 'Save & refresh' }).click();
     await page.getByRole('button', { name: 'Reset to env' }).click();
+    await expect
+      .poll(async () => {
+        return page.evaluate(() => ({
+          url: window.localStorage.getItem('nostrstack.lnbits.url'),
+          key: window.localStorage.getItem('nostrstack.lnbits.key'),
+          readKey: window.localStorage.getItem('nostrstack.lnbits.readKey'),
+          walletId: window.localStorage.getItem('nostrstack.lnbits.walletId.manual')
+        }));
+      })
+      .toEqual({ url: null, key: null, readKey: null, walletId: null });
+    await walletOverrideSummary.click(); // close
 
     // Faucet.
     await page.getByRole('button', { name: 'Add funds (regtest)' }).click();
     await expect(page.getByText(/Funded & mined/i)).toBeVisible({ timeout: 120_000 });
 
     // Config & presets.
+    await page.getByLabel('Amount (sats)').first().fill('6');
     await page
       .getByRole('button', { name: 'Dark' })
       .evaluate((el) => (el as HTMLButtonElement).click());
     await page
       .getByRole('button', { name: 'Light' })
       .evaluate((el) => (el as HTMLButtonElement).click());
+
+    // Brand preset should change primary color.
+    const primaryBefore =
+      (await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('.nostrstack-theme') as HTMLElement).getPropertyValue(
+            '--nostrstack-color-primary'
+          )
+      )) ?? '';
+    const brandSelect = page.getByLabel('Brand preset');
+    await brandSelect.selectOption('emerald');
+    const primaryAfter =
+      (await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('.nostrstack-theme') as HTMLElement).getPropertyValue(
+            '--nostrstack-color-primary'
+          )
+      )) ?? '';
+    expect(primaryAfter.trim()).not.toEqual(primaryBefore.trim());
+
+    // Theme export: copy CSS + vars.
+    const themeExportSummary = page.locator('summary', { hasText: 'Theme export' });
+    await themeExportSummary.click();
+    const selectorInput = page.getByPlaceholder('.nostrstack-theme').first();
+    await selectorInput.fill('.qa-theme');
+    await page.getByRole('button', { name: 'Copy CSS (light+dark)' }).click();
+    await expect(page.getByTestId('toast-region')).toContainText('Copy CSS (light+dark) copied');
+    const cssFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
+    expect(cssFromClipboard).toContain('.qa-theme');
+    await page.getByRole('button', { name: 'Copy vars (json)' }).click();
+    await expect(page.getByTestId('toast-region')).toContainText('Copy vars (json) copied');
+    const varsFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
+    expect(varsFromClipboard).toContain('"--nostrstack-color-primary"');
+    await themeExportSummary.click(); // close
+
+    // Relays: apply defaults, copy, and exercise Add relay (with a duplicate).
+    await page.getByRole('button', { name: 'Use real defaults' }).click();
     const relaysRow = page.getByRole('button', { name: 'Use real defaults' }).locator('..');
     const copyRelaysBtn = relaysRow.getByRole('button').nth(1);
     await copyRelaysBtn.click();
     await expect(page.getByTestId('toast-region')).toContainText('Copy relays copied');
 
-    // Comments: switch relays to mock + post.
     const relaysInput = page.locator('input[placeholder="wss://relay1,wss://relay2"]').first();
+    const relaysBefore = await relaysInput.inputValue();
+    const firstRelay = relaysBefore.split(',').map((s) => s.trim()).filter(Boolean)[0] ?? '';
+    if (firstRelay) {
+      const addRelayInput = page.getByLabel('Add relay URL').first();
+      await addRelayInput.fill(firstRelay);
+      await page.getByRole('button', { name: 'Add relay' }).click();
+      await expect(relaysInput).toHaveValue(relaysBefore);
+    }
+
+    // Nostr: exercise profile + panel controls.
+    await page.getByRole('tab', { name: 'Nostr' }).click();
+    await expect(page.getByText('Comments (Nostr)', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Preview missing state' }).click();
+    await expect(page.getByRole('button', { name: 'Show detected state' })).toBeVisible();
+    await page.getByRole('button', { name: 'Show detected state' }).click();
+    await expect(page.getByRole('button', { name: 'Preview missing state' })).toBeVisible();
+    await page.getByRole('button', { name: 'Re-check' }).click();
+    await page.getByRole('button', { name: 'Request permission' }).click();
+
+    await page.getByRole('button', { name: 'hex' }).first().click();
+    await page.getByRole('button', { name: 'npub' }).first().click();
+    await page.getByRole('button', { name: 'Copy key' }).first().click();
+
+    await page.getByRole('button', { name: 'Clear feed' }).click();
+
+    // Comments: switch relays to mock + post.
+    await page.getByRole('tab', { name: 'Lightning' }).click();
     await relaysInput.fill('mock');
     await page.waitForTimeout(300); // allow remount
     await page.getByRole('tab', { name: 'Nostr' }).click();
-    await expect(page.getByText('Comments (Nostr)', { exact: true })).toBeVisible();
     const commentBox = page.locator('#comments-container textarea').first();
     await commentBox.waitFor({ timeout: 15_000 });
     const comment = `qa-${Date.now()}`;
@@ -205,8 +282,11 @@ async function main() {
     // Request real invoice (API /api/pay) -> recheck status -> pay.
     const requestReal = page.getByRole('button', { name: /Request real invoice/i }).first();
     await requestReal.click();
+    await expect(dialog).toContainText('6 sats', { timeout: 30_000 });
     await expect(page.getByTestId('real-invoice')).toContainText('lnbcrt', { timeout: 30_000 });
     await expect(dialog).toBeVisible({ timeout: 30_000 });
+    await dialog.getByRole('button', { name: 'Copy' }).click();
+    await expect(page.getByTestId('toast-region')).toContainText('Copy copied');
     await page.evaluate(() => {
       const btn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Recheck payment status') as HTMLButtonElement | undefined;
       if (!btn) throw new Error('Recheck payment status button not found');
@@ -231,6 +311,22 @@ async function main() {
     await page.getByLabel('Filter logs').fill('wallet');
     await page.getByText(/Capture frontend console/i).click();
     await page.getByRole('button', { name: 'Clear' }).first().click();
+    await page.getByRole('button', { name: 'Clear' }).nth(1).click();
+    await page.getByText(/Frontend capture on/i).click();
+
+    // Status & build + telemetry controls.
+    await page.getByRole('tab', { name: 'Lightning' }).click();
+    const statusSummary = page.locator('summary', { hasText: 'Status & build' });
+    await statusSummary.scrollIntoViewIfNeeded();
+    await statusSummary.click();
+    const telemetrySummary = page.locator('summary', { hasText: 'Advanced: Telemetry' });
+    await telemetrySummary.click();
+    const wsOverride = page.getByPlaceholder('ws://localhost:4173/api/ws/telemetry').first();
+    await wsOverride.fill('');
+    await wsOverride.blur();
+    await page.getByRole('button', { name: 'Reset WS' }).click();
+    await telemetrySummary.click();
+    await statusSummary.click();
   } catch (err) {
     failures.push({ kind: 'qa', detail: err instanceof Error ? err.stack || err.message : String(err) });
   } finally {
