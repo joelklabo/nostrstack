@@ -88,7 +88,8 @@ function isMock(opts: { baseURL?: string; host?: string }) {
 
 function resolvePayWsUrl(baseURL?: string): string | null {
   if (typeof window === 'undefined') return null;
-  const base = (baseURL ?? '').replace(/\/$/, '');
+  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
+  const base = raw.replace(/\/$/, '');
   if (!base) {
     return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
   }
@@ -96,6 +97,14 @@ function resolvePayWsUrl(baseURL?: string): string | null {
     return `${base.replace(/^http/i, 'ws')}/ws/pay`;
   }
   return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/pay`;
+}
+
+function resolveApiBaseUrl(baseURL?: string) {
+  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
+  const base = raw.replace(/\/$/, '');
+  if (base) return base;
+  if (typeof window === 'undefined') return 'http://localhost:3001';
+  return window.location.origin;
 }
 
 const ATTR_PREFIXES = ['nostrstack'];
@@ -178,7 +187,9 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   container.replaceChildren();
 
   const wsUrl = resolvePayWsUrl(opts.baseURL);
+  const apiBaseUrl = resolveApiBaseUrl(opts.baseURL);
   let payWs: WebSocket | null = null;
+  let pollId: number | null = null;
   let realtimeState: 'idle' | 'connecting' | 'open' | 'error' = 'idle';
   let didUnlock = false;
 
@@ -287,6 +298,17 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   grid.append(qrWrap, right);
   panel.appendChild(grid);
 
+  const stopPoll = () => {
+    if (pollId === null || typeof window === 'undefined') return;
+    try {
+      window.clearInterval(pollId);
+    } catch {
+      /* ignore */
+    } finally {
+      pollId = null;
+    }
+  };
+
   const unlock = () => {
     if (didUnlock) return;
     didUnlock = true;
@@ -299,10 +321,12 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     container.classList.add('nostrstack-pay--unlocked');
     opts.onUnlock?.();
     closePayWs();
+    stopPoll();
     setRealtime('idle');
   };
 
   let currentInvoice: string | null = null;
+  let currentProviderRef: string | null = null;
 
   const setRealtime = (next: typeof realtimeState) => {
     realtimeState = next;
@@ -343,6 +367,35 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     }
   };
 
+  const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
+
+  const pollOnce = async () => {
+    if (!currentProviderRef || didUnlock) return false;
+    try {
+      const domainParam = opts.host ? `?domain=${encodeURIComponent(opts.host)}` : '';
+      const res = await fetch(
+        `${apiBaseUrl}/api/lnurlp/pay/status/${encodeURIComponent(currentProviderRef)}${domainParam}`
+      );
+      if (!res.ok) return false;
+      const body = (await res.json()) as { status?: unknown };
+      const statusStr = String(body.status ?? '').toUpperCase();
+      if (PAID_STATES.has(statusStr)) {
+        unlock();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const startPoll = () => {
+    stopPoll();
+    if (!currentProviderRef || typeof window === 'undefined') return;
+    pollOnce();
+    pollId = window.setInterval(pollOnce, 1500);
+  };
+
   const getInvoice = async () => {
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
@@ -350,15 +403,21 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
     status.classList.add('nostrstack-status--muted');
     try {
-      const pr = isMock(opts)
-        ? 'lnbc1mock' + Math.random().toString(16).slice(2, 10)
-        : (await (async () => {
+      stopPoll();
+      currentProviderRef = null;
+
+      const invoiceRes = isMock(opts)
+        ? { pr: 'lnbc1mock' + Math.random().toString(16).slice(2, 10) }
+        : await (async () => {
             const client = createClient(opts);
             const meta = await client.getLnurlpMetadata(opts.username);
             const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
-            const invoice = await client.getLnurlpInvoice(opts.username, amount);
-            return invoice.pr;
-          })());
+            return await client.getLnurlpInvoice(opts.username, amount);
+          })();
+
+      const pr = invoiceRes.pr;
+      const maybeProviderRef = (invoiceRes as unknown as { provider_ref?: unknown }).provider_ref;
+      currentProviderRef = typeof maybeProviderRef === 'string' ? maybeProviderRef : null;
 
       currentInvoice = pr;
       invoiceCode.textContent = pr;
@@ -394,6 +453,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
         .catch((err) => console.warn('qr gen failed', err));
 
       startRealtime(pr);
+      startPoll();
 
       const verify = opts.verifyPayment;
       if (isMock(opts)) {
@@ -433,6 +493,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       if (!opts.verifyPayment) {
         status.textContent = 'Waiting for payment confirmation…';
         startRealtime(pr);
+        startPoll();
         paidBtn.disabled = false;
         return;
       }

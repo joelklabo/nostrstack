@@ -54,7 +54,8 @@ describe('lnurl webhook', () => {
     expect(inv.statusCode).toBe(200);
     expect(body.pr).toBeTruthy();
 
-    const payment = await server.prisma.payment.findFirstOrThrow();
+    const payment = await server.prisma.payment.findFirstOrThrow({ where: { invoice: body.pr } });
+    expect(body.provider_ref).toBe(payment.providerRef);
 
     const statusRes = await server.inject({ url: `/api/lnurlp/alice/status/${payment.providerRef}` });
     expect(statusRes.statusCode).toBe(200);

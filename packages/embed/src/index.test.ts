@@ -38,6 +38,7 @@ describe('mountTipButton', () => {
 describe('mountPayToAction', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('copies invoice and unlocks when verify succeeds', async () => {
@@ -69,6 +70,53 @@ describe('mountPayToAction', () => {
     // Simulate user confirming payment
     const confirm = host.querySelector('.nostrstack-pay-confirm') as HTMLButtonElement;
     await confirm.onclick?.(new MouseEvent('click'));
+
+    expect(write).toHaveBeenCalledWith(pr);
+    expect(onUnlock).toHaveBeenCalled();
+  });
+
+  it('unlocks via status polling when provider_ref is returned', async () => {
+    vi.useFakeTimers();
+    const host = document.createElement('div');
+    const pr = 'lnbc1payinvoice';
+    const providerRef = 'ref123';
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/.well-known/lnurlp/alice')) {
+        return {
+          ok: true,
+          json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
+        } as Response;
+      }
+      if (url.includes('/api/lnurlp/alice/invoice')) {
+        return {
+          ok: true,
+          json: async () => ({ pr, provider_ref: providerRef })
+        } as Response;
+      }
+      if (url.includes(`/api/lnurlp/pay/status/${providerRef}`)) {
+        return {
+          ok: true,
+          json: async () => ({ status: 'PAID' })
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    const write = vi.fn();
+    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {
+      writeText: write
+    };
+
+    const onUnlock = vi.fn();
+    const button = mountPayToAction(host, {
+      username: 'alice',
+      amountSats: 10,
+      onUnlock
+    });
+
+    await button.onclick?.(new MouseEvent('click'));
+    await vi.advanceTimersByTimeAsync(1500);
 
     expect(write).toHaveBeenCalledWith(pr);
     expect(onUnlock).toHaveBeenCalled();

@@ -104,7 +104,8 @@ export async function registerLnurlCallback(app: FastifyInstance) {
 
     return reply.send({
       pr: charge.invoice,
-      routes: []
+      routes: [],
+      provider_ref: charge.id
     });
   });
 
