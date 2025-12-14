@@ -137,10 +137,24 @@ function normalizeUrl(url: string) {
   return `http://${url}`;
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  subtitle,
+  actions,
+  children
+}: {
+  title: string;
+  subtitle?: React.ReactNode;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="nostrstack-card nostrstack-gallery-card">
-      <h2>{title}</h2>
+      <header className="nostrstack-gallery-card__head">
+        <h2>{title}</h2>
+        {actions ? <div className="nostrstack-gallery-card__actions">{actions}</div> : null}
+      </header>
+      {subtitle ? <div className="nostrstack-gallery-card__subtitle">{subtitle}</div> : null}
       {children}
     </section>
   );
@@ -1035,531 +1049,513 @@ export default function App() {
           data-active={tab === 'lightning' ? 'true' : 'false'}
         >
           {tab === 'lightning' && (
-            <>
-              {paymentRef && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  flexWrap: 'wrap',
-                  marginBottom: '1rem',
-                  alignItems: 'center'
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={pollPayment}
-                  className="nostrstack-btn nostrstack-btn--sm"
-                >
-                  Recheck payment status
-                </button>
-                <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
-                  Ref: <code>{paymentRef.slice(0, 10)}…</code>
-                </span>
-              </div>
-            )}
-
-            <WalletPanel
-              lnbitsUrl={lnbitsUrl}
-              adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
-              visible
-            />
-            <WalletBalance
-              lnbitsUrl={lnbitsUrl}
-              adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
-              readKey={walletReadKey || undefined}
-              walletId={walletIdOverride}
-              apiBase={apiBase}
-              refreshSignal={walletRefresh}
-              onManualRefresh={() => setWalletRefresh((n) => n + 1)}
-              network={networkLabel}
-            />
-
-              <details
-                className="nostrstack-gallery-advanced"
-                style={{ marginBottom: '1rem' }}
-                open={walletOverrideOpen}
-                onToggle={(e) => {
-                  setWalletOverrideOpen((e.currentTarget as HTMLDetailsElement).open);
-                }}
-              >
-                <summary>Advanced: LNbits wallet override</summary>
-                <form
-                  style={{ display: 'grid', gap: '0.4rem' }}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                  }}
-                >
-                  <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
-                    Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API
-                    info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
-                  </div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <input
-                    className="nostrstack-input"
-                    name="lnbitsUrlOverride"
-                    autoComplete="off"
-                    style={{ minWidth: 220, flex: 1 }}
-                    placeholder="LNbits URL (e.g. http://localhost:15001)"
-                    defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
-                    onBlur={(e) => {
-                      const v = e.target.value.trim();
-                      setLnbitsUrlOverride(v || null);
-                      if (typeof window !== 'undefined') {
-                        if (v) window.localStorage.setItem('nostrstack.lnbits.url', v);
-                        else window.localStorage.removeItem('nostrstack.lnbits.url');
-                      }
-                    }}
-                  />
-                  <input
-                    className="nostrstack-input"
-                    name="lnbitsAdminKeyOverride"
-                    style={{ minWidth: 220, flex: 1 }}
-                    placeholder="LNbits admin key"
-                    type="password"
-                    autoComplete="new-password"
-                    ref={adminKeyRef}
-                    defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
-                    onBlur={(e) => {
-                      const v = e.target.value.trim();
-                      setLnbitsKeyOverride(v || null);
-                      if (typeof window !== 'undefined') {
-                        if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
-                        else window.localStorage.removeItem('nostrstack.lnbits.key');
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const txt = await navigator.clipboard.readText();
-                        const v = txt.trim();
-                        if (adminKeyRef.current) adminKeyRef.current.value = v;
-                        setLnbitsKeyOverride(v || null);
-                        if (typeof window !== 'undefined') {
-                          if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
-                          else window.localStorage.removeItem('nostrstack.lnbits.key');
-                        }
-                      } catch {
-                        // ignore clipboard failures
-                      }
-                    }}
-                  >
-                    Paste admin key
-                  </button>
-                  <input
-                    className="nostrstack-input"
-                    name="lnbitsReadKeyOverride"
-                    style={{ minWidth: 220, flex: 1 }}
-                    placeholder="LNbits read key (optional)"
-                    type="password"
-                    autoComplete="new-password"
-                    ref={readKeyRef}
-                    defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
-                    onBlur={(e) => {
-                      const v = e.target.value.trim();
-                      setLnbitsReadKeyOverride(v || null);
-                      if (typeof window !== 'undefined') {
-                        if (v) window.localStorage.setItem('nostrstack.lnbits.readKey', v);
-                        else window.localStorage.removeItem('nostrstack.lnbits.readKey');
-                      }
-                    }}
-                  />
-                  <input
-                    className="nostrstack-input"
-                    name="lnbitsWalletIdOverride"
-                    autoComplete="off"
-                    style={{ minWidth: 160, flex: 1 }}
-                    placeholder="Wallet ID (for ?usr= fallback)"
-                    ref={walletIdRef}
-                    defaultValue={lnbitsWalletIdOverride ?? lnbitsWalletIdEnv ?? ''}
-                    onBlur={(e) => {
-                      const v = e.target.value.trim();
-                      setLnbitsWalletIdOverride(v || null);
-                      if (typeof window !== 'undefined') {
-                        if (v) window.localStorage.setItem('nostrstack.lnbits.walletId.manual', v);
-                        else window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
-                      }
-                    }}
-                  />
-                  <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>
-                    Save & refresh
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLnbitsUrlOverride(null);
-                      setLnbitsKeyOverride(null);
-                      setLnbitsReadKeyOverride(null);
-                      setLnbitsWalletIdOverride(null);
-                      if (typeof window !== 'undefined') {
-                        window.localStorage.removeItem('nostrstack.lnbits.url');
-                        window.localStorage.removeItem('nostrstack.lnbits.key');
-                        window.localStorage.removeItem('nostrstack.lnbits.readKey');
-                        window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
-                      }
-                      setWalletRefresh((n) => n + 1);
-                    }}
-                  >
-                      Reset to env
-                    </button>
-                  </div>
-                </form>
-              </details>
-            <div
-              style={{
-                display: 'grid',
-                gap: '0.4rem',
-                padding: '0.75rem 0.85rem',
-                background:
-                  'color-mix(in oklab, var(--nostrstack-color-primary-soft) 55%, var(--nostrstack-color-surface))',
-                border: `1px solid ${layout.border}`,
-                borderRadius: layout.radius,
-                marginBottom: '1rem'
-              }}
-            >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
-              }}
-            >
-              <strong>Pay an invoice with Test payer (lnd-payer)</strong>
-              <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
-                Prefunded LND node paying outbound; use this to settle demo invoices instantly.
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <input
-                className="nostrstack-input"
-                name="payerInvoice"
-                autoComplete="off"
-                style={{ flex: 1, minWidth: 260 }}
-                placeholder="Paste BOLT11"
-                value={payerInvoice}
-                onChange={(e) => setPayerInvoice(e.target.value)}
-              />
-              <button
-                type="button"
-                data-testid="test-payer-pay"
-                onClick={payWithTestPayer}
-                disabled={payerStatus === 'paying'}
-              >
-                {payerStatus === 'paying' ? 'Paying…' : 'Pay with test payer'}
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const txt = await navigator.clipboard.readText();
-                    setPayerInvoice(txt.trim());
-                  } catch {
-                    setPayerMessage('Clipboard not available');
-                  }
-                }}
-              >
-                Paste
-              </button>
-            </div>
-            {payerMessage && (
-              <div
-                style={{
-                  color:
-                    payerStatus === 'error'
-                      ? 'var(--nostrstack-color-danger)'
-                      : 'var(--nostrstack-color-success)',
-                  fontSize: '0.9rem'
-                }}
-              >
-                {payerMessage}
-              </div>
-            )}
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <FaucetButton apiBase={apiBase} onFunded={() => setWalletRefresh((n) => n + 1)} />
-          </div>
-          <Card title="Config & presets">
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-                gap: '0.75rem'
-              }}
-            >
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <span>Username</span>
-                  <input
-                    className="nostrstack-input"
-                    name="username"
-                    autoComplete="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <span>Amount (sats)</span>
-                  <input
-                    className="nostrstack-input"
-                    name="amountSats"
-                    type="number"
-                    autoComplete="off"
-                    min={1}
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value) || 1)}
-                  />
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <span>Theme</span>
-                <div
-                  role="group"
-                  aria-label="Theme"
-                  style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setTheme('light')}
-                    className="nostrstack-gallery-tabbtn"
-                    aria-pressed={theme === 'light'}
-                  >
-                    Light
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTheme('dark')}
-                    className="nostrstack-gallery-tabbtn"
-                    aria-pressed={theme === 'dark'}
-                  >
-                    Dark
-                  </button>
-                </div>
-              </div>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <span>Brand</span>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <select
-                      className="nostrstack-select"
-                      name="brandPreset"
-                      value={brandPreset}
-                      onChange={(e) => {
-                        const v = e.target.value as NostrstackBrandPreset;
-                        setBrandPreset(v);
-                        if (typeof window !== 'undefined')
-                        window.localStorage.setItem('nostrstack.brand.preset', v);
-                    }}
-                    style={{ flex: 1 }}
-                    aria-label="Brand preset"
-                  >
-                    {Object.entries(nostrstackBrandPresets).map(([key, preset]) => (
-                      <option key={key} value={key}>
-                        {preset.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span
-                    aria-hidden="true"
-                    title="Brand preview"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 999,
-                      border: `1px solid ${layout.border}`,
-                      background:
-                        'linear-gradient(135deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))',
-                      boxShadow: 'var(--nostrstack-shadow-glow)'
-                    }}
-                  />
-                </div>
-              </label>
-            </div>
-
-            <details className="nostrstack-gallery-advanced" style={{ marginTop: '0.75rem' }}>
-              <summary>Theme export</summary>
-              <div style={{ display: 'grid', gap: '0.6rem' }}>
-                <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
-                  Copy a stylesheet snippet to apply this brand anywhere. Target a wrapper that has
-                  the <code>nostrstack-theme</code> class.
-                </div>
-
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <span>CSS selector</span>
-                    <input
-                      className="nostrstack-input"
-                      name="themeExportSelector"
-                      autoComplete="off"
-                      value={themeExportSelector}
-                      onChange={(e) => setThemeExportSelector(e.target.value)}
-                      placeholder=".nostrstack-theme"
-                    />
-                  </label>
-
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <CopyButton text={themeExport.cssBoth} label="Copy CSS (light+dark)" />
-                  <CopyButton text={themeExport.cssLight} label="Copy CSS (light)" />
-                  <CopyButton text={themeExport.cssDark} label="Copy CSS (dark)" />
-                  <CopyButton text={themeExport.varsJson} label="Copy vars (json)" />
-                </div>
-
-                <div style={{ display: 'grid', gap: '0.35rem' }}>
-                  <strong>Preview</strong>
-                  <pre
-                    className="nostrstack-code"
-                    style={{
-                      margin: 0,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      maxHeight: 240,
-                      overflow: 'auto',
-                      background: themeStyles.inset,
-                      border: `1px solid ${layout.border}`,
-                      borderRadius: 'var(--nostrstack-radius-md)',
-                      padding: '0.6rem'
-                    }}
-                  >
-                    {themeExport.cssBoth.trim()}
-                  </pre>
-                </div>
-              </div>
-            </details>
-
-            <div
-              style={{
-                marginTop: '0.75rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.4rem'
-              }}
-            >
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <span>Relays (comments)</span>
-                  <input
-                    className="nostrstack-input"
-                    name="relaysCsv"
-                    autoComplete="off"
-                    style={{ width: '100%' }}
-                    value={relaysCsv}
-                    onChange={(e) => setRelaysCsv(e.target.value)}
-                    placeholder="wss://relay1,wss://relay2"
-                  />
-              </label>
-              <div
-                style={{
-                  display: 'grid',
-                  gap: '0.4rem',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
-                }}
-              >
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
-                >
-                  <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>
-                    Use real defaults
-                  </button>
-                  <CopyButton text={relayLabel} label="Copy relays" />
-                </div>
-                <div
-                  style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
-                >
-                    <input
-                      className="nostrstack-input"
-                      name="relayUrlToAdd"
-                      autoComplete="off"
-                      aria-label="Add relay URL"
-                      placeholder="wss://relay.example"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        const url = (e.target as HTMLInputElement).value.trim();
-                        if (!url) return;
-                        const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
-                        setRelaysList(next);
-                        setRelaysCsv(next.join(','));
-                        (e.target as HTMLInputElement).value = '';
-                      }
-                    }}
-                    style={{ flex: 1, minWidth: 180 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.querySelector<HTMLInputElement>(
-                        'input[aria-label="Add relay URL"]'
-                      );
-                      const url = input?.value.trim();
-                      if (!url) return;
-                      const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
-                      setRelaysList(next);
-                      setRelaysCsv(next.join(','));
-                      if (input) input.value = '';
-                    }}
-                  >
-                    Add relay
-                  </button>
-                </div>
-              </div>
-              <div style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
-                Using: {relayLabel} (real Nostr relays)
-              </div>
-            </div>
-          </Card>
-
-          <div
-            style={{
-              display: 'grid',
-              gap: '1rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
-            }}
-          >
-            <Card title="Tip button">
-              <div style={{ marginBottom: '0.5rem', color: themeStyles.muted }}>
-                LNURLp flow. Request a real invoice from the API.
-              </div>
-              <div id="tip-container" />
-              <div style={{ marginTop: '0.75rem' }}>
-                <button onClick={requestRealInvoice} disabled={realBusy}>
-                  {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
-                </button>
-                {realInvoice && (
-                  <div
-                    data-testid="real-invoice"
-                    style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}
-                  >
-                    <strong>BOLT11</strong>
-                    <pre
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                        background: themeStyles.inset,
-                        border: `1px solid ${layout.border}`,
-                        borderRadius: 'var(--nostrstack-radius-md)',
-                        padding: '0.6rem'
-                      }}
+            <div className="nostrstack-lightning-layout">
+              <div className="nostrstack-lightning-main">
+                {paymentRef && (
+                  <div className="nostrstack-payref">
+                    <button
+                      type="button"
+                      onClick={pollPayment}
+                      className="nostrstack-btn nostrstack-btn--sm"
                     >
-                      {realInvoice}
-                    </pre>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <CopyButton text={realInvoice} label="Copy" />
-                      <a
-                        href={`lightning:${realInvoice}`}
-                        className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
-                        style={{ textDecoration: 'none' }}
-                      >
-                        Open in wallet
-                      </a>
-                    </div>
+                      Recheck payment status
+                    </button>
+                    <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
+                      Ref: <code>{paymentRef.slice(0, 10)}…</code>
+                    </span>
                   </div>
                 )}
-              </div>
-            </Card>
 
-            <Card title="Pay to unlock">
-              <PayToUnlockCard apiBase={apiBase} host={demoHost} amountSats={amount} onPayWsState={setPayWsState} />
-            </Card>
-          </div>
-            </>
+                <Card
+                  title="Quick actions"
+                  subtitle="Settle demo invoices instantly (regtest)."
+                >
+                  <div className="nostrstack-action-grid">
+                    <div className="nostrstack-action-block">
+                      <div className="nostrstack-action-block__head">
+                        <strong>Test payer</strong>
+                        <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
+                          Prefunded LND node paying outbound; use this to settle demo invoices instantly.
+                        </span>
+                      </div>
+                      <div className="nostrstack-action-row">
+                        <input
+                          className="nostrstack-input"
+                          name="payerInvoice"
+                          autoComplete="off"
+                          style={{ flex: 1, minWidth: 260 }}
+                          placeholder="Paste BOLT11"
+                          value={payerInvoice}
+                          onChange={(e) => setPayerInvoice(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          data-testid="test-payer-pay"
+                          onClick={payWithTestPayer}
+                          disabled={payerStatus === 'paying'}
+                        >
+                          {payerStatus === 'paying' ? 'Paying…' : 'Pay with test payer'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const txt = await navigator.clipboard.readText();
+                              setPayerInvoice(txt.trim());
+                            } catch {
+                              setPayerMessage('Clipboard not available');
+                            }
+                          }}
+                        >
+                          Paste
+                        </button>
+                      </div>
+                      {payerMessage && (
+                        <div
+                          className="nostrstack-action-msg"
+                          data-tone={payerStatus === 'error' ? 'danger' : 'success'}
+                        >
+                          {payerMessage}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="nostrstack-action-block nostrstack-action-block--fund">
+                      <div className="nostrstack-action-block__head">
+                        <strong>Fund receiver wallet</strong>
+                        <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
+                          Mines blocks + opens an outbound channel for spending.
+                        </span>
+                      </div>
+                      <FaucetButton apiBase={apiBase} onFunded={() => setWalletRefresh((n) => n + 1)} />
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="nostrstack-lightning-widgets">
+                  <Card
+                    title="Tip button"
+                    subtitle="LNURLp flow. Request a real invoice from the API."
+                  >
+                    <div id="tip-container" />
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <button onClick={requestRealInvoice} disabled={realBusy}>
+                        {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
+                      </button>
+                      {realInvoice && (
+                        <div
+                          data-testid="real-invoice"
+                          style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}
+                        >
+                          <strong>BOLT11</strong>
+                          <pre
+                            style={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              background: themeStyles.inset,
+                              border: `1px solid ${layout.border}`,
+                              borderRadius: 'var(--nostrstack-radius-md)',
+                              padding: '0.6rem'
+                            }}
+                          >
+                            {realInvoice}
+                          </pre>
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <CopyButton text={realInvoice} label="Copy" />
+                            <a
+                              href={`lightning:${realInvoice}`}
+                              className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                              style={{ textDecoration: 'none' }}
+                            >
+                              Open in wallet
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+
+                  <Card title="Pay to unlock">
+                    <PayToUnlockCard apiBase={apiBase} host={demoHost} amountSats={amount} onPayWsState={setPayWsState} />
+                  </Card>
+                </div>
+              </div>
+
+              <aside className="nostrstack-lightning-side">
+                <WalletPanel
+                  lnbitsUrl={lnbitsUrl}
+                  adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+                  visible
+                />
+                <WalletBalance
+                  lnbitsUrl={lnbitsUrl}
+                  adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+                  readKey={walletReadKey || undefined}
+                  walletId={walletIdOverride}
+                  apiBase={apiBase}
+                  refreshSignal={walletRefresh}
+                  onManualRefresh={() => setWalletRefresh((n) => n + 1)}
+                  network={networkLabel}
+                />
+
+                <details
+                  className="nostrstack-gallery-advanced"
+                  style={{ marginBottom: '1rem' }}
+                  open={walletOverrideOpen}
+                  onToggle={(e) => {
+                    setWalletOverrideOpen((e.currentTarget as HTMLDetailsElement).open);
+                  }}
+                >
+                  <summary>Advanced: LNbits wallet override</summary>
+                  <form
+                    style={{ display: 'grid', gap: '0.4rem' }}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
+                    <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
+                      Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API
+                      info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <input
+                        className="nostrstack-input"
+                        name="lnbitsUrlOverride"
+                        autoComplete="off"
+                        style={{ minWidth: 220, flex: 1 }}
+                        placeholder="LNbits URL (e.g. http://localhost:15001)"
+                        defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          setLnbitsUrlOverride(v || null);
+                          if (typeof window !== 'undefined') {
+                            if (v) window.localStorage.setItem('nostrstack.lnbits.url', v);
+                            else window.localStorage.removeItem('nostrstack.lnbits.url');
+                          }
+                        }}
+                      />
+                      <input
+                        className="nostrstack-input"
+                        name="lnbitsAdminKeyOverride"
+                        style={{ minWidth: 220, flex: 1 }}
+                        placeholder="LNbits admin key"
+                        type="password"
+                        autoComplete="new-password"
+                        ref={adminKeyRef}
+                        defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          setLnbitsKeyOverride(v || null);
+                          if (typeof window !== 'undefined') {
+                            if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
+                            else window.localStorage.removeItem('nostrstack.lnbits.key');
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const txt = await navigator.clipboard.readText();
+                            const v = txt.trim();
+                            if (adminKeyRef.current) adminKeyRef.current.value = v;
+                            setLnbitsKeyOverride(v || null);
+                            if (typeof window !== 'undefined') {
+                              if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
+                              else window.localStorage.removeItem('nostrstack.lnbits.key');
+                            }
+                          } catch {
+                            // ignore clipboard failures
+                          }
+                        }}
+                      >
+                        Paste admin key
+                      </button>
+                      <input
+                        className="nostrstack-input"
+                        name="lnbitsReadKeyOverride"
+                        style={{ minWidth: 220, flex: 1 }}
+                        placeholder="LNbits read key (optional)"
+                        type="password"
+                        autoComplete="new-password"
+                        ref={readKeyRef}
+                        defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          setLnbitsReadKeyOverride(v || null);
+                          if (typeof window !== 'undefined') {
+                            if (v) window.localStorage.setItem('nostrstack.lnbits.readKey', v);
+                            else window.localStorage.removeItem('nostrstack.lnbits.readKey');
+                          }
+                        }}
+                      />
+                      <input
+                        className="nostrstack-input"
+                        name="lnbitsWalletIdOverride"
+                        autoComplete="off"
+                        style={{ minWidth: 160, flex: 1 }}
+                        placeholder="Wallet ID (for ?usr= fallback)"
+                        ref={walletIdRef}
+                        defaultValue={lnbitsWalletIdOverride ?? lnbitsWalletIdEnv ?? ''}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          setLnbitsWalletIdOverride(v || null);
+                          if (typeof window !== 'undefined') {
+                            if (v) window.localStorage.setItem('nostrstack.lnbits.walletId.manual', v);
+                            else window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
+                          }
+                        }}
+                      />
+                      <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>
+                        Save & refresh
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLnbitsUrlOverride(null);
+                          setLnbitsKeyOverride(null);
+                          setLnbitsReadKeyOverride(null);
+                          setLnbitsWalletIdOverride(null);
+                          if (typeof window !== 'undefined') {
+                            window.localStorage.removeItem('nostrstack.lnbits.url');
+                            window.localStorage.removeItem('nostrstack.lnbits.key');
+                            window.localStorage.removeItem('nostrstack.lnbits.readKey');
+                            window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
+                          }
+                          setWalletRefresh((n) => n + 1);
+                        }}
+                      >
+                        Reset to env
+                      </button>
+                    </div>
+                  </form>
+                </details>
+
+                <Card title="Config & presets">
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span>Username</span>
+                      <input
+                        className="nostrstack-input"
+                        name="username"
+                        autoComplete="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span>Amount (sats)</span>
+                      <input
+                        className="nostrstack-input"
+                        name="amountSats"
+                        type="number"
+                        autoComplete="off"
+                        min={1}
+                        value={amount}
+                        onChange={(e) => setAmount(Number(e.target.value) || 1)}
+                      />
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span>Theme</span>
+                      <div
+                        role="group"
+                        aria-label="Theme"
+                        style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setTheme('light')}
+                          className="nostrstack-gallery-tabbtn"
+                          aria-pressed={theme === 'light'}
+                        >
+                          Light
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTheme('dark')}
+                          className="nostrstack-gallery-tabbtn"
+                          aria-pressed={theme === 'dark'}
+                        >
+                          Dark
+                        </button>
+                      </div>
+                    </div>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span>Brand</span>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <select
+                          className="nostrstack-select"
+                          name="brandPreset"
+                          value={brandPreset}
+                          onChange={(e) => {
+                            const v = e.target.value as NostrstackBrandPreset;
+                            setBrandPreset(v);
+                            if (typeof window !== 'undefined')
+                              window.localStorage.setItem('nostrstack.brand.preset', v);
+                          }}
+                          style={{ flex: 1 }}
+                          aria-label="Brand preset"
+                        >
+                          {Object.entries(nostrstackBrandPresets).map(([key, preset]) => (
+                            <option key={key} value={key}>
+                              {preset.label}
+                            </option>
+                          ))}
+                        </select>
+                        <span
+                          aria-hidden="true"
+                          title="Brand preview"
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 999,
+                            border: `1px solid ${layout.border}`,
+                            background:
+                              'linear-gradient(135deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))',
+                            boxShadow: 'var(--nostrstack-shadow-glow)'
+                          }}
+                        />
+                      </div>
+                    </label>
+                  </div>
+
+                  <details className="nostrstack-gallery-advanced" style={{ marginTop: '0.75rem' }}>
+                    <summary>Theme export</summary>
+                    <div style={{ display: 'grid', gap: '0.6rem' }}>
+                      <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
+                        Copy a stylesheet snippet to apply this brand anywhere. Target a wrapper that has
+                        the <code>nostrstack-theme</code> class.
+                      </div>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <span>CSS selector</span>
+                        <input
+                          className="nostrstack-input"
+                          name="themeExportSelector"
+                          autoComplete="off"
+                          value={themeExportSelector}
+                          onChange={(e) => setThemeExportSelector(e.target.value)}
+                          placeholder=".nostrstack-theme"
+                        />
+                      </label>
+
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <CopyButton text={themeExport.cssBoth} label="Copy CSS (light+dark)" />
+                        <CopyButton text={themeExport.cssLight} label="Copy CSS (light)" />
+                        <CopyButton text={themeExport.cssDark} label="Copy CSS (dark)" />
+                        <CopyButton text={themeExport.varsJson} label="Copy vars (json)" />
+                      </div>
+
+                      <div style={{ display: 'grid', gap: '0.35rem' }}>
+                        <strong>Preview</strong>
+                        <pre
+                          className="nostrstack-code"
+                          style={{
+                            margin: 0,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            maxHeight: 240,
+                            overflow: 'auto',
+                            background: themeStyles.inset,
+                            border: `1px solid ${layout.border}`,
+                            borderRadius: 'var(--nostrstack-radius-md)',
+                            padding: '0.6rem'
+                          }}
+                        >
+                          {themeExport.cssBoth.trim()}
+                        </pre>
+                      </div>
+                    </div>
+                  </details>
+
+                  <div
+                    style={{
+                      marginTop: '0.75rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span>Relays (comments)</span>
+                      <input
+                        className="nostrstack-input"
+                        name="relaysCsv"
+                        autoComplete="off"
+                        style={{ width: '100%' }}
+                        value={relaysCsv}
+                        onChange={(e) => setRelaysCsv(e.target.value)}
+                        placeholder="wss://relay1,wss://relay2"
+                      />
+                    </label>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gap: '0.4rem',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+                      }}
+                    >
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+                      >
+                        <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>
+                          Use real defaults
+                        </button>
+                        <CopyButton text={relayLabel} label="Copy relays" />
+                      </div>
+                      <div
+                        style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
+                      >
+                        <input
+                          className="nostrstack-input"
+                          name="relayUrlToAdd"
+                          autoComplete="off"
+                          aria-label="Add relay URL"
+                          placeholder="wss://relay.example"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const url = (e.target as HTMLInputElement).value.trim();
+                              if (!url) return;
+                              const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
+                              setRelaysList(next);
+                              setRelaysCsv(next.join(','));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }}
+                          style={{ flex: 1, minWidth: 180 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.querySelector<HTMLInputElement>(
+                              'input[aria-label="Add relay URL"]'
+                            );
+                            const url = input?.value.trim();
+                            if (!url) return;
+                            const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
+                            setRelaysList(next);
+                            setRelaysCsv(next.join(','));
+                            if (input) input.value = '';
+                          }}
+                        >
+                          Add relay
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                      Using: {relayLabel} (real Nostr relays)
+                    </div>
+                  </div>
+                </Card>
+              </aside>
+            </div>
           )}
         </section>
 
