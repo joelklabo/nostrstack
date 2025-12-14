@@ -37,7 +37,8 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   const rpcUrl = rpcUrlParsed.toString();
 
   server.on('upgrade', (req, socket, head) => {
-    if (req.url !== '/ws/telemetry') return;
+    const path = (req.url ?? '').split('?')[0] ?? '';
+    if (!path.endsWith('/ws/telemetry')) return;
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit('connection', ws, req);
     });

@@ -7,7 +7,8 @@ export function createPayEventHub(server: FastifyInstance) {
   const wss = new WebSocketServer({ noServer: true });
 
   server.server.on('upgrade', (req, socket, head) => {
-    if (req.url !== '/ws/pay') return;
+    const path = (req.url ?? '').split('?')[0] ?? '';
+    if (!path.endsWith('/ws/pay')) return;
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit('connection', ws, req);
     });
@@ -32,4 +33,3 @@ declare module 'fastify' {
     payEventHub?: { broadcast: (ev: PayEvent) => void };
   }
 }
-

@@ -35,9 +35,7 @@ test.skip('embed tip generates mock invoice', async ({ page }) => {
 
 test.skip('embed pay unlocks content', async ({ page }) => {
   await page.goto('/');
-  const payBtn = page.locator('#pay-container button').first();
-  await payBtn.waitFor({ timeout: 15000 });
-  await payBtn.click();
+  await page.getByTestId('paywall-unlock').click();
   const status = page.getByTestId('unlock-status');
   try {
     await expect(status).toContainText(/unlocked/i, { timeout: 10000 });

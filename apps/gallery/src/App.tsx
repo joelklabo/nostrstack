@@ -3,7 +3,6 @@ import {
   autoMount,
   createNostrstackBrandTheme,
   mountCommentWidget,
-  mountPayToAction,
   mountTipButton,
   type NostrstackBrandPreset,
   nostrstackBrandPresets,
@@ -20,6 +19,7 @@ import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
 import { NostrProfileCard } from './NostrProfileCard';
+import { PayToUnlockCard } from './PayToUnlockCard';
 import { BlockList } from './TelemetryCard';
 import { layout } from './tokens';
 import type { RelayStats } from './types/relay';
@@ -258,29 +258,20 @@ function nip11Url(url: string) {
 function useMountWidgets(
   username: string,
   amount: number,
-  relaysCsv: string,
-  onUnlock: () => void,
-  enableTestSigner: boolean,
   setQrInvoice: (pr: string | null) => void,
   setQrAmount: (n?: number) => void,
-  setUnlockedPayload: (v: string | null) => void,
   setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
   setRelayStats: React.Dispatch<React.SetStateAction<RelayStats>>,
   relaysList: string[],
-  tab: DemoTabKey,
-  verifyPayment: (pr: string) => Promise<boolean>
+  tab: DemoTabKey
 ) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
-    const payHost = document.getElementById('pay-container');
-    const unlockHost = document.getElementById('unlock-status');
     const commentsHost = document.getElementById('comments-container');
     const timeouts: number[] = [];
 
     if (tipHost) tipHost.innerHTML = '';
-    if (payHost) payHost.innerHTML = '';
     if (commentsHost) commentsHost.innerHTML = '';
-    if (unlockHost) unlockHost.textContent = 'Locked';
 
     const tipOpts: Record<string, unknown> = {
       username,
@@ -295,30 +286,6 @@ function useMountWidgets(
     };
     if (tipHost) {
       timeouts.push(window.setTimeout(() => mountTipButton(tipHost, tipOpts), 50));
-    }
-    if (payHost) {
-      timeouts.push(
-        window.setTimeout(() => {
-          mountPayToAction(payHost, {
-            username,
-            amountSats: amount,
-            host: demoHost,
-            baseURL: apiBase,
-            verifyPayment,
-            onInvoice: (pr) => {
-              setQrInvoice(pr);
-              setQrAmount(amount);
-              setQrStatus('pending');
-            },
-            onUnlock: () => {
-              if (unlockHost) unlockHost.textContent = 'Unlocked!';
-              onUnlock?.();
-              setUnlockedPayload('Paid content unlocked');
-              setQrStatus('paid');
-            }
-          });
-        }, 50)
-      );
     }
 
     if (commentsHost) {
@@ -357,7 +324,7 @@ function useMountWidgets(
     return () => {
       timeouts.forEach((id) => window.clearTimeout(id));
     };
-  }, [username, amount, relaysCsv, onUnlock, enableTestSigner, relaysList, tab, verifyPayment]);
+  }, [username, amount, relaysList, tab]);
 }
 
 export default function App() {
@@ -368,7 +335,6 @@ export default function App() {
   const [themeExportSelector, setThemeExportSelector] = useState('.nostrstack-theme');
   const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
   const [relaysList, setRelaysList] = useState<string[]>(relaysEnvDefault);
-  const [locked, setLocked] = useState(true);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
   const [qrInvoice, setQrInvoice] = useState<string | null>(null);
@@ -376,7 +342,6 @@ export default function App() {
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [qrStatus, setQrStatus] = useState<'pending' | 'paid' | 'error'>('pending');
   const [tab, setTab] = useState<DemoTabKey>('lightning');
-  const [, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
   const [lnbitsUrlOverride, setLnbitsUrlOverride] = useState<string | null>(null);
@@ -388,8 +353,6 @@ export default function App() {
   const [payerStatus, setPayerStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
   const [payerMessage, setPayerMessage] = useState<string | null>(null);
   const [payWsState, setPayWsState] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
-  const paidInvoicesRef = useRef<Set<string>>(new Set());
-  const payWaitersRef = useRef<Map<string, Set<(ok: boolean) => void>>>(new Map());
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: 'unknown' },
     { label: 'LNbits', status: 'unknown' }
@@ -455,7 +418,6 @@ export default function App() {
     setQrInvoice(null);
     setQrAmount(undefined);
     setQrStatus('pending');
-    setLocked(true);
   }, []);
 
   useEffect(() => {
@@ -769,10 +731,6 @@ export default function App() {
     if (activePubkey) fetchProfile(activePubkey);
   }, [activePubkey, fetchProfile]);
 
-  useEffect(() => {
-    setLocked(true);
-  }, [username, amount, relaysCsv]);
-
   const handleSendNote = useCallback(async () => {
     try {
       setLastNoteResult(null);
@@ -828,16 +786,6 @@ export default function App() {
           )
         ) {
           setQrStatus('paid');
-          setUnlockedPayload('Paid content unlocked');
-          setLocked(false);
-          if (qrInvoice) {
-            paidInvoicesRef.current.add(qrInvoice);
-            const waiters = payWaitersRef.current.get(qrInvoice);
-            if (waiters) {
-              waiters.forEach((fn) => fn(true));
-              payWaitersRef.current.delete(qrInvoice);
-            }
-          }
         }
       } else if (res.status === 404) {
         // stop polling if provider no longer knows about this ref
@@ -852,26 +800,14 @@ export default function App() {
 
   useEffect(() => {
     if (!qrInvoice) return;
-    setPayWsState('connecting');
     const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
     const ws = new WebSocket(wsUrl);
     const pr = qrInvoice;
-    ws.onopen = () => setPayWsState('open');
-    ws.onerror = () => setPayWsState('error');
-    ws.onclose = () => setPayWsState((prev) => (prev === 'error' ? prev : 'idle'));
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data as string);
         if (msg.type === 'invoice-paid' && msg.pr === pr) {
           setQrStatus('paid');
-          setUnlockedPayload('Paid content unlocked');
-          setLocked(false);
-          paidInvoicesRef.current.add(pr);
-          const waiters = payWaitersRef.current.get(pr);
-          if (waiters) {
-            waiters.forEach((fn) => fn(true));
-            payWaitersRef.current.delete(pr);
-          }
         }
       } catch {
         // ignore malformed frames
@@ -917,47 +853,15 @@ export default function App() {
     };
     fetchHealth();
   }, []);
-
-  const handleUnlocked = useCallback(() => setLocked(false), []);
-  const verifyPayment = useCallback(async (pr: string) => {
-    if (!pr) return false;
-    if (paidInvoicesRef.current.has(pr)) return true;
-    return await new Promise<boolean>((resolve) => {
-      const existing = payWaitersRef.current.get(pr) ?? new Set<(ok: boolean) => void>();
-      payWaitersRef.current.set(pr, existing);
-      let settled = false;
-      const timeout = window.setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        existing.delete(resolveFn);
-        if (existing.size === 0) payWaitersRef.current.delete(pr);
-        resolve(false);
-      }, 90_000);
-      const resolveFn = (ok: boolean) => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timeout);
-        existing.delete(resolveFn);
-        if (existing.size === 0) payWaitersRef.current.delete(pr);
-        resolve(ok);
-      };
-      existing.add(resolveFn);
-    });
-  }, []);
   useMountWidgets(
     username,
     amount,
-    relaysCsv,
-    handleUnlocked,
-    false,
     setQrInvoice,
     setQrAmount,
-    setUnlockedPayload,
     setQrStatus,
     setRelayStats,
     relaysList,
-    tab,
-    verifyPayment
+    tab
   );
 
   const themeStyles = useMemo<ThemeStyles>(
@@ -1027,10 +931,7 @@ export default function App() {
       setPayerStatus('paid');
       setPayerMessage('Paid via test payer');
       setWalletRefresh((n) => n + 1);
-      if (qrInvoice && inv.includes(qrInvoice.slice(0, 12))) {
-        setQrStatus('paid');
-        setLocked(false);
-      }
+      if (qrInvoice && inv.includes(qrInvoice.slice(0, 12))) setQrStatus('paid');
     } catch (err) {
       setPayerStatus('error');
       setPayerMessage(formatError(err));
@@ -1656,53 +1557,7 @@ export default function App() {
             </Card>
 
             <Card title="Pay to unlock">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  flexWrap: 'wrap',
-                  marginBottom: '0.5rem',
-                  color: themeStyles.muted
-                }}
-              >
-                <span>Creates an invoice; unlocks after real payment confirmation.</span>
-                <span
-                  className={
-                    locked ? 'pay-status pay-status--pending' : 'pay-status pay-status--paid'
-                  }
-                >
-                  <span className="dot" />
-                  {locked ? 'Waiting for payment' : 'Unlocked'}
-                </span>
-              </div>
-              <div id="pay-container" />
-              <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
-                {locked ? 'Locked' : 'Unlocked!'}
-              </div>
-              {!locked && (
-                <div
-                  style={{
-                    marginTop: '0.75rem',
-                    background: themeStyles.inset,
-                    border: `1px solid ${layout.border}`,
-                    borderRadius: 'var(--nostrstack-radius-md)',
-                    padding: '0.75rem'
-                  }}
-                >
-                  <strong>Unlocked content:</strong>
-                  <div
-                    style={{
-                      marginTop: '0.35rem',
-                      fontFamily: 'var(--nostrstack-font-mono)',
-                      fontSize: '0.9rem',
-                      color: themeStyles.text
-                    }}
-                  >
-                    secrets/regtest.txt — "The quick brown fox pays 21 sats."
-                  </div>
-                </div>
-              )}
+              <PayToUnlockCard apiBase={apiBase} host={demoHost} amountSats={amount} onPayWsState={setPayWsState} />
             </Card>
           </div>
             </>

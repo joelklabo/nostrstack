@@ -40,8 +40,7 @@ test.describe('regtest demo (real payments + comments)', () => {
     await expect(page.getByTestId('invoice')).toContainText('BOLT11');
 
     // Pay-to-unlock (mock verify)
-    const payBtn = page.locator('#pay-container button').first();
-    await payBtn.click();
+    await page.getByTestId('paywall-unlock').click();
     const unlockStatus = page.getByTestId('unlock-status');
     try {
       await expect(unlockStatus).toContainText(/unlocked/i, { timeout: 3000 });

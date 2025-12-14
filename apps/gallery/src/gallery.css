@@ -420,6 +420,176 @@
   animation: nostrstack-pulse-soft 1.6s infinite;
 }
 
+/* ===== Paywall ===== */
+.nostrstack-paywall {
+  display: grid;
+  gap: var(--nostrstack-space-3);
+}
+
+.nostrstack-paywall__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--nostrstack-space-3);
+  flex-wrap: wrap;
+}
+
+.nostrstack-paywall__title {
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+
+.nostrstack-paywall__subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  color: var(--nostrstack-color-text-muted);
+}
+
+.nostrstack-paywall__badges {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nostrstack-space-2);
+  flex-wrap: wrap;
+}
+
+.nostrstack-paywall__ws {
+  font-size: 0.85rem;
+  color: var(--nostrstack-color-text-muted);
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--nostrstack-color-border);
+  border-radius: var(--nostrstack-radius-pill);
+  background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 55%, transparent);
+  box-shadow: var(--nostrstack-shadow-sm);
+}
+
+.nostrstack-paywall__panel {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--nostrstack-space-3);
+  padding: var(--nostrstack-space-3);
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid var(--nostrstack-color-border);
+  background:
+    radial-gradient(1200px circle at top left, color-mix(in oklab, var(--nostrstack-color-primary) 10%, transparent), transparent 55%),
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--nostrstack-color-surface) 92%, transparent),
+      color-mix(in oklab, var(--nostrstack-color-surface-subtle) 92%, transparent));
+  box-shadow: var(--nostrstack-shadow-lg);
+}
+
+@media (max-width: 560px) {
+  .nostrstack-paywall__panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nostrstack-paywall__qr {
+  display: grid;
+  place-items: center;
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-border) 70%, transparent);
+  background: color-mix(in oklab, var(--nostrstack-color-surface) 85%, transparent);
+  padding: var(--nostrstack-space-3);
+  min-height: 220px;
+}
+
+.nostrstack-paywall__qrimg {
+  width: min(220px, 100%);
+  height: auto;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: white;
+}
+
+.nostrstack-paywall__qrskeleton {
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px dashed var(--nostrstack-color-border);
+  background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 75%, transparent);
+  --nostrstack-pulse-color: var(--nostrstack-color-border-strong);
+  animation: nostrstack-pulse-soft 1.6s infinite;
+}
+
+.nostrstack-paywall__details {
+  display: grid;
+  gap: var(--nostrstack-space-3);
+  align-content: start;
+}
+
+.nostrstack-paywall__row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: var(--nostrstack-space-2);
+  align-items: baseline;
+}
+
+.nostrstack-paywall__k {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nostrstack-color-text-subtle);
+  font-weight: 900;
+}
+
+.nostrstack-paywall__v {
+  font-weight: 750;
+  color: var(--nostrstack-color-text);
+}
+
+.nostrstack-paywall__timer {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--nostrstack-color-text-muted);
+}
+
+.nostrstack-paywall__invoice {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface);
+  font-family: var(--nostrstack-font-mono);
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nostrstack-paywall__actions,
+.nostrstack-paywall__cta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.nostrstack-paywall__error {
+  color: var(--nostrstack-color-danger);
+  font-size: 0.9rem;
+  border-left: 3px solid color-mix(in oklab, var(--nostrstack-color-danger) 75%, transparent);
+  padding-left: 0.65rem;
+}
+
+.nostrstack-paywall__unlocked {
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-success) 10%, var(--nostrstack-color-surface));
+  border-radius: var(--nostrstack-radius-lg);
+  padding: var(--nostrstack-space-3);
+}
+
+.nostrstack-paywall__unlocked-title {
+  font-weight: 950;
+}
+
+.nostrstack-paywall__unlocked-body {
+  margin-top: 0.35rem;
+  font-family: var(--nostrstack-font-mono);
+  font-size: 0.95rem;
+  color: var(--nostrstack-color-text);
+}
+
 @keyframes nostrstack-pulse-soft {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-pulse-color) 45%, transparent); }
   70% { box-shadow: 0 0 0 8px transparent; }

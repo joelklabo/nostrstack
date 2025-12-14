@@ -265,9 +265,10 @@ async function main() {
     await expect(dialog).toBeHidden({ timeout: 10_000 });
 
     // Pay-to-unlock -> invoice -> pay -> unlocked content.
-    await page.locator('#pay-container button').first().click();
-    await expect(dialog).toBeVisible({ timeout: 30_000 });
-    const bolt11Unlock = (await dialog.locator('code').last().textContent())?.trim() ?? '';
+    await page.getByTestId('paywall-unlock').click();
+    const invoiceCode = page.locator('.nostrstack-paywall__invoice').first();
+    await expect(invoiceCode).toBeVisible({ timeout: 30_000 });
+    const bolt11Unlock = (await invoiceCode.getAttribute('title'))?.trim() ?? '';
     expect(bolt11Unlock).toMatch(/^ln/i);
     await page.evaluate(async (invoice) => {
       await navigator.clipboard.writeText(invoice);
@@ -277,7 +278,6 @@ async function main() {
     await expect(payerInput).toHaveValue(bolt11Unlock, { timeout: 10_000 });
     await payWithTestPayer(page);
     await expect(page.getByTestId('unlock-status')).toContainText(/Unlocked/i, { timeout: 30_000 });
-    await dialog.getByRole('button', { name: 'Close invoice' }).click();
 
     // Request real invoice (API /api/pay) -> recheck status -> pay.
     const requestReal = page.getByRole('button', { name: /Request real invoice/i }).first();
