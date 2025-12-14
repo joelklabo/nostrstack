@@ -28,6 +28,10 @@ export const rawBodyPlugin = fp(async (app: FastifyInstance) => {
 });
 
 declare module 'fastify' {
+  interface FastifyContextConfig {
+    rawBody?: boolean;
+  }
+
   interface FastifyRequest {
     rawBody?: string;
   }

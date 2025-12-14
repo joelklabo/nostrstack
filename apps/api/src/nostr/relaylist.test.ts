@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 process.env.NODE_ENV = 'test';
@@ -13,8 +14,9 @@ vi.mock('nostr-tools', async () => {
   const actual = await vi.importActual<typeof import('nostr-tools')>('nostr-tools');
   return {
     ...actual,
-    finalizeEvent: (event: { kind: number } & Record<string, unknown>, _sk: string) => ({
+    finalizeEvent: (event: { kind: number } & Record<string, unknown>, _sk: Uint8Array) => ({
       ...event,
+      pubkey: 'pubkey-test',
       id: `id-${event.kind}`,
       sig: `sig-${event.kind}`
     })
@@ -32,13 +34,7 @@ vi.mock('nostr-tools/relay', () => {
 
       connect = vi.fn();
       close = vi.fn();
-      publish(_event: { kind?: number }) {
-        return {
-          on: (evt: string, cb: () => void) => {
-            if (evt === 'ok') cb();
-          }
-        };
-      }
+      publish = vi.fn(async (_event: { kind?: number }) => 'ok');
     }
   };
 });
@@ -47,7 +43,18 @@ describe('NIP-65 relay list', () => {
   beforeAll(async () => {
     const mod = await import('./nostr-client.js');
     client = mod.NostrClient;
-    instance = new client('1'.repeat(64), console);
+    const log = {
+      child: () => log,
+      level: 'info',
+      fatal: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+      trace: vi.fn(),
+      silent: vi.fn()
+    } as unknown as FastifyBaseLogger;
+    instance = new client('1'.repeat(64), log);
   });
 
   afterAll(() => {

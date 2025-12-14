@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { buildServer as buildServerFn } from '../server.js';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';
@@ -10,7 +11,7 @@ process.env.OP_NODE_WEBHOOK_SECRET = '';
 process.env.NOSTR_SECRET_KEY = '1'.repeat(64);
 process.env.DATABASE_URL = 'file:./tmp-nostr.db';
 
-let server: Awaited<ReturnType<typeof buildServer>>;
+let server: Awaited<ReturnType<typeof buildServerFn>>;
 
 describe('nostr', () => {
   beforeAll(async () => {
@@ -75,7 +76,6 @@ describe('nostr', () => {
     // Override nostr client + relays to avoid network
     // @ts-expect-error override for test
     server.nostrClient = { publish };
-    // @ts-expect-error override
     server.nostrRelays = [];
 
     const res = await server.inject({

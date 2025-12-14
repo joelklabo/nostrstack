@@ -1,17 +1,21 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { type EventTemplate,finalizeEvent, getPublicKey } from 'nostr-tools';
+import { finalizeEvent, type EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
+import { hexToBytes } from 'nostr-tools/utils';
+
+export type PublishTemplate = Pick<EventTemplate, 'kind' | 'tags' | 'content'> &
+  Partial<Pick<EventTemplate, 'created_at'>>;
 
 export type PublishInput = {
-  template: EventTemplate;
+  template: PublishTemplate;
   relays: string[];
 };
 
 export class NostrClient {
-  private readonly pubkey: string;
+  private readonly secretKeyBytes: Uint8Array;
 
-  constructor(private readonly sk: string, private readonly log: FastifyBaseLogger) {
-    this.pubkey = getPublicKey(sk);
+  constructor(secretKey: string, private readonly log: FastifyBaseLogger) {
+    this.secretKeyBytes = hexToBytes(secretKey);
   }
 
   async publishRelayList(relays: string[]) {
@@ -20,8 +24,7 @@ export class NostrClient {
       template: {
         kind: 10002,
         content: '',
-        tags,
-        pubkey: this.pubkey
+        tags
       },
       relays
     });
@@ -30,22 +33,19 @@ export class NostrClient {
   async publish({ template, relays }: PublishInput) {
     const event = finalizeEvent(
       {
-        ...template,
-        created_at: template.created_at ?? Math.floor(Date.now() / 1000),
-        pubkey: template.pubkey ?? this.pubkey
+        kind: template.kind,
+        content: template.content,
+        tags: template.tags,
+        created_at: template.created_at ?? Math.floor(Date.now() / 1000)
       },
-      this.sk
+      this.secretKeyBytes
     );
 
     const results = await Promise.allSettled(
       relays.map(async (url) => {
         const relay = await Relay.connect(url);
         try {
-          await new Promise<void>((resolve, reject) => {
-            const pub = relay.publish(event);
-            pub.on('ok', () => resolve());
-            pub.on('failed', (reason) => reject(new Error(String(reason))));
-          });
+          await relay.publish(event);
           return { url, ok: true };
         } finally {
           relay.close();

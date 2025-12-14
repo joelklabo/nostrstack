@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 import { afterAll,beforeAll, describe, expect, it } from 'vitest';
+import type { buildServer as buildServerFn } from '../server.js';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';
@@ -9,7 +10,7 @@ process.env.LOG_LEVEL = 'error';
 process.env.OP_NODE_WEBHOOK_SECRET = '';
 process.env.DATABASE_URL = 'file:./tmp-lnurl.db';
 
-let server: Awaited<ReturnType<typeof buildServer>>;
+let server: Awaited<ReturnType<typeof buildServerFn>>;
 
 describe('lnurl webhook', () => {
   beforeAll(async () => {

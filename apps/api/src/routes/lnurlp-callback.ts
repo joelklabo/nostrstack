@@ -128,6 +128,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     },
     config: { rawBody: true }
   }, async (request, reply) => {
+    const { username } = request.params as { username: string };
     const { id, status } = request.body as { id: string; status: string };
     const tenant = await getTenantForRequest(app, request);
     const raw = request.rawBody;
@@ -162,7 +163,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     const successStates = ['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED'];
     if (successStates.includes(normalizedStatus) && app.nostrClient && payment.user?.pubkey) {
       const amountMsat = payment.amountSats * 1000;
-      const identifier = `${request.params.username}@${tenant.domain}`;
+      const identifier = `${username}@${tenant.domain}`;
       const tags = [
         ['p', payment.user.pubkey],
         ['bolt11', payment.invoice],

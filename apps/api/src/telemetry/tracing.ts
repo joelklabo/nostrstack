@@ -1,6 +1,6 @@
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
@@ -23,7 +23,7 @@ export function startTracing(env: Env) {
   const traceExporter = env.OTEL_EXPORTER_OTLP_ENDPOINT ? new OTLPTraceExporter(collectorOptions) : undefined;
 
   const sdk = new NodeSDK({
-    resource: new Resource({
+    resource: resourceFromAttributes({
       [SemanticResourceAttributes.SERVICE_NAME]: env.OTEL_SERVICE_NAME,
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: env.NODE_ENV
     }),

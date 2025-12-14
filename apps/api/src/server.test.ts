@@ -6,7 +6,9 @@ process.env.PUBLIC_ORIGIN = 'http://localhost:3001';
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-let server: Awaited<ReturnType<typeof buildServer>>;
+import type { buildServer as buildServerFn } from './server.js';
+
+let server: Awaited<ReturnType<typeof buildServerFn>>;
 
 describe('server', () => {
   beforeAll(async () => {

@@ -20,6 +20,8 @@ type TelemetryEvent =
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
   | { type: 'error'; message: string; time: number };
 
+type TelemetryBlockEvent = Extract<TelemetryEvent, { type: 'block' }>;
+
 export async function registerTelemetryWs(app: FastifyInstance) {
   const server = app.server;
   const wss = new WebSocketServer({ noServer: true });
@@ -48,7 +50,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     });
   };
 
-  let lastEvent: TelemetryEvent | null = null;
+  let lastEvent: TelemetryBlockEvent | null = null;
   let lastErrorEvent: TelemetryEvent | null = null;
 
   const broadcastError = (message: string) => {
@@ -92,7 +94,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   let lastHash: string | null = null;
   let lastBlockTime: number | null = null;
 
-  const fetchBlock = async (height: number): Promise<TelemetryEvent | null> => {
+  const fetchBlock = async (height: number): Promise<TelemetryBlockEvent | null> => {
     try {
       const hash = (await rpcCall('getblockhash', [height])) as string;
       if (!hash) return null;

@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, RouteHandlerMethod } from 'fastify';
 
 type PayResult = {
   payment_hash?: string;
@@ -31,7 +31,7 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
     }
   } as const;
 
-  const handler: Parameters<FastifyInstance['post']>[1] = async (request, reply) => {
+  const handler: RouteHandlerMethod = async (request, reply) => {
     const { invoice } = request.body as { invoice: string };
     if (!invoice || invoice.length < 10) return reply.code(400).send({ ok: false, error: 'invalid_invoice' });
 
