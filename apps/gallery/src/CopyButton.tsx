@@ -34,9 +34,11 @@ export function CopyButton({ text, label = 'Copy', size = 'sm' }: Props) {
         onClick={handleCopy}
         style={{
           padding,
-          background: copied ? '#22c55e' : '#e2e8f0',
-          color: '#0f172a',
-          border: '1px solid #cbd5e1',
+          background: copied ? 'var(--nostrstack-color-success)' : 'var(--nostrstack-color-surface-strong)',
+          color: copied ? 'var(--nostrstack-color-text-on-strong)' : 'var(--nostrstack-color-text)',
+          border: copied
+            ? '1px solid color-mix(in oklab, var(--nostrstack-color-success) 45%, var(--nostrstack-color-border))'
+            : '1px solid var(--nostrstack-color-border-strong)',
           borderRadius: 8,
           fontSize: '0.85rem',
           cursor: 'pointer'
@@ -44,7 +46,7 @@ export function CopyButton({ text, label = 'Copy', size = 'sm' }: Props) {
       >
         {copied ? 'Copied' : label}
       </button>
-      {error && <span style={{ fontSize: '0.8rem', color: '#b91c1c' }}>{error}</span>}
+      {error && <span style={{ fontSize: '0.8rem', color: 'var(--nostrstack-color-danger)' }}>{error}</span>}
     </div>
   );
 }

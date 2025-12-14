@@ -1,0 +1,209 @@
+:where(html, body) {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.nostrstack-gallery) {
+  min-height: 100vh;
+  padding: var(--nostrstack-space-8);
+  background: var(--nostrstack-color-bg);
+  color: var(--nostrstack-color-text);
+}
+
+@media (max-width: 720px) {
+  :where(.nostrstack-gallery) {
+    padding: var(--nostrstack-space-4);
+  }
+}
+
+:where(.nostrstack-gallery) :where(p) {
+  color: var(--nostrstack-color-text-muted);
+}
+
+:where(.nostrstack-gallery) :where(button:not(.nostrstack-btn)) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface);
+  color: var(--nostrstack-color-text);
+  cursor: pointer;
+  transition:
+    transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+    box-shadow var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+    border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+    background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
+  box-shadow: var(--nostrstack-shadow-sm);
+}
+
+:where(.nostrstack-gallery) :where(button:not(.nostrstack-btn)):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--nostrstack-shadow-md);
+  border-color: var(--nostrstack-color-border-strong);
+}
+
+:where(.nostrstack-gallery) :where(button:not(.nostrstack-btn)):active {
+  transform: translateY(0);
+}
+
+:where(.nostrstack-gallery) :where(button:not(.nostrstack-btn)):disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+:where(.nostrstack-gallery) :where(input:not(.nostrstack-input), textarea:not(.nostrstack-textarea), select) {
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface);
+  color: var(--nostrstack-color-text);
+  padding: 0.55rem 0.75rem;
+  transition:
+    border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+    box-shadow var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
+}
+
+:where(.nostrstack-gallery) :where(input:not(.nostrstack-input), textarea:not(.nostrstack-textarea), select):focus {
+  outline: none;
+  box-shadow: var(--nostrstack-shadow-focus);
+  border-color: var(--nostrstack-color-border-strong);
+}
+
+.nostrstack-gallery-card {
+  padding: var(--nostrstack-space-4);
+  margin-bottom: var(--nostrstack-space-4);
+}
+
+.nostrstack-gallery-card :where(h2) {
+  margin-top: 0;
+  margin-bottom: var(--nostrstack-space-3);
+}
+
+.nostrstack-gallery-network {
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--nostrstack-radius-pill);
+  background: linear-gradient(135deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent));
+  color: var(--nostrstack-color-text-on-strong);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: var(--nostrstack-shadow-glow);
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-primary) 35%, var(--nostrstack-color-border));
+}
+
+.relay-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--nostrstack-radius-pill);
+  background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 65%, transparent);
+  color: var(--nostrstack-color-text);
+  font-size: 12px;
+  border: 1px solid var(--nostrstack-color-border);
+}
+
+.relay-pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--nostrstack-radius-pill);
+  background: var(--nostrstack-color-text-subtle);
+  --nostrstack-pulse-color: var(--nostrstack-color-text-subtle);
+  animation: nostrstack-pulse-soft 2s infinite;
+}
+
+.relay-pill .dot.real {
+  background: var(--nostrstack-color-success);
+  --nostrstack-pulse-color: var(--nostrstack-color-success);
+}
+
+.status-dot.pulse {
+  --nostrstack-pulse-color: var(--nostrstack-color-success);
+  animation: nostrstack-pulse-soft 2s infinite;
+}
+
+.relay-chip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--nostrstack-radius-md);
+  min-width: 220px;
+}
+
+.chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--nostrstack-radius-pill);
+  background: var(--nostrstack-color-text-subtle);
+  --nostrstack-pulse-color: var(--nostrstack-color-text-subtle);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-color-text-subtle) 35%, transparent);
+}
+
+.chip-dot.real {
+  background: var(--nostrstack-color-success);
+  --nostrstack-pulse-color: var(--nostrstack-color-success);
+}
+
+.chip-dot.pulse {
+  animation: nostrstack-pulse-soft 1.8s infinite;
+}
+
+.chip-count {
+  font-size: 0.78rem;
+  color: var(--nostrstack-color-text-muted);
+  background: var(--nostrstack-color-surface-strong);
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--nostrstack-radius-pill);
+  border: 1px solid var(--nostrstack-color-border);
+}
+
+.pay-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--nostrstack-radius-pill);
+  font-weight: 800;
+}
+
+.pay-status .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--nostrstack-radius-pill);
+}
+
+.pay-status--pending {
+  background: color-mix(in oklab, var(--nostrstack-color-warning) 14%, var(--nostrstack-color-surface));
+  color: color-mix(in oklab, var(--nostrstack-color-warning) 70%, var(--nostrstack-color-text));
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-warning) 35%, var(--nostrstack-color-border));
+}
+
+.pay-status--pending .dot {
+  background: var(--nostrstack-color-warning);
+  --nostrstack-pulse-color: var(--nostrstack-color-warning);
+  animation: nostrstack-pulse-soft 1.6s infinite;
+}
+
+.pay-status--paid {
+  background: color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface));
+  color: color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text));
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border));
+}
+
+.pay-status--paid .dot {
+  background: var(--nostrstack-color-success);
+  --nostrstack-pulse-color: var(--nostrstack-color-success);
+  animation: nostrstack-pulse-soft 1.6s infinite;
+}
+
+@keyframes nostrstack-pulse-soft {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-pulse-color) 45%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+

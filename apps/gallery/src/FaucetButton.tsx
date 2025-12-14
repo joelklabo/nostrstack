@@ -27,7 +27,7 @@ export function FaucetButton({ apiBase, onFunded }: { apiBase: string; onFunded?
       <button onClick={run} disabled={busy} style={{ padding: '0.55rem 1rem' }}>
         {busy ? 'Funding…' : 'Add funds (regtest)'}
       </button>
-      {msg && <span style={{ fontSize: '0.9rem', color: '#475569' }}>{msg}</span>}
+      {msg && <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>{msg}</span>}
     </div>
   );
 }

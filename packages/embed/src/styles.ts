@@ -136,8 +136,13 @@ export function ensureNostrstackEmbedStyles(doc: Document | undefined = typeof d
 }
 
 export function ensureNostrstackRoot(container: HTMLElement, mode?: NostrstackThemeMode) {
-  container.classList.add('nostrstack', 'nostrstack-theme');
-  if (mode) container.setAttribute('data-nostrstack-theme', mode);
+  container.classList.add('nostrstack');
+  if (mode) {
+    container.classList.add('nostrstack-theme');
+    container.setAttribute('data-nostrstack-theme', mode);
+  } else if (!container.closest?.('.nostrstack-theme')) {
+    container.classList.add('nostrstack-theme');
+  }
   ensureNostrstackEmbedStyles(container.ownerDocument);
 }
 

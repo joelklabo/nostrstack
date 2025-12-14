@@ -16,7 +16,11 @@ import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
 type RelayInfo = { relays: string[]; mode: 'real' | 'mock' };
-type Health = { label: string; status: 'ok' | 'fail' | 'error' | 'skipped' | 'unknown'; detail?: string };
+type Health = {
+  label: string;
+  status: 'ok' | 'fail' | 'error' | 'skipped' | 'unknown';
+  detail?: string;
+};
 type ProfileMeta = {
   name?: string;
   about?: string;
@@ -44,12 +48,17 @@ const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const networkLabel = import.meta.env.VITE_NETWORK ?? 'regtest';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
-  ? relaysEnvRaw.split(',').map((r: string) => r.trim()).filter(Boolean)
+  ? relaysEnvRaw
+      .split(',')
+      .map((r: string) => r.trim())
+      .filter(Boolean)
   : ['wss://relay.damus.io'];
 const lnbitsUrlRaw = import.meta.env.VITE_LNBITS_URL ?? 'http://localhost:15001';
 const lnbitsAdminKey = import.meta.env.VITE_LNBITS_ADMIN_KEY ?? 'set-me';
-const lnbitsReadKeyEnv = (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_READ_KEY ?? '';
-const lnbitsWalletIdEnv = (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_WALLET_ID ?? '';
+const lnbitsReadKeyEnv =
+  (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_READ_KEY ?? '';
+const lnbitsWalletIdEnv =
+  (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_WALLET_ID ?? '';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
 const profileDefault: ProfileMeta = {};
 
@@ -101,10 +110,10 @@ function normalizeUrl(url: string) {
   return `http://${url}`;
 }
 
-function Card({ title, children, themeStyles }: { title: string; children: React.ReactNode; themeStyles: ThemeStyles }) {
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ border: `1px solid ${layout.border}`, borderRadius: layout.radius, padding: layout.cardPadding, marginBottom: '1rem', background: themeStyles.card, color: themeStyles.text, boxShadow: themeStyles.shadow }}>
-      <h2 style={{ marginTop: 0 }}>{title}</h2>
+    <section className="nostrstack-card nostrstack-gallery-card">
+      <h2>{title}</h2>
       {children}
     </section>
   );
@@ -112,17 +121,22 @@ function Card({ title, children, themeStyles }: { title: string; children: React
 
 export type PillTone = 'info' | 'success' | 'warn' | 'muted';
 
-export function Pill({ label, value, tone = 'info', theme }: { label: string; value: string; tone?: PillTone; theme: 'light' | 'dark' }) {
+export function Pill({
+  label,
+  value,
+  tone = 'info'
+}: {
+  label: string;
+  value: string;
+  tone?: PillTone;
+}) {
   const toneColor: Record<PillTone, string> = {
-    info: '#3b82f6',
-    success: '#22c55e',
-    warn: '#f59e0b',
-    muted: '#94a3b8'
+    info: 'var(--nostrstack-color-info)',
+    success: 'var(--nostrstack-color-success)',
+    warn: 'var(--nostrstack-color-warning)',
+    muted: 'var(--nostrstack-color-text-subtle)'
   };
-  const background = theme === 'dark' ? '#111827' : '#fff';
-  const border = `${toneColor[tone]}33`;
-  const textColor = theme === 'dark' ? '#e2e8f0' : '#0f172a';
-  const subColor = theme === 'dark' ? '#cbd5e1' : '#475569';
+  const toneVar = toneColor[tone];
 
   return (
     <span
@@ -132,13 +146,23 @@ export function Pill({ label, value, tone = 'info', theme }: { label: string; va
         gap: '0.4rem',
         padding: '0.4rem 0.75rem',
         borderRadius: 999,
-        border: `1px solid ${border}`,
-        background,
-        color: textColor,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+        border: `1px solid color-mix(in oklab, ${toneVar} 30%, var(--nostrstack-color-border))`,
+        background: 'color-mix(in oklab, var(--nostrstack-color-surface) 92%, transparent)',
+        color: 'var(--nostrstack-color-text)',
+        boxShadow: 'var(--nostrstack-shadow-sm)'
       }}
     >
-      <span style={{ fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: subColor, fontWeight: 700 }}>{label}</span>
+      <span
+        style={{
+          fontSize: '0.7rem',
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          color: 'var(--nostrstack-color-text-subtle)',
+          fontWeight: 800
+        }}
+      >
+        {label}
+      </span>
       <span style={{ fontWeight: 700 }}>{value}</span>
     </span>
   );
@@ -181,7 +205,9 @@ function mergeRelays(prev: string[], next: string[]) {
 }
 
 type NostrRelayInfo = { read?: boolean; write?: boolean };
-type NostrWithRelays = typeof window.nostr & { getRelays?: () => Promise<Record<string, NostrRelayInfo>> };
+type NostrWithRelays = typeof window.nostr & {
+  getRelays?: () => Promise<Record<string, NostrRelayInfo>>;
+};
 
 async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
   try {
@@ -201,14 +227,19 @@ function nip11Url(url: string) {
   return url.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
 }
 
-const tabBtn = (active: boolean, themeStyles: { background: string; color: string; borderColor: string }) => ({
+const tabBtn = (
+  active: boolean,
+  themeStyles: { background: string; color: string; borderColor: string }
+) => ({
   padding: '0.55rem 1.1rem',
-  borderRadius: 10,
+  borderRadius: 'var(--nostrstack-radius-md)',
   border: `1px solid ${themeStyles.borderColor}`,
-  background: active ? '#0ea5e9' : themeStyles.background,
-  color: active ? '#fff' : themeStyles.color,
-  fontWeight: 700,
-  boxShadow: active ? '0 6px 20px rgba(14,165,233,0.25)' : 'none'
+  background: active
+    ? 'linear-gradient(135deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))'
+    : 'var(--nostrstack-color-surface)',
+  color: active ? 'var(--nostrstack-color-text-on-strong)' : themeStyles.color,
+  fontWeight: 800,
+  boxShadow: active ? 'var(--nostrstack-shadow-glow)' : 'var(--nostrstack-shadow-sm)'
 });
 
 function useMountWidgets(
@@ -373,16 +404,25 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const url = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
-    const key = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.key') : null;
-    const readKey = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.readKey') : null;
-    const walletId = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.walletId.manual') : null;
+    const url =
+      typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
+    const key =
+      typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.key') : null;
+    const readKey =
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('nostrstack.lnbits.readKey')
+        : null;
+    const walletId =
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('nostrstack.lnbits.walletId.manual')
+        : null;
     if (url) setLnbitsUrlOverride(url);
     if (key) setLnbitsKeyOverride(key);
     if (readKey) setLnbitsReadKeyOverride(readKey);
     if (walletId) setLnbitsWalletIdOverride(walletId);
     else if (lnbitsWalletIdEnv) setLnbitsWalletIdOverride(lnbitsWalletIdEnv);
-    const tws = typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
+    const tws =
+      typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
     if (tws) setTelemetryWsOverride(tws);
   }, []);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
@@ -409,7 +449,8 @@ export default function App() {
   }, [activePubkey]);
 
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
+    const saved =
+      typeof window !== 'undefined' ? window.localStorage.getItem(RELAY_STORAGE_KEY) : null;
     if (saved) setRelaysCsv(saved);
   }, []);
 
@@ -425,7 +466,10 @@ export default function App() {
     const controller = new AbortController();
     const fetchMeta = async (relay: string) => {
       try {
-        const res = await fetch(nip11Url(relay), { headers: { Accept: 'application/nostr+json' }, signal: controller.signal });
+        const res = await fetch(nip11Url(relay), {
+          headers: { Accept: 'application/nostr+json' },
+          signal: controller.signal
+        });
         if (!res.ok) return;
         const body = await res.json();
         const limitation = body.limitation ?? {};
@@ -533,41 +577,53 @@ export default function App() {
     }
   }, []);
 
-  const fetchProfile = useCallback(async (pk: string) => {
-    if (!pk) return;
-    const target = profileRelays.find(isRelayUrl) ?? relaysEnvDefault.find(isRelayUrl);
-    if (!target) return;
-    setProfileStatus('loading');
-    setNip05Verified(null);
-    try {
-      const relay = await Relay.connect(target);
-      type RelayListFn = (filters: Array<{ kinds: number[]; authors: string[]; limit: number }>) => Promise<NostrEvent[]>;
-      const list = (relay as Relay & { list?: RelayListFn }).list;
-      const evs = (await list?.([{ kinds: [0, 10002], authors: [pk], limit: 2 }])) ?? [];
-      relay.close();
-
-      const metaEv = evs.find((e) => e.kind === 0);
-      if (metaEv?.content) {
-        const meta = JSON.parse(metaEv.content ?? '{}');
-        setProfile(meta);
-        setProfileStatus('ok');
-        if (meta.nip05) verifyNip05(meta.nip05, pk).then(setNip05Verified).catch(() => setNip05Verified(false));
-        else setNip05Verified(null);
-      } else {
-        setProfileStatus('error');
-      }
-
-      const relayEv = evs.find((e) => e.kind === 10002);
-      const relayTags = relayEv?.tags?.filter?.((t: string[]) => t[0] === 'r' && t[1]).map((t: string[]) => t[1]).filter(isRelayUrl) ?? [];
-      if (relayTags.length) {
-        setSignerRelays((prev) => mergeRelays(prev, relayTags));
-      }
-    } catch (err) {
-      console.warn('profile fetch failed', err);
-      setProfileStatus('error');
+  const fetchProfile = useCallback(
+    async (pk: string) => {
+      if (!pk) return;
+      const target = profileRelays.find(isRelayUrl) ?? relaysEnvDefault.find(isRelayUrl);
+      if (!target) return;
+      setProfileStatus('loading');
       setNip05Verified(null);
-    }
-  }, [profileRelays]);
+      try {
+        const relay = await Relay.connect(target);
+        type RelayListFn = (
+          filters: Array<{ kinds: number[]; authors: string[]; limit: number }>
+        ) => Promise<NostrEvent[]>;
+        const list = (relay as Relay & { list?: RelayListFn }).list;
+        const evs = (await list?.([{ kinds: [0, 10002], authors: [pk], limit: 2 }])) ?? [];
+        relay.close();
+
+        const metaEv = evs.find((e) => e.kind === 0);
+        if (metaEv?.content) {
+          const meta = JSON.parse(metaEv.content ?? '{}');
+          setProfile(meta);
+          setProfileStatus('ok');
+          if (meta.nip05)
+            verifyNip05(meta.nip05, pk)
+              .then(setNip05Verified)
+              .catch(() => setNip05Verified(false));
+          else setNip05Verified(null);
+        } else {
+          setProfileStatus('error');
+        }
+
+        const relayEv = evs.find((e) => e.kind === 10002);
+        const relayTags =
+          relayEv?.tags
+            ?.filter?.((t: string[]) => t[0] === 'r' && t[1])
+            .map((t: string[]) => t[1])
+            .filter(isRelayUrl) ?? [];
+        if (relayTags.length) {
+          setSignerRelays((prev) => mergeRelays(prev, relayTags));
+        }
+      } catch (err) {
+        console.warn('profile fetch failed', err);
+        setProfileStatus('error');
+        setNip05Verified(null);
+      }
+    },
+    [profileRelays]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -655,10 +711,16 @@ export default function App() {
   const pollPayment = useCallback(async () => {
     if (!paymentRef) return;
     try {
-      const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef)}`);
+      const res = await fetch(
+        `${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef)}`
+      );
       if (res.ok) {
         const body = await res.json();
-        if (['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'PAID'].includes(String(body.status || '').toUpperCase())) {
+        if (
+          ['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'PAID'].includes(
+            String(body.status || '').toUpperCase()
+          )
+        ) {
           setQrStatus('paid');
           setUnlockedPayload('Paid content unlocked');
           setLocked(false);
@@ -721,15 +783,27 @@ export default function App() {
       // always check against real API
       const results: Health[] = [];
       try {
-        const apiRes = await fetch(apiBase.startsWith('/api') ? '/api/health' : `${apiBase}/health`);
-        results.push({ label: 'API', status: apiRes.ok ? 'ok' : 'fail', detail: `http ${apiRes.status}` });
+        const apiRes = await fetch(
+          apiBase.startsWith('/api') ? '/api/health' : `${apiBase}/health`
+        );
+        results.push({
+          label: 'API',
+          status: apiRes.ok ? 'ok' : 'fail',
+          detail: `http ${apiRes.status}`
+        });
       } catch (err) {
         results.push({ label: 'API', status: 'error', detail: formatError(err) });
       }
       try {
-        const lnRes = await fetch(apiBase.startsWith('/api') ? '/api/health/lnbits' : `${apiBase}/health/lnbits`);
+        const lnRes = await fetch(
+          apiBase.startsWith('/api') ? '/api/health/lnbits' : `${apiBase}/health/lnbits`
+        );
         const body = await lnRes.json();
-        results.push({ label: 'LNbits', status: body.status ?? (lnRes.ok ? 'ok' : 'fail'), detail: body.reason || body.error || `http ${lnRes.status}` });
+        results.push({
+          label: 'LNbits',
+          status: body.status ?? (lnRes.ok ? 'ok' : 'fail'),
+          detail: body.reason || body.error || `http ${lnRes.status}`
+        });
       } catch (err) {
         results.push({ label: 'LNbits', status: 'error', detail: formatError(err) });
       }
@@ -764,41 +838,35 @@ export default function App() {
       existing.add(resolveFn);
     });
   }, []);
-  useMountWidgets(username, amount, relaysCsv, handleUnlocked, false, setQrInvoice, setQrAmount, setUnlockedPayload, setQrStatus, setRelayStats, relaysList, tab, verifyPayment);
-
-  const themeStyles = useMemo(
-    () =>
-      theme === 'dark'
-        ? {
-            background: '#0b1021',
-            card: '#0f172a',
-            inset: '#111827',
-            text: '#e2e8f0',
-            color: '#e2e8f0',
-            muted: '#94a3b8',
-            borderColor: '#1f2937',
-            accent: '#38bdf8',
-            shadow: '0 10px 40px rgba(0,0,0,0.35)'
-          }
-        : {
-            background: '#f8fafc',
-            card: '#fff',
-            inset: '#f8fafc',
-            text: '#0f172a',
-            color: '#0f172a',
-            muted: '#475569',
-            borderColor: '#e2e8f0',
-            accent: '#0ea5e9',
-            shadow: '0 10px 30px rgba(15,23,42,0.08)'
-          },
-    [theme]
+  useMountWidgets(
+    username,
+    amount,
+    relaysCsv,
+    handleUnlocked,
+    false,
+    setQrInvoice,
+    setQrAmount,
+    setUnlockedPayload,
+    setQrStatus,
+    setRelayStats,
+    relaysList,
+    tab,
+    verifyPayment
   );
 
-  const colors = useMemo(
+  const themeStyles = useMemo<ThemeStyles>(
     () => ({
-      subtle: theme === 'dark' ? '#cbd5e1' : '#475569'
+      background: 'var(--nostrstack-color-bg)',
+      card: 'var(--nostrstack-color-surface)',
+      inset: 'var(--nostrstack-color-surface-subtle)',
+      text: 'var(--nostrstack-color-text)',
+      color: 'var(--nostrstack-color-text)',
+      muted: 'var(--nostrstack-color-text-muted)',
+      borderColor: 'var(--nostrstack-color-border)',
+      accent: 'var(--nostrstack-color-primary)',
+      shadow: 'var(--nostrstack-shadow-lg)'
     }),
-    [theme]
+    []
   );
 
   const requestRealInvoice = useCallback(async () => {
@@ -863,65 +931,65 @@ export default function App() {
     }
   }, [payerInvoice, apiBase, qrInvoice]);
 
-  const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4) ? lnbitsAdminKey : '';
+  const walletKeyEnv = (import.meta.env.VITE_LNBITS_ADMIN_KEY ?? '').slice(0, 4)
+    ? lnbitsAdminKey
+    : '';
   const walletKey = (lnbitsKeyOverride ?? walletKeyEnv) || 'set VITE_LNBITS_ADMIN_KEY';
   const walletReadKey = lnbitsReadKeyOverride ?? lnbitsReadKeyEnv ?? '';
   const walletIdOverride = lnbitsWalletIdOverride ?? (lnbitsWalletIdEnv || undefined);
   const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
   const telemetryWsUrl = telemetryWsOverride ?? resolveTelemetryWs(apiBase);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',');
-  const isDark = theme === 'dark';
 
   return (
-    <main
-      style={{
-        padding: '2rem',
-        fontFamily: 'Inter, system-ui, sans-serif',
-        background: themeStyles.background,
-        color: themeStyles.color,
-        minHeight: '100vh'
-      }}
-    >
+    <main className="nostrstack nostrstack-theme nostrstack-gallery" data-nostrstack-theme={theme}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <h1 style={{ marginTop: 0, marginBottom: 0, color: themeStyles.text }}>nostrstack Demo</h1>
-        <span
-          style={{
-            padding: '0.35rem 0.8rem',
-            borderRadius: 999,
-            background: themeStyles.accent,
-            color: isDark ? '#0b1220' : '#e2e8f0',
-            fontWeight: 700,
-            letterSpacing: '0.03em'
-          }}
-        >
-          {network.toUpperCase()}
-        </span>
+        <h1 style={{ marginTop: 0, marginBottom: 0 }}>nostrstack Demo</h1>
+        <span className="nostrstack-gallery-network">{network.toUpperCase()}</span>
       </div>
-      <p style={{ maxWidth: 780, color: themeStyles.muted }}>
-        Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use the relays you set.
+      <p style={{ maxWidth: 780 }}>
+        Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use
+        the relays you set.
       </p>
 
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => setTab('lightning')} style={tabBtn(tab === 'lightning', themeStyles)}>Lightning</button>
-        <button onClick={() => setTab('nostr')} style={tabBtn(tab === 'nostr', themeStyles)}>Nostr</button>
-        <button onClick={() => setTab('logs')} style={tabBtn(tab === 'logs', themeStyles)}>Logs</button>
+        <button
+          onClick={() => setTab('lightning')}
+          style={tabBtn(tab === 'lightning', themeStyles)}
+        >
+          Lightning
+        </button>
+        <button onClick={() => setTab('nostr')} style={tabBtn(tab === 'nostr', themeStyles)}>
+          Nostr
+        </button>
+        <button onClick={() => setTab('logs')} style={tabBtn(tab === 'logs', themeStyles)}>
+          Logs
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <Pill label="Host" value={demoHost} tone="info" theme={theme} />
-        <Pill label="API" value={apiBase} tone="info" theme={theme} />
-        <Pill label="Payments" value="real invoices" tone="success" theme={theme} />
-        <Pill label="Pay WS" value={payWsState} tone={payWsState === 'open' ? 'success' : payWsState === 'connecting' ? 'warn' : 'muted'} theme={theme} />
-        <Pill label="Comments" value="real Nostr" tone="success" theme={theme} />
-        <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" theme={theme} />
+        <Pill label="Host" value={demoHost} tone="info" />
+        <Pill label="API" value={apiBase} tone="info" />
+        <Pill label="Payments" value="real invoices" tone="success" />
+        <Pill
+          label="Pay WS"
+          value={payWsState}
+          tone={payWsState === 'open' ? 'success' : payWsState === 'connecting' ? 'warn' : 'muted'}
+        />
+        <Pill label="Comments" value="real Nostr" tone="success" />
+        <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" />
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <button onClick={pollPayment} style={{ padding: '0.35rem 0.75rem', borderRadius: 8, border: `1px solid ${layout.border}`, background: themeStyles.card, color: themeStyles.text, cursor: 'pointer' }}>
+        <button onClick={pollPayment} className="nostrstack-btn nostrstack-btn--sm">
           Recheck payment status
         </button>
       </div>
 
-      <WalletPanel lnbitsUrl={lnbitsUrl} adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'} visible />
+      <WalletPanel
+        lnbitsUrl={lnbitsUrl}
+        adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+        visible
+      />
       <WalletBalance
         lnbitsUrl={lnbitsUrl}
         adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
@@ -932,10 +1000,21 @@ export default function App() {
         onManualRefresh={() => setWalletRefresh((n) => n + 1)}
         network={networkLabel}
       />
-      <div style={{ display: 'grid', gap: '0.4rem', padding: '0.6rem 0.8rem', background: '#f1f5f9', border: `1px solid ${layout.border}`, borderRadius: layout.radius, marginBottom: '1rem' }}>
+      <div
+        style={{
+          display: 'grid',
+          gap: '0.4rem',
+          padding: '0.6rem 0.8rem',
+          background: themeStyles.inset,
+          border: `1px solid ${layout.border}`,
+          borderRadius: layout.radius,
+          marginBottom: '1rem'
+        }}
+      >
         <strong>Use a custom LNbits wallet</strong>
-        <div style={{ color: '#475569', fontSize: '0.95rem' }}>
-          Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
+        <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
+          Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API info,
+          optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <input
@@ -1014,7 +1093,9 @@ export default function App() {
               }
             }}
           />
-          <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>Save & refresh</button>
+          <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>
+            Save & refresh
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -1036,184 +1117,313 @@ export default function App() {
         </div>
       </div>
       {tab === 'lightning' && (
-      <>
-      <div style={{ display: 'grid', gap: '0.4rem', padding: '0.75rem 0.85rem', background: '#eef2ff', border: `1px solid ${layout.border}`, borderRadius: layout.radius, marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <strong>Pay an invoice with Test payer (lnd-payer)</strong>
-          <span style={{ color: '#475569', fontSize: '0.9rem' }}>Prefunded LND node paying outbound; use this to settle demo invoices instantly.</span>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <input
-            style={{ flex: 1, minWidth: 260 }}
-            placeholder="Paste BOLT11"
-            value={payerInvoice}
-            onChange={(e) => setPayerInvoice(e.target.value)}
-          />
-          <button type="button" data-testid="test-payer-pay" onClick={payWithTestPayer} disabled={payerStatus === 'paying'}>
-            {payerStatus === 'paying' ? 'Paying…' : 'Pay with test payer'}
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                const txt = await navigator.clipboard.readText();
-                setPayerInvoice(txt.trim());
-              } catch {
-                setPayerMessage('Clipboard not available');
-              }
+        <>
+          <div
+            style={{
+              display: 'grid',
+              gap: '0.4rem',
+              padding: '0.75rem 0.85rem',
+              background:
+                'color-mix(in oklab, var(--nostrstack-color-primary-soft) 55%, var(--nostrstack-color-surface))',
+              border: `1px solid ${layout.border}`,
+              borderRadius: layout.radius,
+              marginBottom: '1rem'
             }}
           >
-            Paste
-          </button>
-        </div>
-        {payerMessage && (
-          <div style={{ color: payerStatus === 'error' ? '#b91c1c' : '#166534', fontSize: '0.9rem' }}>{payerMessage}</div>
-        )}
-      </div>
-      <div style={{ marginBottom: '1rem' }}>
-        <FaucetButton apiBase={apiBase} onFunded={() => setWalletRefresh((n) => n + 1)} />
-      </div>
-      <Card title="Config & presets" themeStyles={themeStyles}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <span>Username</span>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} />
-          </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <span>Amount (sats)</span>
-            <input type="number" min={1} value={amount} onChange={(e) => setAmount(Number(e.target.value) || 1)} />
-          </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <span>Theme</span>
-            <div role="group" aria-label="Theme" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setTheme('light')}
-                style={tabBtn(theme === 'light', themeStyles)}
-                aria-pressed={theme === 'light'}
-              >
-                Light
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme('dark')}
-                style={tabBtn(theme === 'dark', themeStyles)}
-                aria-pressed={theme === 'dark'}
-              >
-                Dark
-              </button>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}
+            >
+              <strong>Pay an invoice with Test payer (lnd-payer)</strong>
+              <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
+                Prefunded LND node paying outbound; use this to settle demo invoices instantly.
+              </span>
             </div>
-          </label>
-        </div>
-
-        <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <span>Relays (comments)</span>
-            <input
-              style={{ width: '100%' }}
-              value={relaysCsv}
-              onChange={(e) => setRelaysCsv(e.target.value)}
-              placeholder="wss://relay1,wss://relay2"
-            />
-          </label>
-          <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>Use real defaults</button>
-              <CopyButton text={relayLabel} label="Copy relays" />
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <input
-                aria-label="Add relay URL"
-                placeholder="wss://relay.example"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const url = (e.target as HTMLInputElement).value.trim();
-                    if (!url) return;
-                    const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
-                    setRelaysList(next);
-                    setRelaysCsv(next.join(','));
-                    (e.target as HTMLInputElement).value = '';
-                  }
-                }}
-                style={{ flex: 1, minWidth: 180 }}
+                style={{ flex: 1, minWidth: 260 }}
+                placeholder="Paste BOLT11"
+                value={payerInvoice}
+                onChange={(e) => setPayerInvoice(e.target.value)}
               />
               <button
                 type="button"
-                onClick={() => {
-                  const input = document.querySelector<HTMLInputElement>('input[aria-label="Add relay URL"]');
-                  const url = input?.value.trim();
-                  if (!url) return;
-                  const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
-                  setRelaysList(next);
-                  setRelaysCsv(next.join(','));
-                  if (input) input.value = '';
+                data-testid="test-payer-pay"
+                onClick={payWithTestPayer}
+                disabled={payerStatus === 'paying'}
+              >
+                {payerStatus === 'paying' ? 'Paying…' : 'Pay with test payer'}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const txt = await navigator.clipboard.readText();
+                    setPayerInvoice(txt.trim());
+                  } catch {
+                    setPayerMessage('Clipboard not available');
+                  }
                 }}
               >
-                Add relay
+                Paste
               </button>
             </div>
-          </div>
-          <div style={{ fontSize: '0.9rem', color: '#475569' }}>
-            Using: {relayLabel} (real Nostr relays)
-          </div>
-        </div>
-
-      </Card>
-
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-        <Card title="Tip button" themeStyles={themeStyles}>
-          <div style={{ marginBottom: '0.5rem', color: '#475569' }}>LNURLp flow. Request a real invoice from the API.</div>
-          <div id="tip-container" />
-          <div style={{ marginTop: '0.75rem' }}>
-            <button onClick={requestRealInvoice} disabled={realBusy}>
-              {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
-            </button>
-            {realInvoice && (
-              <div data-testid="real-invoice" style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}>
-                <strong>BOLT11</strong>
-                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.6rem' }}>
-                  {realInvoice}
-                </pre>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <CopyButton text={realInvoice} label="Copy" />
-                  <a href={`lightning:${realInvoice}`} style={{ padding: '0.35rem 0.7rem', borderRadius: 10, border: '1px solid #e2e8f0', textDecoration: 'none', color: '#0f172a', background: '#fff' }}>
-                    Open in wallet
-                  </a>
-                </div>
+            {payerMessage && (
+              <div
+                style={{
+                  color:
+                    payerStatus === 'error'
+                      ? 'var(--nostrstack-color-danger)'
+                      : 'var(--nostrstack-color-success)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                {payerMessage}
               </div>
             )}
           </div>
-        </Card>
+          <div style={{ marginBottom: '1rem' }}>
+            <FaucetButton apiBase={apiBase} onFunded={() => setWalletRefresh((n) => n + 1)} />
+          </div>
+          <Card title="Config & presets">
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                gap: '0.75rem'
+              }}
+            >
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span>Username</span>
+                <input value={username} onChange={(e) => setUsername(e.target.value)} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span>Amount (sats)</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value) || 1)}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span>Theme</span>
+                <div
+                  role="group"
+                  aria-label="Theme"
+                  style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setTheme('light')}
+                    style={tabBtn(theme === 'light', themeStyles)}
+                    aria-pressed={theme === 'light'}
+                  >
+                    Light
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('dark')}
+                    style={tabBtn(theme === 'dark', themeStyles)}
+                    aria-pressed={theme === 'dark'}
+                  >
+                    Dark
+                  </button>
+                </div>
+              </label>
+            </div>
 
-        <Card title="Pay to unlock" themeStyles={themeStyles}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem', color: '#475569' }}>
-            <span>Creates an invoice; unlocks after real payment confirmation.</span>
-            <span className={locked ? 'pay-status pay-status--pending' : 'pay-status pay-status--paid'}>
-              <span className="dot" />
-              {locked ? 'Waiting for payment' : 'Unlocked'}
-            </span>
-          </div>
-          <div id="pay-container" />
-          <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
-            {locked ? 'Locked' : 'Unlocked!'}
-          </div>
-          {!locked && (
-            <div style={{ marginTop: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.75rem' }}>
-              <strong>Unlocked content:</strong>
-              <div style={{ marginTop: '0.35rem', fontFamily: 'monospace', fontSize: '0.9rem', color: '#0f172a' }}>
-                secrets/regtest.txt — "The quick brown fox pays 21 sats."
+            <div
+              style={{
+                marginTop: '0.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem'
+              }}
+            >
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span>Relays (comments)</span>
+                <input
+                  style={{ width: '100%' }}
+                  value={relaysCsv}
+                  onChange={(e) => setRelaysCsv(e.target.value)}
+                  placeholder="wss://relay1,wss://relay2"
+                />
+              </label>
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '0.4rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+                }}
+              >
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+                >
+                  <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>
+                    Use real defaults
+                  </button>
+                  <CopyButton text={relayLabel} label="Copy relays" />
+                </div>
+                <div
+                  style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
+                >
+                  <input
+                    aria-label="Add relay URL"
+                    placeholder="wss://relay.example"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const url = (e.target as HTMLInputElement).value.trim();
+                        if (!url) return;
+                        const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
+                        setRelaysList(next);
+                        setRelaysCsv(next.join(','));
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }}
+                    style={{ flex: 1, minWidth: 180 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.querySelector<HTMLInputElement>(
+                        'input[aria-label="Add relay URL"]'
+                      );
+                      const url = input?.value.trim();
+                      if (!url) return;
+                      const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
+                      setRelaysList(next);
+                      setRelaysCsv(next.join(','));
+                      if (input) input.value = '';
+                    }}
+                  >
+                    Add relay
+                  </button>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                Using: {relayLabel} (real Nostr relays)
               </div>
             </div>
-          )}
-        </Card>
-      </div>
-      </>
+          </Card>
+
+          <div
+            style={{
+              display: 'grid',
+              gap: '1rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
+            }}
+          >
+            <Card title="Tip button">
+              <div style={{ marginBottom: '0.5rem', color: themeStyles.muted }}>
+                LNURLp flow. Request a real invoice from the API.
+              </div>
+              <div id="tip-container" />
+              <div style={{ marginTop: '0.75rem' }}>
+                <button onClick={requestRealInvoice} disabled={realBusy}>
+                  {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
+                </button>
+                {realInvoice && (
+                  <div
+                    data-testid="real-invoice"
+                    style={{ marginTop: '0.6rem', display: 'grid', gap: '0.35rem' }}
+                  >
+                    <strong>BOLT11</strong>
+                    <pre
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        background: themeStyles.inset,
+                        border: `1px solid ${layout.border}`,
+                        borderRadius: 'var(--nostrstack-radius-md)',
+                        padding: '0.6rem'
+                      }}
+                    >
+                      {realInvoice}
+                    </pre>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <CopyButton text={realInvoice} label="Copy" />
+                      <a
+                        href={`lightning:${realInvoice}`}
+                        className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        Open in wallet
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card title="Pay to unlock">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap',
+                  marginBottom: '0.5rem',
+                  color: themeStyles.muted
+                }}
+              >
+                <span>Creates an invoice; unlocks after real payment confirmation.</span>
+                <span
+                  className={
+                    locked ? 'pay-status pay-status--pending' : 'pay-status pay-status--paid'
+                  }
+                >
+                  <span className="dot" />
+                  {locked ? 'Waiting for payment' : 'Unlocked'}
+                </span>
+              </div>
+              <div id="pay-container" />
+              <div id="unlock-status" style={{ marginTop: '0.5rem' }} data-testid="unlock-status">
+                {locked ? 'Locked' : 'Unlocked!'}
+              </div>
+              {!locked && (
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    background: themeStyles.inset,
+                    border: `1px solid ${layout.border}`,
+                    borderRadius: 'var(--nostrstack-radius-md)',
+                    padding: '0.75rem'
+                  }}
+                >
+                  <strong>Unlocked content:</strong>
+                  <div
+                    style={{
+                      marginTop: '0.35rem',
+                      fontFamily: 'var(--nostrstack-font-mono)',
+                      fontSize: '0.9rem',
+                      color: themeStyles.text
+                    }}
+                  >
+                    secrets/regtest.txt — "The quick brown fox pays 21 sats."
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+        </>
       )}
 
       {tab === 'nostr' && (
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-          <Card title="Nostr profile" themeStyles={themeStyles}>
+        <div
+          style={{
+            display: 'grid',
+            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
+          }}
+        >
+          <Card title="Nostr profile">
             <NostrProfileCard
               pubkey={activePubkey ?? undefined}
               seckey={undefined}
@@ -1224,14 +1434,46 @@ export default function App() {
               fullProfile={profile}
               nip05Verified={nip05Verified}
             />
-            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', padding: '0.75rem', borderRadius: layout.radius, border: `1px solid ${layout.border}`, background: themeStyles.inset }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ width: 10, height: 10, borderRadius: 999, background: signerReady ? '#22c55e' : '#ef4444' }} />
+            <div
+              style={{
+                marginTop: '0.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.35rem',
+                padding: '0.75rem',
+                borderRadius: layout.radius,
+                border: `1px solid ${layout.border}`,
+                background: themeStyles.inset
+              }}
+            >
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+              >
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 999,
+                    background: signerReady
+                      ? 'var(--nostrstack-color-success)'
+                      : 'var(--nostrstack-color-danger)'
+                  }}
+                />
                 <strong>{signerReady ? 'Signer available' : 'No NIP-07 signer detected'}</strong>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ color: colors.subtle, fontSize: '0.9rem' }}>Pubkey:</span>
-                <code style={{ fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: '100%' }}>{activePubkey ?? '—'}</code>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+              >
+                <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>Pubkey:</span>
+                <code
+                  style={{
+                    fontFamily: 'var(--nostrstack-font-mono)',
+                    wordBreak: 'break-all',
+                    maxWidth: '100%'
+                  }}
+                >
+                  {activePubkey ?? '—'}
+                </code>
               </div>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <span style={{ fontWeight: 600 }}>Demo message</span>
@@ -1239,29 +1481,38 @@ export default function App() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={2}
-                  style={{
-                    borderRadius: layout.radius,
-                    border: `1px solid ${layout.border}`,
-                    padding: '0.6rem',
-                    fontFamily: 'inherit',
-                    resize: 'vertical'
-                  }}
+                  style={{ resize: 'vertical' }}
                 />
               </label>
-              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button type="button" onClick={handleSendNote} disabled={!signerReady} style={{ padding: '0.55rem 1rem' }}>
+              <div
+                style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}
+              >
+                <button
+                  type="button"
+                  className="nostrstack-btn nostrstack-btn--primary"
+                  onClick={handleSendNote}
+                  disabled={!signerReady}
+                >
                   Send signed note
                 </button>
-                <span style={{ fontSize: '0.9rem', color: colors.subtle }}>Relay: {profileRelays[0] ?? '—'}</span>
+                <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                  Relay: {profileRelays[0] ?? '—'}
+                </span>
               </div>
               {lastNoteResult && (
                 <div
                   style={{
                     padding: '0.55rem 0.75rem',
                     borderRadius: layout.radius,
-                    border: `1px solid ${lastNoteOk ? '#22c55e44' : '#ef444444'}`,
-                    background: lastNoteOk ? '#ecfdf3' : '#fef2f2',
-                    color: lastNoteOk ? '#166534' : '#b91c1c',
+                    border: lastNoteOk
+                      ? '1px solid color-mix(in oklab, var(--nostrstack-color-success) 28%, var(--nostrstack-color-border))'
+                      : '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 28%, var(--nostrstack-color-border))',
+                    background: lastNoteOk
+                      ? 'color-mix(in oklab, var(--nostrstack-color-success) 12%, var(--nostrstack-color-surface))'
+                      : 'color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface))',
+                    color: lastNoteOk
+                      ? 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))'
+                      : 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
                     fontSize: '0.9rem'
                   }}
                 >
@@ -1270,7 +1521,7 @@ export default function App() {
               )}
             </div>
           </Card>
-          <Card title="Comments (Nostr)" themeStyles={themeStyles}>
+          <Card title="Comments (Nostr)">
             <CommentsPanel
               relayLabel={relayLabel}
               relaysEnvDefault={relaysEnvDefault}
@@ -1284,43 +1535,91 @@ export default function App() {
       )}
 
       <div style={{ display: tab === 'logs' ? 'block' : 'none' }}>
-        <Card title="Logs" themeStyles={themeStyles}>
-          <div style={{ marginBottom: '0.5rem', color: '#475569', fontSize: '0.95rem' }}>
-            Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures frontend console (toggle to enable).
+        <Card title="Logs">
+          <div style={{ marginBottom: '0.5rem', color: themeStyles.muted, fontSize: '0.95rem' }}>
+            Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures
+            frontend console (toggle to enable).
           </div>
           <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} theme={theme} />
         </Card>
       </div>
 
-      <Card title="Status & build" themeStyles={themeStyles}>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem', color: themeStyles.muted }}>
-          <span>Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} • {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</span>
+      <Card title="Status & build">
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            marginBottom: '0.5rem',
+            color: themeStyles.muted
+          }}
+        >
+          <span>
+            Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} •{' '}
+            {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}
+          </span>
           <span>Host: {demoHost}</span>
           <span>API base: {apiBase}</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.6rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '0.6rem'
+          }}
+        >
           {health.map((h) => {
-            const color = h.status === 'ok' ? '#22c55e' : '#ef4444';
-            const bg = isDark ? themeStyles.inset : '#f8fafc';
+            const color =
+              h.status === 'ok'
+                ? 'var(--nostrstack-color-success)'
+                : h.status === 'unknown' || h.status === 'skipped'
+                  ? 'var(--nostrstack-color-text-subtle)'
+                  : 'var(--nostrstack-color-danger)';
+            const bg = themeStyles.inset;
             return (
-              <div key={h.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 0.75rem', borderRadius: 10, background: bg, border: `1px solid ${themeStyles.borderColor}` }}>
+              <div
+                key={h.label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.6rem 0.75rem',
+                  borderRadius: 'var(--nostrstack-radius-md)',
+                  background: bg,
+                  border: `1px solid ${themeStyles.borderColor}`
+                }}
+              >
                 <span
                   className={h.status === 'ok' ? 'status-dot pulse' : 'status-dot'}
                   style={{ width: 12, height: 12, borderRadius: 999, background: color }}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                   <span style={{ fontWeight: 700 }}>{h.label}</span>
-                  <span style={{ fontSize: '0.9rem', color: '#475569' }}>{h.status}{h.detail ? ` – ${h.detail}` : ''}</span>
+                  <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                    {h.status}
+                    {h.detail ? ` – ${h.detail}` : ''}
+                  </span>
                 </div>
               </div>
             );
           })}
         </div>
-            {tab === 'lightning' && (
+        {tab === 'lightning' && (
           <div style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '0.5rem',
+                flexWrap: 'wrap'
+              }}
+            >
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 240 }}>
-                <span style={{ fontSize: '0.9rem', color: '#475569' }}>Telemetry WS override</span>
+                <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                  Telemetry WS override
+                </span>
                 <input
                   defaultValue={telemetryWsOverride ?? ''}
                   placeholder="ws://localhost:4173/api/ws/telemetry"
@@ -1338,7 +1637,8 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setTelemetryWsOverride(null);
-                  if (typeof window !== 'undefined') window.localStorage.removeItem('nostrstack.telemetry.ws');
+                  if (typeof window !== 'undefined')
+                    window.localStorage.removeItem('nostrstack.telemetry.ws');
                 }}
               >
                 Reset WS
@@ -1349,35 +1649,14 @@ export default function App() {
         )}
       </Card>
 
-      <style>{`
-        button { cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; }
-        button:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(15,23,42,0.12); }
-        input, select, button, textarea { background: ${theme === 'dark' ? '#111827' : '#fff'}; color: ${themeStyles.text}; border: 1px solid ${themeStyles.borderColor}; border-radius: 8px; padding: 0.5rem 0.75rem; transition: border-color 120ms ease, background 120ms ease; }
-        section { border-color: ${themeStyles.borderColor}; }
-        .relay-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'}; color: ${theme === 'dark' ? '#e2e8f0' : '#0f172a'}; font-size: 12px; border: 1px solid ${themeStyles.borderColor}; }
-        .relay-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.6); animation: pulse 2s infinite; }
-        .relay-pill .dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
-        .status-dot.pulse { box-shadow: 0 0 0 0 rgba(34,197,94,0.25); animation: pulse 2s infinite; }
-        .relay-chip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.45rem; padding: 0.45rem 0.6rem; border-radius: 12px; min-width: 220px; }
-        .chip-dot { width: 10px; height: 10px; border-radius: 999px; background: #94a3b8; box-shadow: 0 0 0 0 rgba(148,163,184,0.4); }
-        .chip-dot.real { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-        .chip-dot.pulse { animation: pulse 1.8s infinite; }
-        .chip-count { font-size: 0.78rem; color: #0f172a; background: #e2e8f0; padding: 0.2rem 0.45rem; border-radius: 999px; border: 1px solid #cbd5e1; }
-        .pay-status { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; }
-        .pay-status .dot { width: 10px; height: 10px; border-radius: 999px; }
-        .pay-status--pending { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
-        .pay-status--pending .dot { background: #fb923c; box-shadow: 0 0 0 0 rgba(251,146,60,0.35); animation: pulse 1.6s infinite; }
-        .pay-status--paid { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
-        .pay-status--paid .dot { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.3); animation: pulse 1.6s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        @media (prefers-reduced-motion: reduce) {
-          * { animation: none !important; transition: none !important; }
-        }
-      `}</style>
-
-      {qrInvoice && <InvoicePopover invoice={qrInvoice} amountSats={qrAmount} status={qrStatus} onClose={() => setQrInvoice(null)} />}
+      {qrInvoice && (
+        <InvoicePopover
+          invoice={qrInvoice}
+          amountSats={qrAmount}
+          status={qrStatus}
+          onClose={() => setQrInvoice(null)}
+        />
+      )}
     </main>
   );
 }
