@@ -76,6 +76,8 @@ export function InvoicePopover({
   const stale = status === 'pending' && ageMs > 120000;
   const progress = Math.min(1, ageMs / 120000);
   const displayAmount = useMemo(() => (amountSats ? `${amountSats} sats` : ''), [amountSats]);
+  const titleId = 'nostrstack-invoice-popover-title';
+  const descId = 'nostrstack-invoice-popover-desc';
   const visualState = stale ? 'timeout' : status;
   const toneFg =
     visualState === 'paid'
@@ -116,37 +118,35 @@ export function InvoicePopover({
   };
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
+    <div className="nostrstack-popover-overlay nostrstack-gallery-popover-overlay" onClick={onClose}>
       <style>{pulseCss}</style>
       <div
-        style={cardStyle}
+        className="nostrstack-popover"
         onClick={(e) => e.stopPropagation()}
         aria-live="polite"
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         ref={cardRef}
         tabIndex={-1}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '0.8rem',
-            gap: 12
-          }}
-        >
+        <div className="nostrstack-popover-header">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>Invoice</div>
+            <div className="nostrstack-popover-title" id={titleId}>
+              Invoice
+            </div>
             {displayAmount && (
-              <div style={{ color: 'var(--nostrstack-color-text-muted)', fontWeight: 700 }}>
+              <div className="nostrstack-popover-sub">
                 {displayAmount}
               </div>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={closeBtnStyle}
+            className="nostrstack-btn nostrstack-btn--sm nostrstack-btn--ghost"
+            style={{ borderRadius: 'var(--nostrstack-radius-pill)', padding: '0.25rem 0.6rem' }}
             aria-label="Close invoice"
             ref={closeBtnRef}
           >
@@ -156,21 +156,10 @@ export function InvoicePopover({
 
         <div style={{ display: 'grid', gap: '0.9rem' }}>
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(230px, 260px) 1fr',
-              alignItems: 'center',
-              gap: '1rem'
-            }}
+            className="nostrstack-popover-grid"
           >
             <div
-              style={{
-                padding: '0.6rem',
-                background: 'var(--nostrstack-color-surface-subtle)',
-                borderRadius: 'var(--nostrstack-radius-lg)',
-                border: '1px solid var(--nostrstack-color-border)',
-                boxShadow: 'var(--nostrstack-shadow-md)'
-              }}
+              className="nostrstack-qr"
             >
               <button
                 type="button"
@@ -214,6 +203,7 @@ export function InvoicePopover({
                 )}
               </button>
               <div
+                id={descId}
                 style={{
                   marginTop: 8,
                   textAlign: 'center',
@@ -311,22 +301,20 @@ export function InvoicePopover({
                   </div>
                 </div>
               </div>
-              <a
-                href={`lightning:${invoice}`}
-                className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
-                style={{ textDecoration: 'none' }}
-              >
-                Open in wallet
-              </a>
-              {stale && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="nostrstack-btn nostrstack-btn--sm"
+              <div className="nostrstack-popover-actions">
+                <a
+                  href={`lightning:${invoice}`}
+                  className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                  style={{ textDecoration: 'none' }}
                 >
-                  Dismiss
-                </button>
-              )}
+                  Open in wallet
+                </a>
+                {stale && (
+                  <button type="button" onClick={onClose} className="nostrstack-btn nostrstack-btn--sm">
+                    Dismiss
+                  </button>
+                )}
+              </div>
               {visualState === 'paid' && (
                 <div
                   style={{
@@ -363,7 +351,7 @@ export function InvoicePopover({
             </div>
           </div>
 
-          <div style={invoiceBox}>
+          <div className="nostrstack-invoice-box">
             <div
               style={{
                 display: 'flex',
@@ -375,49 +363,13 @@ export function InvoicePopover({
               <div style={{ fontWeight: 700, color: 'var(--nostrstack-color-text)' }}>BOLT11</div>
               <CopyButton text={invoice} label="Copy" size="sm" />
             </div>
-            <code style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>
-              {invoice}
-            </code>
+            <code className="nostrstack-code">{invoice}</code>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'var(--nostrstack-color-overlay)',
-  backdropFilter: 'blur(4px)',
-  display: 'grid',
-  placeItems: 'center',
-  zIndex: 1000,
-  animation:
-    'nostrstack-fade-in var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard)'
-};
-
-const cardStyle: React.CSSProperties = {
-  background: 'var(--nostrstack-color-surface)',
-  color: 'var(--nostrstack-color-text)',
-  border: '1px solid var(--nostrstack-color-border)',
-  borderRadius: 'var(--nostrstack-radius-lg)',
-  padding: '1.15rem 1.35rem',
-  width: 560,
-  maxWidth: '92vw',
-  boxShadow: 'var(--nostrstack-shadow-lg)',
-  animation:
-    'nostrstack-pop-in var(--nostrstack-motion-enter) var(--nostrstack-motion-ease-emphasized)'
-};
-
-const invoiceBox: React.CSSProperties = {
-  background: 'var(--nostrstack-color-surface-subtle)',
-  border: '1px solid var(--nostrstack-color-border)',
-  borderRadius: 'var(--nostrstack-radius-md)',
-  padding: '0.75rem',
-  maxHeight: 140,
-  overflow: 'auto'
-};
 
 const statusVizWrapper: React.CSSProperties = {
   border: '1px solid var(--nostrstack-color-border)',
@@ -507,14 +459,6 @@ const burst: React.CSSProperties = {
   background:
     'radial-gradient(circle, color-mix(in oklab, var(--nostrstack-color-success) 35%, transparent) 0%, transparent 60%)',
   animation: 'burst 650ms ease-out'
-};
-
-const closeBtnStyle: React.CSSProperties = {
-  border: 'none',
-  background: 'transparent',
-  fontSize: '1.2rem',
-  cursor: 'pointer',
-  color: 'var(--nostrstack-color-text-muted)'
 };
 
 const pulseCss = `

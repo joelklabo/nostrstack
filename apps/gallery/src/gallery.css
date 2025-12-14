@@ -113,6 +113,11 @@
   transform: translateY(0);
 }
 
+.nostrstack-gallery-popover-overlay {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
 .nostrstack-envbar {
   display: flex;
   gap: var(--nostrstack-space-2);
