@@ -6,7 +6,9 @@ import {
   mountPayToAction,
   mountTipButton,
   type NostrstackBrandPreset,
-  nostrstackBrandPresets
+  nostrstackBrandPresets,
+  themeToCss,
+  themeToCssVars
 } from '@nostrstack/embed';
 import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
@@ -362,6 +364,7 @@ export default function App() {
   const [amount, setAmount] = useState(5);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
+  const [themeExportSelector, setThemeExportSelector] = useState('.nostrstack-theme');
   const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
   const [relaysList, setRelaysList] = useState<string[]>(relaysEnvDefault);
   const [locked, setLocked] = useState(true);
@@ -423,6 +426,11 @@ export default function App() {
     if (savedPreset && savedPreset in nostrstackBrandPresets) {
       setBrandPreset(savedPreset as NostrstackBrandPreset);
     }
+    const savedSelector =
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('nostrstack.theme.export.selector')
+        : null;
+    if (savedSelector) setThemeExportSelector(savedSelector);
 
     const url =
       typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
@@ -450,6 +458,32 @@ export default function App() {
     if (!el) return;
     applyNostrstackTheme(el, createNostrstackBrandTheme({ preset: brandPreset, mode: theme }));
   }, [brandPreset, theme]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const next = themeExportSelector.trim();
+    if (!next) window.localStorage.removeItem('nostrstack.theme.export.selector');
+    else window.localStorage.setItem('nostrstack.theme.export.selector', next);
+  }, [themeExportSelector]);
+
+  const themeExport = useMemo(() => {
+    const selector = themeExportSelector.trim() || '.nostrstack-theme';
+    const light = createNostrstackBrandTheme({ preset: brandPreset, mode: 'light' });
+    const dark = createNostrstackBrandTheme({ preset: brandPreset, mode: 'dark' });
+    const cssLight = themeToCss(light, selector);
+    const cssDark = themeToCss(dark, selector);
+    const varsJson = JSON.stringify(
+      themeToCssVars(createNostrstackBrandTheme({ preset: brandPreset, mode: theme })),
+      null,
+      2
+    );
+    return {
+      selector,
+      cssLight,
+      cssDark,
+      cssBoth: `${cssLight}${cssDark}`,
+      varsJson
+    };
+  }, [brandPreset, theme, themeExportSelector]);
   useEffect(() => {
     if (walletOverrideAutoOpenRef.current) return;
     const hasOverride =
@@ -1382,6 +1416,53 @@ export default function App() {
                 </div>
               </label>
             </div>
+
+            <details className="nostrstack-gallery-advanced" style={{ marginTop: '0.75rem' }}>
+              <summary>Theme export</summary>
+              <div style={{ display: 'grid', gap: '0.6rem' }}>
+                <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
+                  Copy a stylesheet snippet to apply this brand anywhere. Target a wrapper that has
+                  the <code>nostrstack-theme</code> class.
+                </div>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <span>CSS selector</span>
+                  <input
+                    className="nostrstack-input"
+                    value={themeExportSelector}
+                    onChange={(e) => setThemeExportSelector(e.target.value)}
+                    placeholder=".nostrstack-theme"
+                  />
+                </label>
+
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <CopyButton text={themeExport.cssBoth} label="Copy CSS (light+dark)" />
+                  <CopyButton text={themeExport.cssLight} label="Copy CSS (light)" />
+                  <CopyButton text={themeExport.cssDark} label="Copy CSS (dark)" />
+                  <CopyButton text={themeExport.varsJson} label="Copy vars (json)" />
+                </div>
+
+                <div style={{ display: 'grid', gap: '0.35rem' }}>
+                  <strong>Preview</strong>
+                  <pre
+                    className="nostrstack-code"
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      maxHeight: 240,
+                      overflow: 'auto',
+                      background: themeStyles.inset,
+                      border: `1px solid ${layout.border}`,
+                      borderRadius: 'var(--nostrstack-radius-md)',
+                      padding: '0.6rem'
+                    }}
+                  >
+                    {themeExport.cssBoth.trim()}
+                  </pre>
+                </div>
+              </div>
+            </details>
 
             <div
               style={{
