@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { Badge } from './ui/Badge';
+
 type Props = {
   lnbitsUrl?: string;
   adminKey?: string;
@@ -202,21 +204,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
             <strong>Wallets</strong>
             <ConnectionPill state={loading ? 'checking' : error ? 'error' : wallet ? 'ok' : 'idle'} />
           </div>
-          <span
-            style={{
-              padding: '0.2rem 0.55rem',
-              borderRadius: 'var(--nostrstack-radius-pill)',
-              background:
-                'color-mix(in oklab, var(--nostrstack-color-accent) 12%, var(--nostrstack-color-surface))',
-              color: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
-              border:
-                '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
-              fontWeight: 700,
-              letterSpacing: '0.02em'
-            }}
-          >
-            {(network ?? 'regtest').toUpperCase()}
-          </span>
+          <Badge tone="accent">{(network ?? 'regtest').toUpperCase()}</Badge>
           <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>
             Add funds mines blocks then pays an LNbits invoice so the balance below is real.
           </span>

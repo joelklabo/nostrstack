@@ -1,6 +1,8 @@
 import React from 'react';
 
 import { CopyButton } from './CopyButton';
+import { Badge } from './ui/Badge';
+import { Callout } from './ui/Callout';
 
 export function WalletPanel({
   lnbitsUrl,
@@ -10,22 +12,19 @@ export function WalletPanel({
   lnbitsUrl: string;
   adminKey: string;
   visible?: boolean;
-  }) {
+}) {
   if (!visible) return null;
   return (
-    <div
-      style={{
-        padding: '0.75rem 1rem',
-        background:
-          'color-mix(in oklab, var(--nostrstack-color-accent) 12%, var(--nostrstack-color-surface))',
-        border:
-          '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
-        borderRadius: 'var(--nostrstack-radius-md)',
-        marginBottom: '1rem',
-        color: 'var(--nostrstack-color-text)'
-      }}
+    <Callout
+      tone="accent"
+      style={{ marginBottom: '1rem' }}
+      heading={
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>Test wallet</span>
+          <Badge tone="accent">LNbits regtest</Badge>
+        </span>
+      }
     >
-      <strong>Test wallet (LNbits regtest)</strong>
       <ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
         <li>
           Open LNbits UI:&nbsp;
@@ -45,6 +44,6 @@ export function WalletPanel({
           Create a wallet inside LNbits, then use its Admin key in the widgets (username defaults to the wallet name).
         </li>
       </ul>
-    </div>
+    </Callout>
   );
 }
