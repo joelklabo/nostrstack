@@ -1,3 +1,4 @@
+import { resolvePayWsUrl } from '@nostrstack/embed';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -13,19 +14,6 @@ export type PayToUnlockCardProps = {
   amountSats: number;
   onPayWsState?: (state: PayWsState) => void;
 };
-
-function resolvePayWsUrl(apiBase: string) {
-  const base = apiBase.replace(/\/$/, '');
-  if (typeof window === 'undefined') {
-    // Fallback for SSR/CLI contexts: best-effort.
-    return `wss://localhost:4173${base}/ws/pay`;
-  }
-  if (/^https?:\/\//i.test(base)) {
-    return `${base.replace(/^http/i, 'ws')}/ws/pay`;
-  }
-  const wsOrigin = window.location.origin.replace(/^http/i, 'ws');
-  return `${wsOrigin}${base}/ws/pay`;
-}
 
 function apiUrl(apiBase: string, path: string) {
   const base = apiBase.replace(/\/$/, '');
@@ -123,7 +111,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
   }, [apiBase, host, providerRef, markPaid]);
 
   useEffect(() => {
-    if (!invoice || status !== 'pending') return;
+    if (!invoice || status !== 'pending' || !wsUrl) return;
     setWsState('connecting');
     const ws = new WebSocket(wsUrl);
     let closed = false;

@@ -86,9 +86,10 @@ function isMock(opts: { baseURL?: string; host?: string }) {
   return opts.baseURL === 'mock' || opts.host === 'mock';
 }
 
-function resolvePayWsUrl(baseURL?: string): string | null {
+export function resolvePayWsUrl(baseURL?: string): string | null {
   if (typeof window === 'undefined') return null;
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
+  if (raw === 'mock') return null;
   const base = raw.replace(/\/$/, '');
   if (!base) {
     return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;

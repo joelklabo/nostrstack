@@ -6,6 +6,7 @@ import {
   mountTipButton,
   type NostrstackBrandPreset,
   nostrstackBrandPresets,
+  resolvePayWsUrl,
   themeToCss,
   themeToCssVars
 } from '@nostrstack/embed';
@@ -813,22 +814,24 @@ export default function App() {
 
   useEffect(() => {
     if (!qrInvoice) return;
-    const wsUrl = `${apiBase.replace(/\/$/, '').replace(/^http/, 'ws')}/ws/pay`;
-    const ws = new WebSocket(wsUrl);
+    const wsUrl = resolvePayWsUrl(apiBase);
+    const ws = wsUrl ? new WebSocket(wsUrl) : null;
     const pr = qrInvoice;
-    ws.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data as string);
-        if (msg.type === 'invoice-paid' && msg.pr === pr) {
-          setQrStatus('paid');
+    if (ws) {
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string);
+          if (msg.type === 'invoice-paid' && msg.pr === pr) {
+            setQrStatus('paid');
+          }
+        } catch {
+          // ignore malformed frames
         }
-      } catch {
-        // ignore malformed frames
-      }
-    };
+      };
+    }
     const pollId = paymentRef ? window.setInterval(pollPayment, 5000) : null;
     return () => {
-      ws.close();
+      ws?.close();
       if (pollId) window.clearInterval(pollId);
     };
   }, [qrInvoice, apiBase, paymentRef, pollPayment]);
