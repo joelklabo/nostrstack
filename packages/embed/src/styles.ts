@@ -493,6 +493,48 @@ export const nostrstackComponentsCss = `
 .nostrstack-muted { color: var(--nostrstack-color-text-muted); }
 .nostrstack-code { font-family: var(--nostrstack-font-mono); }
 
+/* ===== Primitives ===== */
+.nostrstack-badge {
+  --nostrstack-badge-tone: var(--nostrstack-color-text-subtle);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nostrstack-space-2);
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--nostrstack-radius-pill);
+  border: 1px solid color-mix(in oklab, var(--nostrstack-badge-tone) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-badge-tone) 12%, var(--nostrstack-color-surface));
+  color: color-mix(in oklab, var(--nostrstack-badge-tone) 70%, var(--nostrstack-color-text));
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  box-shadow: var(--nostrstack-shadow-sm);
+  user-select: none;
+}
+
+.nostrstack-callout {
+  --nostrstack-callout-tone: var(--nostrstack-color-accent);
+
+  padding: var(--nostrstack-space-4);
+  border-radius: var(--nostrstack-radius-lg);
+  background: color-mix(in oklab, var(--nostrstack-callout-tone) 10%, var(--nostrstack-color-surface));
+  border: 1px solid color-mix(in oklab, var(--nostrstack-callout-tone) 30%, var(--nostrstack-color-border));
+  color: var(--nostrstack-color-text);
+  box-shadow: var(--nostrstack-shadow-sm);
+  transition:
+    border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+    background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
+}
+
+.nostrstack-callout__title {
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.nostrstack-callout__content {
+  margin-top: var(--nostrstack-space-2);
+}
+
 /* ===== Relay badge ===== */
 .nostrstack-relay-badge {
   display: inline-flex;
