@@ -1,4 +1,5 @@
 import { NostrstackClient } from '@nostrstack/sdk';
+import QRCode from 'qrcode';
 
 import { renderInvoicePopover } from './invoicePopover.js';
 import { renderRelayBadge } from './relayBadge.js';
@@ -85,6 +86,18 @@ function isMock(opts: { baseURL?: string; host?: string }) {
   return opts.baseURL === 'mock' || opts.host === 'mock';
 }
 
+function resolvePayWsUrl(baseURL?: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const base = (baseURL ?? '').replace(/\/$/, '');
+  if (!base) {
+    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
+  }
+  if (/^https?:\/\//i.test(base)) {
+    return `${base.replace(/^http/i, 'ws')}/ws/pay`;
+  }
+  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/pay`;
+}
+
 const ATTR_PREFIXES = ['nostrstack'];
 
 function getBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments') {
@@ -164,6 +177,48 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   container.classList.add('nostrstack-card', 'nostrstack-pay');
   container.replaceChildren();
 
+  const wsUrl = resolvePayWsUrl(opts.baseURL);
+  let payWs: WebSocket | null = null;
+  let realtimeState: 'idle' | 'connecting' | 'open' | 'error' = 'idle';
+  let didUnlock = false;
+
+  const closePayWs = () => {
+    const ws = payWs;
+    payWs = null;
+    if (!ws) return;
+    try {
+      // Detach handlers so we don't mutate UI after unlock/unmount.
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+    } catch {
+      /* ignore */
+    }
+    try {
+      // Avoid the noisy browser warning when closing while CONNECTING.
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+        return;
+      }
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.addEventListener(
+          'open',
+          () => {
+            try {
+              ws.close();
+            } catch {
+              /* ignore */
+            }
+          },
+          { once: true }
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'nostrstack-btn nostrstack-btn--primary';
@@ -174,9 +229,34 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
 
+  const realtime = document.createElement('div');
+  realtime.className = 'nostrstack-pay-realtime';
+  realtime.textContent = '';
+
+  const header = document.createElement('div');
+  header.className = 'nostrstack-pay-header';
+  header.append(btn, status);
+
+  const panel = document.createElement('div');
+  panel.className = 'nostrstack-pay-panel';
+  panel.style.display = 'none';
+
+  const grid = document.createElement('div');
+  grid.className = 'nostrstack-pay-grid';
+
+  const qrWrap = document.createElement('div');
+  qrWrap.className = 'nostrstack-pay-qr';
+  const qrImg = document.createElement('img');
+  qrImg.alt = 'Lightning invoice QR';
+  qrImg.decoding = 'async';
+  qrImg.loading = 'lazy';
+  qrWrap.appendChild(qrImg);
+
+  const right = document.createElement('div');
+  right.className = 'nostrstack-pay-right';
+
   const invoiceBox = document.createElement('div');
   invoiceBox.className = 'nostrstack-invoice-box';
-  invoiceBox.style.display = 'none';
   const invoiceCode = document.createElement('code');
   invoiceCode.className = 'nostrstack-code';
   invoiceBox.appendChild(invoiceCode);
@@ -187,23 +267,81 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   openWallet.rel = 'noreferrer';
   openWallet.style.display = 'none';
 
+  const copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.textContent = 'Copy invoice';
+  copyBtn.className = 'nostrstack-btn nostrstack-btn--sm';
+  copyBtn.style.display = 'none';
+
   const paidBtn = document.createElement('button');
   paidBtn.type = 'button';
   paidBtn.textContent = "I've paid";
   paidBtn.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-pay-confirm';
   paidBtn.style.display = 'none';
 
+  const actions = document.createElement('div');
+  actions.className = 'nostrstack-pay-actions';
+  actions.append(copyBtn, openWallet, paidBtn);
+
+  right.append(realtime, actions, invoiceBox);
+  grid.append(qrWrap, right);
+  panel.appendChild(grid);
+
   const unlock = () => {
+    if (didUnlock) return;
+    didUnlock = true;
     status.textContent = 'Unlocked';
     status.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
     status.classList.add('nostrstack-status--success');
     btn.disabled = true;
     paidBtn.disabled = true;
+    copyBtn.disabled = true;
     container.classList.add('nostrstack-pay--unlocked');
     opts.onUnlock?.();
+    closePayWs();
+    setRealtime('idle');
   };
 
   let currentInvoice: string | null = null;
+
+  const setRealtime = (next: typeof realtimeState) => {
+    realtimeState = next;
+    if (!wsUrl) {
+      realtime.textContent = '';
+      return;
+    }
+    realtime.textContent =
+      realtimeState === 'open'
+        ? 'Realtime: connected'
+        : realtimeState === 'connecting'
+          ? 'Realtime: connecting…'
+          : realtimeState === 'error'
+            ? 'Realtime: error'
+            : 'Realtime: idle';
+  };
+
+  const startRealtime = (pr: string) => {
+    if (!wsUrl) return;
+    closePayWs();
+    try {
+      setRealtime('connecting');
+      const ws = new WebSocket(wsUrl);
+      payWs = ws;
+      ws.onopen = () => setRealtime('open');
+      ws.onerror = () => setRealtime('error');
+      ws.onclose = () => setRealtime(realtimeState === 'error' ? 'error' : 'idle');
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as { type?: string; pr?: string };
+          if (msg.type === 'invoice-paid' && msg.pr && msg.pr === pr) unlock();
+        } catch {
+          /* ignore malformed frames */
+        }
+      };
+    } catch {
+      setRealtime('error');
+    }
+  };
 
   const getInvoice = async () => {
     btn.disabled = true;
@@ -224,25 +362,54 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
 
       currentInvoice = pr;
       invoiceCode.textContent = pr;
-      invoiceBox.style.display = 'block';
+      panel.style.display = 'block';
       openWallet.href = `lightning:${pr}`;
-      openWallet.style.display = 'inline';
-      paidBtn.style.display = 'inline';
-      status.textContent = 'Pay invoice then confirm.';
+      openWallet.style.display = '';
+      paidBtn.style.display = '';
+      copyBtn.style.display = '';
+      status.textContent = 'Pay invoice. Unlocks on confirmation.';
 
       if (opts.onInvoice) await opts.onInvoice(pr);
       else if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(pr);
       }
 
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(pr);
+          copyBtn.textContent = 'Copied';
+          window.setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
+        } catch (e) {
+          console.warn('copy failed', e);
+          copyBtn.textContent = 'Copy failed';
+          window.setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
+        }
+      };
+
+      const qrPayload = /^lightning:/i.test(pr) ? pr : `lightning:${pr}`;
+      QRCode.toDataURL(qrPayload, { errorCorrectionLevel: 'M', margin: 1, scale: 6 })
+        .then((dataUrl) => {
+          qrImg.src = dataUrl;
+        })
+        .catch((err) => console.warn('qr gen failed', err));
+
+      startRealtime(pr);
+
       const verify = opts.verifyPayment;
       if (isMock(opts)) {
         unlock();
         return pr;
       }
-      if (!verify) return pr;
-      const ok = await verify(pr);
-      if (ok) unlock();
+      if (verify) {
+        // Fire-and-forget verification; realtime WS can unlock sooner.
+        verify(pr)
+          .then((ok) => {
+            if (ok) unlock();
+          })
+          .catch(() => {
+            /* ignore */
+          });
+      }
       return pr;
     } catch (e) {
       console.error('pay-to-action error', e);
@@ -258,13 +425,22 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   const markPaid = async () => {
     try {
       paidBtn.disabled = true;
-      if (opts.verifyPayment) {
-        const ok = await opts.verifyPayment(currentInvoice ?? '');
-        if (!ok) {
-          status.textContent = 'Payment not detected yet';
-          paidBtn.disabled = false;
-          return;
-        }
+      const pr = currentInvoice ?? '';
+      if (!pr) {
+        paidBtn.disabled = false;
+        return;
+      }
+      if (!opts.verifyPayment) {
+        status.textContent = 'Waiting for payment confirmation…';
+        startRealtime(pr);
+        paidBtn.disabled = false;
+        return;
+      }
+      const ok = await opts.verifyPayment(pr);
+      if (!ok) {
+        status.textContent = 'Payment not detected yet';
+        paidBtn.disabled = false;
+        return;
       }
       unlock();
     } catch (e) {
@@ -278,13 +454,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   paidBtn.addEventListener('click', markPaid);
   paidBtn.onclick = markPaid;
 
-  container.appendChild(btn);
-  container.appendChild(status);
-  container.appendChild(invoiceBox);
-  const actions = document.createElement('div');
-  actions.className = 'nostrstack-pay-actions';
-  actions.append(openWallet, paidBtn);
-  container.appendChild(actions);
+  container.appendChild(header);
+  container.appendChild(panel);
   return btn;
 }
 

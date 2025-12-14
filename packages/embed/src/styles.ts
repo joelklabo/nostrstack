@@ -656,15 +656,79 @@ export const nostrstackComponentsCss = `
 /* ===== Pay-to-action widget ===== */
 .nostrstack-pay {
   padding: var(--nostrstack-space-4);
+  display: grid;
+  gap: var(--nostrstack-space-3);
+}
+
+.nostrstack-pay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nostrstack-space-2);
+  flex-wrap: wrap;
+}
+
+.nostrstack-pay-status {
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--nostrstack-radius-pill);
+  border: 1px solid var(--nostrstack-color-border);
+  background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 55%, transparent);
+  box-shadow: var(--nostrstack-shadow-sm);
+  font-weight: 900;
+}
+
+.nostrstack-pay--unlocked .nostrstack-pay-status {
+  border-color: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-success) 10%, var(--nostrstack-color-surface));
+}
+
+.nostrstack-pay-panel {
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid var(--nostrstack-color-border);
+  background:
+    radial-gradient(1000px circle at top left, color-mix(in oklab, var(--nostrstack-color-primary) 12%, transparent), transparent 58%),
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--nostrstack-color-surface) 92%, transparent),
+      color-mix(in oklab, var(--nostrstack-color-surface-subtle) 92%, transparent));
+  padding: var(--nostrstack-space-3);
+  box-shadow: var(--nostrstack-shadow-lg);
+}
+
+.nostrstack-pay-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) 1fr;
+  gap: var(--nostrstack-space-3);
+  align-items: start;
+}
+
+.nostrstack-pay-qr {
+  padding: 0.6rem;
+  background: var(--nostrstack-color-surface-subtle);
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid var(--nostrstack-color-border);
+  box-shadow: var(--nostrstack-shadow-md);
+}
+.nostrstack-pay-qr img { width: 100%; height: auto; display: block; border-radius: var(--nostrstack-radius-md); background: white; }
+
+.nostrstack-pay-right {
   display: flex;
   flex-direction: column;
-  gap: var(--nostrstack-space-3);
-  align-items: flex-start;
+  gap: var(--nostrstack-space-2);
+  min-width: 240px;
 }
-.nostrstack-pay .nostrstack-invoice-box { width: 100%; margin-top: var(--nostrstack-space-2); }
+
+.nostrstack-pay-realtime {
+  font-size: 0.85rem;
+  font-weight: 750;
+  color: var(--nostrstack-color-text-muted);
+}
+
 .nostrstack-pay-actions { display: flex; flex-wrap: wrap; gap: var(--nostrstack-space-2); align-items: center; }
-.nostrstack-pay-status { font-weight: 700; font-size: 0.95rem; }
-.nostrstack-pay--unlocked .nostrstack-pay-status { color: var(--nostrstack-color-success); }
+.nostrstack-pay .nostrstack-invoice-box { width: 100%; margin-top: 0; max-height: 160px; }
+
+@media (max-width: 640px) {
+  .nostrstack-pay-grid { grid-template-columns: 1fr; }
+}
 
 /* ===== Comments widget ===== */
 .nostrstack-comments {
