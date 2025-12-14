@@ -18,6 +18,9 @@ importers:
       '@nostrstack/config':
         specifier: workspace:^
         version: link:packages/config
+      chrome-devtools-mcp:
+        specifier: 0.12.1
+        version: 0.12.1
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -415,6 +418,7 @@ packages:
   '@beads/bd@0.27.2':
     resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
     engines: {node: '>=14.0.0'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -1848,6 +1852,11 @@ packages:
   chokidar@3.6.0:
     resolution: {integrity: sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==}
     engines: {node: '>= 8.10.0'}
+
+  chrome-devtools-mcp@0.12.1:
+    resolution: {integrity: sha512-QREfGxJVVlBrjKdyis9px6UHyXix+Rre9nCkqX7CY7GsU8c6azOwwV8inQB8E3h2/QGqi4sCSF8fmjfAvmE07Q==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
+    hasBin: true
 
   cjs-module-lexer@1.4.3:
     resolution: {integrity: sha512-9z8TZaGM1pfswYeXrUpzPrkx8UnWYdhJclsiYMm6x/w5+nN+8Tf/LnAgfLGQCm59qAOxU8WwHEq2vNwF6i4j+Q==}
@@ -5700,6 +5709,8 @@ snapshots:
       readdirp: 3.6.0
     optionalDependencies:
       fsevents: 2.3.3
+
+  chrome-devtools-mcp@0.12.1: {}
 
   cjs-module-lexer@1.4.3: {}
 
