@@ -276,7 +276,6 @@ function useMountWidgets(
     const tipOpts: Record<string, unknown> = {
       username,
       amountSats: amount,
-      host: demoHost,
       baseURL: apiBase,
       onInvoice: (pr: string) => {
         setQrInvoice(pr);
@@ -776,7 +775,7 @@ export default function App() {
     if (!paymentRef) return;
     try {
       const res = await fetch(
-        `${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef)}`
+        `${apiBase.replace(/\/$/, '')}/api/lnurlp/pay/status/${encodeURIComponent(paymentRef)}?domain=${encodeURIComponent(demoHost)}`
       );
       if (res.ok) {
         const body = await res.json();
@@ -888,7 +887,7 @@ export default function App() {
     try {
       const res = await fetch(`${apiBase}/api/pay`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', host: demoHost },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           domain: demoHost,
           action: 'tip',

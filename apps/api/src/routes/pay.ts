@@ -59,11 +59,19 @@ export async function registerPayRoutes(app: FastifyInstance) {
         properties: { id: { type: 'string' } },
         required: ['id'],
         additionalProperties: false
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          domain: { type: 'string' }
+        },
+        additionalProperties: false
       }
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const tenant = await getTenantForRequest(app, request);
+    const { domain } = (request.query as { domain?: string } | undefined) ?? {};
+    const tenant = await getTenantForRequest(app, request, domain);
     const payment = await app.prisma.payment.findFirst({
       where: { providerRef: id, tenantId: tenant.id }
     });

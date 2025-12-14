@@ -103,9 +103,12 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
   const poll = useCallback(async () => {
     if (!providerRef) return false;
     try {
-      const res = await fetch(apiUrl(apiBase, `/api/lnurlp/pay/status/${encodeURIComponent(providerRef)}`), {
-        headers: { host }
-      });
+      const res = await fetch(
+        apiUrl(
+          apiBase,
+          `/api/lnurlp/pay/status/${encodeURIComponent(providerRef)}?domain=${encodeURIComponent(host)}`
+        )
+      );
       if (!res.ok) return false;
       const body = (await res.json()) as { status?: string };
       const s = String(body.status ?? '').toUpperCase();
@@ -180,7 +183,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     try {
       const res = await fetch(apiUrl(apiBase, '/api/pay'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', host },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           domain: host,
           action: 'unlock',
@@ -359,4 +362,3 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     </div>
   );
 }
-
