@@ -342,6 +342,7 @@
   display: grid;
   gap: var(--nostrstack-space-4);
   align-content: start;
+  min-width: 0;
 }
 
 .nostrstack-lightning-main .nostrstack-gallery-card,
@@ -353,6 +354,10 @@
   display: grid;
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: var(--nostrstack-space-4);
+}
+
+.nostrstack-lightning-widgets > * {
+  min-width: 0;
 }
 
 @media (max-width: 960px) {
@@ -620,7 +625,7 @@
 
 .nostrstack-paywall__panel {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: var(--nostrstack-space-3);
   padding: var(--nostrstack-space-3);
   border-radius: var(--nostrstack-radius-lg);
@@ -689,6 +694,7 @@
   display: grid;
   gap: var(--nostrstack-space-3);
   align-content: start;
+  min-width: 0;
 }
 
 .nostrstack-paywall__row {
