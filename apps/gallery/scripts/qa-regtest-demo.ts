@@ -132,8 +132,6 @@ async function main() {
     await expect(refreshBtn).toHaveText('Refresh', { timeout: 30_000 });
 
     // Custom wallet: paste admin key + reset + save.
-    const walletOverrideSummary = page.locator('summary', { hasText: 'Advanced: LNbits wallet override' });
-    await walletOverrideSummary.click();
     await page.evaluate(async (k) => navigator.clipboard.writeText(k), adminKey);
     await page.getByRole('button', { name: 'Paste admin key' }).click();
     await page.getByRole('button', { name: 'Save & refresh' }).click();
@@ -148,7 +146,6 @@ async function main() {
         }));
       })
       .toEqual({ url: null, key: null, readKey: null, walletId: null });
-    await walletOverrideSummary.click(); // close
 
     // Faucet.
     await page.getByRole('button', { name: 'Add funds (regtest)' }).click();
@@ -156,11 +153,12 @@ async function main() {
 
     // Config & presets.
     await page.getByLabel('Amount (sats)').first().fill('6');
+    const themeGroup = page.getByRole('group', { name: 'Theme' });
     await page
-      .getByRole('button', { name: 'Dark' })
+      .getByRole('button', { name: 'Dark', exact: true })
       .evaluate((el) => (el as HTMLButtonElement).click());
     await page
-      .getByRole('button', { name: 'Light' })
+      .getByRole('button', { name: 'Light', exact: true })
       .evaluate((el) => (el as HTMLButtonElement).click());
 
     // Brand preset should change primary color.
@@ -183,8 +181,8 @@ async function main() {
     expect(primaryAfter.trim()).not.toEqual(primaryBefore.trim());
 
     // Theme export: copy CSS + vars.
-    const themeExportSummary = page.locator('summary', { hasText: 'Theme export' });
-    await themeExportSummary.click();
+    const themeExportHeading = page.getByRole('heading', { name: 'Theme export' }).first();
+    await themeExportHeading.scrollIntoViewIfNeeded();
     const selectorInput = page.getByPlaceholder('.nostrstack-theme').first();
     await selectorInput.fill('.qa-theme');
     await page.getByRole('button', { name: 'Copy CSS (light+dark)' }).click();
@@ -195,7 +193,6 @@ async function main() {
     await expect(page.getByTestId('toast-region')).toContainText('Copy vars (json) copied');
     const varsFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
     expect(varsFromClipboard).toContain('"--nostrstack-color-primary"');
-    await themeExportSummary.click(); // close
 
     // Relays: apply defaults, copy, and exercise Add relay (with a duplicate).
     await page.getByRole('button', { name: 'Use real defaults' }).click();
@@ -318,17 +315,16 @@ async function main() {
 
     // Status & build + telemetry controls.
     await page.getByRole('tab', { name: 'Lightning' }).click();
-    const statusSummary = page.locator('summary', { hasText: 'Status & build' });
-    await statusSummary.scrollIntoViewIfNeeded();
-    await statusSummary.click();
-    const telemetrySummary = page.locator('summary', { hasText: 'Advanced: Telemetry' });
-    await telemetrySummary.click();
+    const statusHeading = page.getByRole('heading', { name: 'Status & build' }).first();
+    await statusHeading.scrollIntoViewIfNeeded();
+    await expect(statusHeading).toBeVisible({ timeout: 30_000 });
+    const telemetryHeading = page.getByRole('heading', { name: 'Telemetry' }).first();
+    await telemetryHeading.scrollIntoViewIfNeeded();
+    await expect(telemetryHeading).toBeVisible({ timeout: 30_000 });
     const wsOverride = page.getByPlaceholder('ws://localhost:4173/api/ws/telemetry').first();
     await wsOverride.fill('');
     await wsOverride.blur();
     await page.getByRole('button', { name: 'Reset WS' }).click();
-    await telemetrySummary.click();
-    await statusSummary.click();
   } catch (err) {
     failures.push({ kind: 'qa', detail: err instanceof Error ? err.stack || err.message : String(err) });
   } finally {

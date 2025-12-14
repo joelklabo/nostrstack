@@ -222,7 +222,22 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
               : 'Locked';
 
   const wsLabel =
-    wsState === 'open' ? 'Realtime: connected' : wsState === 'connecting' ? 'Realtime: connecting…' : 'Realtime: idle';
+    wsState === 'open'
+      ? 'Realtime: connected'
+      : wsState === 'connecting'
+        ? 'Realtime: connecting…'
+        : wsState === 'error'
+          ? 'Realtime: error'
+          : 'Realtime: idle';
+
+  const primaryLabel =
+    status === 'paid'
+      ? 'New invoice'
+      : status === 'creating'
+        ? 'Creating…'
+        : status === 'pending'
+          ? 'Waiting…'
+          : `Unlock (${amountSats} sats)`;
 
   return (
     <div className="nostrstack-paywall" data-state={status} data-ws={wsState}>
@@ -246,7 +261,12 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
 
       <div className="nostrstack-paywall__panel">
         <div className="nostrstack-paywall__qr">
-          {qrUrl ? (
+          {status === 'paid' && !invoice ? (
+            <div className="nostrstack-paywall__qrnotice">
+              <strong>Unlocked</strong>
+              <span>Payment confirmed.</span>
+            </div>
+          ) : qrUrl ? (
             <img
               src={qrUrl}
               alt="Lightning invoice QR"
@@ -313,7 +333,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
               disabled={status === 'creating' || status === 'pending'}
               onClick={unlock}
             >
-              {status === 'creating' ? 'Creating…' : status === 'pending' ? 'Waiting…' : `Unlock (${amountSats} sats)`}
+              {primaryLabel}
             </button>
 
             <button
@@ -325,7 +345,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
               Reset
             </button>
 
-            {import.meta.env.DEV && (
+            {import.meta.env.DEV && status === 'pending' && invoice && (
               <button
                 type="button"
                 data-testid="mock-unlock"

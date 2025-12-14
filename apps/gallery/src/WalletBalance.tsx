@@ -251,7 +251,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
         {lastHeaders && <div style={{ color: 'var(--nostrstack-color-text-subtle)' }}>Headers: {lastHeaders}</div>}
       </div>
       {lastResponse && (
-        <details style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
+        <details open style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
           <summary>Last response</summary>
           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>{lastResponse}</pre>
         </details>

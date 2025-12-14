@@ -372,7 +372,6 @@ export default function App() {
     { label: 'LNbits', status: 'unknown' }
   ]);
   const [walletRefresh, setWalletRefresh] = useState(0);
-  const [walletOverrideOpen, setWalletOverrideOpen] = useState(false);
   const tabRefs = useRef<Record<DemoTabKey, HTMLButtonElement | null>>({
     lightning: null,
     nostr: null,
@@ -414,7 +413,6 @@ export default function App() {
   const adminKeyRef = useRef<HTMLInputElement | null>(null);
   const readKeyRef = useRef<HTMLInputElement | null>(null);
   const walletIdRef = useRef<HTMLInputElement | null>(null);
-  const walletOverrideAutoOpenRef = useRef(false);
   useEffect(() => {
     if (import.meta.env.DEV) {
       // Expose helpers for MCP-driven UI testing
@@ -498,15 +496,6 @@ export default function App() {
       varsJson
     };
   }, [brandPreset, theme, themeExportSelector]);
-  useEffect(() => {
-    if (walletOverrideAutoOpenRef.current) return;
-    const hasOverride =
-      Boolean(lnbitsUrlOverride || lnbitsKeyOverride || lnbitsReadKeyOverride) ||
-      Boolean(lnbitsWalletIdOverride && lnbitsWalletIdOverride !== lnbitsWalletIdEnv);
-    if (!hasOverride) return;
-    walletOverrideAutoOpenRef.current = true;
-    setWalletOverrideOpen(true);
-  }, [lnbitsUrlOverride, lnbitsKeyOverride, lnbitsReadKeyOverride, lnbitsWalletIdOverride]);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
   const [signerReady, setSignerReady] = useState(false);
   const [signerRelays, setSignerRelays] = useState<string[]>([]);
@@ -1182,6 +1171,156 @@ export default function App() {
                     <PayToUnlockCard apiBase={apiBase} host={demoHost} amountSats={amount} onPayWsState={setPayWsState} />
                   </Card>
                 </div>
+
+                <Card
+                  title="Status & build"
+                  subtitle={
+                    <>
+                      Build: <code>{import.meta.env.VITE_APP_COMMIT ?? 'dev'}</code> •{' '}
+                      <code>{import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</code> · Host:{' '}
+                      <code>{demoHost}</code> · API base: <code>{apiBase}</code>
+                    </>
+                  }
+                >
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '0.6rem'
+                    }}
+                  >
+                    {health.map((h) => {
+                      const color =
+                        h.status === 'ok'
+                          ? 'var(--nostrstack-color-success)'
+                          : h.status === 'unknown' || h.status === 'skipped'
+                            ? 'var(--nostrstack-color-text-subtle)'
+                            : 'var(--nostrstack-color-danger)';
+                      const bg = themeStyles.inset;
+                      return (
+                        <div
+                          key={h.label}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.6rem 0.75rem',
+                            borderRadius: 'var(--nostrstack-radius-md)',
+                            background: bg,
+                            border: `1px solid ${themeStyles.borderColor}`
+                          }}
+                        >
+                          <span
+                            className={h.status === 'ok' ? 'status-dot pulse' : 'status-dot'}
+                            style={{ width: 12, height: 12, borderRadius: 999, background: color }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            <span style={{ fontWeight: 700 }}>{h.label}</span>
+                            <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                              {h.status}
+                              {h.detail ? ` – ${h.detail}` : ''}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                <Card title="Telemetry" subtitle="Live telemetry feed over WebSocket.">
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.75rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 280 }}>
+                      <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                        Telemetry WS override
+                      </span>
+                      <input
+                        className="nostrstack-input"
+                        name="telemetryWsOverride"
+                        autoComplete="off"
+                        defaultValue={telemetryWsOverride ?? ''}
+                        placeholder="ws://localhost:4173/api/ws/telemetry"
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          setTelemetryWsOverride(v || null);
+                          if (typeof window !== 'undefined') {
+                            if (v) window.localStorage.setItem('nostrstack.telemetry.ws', v);
+                            else window.localStorage.removeItem('nostrstack.telemetry.ws');
+                          }
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTelemetryWsOverride(null);
+                        if (typeof window !== 'undefined')
+                          window.localStorage.removeItem('nostrstack.telemetry.ws');
+                      }}
+                    >
+                      Reset WS
+                    </button>
+                  </div>
+                  <BlockList wsUrl={telemetryWsUrl} network={network} />
+                </Card>
+
+                <Card
+                  title="Theme export"
+                  subtitle={
+                    <>
+                      Copy a stylesheet snippet to apply this brand anywhere. Target a wrapper that has
+                      the <code>nostrstack-theme</code> class.
+                    </>
+                  }
+                >
+                  <div style={{ display: 'grid', gap: '0.6rem' }}>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span>CSS selector</span>
+                      <input
+                        className="nostrstack-input"
+                        name="themeExportSelector"
+                        autoComplete="off"
+                        value={themeExportSelector}
+                        onChange={(e) => setThemeExportSelector(e.target.value)}
+                        placeholder=".nostrstack-theme"
+                      />
+                    </label>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <CopyButton text={themeExport.cssBoth} label="Copy CSS (light+dark)" />
+                      <CopyButton text={themeExport.cssLight} label="Copy CSS (light)" />
+                      <CopyButton text={themeExport.cssDark} label="Copy CSS (dark)" />
+                      <CopyButton text={themeExport.varsJson} label="Copy vars (json)" />
+                    </div>
+
+                    <div style={{ display: 'grid', gap: '0.35rem' }}>
+                      <strong>Preview</strong>
+                      <pre
+                        className="nostrstack-code"
+                        style={{
+                          margin: 0,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          maxHeight: 240,
+                          overflow: 'auto',
+                          background: themeStyles.inset,
+                          border: `1px solid ${layout.border}`,
+                          borderRadius: 'var(--nostrstack-radius-md)',
+                          padding: '0.6rem'
+                        }}
+                      >
+                        {themeExport.cssBoth.trim()}
+                      </pre>
+                    </div>
+                  </div>
+                </Card>
               </div>
 
               <aside className="nostrstack-lightning-side">
@@ -1201,25 +1340,22 @@ export default function App() {
                   network={networkLabel}
                 />
 
-                <details
-                  className="nostrstack-gallery-advanced"
-                  style={{ marginBottom: '1rem' }}
-                  open={walletOverrideOpen}
-                  onToggle={(e) => {
-                    setWalletOverrideOpen((e.currentTarget as HTMLDetailsElement).open);
-                  }}
+                <Card
+                  title="LNbits wallet override"
+                  subtitle={
+                    <>
+                      Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet
+                      API info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code>{' '}
+                      fallback.
+                    </>
+                  }
                 >
-                  <summary>Advanced: LNbits wallet override</summary>
                   <form
                     style={{ display: 'grid', gap: '0.4rem' }}
                     onSubmit={(e) => {
                       e.preventDefault();
                     }}
                   >
-                    <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
-                      Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API
-                      info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
-                    </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <input
                         className="nostrstack-input"
@@ -1332,7 +1468,7 @@ export default function App() {
                       </button>
                     </div>
                   </form>
-                </details>
+                </Card>
 
                 <Card title="Config & presets">
                   <div
@@ -1427,55 +1563,6 @@ export default function App() {
                       </div>
                     </label>
                   </div>
-
-                  <details className="nostrstack-gallery-advanced" style={{ marginTop: '0.75rem' }}>
-                    <summary>Theme export</summary>
-                    <div style={{ display: 'grid', gap: '0.6rem' }}>
-                      <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
-                        Copy a stylesheet snippet to apply this brand anywhere. Target a wrapper that has
-                        the <code>nostrstack-theme</code> class.
-                      </div>
-
-                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <span>CSS selector</span>
-                        <input
-                          className="nostrstack-input"
-                          name="themeExportSelector"
-                          autoComplete="off"
-                          value={themeExportSelector}
-                          onChange={(e) => setThemeExportSelector(e.target.value)}
-                          placeholder=".nostrstack-theme"
-                        />
-                      </label>
-
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <CopyButton text={themeExport.cssBoth} label="Copy CSS (light+dark)" />
-                        <CopyButton text={themeExport.cssLight} label="Copy CSS (light)" />
-                        <CopyButton text={themeExport.cssDark} label="Copy CSS (dark)" />
-                        <CopyButton text={themeExport.varsJson} label="Copy vars (json)" />
-                      </div>
-
-                      <div style={{ display: 'grid', gap: '0.35rem' }}>
-                        <strong>Preview</strong>
-                        <pre
-                          className="nostrstack-code"
-                          style={{
-                            margin: 0,
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                            maxHeight: 240,
-                            overflow: 'auto',
-                            background: themeStyles.inset,
-                            border: `1px solid ${layout.border}`,
-                            borderRadius: 'var(--nostrstack-radius-md)',
-                            padding: '0.6rem'
-                          }}
-                        >
-                          {themeExport.cssBoth.trim()}
-                        </pre>
-                      </div>
-                    </div>
-                  </details>
 
                   <div
                     style={{
@@ -1711,116 +1798,6 @@ export default function App() {
             </Card>
           )}
         </section>
-
-        <details className="nostrstack-gallery-advanced" style={{ marginBottom: '1rem' }}>
-        <summary>Status & build</summary>
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            marginBottom: '0.5rem',
-            color: themeStyles.muted
-          }}
-        >
-          <span>
-            Build: {import.meta.env.VITE_APP_COMMIT ?? 'dev'} •{' '}
-            {import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}
-          </span>
-          <span>Host: {demoHost}</span>
-          <span>API base: {apiBase}</span>
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '0.6rem'
-          }}
-        >
-          {health.map((h) => {
-            const color =
-              h.status === 'ok'
-                ? 'var(--nostrstack-color-success)'
-                : h.status === 'unknown' || h.status === 'skipped'
-                  ? 'var(--nostrstack-color-text-subtle)'
-                  : 'var(--nostrstack-color-danger)';
-            const bg = themeStyles.inset;
-            return (
-              <div
-                key={h.label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.6rem 0.75rem',
-                  borderRadius: 'var(--nostrstack-radius-md)',
-                  background: bg,
-                  border: `1px solid ${themeStyles.borderColor}`
-                }}
-              >
-                <span
-                  className={h.status === 'ok' ? 'status-dot pulse' : 'status-dot'}
-                  style={{ width: 12, height: 12, borderRadius: 999, background: color }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                  <span style={{ fontWeight: 700 }}>{h.label}</span>
-                  <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
-                    {h.status}
-                    {h.detail ? ` – ${h.detail}` : ''}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {tab === 'lightning' && (
-          <details className="nostrstack-gallery-advanced" style={{ marginTop: '1rem' }}>
-            <summary>Advanced: Telemetry</summary>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '0.5rem',
-                flexWrap: 'wrap'
-              }}
-            >
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 240 }}>
-                <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
-                  Telemetry WS override
-                </span>
-                  <input
-                    className="nostrstack-input"
-                    name="telemetryWsOverride"
-                    autoComplete="off"
-                    defaultValue={telemetryWsOverride ?? ''}
-                    placeholder="ws://localhost:4173/api/ws/telemetry"
-                    onBlur={(e) => {
-                      const v = e.target.value.trim();
-                      setTelemetryWsOverride(v || null);
-                    if (typeof window !== 'undefined') {
-                      if (v) window.localStorage.setItem('nostrstack.telemetry.ws', v);
-                      else window.localStorage.removeItem('nostrstack.telemetry.ws');
-                    }
-                  }}
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setTelemetryWsOverride(null);
-                  if (typeof window !== 'undefined')
-                    window.localStorage.removeItem('nostrstack.telemetry.ws');
-                }}
-              >
-                Reset WS
-              </button>
-            </div>
-            <BlockList wsUrl={telemetryWsUrl} network={network} />
-          </details>
-        )}
-      </details>
 
       </div>
 

@@ -11,7 +11,7 @@
 }
 
 .nostrstack-gallery-content {
-  max-width: 1180px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
@@ -351,7 +351,7 @@
 
 .nostrstack-lightning-widgets {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: var(--nostrstack-space-4);
 }
 
@@ -647,6 +647,24 @@
   background: color-mix(in oklab, var(--nostrstack-color-surface) 85%, transparent);
   padding: var(--nostrstack-space-3);
   min-height: 220px;
+}
+
+.nostrstack-paywall__qrnotice {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  text-align: center;
+  padding: var(--nostrstack-space-3);
+  color: var(--nostrstack-color-text);
+}
+
+.nostrstack-paywall__qrnotice strong {
+  font-weight: 950;
+}
+
+.nostrstack-paywall__qrnotice span {
+  font-size: 0.9rem;
+  color: var(--nostrstack-color-text-muted);
 }
 
 .nostrstack-paywall__qrimg {
