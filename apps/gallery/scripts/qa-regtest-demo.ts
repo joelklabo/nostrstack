@@ -41,6 +41,7 @@ async function main() {
   const consoleErrors: string[] = [];
   const consoleWarnings: string[] = [];
   const localRequestFailures: string[] = [];
+  const localResponses404: string[] = [];
   const pageErrors: string[] = [];
   let tearingDown = false;
 
@@ -78,6 +79,13 @@ async function main() {
     }
     localRequestFailures.push(`${url} :: ${errText}`);
   });
+  page.on('response', (res) => {
+    if (tearingDown) return;
+    if (res.status() !== 404) return;
+    const url = res.url();
+    if (!isLocalUrl(url)) return;
+    localResponses404.push(url);
+  });
 
   try {
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -94,6 +102,22 @@ async function main() {
     const copyKeyBtn = page.locator('li', { hasText: 'Admin key:' }).getByRole('button');
     await copyKeyBtn.click();
     await expect(copyKeyBtn).toHaveText('Copied');
+    let adminKeyFromClipboard = '';
+    try {
+      adminKeyFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
+    } catch {
+      // Some environments may not allow clipboard reads; fall back to DOM.
+    }
+    let adminKey = adminKeyFromClipboard.trim();
+    if (!/^[0-9a-f]{8,}$/i.test(adminKey)) {
+      adminKey =
+        (await page
+          .locator('li', { hasText: 'Admin key:' })
+          .locator('code')
+          .first()
+          .textContent())?.trim() ?? '';
+    }
+    expect(adminKey).toMatch(/^[0-9a-f]{8,}$/i);
 
     // WalletBalance controls.
     await page.getByRole('button', { name: 'Show key' }).click();
@@ -108,8 +132,7 @@ async function main() {
 
     // Custom wallet: paste admin key + reset + save.
     await page.locator('summary', { hasText: 'Advanced: LNbits wallet override' }).click();
-    const dummyKey = 'dummy-admin-key-' + Date.now();
-    await page.evaluate(async (k) => navigator.clipboard.writeText(k), dummyKey);
+    await page.evaluate(async (k) => navigator.clipboard.writeText(k), adminKey);
     await page.getByRole('button', { name: 'Paste admin key' }).click();
     await page.getByRole('button', { name: 'Save & refresh' }).click();
     await page.getByRole('button', { name: 'Reset to env' }).click();
@@ -218,6 +241,7 @@ async function main() {
 
   if (pageErrors.length) failures.push({ kind: 'pageerror', detail: pageErrors.join('\n') });
   if (localRequestFailures.length) failures.push({ kind: 'requestfailed', detail: localRequestFailures.join('\n') });
+  if (localResponses404.length) failures.push({ kind: 'response:404', detail: Array.from(new Set(localResponses404)).join('\n') });
   if (consoleErrors.length) failures.push({ kind: 'console:error', detail: consoleErrors.join('\n') });
 
   // Warnings are informative but don’t fail by default; opt-in via FAIL_ON_WARN=1.

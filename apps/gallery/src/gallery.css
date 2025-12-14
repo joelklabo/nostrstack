@@ -15,6 +15,28 @@
   margin: 0 auto;
 }
 
+.nostrstack-gallery-tab {
+  min-height: 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nostrstack-gallery-tab {
+    animation: nostrstack-gallery-tab-enter var(--nostrstack-motion-enter)
+      var(--nostrstack-motion-ease-emphasized);
+  }
+}
+
+@keyframes nostrstack-gallery-tab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--nostrstack-motion-distance-short));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .nostrstack-gallery-shell {
   position: sticky;
   top: 0;
@@ -54,6 +76,56 @@
 .nostrstack-gallery-advanced > summary {
   cursor: pointer;
   font-weight: 800;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nostrstack-space-2);
+  user-select: none;
+}
+
+.nostrstack-gallery-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nostrstack-gallery-advanced > summary::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--nostrstack-color-text-subtle);
+  border-bottom: 2px solid var(--nostrstack-color-text-subtle);
+  transform: rotate(45deg);
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nostrstack-gallery-advanced {
+    transition:
+      transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+      box-shadow var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+      border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+      background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
+  }
+
+  .nostrstack-gallery-advanced:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--nostrstack-shadow-md);
+    border-color: var(--nostrstack-color-border-strong);
+  }
+
+  .nostrstack-gallery-advanced > summary::after {
+    transition:
+      transform var(--nostrstack-motion-base) var(--nostrstack-motion-ease-emphasized),
+      border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
+  }
+}
+
+.nostrstack-gallery-advanced:hover > summary::after {
+  border-color: var(--nostrstack-color-text-muted);
+}
+
+.nostrstack-gallery-advanced[open] > summary::after {
+  transform: rotate(-135deg);
 }
 
 .nostrstack-gallery-advanced[open] > summary {

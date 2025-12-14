@@ -6,7 +6,8 @@ import {
   mountPayToAction,
   mountTipButton,
   type NostrstackBrandPreset,
-  nostrstackBrandPresets} from '@nostrstack/embed';
+  nostrstackBrandPresets
+} from '@nostrstack/embed';
 import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -1059,9 +1060,10 @@ export default function App() {
         </div>
       </header>
       <div className="nostrstack-gallery-content">
-        {tab === 'lightning' && (
-          <>
-            {paymentRef && (
+        <div key={tab} className="nostrstack-gallery-tab">
+          {tab === 'lightning' && (
+            <>
+              {paymentRef && (
               <div
                 style={{
                   display: 'flex',
@@ -1544,17 +1546,17 @@ export default function App() {
               )}
             </Card>
           </div>
-        </>
-      )}
+            </>
+          )}
 
-      {tab === 'nostr' && (
-        <div
-          style={{
-            display: 'grid',
-            gap: '1rem',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
-          }}
-        >
+          {tab === 'nostr' && (
+            <div
+              style={{
+                display: 'grid',
+                gap: '1rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
+              }}
+            >
           <Card title="Nostr profile">
             <NostrProfileCard
               pubkey={activePubkey ?? undefined}
@@ -1662,20 +1664,23 @@ export default function App() {
             />
             <div id="comments-container" />
           </Card>
+            </div>
+          )}
+
+          {tab === 'logs' && (
+            <Card title="Logs">
+              <div
+                style={{ marginBottom: '0.5rem', color: themeStyles.muted, fontSize: '0.95rem' }}
+              >
+                Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures
+                frontend console (toggle to enable).
+              </div>
+              <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
+            </Card>
+          )}
         </div>
-      )}
 
-      {tab === 'logs' && (
-        <Card title="Logs">
-          <div style={{ marginBottom: '0.5rem', color: themeStyles.muted, fontSize: '0.95rem' }}>
-            Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures
-            frontend console (toggle to enable).
-          </div>
-          <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
-        </Card>
-      )}
-
-      <details className="nostrstack-gallery-advanced" style={{ marginBottom: '1rem' }}>
+        <details className="nostrstack-gallery-advanced" style={{ marginBottom: '1rem' }}>
         <summary>Status & build</summary>
         <div
           style={{
