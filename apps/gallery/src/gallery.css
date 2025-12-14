@@ -585,6 +585,8 @@
 .nostrstack-paywall {
   display: grid;
   gap: var(--nostrstack-space-3);
+  container-type: inline-size;
+  container-name: paywall;
 }
 
 .nostrstack-paywall__top {
@@ -639,6 +641,12 @@
 }
 
 @media (max-width: 560px) {
+  .nostrstack-paywall__panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container paywall (max-width: 520px) {
   .nostrstack-paywall__panel {
     grid-template-columns: 1fr;
   }
