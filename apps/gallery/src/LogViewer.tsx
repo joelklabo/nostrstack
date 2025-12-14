@@ -7,6 +7,8 @@ type Props = {
   enabled?: boolean;
 };
 
+type MinLevel = 'all' | 'info' | 'warn' | 'error';
+
 const levelColors: Record<string, string> = {
   debug: 'var(--nostrstack-color-text-subtle)',
   info: 'var(--nostrstack-color-info)',
@@ -23,6 +25,28 @@ const statusCopy: Record<string, string> = {
   closed: 'Closed'
 };
 
+function levelRank(level: string | number) {
+  if (typeof level === 'number') {
+    if (level >= 50) return 3;
+    if (level >= 40) return 2;
+    if (level >= 30) return 1;
+    return 0;
+  }
+  const raw = String(level).toLowerCase();
+  if (raw === 'error' || raw === 'fatal') return 3;
+  if (raw === 'warn' || raw === 'warning') return 2;
+  if (raw === 'info' || raw === 'log') return 1;
+  if (raw === 'debug' || raw === 'trace') return 0;
+  return 1;
+}
+
+function minLevelRank(level: MinLevel) {
+  if (level === 'error') return 3;
+  if (level === 'warn') return 2;
+  if (level === 'info') return 1;
+  return 0;
+}
+
 export function LogViewer({ backendUrl, enabled = true }: Props) {
   const [backendLines, setBackendLines] = useState<LogLine[]>([]);
   const [frontendLines, setFrontendLines] = useState<LogLine[]>([]);
@@ -37,22 +61,51 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
     const stored = window.localStorage.getItem('nostrstack.logviewer.captureFront');
     return stored === 'true';
   });
+  const [paused, setPaused] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return (window.localStorage.getItem('nostrstack.logviewer.autoscroll') ?? 'true') === 'true';
+  });
+  const [minLevel, setMinLevel] = useState<MinLevel>(() => {
+    if (typeof window === 'undefined') return 'all';
+    const stored = window.localStorage.getItem('nostrstack.logviewer.minLevel') as MinLevel | null;
+    return stored ?? 'all';
+  });
+  const [pendingBackendCount, setPendingBackendCount] = useState(0);
+  const [pendingFrontCount, setPendingFrontCount] = useState(0);
   const [connectSeq, setConnectSeq] = useState(0);
   const eventSourceRef = useRef<EventSource | null>(null);
   const originalConsole = useRef<Partial<Console> | null>(null);
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingBackendRef = useRef<LogLine[]>([]);
+  const pendingFrontRef = useRef<LogLine[]>([]);
+  const pausedRef = useRef(false);
+  const backendScrollRef = useRef<HTMLDivElement | null>(null);
+  const frontScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   const filteredBackend = useMemo(() => {
-    if (!filter.trim()) return backendLines;
-    const f = filter.toLowerCase();
-    return backendLines.filter((l) => l.message.toLowerCase().includes(f));
-  }, [backendLines, filter]);
+    const f = filter.trim().toLowerCase();
+    const min = minLevelRank(minLevel);
+    return backendLines.filter((l) => {
+      if (minLevel !== 'all' && levelRank(l.level) < min) return false;
+      if (!f) return true;
+      return l.message.toLowerCase().includes(f);
+    });
+  }, [backendLines, filter, minLevel]);
 
   const filteredFront = useMemo(() => {
-    if (!filter.trim()) return frontendLines;
-    const f = filter.toLowerCase();
-    return frontendLines.filter((l) => l.message.toLowerCase().includes(f));
-  }, [frontendLines, filter]);
+    const f = filter.trim().toLowerCase();
+    const min = minLevelRank(minLevel);
+    return frontendLines.filter((l) => {
+      if (minLevel !== 'all' && levelRank(l.level) < min) return false;
+      if (!f) return true;
+      return l.message.toLowerCase().includes(f);
+    });
+  }, [frontendLines, filter, minLevel]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -63,7 +116,13 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
     es.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data) as LogLine;
-        setBackendLines((prev) => [...prev.slice(-499), data]);
+        if (pausedRef.current) {
+          pendingBackendRef.current.push(data);
+          if (pendingBackendRef.current.length > 1000) pendingBackendRef.current.shift();
+          setPendingBackendCount((n) => n + 1);
+        } else {
+          setBackendLines((prev) => [...prev.slice(-499), data]);
+        }
         setStatus('open');
       } catch {
         // ignore
@@ -108,7 +167,14 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
     const wrap = (level: keyof Console) =>
       (...args: unknown[]) => {
         const msg = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
-        setFrontendLines((prev) => [...prev.slice(-499), { ts: Date.now(), level, message: msg }]);
+        const line = { ts: Date.now(), level, message: msg } satisfies LogLine;
+        if (pausedRef.current) {
+          pendingFrontRef.current.push(line);
+          if (pendingFrontRef.current.length > 1000) pendingFrontRef.current.shift();
+          setPendingFrontCount((n) => n + 1);
+        } else {
+          setFrontendLines((prev) => [...prev.slice(-499), line]);
+        }
         // @ts-expect-error
         originalConsole.current?.[level]?.apply(console, args);
       };
@@ -124,6 +190,26 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
       }
     };
   }, [captureFront]);
+
+  useEffect(() => {
+    if (!autoScroll || paused) return;
+    const el = backendScrollRef.current;
+    if (!el) return;
+    const id = window.setTimeout(() => {
+      el.scrollTop = el.scrollHeight;
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [backendLines.length, autoScroll, paused]);
+
+  useEffect(() => {
+    if (!autoScroll || paused) return;
+    const el = frontScrollRef.current;
+    if (!el) return;
+    const id = window.setTimeout(() => {
+      el.scrollTop = el.scrollHeight;
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [frontendLines.length, autoScroll, paused]);
 
   const renderLine = (line: LogLine) => {
     const color = levelColors[String(line.level).toLowerCase()] ?? 'var(--nostrstack-color-text)';
@@ -142,6 +228,41 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
     setStatus('connecting');
     setLastError(null);
     setConnectSeq((n) => n + 1);
+  };
+
+  const clearBackend = () => {
+    setBackendLines([]);
+    pendingBackendRef.current = [];
+    setPendingBackendCount(0);
+  };
+
+  const clearFrontend = () => {
+    setFrontendLines([]);
+    pendingFrontRef.current = [];
+    setPendingFrontCount(0);
+  };
+
+  const togglePause = () => {
+    if (!paused) {
+      pausedRef.current = true;
+      setPaused(true);
+      return;
+    }
+
+    const pendingBackend = pendingBackendRef.current;
+    const pendingFront = pendingFrontRef.current;
+    pausedRef.current = false;
+    pendingBackendRef.current = [];
+    pendingFrontRef.current = [];
+    setPendingBackendCount(0);
+    setPendingFrontCount(0);
+    setPaused(false);
+    if (pendingBackend.length) {
+      setBackendLines((prev) => [...prev, ...pendingBackend].slice(-499));
+    }
+    if (pendingFront.length) {
+      setFrontendLines((prev) => [...prev, ...pendingFront].slice(-499));
+    }
   };
 
   const tone = (() => {
@@ -222,6 +343,35 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
               <span className="logv__slider" />
               <span className="logv__switch-label">{captureFront ? 'Frontend capture on' : 'Capture frontend console'}</span>
             </label>
+            <label className="logv__switch">
+              <input
+                type="checkbox"
+                checked={autoScroll}
+                onChange={(e) => {
+                  setAutoScroll(e.target.checked);
+                  if (typeof window !== 'undefined') window.localStorage.setItem('nostrstack.logviewer.autoscroll', String(e.target.checked));
+                }}
+              />
+              <span className="logv__slider" />
+              <span className="logv__switch-label">{autoScroll ? 'Auto-scroll on' : 'Auto-scroll'}</span>
+            </label>
+            <label className="logv__level">
+              <span className="logv__level-label">Level</span>
+              <select
+                className="nostrstack-select logv__level-select"
+                value={minLevel}
+                onChange={(e) => {
+                  const v = e.target.value as MinLevel;
+                  setMinLevel(v);
+                  if (typeof window !== 'undefined') window.localStorage.setItem('nostrstack.logviewer.minLevel', v);
+                }}
+              >
+                <option value="all">All</option>
+                <option value="info">Info+</option>
+                <option value="warn">Warn+</option>
+                <option value="error">Error</option>
+              </select>
+            </label>
             <div className="logv__filter">
               <span className="logv__filter-icon">🔍</span>
               <input
@@ -235,6 +385,15 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
                 aria-label="Filter logs"
               />
             </div>
+            <button
+              type="button"
+              className="logv__ghost"
+              onClick={togglePause}
+              aria-pressed={paused}
+              title="Pause rendering to inspect logs; resume flushes buffered lines."
+            >
+              {paused ? `Resume (${pendingBackendCount + pendingFrontCount} new)` : 'Pause'}
+            </button>
           </div>
         </div>
       </div>
@@ -246,9 +405,9 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
               <strong>Backend logs</strong>
               <span className="logv__count">{filteredBackend.length}</span>
             </div>
-            <button type="button" className="logv__ghost" onClick={() => setBackendLines([])}>Clear</button>
+            <button type="button" className="logv__ghost" onClick={clearBackend}>Clear</button>
           </header>
-          <div className="logv__scroll">
+          <div className="logv__scroll" ref={backendScrollRef}>
             {filteredBackend.length === 0 ? (
               <div className="logv__empty">No backend logs yet.</div>
             ) : (
@@ -263,9 +422,9 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
               <strong>Frontend logs</strong>
               <span className="logv__count">{filteredFront.length}</span>
             </div>
-            <button type="button" className="logv__ghost" onClick={() => setFrontendLines([])}>Clear</button>
+            <button type="button" className="logv__ghost" onClick={clearFrontend}>Clear</button>
           </header>
-          <div className="logv__scroll">
+          <div className="logv__scroll" ref={frontScrollRef}>
             {filteredFront.length === 0 ? (
               <div className="logv__empty">No frontend logs captured. Toggle capture to start.</div>
             ) : (
@@ -281,20 +440,25 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
         .logv__panel { border: 1px solid var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-lg); background: var(--nostrstack-color-surface); padding: 0.75rem 0.9rem; box-shadow: var(--nostrstack-shadow-md); }
         .logv__status-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
         .logv__pill { display: inline-flex; align-items: center; gap: 0.6rem; border-radius: var(--nostrstack-radius-pill); border: 1px solid var(--nostrstack-color-border); padding: 0.5rem 0.8rem; min-width: 200px; }
-        .logv__pill-label { font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nostrstack-color-text-muted); font-weight: 700; }
-        .logv__pill-value { font-weight: 800; font-size: 1rem; }
-        .logv__dot { width: 12px; height: 12px; border-radius: 999px; }
-        .logv__ghost { background: transparent; color: var(--nostrstack-color-text); border: 1px solid var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-md); padding: 0.45rem 0.75rem; transition: border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard), background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); }
-        .logv__ghost:hover { border-color: var(--nostrstack-color-border-strong); background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 60%, transparent); }
-        .logv__meta { font-size: 0.9rem; color: var(--nostrstack-color-text-muted); margin-top: 0.4rem; }
-        .logv__error { margin-top: 0.45rem; padding: 0.55rem 0.7rem; background: color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface)); border: 1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border)); color: color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text)); border-radius: var(--nostrstack-radius-md); }
-        .logv__controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-        .logv__switch { display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer; color: var(--nostrstack-color-text); font-weight: 700; }
-        .logv__switch input { display: none; }
-        .logv__slider { width: 44px; height: 24px; background: var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-pill); position: relative; transition: all var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); }
-        .logv__slider::after { content: ''; position: absolute; top: 3px; left: 4px; width: 18px; height: 18px; border-radius: var(--nostrstack-radius-pill); background: var(--nostrstack-color-surface); transition: transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); box-shadow: var(--nostrstack-shadow-sm); }
-        .logv__switch input:checked + .logv__slider { background: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border)); }
-        .logv__switch input:checked + .logv__slider::after { transform: translateX(18px); background: var(--nostrstack-color-success); }
+	        .logv__pill-label { font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nostrstack-color-text-muted); font-weight: 700; }
+	        .logv__pill-value { font-weight: 800; font-size: 1rem; }
+	        .logv__dot { width: 12px; height: 12px; border-radius: 999px; }
+	        .logv__ghost { background: transparent; color: var(--nostrstack-color-text); border: 1px solid var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-md); padding: 0.45rem 0.75rem; transition: border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard), background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); }
+	        .logv__ghost:hover { border-color: var(--nostrstack-color-border-strong); background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 60%, transparent); }
+	        .logv__ghost:focus-visible { outline: none; box-shadow: var(--nostrstack-shadow-focus); }
+	        .logv__ghost[aria-pressed="true"] { border-color: color-mix(in oklab, var(--nostrstack-color-warning) 35%, var(--nostrstack-color-border)); background: color-mix(in oklab, var(--nostrstack-color-warning) 10%, var(--nostrstack-color-surface)); }
+	        .logv__meta { font-size: 0.9rem; color: var(--nostrstack-color-text-muted); margin-top: 0.4rem; }
+	        .logv__error { margin-top: 0.45rem; padding: 0.55rem 0.7rem; background: color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface)); border: 1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border)); color: color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text)); border-radius: var(--nostrstack-radius-md); }
+	        .logv__controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+	        .logv__switch { display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer; color: var(--nostrstack-color-text); font-weight: 700; }
+	        .logv__switch input { display: none; }
+	        .logv__level { display: inline-flex; align-items: center; gap: 0.55rem; }
+	        .logv__level-label { font-size: 0.95rem; color: var(--nostrstack-color-text-muted); font-weight: 700; }
+	        .logv__level-select { min-width: 120px; }
+	        .logv__slider { width: 44px; height: 24px; background: var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-pill); position: relative; transition: all var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); }
+	        .logv__slider::after { content: ''; position: absolute; top: 3px; left: 4px; width: 18px; height: 18px; border-radius: var(--nostrstack-radius-pill); background: var(--nostrstack-color-surface); transition: transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); box-shadow: var(--nostrstack-shadow-sm); }
+	        .logv__switch input:checked + .logv__slider { background: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border)); }
+	        .logv__switch input:checked + .logv__slider::after { transform: translateX(18px); background: var(--nostrstack-color-success); }
         .logv__switch-label { font-size: 0.95rem; color: var(--nostrstack-color-text-muted); }
         .logv__filter { position: relative; display: inline-flex; align-items: center; min-width: 240px; flex: 1; }
         .logv__filter-icon { position: absolute; left: 0.75rem; opacity: 0.65; pointer-events: none; }
