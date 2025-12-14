@@ -1175,23 +1175,30 @@ export default function App() {
               network={networkLabel}
             />
 
-            <details
-              className="nostrstack-gallery-advanced"
-              style={{ marginBottom: '1rem' }}
-              open={walletOverrideOpen}
-              onToggle={(e) => {
-                setWalletOverrideOpen((e.currentTarget as HTMLDetailsElement).open);
-              }}
-            >
-              <summary>Advanced: LNbits wallet override</summary>
-              <div style={{ display: 'grid', gap: '0.4rem' }}>
-                <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
-                  Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API
-                  info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
-                </div>
+              <details
+                className="nostrstack-gallery-advanced"
+                style={{ marginBottom: '1rem' }}
+                open={walletOverrideOpen}
+                onToggle={(e) => {
+                  setWalletOverrideOpen((e.currentTarget as HTMLDetailsElement).open);
+                }}
+              >
+                <summary>Advanced: LNbits wallet override</summary>
+                <form
+                  style={{ display: 'grid', gap: '0.4rem' }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                  }}
+                >
+                  <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
+                    Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API
+                    info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
+                  </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <input
                     className="nostrstack-input"
+                    name="lnbitsUrlOverride"
+                    autoComplete="off"
                     style={{ minWidth: 220, flex: 1 }}
                     placeholder="LNbits URL (e.g. http://localhost:15001)"
                     defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
@@ -1206,9 +1213,11 @@ export default function App() {
                   />
                   <input
                     className="nostrstack-input"
+                    name="lnbitsAdminKeyOverride"
                     style={{ minWidth: 220, flex: 1 }}
                     placeholder="LNbits admin key"
                     type="password"
+                    autoComplete="new-password"
                     ref={adminKeyRef}
                     defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
                     onBlur={(e) => {
@@ -1241,9 +1250,11 @@ export default function App() {
                   </button>
                   <input
                     className="nostrstack-input"
+                    name="lnbitsReadKeyOverride"
                     style={{ minWidth: 220, flex: 1 }}
                     placeholder="LNbits read key (optional)"
                     type="password"
+                    autoComplete="new-password"
                     ref={readKeyRef}
                     defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
                     onBlur={(e) => {
@@ -1257,6 +1268,8 @@ export default function App() {
                   />
                   <input
                     className="nostrstack-input"
+                    name="lnbitsWalletIdOverride"
+                    autoComplete="off"
                     style={{ minWidth: 160, flex: 1 }}
                     placeholder="Wallet ID (for ?usr= fallback)"
                     ref={walletIdRef}
@@ -1289,11 +1302,11 @@ export default function App() {
                       setWalletRefresh((n) => n + 1);
                     }}
                   >
-                    Reset to env
-                  </button>
-                </div>
-              </div>
-            </details>
+                      Reset to env
+                    </button>
+                  </div>
+                </form>
+              </details>
             <div
               style={{
                 display: 'grid',
@@ -1323,6 +1336,8 @@ export default function App() {
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <input
                 className="nostrstack-input"
+                name="payerInvoice"
+                autoComplete="off"
                 style={{ flex: 1, minWidth: 260 }}
                 placeholder="Paste BOLT11"
                 value={payerInvoice}
@@ -1375,23 +1390,27 @@ export default function App() {
                 gap: '0.75rem'
               }}
             >
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <span>Username</span>
-                <input
-                  className="nostrstack-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <span>Amount (sats)</span>
-                <input
-                  className="nostrstack-input"
-                  type="number"
-                  min={1}
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value) || 1)}
-                />
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <span>Username</span>
+                  <input
+                    className="nostrstack-input"
+                    name="username"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <span>Amount (sats)</span>
+                  <input
+                    className="nostrstack-input"
+                    name="amountSats"
+                    type="number"
+                    autoComplete="off"
+                    min={1}
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value) || 1)}
+                  />
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span>Theme</span>
@@ -1421,13 +1440,14 @@ export default function App() {
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span>Brand</span>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <select
-                    className="nostrstack-select"
-                    value={brandPreset}
-                    onChange={(e) => {
-                      const v = e.target.value as NostrstackBrandPreset;
-                      setBrandPreset(v);
-                      if (typeof window !== 'undefined')
+                    <select
+                      className="nostrstack-select"
+                      name="brandPreset"
+                      value={brandPreset}
+                      onChange={(e) => {
+                        const v = e.target.value as NostrstackBrandPreset;
+                        setBrandPreset(v);
+                        if (typeof window !== 'undefined')
                         window.localStorage.setItem('nostrstack.brand.preset', v);
                     }}
                     style={{ flex: 1 }}
@@ -1466,13 +1486,15 @@ export default function App() {
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <span>CSS selector</span>
-                  <input
-                    className="nostrstack-input"
-                    value={themeExportSelector}
-                    onChange={(e) => setThemeExportSelector(e.target.value)}
-                    placeholder=".nostrstack-theme"
-                  />
-                </label>
+                    <input
+                      className="nostrstack-input"
+                      name="themeExportSelector"
+                      autoComplete="off"
+                      value={themeExportSelector}
+                      onChange={(e) => setThemeExportSelector(e.target.value)}
+                      placeholder=".nostrstack-theme"
+                    />
+                  </label>
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <CopyButton text={themeExport.cssBoth} label="Copy CSS (light+dark)" />
@@ -1511,15 +1533,17 @@ export default function App() {
                 gap: '0.4rem'
               }}
             >
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <span>Relays (comments)</span>
-                <input
-                  className="nostrstack-input"
-                  style={{ width: '100%' }}
-                  value={relaysCsv}
-                  onChange={(e) => setRelaysCsv(e.target.value)}
-                  placeholder="wss://relay1,wss://relay2"
-                />
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <span>Relays (comments)</span>
+                  <input
+                    className="nostrstack-input"
+                    name="relaysCsv"
+                    autoComplete="off"
+                    style={{ width: '100%' }}
+                    value={relaysCsv}
+                    onChange={(e) => setRelaysCsv(e.target.value)}
+                    placeholder="wss://relay1,wss://relay2"
+                  />
               </label>
               <div
                 style={{
@@ -1539,13 +1563,15 @@ export default function App() {
                 <div
                   style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
                 >
-                  <input
-                    className="nostrstack-input"
-                    aria-label="Add relay URL"
-                    placeholder="wss://relay.example"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
+                    <input
+                      className="nostrstack-input"
+                      name="relayUrlToAdd"
+                      autoComplete="off"
+                      aria-label="Add relay URL"
+                      placeholder="wss://relay.example"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
                         const url = (e.target as HTMLInputElement).value.trim();
                         if (!url) return;
                         const next = Array.from(new Set([...relaysList, url])).filter(Boolean);
@@ -1753,13 +1779,14 @@ export default function App() {
               </div>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <span style={{ fontWeight: 600 }}>Demo message</span>
-                <textarea
-                  className="nostrstack-textarea"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={2}
-                  style={{ resize: 'vertical' }}
-                />
+                  <textarea
+                    className="nostrstack-textarea"
+                    name="demoMessage"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={2}
+                    style={{ resize: 'vertical' }}
+                  />
               </label>
               <div
                 style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}
@@ -1910,13 +1937,15 @@ export default function App() {
                 <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
                   Telemetry WS override
                 </span>
-                <input
-                  className="nostrstack-input"
-                  defaultValue={telemetryWsOverride ?? ''}
-                  placeholder="ws://localhost:4173/api/ws/telemetry"
-                  onBlur={(e) => {
-                    const v = e.target.value.trim();
-                    setTelemetryWsOverride(v || null);
+                  <input
+                    className="nostrstack-input"
+                    name="telemetryWsOverride"
+                    autoComplete="off"
+                    defaultValue={telemetryWsOverride ?? ''}
+                    placeholder="ws://localhost:4173/api/ws/telemetry"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      setTelemetryWsOverride(v || null);
                     if (typeof window !== 'undefined') {
                       if (v) window.localStorage.setItem('nostrstack.telemetry.ws', v);
                       else window.localStorage.removeItem('nostrstack.telemetry.ws');

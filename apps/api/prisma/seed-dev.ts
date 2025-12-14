@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  const domain = 'localhost:3001';
+  const domain = 'localhost';
   const username = 'alice';
   const lightningAddress = `${username}@${domain}`;
 

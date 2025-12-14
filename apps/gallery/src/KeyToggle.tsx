@@ -34,6 +34,7 @@ export function KeyToggle({ pubkey, seckey }: Props) {
         </button>
         <select
           className="nostrstack-select"
+          name="keyToggleFormat"
           value={format}
           onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')}
           style={{ width: 'auto', minWidth: 132 }}

@@ -339,13 +339,19 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
         <div className="logv__panel">
           <div className="logv__controls">
             <label className="logv__switch">
-              <input type="checkbox" checked={captureFront} onChange={(e) => setCaptureFront(e.target.checked)} />
+              <input
+                type="checkbox"
+                name="captureFront"
+                checked={captureFront}
+                onChange={(e) => setCaptureFront(e.target.checked)}
+              />
               <span className="logv__slider" />
               <span className="logv__switch-label">{captureFront ? 'Frontend capture on' : 'Capture frontend console'}</span>
             </label>
             <label className="logv__switch">
               <input
                 type="checkbox"
+                name="autoScroll"
                 checked={autoScroll}
                 onChange={(e) => {
                   setAutoScroll(e.target.checked);
@@ -359,6 +365,7 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
               <span className="logv__level-label">Level</span>
               <select
                 className="nostrstack-select logv__level-select"
+                name="minLevel"
                 value={minLevel}
                 onChange={(e) => {
                   const v = e.target.value as MinLevel;
@@ -376,6 +383,7 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
               <span className="logv__filter-icon">🔍</span>
               <input
                 className="nostrstack-input logv__filter-input"
+                name="logFilter"
                 value={filter}
                 onChange={(e) => {
                   setFilter(e.target.value);

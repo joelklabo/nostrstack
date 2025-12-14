@@ -10,6 +10,7 @@ export function MockComments() {
         <span>Comment (local mock)</span>
         <textarea
           className="nostrstack-textarea"
+          name="mockComment"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}

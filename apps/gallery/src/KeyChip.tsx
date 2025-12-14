@@ -63,6 +63,7 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, s
           <input
             type="checkbox"
             aria-label="Toggle key format"
+            name="keyChipHexToggle"
             checked={format === 'hex'}
             onChange={(e) => setFormat(e.target.checked ? 'hex' : 'npub')}
             style={{ accentColor: 'var(--nostrstack-color-primary)', width: 16, height: 16, cursor: 'pointer' }}
