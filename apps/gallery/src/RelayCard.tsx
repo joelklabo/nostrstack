@@ -173,9 +173,16 @@ export function RelayCard({
           )}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {nipPills.map((n) => (
-              <Pill key={n} label={`NIP-${n}`} tone="accent" />
+              <Badge key={n} tone="accent">
+                NIP-{n}
+              </Badge>
             ))}
-            {securityPills.length === 0 && nipPills.length === 0 ? <Pill label="base" tone="muted" /> : null}
+            {securityPills.map((s) => (
+              <Badge key={s} tone="muted">
+                {s}
+              </Badge>
+            ))}
+            {securityPills.length === 0 && nipPills.length === 0 ? <Badge tone="muted">base</Badge> : null}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, minWidth: 130 }}>
@@ -216,37 +223,6 @@ export function RelayCard({
         </div>
       </div>
     </div>
-  );
-}
-
-function Pill({ label, tone = 'accent' }: { label: string; tone?: 'accent' | 'muted' }) {
-  const styles =
-    tone === 'accent'
-      ? {
-          bg: 'color-mix(in oklab, var(--nostrstack-color-accent) 14%, var(--nostrstack-color-surface))',
-          fg: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
-          border: 'color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))'
-        }
-      : {
-          bg: 'var(--nostrstack-color-surface-strong)',
-          fg: 'var(--nostrstack-color-text-muted)',
-          border: 'var(--nostrstack-color-border)'
-        };
-
-  return (
-    <span
-      style={{
-        fontSize: '0.72rem',
-        color: styles.fg,
-        background: styles.bg,
-        padding: '0.15rem 0.45rem',
-        borderRadius: 'var(--nostrstack-radius-pill)',
-        border: `1px solid ${styles.border}`,
-        letterSpacing: '0.03em'
-      }}
-    >
-      {label}
-    </span>
   );
 }
 
