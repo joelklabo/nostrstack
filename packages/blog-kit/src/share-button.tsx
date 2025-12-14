@@ -116,10 +116,10 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className }: S
         onClick={handleShare}
         disabled={state === 'sharing'}
         style={{
-          background: 'var(--ns-surface)',
-          color: 'var(--ns-text)',
-          border: '1px solid var(--ns-border)',
-          borderRadius: 999,
+          background: 'var(--nostrstack-color-surface, var(--ns-surface))',
+          color: 'var(--nostrstack-color-text, var(--ns-text))',
+          border: '1px solid var(--nostrstack-color-border, var(--ns-border))',
+          borderRadius: 'var(--nostrstack-radius-pill, 999px)',
           padding: '0.5rem 0.9rem',
           fontWeight: 600,
           cursor: state === 'sharing' ? 'wait' : 'pointer',
