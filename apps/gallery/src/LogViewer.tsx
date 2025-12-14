@@ -225,6 +225,7 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
             <div className="logv__filter">
               <span className="logv__filter-icon">🔍</span>
               <input
+                className="nostrstack-input logv__filter-input"
                 value={filter}
                 onChange={(e) => {
                   setFilter(e.target.value);
@@ -232,7 +233,6 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
                 }}
                 placeholder="Filter log text"
                 aria-label="Filter logs"
-                style={{ background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-text)', borderColor: 'var(--nostrstack-color-border)' }}
               />
             </div>
           </div>
@@ -296,9 +296,9 @@ export function LogViewer({ backendUrl, enabled = true }: Props) {
         .logv__switch input:checked + .logv__slider { background: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border)); }
         .logv__switch input:checked + .logv__slider::after { transform: translateX(18px); background: var(--nostrstack-color-success); }
         .logv__switch-label { font-size: 0.95rem; color: var(--nostrstack-color-text-muted); }
-        .logv__filter { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid var(--nostrstack-color-border); background: var(--nostrstack-color-surface); padding: 0.45rem 0.65rem; border-radius: var(--nostrstack-radius-md); min-width: 240px; }
-        .logv__filter input { border: none; outline: none; width: 100%; background: transparent; color: var(--nostrstack-color-text); }
-        .logv__filter-icon { opacity: 0.7; }
+        .logv__filter { position: relative; display: inline-flex; align-items: center; min-width: 240px; flex: 1; }
+        .logv__filter-icon { position: absolute; left: 0.75rem; opacity: 0.65; pointer-events: none; }
+        .logv__filter-input { padding-left: 2.1rem; }
         .logv__grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
         .logv__stack { display: flex; flex-direction: column; gap: 0.55rem; min-height: 240px; max-height: 45vh; }
         .logv__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }

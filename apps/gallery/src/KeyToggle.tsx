@@ -32,7 +32,12 @@ export function KeyToggle({ pubkey, seckey }: Props) {
         <button onClick={() => setShowPriv((v) => !v)} style={pillBtn}>
           {showPriv ? 'Show pub' : 'Show priv'}
         </button>
-        <select value={format} onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')} style={selectStyle}>
+        <select
+          className="nostrstack-select"
+          value={format}
+          onChange={(e) => setFormat(e.target.value as 'hex' | 'npub')}
+          style={{ width: 'auto', minWidth: 132 }}
+        >
           <option value="npub">npub/nsec</option>
           <option value="hex">hex</option>
         </select>
@@ -67,14 +72,6 @@ const pillBtn: React.CSSProperties = {
   background: 'var(--nostrstack-color-surface)',
   color: 'var(--nostrstack-color-text)',
   fontWeight: 700
-};
-
-const selectStyle: React.CSSProperties = {
-  padding: '0.45rem 0.75rem',
-  borderRadius: 10,
-  border: '1px solid var(--nostrstack-color-border-strong)',
-  background: 'var(--nostrstack-color-surface)',
-  color: 'var(--nostrstack-color-text)'
 };
 
 const codeBox: React.CSSProperties = {

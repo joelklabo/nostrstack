@@ -381,7 +381,7 @@ export const nostrstackComponentsCss = `
 }
 .nostrstack-btn--primary:hover { filter: saturate(1.03); }
 
-.nostrstack-input, .nostrstack-textarea {
+.nostrstack-input, .nostrstack-textarea, .nostrstack-select {
   width: 100%;
   border-radius: var(--nostrstack-radius-md);
   border: 1px solid var(--nostrstack-color-border);
@@ -390,7 +390,19 @@ export const nostrstackComponentsCss = `
   padding: 0.55rem 0.75rem;
   transition: border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard), box-shadow var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
 }
-.nostrstack-input:focus, .nostrstack-textarea:focus { outline: none; box-shadow: var(--nostrstack-shadow-focus); border-color: var(--nostrstack-color-border-strong); }
+.nostrstack-input:focus, .nostrstack-textarea:focus, .nostrstack-select:focus { outline: none; box-shadow: var(--nostrstack-shadow-focus); border-color: var(--nostrstack-color-border-strong); }
+
+.nostrstack-select {
+  appearance: none;
+  padding-right: 2.15rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, color-mix(in oklab, var(--nostrstack-color-text) 65%, transparent) 50%),
+    linear-gradient(135deg, color-mix(in oklab, var(--nostrstack-color-text) 65%, transparent) 50%, transparent 50%),
+    linear-gradient(to right, color-mix(in oklab, var(--nostrstack-color-border-strong) 55%, transparent), color-mix(in oklab, var(--nostrstack-color-border-strong) 55%, transparent));
+  background-position: calc(100% - 0.85rem) calc(50% - 2px), calc(100% - 0.75rem) calc(50% - 2px), calc(100% - 2.05rem) 50%;
+  background-size: 6px 6px, 6px 6px, 1px 1.4em;
+  background-repeat: no-repeat;
+}
 
 .nostrstack-card {
   border: 1px solid var(--nostrstack-color-border);

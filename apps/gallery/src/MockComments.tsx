@@ -9,15 +9,17 @@ export function MockComments() {
       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
         <span>Comment (local mock)</span>
         <textarea
+          className="nostrstack-textarea"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          style={{ width: '100%' }}
+          style={{ width: '100%', resize: 'vertical' }}
         />
       </label>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button
           type="button"
+          className="nostrstack-btn nostrstack-btn--primary"
           onClick={() => {
             if (!text.trim()) return;
             setItems((prev) => [{ content: text.trim(), ts: Date.now() }, ...prev].slice(0, 20));
@@ -26,7 +28,9 @@ export function MockComments() {
         >
           Post
         </button>
-        <button type="button" onClick={() => setText('')}>Clear</button>
+        <button type="button" className="nostrstack-btn" onClick={() => setText('')}>
+          Clear
+        </button>
       </div>
       <div style={{ display: 'grid', gap: '0.4rem' }}>
         {items.map((item) => (

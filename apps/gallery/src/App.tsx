@@ -1118,6 +1118,7 @@ export default function App() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <input
+                    className="nostrstack-input"
                     style={{ minWidth: 220, flex: 1 }}
                     placeholder="LNbits URL (e.g. http://localhost:15001)"
                     defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
@@ -1131,6 +1132,7 @@ export default function App() {
                     }}
                   />
                   <input
+                    className="nostrstack-input"
                     style={{ minWidth: 220, flex: 1 }}
                     placeholder="LNbits admin key"
                     type="password"
@@ -1165,6 +1167,7 @@ export default function App() {
                     Paste admin key
                   </button>
                   <input
+                    className="nostrstack-input"
                     style={{ minWidth: 220, flex: 1 }}
                     placeholder="LNbits read key (optional)"
                     type="password"
@@ -1180,6 +1183,7 @@ export default function App() {
                     }}
                   />
                   <input
+                    className="nostrstack-input"
                     style={{ minWidth: 160, flex: 1 }}
                     placeholder="Wallet ID (for ?usr= fallback)"
                     ref={walletIdRef}
@@ -1218,17 +1222,17 @@ export default function App() {
               </div>
             </details>
             <div
-            style={{
-              display: 'grid',
-              gap: '0.4rem',
-              padding: '0.75rem 0.85rem',
-              background:
-                'color-mix(in oklab, var(--nostrstack-color-primary-soft) 55%, var(--nostrstack-color-surface))',
-              border: `1px solid ${layout.border}`,
-              borderRadius: layout.radius,
-              marginBottom: '1rem'
-            }}
-          >
+              style={{
+                display: 'grid',
+                gap: '0.4rem',
+                padding: '0.75rem 0.85rem',
+                background:
+                  'color-mix(in oklab, var(--nostrstack-color-primary-soft) 55%, var(--nostrstack-color-surface))',
+                border: `1px solid ${layout.border}`,
+                borderRadius: layout.radius,
+                marginBottom: '1rem'
+              }}
+            >
             <div
               style={{
                 display: 'flex',
@@ -1245,6 +1249,7 @@ export default function App() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <input
+                className="nostrstack-input"
                 style={{ flex: 1, minWidth: 260 }}
                 placeholder="Paste BOLT11"
                 value={payerInvoice}
@@ -1299,11 +1304,16 @@ export default function App() {
             >
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span>Username</span>
-                <input value={username} onChange={(e) => setUsername(e.target.value)} />
+                <input
+                  className="nostrstack-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
               </label>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span>Amount (sats)</span>
                 <input
+                  className="nostrstack-input"
                   type="number"
                   min={1}
                   value={amount}
@@ -1339,6 +1349,7 @@ export default function App() {
                 <span>Brand</span>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <select
+                    className="nostrstack-select"
                     value={brandPreset}
                     onChange={(e) => {
                       const v = e.target.value as NostrstackBrandPreset;
@@ -1383,6 +1394,7 @@ export default function App() {
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span>Relays (comments)</span>
                 <input
+                  className="nostrstack-input"
                   style={{ width: '100%' }}
                   value={relaysCsv}
                   onChange={(e) => setRelaysCsv(e.target.value)}
@@ -1408,6 +1420,7 @@ export default function App() {
                   style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
                 >
                   <input
+                    className="nostrstack-input"
                     aria-label="Add relay URL"
                     placeholder="wss://relay.example"
                     onKeyDown={(e) => {
@@ -1612,6 +1625,7 @@ export default function App() {
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <span style={{ fontWeight: 600 }}>Demo message</span>
                 <textarea
+                  className="nostrstack-textarea"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={2}
@@ -1759,6 +1773,7 @@ export default function App() {
                   Telemetry WS override
                 </span>
                 <input
+                  className="nostrstack-input"
                   defaultValue={telemetryWsOverride ?? ''}
                   placeholder="ws://localhost:4173/api/ws/telemetry"
                   onBlur={(e) => {
