@@ -11,7 +11,8 @@
 import { execSync } from 'node:child_process';
 import http from 'node:http';
 import https from 'node:https';
-import { URL } from 'node:url';
+import path from 'node:path';
+import { URL, fileURLToPath } from 'node:url';
 
 function normalizeBase(base: string) {
   return base.replace(/\/+$/, '');
@@ -23,6 +24,9 @@ const DEFAULT_API_BASE =
 const API_BASE = normalizeBase(process.env.API_BASE ?? DEFAULT_API_BASE);
 const AMOUNT = Number(process.env.AMOUNT ?? 123);
 const ACTION = process.env.ACTION ?? 'regtest-smoke';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const REGTEST_COMPOSE = path.join(ROOT, 'deploy', 'regtest', 'docker-compose.yml');
 
 function shouldAllowInsecureLocalTls(base: string) {
   try {
@@ -100,7 +104,7 @@ async function main() {
 
   console.log('💸 Paying via lnd-payer...');
   execSync(
-    `docker compose -f deploy/regtest/docker-compose.yml exec lnd-payer ` +
+    `docker compose -f "${REGTEST_COMPOSE}" exec lnd-payer ` +
       `lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:10010 ` +
       `--macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon ` +
       `--tlscertpath=/data/tls.cert payinvoice --force --json "${payJson.payment_request}"`,
