@@ -11,6 +11,22 @@ codex mcp remove chrome-devtools
 codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 --acceptInsecureCerts
 ```
 
+### Troubleshooting: `Transport closed`
+If Codex MCP tool calls fail with `Transport closed`:
+
+1) Ensure Codex has the MCP client feature enabled in `~/.codex/config.toml`:
+```toml
+[features]
+rmcp_client = true
+```
+Then restart Codex CLI.
+
+2) Verify Chrome remote debugging is running:
+- Start Chrome: `./scripts/mcp-chrome.sh`
+- Verify the port: `lsof -nP -iTCP:9222 -sTCP:LISTEN`
+
+3) Re-add the server entry (above) and restart Codex again.
+
 ## Client config (example)
 ```json
 {
