@@ -107,6 +107,7 @@ async function main() {
     await expect(refreshBtn).toBeEnabled({ timeout: 30_000 });
 
     // Custom wallet: paste admin key + reset + save.
+    await page.locator('summary', { hasText: 'Advanced: LNbits wallet override' }).click();
     const dummyKey = 'dummy-admin-key-' + Date.now();
     await page.evaluate(async (k) => navigator.clipboard.writeText(k), dummyKey);
     await page.getByRole('button', { name: 'Paste admin key' }).click();
@@ -118,8 +119,12 @@ async function main() {
     await expect(page.getByText(/Funded & mined/i)).toBeVisible({ timeout: 120_000 });
 
     // Config & presets.
-    await page.getByRole('button', { name: 'Dark' }).click();
-    await page.getByRole('button', { name: 'Light' }).click();
+    await page
+      .getByRole('button', { name: 'Dark' })
+      .evaluate((el) => (el as HTMLButtonElement).click());
+    await page
+      .getByRole('button', { name: 'Light' })
+      .evaluate((el) => (el as HTMLButtonElement).click());
     const relaysRow = page.getByRole('button', { name: 'Use real defaults' }).locator('..');
     const copyRelaysBtn = relaysRow.getByRole('button').nth(1);
     await copyRelaysBtn.click();
@@ -129,7 +134,7 @@ async function main() {
     const relaysInput = page.locator('input[placeholder="wss://relay1,wss://relay2"]').first();
     await relaysInput.fill('mock');
     await page.waitForTimeout(300); // allow remount
-    await page.getByRole('button', { name: 'Nostr' }).click();
+    await page.getByRole('tab', { name: 'Nostr' }).click();
     await expect(page.getByText('Comments (Nostr)', { exact: true })).toBeVisible();
     const commentBox = page.locator('#comments-container textarea').first();
     await commentBox.waitFor({ timeout: 15_000 });
@@ -139,7 +144,7 @@ async function main() {
     await expect(page.locator('#comments-container')).toContainText(comment, { timeout: 15_000 });
 
     // Back to Lightning for payment flows.
-    await page.getByRole('button', { name: 'Lightning' }).click();
+    await page.getByRole('tab', { name: 'Lightning' }).click();
 
     // Tip button -> invoice popover -> pay via in-app test payer.
     await page.locator('#tip-container button').first().click();
@@ -197,7 +202,7 @@ async function main() {
     await dialog.getByRole('button', { name: 'Close invoice' }).click();
 
     // Logs: SSE + controls.
-    await page.getByRole('button', { name: 'Logs' }).click();
+    await page.getByRole('tab', { name: 'Logs' }).click();
     await expect(page.getByText('Backend stream', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Reconnect' }).click();
     await page.getByLabel('Filter logs').fill('wallet');

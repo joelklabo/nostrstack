@@ -119,7 +119,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-export type PillTone = 'info' | 'success' | 'warn' | 'muted';
+export type PillTone = 'info' | 'success' | 'warn' | 'danger' | 'muted';
 
 export function Pill({
   label,
@@ -134,6 +134,7 @@ export function Pill({
     info: 'var(--nostrstack-color-info)',
     success: 'var(--nostrstack-color-success)',
     warn: 'var(--nostrstack-color-warning)',
+    danger: 'var(--nostrstack-color-danger)',
     muted: 'var(--nostrstack-color-text-subtle)'
   };
   const toneVar = toneColor[tone];
@@ -380,9 +381,11 @@ export default function App() {
     { label: 'LNbits', status: 'unknown' }
   ]);
   const [walletRefresh, setWalletRefresh] = useState(0);
+  const [walletOverrideOpen, setWalletOverrideOpen] = useState(false);
   const adminKeyRef = useRef<HTMLInputElement | null>(null);
   const readKeyRef = useRef<HTMLInputElement | null>(null);
   const walletIdRef = useRef<HTMLInputElement | null>(null);
+  const walletOverrideAutoOpenRef = useRef(false);
   useEffect(() => {
     if (import.meta.env.DEV) {
       // Expose helpers for MCP-driven UI testing
@@ -425,6 +428,15 @@ export default function App() {
       typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
     if (tws) setTelemetryWsOverride(tws);
   }, []);
+  useEffect(() => {
+    if (walletOverrideAutoOpenRef.current) return;
+    const hasOverride =
+      Boolean(lnbitsUrlOverride || lnbitsKeyOverride || lnbitsReadKeyOverride) ||
+      Boolean(lnbitsWalletIdOverride && lnbitsWalletIdOverride !== lnbitsWalletIdEnv);
+    if (!hasOverride) return;
+    walletOverrideAutoOpenRef.current = true;
+    setWalletOverrideOpen(true);
+  }, [lnbitsUrlOverride, lnbitsKeyOverride, lnbitsReadKeyOverride, lnbitsWalletIdOverride]);
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
   const [signerReady, setSignerReady] = useState(false);
   const [signerRelays, setSignerRelays] = useState<string[]>([]);
@@ -940,185 +952,245 @@ export default function App() {
   const lnbitsUrl = normalizeUrl(lnbitsUrlOverride ?? lnbitsUrlRaw);
   const telemetryWsUrl = telemetryWsOverride ?? resolveTelemetryWs(apiBase);
   const relayLabel = relaysCsv || relaysEnvDefault.join(',');
+  const lnbitsHealth = health.find((h) => h.label === 'LNbits') ?? {
+    label: 'LNbits',
+    status: 'unknown' as const
+  };
 
   return (
     <main className="nostrstack nostrstack-theme nostrstack-gallery" data-nostrstack-theme={theme}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <h1 style={{ marginTop: 0, marginBottom: 0 }}>nostrstack Demo</h1>
-        <span className="nostrstack-gallery-network">{network.toUpperCase()}</span>
-      </div>
-      <p style={{ maxWidth: 780 }}>
-        Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments use
-        the relays you set.
-      </p>
+      <header className="nostrstack-gallery-shell">
+        <div className="nostrstack-gallery-content">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h1 style={{ marginTop: 0, marginBottom: 0 }}>nostrstack Demo</h1>
+            <span className="nostrstack-gallery-network">{network.toUpperCase()}</span>
+          </div>
+          <p style={{ maxWidth: 780 }}>
+            Play with the widgets below. Lightning points at <strong>{demoHost}</strong>; comments
+            use the relays you set.
+          </p>
 
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button
-          onClick={() => setTab('lightning')}
-          style={tabBtn(tab === 'lightning', themeStyles)}
-        >
-          Lightning
-        </button>
-        <button onClick={() => setTab('nostr')} style={tabBtn(tab === 'nostr', themeStyles)}>
-          Nostr
-        </button>
-        <button onClick={() => setTab('logs')} style={tabBtn(tab === 'logs', themeStyles)}>
-          Logs
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <Pill label="Host" value={demoHost} tone="info" />
-        <Pill label="API" value={apiBase} tone="info" />
-        <Pill label="Payments" value="real invoices" tone="success" />
-        <Pill
-          label="Pay WS"
-          value={payWsState}
-          tone={payWsState === 'open' ? 'success' : payWsState === 'connecting' ? 'warn' : 'muted'}
-        />
-        <Pill label="Comments" value="real Nostr" tone="success" />
-        <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" />
-      </div>
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <button onClick={pollPayment} className="nostrstack-btn nostrstack-btn--sm">
-          Recheck payment status
-        </button>
-      </div>
-
-      <WalletPanel
-        lnbitsUrl={lnbitsUrl}
-        adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
-        visible
-      />
-      <WalletBalance
-        lnbitsUrl={lnbitsUrl}
-        adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
-        readKey={walletReadKey || undefined}
-        walletId={walletIdOverride}
-        apiBase={apiBase}
-        refreshSignal={walletRefresh}
-        onManualRefresh={() => setWalletRefresh((n) => n + 1)}
-        network={networkLabel}
-      />
-      <div
-        style={{
-          display: 'grid',
-          gap: '0.4rem',
-          padding: '0.6rem 0.8rem',
-          background: themeStyles.inset,
-          border: `1px solid ${layout.border}`,
-          borderRadius: layout.radius,
-          marginBottom: '1rem'
-        }}
-      >
-        <strong>Use a custom LNbits wallet</strong>
-        <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
-          Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API info,
-          optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <input
-            style={{ minWidth: 220, flex: 1 }}
-            placeholder="LNbits URL (e.g. http://localhost:15001)"
-            defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              setLnbitsUrlOverride(v || null);
-              if (typeof window !== 'undefined') {
-                if (v) window.localStorage.setItem('nostrstack.lnbits.url', v);
-                else window.localStorage.removeItem('nostrstack.lnbits.url');
-              }
-            }}
-          />
-          <input
-            style={{ minWidth: 220, flex: 1 }}
-            placeholder="LNbits admin key"
-            type="password"
-            ref={adminKeyRef}
-            defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              setLnbitsKeyOverride(v || null);
-              if (typeof window !== 'undefined') {
-                if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
-                else window.localStorage.removeItem('nostrstack.lnbits.key');
-              }
-            }}
-          />
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                const txt = await navigator.clipboard.readText();
-                const v = txt.trim();
-                if (adminKeyRef.current) adminKeyRef.current.value = v;
-                setLnbitsKeyOverride(v || null);
-                if (typeof window !== 'undefined') {
-                  if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
-                  else window.localStorage.removeItem('nostrstack.lnbits.key');
-                }
-              } catch {
-                // ignore clipboard failures
-              }
-            }}
-          >
-            Paste admin key
-          </button>
-          <input
-            style={{ minWidth: 220, flex: 1 }}
-            placeholder="LNbits read key (optional)"
-            type="password"
-            ref={readKeyRef}
-            defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              setLnbitsReadKeyOverride(v || null);
-              if (typeof window !== 'undefined') {
-                if (v) window.localStorage.setItem('nostrstack.lnbits.readKey', v);
-                else window.localStorage.removeItem('nostrstack.lnbits.readKey');
-              }
-            }}
-          />
-          <input
-            style={{ minWidth: 160, flex: 1 }}
-            placeholder="Wallet ID (for ?usr= fallback)"
-            ref={walletIdRef}
-            defaultValue={lnbitsWalletIdOverride ?? lnbitsWalletIdEnv ?? ''}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              setLnbitsWalletIdOverride(v || null);
-              if (typeof window !== 'undefined') {
-                if (v) window.localStorage.setItem('nostrstack.lnbits.walletId.manual', v);
-                else window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
-              }
-            }}
-          />
-          <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>
-            Save & refresh
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setLnbitsUrlOverride(null);
-              setLnbitsKeyOverride(null);
-              setLnbitsReadKeyOverride(null);
-              setLnbitsWalletIdOverride(null);
-              if (typeof window !== 'undefined') {
-                window.localStorage.removeItem('nostrstack.lnbits.url');
-                window.localStorage.removeItem('nostrstack.lnbits.key');
-                window.localStorage.removeItem('nostrstack.lnbits.readKey');
-                window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
-              }
-              setWalletRefresh((n) => n + 1);
-            }}
-          >
-            Reset to env
-          </button>
-        </div>
-      </div>
-      {tab === 'lightning' && (
-        <>
           <div
+            role="tablist"
+            aria-label="Demo sections"
+            style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'lightning'}
+              onClick={() => setTab('lightning')}
+              style={tabBtn(tab === 'lightning', themeStyles)}
+            >
+              Lightning
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'nostr'}
+              onClick={() => setTab('nostr')}
+              style={tabBtn(tab === 'nostr', themeStyles)}
+            >
+              Nostr
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'logs'}
+              onClick={() => setTab('logs')}
+              style={tabBtn(tab === 'logs', themeStyles)}
+            >
+              Logs
+            </button>
+          </div>
+
+          <div className="nostrstack-envbar" style={{ marginBottom: '1rem' }}>
+            <Pill label="Host" value={demoHost} tone="info" />
+            <Pill label="API" value={apiBase} tone="info" />
+            <Pill
+              label="LNbits"
+              value={lnbitsHealth.status}
+              tone={
+                lnbitsHealth.status === 'ok'
+                  ? 'success'
+                  : lnbitsHealth.status === 'fail'
+                    ? 'warn'
+                    : lnbitsHealth.status === 'unknown' || lnbitsHealth.status === 'skipped'
+                      ? 'muted'
+                      : 'danger'
+              }
+            />
+            <Pill label="Payments" value="real invoices" tone="success" />
+            <Pill
+              label="Pay WS"
+              value={payWsState}
+              tone={
+                payWsState === 'open' ? 'success' : payWsState === 'connecting' ? 'warn' : 'muted'
+              }
+            />
+            <Pill label="Comments" value="real Nostr" tone="success" />
+            <Pill label="Relays" value={compactRelaysLabel(relayLabel)} tone="info" />
+          </div>
+        </div>
+      </header>
+      <div className="nostrstack-gallery-content">
+        {tab === 'lightning' && (
+          <>
+            {paymentRef && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  flexWrap: 'wrap',
+                  marginBottom: '1rem',
+                  alignItems: 'center'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={pollPayment}
+                  className="nostrstack-btn nostrstack-btn--sm"
+                >
+                  Recheck payment status
+                </button>
+                <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>
+                  Ref: <code>{paymentRef.slice(0, 10)}…</code>
+                </span>
+              </div>
+            )}
+
+            <WalletPanel
+              lnbitsUrl={lnbitsUrl}
+              adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+              visible
+            />
+            <WalletBalance
+              lnbitsUrl={lnbitsUrl}
+              adminKey={walletKey || 'set VITE_LNBITS_ADMIN_KEY'}
+              readKey={walletReadKey || undefined}
+              walletId={walletIdOverride}
+              apiBase={apiBase}
+              refreshSignal={walletRefresh}
+              onManualRefresh={() => setWalletRefresh((n) => n + 1)}
+              network={networkLabel}
+            />
+
+            <details
+              className="nostrstack-gallery-advanced"
+              style={{ marginBottom: '1rem' }}
+              open={walletOverrideOpen}
+              onToggle={(e) => {
+                setWalletOverrideOpen((e.currentTarget as HTMLDetailsElement).open);
+              }}
+            >
+              <summary>Advanced: LNbits wallet override</summary>
+              <div style={{ display: 'grid', gap: '0.4rem' }}>
+                <div style={{ color: themeStyles.muted, fontSize: '0.95rem' }}>
+                  Example: URL <code>http://localhost:15001</code>, Admin key from LNbits wallet API
+                  info, optional Wallet ID for <code>/api/v1/wallet?usr=&lt;id&gt;</code> fallback.
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <input
+                    style={{ minWidth: 220, flex: 1 }}
+                    placeholder="LNbits URL (e.g. http://localhost:15001)"
+                    defaultValue={lnbitsUrlOverride ?? lnbitsUrlRaw}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      setLnbitsUrlOverride(v || null);
+                      if (typeof window !== 'undefined') {
+                        if (v) window.localStorage.setItem('nostrstack.lnbits.url', v);
+                        else window.localStorage.removeItem('nostrstack.lnbits.url');
+                      }
+                    }}
+                  />
+                  <input
+                    style={{ minWidth: 220, flex: 1 }}
+                    placeholder="LNbits admin key"
+                    type="password"
+                    ref={adminKeyRef}
+                    defaultValue={lnbitsKeyOverride ?? walletKeyEnv}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      setLnbitsKeyOverride(v || null);
+                      if (typeof window !== 'undefined') {
+                        if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
+                        else window.localStorage.removeItem('nostrstack.lnbits.key');
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const txt = await navigator.clipboard.readText();
+                        const v = txt.trim();
+                        if (adminKeyRef.current) adminKeyRef.current.value = v;
+                        setLnbitsKeyOverride(v || null);
+                        if (typeof window !== 'undefined') {
+                          if (v) window.localStorage.setItem('nostrstack.lnbits.key', v);
+                          else window.localStorage.removeItem('nostrstack.lnbits.key');
+                        }
+                      } catch {
+                        // ignore clipboard failures
+                      }
+                    }}
+                  >
+                    Paste admin key
+                  </button>
+                  <input
+                    style={{ minWidth: 220, flex: 1 }}
+                    placeholder="LNbits read key (optional)"
+                    type="password"
+                    ref={readKeyRef}
+                    defaultValue={lnbitsReadKeyOverride ?? lnbitsReadKeyEnv}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      setLnbitsReadKeyOverride(v || null);
+                      if (typeof window !== 'undefined') {
+                        if (v) window.localStorage.setItem('nostrstack.lnbits.readKey', v);
+                        else window.localStorage.removeItem('nostrstack.lnbits.readKey');
+                      }
+                    }}
+                  />
+                  <input
+                    style={{ minWidth: 160, flex: 1 }}
+                    placeholder="Wallet ID (for ?usr= fallback)"
+                    ref={walletIdRef}
+                    defaultValue={lnbitsWalletIdOverride ?? lnbitsWalletIdEnv ?? ''}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      setLnbitsWalletIdOverride(v || null);
+                      if (typeof window !== 'undefined') {
+                        if (v) window.localStorage.setItem('nostrstack.lnbits.walletId.manual', v);
+                        else window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
+                      }
+                    }}
+                  />
+                  <button type="button" onClick={() => setWalletRefresh((n) => n + 1)}>
+                    Save & refresh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLnbitsUrlOverride(null);
+                      setLnbitsKeyOverride(null);
+                      setLnbitsReadKeyOverride(null);
+                      setLnbitsWalletIdOverride(null);
+                      if (typeof window !== 'undefined') {
+                        window.localStorage.removeItem('nostrstack.lnbits.url');
+                        window.localStorage.removeItem('nostrstack.lnbits.key');
+                        window.localStorage.removeItem('nostrstack.lnbits.readKey');
+                        window.localStorage.removeItem('nostrstack.lnbits.walletId.manual');
+                      }
+                      setWalletRefresh((n) => n + 1);
+                    }}
+                  >
+                    Reset to env
+                  </button>
+                </div>
+              </div>
+            </details>
+            <div
             style={{
               display: 'grid',
               gap: '0.4rem',
@@ -1211,7 +1283,7 @@ export default function App() {
                   onChange={(e) => setAmount(Number(e.target.value) || 1)}
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span>Theme</span>
                 <div
                   role="group"
@@ -1235,7 +1307,7 @@ export default function App() {
                     Dark
                   </button>
                 </div>
-              </label>
+              </div>
             </div>
 
             <div
@@ -1533,7 +1605,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ display: tab === 'logs' ? 'block' : 'none' }}>
+      {tab === 'logs' && (
         <Card title="Logs">
           <div style={{ marginBottom: '0.5rem', color: themeStyles.muted, fontSize: '0.95rem' }}>
             Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures
@@ -1541,9 +1613,10 @@ export default function App() {
           </div>
           <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
         </Card>
-      </div>
+      )}
 
-      <Card title="Status & build">
+      <details className="nostrstack-gallery-advanced" style={{ marginBottom: '1rem' }}>
+        <summary>Status & build</summary>
         <div
           style={{
             display: 'flex',
@@ -1605,7 +1678,8 @@ export default function App() {
           })}
         </div>
         {tab === 'lightning' && (
-          <div style={{ marginTop: '1rem' }}>
+          <details className="nostrstack-gallery-advanced" style={{ marginTop: '1rem' }}>
+            <summary>Advanced: Telemetry</summary>
             <div
               style={{
                 display: 'flex',
@@ -1644,9 +1718,11 @@ export default function App() {
               </button>
             </div>
             <BlockList wsUrl={telemetryWsUrl} network={network} />
-          </div>
+          </details>
         )}
-      </Card>
+      </details>
+
+      </div>
 
       {qrInvoice && (
         <InvoicePopover
