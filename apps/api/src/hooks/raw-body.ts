@@ -5,7 +5,7 @@ import fp from 'fastify-plugin';
 export const rawBodyPlugin = fp(async (app: FastifyInstance) => {
   app.addHook('onRequest', async (request, _reply) => {
     if (process.env.VITEST === 'true') return;
-    const wantsRaw = (request.context.config as { rawBody?: boolean } | undefined)?.rawBody;
+    const wantsRaw = (request.routeOptions?.config as { rawBody?: boolean } | undefined)?.rawBody;
     if (!wantsRaw) return;
 
     let data = '';

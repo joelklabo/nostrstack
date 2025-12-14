@@ -109,7 +109,8 @@ export async function buildServer() {
     keyGenerator: (req) => {
       const host = (req.headers['x-forwarded-host'] as string | undefined) || req.headers.host || 'unknown';
       const tenant = host.split(':')[0].toLowerCase();
-      return `${tenant}:${req.routerPath || req.raw.url}`;
+      const route = req.routeOptions?.url || req.raw.url || 'unknown';
+      return `${tenant}:${route}`;
     }
   });
   await server.addHook('onRequest', requestIdHook);

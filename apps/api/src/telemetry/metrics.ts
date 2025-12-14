@@ -19,11 +19,11 @@ client.collectDefaultMetrics();
 
 export const metricsPlugin = fp(async function metricsPlugin(app: FastifyInstance) {
   app.addHook('onResponse', async (req, reply) => {
-    const route = reply.contextConfig?.url || req.routerPath || 'unknown';
+    const route = req.routeOptions?.url || 'unknown';
     const tenant = (req.headers.host || 'default').split(':')[0].toLowerCase();
     const labels = [req.method, route, String(reply.statusCode), tenant];
     requestCount.labels(...labels).inc();
-    requestDuration.labels(...labels).observe(reply.getResponseTime() / 1000);
+    requestDuration.labels(...labels).observe(reply.elapsedTime / 1000);
   });
 
   app.decorate('metricsRegistry', client.register);
