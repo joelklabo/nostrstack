@@ -1,7 +1,8 @@
 "use client";
 
+import { ensureNostrstackRoot } from '@nostrstack/embed';
 import { Relay } from 'nostr-tools/relay';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useNostrstackConfig } from './context';
 
@@ -54,8 +55,14 @@ export type ShareButtonProps = {
 
 export function ShareButton({ url, title, lnAddress, relays, tag, className }: ShareButtonProps) {
   const cfg = useNostrstackConfig();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<'idle' | 'sharing' | 'copied' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!rootRef.current) return;
+    ensureNostrstackRoot(rootRef.current);
+  }, []);
 
   const relayList = useMemo(() => relays ?? cfg.relays ?? DEFAULT_RELAYS, [relays, cfg.relays]);
   const note = useMemo(
@@ -110,24 +117,24 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className }: S
   }, [note, title, url, tag, relayList]);
 
   return (
-    <div className={className}>
+    <div ref={rootRef} className={className}>
       <button
         type="button"
         onClick={handleShare}
         disabled={state === 'sharing'}
-        style={{
-          background: 'var(--nostrstack-color-surface, var(--ns-surface))',
-          color: 'var(--nostrstack-color-text, var(--ns-text))',
-          border: '1px solid var(--nostrstack-color-border, var(--ns-border))',
-          borderRadius: 'var(--nostrstack-radius-pill, 999px)',
-          padding: '0.5rem 0.9rem',
-          fontWeight: 600,
-          cursor: state === 'sharing' ? 'wait' : 'pointer',
-        }}
+        aria-busy={state === 'sharing'}
+        className="nostrstack-btn nostrstack-btn--primary"
       >
         {state === 'sharing' ? 'Sharing…' : state === 'copied' ? 'Shared' : 'Share to Nostr'}
       </button>
-      {error && <p style={{ color: '#f87171', marginTop: 6, fontSize: 13 }}>{error}</p>}
+      {error && (
+        <p
+          role="alert"
+          style={{ color: 'var(--nostrstack-color-danger)', marginTop: 6, fontSize: 13 }}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
