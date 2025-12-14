@@ -182,8 +182,12 @@ export async function buildServer() {
   });
 
   server.setErrorHandler((err, req, reply) => {
-    req.log.error({ err }, 'request errored');
     const status = err.statusCode && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : 500;
+    if (status >= 500) {
+      req.log.error({ err, status }, 'request errored');
+    } else {
+      req.log.warn({ err, status }, 'request failed');
+    }
     const body: Record<string, unknown> = {
       error: err.code || 'internal_error',
       message: env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
