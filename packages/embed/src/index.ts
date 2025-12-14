@@ -107,9 +107,17 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
   btn.className = 'nostrstack-btn nostrstack-btn--primary';
   btn.textContent = opts.text ?? 'Send sats';
   setBrandAttr(btn, 'Tip', opts.username);
+  const status = document.createElement('div');
+  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  status.style.marginTop = '0.5rem';
   const handler = async () => {
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
+    status.textContent = 'Generating invoice…';
+    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
+    status.classList.add('nostrstack-status--muted');
     try {
       if (isMock(opts)) {
         const mockPr = 'lnbc1mock' + Math.random().toString(16).slice(2, 10);
@@ -117,6 +125,7 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
         if (!opts.onInvoice) {
           renderInvoicePopover(mockPr, { mount: container, title: 'Invoice', subtitle: 'Mock payment' });
         }
+        status.textContent = '';
         return;
       }
 
@@ -126,12 +135,16 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
       const invoice = await client.getLnurlpInvoice(opts.username, amount);
       if (opts.onInvoice) {
         await opts.onInvoice(invoice.pr);
+        status.textContent = '';
       } else {
         renderInvoicePopover(invoice.pr, { mount: container, title: 'Invoice', subtitle: `Pay @${opts.username}` });
+        status.textContent = '';
       }
     } catch (e) {
       console.error('tip error', e);
-      alert('Failed to generate invoice');
+      status.textContent = 'Failed to generate invoice';
+      status.classList.remove('nostrstack-status--muted');
+      status.classList.add('nostrstack-status--danger');
     } finally {
       btn.disabled = false;
       btn.removeAttribute('aria-busy');
@@ -142,6 +155,7 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
   btn.addEventListener('click', handler);
   btn.onclick = handler;
   container.appendChild(btn);
+  container.appendChild(status);
   return btn;
 }
 
@@ -156,7 +170,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   btn.textContent = opts.text ?? 'Unlock';
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-pay-status nostrstack-muted';
+  status.className = 'nostrstack-pay-status nostrstack-status nostrstack-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
 
@@ -181,6 +195,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
 
   const unlock = () => {
     status.textContent = 'Unlocked';
+    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
+    status.classList.add('nostrstack-status--success');
     btn.disabled = true;
     paidBtn.disabled = true;
     container.classList.add('nostrstack-pay--unlocked');
@@ -193,6 +209,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
     status.textContent = 'Generating invoice…';
+    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
+    status.classList.add('nostrstack-status--muted');
     try {
       const pr = isMock(opts)
         ? 'lnbc1mock' + Math.random().toString(16).slice(2, 10)
@@ -229,7 +247,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     } catch (e) {
       console.error('pay-to-action error', e);
       status.textContent = 'Failed to generate invoice';
-      alert('Failed to generate invoice');
+      status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
+      status.classList.add('nostrstack-status--danger');
     } finally {
       btn.disabled = false;
       btn.removeAttribute('aria-busy');
@@ -344,6 +363,11 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   const list = document.createElement('div');
   list.className = 'nostrstack-comments-list';
 
+  const status = document.createElement('div');
+  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+
   const form = document.createElement('form');
   form.className = 'nostrstack-comments-form';
   const textarea = document.createElement('textarea');
@@ -379,12 +403,17 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.nostr && !mockMode) {
-      alert('Nostr signer (NIP-07) required to post');
+      status.textContent = 'Nostr signer (NIP-07) required to post';
+      status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
+      status.classList.add('nostrstack-status--danger');
       return;
     }
     const content = textarea.value.trim();
     if (!content) return;
     submit.disabled = true;
+    status.textContent = '';
+    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
+    status.classList.add('nostrstack-status--muted');
     try {
       if (mockMode) {
         const mockEvent: NostrEvent = {
@@ -419,7 +448,9 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
       }
     } catch (err) {
       console.error('nostr post failed', err);
-      alert('Failed to post comment');
+      status.textContent = 'Failed to post comment';
+      status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
+      status.classList.add('nostrstack-status--danger');
     } finally {
       submit.disabled = false;
     }
@@ -428,6 +459,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   header.append(headerText, relayBadge);
   container.appendChild(header);
   container.appendChild(list);
+  container.appendChild(status);
   container.appendChild(form);
   return container;
 }

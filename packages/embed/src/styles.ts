@@ -492,6 +492,10 @@ export const nostrstackComponentsCss = `
 
 .nostrstack-muted { color: var(--nostrstack-color-text-muted); }
 .nostrstack-code { font-family: var(--nostrstack-font-mono); }
+.nostrstack-status { font-weight: 700; font-size: 0.92rem; line-height: 1.25; }
+.nostrstack-status--muted { color: var(--nostrstack-color-text-muted); }
+.nostrstack-status--success { color: var(--nostrstack-color-success); }
+.nostrstack-status--danger { color: var(--nostrstack-color-danger); }
 
 /* ===== Primitives ===== */
 .nostrstack-badge {
