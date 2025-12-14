@@ -1,6 +1,13 @@
 "use client";
 
-import { type NostrstackTheme,themeToCssVars } from '@nostrstack/embed';
+import {
+  createNostrstackBrandTheme,
+  ensureNostrstackEmbedStyles,
+  type NostrstackBrandPreset,
+  type NostrstackTheme,
+  type NostrstackThemeMode,
+  themeToCssVars
+} from '@nostrstack/embed';
 import React, { createContext, useContext, useMemo } from 'react';
 
 export type ThemeVars = {
@@ -17,6 +24,8 @@ export type NostrstackConfig = {
   relays?: string[];
   theme?: ThemeVars;
   nostrstackTheme?: NostrstackTheme;
+  brandPreset?: NostrstackBrandPreset;
+  themeMode?: NostrstackThemeMode;
 };
 
 const NostrstackContext = createContext<NostrstackConfig>({});
@@ -29,6 +38,9 @@ export type NostrstackProviderProps = React.PropsWithChildren<NostrstackConfig> 
 export function NostrstackProvider({ children, className, style, ...config }: NostrstackProviderProps) {
   const value = useMemo(() => config, [config]);
   const legacy = config.theme ?? {};
+  React.useEffect(() => {
+    ensureNostrstackEmbedStyles();
+  }, []);
   const baseTheme: NostrstackTheme = {
     color: {
       primary: legacy.accent ?? '#f59e0b',
@@ -38,9 +50,14 @@ export function NostrstackProvider({ children, className, style, ...config }: No
     }
   };
 
+  const mode = config.nostrstackTheme?.mode ?? config.themeMode;
+  const brandTheme =
+    config.brandPreset ? createNostrstackBrandTheme({ preset: config.brandPreset, mode: mode ?? 'light' }) : undefined;
+
   const themeVars: React.CSSProperties = {
     ...themeToCssVars(baseTheme),
-    ...themeToCssVars(config.nostrstackTheme),
+    ...(brandTheme ? themeToCssVars(brandTheme) : {}),
+    ...themeToCssVars(config.nostrstackTheme ?? {}),
     // Legacy aliases (blog-kit v1)
     '--ns-accent': 'var(--nostrstack-color-primary)',
     '--ns-text': 'var(--nostrstack-color-text)',
@@ -49,8 +66,7 @@ export function NostrstackProvider({ children, className, style, ...config }: No
     ...style
   } as React.CSSProperties;
 
-  const mode = config.nostrstackTheme?.mode;
-  const mergedClassName = ['nostrstack-theme', className].filter(Boolean).join(' ');
+  const mergedClassName = ['nostrstack', 'nostrstack-theme', className].filter(Boolean).join(' ');
 
   return (
     <NostrstackContext.Provider value={value}>

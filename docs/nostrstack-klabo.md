@@ -53,6 +53,18 @@ Admin compose/edit forms expose these fields; per-post disable is respected even
 - `@nostrstack/blog-kit` exposes `NostrstackProvider`, `TipButton`, `Comments`, `ShareButton`, plus helpers for LN address/relays.
 - Use when embedding widgets into other React blogs: wrap layout with `NostrstackProvider` and drop components where needed.
 
+### Theming (blog-kit)
+Quick preset:
+```tsx
+<NostrstackProvider brandPreset="emerald" themeMode="dark">
+  {/* widgets */}
+</NostrstackProvider>
+```
+
+Full control:
+- Pass `nostrstackTheme` (uses `@nostrstack/embed` tokens).
+- Or set `--nostrstack-*` CSS vars on a wrapping selector (the provider renders `.nostrstack-theme`).
+
 ## Static-site injector
 - CLI `pnpm nostrstack inject -i dist -t alice@your.host -a https://api.host -r wss://relay1,wss://relay2` adds embed script + tip/comments placeholders to static HTML/MDX outputs (Hugo/Jekyll/etc.). Idempotent via markers.
 

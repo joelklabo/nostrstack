@@ -16,6 +16,8 @@ vi.mock('@nostrstack/embed', () => {
       div.textContent = 'Comments';
       el.appendChild(div);
     }),
+    createNostrstackBrandTheme: vi.fn(() => ({})),
+    ensureNostrstackEmbedStyles: vi.fn(),
     ensureNostrstackRoot: vi.fn(),
     themeToCssVars: vi.fn(() => ({})),
   };
