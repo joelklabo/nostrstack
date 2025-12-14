@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
+import { useToast } from './toast';
 
 export type InvoicePopoverProps = {
   invoice: string | null;
@@ -16,6 +17,7 @@ export function InvoicePopover({
   status = 'pending',
   onClose
 }: InvoicePopoverProps) {
+  const toast = useToast();
   const [dataUrl, setDataUrl] = useState<string>('');
   const [ageMs, setAgeMs] = useState(0);
   const [celebrate, setCelebrate] = useState(false);
@@ -62,6 +64,15 @@ export function InvoicePopover({
     }
   }, [invoice]);
 
+  useEffect(() => {
+    if (!invoice) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [invoice, onClose]);
+
   const stale = status === 'pending' && ageMs > 120000;
   const progress = Math.min(1, ageMs / 120000);
   const displayAmount = useMemo(() => (amountSats ? `${amountSats} sats` : ''), [amountSats]);
@@ -92,6 +103,17 @@ export function InvoicePopover({
   }, [visualState]);
 
   if (!invoice) return null;
+
+  const copyInvoice = async () => {
+    try {
+      if (!navigator?.clipboard?.writeText) throw new Error('Clipboard not available');
+      await navigator.clipboard.writeText(invoice);
+      toast({ message: 'Invoice copied', tone: 'success' });
+    } catch (err) {
+      console.warn('copy invoice failed', err);
+      toast({ message: 'Copy failed', tone: 'danger' });
+    }
+  };
 
   return (
     <div style={overlayStyle} onClick={onClose}>
@@ -150,32 +172,47 @@ export function InvoicePopover({
                 boxShadow: 'var(--nostrstack-shadow-md)'
               }}
             >
-              {dataUrl ? (
-                <img
-                  src={dataUrl}
-                  alt="Lightning invoice QR"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    maxWidth: 240,
-                    maxHeight: 240,
-                    display: 'block',
-                    margin: '0 auto',
-                    borderRadius: 'var(--nostrstack-radius-md)'
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    height: 240,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--nostrstack-color-text-subtle)'
-                  }}
-                >
-                  Generating…
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={copyInvoice}
+                aria-label="Copy invoice"
+                className="nostrstack-invoice-qr"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  padding: 0,
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  borderRadius: 'var(--nostrstack-radius-md)'
+                }}
+              >
+                {dataUrl ? (
+                  <img
+                    src={dataUrl}
+                    alt="Lightning invoice QR"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      maxWidth: 240,
+                      maxHeight: 240,
+                      display: 'block',
+                      margin: '0 auto',
+                      borderRadius: 'var(--nostrstack-radius-md)'
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      height: 240,
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--nostrstack-color-text-subtle)'
+                    }}
+                  >
+                    Generating…
+                  </div>
+                )}
+              </button>
               <div
                 style={{
                   marginTop: 8,
@@ -184,7 +221,7 @@ export function InvoicePopover({
                   color: 'var(--nostrstack-color-text-muted)'
                 }}
               >
-                Scan or tap to pay
+                Scan to pay • Click QR to copy
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 240 }}>

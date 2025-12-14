@@ -285,7 +285,9 @@ async function main() {
     await expect(dialog).toContainText('6 sats', { timeout: 30_000 });
     await expect(page.getByTestId('real-invoice')).toContainText('lnbcrt', { timeout: 30_000 });
     await expect(dialog).toBeVisible({ timeout: 30_000 });
-    await dialog.getByRole('button', { name: 'Copy' }).click();
+    await dialog.getByRole('button', { name: 'Copy invoice' }).click();
+    await expect(page.getByTestId('toast-region')).toContainText('Invoice copied');
+    await dialog.getByRole('button', { name: 'Copy', exact: true }).click();
     await expect(page.getByTestId('toast-region')).toContainText('Copy copied');
     await page.evaluate(() => {
       const btn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Recheck payment status') as HTMLButtonElement | undefined;

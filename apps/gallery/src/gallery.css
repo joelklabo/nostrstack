@@ -189,6 +189,11 @@
   border-color: var(--nostrstack-color-border-strong);
 }
 
+.nostrstack-invoice-qr:focus-visible {
+  outline: none;
+  box-shadow: var(--nostrstack-shadow-focus);
+}
+
 :where(.nostrstack-gallery) :where(button:not(.nostrstack-btn)):active {
   transform: translateY(0);
 }
