@@ -182,8 +182,10 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
     return (
       <div style={card}>
         <strong>Wallet</strong>
-        <div style={{ color: '#475569', marginTop: 4 }}>Wallet config missing. Set env vars or paste values above.</div>
-        <ul style={{ color: '#475569', marginTop: 4, paddingLeft: '1.1rem' }}>
+        <div style={{ color: 'var(--nostrstack-color-text-muted)', marginTop: 4 }}>
+          Wallet config missing. Set env vars or paste values above.
+        </div>
+        <ul style={{ color: 'var(--nostrstack-color-text-muted)', marginTop: 4, paddingLeft: '1.1rem' }}>
           <li>Required: <code>VITE_LNBITS_URL</code> and either <code>VITE_LNBITS_ADMIN_KEY</code> or <code>VITE_LNBITS_READ_KEY</code>.</li>
           <li>Optional: <code>VITE_LNBITS_WALLET_ID</code> to prefill the wallet ID field.</li>
           <li>You can also paste keys/URL in the controls above and click “Save & refresh”.</li>
@@ -200,8 +202,24 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
             <strong>Wallets</strong>
             <ConnectionPill state={loading ? 'checking' : error ? 'error' : wallet ? 'ok' : 'idle'} />
           </div>
-          <span style={{ padding: '0.2rem 0.55rem', borderRadius: 999, background: '#eef2ff', color: '#4338ca', fontWeight: 700, letterSpacing: '0.02em' }}>{(network ?? 'regtest').toUpperCase()}</span>
-          <span style={{ fontSize: '0.9rem', color: '#475569' }}>Add funds mines blocks then pays an LNbits invoice so the balance below is real.</span>
+          <span
+            style={{
+              padding: '0.2rem 0.55rem',
+              borderRadius: 'var(--nostrstack-radius-pill)',
+              background:
+                'color-mix(in oklab, var(--nostrstack-color-accent) 12%, var(--nostrstack-color-surface))',
+              color: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
+              border:
+                '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
+              fontWeight: 700,
+              letterSpacing: '0.02em'
+            }}
+          >
+            {(network ?? 'regtest').toUpperCase()}
+          </span>
+          <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>
+            Add funds mines blocks then pays an LNbits invoice so the balance below is real.
+          </span>
         </div>
         <button
           type="button"
@@ -209,7 +227,7 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
             setUpdatedAt(Date.now());
             onManualRefresh?.();
           }}
-          style={btn}
+          className="nostrstack-btn nostrstack-btn--sm"
           disabled={loading}
         >
           {loading ? 'Refreshing…' : 'Refresh'}
@@ -219,19 +237,21 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
       <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', marginBottom: 10 }}>
         <RoleCard
           title="Receiver"
-          accent="#0ea5e9"
+          tone="info"
           subtitle="LNbits (you)"
           body="Invoices and faucet payments land here. The balance and wallet ID come directly from LNbits over X-Api-Key."
         />
         <RoleCard
           title="Test payer"
-          accent="#22c55e"
+          tone="success"
           subtitle={payerLabel}
           body="Prefunded LND node that pays invoices (including the faucet top-up) so you can bounce sats back and forth."
         />
       </div>
-      {error && <div style={{ color: '#b91c1c', fontSize: '0.9rem' }}>Error: {error}</div>}
-      <div style={{ display: 'grid', gap: 4, fontSize: '0.9rem', color: '#475569', marginBottom: 4 }}>
+      {error && (
+        <div style={{ color: 'var(--nostrstack-color-danger)', fontSize: '0.9rem' }}>Error: {error}</div>
+      )}
+      <div style={{ display: 'grid', gap: 4, fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)', marginBottom: 4 }}>
         {keyStatuses.map((s) => (
           <div key={s.kind} style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, minWidth: 70 }}>{s.kind === 'admin' ? 'Admin key' : 'Read key'}</span>
@@ -239,11 +259,11 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
             {s.url && <code style={pillCode}>{s.url}</code>}
           </div>
         ))}
-        {lastRequest && <div style={{ color: '#94a3b8' }}>Last request: {lastRequest}</div>}
-        {lastHeaders && <div style={{ color: '#94a3b8' }}>Headers: {lastHeaders}</div>}
+        {lastRequest && <div style={{ color: 'var(--nostrstack-color-text-subtle)' }}>Last request: {lastRequest}</div>}
+        {lastHeaders && <div style={{ color: 'var(--nostrstack-color-text-subtle)' }}>Headers: {lastHeaders}</div>}
       </div>
       {lastResponse && (
-        <details style={{ fontSize: '0.85rem', color: '#475569' }}>
+        <details style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
           <summary>Last response</summary>
           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>{lastResponse}</pre>
         </details>
@@ -251,32 +271,32 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
       {!error && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--nostrstack-color-text)' }}>
               {wallet?.balance != null ? `${wallet.balance} sats` : loading ? <span style={skeleton} /> : '—'}
             </span>
-            {wallet?.name && <span style={{ color: '#475569' }}>{wallet.name}</span>}
+            {wallet?.name && <span style={{ color: 'var(--nostrstack-color-text-muted)' }}>{wallet.name}</span>}
           </div>
-          <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+          <div style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>
             {updatedAt ? `Updated ${new Date(updatedAt).toLocaleTimeString()}` : '—'}
           </div>
           {wallet?.id && (
-            <div style={{ fontSize: '0.85rem', color: '#64748b', wordBreak: 'break-all' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-subtle)', wordBreak: 'break-all' }}>
               Wallet ID: {wallet.id}
             </div>
           )}
           {lastWalletId && !wallet?.id && (
-            <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-subtle)' }}>
               Last known wallet ID: {lastWalletId}
             </div>
           )}
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-        <code style={{ padding: '0.25rem 0.45rem', borderRadius: 8, background: '#e2e8f0', color: '#0f172a' }}>{normalizeUrl(lnbitsUrl || '')}</code>
-        <code style={{ padding: '0.25rem 0.45rem', borderRadius: 8, background: '#e2e8f0', color: '#0f172a' }}>
+        <code style={{ padding: '0.25rem 0.45rem', borderRadius: 'var(--nostrstack-radius-sm)', background: 'var(--nostrstack-color-surface-strong)', border: '1px solid var(--nostrstack-color-border)', color: 'var(--nostrstack-color-text)' }}>{normalizeUrl(lnbitsUrl || '')}</code>
+        <code style={{ padding: '0.25rem 0.45rem', borderRadius: 'var(--nostrstack-radius-sm)', background: 'var(--nostrstack-color-surface-strong)', border: '1px solid var(--nostrstack-color-border)', color: 'var(--nostrstack-color-text)' }}>
           {masked ? '••••••••' : adminKey || readKey || ''}
         </code>
-        <button type="button" onClick={() => setMasked((v) => !v)} style={btn}>
+        <button type="button" onClick={() => setMasked((v) => !v)} className="nostrstack-btn nostrstack-btn--sm">
           {masked ? 'Show key' : 'Hide key'}
         </button>
       </div>
@@ -285,26 +305,18 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
 }
 
 const card: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
-  borderRadius: 12,
+  border: '1px solid var(--nostrstack-color-border)',
+  borderRadius: 'var(--nostrstack-radius-lg)',
   padding: '0.75rem 0.85rem',
-  background: '#f8fafc'
-};
-
-const btn: React.CSSProperties = {
-  padding: '0.35rem 0.65rem',
-  borderRadius: 8,
-  border: '1px solid #cbd5e1',
-  background: '#fff',
-  cursor: 'pointer'
+  background: 'var(--nostrstack-color-surface-subtle)'
 };
 
 const pillCode: React.CSSProperties = {
   padding: '0.15rem 0.4rem',
-  borderRadius: 8,
-  background: '#f8fafc',
-  border: '1px solid #e2e8f0',
-  color: '#0f172a',
+  borderRadius: 'var(--nostrstack-radius-sm)',
+  background: 'var(--nostrstack-color-surface-strong)',
+  border: '1px solid var(--nostrstack-color-border)',
+  color: 'var(--nostrstack-color-text)',
   fontSize: '0.8rem'
 };
 
@@ -312,7 +324,7 @@ const skeleton: React.CSSProperties = {
   display: 'inline-block',
   width: 80,
   height: 16,
-  background: '#e2e8f0',
+  background: 'var(--nostrstack-color-surface-strong)',
   borderRadius: 6,
   animation: 'pulse 1.6s ease-in-out infinite'
 };
@@ -325,45 +337,96 @@ function normalizeUrl(url: string) {
   return `http://${url}`;
 }
 
-function RoleCard({ title, subtitle, body, accent }: { title: string; subtitle: string; body: string; accent: string }) {
+function RoleCard({ title, subtitle, body, tone }: { title: string; subtitle: string; body: string; tone: 'info' | 'success' }) {
+  const accent = tone === 'success' ? 'var(--nostrstack-color-success)' : 'var(--nostrstack-color-info)';
   return (
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.65rem 0.75rem', background: '#fff', display: 'grid', gap: 4 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0f172a' }}>
-        <span style={{ width: 10, height: 10, borderRadius: 999, background: accent, boxShadow: `0 0 0 6px ${accent}1a` }} />
+    <div className="nostrstack-card" style={{ padding: '0.65rem 0.75rem', background: 'var(--nostrstack-color-surface)', display: 'grid', gap: 4, boxShadow: 'var(--nostrstack-shadow-sm)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: 'var(--nostrstack-color-text)' }}>
+        <span
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 'var(--nostrstack-radius-pill)',
+            background: accent,
+            boxShadow: `0 0 0 6px color-mix(in oklab, ${accent} 22%, transparent)`
+          }}
+        />
         {title}
       </div>
-      <div style={{ color: '#0f172a', fontWeight: 600 }}>{subtitle}</div>
-      <div style={{ color: '#475569', fontSize: '0.9rem' }}>{body}</div>
+      <div style={{ color: 'var(--nostrstack-color-text)', fontWeight: 600 }}>{subtitle}</div>
+      <div style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: '0.9rem' }}>{body}</div>
     </div>
   );
 }
 
 function StatusPill({ status, message }: { status: KeyStatus['status']; message?: string }) {
-  const palette: Record<KeyStatus['status'], { bg: string; fg: string; label: string }> = {
-    idle: { bg: '#e2e8f0', fg: '#475569', label: 'idle' },
-    ok: { bg: '#ecfdf3', fg: '#166534', label: 'ok' },
-    error: { bg: '#fef2f2', fg: '#b91c1c', label: message || 'error' }
+  const palette: Record<KeyStatus['status'], { bg: string; fg: string; dot: string; border: string; label: string }> = {
+    idle: {
+      bg: 'var(--nostrstack-color-surface-strong)',
+      fg: 'var(--nostrstack-color-text-muted)',
+      dot: 'var(--nostrstack-color-text-subtle)',
+      border: 'var(--nostrstack-color-border)',
+      label: 'idle'
+    },
+    ok: {
+      bg: 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))',
+      fg: 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))',
+      dot: 'var(--nostrstack-color-success)',
+      border: 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))',
+      label: 'ok'
+    },
+    error: {
+      bg: 'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
+      fg: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+      dot: 'var(--nostrstack-color-danger)',
+      border: 'color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
+      label: message || 'error'
+    }
   };
   const tone = palette[status];
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: '1px solid #e2e8f0', fontWeight: 700 }}>
-      <span style={{ width: 8, height: 8, borderRadius: 999, background: tone.fg }} />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 'var(--nostrstack-radius-pill)', background: tone.bg, color: tone.fg, border: `1px solid ${tone.border}`, fontWeight: 700 }}>
+      <span style={{ width: 8, height: 8, borderRadius: 'var(--nostrstack-radius-pill)', background: tone.dot }} />
       {tone.label}
     </span>
   );
 }
 
 function ConnectionPill({ state }: { state: 'idle' | 'checking' | 'ok' | 'error' }) {
-  const palette: Record<'idle' | 'checking' | 'ok' | 'error', { bg: string; fg: string; label: string }> = {
-    idle: { bg: '#e2e8f0', fg: '#475569', label: 'idle' },
-    checking: { bg: '#fff7ed', fg: '#c2410c', label: 'checking' },
-    ok: { bg: '#ecfdf3', fg: '#166534', label: 'connected' },
-    error: { bg: '#fef2f2', fg: '#b91c1c', label: 'error' }
+  const palette: Record<'idle' | 'checking' | 'ok' | 'error', { bg: string; fg: string; dot: string; border: string; label: string }> = {
+    idle: {
+      bg: 'var(--nostrstack-color-surface-strong)',
+      fg: 'var(--nostrstack-color-text-muted)',
+      dot: 'var(--nostrstack-color-text-subtle)',
+      border: 'var(--nostrstack-color-border)',
+      label: 'idle'
+    },
+    checking: {
+      bg: 'color-mix(in oklab, var(--nostrstack-color-warning) 14%, var(--nostrstack-color-surface))',
+      fg: 'color-mix(in oklab, var(--nostrstack-color-warning) 70%, var(--nostrstack-color-text))',
+      dot: 'var(--nostrstack-color-warning)',
+      border: 'color-mix(in oklab, var(--nostrstack-color-warning) 35%, var(--nostrstack-color-border))',
+      label: 'checking'
+    },
+    ok: {
+      bg: 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))',
+      fg: 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))',
+      dot: 'var(--nostrstack-color-success)',
+      border: 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))',
+      label: 'connected'
+    },
+    error: {
+      bg: 'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
+      fg: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+      dot: 'var(--nostrstack-color-danger)',
+      border: 'color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
+      label: 'error'
+    }
   };
   const tone = palette[state];
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.85rem' }}>
-      <span style={{ width: 8, height: 8, borderRadius: 999, background: tone.fg }} />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.2rem 0.55rem', borderRadius: 'var(--nostrstack-radius-pill)', background: tone.bg, color: tone.fg, border: `1px solid ${tone.border}`, fontWeight: 700, fontSize: '0.85rem' }}>
+      <span style={{ width: 8, height: 8, borderRadius: 'var(--nostrstack-radius-pill)', background: tone.dot }} />
       {tone.label}
     </span>
   );

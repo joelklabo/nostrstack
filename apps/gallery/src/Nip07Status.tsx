@@ -111,11 +111,30 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
   }, [detect]);
 
   const stateColor =
-    status === 'ready' ? '#22c55e' : status === 'checking' ? '#f59e0b' : status === 'error' ? '#ef4444' : '#f97316';
-  const badgeShadow = status === 'ready' ? '0 0 0 6px rgba(34,197,94,0.2)' : 'none';
+    status === 'ready'
+      ? 'var(--nostrstack-color-success)'
+      : status === 'checking'
+        ? 'var(--nostrstack-color-warning)'
+        : status === 'error'
+          ? 'var(--nostrstack-color-danger)'
+          : 'var(--nostrstack-color-warning)';
+  const badgeShadow =
+    status === 'ready'
+      ? '0 0 0 6px color-mix(in oklab, var(--nostrstack-color-success) 22%, transparent)'
+      : 'none';
 
   return (
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+    <div
+      className="nostrstack-card"
+      style={{
+        padding: '0.75rem',
+        background: 'var(--nostrstack-color-surface-subtle)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.4rem',
+        boxShadow: 'var(--nostrstack-shadow-sm)'
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
         <span style={{ width: 10, height: 10, borderRadius: 999, background: stateColor, boxShadow: badgeShadow }} />
         <strong>
@@ -127,16 +146,44 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       </div>
 
       {status === 'ready' && (
-        <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: '0.9rem',
+            color: 'var(--nostrstack-color-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap',
+            minWidth: 0
+          }}
+        >
           <span>Pubkey:</span>
-          <code style={{ background: '#fff', padding: '0.25rem 0.45rem', borderRadius: 8, border: '1px solid #e2e8f0', wordBreak: 'break-all', maxWidth: '100%', display: 'block' }}>
+          <code
+            style={{
+              background: 'var(--nostrstack-color-surface)',
+              padding: '0.25rem 0.45rem',
+              borderRadius: 'var(--nostrstack-radius-sm)',
+              border: '1px solid var(--nostrstack-color-border)',
+              wordBreak: 'break-all',
+              maxWidth: '100%',
+              display: 'block'
+            }}
+          >
             {npub ?? detectedNpub ?? 'unknown'}
           </code>
         </div>
       )}
 
       {status === 'missing' && (
-        <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div
+          style={{
+            fontSize: '0.9rem',
+            color: 'var(--nostrstack-color-text-muted)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.25rem'
+          }}
+        >
           <span>Tips to enable:</span>
           <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
             <li>Install Alby or nos2x</li>
@@ -145,49 +192,80 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
             <li>Use https or localhost so the extension can inject</li>
           </ul>
           {nostrPresent === false && (
-            <div style={{ color: '#ef4444' }}>No window.nostr detected on this origin.</div>
+            <div style={{ color: 'var(--nostrstack-color-danger)' }}>
+              No window.nostr detected on this origin.
+            </div>
           )}
-          {lastHint && <div style={{ color: '#9f1239' }}>{lastHint}</div>}
+          {lastHint && (
+            <div style={{ color: 'color-mix(in oklab, var(--nostrstack-color-danger) 80%, var(--nostrstack-color-text))' }}>
+              {lastHint}
+            </div>
+          )}
         </div>
       )}
 
       {status === 'error' && (
-        <div style={{ fontSize: '0.9rem', color: '#ef4444' }}>
+        <div style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-danger)' }}>
           {error ?? 'Unknown error checking signer'}
           {error === 'timeout' && (
-            <div style={{ color: '#475569', marginTop: 4 }}>
+            <div style={{ color: 'var(--nostrstack-color-text-muted)', marginTop: 4 }}>
               Extension may be waiting for permission — click request or allow in your NIP-07 wallet.
             </div>
           )}
           {error && (
-            <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: 4 }}>
+            <div style={{ color: 'var(--nostrstack-color-text-subtle)', fontSize: '0.85rem', marginTop: 4 }}>
               Raw: {error}
             </div>
           )}
-          {lastHint && <div style={{ color: '#9f1239', marginTop: 4 }}>{lastHint}</div>}
+          {lastHint && (
+            <div style={{ color: 'color-mix(in oklab, var(--nostrstack-color-danger) 80%, var(--nostrstack-color-text))', marginTop: 4 }}>
+              {lastHint}
+            </div>
+          )}
         </div>
       )}
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.1rem' }}>
-        <button type="button" onClick={detect} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: '1px solid #cbd5e1', background: '#fff' }}>
+        <button
+          type="button"
+          onClick={detect}
+          className="nostrstack-btn nostrstack-btn--sm"
+          style={{ borderRadius: 'var(--nostrstack-radius-pill)' }}
+        >
           Re-check
         </button>
         <button
           type="button"
           onClick={() => window.nostr?.getPublicKey && detect()}
-          style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: '1px solid #cbd5e1', background: '#eef2ff' }}
+          className="nostrstack-btn nostrstack-btn--sm"
+          style={{
+            borderRadius: 'var(--nostrstack-radius-pill)',
+            background:
+              'color-mix(in oklab, var(--nostrstack-color-accent) 12%, var(--nostrstack-color-surface))',
+            border:
+              '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))'
+          }}
         >
           Request permission
         </button>
         <button
           type="button"
           onClick={() => setDemoOff((v) => !v)}
-          style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: '1px solid #cbd5e1', background: demoOff ? '#fee2e2' : '#fff' }}
+          className="nostrstack-btn nostrstack-btn--sm"
+          style={{
+            borderRadius: 'var(--nostrstack-radius-pill)',
+            background: demoOff
+              ? 'color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface))'
+              : 'var(--nostrstack-color-surface)',
+            border: demoOff
+              ? '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))'
+              : '1px solid var(--nostrstack-color-border)'
+          }}
         >
           {demoOff ? 'Show detected state' : 'Preview missing state'}
         </button>
         {lastCheckedAt && (
-          <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
             Checked {new Date(lastCheckedAt).toLocaleTimeString()}
           </span>
         )}

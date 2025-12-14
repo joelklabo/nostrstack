@@ -46,10 +46,10 @@ export function KeyToggle({ pubkey, seckey }: Props) {
 }
 
 const wrapper: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
-  borderRadius: 12,
+  border: '1px solid var(--nostrstack-color-border)',
+  borderRadius: 'var(--nostrstack-radius-lg)',
   padding: '0.75rem',
-  background: '#f8fafc'
+  background: 'var(--nostrstack-color-surface-subtle)'
 };
 
 const toolbar: React.CSSProperties = {
@@ -63,27 +63,29 @@ const toolbar: React.CSSProperties = {
 const pillBtn: React.CSSProperties = {
   padding: '0.4rem 0.9rem',
   borderRadius: 999,
-  border: '1px solid #cbd5e1',
-  background: '#fff',
+  border: '1px solid var(--nostrstack-color-border-strong)',
+  background: 'var(--nostrstack-color-surface)',
+  color: 'var(--nostrstack-color-text)',
   fontWeight: 700
 };
 
 const selectStyle: React.CSSProperties = {
   padding: '0.45rem 0.75rem',
   borderRadius: 10,
-  border: '1px solid #cbd5e1',
-  background: '#fff'
+  border: '1px solid var(--nostrstack-color-border-strong)',
+  background: 'var(--nostrstack-color-surface)',
+  color: 'var(--nostrstack-color-text)'
 };
 
 const codeBox: React.CSSProperties = {
-  fontFamily: 'monospace',
+  fontFamily: 'var(--nostrstack-font-mono)',
   wordBreak: 'break-word',
   fontSize: '0.9rem',
-  color: '#0f172a',
+  color: 'var(--nostrstack-color-text)',
   padding: '0.35rem 0.6rem',
-  background: '#fff',
+  background: 'var(--nostrstack-color-surface)',
   borderRadius: 10,
-  border: '1px solid #e2e8f0',
+  border: '1px solid var(--nostrstack-color-border)',
   minHeight: 34
 };
 

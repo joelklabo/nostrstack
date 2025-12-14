@@ -108,7 +108,10 @@ export function NpubBar({ pubkey, seckey }: Props) {
           <button
             type="button"
             onClick={() => setFormat('npub')}
-            style={{ ...toggleBtn, color: format === 'npub' ? '#0f172a' : '#64748b' }}
+            style={{
+              ...toggleBtn,
+              color: format === 'npub' ? 'var(--nostrstack-color-text)' : 'var(--nostrstack-color-text-subtle)'
+            }}
             aria-pressed={format === 'npub'}
           >
             npub
@@ -116,7 +119,10 @@ export function NpubBar({ pubkey, seckey }: Props) {
           <button
             type="button"
             onClick={() => setFormat('hex')}
-            style={{ ...toggleBtn, color: format === 'hex' ? '#0f172a' : '#64748b' }}
+            style={{
+              ...toggleBtn,
+              color: format === 'hex' ? 'var(--nostrstack-color-text)' : 'var(--nostrstack-color-text-subtle)'
+            }}
             aria-pressed={format === 'hex'}
           >
             hex
@@ -126,11 +132,34 @@ export function NpubBar({ pubkey, seckey }: Props) {
           {truncated}
         </span>
         <button type="button" onClick={handleCopy} style={copy} aria-live="polite" aria-label="Copy key">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={copied ? '#22c55e' : '#0f172a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke 120ms ease', opacity: copied ? 0.9 : 1 }}>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={copied ? 'var(--nostrstack-color-success)' : 'var(--nostrstack-color-text)'}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ transition: 'stroke 120ms ease', opacity: copied ? 0.9 : 1 }}
+          >
             <rect x="9" y="9" width="11" height="11" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
-          <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: copied ? 1 : 0, color: '#22c55e', fontWeight: 800, transition: 'opacity 120ms ease' }}>✓</span>
+          <span
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'grid',
+              placeItems: 'center',
+              opacity: copied ? 1 : 0,
+              color: 'var(--nostrstack-color-success)',
+              fontWeight: 800,
+              transition: 'opacity 120ms ease'
+            }}
+          >
+            ✓
+          </span>
         </button>
       </div>
     </div>
@@ -146,19 +175,19 @@ const bar: React.CSSProperties = {
   gridTemplateColumns: 'auto 1fr auto',
   alignItems: 'center',
   gap: 10,
-  background: '#f8fafc',
-  borderRadius: 14,
-  border: '1px solid #e2e8f0',
+  background: 'var(--nostrstack-color-surface-subtle)',
+  borderRadius: 'var(--nostrstack-radius-lg)',
+  border: '1px solid var(--nostrstack-color-border)',
   padding: '0.45rem 0.65rem',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 6px 16px rgba(15,23,42,0.06)',
+  boxShadow: 'var(--nostrstack-shadow-md)',
   position: 'relative',
   overflow: 'hidden'
 };
 
 const text: React.CSSProperties = {
-  fontFamily: 'monospace',
+  fontFamily: 'var(--nostrstack-font-mono)',
   fontSize: '0.96rem',
-  color: '#0f172a',
+  color: 'var(--nostrstack-color-text)',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis'
@@ -168,12 +197,12 @@ const copy: React.CSSProperties = {
   position: 'relative',
   width: 40,
   height: 40,
-  borderRadius: 10,
-  border: '1px solid #cbd5e1',
-  background: '#fff',
+  borderRadius: 'var(--nostrstack-radius-md)',
+  border: '1px solid var(--nostrstack-color-border)',
+  background: 'var(--nostrstack-color-surface)',
   cursor: 'pointer',
   fontWeight: 800,
-  color: '#0f172a',
+  color: 'var(--nostrstack-color-text)',
   display: 'grid',
   placeItems: 'center'
 };
@@ -182,12 +211,13 @@ const toggleShell: React.CSSProperties = {
   display: 'inline-grid',
   gridTemplateColumns: '1fr 1fr',
   position: 'relative',
-  borderRadius: 14,
-  background: '#e2e8f0',
+  borderRadius: 'var(--nostrstack-radius-lg)',
+  background: 'var(--nostrstack-color-surface-strong)',
+  border: '1px solid var(--nostrstack-color-border)',
   padding: 4,
   gap: 4,
   minWidth: 140,
-  boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.08)',
+  boxShadow: 'inset 0 2px 6px color-mix(in oklab, var(--nostrstack-color-text) 12%, transparent)',
   alignItems: 'center'
 };
 
@@ -195,10 +225,12 @@ const thumb: React.CSSProperties = {
   position: 'absolute',
   inset: 4,
   width: 'calc(50% - 4px)',
-  borderRadius: 10,
-  background: 'linear-gradient(145deg, #fff, #dbeafe)',
-  boxShadow: '2px 2px 6px rgba(0,0,0,0.12), -1px -1px 4px rgba(255,255,255,0.9)',
-  transition: 'transform 150ms ease, box-shadow 150ms ease',
+  borderRadius: 'var(--nostrstack-radius-md)',
+  background:
+    'linear-gradient(145deg, var(--nostrstack-color-surface), color-mix(in oklab, var(--nostrstack-color-primary-soft) 55%, var(--nostrstack-color-surface)))',
+  boxShadow: 'var(--nostrstack-shadow-sm)',
+  transition:
+    'transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard), box-shadow var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard), background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard)',
   zIndex: 0
 };
 

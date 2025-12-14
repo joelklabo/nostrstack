@@ -24,10 +24,20 @@ type Props = {
   latencyMs?: number;
   online?: boolean;
   lastProbeAt?: number;
-  theme?: 'light' | 'dark';
 };
 
-export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, lastSentAt, latencyMs, online, lastProbeAt, theme = 'light' }: Props) {
+export function RelayCard({
+  url,
+  meta,
+  recv = 0,
+  recvPerMin,
+  sendStatus,
+  last,
+  lastSentAt,
+  latencyMs,
+  online,
+  lastProbeAt
+}: Props) {
   const host = useMemo(() => {
     try {
       return new URL(url.replace(/^ws/, 'http')).host;
@@ -36,30 +46,41 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
     }
   }, [url]);
 
-  const palette =
-    theme === 'dark'
-      ? { card: '#0b1220', text: '#e2e8f0', sub: '#cbd5e1', border: '#1f2937', chip: '#0f172a', accent: '#38bdf8' }
-      : { card: '#fff', text: '#0f172a', sub: '#475569', border: '#e2e8f0', chip: '#f8fafc', accent: '#0ea5e9' };
-
   const now = Date.now();
   const recvHot = last && now - last < 4000;
   const sendHot = lastSentAt && now - lastSentAt < 4000;
   const tone =
     sendStatus === 'sending'
-      ? { dot: '#0ea5e9', shadow: 'rgba(14,165,233,0.35)', badge: '• sending' }
+      ? { dot: 'var(--nostrstack-color-info)', badge: '• sending' }
       : sendStatus === 'ok'
-        ? { dot: '#22c55e', shadow: 'rgba(34,197,94,0.35)', badge: sendHot ? '✓ sent' : '' }
+        ? { dot: 'var(--nostrstack-color-success)', badge: sendHot ? '✓ sent' : '' }
         : sendStatus === 'error'
-          ? { dot: '#ef4444', shadow: 'rgba(239,68,68,0.35)', badge: '! error' }
-          : { dot: '#94a3b8', shadow: 'rgba(148,163,184,0.35)', badge: '' };
+          ? { dot: 'var(--nostrstack-color-danger)', badge: '! error' }
+          : { dot: 'var(--nostrstack-color-text-subtle)', badge: '' };
 
   const lastLabel = last ? timeAgo(last) : 'no recent activity';
   const sendLabel = lastSentAt ? `${timeAgo(lastSentAt)} (send)` : null;
   const activityBars = buildSpark(recv);
   const tooltip = last ? new Date(last).toLocaleTimeString() : '—';
   const statusState = online === false ? 'offline' : online === true ? 'online' : 'unknown';
-  const statusColor = statusState === 'offline' ? '#ef4444' : statusState === 'online' ? '#15803d' : palette.sub;
-  const statusBg = statusState === 'offline' ? '#fef2f2' : statusState === 'online' ? '#ecfdf3' : palette.chip;
+  const statusTone =
+    statusState === 'offline'
+      ? {
+          fg: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+          bg: 'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
+          border: 'color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))'
+        }
+      : statusState === 'online'
+        ? {
+            fg: 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))',
+            bg: 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))',
+            border: 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))'
+          }
+        : {
+            fg: 'var(--nostrstack-color-text-muted)',
+            bg: 'var(--nostrstack-color-surface-strong)',
+            border: 'var(--nostrstack-color-border)'
+          };
   const statusLabel = latencyMs != null && statusState !== 'unknown' ? `${statusState} • ${latencyMs}ms` : statusState;
   const statusTitle = lastProbeAt ? `last probe ${new Date(lastProbeAt).toLocaleTimeString()}` : undefined;
   const nipPills = (meta?.supportedNips ?? []).slice(0, 4);
@@ -71,21 +92,26 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
 
   return (
     <div
-      className="relay-card"
+      className="nostrstack-card relay-card"
       style={{
-        border: `1px solid ${palette.border}`,
-        borderRadius: 12,
         padding: '0.75rem 0.85rem',
-        background: palette.card,
-        boxShadow: '0 10px 28px rgba(15,23,42,0.08)'
+        boxShadow: 'var(--nostrstack-shadow-md)'
       }}
     >
-      <style>{`
-        @keyframes relay-pulse { 0% { box-shadow: 0 0 0 0 ${tone.shadow}; } 70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
-      `}</style>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: '0.65rem' }}>
         <div style={{ position: 'relative', width: 36, height: 36 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: palette.chip, border: `1px solid ${palette.border}`, display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 'var(--nostrstack-radius-md)',
+              background: 'var(--nostrstack-color-surface-strong)',
+              border: '1px solid var(--nostrstack-color-border)',
+              display: 'grid',
+              placeItems: 'center',
+              overflow: 'hidden'
+            }}
+          >
             <span style={{ fontSize: '0.9rem' }}>{meta?.icon ? '🛰️' : '📡'}</span>
           </div>
           <span
@@ -96,31 +122,77 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
               bottom: -4,
               width: 10,
               height: 10,
-              borderRadius: 999,
+              borderRadius: 'var(--nostrstack-radius-pill)',
               background: tone.dot,
-              boxShadow: recvHot || sendHot ? `0 0 0 6px ${tone.shadow}` : undefined,
-              animation: recvHot || sendHot ? 'relay-pulse 1.8s infinite' : undefined
-            }}
+              animation: recvHot || sendHot ? 'nostrstack-pulse-soft 1.8s infinite' : undefined,
+              ...(recvHot || sendHot ? ({ '--nostrstack-pulse-color': tone.dot } as Record<string, string>) : {})
+            } as React.CSSProperties}
           />
         </div>
         <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <strong style={{ fontSize: '0.95rem', color: palette.text, overflow: 'hidden', textOverflow: 'ellipsis' }}>{host}</strong>
+            <strong
+              style={{
+                fontSize: '0.95rem',
+                color: 'var(--nostrstack-color-text)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              {host}
+            </strong>
             {securityPills.map((p) => (
-              <span key={p} style={{ fontSize: '0.72rem', background: '#fef2f2', color: '#b91c1c', padding: '0.15rem 0.45rem', borderRadius: 999, border: '1px solid #fecdd3', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <span
+                key={p}
+                style={{
+                  fontSize: '0.72rem',
+                  background:
+                    'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
+                  color:
+                    'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: 'var(--nostrstack-radius-pill)',
+                  border:
+                    '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em'
+                }}
+              >
                 {p}
               </span>
             ))}
           </div>
-          <span style={{ fontSize: '0.82rem', color: palette.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span
+            style={{
+              fontSize: '0.82rem',
+              color: 'var(--nostrstack-color-text-muted)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
             {(meta?.name || '—')}{meta?.software ? ` • ${meta.software}${meta?.version ? ` ${meta.version}` : ''}` : meta?.version ? ` • v${meta.version}` : ''}
           </span>
-          {description && <span style={{ fontSize: '0.82rem', color: palette.sub, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{description}</span>}
+          {description && (
+            <span
+              style={{
+                fontSize: '0.82rem',
+                color: 'var(--nostrstack-color-text-muted)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}
+            >
+              {description}
+            </span>
+          )}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {nipPills.map((n) => (
-              <Pill key={n} label={`NIP-${n}`} color={palette.accent} />
+              <Pill key={n} label={`NIP-${n}`} tone="accent" />
             ))}
-            {securityPills.length === 0 && nipPills.length === 0 ? <Pill label="base" color={palette.sub} /> : null}
+            {securityPills.length === 0 && nipPills.length === 0 ? <Pill label="base" tone="muted" /> : null}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, minWidth: 130 }}>
@@ -128,22 +200,40 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
             title={statusTitle}
             style={{
               fontSize: '0.78rem',
-              color: statusColor,
-              background: statusBg,
-              border: `1px solid ${palette.border}`,
+              color: statusTone.fg,
+              background: statusTone.bg,
+              border: `1px solid ${statusTone.border}`,
               padding: '0.18rem 0.55rem',
-              borderRadius: 999,
+              borderRadius: 'var(--nostrstack-radius-pill)',
               textTransform: 'capitalize'
             }}
           >
             {statusLabel}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.85rem', color: palette.text, background: palette.chip, border: `1px solid ${palette.border}`, padding: '0.2rem 0.55rem', borderRadius: 999 }}>
+            <span
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--nostrstack-color-text)',
+                background: 'var(--nostrstack-color-surface-strong)',
+                border: '1px solid var(--nostrstack-color-border)',
+                padding: '0.2rem 0.55rem',
+                borderRadius: 'var(--nostrstack-radius-pill)'
+              }}
+            >
               recv {recv}
             </span>
             {recvPerMin != null && (
-              <span style={{ fontSize: '0.82rem', color: palette.sub, background: palette.chip, border: `1px solid ${palette.border}`, padding: '0.18rem 0.55rem', borderRadius: 999 }}>
+              <span
+                style={{
+                  fontSize: '0.82rem',
+                  color: 'var(--nostrstack-color-text-muted)',
+                  background: 'var(--nostrstack-color-surface-strong)',
+                  border: '1px solid var(--nostrstack-color-border)',
+                  padding: '0.18rem 0.55rem',
+                  borderRadius: 'var(--nostrstack-radius-pill)'
+                }}
+              >
                 {recvPerMin}/min
               </span>
             )}
@@ -154,8 +244,8 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
               <span key={idx} title={tooltip} style={{ width: 5, height: h, borderRadius: 2, background: tone.dot, opacity: 0.8 }} />
             ))}
           </div>
-          <span style={{ fontSize: '0.75rem', color: palette.sub, whiteSpace: 'nowrap' }}>{lastLabel}</span>
-          {sendLabel && <span style={{ fontSize: '0.75rem', color: palette.sub, whiteSpace: 'nowrap' }}>{sendLabel}</span>}
+          <span style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-text-muted)', whiteSpace: 'nowrap' }}>{lastLabel}</span>
+          {sendLabel && <span style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-text-muted)', whiteSpace: 'nowrap' }}>{sendLabel}</span>}
           <div style={{ display: 'flex', gap: 6 }}>
             <CopyButton text={url} label="Copy" />
             <button
@@ -164,7 +254,7 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
                 if (typeof window === 'undefined') return;
                 window.open(url.replace(/^ws/, 'http'), '_blank', 'noreferrer');
               }}
-              style={{ border: `1px solid ${palette.border}`, background: palette.chip, color: palette.text, borderRadius: 8, padding: '0.15rem 0.55rem', cursor: 'pointer' }}
+              className="nostrstack-btn nostrstack-btn--sm nostrstack-btn--ghost"
             >
               Open
             </button>
@@ -175,9 +265,32 @@ export function RelayCard({ url, meta, recv = 0, recvPerMin, sendStatus, last, l
   );
 }
 
-function Pill({ label, color }: { label: string; color: string }) {
+function Pill({ label, tone = 'accent' }: { label: string; tone?: 'accent' | 'muted' }) {
+  const styles =
+    tone === 'accent'
+      ? {
+          bg: 'color-mix(in oklab, var(--nostrstack-color-accent) 14%, var(--nostrstack-color-surface))',
+          fg: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
+          border: 'color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))'
+        }
+      : {
+          bg: 'var(--nostrstack-color-surface-strong)',
+          fg: 'var(--nostrstack-color-text-muted)',
+          border: 'var(--nostrstack-color-border)'
+        };
+
   return (
-    <span style={{ fontSize: '0.72rem', color, background: 'rgba(14,165,233,0.08)', padding: '0.15rem 0.45rem', borderRadius: 999, border: `1px solid ${color}22`, letterSpacing: '0.03em' }}>
+    <span
+      style={{
+        fontSize: '0.72rem',
+        color: styles.fg,
+        background: styles.bg,
+        padding: '0.15rem 0.45rem',
+        borderRadius: 'var(--nostrstack-radius-pill)',
+        border: `1px solid ${styles.border}`,
+        letterSpacing: '0.03em'
+      }}
+    >
       {label}
     </span>
   );

@@ -247,10 +247,40 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
   }, [wsUrl]);
 
   const tone = useMemo(() => {
-    if (status === 'open') return { label: 'Streaming', bg: '#ecfdf3', fg: '#166534', dot: '#22c55e' };
-    if (status === 'connecting') return { label: 'Connecting…', bg: '#fff7ed', fg: '#c2410c', dot: '#fb923c' };
-    if (status === 'error') return { label: 'Disconnected', bg: '#fef2f2', fg: '#b91c1c', dot: '#ef4444' };
-    return { label: 'Idle', bg: '#e2e8f0', fg: '#475569', dot: '#94a3b8' };
+    if (status === 'open') {
+      return {
+        label: 'Streaming',
+        bg: 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))',
+        fg: 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))',
+        dot: 'var(--nostrstack-color-success)',
+        border: 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))'
+      };
+    }
+    if (status === 'connecting') {
+      return {
+        label: 'Connecting…',
+        bg: 'color-mix(in oklab, var(--nostrstack-color-warning) 14%, var(--nostrstack-color-surface))',
+        fg: 'color-mix(in oklab, var(--nostrstack-color-warning) 70%, var(--nostrstack-color-text))',
+        dot: 'var(--nostrstack-color-warning)',
+        border: 'color-mix(in oklab, var(--nostrstack-color-warning) 35%, var(--nostrstack-color-border))'
+      };
+    }
+    if (status === 'error') {
+      return {
+        label: 'Disconnected',
+        bg: 'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
+        fg: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+        dot: 'var(--nostrstack-color-danger)',
+        border: 'color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))'
+      };
+    }
+    return {
+      label: 'Idle',
+      bg: 'var(--nostrstack-color-surface-strong)',
+      fg: 'var(--nostrstack-color-text-muted)',
+      dot: 'var(--nostrstack-color-text-subtle)',
+      border: 'var(--nostrstack-color-border)'
+    };
   }, [status]);
 
   const blockEvents = useMemo(
@@ -263,35 +293,135 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800 }}>
           <span>Telemetry</span>
-          <span style={{ padding: '0.2rem 0.6rem', borderRadius: 999, background: '#eef2ff', color: '#4338ca', fontWeight: 700, letterSpacing: '0.03em' }}>{network.toUpperCase()}</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.3rem 0.65rem', borderRadius: 999, background: tone.bg, color: tone.fg, border: `1px solid ${tone.bg}` }}>
-            <span style={{ width: 10, height: 10, borderRadius: 999, background: tone.dot, boxShadow: status === 'open' ? '0 0 0 0 rgba(34,197,94,0.3)' : 'none', animation: status === 'open' ? 'telemetry-pulse 1.8s infinite' : 'none' }} />
+          <span
+            style={{
+              padding: '0.2rem 0.6rem',
+              borderRadius: 'var(--nostrstack-radius-pill)',
+              background:
+                'color-mix(in oklab, var(--nostrstack-color-accent) 14%, var(--nostrstack-color-surface))',
+              color: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
+              border:
+                '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
+              fontWeight: 700,
+              letterSpacing: '0.03em'
+            }}
+          >
+            {network.toUpperCase()}
+          </span>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '0.3rem 0.65rem',
+              borderRadius: 'var(--nostrstack-radius-pill)',
+              background: tone.bg,
+              color: tone.fg,
+              border: `1px solid ${tone.border}`
+            }}
+          >
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 'var(--nostrstack-radius-pill)',
+                background: tone.dot,
+                animation: status === 'open' ? 'nostrstack-pulse-soft 1.8s infinite' : 'none',
+                ...(status === 'open' ? ({ '--nostrstack-pulse-color': tone.dot } as Record<string, string>) : {})
+              } as React.CSSProperties}
+            />
             {tone.label}
           </span>
         </div>
-        <span style={{ fontSize: '0.95rem', color: '#475569' }}>Height: {height ?? '…'}</span>
+        <span style={{ fontSize: '0.95rem', color: 'var(--nostrstack-color-text-muted)' }}>
+          Height: {height ?? '…'}
+        </span>
       </div>
-      <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div
+        style={{
+          fontSize: '0.9rem',
+          color: 'var(--nostrstack-color-text-muted)',
+          display: 'flex',
+          gap: '0.45rem',
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}
+      >
         <span style={{ fontWeight: 700 }}>Endpoint</span>
-        <code style={{ background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: 8 }}>{activeUrl}</code>
-        {attemptNote && <span style={{ color: '#c2410c' }}>{attemptNote}</span>}
+        <code
+          style={{
+            background: 'var(--nostrstack-color-surface-strong)',
+            border: '1px solid var(--nostrstack-color-border)',
+            padding: '0.2rem 0.4rem',
+            borderRadius: 'var(--nostrstack-radius-sm)'
+          }}
+        >
+          {activeUrl}
+        </code>
+        {attemptNote && (
+          <span style={{ color: 'color-mix(in oklab, var(--nostrstack-color-warning) 75%, var(--nostrstack-color-text))' }}>
+            {attemptNote}
+          </span>
+        )}
       </div>
       {backendIssue && (
-        <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10, display: 'grid', gap: 4 }}>
+        <div
+          style={{
+            fontSize: '0.9rem',
+            color: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+            background:
+              'color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface))',
+            border:
+              '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
+            padding: '0.45rem 0.6rem',
+            borderRadius: 'var(--nostrstack-radius-md)',
+            display: 'grid',
+            gap: 4
+          }}
+        >
           <span>Telemetry backend issue: {backendIssue}</span>
-          <span style={{ color: '#9f1239' }}>Check API logs (.logs/dev/api.log) and bitcoind RPC health.</span>
+          <span style={{ color: 'color-mix(in oklab, var(--nostrstack-color-danger) 80%, var(--nostrstack-color-text))' }}>
+            Check API logs (.logs/dev/api.log) and bitcoind RPC health.
+          </span>
         </div>
       )}
       {status === 'error' && (
-        <div style={{ fontSize: '0.9rem', color: '#b91c1c', background: '#fef2f2', border: '1px solid #fecdd3', padding: '0.45rem 0.6rem', borderRadius: 10, display: 'grid', gap: 4 }}>
+        <div
+          style={{
+            fontSize: '0.9rem',
+            color: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+            background:
+              'color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface))',
+            border:
+              '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
+            padding: '0.45rem 0.6rem',
+            borderRadius: 'var(--nostrstack-radius-md)',
+            display: 'grid',
+            gap: 4
+          }}
+        >
           <span>Stream error: {errorMsg ?? 'disconnected'} — retrying…</span>
-          {suggestFix(activeUrl, errorMsg)?.length ? <span style={{ color: '#9f1239' }}>{suggestFix(activeUrl, errorMsg)}</span> : null}
-          <span style={{ color: '#9f1239' }}>If you are in dev, ensure API is running (`pnpm dev:logs`) and check API logs for `/ws/telemetry` errors.</span>
+          {suggestFix(activeUrl, errorMsg)?.length ? (
+            <span style={{ color: 'color-mix(in oklab, var(--nostrstack-color-danger) 80%, var(--nostrstack-color-text))' }}>
+              {suggestFix(activeUrl, errorMsg)}
+            </span>
+          ) : null}
+          <span style={{ color: 'color-mix(in oklab, var(--nostrstack-color-danger) 80%, var(--nostrstack-color-text))' }}>
+            If you are in dev, ensure API is running (`pnpm dev:logs`) and check API logs for `/ws/telemetry` errors.
+          </span>
         </div>
       )}
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'minmax(360px, 1fr)' }}>
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden', background: '#0f172a', color: '#e2e8f0' }}>
-          <div style={{ padding: '0.75rem 1rem', display: 'grid', gridTemplateColumns: '1fr 80px 80px 90px 90px 140px', gap: 8, fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', background: '#0c1326' }}>
+        <div
+          className="nostrstack-card"
+          style={{
+            borderRadius: 'var(--nostrstack-radius-lg)',
+            overflow: 'hidden',
+            background: 'var(--nostrstack-color-surface)',
+            boxShadow: 'var(--nostrstack-shadow-md)'
+          }}
+        >
+          <div style={{ padding: '0.75rem 1rem', display: 'grid', gridTemplateColumns: '1fr 80px 80px 90px 90px 140px', gap: 8, fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--nostrstack-color-text-subtle)', background: 'var(--nostrstack-color-surface-strong)' }}>
             <span>Height</span>
             <span>Txs</span>
             <span>Size</span>
@@ -300,7 +430,9 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
             <span>Hash</span>
           </div>
           {blockEvents.length === 0 ? (
-            <div style={{ padding: '0.9rem 1rem', color: '#cbd5e1' }}>Waiting for blocks…</div>
+            <div style={{ padding: '0.9rem 1rem', color: 'var(--nostrstack-color-text-muted)' }}>
+              Waiting for blocks…
+            </div>
           ) : (
             blockEvents.map((b) => (
               <BlockRow key={eventKey(b)} block={b} isNew={blockFlashKey === eventKey(b)} now={now} />
@@ -309,8 +441,6 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
         </div>
       </div>
       <style>{`
-        @keyframes telemetry-pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.35);} 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
-        @keyframes block-pop { 0% { transform: translateY(4px) scale(0.96); opacity: 0.4; } 70% { transform: translateY(-2px) scale(1.02); opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
         @keyframes slideDown { 0% { transform: translateY(-6px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
       `}</style>
     </div>
@@ -336,20 +466,29 @@ function BlockRow({ block, isNew, now }: { block: BlockEvent; isNew: boolean; no
         gap: 8,
         padding: '0.65rem 1rem',
         alignItems: 'center',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-        background: isNew ? 'rgba(14,165,233,0.12)' : 'transparent',
+        borderTop: '1px solid color-mix(in oklab, var(--nostrstack-color-border) 55%, transparent)',
+        background: isNew
+          ? 'color-mix(in oklab, var(--nostrstack-color-info) 12%, var(--nostrstack-color-surface))'
+          : 'transparent',
         animation: isNew ? 'slideDown 320ms ease-out' : undefined
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 10, height: 10, borderRadius: 999, background: '#22c55e' }} />
+        <span
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 'var(--nostrstack-radius-pill)',
+            background: 'var(--nostrstack-color-success)'
+          }}
+        />
         <strong>#{block.height}</strong>
       </div>
       <span>{block.txs ?? '—'}</span>
       <span>{block.size != null ? `${(block.size / 1024).toFixed(1)} KB` : '—'}</span>
       <span>{block.weight ?? '—'}</span>
       <span>{formatDuration(since)}</span>
-      <code style={{ color: '#93c5fd', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <code style={{ color: 'var(--nostrstack-color-info)', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {(block.hash ?? '').slice(0, 18) || 'hash'}
       </code>
     </div>

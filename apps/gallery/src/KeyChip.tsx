@@ -47,8 +47,8 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, s
           alignItems: 'center',
           gap: 6,
           padding: compact ? '6px 10px' : '8px 12px',
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
+          background: 'var(--nostrstack-color-surface-subtle)',
+          border: '1px solid var(--nostrstack-color-border)',
           borderRadius: 999,
           fontSize: '0.9rem',
           minWidth: 0,
@@ -57,13 +57,15 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, s
         }}
       >
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, cursor: 'pointer' }}>
-          <span style={{ fontSize: '0.85rem', color: '#475569' }}>{format === 'npub' ? 'npub/nsec' : 'hex'}</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
+            {format === 'npub' ? 'npub/nsec' : 'hex'}
+          </span>
           <input
             type="checkbox"
             aria-label="Toggle key format"
             checked={format === 'hex'}
             onChange={(e) => setFormat(e.target.checked ? 'hex' : 'npub')}
-            style={{ accentColor: '#2563eb', width: 16, height: 16, cursor: 'pointer' }}
+            style={{ accentColor: 'var(--nostrstack-color-primary)', width: 16, height: 16, cursor: 'pointer' }}
           />
         </label>
         <code
@@ -83,7 +85,8 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, s
       <button
         type="button"
         onClick={() => navigator.clipboard?.writeText(fullValue)}
-        style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
+        className="nostrstack-btn nostrstack-btn--sm"
+        style={{ flexShrink: 0 }}
       >
         Copy
       </button>

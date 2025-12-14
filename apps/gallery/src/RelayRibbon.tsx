@@ -12,13 +12,49 @@ export function RelayRibbon({ events }: { events: EventItem[] }) {
   return (
     <div style={wrap}>
       {visible.map((ev, idx) => (
-        <div key={`${ev.relay}-${ev.ts}-${idx}`} style={{ ...pill, background: ev.kind === 'send' ? '#ecfdf3' : '#e0f2fe', borderColor: ev.kind === 'send' ? '#bbf7d0' : '#bae6fd' }}>
-          <span style={{ color: ev.kind === 'send' ? '#166534' : '#0ea5e9', fontWeight: 700 }}>{ev.kind}</span>
-          <span style={{ color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{host(ev.relay)}</span>
-          <span style={{ color: '#475569' }}>{timeAgo(ev.ts)}</span>
+        <div
+          key={`${ev.relay}-${ev.ts}-${idx}`}
+          style={{
+            ...pill,
+            background:
+              ev.kind === 'send'
+                ? 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))'
+                : 'color-mix(in oklab, var(--nostrstack-color-info) 14%, var(--nostrstack-color-surface))',
+            borderColor:
+              ev.kind === 'send'
+                ? 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))'
+                : 'color-mix(in oklab, var(--nostrstack-color-info) 35%, var(--nostrstack-color-border))'
+          }}
+        >
+          <span
+            style={{
+              color:
+                ev.kind === 'send'
+                  ? 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))'
+                  : 'color-mix(in oklab, var(--nostrstack-color-info) 70%, var(--nostrstack-color-text))',
+              fontWeight: 700
+            }}
+          >
+            {ev.kind}
+          </span>
+          <span
+            style={{
+              color: 'var(--nostrstack-color-text)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 140
+            }}
+          >
+            {host(ev.relay)}
+          </span>
+          <span style={{ color: 'var(--nostrstack-color-text-muted)' }}>{timeAgo(ev.ts)}</span>
         </div>
       ))}
-      {visible.length === 0 && <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Waiting for relay events…</span>}
+      {visible.length === 0 && (
+        <span style={{ color: 'var(--nostrstack-color-text-subtle)', fontSize: '0.9rem' }}>
+          Waiting for relay events…
+        </span>
+      )}
     </div>
   );
 }
@@ -36,9 +72,9 @@ const pill: React.CSSProperties = {
   gap: 6,
   padding: '0.35rem 0.6rem',
   borderRadius: 999,
-  border: '1px solid #e2e8f0',
+  border: '1px solid var(--nostrstack-color-border)',
   whiteSpace: 'nowrap',
-  boxShadow: '0 4px 12px rgba(15,23,42,0.08)'
+  boxShadow: 'var(--nostrstack-shadow-sm)'
 };
 
 function timeAgo(ts: number) {

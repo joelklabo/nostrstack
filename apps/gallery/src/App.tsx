@@ -1527,7 +1527,6 @@ export default function App() {
               relaysEnvDefault={relaysEnvDefault}
               relaysList={relaysList}
               relayStats={relayStats}
-              theme={theme}
             />
             <div id="comments-container" />
           </Card>
@@ -1540,7 +1539,7 @@ export default function App() {
             Streams backend logs from <code>{resolveLogStreamUrl(apiBase)}</code> and captures
             frontend console (toggle to enable).
           </div>
-          <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} theme={theme} />
+          <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
         </Card>
       </div>
 

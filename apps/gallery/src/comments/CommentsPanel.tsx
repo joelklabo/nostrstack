@@ -9,14 +9,12 @@ export function CommentsPanel({
   relayLabel,
   relaysEnvDefault,
   relaysList,
-  relayStats,
-  theme
+  relayStats
 }: {
   relayLabel: string;
   relaysEnvDefault: string[];
   relaysList: string[];
   relayStats: RelayStats;
-  theme: 'light' | 'dark';
 }) {
   const relaysToShow = useMemo(
     () => (relaysList.length ? relaysList : relaysEnvDefault),
@@ -67,14 +65,22 @@ export function CommentsPanel({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <Pill label="Mode" value="real relays" tone="success" />
-        <span style={{ fontSize: '0.9rem', color: '#475569' }}>Relays: {relayLabel}</span>
+        <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>
+          Relays: {relayLabel}
+        </span>
         <span
           style={{
             padding: '0.25rem 0.55rem',
             borderRadius: 999,
-            border: '1px solid #e2e8f0',
-            background: liveBadge === 'listening' ? '#ecfdf3' : '#f1f5f9',
-            color: liveBadge === 'listening' ? '#166534' : '#475569',
+            border: '1px solid var(--nostrstack-color-border)',
+            background:
+              liveBadge === 'listening'
+                ? 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))'
+                : 'var(--nostrstack-color-surface-strong)',
+            color:
+              liveBadge === 'listening'
+                ? 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))'
+                : 'var(--nostrstack-color-text-muted)',
             fontWeight: 700
           }}
         >
@@ -82,7 +88,13 @@ export function CommentsPanel({
           {lastAgo !== null && ` · ${lastAgo}s ago`}
         </span>
       </div>
-      <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
+      <div
+        style={{
+          marginBottom: '0.5rem',
+          fontSize: '0.9rem',
+          color: 'var(--nostrstack-color-text-muted)'
+        }}
+      >
         Posting to real relays needs a NIP-07 signer. Don’t have one?{' '}
         <a href="https://getalby.com" target="_blank" rel="noreferrer">
           Get Alby
@@ -123,18 +135,16 @@ export function CommentsPanel({
               latencyMs={data.latencyMs}
               online={data.online}
               lastProbeAt={data.lastProbeAt}
-              theme={theme}
             />
           );
         })}
       </div>
       <RelayRibbon events={ribbonEvents} />
       <div
+        className="nostrstack-card"
         style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
           padding: '0.65rem 0.75rem',
-          background: theme === 'dark' ? '#0f172a' : '#fff'
+          background: 'var(--nostrstack-color-surface)'
         }}
       >
         <div
@@ -148,33 +158,34 @@ export function CommentsPanel({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span style={{ fontWeight: 800 }}>Live activity</span>
-            <span style={{ fontSize: '0.9rem', color: '#475569' }}>{events.length} events</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>
+              {events.length} events
+            </span>
           </div>
           <button
             type="button"
             onClick={() => setEvents([])}
-            style={{
-              border: '1px solid #e2e8f0',
-              background: 'transparent',
-              borderRadius: 8,
-              padding: '0.3rem 0.65rem'
-            }}
+            className="nostrstack-btn nostrstack-btn--sm nostrstack-btn--ghost"
           >
             Clear feed
           </button>
         </div>
         <div style={{ maxHeight: 220, overflow: 'auto', display: 'grid', gap: '0.4rem' }}>
           {events.length === 0 ? (
-            <div style={{ color: '#475569', fontSize: '0.95rem' }}>Waiting for relay events…</div>
+            <div style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: '0.95rem' }}>
+              Waiting for relay events…
+            </div>
           ) : (
             events.map((ev, idx) => (
               <div
                 key={`${ev.relay}-${ev.ts}-${idx}`}
+                className="nostrstack-card"
                 style={{
                   padding: '0.45rem 0.6rem',
-                  borderRadius: 10,
-                  border: '1px solid #e2e8f0',
-                  background: theme === 'dark' ? '#111827' : '#f8fafc',
+                  borderRadius: 'var(--nostrstack-radius-md)',
+                  borderColor: 'var(--nostrstack-color-border)',
+                  background: 'var(--nostrstack-color-surface-subtle)',
+                  boxShadow: 'var(--nostrstack-shadow-sm)',
                   display: 'grid',
                   gridTemplateColumns: '1fr auto',
                   gap: '0.4rem',
@@ -182,15 +193,21 @@ export function CommentsPanel({
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontWeight: 700, color: '#0f172a', wordBreak: 'break-all' }}>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: 'var(--nostrstack-color-text)',
+                      wordBreak: 'break-all'
+                    }}
+                  >
                     {ev.relay}
                   </span>
-                  <span style={{ color: '#475569', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: '0.9rem' }}>
                     recv {ev.recv ?? 0}
                     {ev.sendStatus ? ` • ${ev.sendStatus}` : ''}
                   </span>
                 </div>
-                <time style={{ fontSize: '0.85rem', color: '#475569' }}>
+                <time style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
                   {new Date(ev.ts).toLocaleTimeString()}
                 </time>
               </div>

@@ -12,7 +12,7 @@ export function MockComments() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          style={{ width: '100%', borderRadius: 10, border: '1px solid #e2e8f0', padding: '0.6rem' }}
+          style={{ width: '100%' }}
         />
       </label>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -30,12 +30,22 @@ export function MockComments() {
       </div>
       <div style={{ display: 'grid', gap: '0.4rem' }}>
         {items.map((item) => (
-          <div key={item.ts} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.55rem' }}>
-            <div style={{ fontSize: '0.85rem', color: '#475569' }}>{new Date(item.ts).toLocaleTimeString()}</div>
+          <div
+            key={item.ts}
+            style={{
+              border: '1px solid var(--nostrstack-color-border)',
+              borderRadius: 'var(--nostrstack-radius-md)',
+              padding: '0.55rem',
+              background: 'var(--nostrstack-color-surface)'
+            }}
+          >
+            <div style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
+              {new Date(item.ts).toLocaleTimeString()}
+            </div>
             <div style={{ whiteSpace: 'pre-wrap' }}>{item.content}</div>
           </div>
         ))}
-        {items.length === 0 && <div style={{ color: '#475569' }}>No comments yet.</div>}
+        {items.length === 0 && <div style={{ color: 'var(--nostrstack-color-text-muted)' }}>No comments yet.</div>}
       </div>
     </div>
   );

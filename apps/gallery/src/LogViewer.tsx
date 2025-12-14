@@ -5,15 +5,14 @@ type LogLine = { ts: number; level: string | number; message: string; data?: unk
 type Props = {
   backendUrl: string;
   enabled?: boolean;
-  theme?: 'light' | 'dark';
 };
 
 const levelColors: Record<string, string> = {
-  debug: '#64748b',
-  info: '#0ea5e9',
-  warn: '#f59e0b',
-  warning: '#f59e0b',
-  error: '#ef4444'
+  debug: 'var(--nostrstack-color-text-subtle)',
+  info: 'var(--nostrstack-color-info)',
+  warn: 'var(--nostrstack-color-warning)',
+  warning: 'var(--nostrstack-color-warning)',
+  error: 'var(--nostrstack-color-danger)'
 };
 
 const statusCopy: Record<string, string> = {
@@ -24,28 +23,7 @@ const statusCopy: Record<string, string> = {
   closed: 'Closed'
 };
 
-const paletteByTheme = {
-  light: {
-    panel: '#fff',
-    border: '#e2e8f0',
-    text: '#0f172a',
-    sub: '#475569',
-    muted: '#94a3b8',
-    codeBg: '#f8fafc',
-    inputBg: '#fff'
-  },
-  dark: {
-    panel: '#0f172a',
-    border: '#1f2937',
-    text: '#e2e8f0',
-    sub: '#cbd5e1',
-    muted: '#475569',
-    codeBg: '#111827',
-    inputBg: '#0b1220'
-  }
-} as const;
-
-export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props) {
+export function LogViewer({ backendUrl, enabled = true }: Props) {
   const [backendLines, setBackendLines] = useState<LogLine[]>([]);
   const [frontendLines, setFrontendLines] = useState<LogLine[]>([]);
   const [status, setStatus] = useState<'idle' | 'connecting' | 'open' | 'error' | 'closed'>('idle');
@@ -63,7 +41,6 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
   const eventSourceRef = useRef<EventSource | null>(null);
   const originalConsole = useRef<Partial<Console> | null>(null);
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const palette = paletteByTheme[theme];
 
   const filteredBackend = useMemo(() => {
     if (!filter.trim()) return backendLines;
@@ -149,7 +126,7 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
   }, [captureFront]);
 
   const renderLine = (line: LogLine) => {
-    const color = levelColors[String(line.level).toLowerCase()] ?? '#0f172a';
+    const color = levelColors[String(line.level).toLowerCase()] ?? 'var(--nostrstack-color-text)';
     const ts = new Date(line.ts).toLocaleTimeString();
     return (
       <div key={`${line.ts}-${line.message}-${Math.random()}`} className="logv__line" style={{ borderLeftColor: color }}>
@@ -170,18 +147,42 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
   const tone = (() => {
     switch (status) {
       case 'open':
-        return { bg: '#ecfdf3', border: '#bbf7d0', color: '#166534', glow: 'rgba(34,197,94,0.25)' };
+        return {
+          bg: 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))',
+          border: 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))',
+          color: 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))',
+          dot: 'var(--nostrstack-color-success)',
+          glow: 'color-mix(in oklab, var(--nostrstack-color-success) 25%, transparent)'
+        };
       case 'connecting':
-        return { bg: '#fff7ed', border: '#fed7aa', color: '#c2410c', glow: 'rgba(251,146,60,0.25)' };
+        return {
+          bg: 'color-mix(in oklab, var(--nostrstack-color-warning) 14%, var(--nostrstack-color-surface))',
+          border: 'color-mix(in oklab, var(--nostrstack-color-warning) 35%, var(--nostrstack-color-border))',
+          color: 'color-mix(in oklab, var(--nostrstack-color-warning) 70%, var(--nostrstack-color-text))',
+          dot: 'var(--nostrstack-color-warning)',
+          glow: 'color-mix(in oklab, var(--nostrstack-color-warning) 25%, transparent)'
+        };
       case 'error':
-        return { bg: '#fef2f2', border: '#fecdd3', color: '#b91c1c', glow: 'rgba(239,68,68,0.28)' };
+        return {
+          bg: 'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
+          border: 'color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
+          color: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+          dot: 'var(--nostrstack-color-danger)',
+          glow: 'color-mix(in oklab, var(--nostrstack-color-danger) 25%, transparent)'
+        };
       default:
-        return { bg: palette.codeBg, border: palette.border, color: palette.sub, glow: 'rgba(148,163,184,0.15)' };
+        return {
+          bg: 'var(--nostrstack-color-surface-strong)',
+          border: 'var(--nostrstack-color-border)',
+          color: 'var(--nostrstack-color-text-muted)',
+          dot: 'var(--nostrstack-color-text-subtle)',
+          glow: 'color-mix(in oklab, var(--nostrstack-color-text) 10%, transparent)'
+        };
     }
   })();
 
   return (
-    <div className="logv" style={{ color: palette.text }}>
+    <div className="logv" style={{ color: 'var(--nostrstack-color-text)' }}>
       <div className="logv__bar">
         <div className="logv__panel">
           <div className="logv__status-row">
@@ -193,7 +194,14 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
                 boxShadow: `0 6px 16px ${tone.glow}`
               }}
             >
-              <span className="logv__dot" style={{ background: tone.color, boxShadow: `0 0 0 0 ${tone.glow}`, animation: status === 'open' ? 'logv-pulse 1.8s infinite' : 'none' }} />
+              <span
+                className="logv__dot"
+                style={{
+                  background: tone.dot,
+                  animation: status === 'open' ? 'nostrstack-pulse-soft 1.8s infinite' : 'none',
+                  ...(status === 'open' ? ({ '--nostrstack-pulse-color': tone.dot } as Record<string, string>) : {})
+                } as React.CSSProperties}
+              />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span className="logv__pill-label">Backend stream</span>
                 <span className="logv__pill-value" style={{ color: tone.color }}>{statusCopy[status]}</span>
@@ -224,7 +232,7 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
                 }}
                 placeholder="Filter log text"
                 aria-label="Filter logs"
-                style={{ background: palette.inputBg, color: palette.text, borderColor: palette.border }}
+                style={{ background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-text)', borderColor: 'var(--nostrstack-color-border)' }}
               />
             </div>
           </div>
@@ -270,40 +278,39 @@ export function LogViewer({ backendUrl, enabled = true, theme = 'light' }: Props
       <style>{`
         .logv { display: flex; flex-direction: column; gap: 0.9rem; }
         .logv__bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.75rem; }
-        .logv__panel { border: 1px solid ${palette.border}; border-radius: 14px; background: ${palette.panel}; padding: 0.75rem 0.9rem; box-shadow: 0 2px 10px rgba(15,23,42,0.04); }
+        .logv__panel { border: 1px solid var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-lg); background: var(--nostrstack-color-surface); padding: 0.75rem 0.9rem; box-shadow: var(--nostrstack-shadow-md); }
         .logv__status-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-        .logv__pill { display: inline-flex; align-items: center; gap: 0.6rem; border-radius: 999px; border: 1px solid ${palette.border}; padding: 0.5rem 0.8rem; min-width: 200px; }
-        .logv__pill-label { font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: ${palette.sub}; font-weight: 700; }
+        .logv__pill { display: inline-flex; align-items: center; gap: 0.6rem; border-radius: var(--nostrstack-radius-pill); border: 1px solid var(--nostrstack-color-border); padding: 0.5rem 0.8rem; min-width: 200px; }
+        .logv__pill-label { font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nostrstack-color-text-muted); font-weight: 700; }
         .logv__pill-value { font-weight: 800; font-size: 1rem; }
         .logv__dot { width: 12px; height: 12px; border-radius: 999px; }
-        .logv__ghost { background: transparent; color: ${palette.text}; border: 1px solid ${palette.border}; border-radius: 10px; padding: 0.45rem 0.75rem; }
-        .logv__ghost:hover { border-color: ${palette.sub}; }
-        .logv__meta { font-size: 0.9rem; color: ${palette.sub}; margin-top: 0.4rem; }
-        .logv__error { margin-top: 0.45rem; padding: 0.55rem 0.7rem; background: #fef2f2; border: 1px solid #fecdd3; color: #b91c1c; border-radius: 10px; }
+        .logv__ghost { background: transparent; color: var(--nostrstack-color-text); border: 1px solid var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-md); padding: 0.45rem 0.75rem; transition: border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard), background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); }
+        .logv__ghost:hover { border-color: var(--nostrstack-color-border-strong); background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 60%, transparent); }
+        .logv__meta { font-size: 0.9rem; color: var(--nostrstack-color-text-muted); margin-top: 0.4rem; }
+        .logv__error { margin-top: 0.45rem; padding: 0.55rem 0.7rem; background: color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface)); border: 1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border)); color: color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text)); border-radius: var(--nostrstack-radius-md); }
         .logv__controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-        .logv__switch { display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer; color: ${palette.text}; font-weight: 700; }
+        .logv__switch { display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer; color: var(--nostrstack-color-text); font-weight: 700; }
         .logv__switch input { display: none; }
-        .logv__slider { width: 44px; height: 24px; background: ${palette.border}; border-radius: 999px; position: relative; transition: all 0.2s ease; }
-        .logv__slider::after { content: ''; position: absolute; top: 3px; left: 4px; width: 18px; height: 18px; border-radius: 999px; background: ${palette.panel === '#fff' ? '#0f172a' : '#e2e8f0'}; transition: transform 0.2s ease; }
-        .logv__switch input:checked + .logv__slider { background: #22c55e55; }
-        .logv__switch input:checked + .logv__slider::after { transform: translateX(18px); background: #22c55e; }
-        .logv__switch-label { font-size: 0.95rem; color: ${palette.sub}; }
-        .logv__filter { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid ${palette.border}; background: ${palette.inputBg}; padding: 0.45rem 0.65rem; border-radius: 10px; min-width: 240px; }
-        .logv__filter input { border: none; outline: none; width: 100%; background: transparent; color: ${palette.text}; }
+        .logv__slider { width: 44px; height: 24px; background: var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-pill); position: relative; transition: all var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); }
+        .logv__slider::after { content: ''; position: absolute; top: 3px; left: 4px; width: 18px; height: 18px; border-radius: var(--nostrstack-radius-pill); background: var(--nostrstack-color-surface); transition: transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard); box-shadow: var(--nostrstack-shadow-sm); }
+        .logv__switch input:checked + .logv__slider { background: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border)); }
+        .logv__switch input:checked + .logv__slider::after { transform: translateX(18px); background: var(--nostrstack-color-success); }
+        .logv__switch-label { font-size: 0.95rem; color: var(--nostrstack-color-text-muted); }
+        .logv__filter { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid var(--nostrstack-color-border); background: var(--nostrstack-color-surface); padding: 0.45rem 0.65rem; border-radius: var(--nostrstack-radius-md); min-width: 240px; }
+        .logv__filter input { border: none; outline: none; width: 100%; background: transparent; color: var(--nostrstack-color-text); }
         .logv__filter-icon { opacity: 0.7; }
         .logv__grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
         .logv__stack { display: flex; flex-direction: column; gap: 0.55rem; min-height: 240px; max-height: 45vh; }
         .logv__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-        .logv__header--sticky { position: sticky; top: 0; padding-top: 0.1rem; padding-bottom: 0.1rem; background: ${palette.panel}; z-index: 2; }
+        .logv__header--sticky { position: sticky; top: 0; padding-top: 0.1rem; padding-bottom: 0.1rem; background: var(--nostrstack-color-surface); z-index: 2; }
         .logv__title { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 1.05rem; }
-        .logv__count { background: ${palette.codeBg}; color: ${palette.sub}; border: 1px solid ${palette.border}; border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.85rem; }
-        .logv__scroll { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-height: 180px; max-height: 100%; overflow: auto; padding: 0.15rem; border: 1px dashed ${palette.border}; border-radius: 10px; background: ${palette.codeBg}; }
-        .logv__line { display: grid; grid-template-columns: 96px 70px 1fr; gap: 0.45rem; font-family: SFMono-Regular, Menlo, monospace; font-size: 0.88rem; padding: 0.25rem 0.4rem; border-left: 3px solid ${palette.sub}; }
-        .logv__ts { color: ${palette.muted}; }
+        .logv__count { background: var(--nostrstack-color-surface-strong); color: var(--nostrstack-color-text-muted); border: 1px solid var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-pill); padding: 0.1rem 0.55rem; font-size: 0.85rem; }
+        .logv__scroll { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-height: 180px; max-height: 100%; overflow: auto; padding: 0.15rem; border: 1px dashed var(--nostrstack-color-border); border-radius: var(--nostrstack-radius-md); background: var(--nostrstack-color-surface-subtle); }
+        .logv__line { display: grid; grid-template-columns: 96px 70px 1fr; gap: 0.45rem; font-family: var(--nostrstack-font-mono); font-size: 0.88rem; padding: 0.25rem 0.4rem; border-left: 3px solid var(--nostrstack-color-text-subtle); }
+        .logv__ts { color: var(--nostrstack-color-text-subtle); }
         .logv__lvl { font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
-        .logv__msg { color: ${palette.text}; word-break: break-word; white-space: pre-wrap; }
-        .logv__empty { color: ${palette.sub}; font-size: 0.95rem; padding: 0.45rem 0; }
-        @keyframes logv-pulse { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.35); } 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+        .logv__msg { color: var(--nostrstack-color-text); word-break: break-word; white-space: pre-wrap; }
+        .logv__empty { color: var(--nostrstack-color-text-muted); font-size: 0.95rem; padding: 0.45rem 0; }
       `}</style>
     </div>
   );

@@ -10,10 +10,21 @@ export function WalletPanel({
   lnbitsUrl: string;
   adminKey: string;
   visible?: boolean;
-}) {
+  }) {
   if (!visible) return null;
   return (
-    <div style={{ padding: '0.75rem 1rem', background: '#eef2ff', borderRadius: 10, marginBottom: '1rem', color: '#1e1b4b' }}>
+    <div
+      style={{
+        padding: '0.75rem 1rem',
+        background:
+          'color-mix(in oklab, var(--nostrstack-color-accent) 12%, var(--nostrstack-color-surface))',
+        border:
+          '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
+        borderRadius: 'var(--nostrstack-radius-md)',
+        marginBottom: '1rem',
+        color: 'var(--nostrstack-color-text)'
+      }}
+    >
       <strong>Test wallet (LNbits regtest)</strong>
       <ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
         <li>
