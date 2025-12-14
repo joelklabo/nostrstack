@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { Badge } from './ui/Badge';
+
 type TelemetryEvent =
   | {
     type: 'block';
@@ -293,21 +295,7 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800 }}>
           <span>Telemetry</span>
-          <span
-            style={{
-              padding: '0.2rem 0.6rem',
-              borderRadius: 'var(--nostrstack-radius-pill)',
-              background:
-                'color-mix(in oklab, var(--nostrstack-color-accent) 14%, var(--nostrstack-color-surface))',
-              color: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
-              border:
-                '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
-              fontWeight: 700,
-              letterSpacing: '0.03em'
-            }}
-          >
-            {network.toUpperCase()}
-          </span>
+          <Badge tone="accent">{network.toUpperCase()}</Badge>
           <span
             style={{
               display: 'inline-flex',

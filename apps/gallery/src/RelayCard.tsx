@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { CopyButton } from './CopyButton';
+import { Badge } from './ui/Badge';
 
 type RelayMeta = {
   name?: string;
@@ -63,24 +64,6 @@ export function RelayCard({
   const activityBars = buildSpark(recv);
   const tooltip = last ? new Date(last).toLocaleTimeString() : '—';
   const statusState = online === false ? 'offline' : online === true ? 'online' : 'unknown';
-  const statusTone =
-    statusState === 'offline'
-      ? {
-          fg: 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
-          bg: 'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
-          border: 'color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))'
-        }
-      : statusState === 'online'
-        ? {
-            fg: 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))',
-            bg: 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))',
-            border: 'color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border))'
-          }
-        : {
-            fg: 'var(--nostrstack-color-text-muted)',
-            bg: 'var(--nostrstack-color-surface-strong)',
-            border: 'var(--nostrstack-color-border)'
-          };
   const statusLabel = latencyMs != null && statusState !== 'unknown' ? `${statusState} • ${latencyMs}ms` : statusState;
   const statusTitle = lastProbeAt ? `last probe ${new Date(lastProbeAt).toLocaleTimeString()}` : undefined;
   const nipPills = (meta?.supportedNips ?? []).slice(0, 4);
@@ -196,46 +179,17 @@ export function RelayCard({
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, minWidth: 130 }}>
-          <span
+          <Badge
+            tone={statusState === 'offline' ? 'danger' : statusState === 'online' ? 'success' : 'muted'}
             title={statusTitle}
-            style={{
-              fontSize: '0.78rem',
-              color: statusTone.fg,
-              background: statusTone.bg,
-              border: `1px solid ${statusTone.border}`,
-              padding: '0.18rem 0.55rem',
-              borderRadius: 'var(--nostrstack-radius-pill)',
-              textTransform: 'capitalize'
-            }}
+            style={{ textTransform: 'capitalize' }}
           >
             {statusLabel}
-          </span>
+          </Badge>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                fontSize: '0.85rem',
-                color: 'var(--nostrstack-color-text)',
-                background: 'var(--nostrstack-color-surface-strong)',
-                border: '1px solid var(--nostrstack-color-border)',
-                padding: '0.2rem 0.55rem',
-                borderRadius: 'var(--nostrstack-radius-pill)'
-              }}
-            >
-              recv {recv}
-            </span>
+            <Badge tone="muted">recv {recv}</Badge>
             {recvPerMin != null && (
-              <span
-                style={{
-                  fontSize: '0.82rem',
-                  color: 'var(--nostrstack-color-text-muted)',
-                  background: 'var(--nostrstack-color-surface-strong)',
-                  border: '1px solid var(--nostrstack-color-border)',
-                  padding: '0.18rem 0.55rem',
-                  borderRadius: 'var(--nostrstack-radius-pill)'
-                }}
-              >
-                {recvPerMin}/min
-              </span>
+              <Badge tone="muted">{recvPerMin}/min</Badge>
             )}
             {tone.badge && <span style={{ fontSize: '0.78rem', color: tone.dot }}>{tone.badge}</span>}
           </div>

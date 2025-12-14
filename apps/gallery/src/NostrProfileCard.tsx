@@ -6,6 +6,7 @@ import { Nip07Status } from './Nip07Status';
 import { NpubBar } from './NpubBar';
 import { RelayCard } from './RelayCard';
 import type { RelayStats } from './types/relay';
+import { Badge } from './ui/Badge';
 
 type Props = {
   pubkey?: string | null;
@@ -102,21 +103,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <div style={{ fontWeight: 800, fontSize: '1.08rem', color: 'var(--nostrstack-color-text)' }}>{name}</div>
             {npub && (
-              <span
-                style={{
-                  padding: '0.25rem 0.55rem',
-                  borderRadius: 'var(--nostrstack-radius-pill)',
-                  background:
-                    'color-mix(in oklab, var(--nostrstack-color-accent) 12%, var(--nostrstack-color-surface))',
-                  color: 'color-mix(in oklab, var(--nostrstack-color-accent) 70%, var(--nostrstack-color-text))',
-                  border:
-                    '1px solid color-mix(in oklab, var(--nostrstack-color-accent) 35%, var(--nostrstack-color-border))',
-                  fontSize: '0.78rem',
-                  fontWeight: 700
-                }}
-              >
-                npub
-              </span>
+              <Badge tone="accent">npub</Badge>
             )}
           </div>
           <div style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: '0.92rem', maxWidth: '100%', wordBreak: 'break-word' }}>
