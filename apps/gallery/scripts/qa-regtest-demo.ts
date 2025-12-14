@@ -98,10 +98,10 @@ async function main() {
     // Wallet panel copy buttons (scoped to avoid global "Copied" collisions).
     const copyUrlBtn = page.locator('li', { hasText: 'Open LNbits UI:' }).getByRole('button');
     await copyUrlBtn.click();
-    await expect(copyUrlBtn).toHaveText('Copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copy URL copied');
     const copyKeyBtn = page.locator('li', { hasText: 'Admin key:' }).getByRole('button');
     await copyKeyBtn.click();
-    await expect(copyKeyBtn).toHaveText('Copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copy key copied');
     let adminKeyFromClipboard = '';
     try {
       adminKeyFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
@@ -151,7 +151,7 @@ async function main() {
     const relaysRow = page.getByRole('button', { name: 'Use real defaults' }).locator('..');
     const copyRelaysBtn = relaysRow.getByRole('button').nth(1);
     await copyRelaysBtn.click();
-    await expect(copyRelaysBtn).toHaveText('Copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copy relays copied');
 
     // Comments: switch relays to mock + post.
     const relaysInput = page.locator('input[placeholder="wss://relay1,wss://relay2"]').first();

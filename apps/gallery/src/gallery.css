@@ -328,3 +328,73 @@
   70% { box-shadow: 0 0 0 8px transparent; }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
+
+/* ===== Toasts ===== */
+.nostrstack-toast-region {
+  position: fixed;
+  right: var(--nostrstack-space-4);
+  bottom: var(--nostrstack-space-4);
+  width: min(360px, calc(100vw - (var(--nostrstack-space-4) * 2)));
+  display: grid;
+  gap: var(--nostrstack-space-2);
+  z-index: 10001;
+}
+
+.nostrstack-toast {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: start;
+  gap: var(--nostrstack-space-2);
+  padding: var(--nostrstack-space-3);
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid var(--nostrstack-color-border);
+  background: color-mix(in oklab, var(--nostrstack-color-surface) 92%, var(--nostrstack-color-surface-subtle));
+  box-shadow: var(--nostrstack-shadow-lg);
+}
+
+.nostrstack-toast__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--nostrstack-radius-pill);
+  margin-top: 0.35rem;
+  background: var(--nostrstack-color-info);
+}
+
+.nostrstack-toast__msg {
+  font-weight: 700;
+  color: var(--nostrstack-color-text);
+  line-height: 1.25;
+}
+
+.nostrstack-toast__close {
+  margin-top: -0.15rem;
+}
+
+.nostrstack-toast--success {
+  border-color: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-success) 10%, var(--nostrstack-color-surface));
+}
+.nostrstack-toast--success .nostrstack-toast__dot { background: var(--nostrstack-color-success); }
+
+.nostrstack-toast--danger {
+  border-color: color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-danger) 10%, var(--nostrstack-color-surface));
+}
+.nostrstack-toast--danger .nostrstack-toast__dot { background: var(--nostrstack-color-danger); }
+
+.nostrstack-toast--info {
+  border-color: color-mix(in oklab, var(--nostrstack-color-info) 30%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-info) 9%, var(--nostrstack-color-surface));
+}
+.nostrstack-toast--info .nostrstack-toast__dot { background: var(--nostrstack-color-info); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .nostrstack-toast {
+    animation: nostrstack-toast-in var(--nostrstack-motion-enter) var(--nostrstack-motion-ease-emphasized);
+  }
+}
+
+@keyframes nostrstack-toast-in {
+  from { transform: translateY(var(--nostrstack-motion-distance-mid)); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
