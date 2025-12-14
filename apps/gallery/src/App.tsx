@@ -54,6 +54,22 @@ type ThemeStyles = {
   shadow: string;
 };
 
+type DemoTabKey = 'lightning' | 'nostr' | 'logs';
+
+const DEMO_TABS: { key: DemoTabKey; label: string }[] = [
+  { key: 'lightning', label: 'Lightning' },
+  { key: 'nostr', label: 'Nostr' },
+  { key: 'logs', label: 'Logs' }
+];
+
+function demoTabId(tab: DemoTabKey) {
+  return `demo-tab-${tab}`;
+}
+
+function demoPanelId(tab: DemoTabKey) {
+  return `demo-panel-${tab}`;
+}
+
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost';
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const networkLabel = import.meta.env.VITE_NETWORK ?? 'regtest';
@@ -239,21 +255,6 @@ function nip11Url(url: string) {
   return url.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
 }
 
-const tabBtn = (
-  active: boolean,
-  themeStyles: { background: string; color: string; borderColor: string }
-) => ({
-  padding: '0.55rem 1.1rem',
-  borderRadius: 'var(--nostrstack-radius-md)',
-  border: `1px solid ${themeStyles.borderColor}`,
-  background: active
-    ? 'linear-gradient(135deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))'
-    : 'var(--nostrstack-color-surface)',
-  color: active ? 'var(--nostrstack-color-text-on-strong)' : themeStyles.color,
-  fontWeight: 800,
-  boxShadow: active ? 'var(--nostrstack-shadow-glow)' : 'var(--nostrstack-shadow-sm)'
-});
-
 function useMountWidgets(
   username: string,
   amount: number,
@@ -266,7 +267,7 @@ function useMountWidgets(
   setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
   setRelayStats: React.Dispatch<React.SetStateAction<RelayStats>>,
   relaysList: string[],
-  tab: 'lightning' | 'nostr' | 'logs',
+  tab: DemoTabKey,
   verifyPayment: (pr: string) => Promise<boolean>
 ) {
   useEffect(() => {
@@ -374,7 +375,7 @@ export default function App() {
   const [paymentRef, setPaymentRef] = useState<string | null>(null);
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
   const [qrStatus, setQrStatus] = useState<'pending' | 'paid' | 'error'>('pending');
-  const [tab, setTab] = useState<'lightning' | 'nostr' | 'logs'>('lightning');
+  const [tab, setTab] = useState<DemoTabKey>('lightning');
   const [, setUnlockedPayload] = useState<string | null>(null);
   const [network] = useState(networkLabel);
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
@@ -395,6 +396,43 @@ export default function App() {
   ]);
   const [walletRefresh, setWalletRefresh] = useState(0);
   const [walletOverrideOpen, setWalletOverrideOpen] = useState(false);
+  const tabRefs = useRef<Record<DemoTabKey, HTMLButtonElement | null>>({
+    lightning: null,
+    nostr: null,
+    logs: null
+  });
+  const handleTabKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      const order = DEMO_TABS.map((t) => t.key);
+      const current = (e.currentTarget.dataset.tab as DemoTabKey | undefined) ?? tab;
+      const idx = order.indexOf(current);
+      if (idx === -1) return;
+
+      const nextIndex = (() => {
+        switch (e.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+            return (idx + 1) % order.length;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            return (idx - 1 + order.length) % order.length;
+          case 'Home':
+            return 0;
+          case 'End':
+            return order.length - 1;
+          default:
+            return null;
+        }
+      })();
+
+      if (nextIndex === null) return;
+      e.preventDefault();
+      const nextTab = order[nextIndex];
+      setTab(nextTab);
+      tabRefs.current[nextTab]?.focus();
+    },
+    [tab]
+  );
   const rootRef = useRef<HTMLElement | null>(null);
   const adminKeyRef = useRef<HTMLInputElement | null>(null);
   const readKeyRef = useRef<HTMLInputElement | null>(null);
@@ -1033,35 +1071,29 @@ export default function App() {
           <div
             role="tablist"
             aria-label="Demo sections"
-            style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}
+            aria-orientation="horizontal"
+            className="nostrstack-gallery-tabs"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'lightning'}
-              onClick={() => setTab('lightning')}
-              style={tabBtn(tab === 'lightning', themeStyles)}
-            >
-              Lightning
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'nostr'}
-              onClick={() => setTab('nostr')}
-              style={tabBtn(tab === 'nostr', themeStyles)}
-            >
-              Nostr
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'logs'}
-              onClick={() => setTab('logs')}
-              style={tabBtn(tab === 'logs', themeStyles)}
-            >
-              Logs
-            </button>
+            {DEMO_TABS.map((t) => (
+              <button
+                key={t.key}
+                ref={(el) => {
+                  tabRefs.current[t.key] = el;
+                }}
+                data-tab={t.key}
+                type="button"
+                role="tab"
+                id={demoTabId(t.key)}
+                aria-controls={demoPanelId(t.key)}
+                aria-selected={tab === t.key}
+                tabIndex={tab === t.key ? 0 : -1}
+                className="nostrstack-gallery-tabbtn"
+                onClick={() => setTab(t.key)}
+                onKeyDown={handleTabKeyDown}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
 
           <div className="nostrstack-envbar" style={{ marginBottom: '1rem' }}>
@@ -1094,7 +1126,14 @@ export default function App() {
         </div>
       </header>
       <div className="nostrstack-gallery-content">
-        <div key={tab} className="nostrstack-gallery-tab">
+        <section
+          id={demoPanelId('lightning')}
+          role="tabpanel"
+          aria-labelledby={demoTabId('lightning')}
+          hidden={tab !== 'lightning'}
+          className="nostrstack-gallery-tab"
+          data-active={tab === 'lightning' ? 'true' : 'false'}
+        >
           {tab === 'lightning' && (
             <>
               {paymentRef && (
@@ -1364,7 +1403,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setTheme('light')}
-                    style={tabBtn(theme === 'light', themeStyles)}
+                    className="nostrstack-gallery-tabbtn"
                     aria-pressed={theme === 'light'}
                   >
                     Light
@@ -1372,7 +1411,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setTheme('dark')}
-                    style={tabBtn(theme === 'dark', themeStyles)}
+                    className="nostrstack-gallery-tabbtn"
                     aria-pressed={theme === 'dark'}
                   >
                     Dark
@@ -1642,7 +1681,16 @@ export default function App() {
           </div>
             </>
           )}
+        </section>
 
+        <section
+          id={demoPanelId('nostr')}
+          role="tabpanel"
+          aria-labelledby={demoTabId('nostr')}
+          hidden={tab !== 'nostr'}
+          className="nostrstack-gallery-tab"
+          data-active={tab === 'nostr' ? 'true' : 'false'}
+        >
           {tab === 'nostr' && (
             <div
               style={{
@@ -1761,7 +1809,16 @@ export default function App() {
           </Card>
             </div>
           )}
+        </section>
 
+        <section
+          id={demoPanelId('logs')}
+          role="tabpanel"
+          aria-labelledby={demoTabId('logs')}
+          hidden={tab !== 'logs'}
+          className="nostrstack-gallery-tab"
+          data-active={tab === 'logs' ? 'true' : 'false'}
+        >
           {tab === 'logs' && (
             <Card title="Logs">
               <div
@@ -1773,7 +1830,7 @@ export default function App() {
               <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
             </Card>
           )}
-        </div>
+        </section>
 
         <details className="nostrstack-gallery-advanced" style={{ marginBottom: '1rem' }}>
         <summary>Status & build</summary>
