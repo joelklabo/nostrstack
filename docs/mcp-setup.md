@@ -4,13 +4,20 @@
 - Start Chrome with remote debugging: `./scripts/mcp-chrome.sh` (defaults port 9222).
 - Start the MCP server: `./scripts/mcp-devtools-server.sh` (wraps `chrome-devtools-mcp@latest`).
 
+## Codex CLI (global MCP config)
+Codex uses a global MCP server list. If your MCP tools fail, re-add the server entry and restart Codex:
+```bash
+codex mcp remove chrome-devtools
+codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 --acceptInsecureCerts
+```
+
 ## Client config (example)
 ```json
 {
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest", "--browser-url=http://127.0.0.1:9222"]
+      "args": ["-y", "chrome-devtools-mcp@latest", "--browserUrl=http://127.0.0.1:9222", "--acceptInsecureCerts"]
     }
   }
 }
