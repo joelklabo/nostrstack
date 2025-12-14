@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 type WalletReq = {
   baseUrl?: string;
@@ -7,7 +7,7 @@ type WalletReq = {
 };
 
 export async function registerWalletRoutes(app: FastifyInstance) {
-  const handler = async (request: any, reply: any) => {
+  const handler = async (request: FastifyRequest<{ Body: WalletReq }>, reply: FastifyReply) => {
     const { baseUrl, apiKey, walletId } = (request.body || {}) as WalletReq;
     const resolvedBase = (baseUrl || process.env.LN_BITS_URL || '').replace(/\/$/, '');
     const resolvedKey = apiKey || process.env.LN_BITS_API_KEY || '';

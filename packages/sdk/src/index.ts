@@ -64,7 +64,7 @@ export class NostrstackClient {
   }
 
   async getLnurlpMetadata(username: string): Promise<LnurlpMetaResponse> {
-    return this.request(`/\\.well-known/lnurlp/${encodeURIComponent(username)}`);
+    return this.request(`/.well-known/lnurlp/${encodeURIComponent(username)}`);
   }
 
   async getLnurlpInvoice(username: string, amountMsat: number): Promise<InvoiceResponse> {
@@ -73,7 +73,7 @@ export class NostrstackClient {
 
   async getNip05(name: string): Promise<Nip05Response> {
     const q = name ? `?name=${encodeURIComponent(name)}` : '';
-    return this.request(`/\\.well-known/nostr.json${q}`);
+    return this.request(`/.well-known/nostr.json${q}`);
   }
 
   async createTenant(body: CreateTenantBody): Promise<CreateTenantResponse> {

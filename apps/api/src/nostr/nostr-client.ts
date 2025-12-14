@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { finalizeEvent, type EventTemplate } from 'nostr-tools';
+import { type EventTemplate,finalizeEvent } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { hexToBytes } from 'nostr-tools/utils';
 

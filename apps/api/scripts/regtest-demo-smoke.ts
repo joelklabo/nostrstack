@@ -12,7 +12,7 @@ import { execSync } from 'node:child_process';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import { URL, fileURLToPath } from 'node:url';
+import { fileURLToPath,URL } from 'node:url';
 
 function normalizeBase(base: string) {
   return base.replace(/\/+$/, '');

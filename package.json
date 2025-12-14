@@ -41,6 +41,7 @@
     "@nostrstack/config": "workspace:^",
     "chrome-devtools-mcp": "0.12.1",
     "concurrently": "^9.2.1",
+    "eslint": "8.57.0",
     "prettier": "3.2.5"
   }
 }

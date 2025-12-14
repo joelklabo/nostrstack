@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import cors from '@fastify/cors';
 import formbody from '@fastify/formbody';
 import helmet from '@fastify/helmet';
@@ -6,8 +9,6 @@ import sensible from '@fastify/sensible';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import Fastify from 'fastify';
-import fs from 'node:fs';
-import path from 'node:path';
 import type { LogFn } from 'pino';
 
 import { env } from './env.js';

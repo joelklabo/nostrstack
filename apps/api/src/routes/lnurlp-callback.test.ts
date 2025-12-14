@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 import { afterAll,beforeAll, describe, expect, it } from 'vitest';
+
 import type { buildServer as buildServerFn } from '../server.js';
 
 process.env.NODE_ENV = 'test';

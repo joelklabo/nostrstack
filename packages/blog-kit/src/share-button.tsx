@@ -1,41 +1,32 @@
 "use client";
 
-import { type Relay,relayInit } from 'nostr-tools';
+import { Relay } from 'nostr-tools/relay';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { useNostrstackConfig } from './context';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
 
-type SignedEvent = {
+type UnsignedEvent = {
   kind: number;
   created_at: number;
   tags: string[][];
   content: string;
   pubkey: string;
-  id?: string;
-  sig?: string;
+};
+
+type SignedEvent = UnsignedEvent & {
+  id: string;
+  sig: string;
 };
 
 async function publishToRelays(relays: string[], event: SignedEvent) {
   const connections: Relay[] = [];
   try {
     for (const url of relays) {
-      const relay = relayInit(url);
-      await relay.connect();
+      const relay = await Relay.connect(url);
       connections.push(relay);
-      await new Promise<void>((resolve, reject) => {
-        const pub = relay.publish(event);
-        const timer = setTimeout(() => reject(new Error('publish timeout')), 5000);
-        pub.on('ok', () => {
-          clearTimeout(timer);
-          resolve();
-        });
-        pub.on('failed', (reason: string) => {
-          clearTimeout(timer);
-          reject(new Error(reason || 'publish failed'));
-        });
-      });
+      await relay.publish(event);
     }
   } finally {
     connections.forEach((r) => r.close());
@@ -69,32 +60,36 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className }: S
   const relayList = useMemo(() => relays ?? cfg.relays ?? DEFAULT_RELAYS, [relays, cfg.relays]);
   const note = useMemo(
     () => `${title}\n${url}${lnAddress ? `\n⚡ ${lnAddress}` : ''}`,
-    [title, url, lnAddress],
+    [title, url, lnAddress]
   );
 
   const handleShare = useCallback(async () => {
     setError(null);
     setState('sharing');
-    const nostr = (globalThis as unknown as { nostr?: { getPublicKey: () => Promise<string>; signEvent: (ev: SignedEvent) => Promise<SignedEvent> } }).nostr;
+    const nostr = (
+      globalThis as unknown as {
+        nostr?: {
+          getPublicKey: () => Promise<string>;
+          signEvent: (ev: UnsignedEvent) => Promise<SignedEvent>;
+        };
+      }
+    ).nostr;
 
     if (nostr && relayList.length) {
       try {
         const pubkey = await nostr.getPublicKey();
         const now = Math.floor(Date.now() / 1000);
-        const event: Omit<SignedEvent, 'id' | 'sig'> = {
+        const event: UnsignedEvent = {
           kind: 1,
           created_at: now,
-          tags: [
-            ['r', url],
-            ...(tag ? [['t', tag]] : []),
-          ],
+          tags: [['r', url], ...(tag ? [['t', tag]] : [])],
           content: note,
-          pubkey,
+          pubkey
         };
-      const signed = await nostr.signEvent(event as unknown as SignedEvent);
-      await publishToRelays(relayList, signed);
-      setState('copied');
-      return;
+        const signed = await nostr.signEvent(event);
+        await publishToRelays(relayList, signed);
+        setState('copied');
+        return;
       } catch (err) {
         console.warn('nostr share failed, falling back', err);
       }
