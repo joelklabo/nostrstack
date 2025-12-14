@@ -126,6 +126,85 @@ export function applyNostrstackTheme(target: HTMLElement, theme: NostrstackTheme
   setVar(target, '--nostrstack-motion-distance-far', m.distanceFar);
 }
 
+export function themeToCssVars(theme: NostrstackTheme = {}): Record<string, string> {
+  const vars: Record<string, string> = {};
+
+  const add = (name: string, value: string | undefined) => {
+    if (!value) return;
+    vars[name] = value;
+  };
+
+  const c = theme.color ?? {};
+  add('--nostrstack-color-primary', c.primary);
+  add('--nostrstack-color-primary-strong', c.primaryStrong);
+  add('--nostrstack-color-primary-soft', c.primarySoft);
+  add('--nostrstack-color-accent', c.accent);
+  add('--nostrstack-color-accent-soft', c.accentSoft);
+  add('--nostrstack-color-success', c.success);
+  add('--nostrstack-color-warning', c.warning);
+  add('--nostrstack-color-danger', c.danger);
+  add('--nostrstack-color-info', c.info);
+  add('--nostrstack-color-bg', c.bg);
+  add('--nostrstack-color-surface', c.surface);
+  add('--nostrstack-color-surface-subtle', c.surfaceSubtle);
+  add('--nostrstack-color-surface-strong', c.surfaceStrong);
+  add('--nostrstack-color-surface-raised', c.surfaceRaised);
+  add('--nostrstack-color-overlay', c.overlay);
+  add('--nostrstack-color-border', c.border);
+  add('--nostrstack-color-border-strong', c.borderStrong);
+  add('--nostrstack-color-ring', c.ring);
+  add('--nostrstack-color-text', c.text);
+  add('--nostrstack-color-text-muted', c.textMuted);
+  add('--nostrstack-color-text-subtle', c.textSubtle);
+  add('--nostrstack-color-text-on-strong', c.textOnStrong);
+
+  const r = theme.radius ?? {};
+  add('--nostrstack-radius-sm', r.sm);
+  add('--nostrstack-radius-md', r.md);
+  add('--nostrstack-radius-lg', r.lg);
+  add('--nostrstack-radius-pill', r.pill);
+
+  const s = theme.shadow ?? {};
+  add('--nostrstack-shadow-sm', s.sm);
+  add('--nostrstack-shadow-md', s.md);
+  add('--nostrstack-shadow-lg', s.lg);
+  add('--nostrstack-shadow-glow', s.glow);
+  add('--nostrstack-shadow-focus', s.focus);
+
+  const f = theme.font ?? {};
+  add('--nostrstack-font-body', f.body);
+  add('--nostrstack-font-mono', f.mono);
+
+  const m = theme.motion ?? {};
+  add('--nostrstack-motion-fast', m.fast);
+  add('--nostrstack-motion-base', m.base);
+  add('--nostrstack-motion-slow', m.slow);
+  add('--nostrstack-motion-enter', m.enter);
+  add('--nostrstack-motion-exit', m.exit);
+  add('--nostrstack-motion-ease-standard', m.easeStandard);
+  add('--nostrstack-motion-ease-emphasized', m.easeEmphasized);
+  add('--nostrstack-motion-ease-snappy', m.easeSnappy);
+  add('--nostrstack-motion-distance-short', m.distanceShort);
+  add('--nostrstack-motion-distance-mid', m.distanceMid);
+  add('--nostrstack-motion-distance-far', m.distanceFar);
+
+  return vars;
+}
+
+export function themeToCss(theme: NostrstackTheme = {}, selector = '.nostrstack-theme') {
+  const vars = themeToCssVars(theme);
+  const entries = Object.entries(vars);
+  if (!entries.length) return '';
+
+  const modeSelector = theme.mode ? `[data-nostrstack-theme="${theme.mode}"]` : '';
+  const resolvedSelector = `${selector}${modeSelector}`;
+
+  const lines = entries
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, value]) => `  ${name}: ${value};`);
+  return `${resolvedSelector} {\n${lines.join('\n')}\n}\n`;
+}
+
 export function ensureNostrstackEmbedStyles(doc: Document | undefined = typeof document !== 'undefined' ? document : undefined) {
   if (!doc?.head) return;
   if (doc.getElementById(STYLE_ID)) return;

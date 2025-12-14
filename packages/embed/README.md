@@ -49,13 +49,31 @@ document.body.appendChild(badge);
 Set the theme mode (light/dark) and optionally override brand colors.
 
 ```ts
-import { applyNostrstackTheme, createNostrstackBrandTheme } from '@nostrstack/embed';
+import { applyNostrstackTheme, createNostrstackBrandTheme, themeToCss, themeToCssVars } from '@nostrstack/embed';
 
 // Apply an "emerald" brand preset in dark mode.
 applyNostrstackTheme(container, createNostrstackBrandTheme({ preset: 'emerald', mode: 'dark' }));
 
 // Or generate from hues (0-359).
 applyNostrstackTheme(container, createNostrstackBrandTheme({ primaryHue: 210, accentHue: 300, mode: 'light' }));
+
+// Or generate CSS to copy/paste into your stylesheet.
+const theme = createNostrstackBrandTheme({ preset: 'emerald', mode: 'dark' });
+const css = themeToCss(theme); // targets `.nostrstack-theme[data-nostrstack-theme="dark"]`
+const vars = themeToCssVars(theme); // { "--nostrstack-color-primary": "...", ... }
+```
+
+Copy/paste example:
+```css
+.nostrstack-theme[data-nostrstack-theme="dark"] {
+  --nostrstack-color-accent: hsl(210 85% 72%);
+  --nostrstack-color-accent-soft: hsl(210 84% 28% / 0.55);
+  --nostrstack-color-primary: hsl(157 86% 62%);
+  --nostrstack-color-primary-soft: hsl(157 80% 22% / 0.7);
+  --nostrstack-color-primary-strong: hsl(157 88% 72%);
+  --nostrstack-color-ring: hsl(157 88% 65% / 0.45);
+  --nostrstack-shadow-glow: 0 0 0 1px hsl(157 88% 65% / 0.18), var(--nostrstack-shadow-lg);
+}
 ```
 
 ## Nostr comments

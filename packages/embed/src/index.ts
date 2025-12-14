@@ -13,12 +13,15 @@ export {
   ensureNostrstackRoot,
   nostrstackComponentsCss,
   nostrstackEmbedStyles,
-  nostrstackTokensCss
+  nostrstackTokensCss,
+  themeToCss,
+  themeToCssVars
 } from './styles.js';
 export {
   createNostrstackBrandTheme,
   type NostrstackBrandPreset,
-  nostrstackBrandPresets} from './themePresets.js';
+  nostrstackBrandPresets
+} from './themePresets.js';
 export { designTokens } from './tokens/designTokens.js';
 
 type TipWidgetOptions = {
