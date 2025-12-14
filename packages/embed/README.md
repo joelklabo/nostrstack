@@ -33,6 +33,7 @@ All of these are exported from `@nostrstack/embed` for reuse in other apps:
 - `renderInvoicePopover(pr: string)` – show a lightweight lightning invoice popover.
 - `renderRelayBadge({ relays, mode })` + `updateRelayBadge` – badge/pill with live status dot.
 - `renderNostrUserCard(pubkey, opts)` – simple profile card (name, about, picture if available).
+- `applyNostrstackTheme(el, theme)` + `createNostrstackBrandTheme({ preset, mode })` – theme any container via CSS variables.
 - `designTokens` – shared spacing, color, radius, and typography tokens.
 
 Example:
@@ -42,6 +43,19 @@ import { renderRelayBadge, designTokens } from '@nostrstack/embed';
 const badge = renderRelayBadge({ relays: ['wss://relay.damus.io'], mode: 'real' });
 badge.style.margin = designTokens.spacing.sm;
 document.body.appendChild(badge);
+```
+
+## Theming
+Set the theme mode (light/dark) and optionally override brand colors.
+
+```ts
+import { applyNostrstackTheme, createNostrstackBrandTheme } from '@nostrstack/embed';
+
+// Apply an "emerald" brand preset in dark mode.
+applyNostrstackTheme(container, createNostrstackBrandTheme({ preset: 'emerald', mode: 'dark' }));
+
+// Or generate from hues (0-359).
+applyNostrstackTheme(container, createNostrstackBrandTheme({ primaryHue: 210, accentHue: 300, mode: 'light' }));
 ```
 
 ## Nostr comments

@@ -1,4 +1,12 @@
-import { autoMount, mountCommentWidget, mountPayToAction, mountTipButton } from '@nostrstack/embed';
+import {
+  applyNostrstackTheme,
+  autoMount,
+  createNostrstackBrandTheme,
+  mountCommentWidget,
+  mountPayToAction,
+  mountTipButton,
+  type NostrstackBrandPreset,
+  nostrstackBrandPresets} from '@nostrstack/embed';
 import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -352,6 +360,7 @@ export default function App() {
   const [username, setUsername] = useState('alice');
   const [amount, setAmount] = useState(5);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
   const [relaysCsv, setRelaysCsv] = useState(relaysEnvDefault.join(','));
   const [relaysList, setRelaysList] = useState<string[]>(relaysEnvDefault);
   const [locked, setLocked] = useState(true);
@@ -382,6 +391,7 @@ export default function App() {
   ]);
   const [walletRefresh, setWalletRefresh] = useState(0);
   const [walletOverrideOpen, setWalletOverrideOpen] = useState(false);
+  const rootRef = useRef<HTMLElement | null>(null);
   const adminKeyRef = useRef<HTMLInputElement | null>(null);
   const readKeyRef = useRef<HTMLInputElement | null>(null);
   const walletIdRef = useRef<HTMLInputElement | null>(null);
@@ -407,6 +417,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const savedPreset =
+      typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.brand.preset') : null;
+    if (savedPreset && savedPreset in nostrstackBrandPresets) {
+      setBrandPreset(savedPreset as NostrstackBrandPreset);
+    }
+
     const url =
       typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.url') : null;
     const key =
@@ -428,6 +444,11 @@ export default function App() {
       typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.telemetry.ws') : null;
     if (tws) setTelemetryWsOverride(tws);
   }, []);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    applyNostrstackTheme(el, createNostrstackBrandTheme({ preset: brandPreset, mode: theme }));
+  }, [brandPreset, theme]);
   useEffect(() => {
     if (walletOverrideAutoOpenRef.current) return;
     const hasOverride =
@@ -958,7 +979,11 @@ export default function App() {
   };
 
   return (
-    <main className="nostrstack nostrstack-theme nostrstack-gallery" data-nostrstack-theme={theme}>
+    <main
+      ref={rootRef}
+      className="nostrstack nostrstack-theme nostrstack-gallery"
+      data-nostrstack-theme={theme}
+    >
       <header className="nostrstack-gallery-shell">
         <div className="nostrstack-gallery-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1308,6 +1333,41 @@ export default function App() {
                   </button>
                 </div>
               </div>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span>Brand</span>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <select
+                    value={brandPreset}
+                    onChange={(e) => {
+                      const v = e.target.value as NostrstackBrandPreset;
+                      setBrandPreset(v);
+                      if (typeof window !== 'undefined')
+                        window.localStorage.setItem('nostrstack.brand.preset', v);
+                    }}
+                    style={{ flex: 1 }}
+                    aria-label="Brand preset"
+                  >
+                    {Object.entries(nostrstackBrandPresets).map(([key, preset]) => (
+                      <option key={key} value={key}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    aria-hidden="true"
+                    title="Brand preview"
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 999,
+                      border: `1px solid ${layout.border}`,
+                      background:
+                        'linear-gradient(135deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))',
+                      boxShadow: 'var(--nostrstack-shadow-glow)'
+                    }}
+                  />
+                </div>
+              </label>
             </div>
 
             <div

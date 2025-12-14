@@ -15,6 +15,10 @@ export {
   nostrstackEmbedStyles,
   nostrstackTokensCss
 } from './styles.js';
+export {
+  createNostrstackBrandTheme,
+  type NostrstackBrandPreset,
+  nostrstackBrandPresets} from './themePresets.js';
 export { designTokens } from './tokens/designTokens.js';
 
 type TipWidgetOptions = {
