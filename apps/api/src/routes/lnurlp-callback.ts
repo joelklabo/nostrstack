@@ -94,7 +94,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       data: {
         tenantId: tenant.id,
         userId: user.id,
-        provider: 'opennode',
+        provider: env.LIGHTNING_PROVIDER,
         providerRef: charge.id,
         invoice: charge.invoice,
         amountSats,
