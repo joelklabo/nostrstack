@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { BrandedQr } from './BrandedQr';
-import { CopyButton } from './CopyButton';
 import { copyToClipboard } from './clipboard';
+import { CopyButton } from './CopyButton';
 import { useToast } from './toast';
 
 export type InvoicePopoverProps = {

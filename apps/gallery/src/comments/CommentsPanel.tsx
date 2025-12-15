@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pill } from '../App';
 import { RelayCard } from '../RelayCard';
 import { RelayRibbon } from '../RelayRibbon';
-import { JsonView } from '../ui/JsonView';
 import type { RelayStats } from '../types/relay';
+import { JsonView } from '../ui/JsonView';
 
 export type LiveActivityItem = {
   id: string;

@@ -1,4 +1,10 @@
-import { renderQrCodeInto, type NostrstackQrPreset, type NostrstackQrRenderResult, type NostrstackQrStyleOptions, type NostrstackQrVerifyMode } from '@nostrstack/embed';
+import {
+  type NostrstackQrPreset,
+  type NostrstackQrRenderResult,
+  type NostrstackQrStyleOptions,
+  type NostrstackQrVerifyMode,
+  renderQrCodeInto
+} from '@nostrstack/embed';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export type BrandedQrProps = {

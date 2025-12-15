@@ -1,6 +1,6 @@
 import {
-  nostrstackQrPresetOptions,
   type NostrstackQrPreset,
+  nostrstackQrPresetOptions,
   type NostrstackQrRenderResult,
   type NostrstackQrStyleOptions,
   type NostrstackQrVerifyMode
@@ -144,7 +144,7 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
               rows={8}
               value={overrideJson}
               onChange={(e) => setOverrideJson(e.target.value)}
-              placeholder={'{\n  \"margin\": 6,\n  \"dotsOptions\": { \"type\": \"rounded\" }\n}'}
+              placeholder={'{\n  "margin": 6,\n  "dotsOptions": { "type": "rounded" }\n}'}
               style={{ resize: 'vertical', fontFamily: 'var(--nostrstack-font-mono)' }}
             />
             {overrideParse.error && (

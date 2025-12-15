@@ -153,7 +153,6 @@ async function main() {
 
     // Config & presets.
     await page.getByLabel('Amount (sats)').first().fill('6');
-    const themeGroup = page.getByRole('group', { name: 'Theme' });
     await page
       .getByRole('button', { name: 'Dark', exact: true })
       .evaluate((el) => (el as HTMLButtonElement).click());

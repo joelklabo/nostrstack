@@ -62,7 +62,6 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
 
     setStatus('checking');
     setError(null);
-    const started = Date.now();
     try {
       if (mode === 'request' && typeof enable === 'function') {
         await Promise.race([

@@ -844,15 +844,15 @@ export default function App() {
       }));
       setActivity((prev) =>
         [
-	          {
-	            id: `send-${relay}-${signed.id ?? signed.created_at}-${Date.now()}`,
-	            ts: Date.now(),
-	            relay,
-	            direction: 'send' as const,
-	            label: signed.content || 'sent note',
-	            sublabel: `kind ${signed.kind} · pubkey ${signed.pubkey.slice(0, 8)}…${signed.pubkey.slice(-4)}`,
-	            payload: { relay, event: signed }
-	          },
+          {
+            id: `send-${relay}-${signed.id ?? signed.created_at}-${Date.now()}`,
+            ts: Date.now(),
+            relay,
+            direction: 'send' as const,
+            label: signed.content || 'sent note',
+            sublabel: `kind ${signed.kind} · pubkey ${signed.pubkey.slice(0, 8)}…${signed.pubkey.slice(-4)}`,
+            payload: { relay, event: signed }
+          },
           ...prev
         ].slice(0, 60)
       );
@@ -868,15 +868,15 @@ export default function App() {
       setLastNoteResult(err instanceof Error ? err.message : String(err));
       setActivity((prev) =>
         [
-	          {
-	            id: `send-error-${relay}-${Date.now()}`,
-	            ts: Date.now(),
-	            relay,
-	            direction: 'send' as const,
-	            label: 'Send failed',
-	            sublabel: err instanceof Error ? err.message : String(err),
-	            payload: err instanceof Error ? { message: err.message, stack: err.stack } : err
-	          },
+          {
+            id: `send-error-${relay}-${Date.now()}`,
+            ts: Date.now(),
+            relay,
+            direction: 'send' as const,
+            label: 'Send failed',
+            sublabel: err instanceof Error ? err.message : String(err),
+            payload: err instanceof Error ? { message: err.message, stack: err.stack } : err
+          },
           ...prev
         ].slice(0, 60)
       );
@@ -1814,118 +1814,133 @@ export default function App() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
               }}
             >
-	          <Card title="Nostr profile">
-	            <NostrProfileCard
-	              pubkey={activePubkey ?? undefined}
-	              seckey={undefined}
-	              signerReady={signerReady}
-	              relays={profileRelays}
-	              relayStats={relayStats}
-	              profile={profile ?? undefined}
-	              fullProfile={profile ?? undefined}
-	              profileStatus={profileStatus}
-	              nip05Verified={nip05Verified}
-	            />
-            <div
-              style={{
-                marginTop: '0.75rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.35rem',
-                padding: '0.75rem',
-                borderRadius: layout.radius,
-                border: `1px solid ${layout.border}`,
-                background: themeStyles.inset
-              }}
-            >
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
-              >
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 999,
-                    background: signerReady
-                      ? 'var(--nostrstack-color-success)'
-                      : 'var(--nostrstack-color-danger)'
-                  }}
+              <Card title="Nostr profile">
+                <NostrProfileCard
+                  pubkey={activePubkey ?? undefined}
+                  seckey={undefined}
+                  signerReady={signerReady}
+                  relays={profileRelays}
+                  relayStats={relayStats}
+                  profile={profile ?? undefined}
+                  fullProfile={profile ?? undefined}
+                  profileStatus={profileStatus}
+                  nip05Verified={nip05Verified}
                 />
-                <strong>{signerReady ? 'Signer available' : 'No NIP-07 signer detected'}</strong>
-              </div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
-              >
-                <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>Pubkey:</span>
-                <code
-                  style={{
-                    fontFamily: 'var(--nostrstack-font-mono)',
-                    wordBreak: 'break-all',
-                    maxWidth: '100%'
-                  }}
-                >
-                  {activePubkey ?? '—'}
-                </code>
-              </div>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                <span style={{ fontWeight: 600 }}>Demo message</span>
-                  <textarea
-                    className="nostrstack-textarea"
-                    name="demoMessage"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={2}
-                    style={{ resize: 'vertical' }}
-                  />
-              </label>
-              <div
-                style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}
-              >
-                <button
-                  type="button"
-                  className="nostrstack-btn nostrstack-btn--primary"
-                  onClick={handleSendNote}
-                  disabled={!signerReady}
-                >
-                  Send signed note
-                </button>
-                <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
-                  Relay: {profileRelays[0] ?? '—'}
-                </span>
-              </div>
-              {lastNoteResult && (
                 <div
                   style={{
-                    padding: '0.55rem 0.75rem',
+                    marginTop: '0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                    padding: '0.75rem',
                     borderRadius: layout.radius,
-                    border: lastNoteOk
-                      ? '1px solid color-mix(in oklab, var(--nostrstack-color-success) 28%, var(--nostrstack-color-border))'
-                      : '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 28%, var(--nostrstack-color-border))',
-                    background: lastNoteOk
-                      ? 'color-mix(in oklab, var(--nostrstack-color-success) 12%, var(--nostrstack-color-surface))'
-                      : 'color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface))',
-                    color: lastNoteOk
-                      ? 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))'
-                      : 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
-                    fontSize: '0.9rem'
+                    border: `1px solid ${layout.border}`,
+                    background: themeStyles.inset
                   }}
                 >
-                  {lastNoteResult}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 999,
+                        background: signerReady
+                          ? 'var(--nostrstack-color-success)'
+                          : 'var(--nostrstack-color-danger)'
+                      }}
+                    />
+                    <strong>{signerReady ? 'Signer available' : 'No NIP-07 signer detected'}</strong>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <span style={{ color: themeStyles.muted, fontSize: '0.9rem' }}>Pubkey:</span>
+                    <code
+                      style={{
+                        fontFamily: 'var(--nostrstack-font-mono)',
+                        wordBreak: 'break-all',
+                        maxWidth: '100%'
+                      }}
+                    >
+                      {activePubkey ?? '—'}
+                    </code>
+                  </div>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    <span style={{ fontWeight: 600 }}>Demo message</span>
+                    <textarea
+                      className="nostrstack-textarea"
+                      name="demoMessage"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      rows={2}
+                      style={{ resize: 'vertical' }}
+                    />
+                  </label>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.6rem',
+                      flexWrap: 'wrap',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="nostrstack-btn nostrstack-btn--primary"
+                      onClick={handleSendNote}
+                      disabled={!signerReady}
+                    >
+                      Send signed note
+                    </button>
+                    <span style={{ fontSize: '0.9rem', color: themeStyles.muted }}>
+                      Relay: {profileRelays[0] ?? '—'}
+                    </span>
+                  </div>
+                  {lastNoteResult && (
+                    <div
+                      style={{
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: layout.radius,
+                        border: lastNoteOk
+                          ? '1px solid color-mix(in oklab, var(--nostrstack-color-success) 28%, var(--nostrstack-color-border))'
+                          : '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 28%, var(--nostrstack-color-border))',
+                        background: lastNoteOk
+                          ? 'color-mix(in oklab, var(--nostrstack-color-success) 12%, var(--nostrstack-color-surface))'
+                          : 'color-mix(in oklab, var(--nostrstack-color-danger) 12%, var(--nostrstack-color-surface))',
+                        color: lastNoteOk
+                          ? 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))'
+                          : 'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {lastNoteResult}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Card>
-          <Card title="Comments (Nostr)">
-            <CommentsPanel
-              relayLabel={relayLabel}
-              relaysEnvDefault={relaysEnvDefault}
-              relaysList={relaysList}
-              relayStats={relayStats}
-              activity={activity}
-              onClearActivity={() => setActivity([])}
-            />
-            <div id="comments-container" />
-          </Card>
+              </Card>
+              <Card title="Comments (Nostr)">
+                <CommentsPanel
+                  relayLabel={relayLabel}
+                  relaysEnvDefault={relaysEnvDefault}
+                  relaysList={relaysList}
+                  relayStats={relayStats}
+                  activity={activity}
+                  onClearActivity={() => setActivity([])}
+                />
+                <div id="comments-container" />
+              </Card>
             </div>
           )}
         </section>
