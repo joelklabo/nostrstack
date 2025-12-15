@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { BrandedQr } from './BrandedQr';
-import { copyToClipboard } from './clipboard';
 import { CopyButton } from './CopyButton';
-import { useToast } from './toast';
+import { useCopyAction } from './useCopyAction';
 
 export type InvoicePopoverProps = {
   invoice: string | null;
@@ -18,7 +17,6 @@ export function InvoicePopover({
   status = 'pending',
   onClose
 }: InvoicePopoverProps) {
-  const toast = useToast();
   const [ageMs, setAgeMs] = useState(0);
   const [celebrate, setCelebrate] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
@@ -97,6 +95,12 @@ export function InvoicePopover({
     }
   }, [visualState]);
 
+  const { copy: copyInvoice } = useCopyAction({
+    text: invoice ?? '',
+    label: 'Copy invoice',
+    disabled: !invoice
+  });
+
   if (!invoice) return null;
 
   const prettyInvoice = (() => {
@@ -104,16 +108,6 @@ export function InvoicePopover({
     const tail = invoice.length > 28 ? invoice.slice(-10) : '';
     return tail ? `${head}…${tail}` : invoice;
   })();
-
-  const copyInvoice = async () => {
-    try {
-      await copyToClipboard(invoice);
-      toast({ message: 'Copied invoice', tone: 'success' });
-    } catch (err) {
-      console.warn('copy invoice failed', err);
-      toast({ message: 'Copy failed', tone: 'danger' });
-    }
-  };
 
   return (
     <div className="nostrstack-popover-overlay nostrstack-gallery-popover-overlay" onClick={onClose}>
@@ -156,7 +150,7 @@ export function InvoicePopover({
           <div className="nostrstack-invoice-modal__qrCard">
             <button
               type="button"
-              onClick={copyInvoice}
+              onClick={() => copyInvoice()}
               aria-label="Copy invoice"
               className="nostrstack-invoice-modal__qrBtn"
             >

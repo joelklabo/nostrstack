@@ -1,7 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-
-import { copyToClipboard } from './clipboard';
-import { useToast } from './toast';
+import { toastMessageFromLabel, useCopyAction } from './useCopyAction';
 
 type Props = {
   text: string;
@@ -13,15 +10,6 @@ type Props = {
   disabled?: boolean;
 };
 
-function toastMessageFromLabel(label: string) {
-  const trimmed = (label ?? '').trim();
-  if (!trimmed) return 'Copied';
-  const lower = trimmed.toLowerCase();
-  if (lower === 'copy') return 'Copied';
-  if (lower.startsWith('copy ')) return `Copied ${trimmed.slice(5)}`;
-  return `${trimmed} copied`;
-}
-
 export function CopyButton({
   text,
   label = 'Copy',
@@ -31,41 +19,12 @@ export function CopyButton({
   successDurationMs = 1200,
   disabled
 }: Props) {
-  const toast = useToast();
-  const [state, setState] = useState<'idle' | 'copied' | 'error'>('idle');
-  const timeoutRef = useRef<number | null>(null);
-  const isDisabled = disabled || !text.trim();
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  const handleCopy = async () => {
-    try {
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-      await copyToClipboard(text);
-      try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(10);
-      } catch {
-        /* ignore */
-      }
-      setState('copied');
-      toast({ message: toastMessageFromLabel(label), tone: 'success' });
-    } catch (err) {
-      console.warn('copy failed', err);
-      try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate([15, 25, 15]);
-      } catch {
-        /* ignore */
-      }
-      setState('error');
-      toast({ message: 'Copy failed', tone: 'danger' });
-    } finally {
-      timeoutRef.current = window.setTimeout(() => setState('idle'), successDurationMs);
-    }
-  };
+  const { state, copy, isDisabled } = useCopyAction({
+    text,
+    label,
+    successDurationMs,
+    disabled
+  });
 
   const buttonLabel =
     state === 'copied'
@@ -78,7 +37,7 @@ export function CopyButton({
     <div style={{ display: 'inline-flex' }}>
       <button
         type="button"
-        onClick={handleCopy}
+        onClick={() => copy()}
         aria-label={variant === 'icon' ? (ariaLabel ?? label) : ariaLabel}
         className={[
           'nostrstack-btn',
