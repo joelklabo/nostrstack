@@ -1001,9 +1001,14 @@ export default function App() {
             type?: string;
             pr?: string;
             providerRef?: string;
+            status?: string;
           };
           if (
-            msg.type === 'invoice-paid' &&
+            (msg.type === 'invoice-paid' ||
+              (msg.type === 'invoice-status' &&
+                ['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED'].includes(
+                  String(msg.status || '').toUpperCase()
+                ))) &&
             ((msg.pr && msg.pr === pr) || (ref && msg.providerRef && msg.providerRef === ref))
           ) {
             setQrStatus('paid');

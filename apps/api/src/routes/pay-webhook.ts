@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
+const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
+
 export async function registerPayWebhook(app: FastifyInstance) {
   app.post('/api/pay/webhook/lnbits', async (request, reply) => {
     const body = (request.body || {}) as Record<string, unknown>;
@@ -10,6 +12,8 @@ export async function registerPayWebhook(app: FastifyInstance) {
       const payment = await app.prisma.payment.findFirst({ where: { providerRef: paymentHash } });
       if (!payment) return reply.code(200).send({ ok: true, ignored: true });
 
+      if (PAID_STATES.has(payment.status)) return reply.send({ ok: true });
+
       await app.prisma.payment.update({ where: { id: payment.id }, data: { status: 'PAID' } });
       let metadata: unknown | undefined;
       if (payment.metadata) {
@@ -19,14 +23,30 @@ export async function registerPayWebhook(app: FastifyInstance) {
           metadata = undefined;
         }
       }
+      const ts = Date.now();
+      app.payEventHub?.broadcast({
+        type: 'invoice-status',
+        ts,
+        providerRef: payment.providerRef,
+        status: 'PAID',
+        prevStatus: payment.status,
+        pr: payment.invoice,
+        amount: payment.amountSats,
+        action: payment.action ?? undefined,
+        itemId: payment.itemId ?? undefined,
+        metadata,
+        source: 'webhook'
+      });
       app.payEventHub?.broadcast({
         type: 'invoice-paid',
+        ts,
         pr: payment.invoice,
         providerRef: payment.providerRef,
         amount: payment.amountSats,
         action: payment.action ?? undefined,
         itemId: payment.itemId ?? undefined,
-        metadata
+        metadata,
+        source: 'webhook'
       });
       return reply.send({ ok: true });
     } catch (err) {

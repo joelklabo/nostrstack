@@ -1,15 +1,42 @@
 import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
-export type PayEvent = {
-  type: 'invoice-paid';
-  pr: string;
-  providerRef: string;
-  amount: number;
-  action?: string;
-  itemId?: string;
-  metadata?: unknown;
-};
+export type PayEvent =
+  | {
+      type: 'invoice-created';
+      ts: number;
+      pr: string;
+      providerRef: string;
+      amount: number;
+      status: string;
+      action?: string;
+      itemId?: string;
+      metadata?: unknown;
+    }
+  | {
+      type: 'invoice-status';
+      ts: number;
+      providerRef: string;
+      status: string;
+      prevStatus?: string;
+      pr?: string;
+      amount?: number;
+      action?: string;
+      itemId?: string;
+      metadata?: unknown;
+      source?: 'poll' | 'reconciler' | 'webhook' | 'lnurl' | 'regtest';
+    }
+  | {
+      type: 'invoice-paid';
+      ts: number;
+      pr: string;
+      providerRef: string;
+      amount: number;
+      action?: string;
+      itemId?: string;
+      metadata?: unknown;
+      source?: 'poll' | 'reconciler' | 'webhook' | 'lnurl' | 'regtest';
+    };
 
 export function createPayEventHub(server: FastifyInstance) {
   const wss = new WebSocketServer({ noServer: true });

@@ -45,6 +45,18 @@ export async function registerPayRoutes(app: FastifyInstance) {
       }
     });
 
+    app.payEventHub?.broadcast({
+      type: 'invoice-created',
+      ts: Date.now(),
+      pr: charge.invoice,
+      providerRef: charge.id,
+      amount: body.amount,
+      status: 'PENDING',
+      action: body.action,
+      itemId: typeof body.metadata?.itemId === 'string' ? body.metadata.itemId : undefined,
+      metadata: body.metadata
+    });
+
     const response = {
       status: 'pending',
       payment_request: charge.invoice,
@@ -93,7 +105,7 @@ export async function registerPayRoutes(app: FastifyInstance) {
     try {
       const statusRes = await app.lightningProvider.getCharge(id);
       const normalized = statusRes?.status?.toUpperCase?.() ?? payment.status;
-      if (paidStates.includes(normalized)) {
+      if (normalized !== payment.status) {
         await app.prisma.payment.update({ where: { id: payment.id }, data: { status: normalized } });
         let metadata: unknown | undefined;
         if (payment.metadata) {
@@ -103,15 +115,33 @@ export async function registerPayRoutes(app: FastifyInstance) {
             metadata = undefined;
           }
         }
+        const ts = Date.now();
         app.payEventHub?.broadcast({
-          type: 'invoice-paid',
-          pr: payment.invoice,
+          type: 'invoice-status',
+          ts,
           providerRef: id,
+          status: normalized,
+          prevStatus: payment.status,
+          pr: payment.invoice,
           amount: payment.amountSats,
           action: payment.action ?? undefined,
           itemId: payment.itemId ?? undefined,
-          metadata
+          metadata,
+          source: 'poll'
         });
+        if (paidStates.includes(normalized)) {
+          app.payEventHub?.broadcast({
+            type: 'invoice-paid',
+            ts,
+            pr: payment.invoice,
+            providerRef: id,
+            amount: payment.amountSats,
+            action: payment.action ?? undefined,
+            itemId: payment.itemId ?? undefined,
+            metadata,
+            source: 'poll'
+          });
+        }
       }
       return reply.send({ status: normalized });
     } catch (err) {

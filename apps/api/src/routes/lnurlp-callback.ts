@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { env } from '../env.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
+const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
+
 export async function registerLnurlCallback(app: FastifyInstance) {
   // Withdraw (LNURLw) for payouts from tenant wallet (non-custodial: uses provider to create invoice request)
   app.get('/api/lnurlw', {
@@ -154,7 +156,10 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     }
 
     const normalizedStatus = status.toUpperCase();
-    await app.prisma.payment.update({ where: { id: payment.id }, data: { status: normalizedStatus } });
+    const prevStatus = payment.status;
+    if (normalizedStatus !== prevStatus) {
+      await app.prisma.payment.update({ where: { id: payment.id }, data: { status: normalizedStatus } });
+    }
 
     // Avoid holding balances: we only track payment status; no wallet custody.
 
@@ -185,7 +190,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       }
     }
 
-    if (successStates.includes(normalizedStatus)) {
+    if (normalizedStatus !== prevStatus) {
       let metadata: unknown | undefined;
       if (payment.metadata) {
         try {
@@ -194,15 +199,33 @@ export async function registerLnurlCallback(app: FastifyInstance) {
           metadata = undefined;
         }
       }
+      const ts = Date.now();
       app.payEventHub?.broadcast({
-        type: 'invoice-paid',
-        pr: payment.invoice,
+        type: 'invoice-status',
+        ts,
         providerRef: id,
+        status: normalizedStatus,
+        prevStatus,
+        pr: payment.invoice,
         amount: payment.amountSats,
         action: payment.action ?? undefined,
         itemId: payment.itemId ?? undefined,
-        metadata
+        metadata,
+        source: 'lnurl'
       });
+      if (PAID_STATES.has(normalizedStatus) && !PAID_STATES.has(prevStatus)) {
+        app.payEventHub?.broadcast({
+          type: 'invoice-paid',
+          ts,
+          pr: payment.invoice,
+          providerRef: id,
+          amount: payment.amountSats,
+          action: payment.action ?? undefined,
+          itemId: payment.itemId ?? undefined,
+          metadata,
+          source: 'lnurl'
+        });
+      }
     }
 
     return reply.send({ ok: true });

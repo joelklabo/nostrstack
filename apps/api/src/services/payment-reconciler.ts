@@ -22,7 +22,7 @@ export function startPaymentReconciler(app: FastifyInstance) {
         try {
           const statusRes = await app.lightningProvider.getCharge!(p.providerRef);
           const normalized = statusRes?.status?.toString().toUpperCase() ?? p.status;
-          if (PAID_STATES.has(normalized)) {
+          if (normalized !== p.status) {
             await app.prisma.payment.update({ where: { id: p.id }, data: { status: normalized } });
             let metadata: unknown | undefined;
             if (p.metadata) {
@@ -32,15 +32,33 @@ export function startPaymentReconciler(app: FastifyInstance) {
                 metadata = undefined;
               }
             }
+            const ts = Date.now();
             app.payEventHub?.broadcast({
-              type: 'invoice-paid',
-              pr: p.invoice,
+              type: 'invoice-status',
+              ts,
               providerRef: p.providerRef,
+              status: normalized,
+              prevStatus: p.status,
+              pr: p.invoice,
               amount: p.amountSats,
               action: p.action ?? undefined,
               itemId: p.itemId ?? undefined,
-              metadata
+              metadata,
+              source: 'reconciler'
             });
+            if (PAID_STATES.has(normalized)) {
+              app.payEventHub?.broadcast({
+                type: 'invoice-paid',
+                ts,
+                pr: p.invoice,
+                providerRef: p.providerRef,
+                amount: p.amountSats,
+                action: p.action ?? undefined,
+                itemId: p.itemId ?? undefined,
+                metadata,
+                source: 'reconciler'
+              });
+            }
           }
         } catch (err) {
           app.log.warn({ err, providerRef: p.providerRef }, 'payment reconciler status check failed');

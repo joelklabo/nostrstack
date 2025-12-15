@@ -60,7 +60,14 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
 
       // Broadcast to any live listeners that this invoice was paid
       if (parsed?.payment_hash && app.payEventHub) {
-        app.payEventHub.broadcast({ type: 'invoice-paid', pr: invoice, providerRef: parsed.payment_hash, amount: 0 });
+        app.payEventHub.broadcast({
+          type: 'invoice-paid',
+          ts: Date.now(),
+          pr: invoice,
+          providerRef: parsed.payment_hash,
+          amount: 0,
+          source: 'regtest'
+        });
       }
 
       return reply.send(payload);

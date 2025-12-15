@@ -135,16 +135,18 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
           pr?: string;
           providerRef?: string;
           provider_ref?: string;
+          status?: string;
         };
         setLastWsMessage(msg);
         const msgProviderRef =
           (typeof msg.providerRef === 'string' ? msg.providerRef : null) ??
           (typeof msg.provider_ref === 'string' ? msg.provider_ref : null);
         const msgInvoice = normalizeInvoice(msg.pr);
-        if (
-          msg.type === 'invoice-paid' &&
-          ((msgInvoice && msgInvoice === invoice) || (msgProviderRef && msgProviderRef === providerRef))
-        ) {
+        const matches =
+          (msgInvoice && msgInvoice === invoice) || (msgProviderRef && msgProviderRef === providerRef);
+        if (!matches) return;
+        if (msg.type === 'invoice-paid') markPaid('ws');
+        if (msg.type === 'invoice-status' && PAID_STATES.has(String(msg.status ?? '').toUpperCase())) {
           markPaid('ws');
         }
       } catch {

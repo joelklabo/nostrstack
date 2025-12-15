@@ -331,6 +331,7 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
   const domain = resolveTenantDomain(opts.host);
   const itemId = opts.itemId;
   const maxItems = Math.max(5, Math.min(60, opts.maxItems ?? 25));
+  const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
 
   const header = document.createElement('div');
   header.className = 'nostrstack-tip-feed__header';
@@ -425,7 +426,11 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
           const msg = JSON.parse(ev.data as string) as unknown;
           if (!msg || typeof msg !== 'object') return;
           const rec = msg as Record<string, unknown>;
-          if (rec.type !== 'invoice-paid') return;
+          const kind = rec.type;
+          const statusStr = typeof rec.status === 'string' ? rec.status.toUpperCase() : '';
+          const paid =
+            kind === 'invoice-paid' || (kind === 'invoice-status' && PAID_STATES.has(statusStr));
+          if (!paid) return;
           const action = extractPayEventAction(msg);
           if (action !== 'tip') return;
           const evItemId = extractPayEventItemId(msg);
@@ -813,7 +818,11 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
           const msg = JSON.parse(ev.data as string) as unknown;
           if (!msg || typeof msg !== 'object') return;
           const rec = msg as Record<string, unknown>;
-          if (rec.type !== 'invoice-paid') return;
+          const kind = rec.type;
+          const statusStr = typeof rec.status === 'string' ? rec.status.toUpperCase() : '';
+          const paid =
+            kind === 'invoice-paid' || (kind === 'invoice-status' && PAID_STATES.has(statusStr));
+          if (!paid) return;
           const msgProviderRef = extractPayEventProviderRef(msg);
           const msgInvoice = normalizeInvoice(extractPayEventInvoice(msg));
           if (
@@ -1181,15 +1190,17 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
             pr?: string;
             providerRef?: string;
             provider_ref?: string;
+            status?: string;
           };
           const msgProviderRef =
             (typeof msg.providerRef === 'string' ? msg.providerRef : null) ??
             (typeof msg.provider_ref === 'string' ? msg.provider_ref : null);
           const msgInvoice = normalizeInvoice(msg.pr);
-          if (
-            msg.type === 'invoice-paid' &&
-            ((msgInvoice && msgInvoice === pr) || (msgProviderRef && msgProviderRef === currentProviderRef))
-          ) {
+          const matches =
+            (msgInvoice && msgInvoice === pr) || (msgProviderRef && msgProviderRef === currentProviderRef);
+          if (!matches) return;
+          if (msg.type === 'invoice-paid') unlock();
+          if (msg.type === 'invoice-status' && PAID_STATES.has(String(msg.status ?? '').toUpperCase())) {
             unlock();
           }
         } catch {
