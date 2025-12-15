@@ -56,6 +56,7 @@ type TipWidgetV2Options = {
   baseURL?: string;
   host?: string;
   metadata?: Record<string, unknown>;
+  size?: 'full' | 'compact';
   onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
   onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
 };
@@ -480,6 +481,9 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
 export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options) {
   ensureNostrstackRoot(container);
   container.classList.add('nostrstack-card', 'nostrstack-tip');
+  if (opts.size === 'compact') {
+    container.classList.add('nostrstack-tip--compact');
+  }
   container.replaceChildren();
 
   const wsUrl = resolvePayWsUrl(opts.baseURL);
@@ -487,18 +491,28 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const domain = resolveTenantDomain(opts.host);
   const itemId = opts.itemId;
 
+  // Header with lightning icon
   const header = document.createElement('div');
   header.className = 'nostrstack-tip__header';
 
+  const headerLeft = document.createElement('div');
+  headerLeft.className = 'nostrstack-tip__headerLeft';
+
   const title = document.createElement('div');
   title.className = 'nostrstack-tip__title';
-  title.textContent = opts.text ?? 'Send a tip';
+  const titleIcon = document.createElement('span');
+  titleIcon.className = 'nostrstack-tip__titleIcon';
+  titleIcon.textContent = '⚡';
+  titleIcon.setAttribute('aria-hidden', 'true');
+  const titleText = document.createTextNode(opts.text ?? 'Send a tip');
+  title.append(titleIcon, titleText);
 
   const subtitle = document.createElement('div');
   subtitle.className = 'nostrstack-tip__sub';
   subtitle.textContent = `Pay @${opts.username}`;
 
-  header.append(title, subtitle);
+  headerLeft.append(title, subtitle);
+  header.appendChild(headerLeft);
 
   const amountRow = document.createElement('div');
   amountRow.className = 'nostrstack-tip__amountRow';
@@ -523,7 +537,10 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-tip__amt';
-    b.textContent = `${n} sats`;
+    const label = document.createElement('span');
+    label.className = 'nostrstack-tip__amtLabel';
+    label.textContent = `${n} sats`;
+    b.appendChild(label);
     b.dataset.amount = String(n);
     b.dataset.selected = n === defaultAmount ? 'true' : 'false';
     b.onclick = async () => {
@@ -576,6 +593,48 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const panel = document.createElement('div');
   panel.className = 'nostrstack-tip__panel';
+  panel.dataset.state = 'idle';
+
+  // Countdown ring
+  const ring = document.createElement('div');
+  ring.className = 'nostrstack-tip__ring';
+
+  const ringSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  ringSvg.setAttribute('class', 'nostrstack-tip__ringSvg');
+  ringSvg.setAttribute('viewBox', '0 0 72 72');
+
+  const ringBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  ringBg.setAttribute('class', 'nostrstack-tip__ringBg');
+  ringBg.setAttribute('cx', '36');
+  ringBg.setAttribute('cy', '36');
+  ringBg.setAttribute('r', '30');
+
+  const ringProgress = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  ringProgress.setAttribute('class', 'nostrstack-tip__ringProgress');
+  ringProgress.setAttribute('cx', '36');
+  ringProgress.setAttribute('cy', '36');
+  ringProgress.setAttribute('r', '30');
+
+  ringSvg.append(ringBg, ringProgress);
+
+  const ringCenter = document.createElement('div');
+  ringCenter.className = 'nostrstack-tip__ringCenter';
+
+  const ringTime = document.createElement('div');
+  ringTime.className = 'nostrstack-tip__ringTime';
+  ringTime.textContent = '2:00';
+
+  const ringLabel = document.createElement('div');
+  ringLabel.className = 'nostrstack-tip__ringLabel';
+  ringLabel.textContent = 'left';
+
+  const ringIcon = document.createElement('div');
+  ringIcon.className = 'nostrstack-tip__ringIcon';
+  ringIcon.textContent = '⏳';
+  ringIcon.style.display = 'none';
+
+  ringCenter.append(ringTime, ringLabel, ringIcon);
+  ring.append(ringSvg, ringCenter);
 
   const status = document.createElement('div');
   status.className = 'nostrstack-status nostrstack-status--muted';
@@ -583,13 +642,18 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   status.setAttribute('aria-live', 'polite');
   status.textContent = 'Pick an amount to generate an invoice.';
 
+  // Realtime indicator with pulse dot
   const realtime = document.createElement('div');
   realtime.className = 'nostrstack-tip__realtime';
-  realtime.textContent = '';
+  realtime.dataset.state = 'idle';
 
-  const timer = document.createElement('div');
-  timer.className = 'nostrstack-tip__timer';
-  timer.textContent = '';
+  const realtimeDot = document.createElement('span');
+  realtimeDot.className = 'nostrstack-tip__realtimeDot';
+
+  const realtimeText = document.createElement('span');
+  realtimeText.textContent = '';
+
+  realtime.append(realtimeDot, realtimeText);
 
   const qrWrap = document.createElement('div');
   qrWrap.className = 'nostrstack-tip__qr';
@@ -624,7 +688,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   actions.append(copyBtn, openWallet, paidBtn);
 
-  panel.append(status, realtime, timer, qrWrap, actions, invoiceBox);
+  panel.append(ring, status, realtime, qrWrap, actions, invoiceBox);
 
   let feed: { refresh: () => void; destroy: () => void } | null = null;
   let feedWrap: HTMLDivElement | null = null;
@@ -727,15 +791,39 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     return `${m}:${r}`;
   };
 
+  const RING_CIRCUMFERENCE = 188.5; // 2 * PI * 30
+  const INVOICE_TTL_SECS = 120;
+
+  const updateRing = (remainingSecs: number, isPaid: boolean) => {
+    if (isPaid) {
+      // Show checkmark
+      ringTime.textContent = '✓';
+      ringTime.style.color = 'var(--nostrstack-color-success)';
+      ringLabel.textContent = 'Paid';
+      ringIcon.style.display = 'none';
+      ringProgress.style.setProperty('--ring-offset', '0');
+      panel.dataset.state = 'paid';
+    } else {
+      // Update countdown
+      const progress = Math.max(0, Math.min(1, 1 - (remainingSecs / INVOICE_TTL_SECS)));
+      const offset = progress * RING_CIRCUMFERENCE;
+      ringProgress.style.setProperty('--ring-offset', String(offset));
+      ringTime.textContent = fmtClock(remainingSecs);
+      ringTime.style.color = '';
+      ringLabel.textContent = remainingSecs > 0 ? 'left' : 'expired';
+      ringIcon.style.display = 'none';
+      panel.dataset.state = 'waiting';
+    }
+  };
+
   const startInvoiceTicker = () => {
     stopInvoiceTicker();
     if (typeof window === 'undefined' || invoiceStartedAt === null) return;
     const update = () => {
       if (invoiceStartedAt === null) return;
       const ageMs = Date.now() - invoiceStartedAt;
-      const elapsed = fmtClock(ageMs / 1000);
-      const remaining = fmtClock(Math.max(0, 120 - ageMs / 1000));
-      timer.textContent = didPay ? `Paid · Elapsed ${elapsed}` : `Elapsed ${elapsed} · Expires ${remaining}`;
+      const remainingSecs = Math.max(0, INVOICE_TTL_SECS - ageMs / 1000);
+      updateRing(remainingSecs, didPay);
     };
     update();
     invoiceTicker = window.setInterval(update, 1000);
@@ -743,18 +831,19 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const setRealtime = (next: typeof realtimeState) => {
     realtimeState = next;
+    realtime.dataset.state = next;
     if (!wsUrl) {
-      realtime.textContent = '';
+      realtimeText.textContent = '';
       return;
     }
-    realtime.textContent =
+    realtimeText.textContent =
       realtimeState === 'open'
-        ? 'Realtime: connected'
+        ? 'Watching for payment'
         : realtimeState === 'connecting'
-          ? 'Realtime: connecting…'
+          ? 'Connecting…'
           : realtimeState === 'error'
-            ? 'Realtime: error'
-            : 'Realtime: idle';
+            ? 'Connection error'
+            : '';
   };
 
   const normalizeInvoice = (pr: string | null | undefined) => {
@@ -764,24 +853,63 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const celebrate = () => {
     container.dataset.celebrate = 'true';
+
+    // Success burst ring
+    const burst = document.createElement('div');
+    burst.className = 'nostrstack-tip__successBurst';
+    container.appendChild(burst);
+    window.setTimeout(() => burst.remove(), 700);
+
+    // Lightning bolts rain
+    const celebration = document.createElement('div');
+    celebration.className = 'nostrstack-tip__celebration';
+    for (let i = 0; i < 8; i++) {
+      const bolt = document.createElement('span');
+      bolt.className = 'nostrstack-tip__celebrationBolt';
+      bolt.textContent = '⚡';
+      bolt.style.left = `${10 + Math.round(Math.random() * 80)}%`;
+      bolt.style.animationDelay = `${Math.random() * 200}ms`;
+      celebration.appendChild(bolt);
+    }
+    container.appendChild(celebration);
+
+    // Confetti particles
     const confetti = document.createElement('div');
     confetti.className = 'nostrstack-tip__confetti';
-    for (let i = 0; i < 14; i++) {
+    const colors = [
+      'var(--nostrstack-color-primary)',
+      'var(--nostrstack-color-accent)',
+      'var(--nostrstack-color-success)',
+      'var(--nostrstack-color-warning)'
+    ];
+    for (let i = 0; i < 20; i++) {
       const p = document.createElement('span');
-      p.style.left = `${Math.round(Math.random() * 96)}%`;
-      p.style.animationDelay = `${Math.random() * 120}ms`;
-      p.style.background = i % 3 === 0 ? 'var(--nostrstack-color-primary)' : i % 3 === 1 ? 'var(--nostrstack-color-accent)' : 'var(--nostrstack-color-success)';
+      p.style.left = `${Math.round(Math.random() * 100)}%`;
+      p.style.animationDelay = `${Math.random() * 300}ms`;
+      p.style.background = colors[i % colors.length];
       confetti.appendChild(p);
     }
-    panel.appendChild(confetti);
-    window.setTimeout(() => confetti.remove(), 1400);
+    container.appendChild(confetti);
+
+    // Haptic feedback
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate([30, 50, 30]);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // Cleanup
     window.setTimeout(() => {
       try {
+        celebration.remove();
+        confetti.remove();
         container.dataset.celebrate = 'false';
       } catch {
         /* ignore */
       }
-    }, 1400);
+    }, 1500);
   };
 
   const markPaid = () => {
@@ -898,7 +1026,12 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     stopPoll();
     stopInvoiceTicker();
     invoiceStartedAt = null;
-    timer.textContent = '';
+    // Reset countdown ring
+    ringTime.textContent = '2:00';
+    ringTime.style.color = '';
+    ringLabel.textContent = 'left';
+    ringProgress.style.setProperty('--ring-offset', '0');
+    panel.dataset.state = 'idle';
 
     try {
       const meta: Record<string, unknown> = { ...(opts.metadata ?? {}) };
@@ -1642,6 +1775,7 @@ type MountTipWidgetOptions = {
   baseURL?: string;
   host?: string;
   metadata?: Record<string, unknown>;
+  size?: 'full' | 'compact';
   onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
   onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
 };
@@ -1664,6 +1798,7 @@ export function mountTipWidget(container: HTMLElement, opts: MountTipWidgetOptio
     baseURL: opts.baseURL,
     host: opts.host,
     metadata: opts.metadata,
+    size: opts.size,
     onInvoice: async (info) => {
       try {
         if (opts.onInvoice) await opts.onInvoice(info);
