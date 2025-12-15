@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 import { Badge } from './ui/Badge';
@@ -39,6 +39,7 @@ export function RelayCard({
   online,
   lastProbeAt
 }: Props) {
+  const [iconOk, setIconOk] = useState(true);
   const host = useMemo(() => {
     try {
       return new URL(url.replace(/^ws/, 'http')).host;
@@ -67,125 +68,60 @@ export function RelayCard({
   const statusLabel = latencyMs != null && statusState !== 'unknown' ? `${statusState} • ${latencyMs}ms` : statusState;
   const statusTitle = lastProbeAt ? `last probe ${new Date(lastProbeAt).toLocaleTimeString()}` : undefined;
   const nipPills = (meta?.supportedNips ?? []).slice(0, 4);
-  const securityPills = [
-    meta?.paymentRequired ? 'payment' : null,
-    meta?.authRequired ? 'auth' : null
-  ].filter(Boolean) as string[];
-  const description = meta?.description?.slice(0, 120) ?? '';
+  const moreNips = Math.max(0, (meta?.supportedNips?.length ?? 0) - nipPills.length);
+  const securityPills = [meta?.paymentRequired ? 'payment' : null, meta?.authRequired ? 'auth' : null].filter(
+    Boolean
+  ) as string[];
+  const description = meta?.description?.slice(0, 110) ?? '';
+  const softwareLine = meta?.software
+    ? `${meta.software}${meta?.version ? ` ${meta.version}` : ''}`
+    : meta?.version
+      ? `v${meta.version}`
+      : null;
+  const subline = [meta?.name ?? null, softwareLine].filter(Boolean).join(' • ') || '—';
+  const showIcon = Boolean(meta?.icon && iconOk);
 
   return (
     <div
       className="nostrstack-card relay-card"
-      style={{
-        padding: '0.75rem 0.85rem',
-        boxShadow: 'var(--nostrstack-shadow-md)'
-      }}
+      data-online={statusState}
+      data-hot={recvHot || sendHot ? '1' : '0'}
+      style={{ '--relay-accent': tone.dot } as React.CSSProperties}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: '0.65rem' }}>
-        <div style={{ position: 'relative', width: 36, height: 36 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--nostrstack-radius-md)',
-              background: 'var(--nostrstack-color-surface-strong)',
-              border: '1px solid var(--nostrstack-color-border)',
-              display: 'grid',
-              placeItems: 'center',
-              overflow: 'hidden'
-            }}
-          >
-            <span style={{ fontSize: '0.9rem' }}>{meta?.icon ? '🛰️' : '📡'}</span>
-          </div>
-          <span
-            className={recvHot || sendHot ? 'pulse' : ''}
-            style={{
-              position: 'absolute',
-              right: -4,
-              bottom: -4,
-              width: 10,
-              height: 10,
-              borderRadius: 'var(--nostrstack-radius-pill)',
-              background: tone.dot,
-              animation: recvHot || sendHot ? 'nostrstack-pulse-soft 1.8s infinite' : undefined,
-              ...(recvHot || sendHot ? ({ '--nostrstack-pulse-color': tone.dot } as Record<string, string>) : {})
-            } as React.CSSProperties}
-          />
-        </div>
-        <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <strong
-              style={{
-                fontSize: '0.95rem',
-                color: 'var(--nostrstack-color-text)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}
-            >
-              {host}
-            </strong>
-            {securityPills.map((p) => (
-              <span
-                key={p}
-                style={{
-                  fontSize: '0.72rem',
-                  background:
-                    'color-mix(in oklab, var(--nostrstack-color-danger) 14%, var(--nostrstack-color-surface))',
-                  color:
-                    'color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text))',
-                  padding: '0.15rem 0.45rem',
-                  borderRadius: 'var(--nostrstack-radius-pill)',
-                  border:
-                    '1px solid color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border))',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em'
-                }}
-              >
-                {p}
-              </span>
-            ))}
-          </div>
-          <span
-            style={{
-              fontSize: '0.82rem',
-              color: 'var(--nostrstack-color-text-muted)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {(meta?.name || '—')}{meta?.software ? ` • ${meta.software}${meta?.version ? ` ${meta.version}` : ''}` : meta?.version ? ` • v${meta.version}` : ''}
-          </span>
-          {description && (
+      <div className="relay-card__top">
+        <div className="relay-card__identity">
+          <div className="relay-card__avatar" aria-hidden>
+            {showIcon ? (
+              <img
+                src={meta!.icon}
+                alt=""
+                loading="lazy"
+                className="relay-card__avatarImg"
+                onError={() => setIconOk(false)}
+              />
+            ) : (
+              <span className="relay-card__avatarFallback">{meta?.icon ? '🛰️' : '📡'}</span>
+            )}
             <span
+              className="relay-card__dot"
               style={{
-                fontSize: '0.82rem',
-                color: 'var(--nostrstack-color-text-muted)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical'
-              }}
-            >
-              {description}
-            </span>
-          )}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {nipPills.map((n) => (
-              <Badge key={n} tone="accent">
-                NIP-{n}
-              </Badge>
-            ))}
-            {securityPills.map((s) => (
-              <Badge key={s} tone="muted">
-                {s}
-              </Badge>
-            ))}
-            {securityPills.length === 0 && nipPills.length === 0 ? <Badge tone="muted">base</Badge> : null}
+                background: tone.dot,
+                animation: recvHot || sendHot ? 'nostrstack-pulse-soft 1.8s infinite' : undefined,
+                ...(recvHot || sendHot ? ({ '--nostrstack-pulse-color': tone.dot } as Record<string, string>) : {})
+              } as React.CSSProperties}
+            />
+          </div>
+          <div className="relay-card__titles">
+            <div className="relay-card__host" title={url}>
+              {host}
+            </div>
+            <div className="relay-card__sub" title={subline}>
+              {subline}
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, minWidth: 130 }}>
+
+        <div className="relay-card__right">
           <Badge
             tone={statusState === 'offline' ? 'danger' : statusState === 'online' ? 'success' : 'muted'}
             title={statusTitle}
@@ -193,21 +129,7 @@ export function RelayCard({
           >
             {statusLabel}
           </Badge>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Badge tone="muted">recv {recv}</Badge>
-            {recvPerMin != null && (
-              <Badge tone="muted">{recvPerMin}/min</Badge>
-            )}
-            {tone.badge && <span style={{ fontSize: '0.78rem', color: tone.dot }}>{tone.badge}</span>}
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {activityBars.map((h, idx) => (
-              <span key={idx} title={tooltip} style={{ width: 5, height: h, borderRadius: 2, background: tone.dot, opacity: 0.8 }} />
-            ))}
-          </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-text-muted)', whiteSpace: 'nowrap' }}>{lastLabel}</span>
-          {sendLabel && <span style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-text-muted)', whiteSpace: 'nowrap' }}>{sendLabel}</span>}
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div className="relay-card__actions">
             <CopyButton text={url} label="Copy" />
             <button
               type="button"
@@ -220,6 +142,42 @@ export function RelayCard({
               Open
             </button>
           </div>
+        </div>
+      </div>
+
+      {description ? <div className="relay-card__desc">{description}</div> : null}
+
+      <div className="relay-card__chips">
+        {securityPills.map((p) => (
+          <Badge key={p} tone="danger">
+            {p}
+          </Badge>
+        ))}
+        {nipPills.map((n) => (
+          <Badge key={n} tone="accent">
+            NIP-{n}
+          </Badge>
+        ))}
+        {moreNips ? <Badge tone="muted">+{moreNips}</Badge> : null}
+        {!securityPills.length && !nipPills.length ? <Badge tone="muted">base</Badge> : null}
+      </div>
+
+      <div className="relay-card__bottom">
+        <div className="relay-card__stats">
+          <span>
+            recv <strong>{recv}</strong>
+          </span>
+          {recvPerMin != null ? <span>· {recvPerMin}/min</span> : null}
+          {tone.badge ? <span style={{ color: tone.dot }}>· {tone.badge}</span> : null}
+        </div>
+        <div className="relay-card__when" title={tooltip}>
+          {lastLabel}
+          {sendLabel ? ` · ${sendLabel}` : ''}
+        </div>
+        <div className="relay-card__spark" aria-hidden>
+          {activityBars.map((h, idx) => (
+            <span key={idx} style={{ height: h }} />
+          ))}
         </div>
       </div>
     </div>

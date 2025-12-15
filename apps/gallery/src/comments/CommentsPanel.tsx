@@ -139,6 +139,7 @@ export function CommentsPanel({
                 software: data.software,
                 version: data.version,
                 description: data.description,
+                icon: data.icon,
                 supportedNips: data.supportedNips,
                 paymentRequired: data.paymentRequired,
                 authRequired: data.authRequired
