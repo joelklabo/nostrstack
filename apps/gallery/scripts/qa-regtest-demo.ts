@@ -262,9 +262,21 @@ async function main() {
     await expect(dialog).toBeHidden({ timeout: 10_000 });
 
     // Pay-to-unlock -> invoice -> pay -> unlocked content.
+    // Regression: this layout used to overflow into the sidebar at some mid-width viewports.
+    await page.setViewportSize({ width: 1220, height: 900 });
     await page.getByTestId('paywall-unlock').click();
     const invoiceCode = page.locator('.nostrstack-paywall__invoice').first();
     await expect(invoiceCode).toBeVisible({ timeout: 30_000 });
+    const overflowPx = await page.evaluate(() => {
+      const invoice = document.querySelector('.nostrstack-paywall__invoice') as HTMLElement | null;
+      const card = invoice?.closest('section') as HTMLElement | null;
+      if (!invoice || !card) return null;
+      const invoiceRect = invoice.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      return invoiceRect.right - cardRect.right;
+    });
+    expect(overflowPx).not.toBeNull();
+    expect(overflowPx!).toBeLessThanOrEqual(1);
     const bolt11Unlock = (await invoiceCode.getAttribute('title'))?.trim() ?? '';
     expect(bolt11Unlock).toMatch(/^ln/i);
     await page.evaluate(async (invoice) => {
