@@ -22,6 +22,7 @@ import { LogViewer } from './LogViewer';
 import { NostrProfileCard } from './NostrProfileCard';
 import { PayToUnlockCard } from './PayToUnlockCard';
 import { QrLabCard } from './QrLabCard';
+import { ShareWidget } from './ShareWidget';
 import { BlockList } from './TelemetryCard';
 import { layout } from './tokens';
 import type { RelayStats } from './types/relay';
@@ -2045,6 +2046,35 @@ export default function App() {
                       {lastNoteResult}
                     </div>
                   )}
+                </div>
+              </Card>
+              <Card title="Share (Nostr)">
+                <div style={{ marginBottom: 10, color: themeStyles.muted, fontSize: '0.95rem' }}>
+                  Demo: a blog post share widget (realtime share feed + avatars).
+                </div>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ display: 'grid', gap: 4 }}>
+                    <div style={{ fontWeight: 800 }}>nostrstack Demo post</div>
+                    <div style={{ fontSize: 13, color: themeStyles.muted }}>
+                      URL:{' '}
+                      <code style={{ fontFamily: 'var(--nostrstack-font-mono)' }}>
+                        {typeof window !== 'undefined'
+                          ? `${window.location.origin}/blog/demo-post`
+                          : `https://${demoHost}/blog/demo-post`}
+                      </code>
+                    </div>
+                  </div>
+                  <ShareWidget
+                    itemId="gallery-demo-post"
+                    title="nostrstack Demo post"
+                    url={
+                      typeof window !== 'undefined'
+                        ? `${window.location.origin}/blog/demo-post`
+                        : `https://${demoHost}/blog/demo-post`
+                    }
+                    lnAddress={`${username}@${demoHost}`}
+                    relays={relaysList}
+                  />
                 </div>
               </Card>
               <Card title="Comments (Nostr)">

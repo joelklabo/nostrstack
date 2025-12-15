@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Comments, NostrstackProvider, ShareButton, TipButton } from './index';
+import { Comments, NostrstackProvider, ShareButton, ShareWidget, TipButton } from './index';
 
 vi.mock('@nostrstack/embed', () => {
   return {
@@ -84,5 +84,11 @@ describe('blog-kit components', () => {
     const btn = await screen.findByRole('button');
     fireEvent.click(btn);
     await waitFor(() => expect(share).toHaveBeenCalled());
+  });
+
+  it('renders share widget without relays', async () => {
+    render(<ShareWidget itemId="post-123" url="https://example.com/post" title="Post" relays={[]} />);
+    await screen.findByText('Shares');
+    await screen.findByText(/No relays configured/i);
   });
 });
