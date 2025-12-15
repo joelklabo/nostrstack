@@ -185,19 +185,19 @@ export function Pill({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '0.4rem',
-        padding: '0.4rem 0.75rem',
+        gap: '0.35rem',
+        padding: '0.3rem 0.6rem',
         borderRadius: 999,
         border: `1px solid color-mix(in oklab, ${toneVar} 30%, var(--nostrstack-color-border))`,
         background: 'color-mix(in oklab, var(--nostrstack-color-surface) 92%, transparent)',
         color: 'var(--nostrstack-color-text)',
-        boxShadow: 'var(--nostrstack-shadow-sm)'
+        boxShadow: 'none'
       }}
     >
       <span
         style={{
-          fontSize: '0.7rem',
-          letterSpacing: '0.05em',
+          fontSize: '0.65rem',
+          letterSpacing: '0.04em',
           textTransform: 'uppercase',
           color: 'var(--nostrstack-color-text-subtle)',
           fontWeight: 800
@@ -205,7 +205,7 @@ export function Pill({
       >
         {label}
       </span>
-      <span style={{ fontWeight: 700 }}>{value}</span>
+      <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{value}</span>
     </span>
   );
 }
