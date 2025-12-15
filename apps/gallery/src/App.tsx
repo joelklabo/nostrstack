@@ -14,7 +14,7 @@ import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CommentsPanel } from './comments/CommentsPanel';
+import { CommentsPanel, type LiveActivityItem } from './comments/CommentsPanel';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
 import { InvoicePopover } from './InvoicePopover';
@@ -278,7 +278,8 @@ function useMountWidgets(
   setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
   setRelayStats: React.Dispatch<React.SetStateAction<RelayStats>>,
   relaysList: string[],
-  tab: DemoTabKey
+  tab: DemoTabKey,
+  pushActivity?: (item: LiveActivityItem) => void
 ) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
@@ -319,11 +320,28 @@ function useMountWidgets(
             return next;
           });
         },
-        // @ts-expect-error onEvent not in upstream types yet
-        onEvent: (ev: { content?: string }) => {
-          if (!ev?.content) return;
+        onEvent: (ev: { id?: string; pubkey?: string; created_at?: number; kind?: number; content?: string }, relay?: string) => {
           const now = Date.now();
-          const targets = relays.length ? relays : relaysEnvDefault;
+          const relayLabel = relay || 'nostr';
+          const content = typeof ev?.content === 'string' ? ev.content : '';
+          const kind = typeof ev?.kind === 'number' ? ev.kind : undefined;
+          const pubkey = typeof ev?.pubkey === 'string' ? ev.pubkey : undefined;
+          const shortPubkey = pubkey ? `${pubkey.slice(0, 8)}…${pubkey.slice(-4)}` : '—';
+          const label = content || (kind != null ? `kind ${kind} event` : 'nostr event');
+          const sublabel = [kind != null ? `kind ${kind}` : null, pubkey ? `pubkey ${shortPubkey}` : null]
+            .filter(Boolean)
+            .join(' · ');
+          const id = ev?.id ? `nostr-${relayLabel}-${ev.id}` : `nostr-${relayLabel}-${pubkey ?? 'pk'}-${ev.created_at ?? now}-${now}`;
+          pushActivity?.({
+            id,
+            ts: now,
+            relay: relayLabel,
+            direction: 'recv',
+            label,
+            sublabel,
+            payload: { relay: relayLabel, event: ev }
+          });
+          const targets = relay ? [relay] : relays.length ? relays : relaysEnvDefault;
           setRelayStats((prev: RelayStats) => {
             const next = { ...prev };
             targets.forEach((relay: string) => {
@@ -338,7 +356,7 @@ function useMountWidgets(
     return () => {
       timeouts.forEach((id) => window.clearTimeout(id));
     };
-  }, [username, amount, relaysList, tab]);
+  }, [username, amount, relaysList, tab, pushActivity]);
 }
 
 export default function App() {
@@ -358,6 +376,7 @@ export default function App() {
   const [tab, setTab] = useState<DemoTabKey>('lightning');
   const [network] = useState(networkLabel);
   const [relayStats, setRelayStats] = useState<RelayStats>(relayMetaDefault);
+  const [activity, setActivity] = useState<LiveActivityItem[]>([]);
   const [lnbitsUrlOverride, setLnbitsUrlOverride] = useState<string | null>(null);
   const [lnbitsKeyOverride, setLnbitsKeyOverride] = useState<string | null>(null);
   const [lnbitsReadKeyOverride, setLnbitsReadKeyOverride] = useState<string | null>(null);
@@ -762,6 +781,20 @@ export default function App() {
         ...prev,
         [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'ok', lastSentAt: Date.now() }
       }));
+      setActivity((prev) =>
+        [
+          {
+            id: `send-${relay}-${signed.id ?? signed.created_at}-${Date.now()}`,
+            ts: Date.now(),
+            relay,
+            direction: 'send',
+            label: signed.content || 'sent note',
+            sublabel: `kind ${signed.kind} · pubkey ${signed.pubkey.slice(0, 8)}…${signed.pubkey.slice(-4)}`,
+            payload: { relay, event: signed }
+          },
+          ...prev
+        ].slice(0, 60)
+      );
       setLastNoteOk(true);
       setLastNoteResult(`Published note to ${relay}`);
     } catch (err) {
@@ -772,6 +805,20 @@ export default function App() {
       }));
       setLastNoteOk(false);
       setLastNoteResult(err instanceof Error ? err.message : String(err));
+      setActivity((prev) =>
+        [
+          {
+            id: `send-error-${relay}-${Date.now()}`,
+            ts: Date.now(),
+            relay,
+            direction: 'send',
+            label: 'Send failed',
+            sublabel: err instanceof Error ? err.message : String(err),
+            payload: err instanceof Error ? { message: err.message, stack: err.stack } : err
+          },
+          ...prev
+        ].slice(0, 60)
+      );
     }
   }, [signerReady, activePubkey, profileRelays, message]);
 
@@ -876,7 +923,10 @@ export default function App() {
     setQrStatus,
     setRelayStats,
     relaysList,
-    tab
+    tab,
+    useCallback((item: LiveActivityItem) => {
+      setActivity((prev) => [item, ...prev].slice(0, 60));
+    }, [])
   );
 
   const themeStyles = useMemo<ThemeStyles>(
@@ -1781,6 +1831,8 @@ export default function App() {
               relaysEnvDefault={relaysEnvDefault}
               relaysList={relaysList}
               relayStats={relayStats}
+              activity={activity}
+              onClearActivity={() => setActivity([])}
             />
             <div id="comments-container" />
           </Card>

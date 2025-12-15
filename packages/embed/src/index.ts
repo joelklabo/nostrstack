@@ -51,7 +51,7 @@ type CommentWidgetOptions = {
   relays?: string[];
   placeholder?: string;
   headerText?: string;
-  onEvent?: (event: NostrEvent) => void;
+  onEvent?: (event: NostrEvent, relay?: string) => void;
   onRelayInfo?: (info: { relays: string[]; mode: 'real' | 'mock' }) => void;
 };
 
@@ -605,6 +605,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   form.className = 'nostrstack-comments-form';
   const textarea = document.createElement('textarea');
   textarea.className = 'nostrstack-textarea';
+  textarea.name = 'comment';
   textarea.placeholder = opts.placeholder ?? 'Add a comment (Nostr)';
   textarea.required = true;
   textarea.rows = 3;
@@ -628,7 +629,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
       const sub = relay.sub(filters);
       sub.on('event', (ev: NostrEvent) => {
         appendEvent(ev);
-        opts.onEvent?.(ev);
+        opts.onEvent?.(ev, relay.url ?? undefined);
       });
     });
   }

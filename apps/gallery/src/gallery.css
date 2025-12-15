@@ -441,6 +441,33 @@
   white-space: pre;
 }
 
+/* ===== Activity feed ===== */
+.nostrstack-activity-item {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--nostrstack-space-3);
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface-subtle);
+  box-shadow: var(--nostrstack-shadow-sm);
+}
+
+.nostrstack-activity-item:hover {
+  border-color: var(--nostrstack-color-border-strong);
+  box-shadow: var(--nostrstack-shadow-md);
+}
+
+.nostrstack-activity-item:focus-visible {
+  outline: none;
+  border-color: var(--nostrstack-color-border-strong);
+  box-shadow: var(--nostrstack-shadow-focus), var(--nostrstack-shadow-md);
+}
+
 .nostrstack-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
