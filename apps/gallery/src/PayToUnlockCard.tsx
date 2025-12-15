@@ -152,7 +152,26 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     };
     return () => {
       closed = true;
-      ws.close();
+      // Avoid InvalidStateError: WebSocket is already in CLOSING or CLOSED state.
+      if (ws.readyState === WebSocket.CONNECTING) {
+        const pending = ws;
+        pending.onopen = () => {
+          try {
+            if (pending.readyState === WebSocket.OPEN) pending.close();
+          } catch {
+            /* ignore */
+          }
+        };
+        pending.onmessage = null;
+        pending.onerror = null;
+        pending.onclose = null;
+        return;
+      }
+      try {
+        if (ws.readyState === WebSocket.OPEN) ws.close();
+      } catch {
+        /* ignore */
+      }
     };
   }, [invoice, providerRef, status, wsUrl, markPaid]);
 

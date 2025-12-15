@@ -88,7 +88,6 @@ const lnbitsReadKeyEnv =
 const lnbitsWalletIdEnv =
   (import.meta.env as Record<string, string | undefined>).VITE_LNBITS_WALLET_ID ?? '';
 const RELAY_STORAGE_KEY = 'nostrstack.relays';
-const profileDefault: ProfileMeta = {};
 
 const relayMetaDefault: RelayStats = relaysEnvDefault.reduce((acc: RelayStats, r: string) => {
   acc[r] = { recv: 0 };
@@ -518,8 +517,8 @@ export default function App() {
   const [activePubkey, setActivePubkey] = useState<string | null>(null);
   const [signerReady, setSignerReady] = useState(false);
   const [signerRelays, setSignerRelays] = useState<string[]>([]);
-  const [profile, setProfile] = useState<ProfileMeta>(profileDefault);
-  const [_profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [profile, setProfile] = useState<ProfileMeta | null>(null);
+  const [profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
   const [message, setMessage] = useState<string>('Hello from nostrstack demo 👋');
   const [lastNoteResult, setLastNoteResult] = useState<string | null>(null);
@@ -536,6 +535,8 @@ export default function App() {
   // Reset NIP-05 status whenever a new profile load starts
   useEffect(() => {
     setNip05Verified(null);
+    setProfile(null);
+    setProfileStatus('idle');
   }, [activePubkey]);
 
   useEffect(() => {
@@ -608,7 +609,11 @@ export default function App() {
             const relay = await Relay.connect(url);
             const latencyMs = Math.round(performance.now() - started);
             if (cancelled) {
-              relay.close();
+              try {
+                relay.close();
+              } catch {
+                /* ignore */
+              }
               return;
             }
             setRelayStats((prev) => ({
@@ -622,7 +627,11 @@ export default function App() {
                 lastProbeAt: Date.now()
               }
             }));
-            relay.close();
+            try {
+              relay.close();
+            } catch {
+              /* ignore */
+            }
           } catch {
             if (cancelled) return;
             setRelayStats((prev) => ({
@@ -670,42 +679,89 @@ export default function App() {
   const fetchProfile = useCallback(
     async (pk: string) => {
       if (!pk) return;
-      const target = profileRelays.find(isRelayUrl) ?? relaysEnvDefault.find(isRelayUrl);
-      if (!target) return;
+      const targets = profileRelays.filter(isRelayUrl).slice(0, 4);
+      if (!targets.length) return;
       setProfileStatus('loading');
       setNip05Verified(null);
       try {
-        const relay = await Relay.connect(target);
-        type RelayListFn = (
-          filters: Array<{ kinds: number[]; authors: string[]; limit: number }>
-        ) => Promise<NostrEvent[]>;
-        const list = (relay as Relay & { list?: RelayListFn }).list;
-        const evs = (await list?.([{ kinds: [0, 10002], authors: [pk], limit: 2 }])) ?? [];
-        relay.close();
+        const fetchFromRelay = async (target: string) => {
+          const relay = await Relay.connect(target);
+          return await new Promise<{ metaEv: NostrEvent | null; relayEv: NostrEvent | null }>(
+            (resolve) => {
+              let metaEv: NostrEvent | null = null;
+              let relayEv: NostrEvent | null = null;
+              let done = false;
+              let sub: { close: (reason?: string) => void } | null = null;
+              const finish = (reason: string) => {
+                if (done) return;
+                done = true;
+                try {
+                  sub?.close(reason);
+                } catch {
+                  /* ignore */
+                }
+                try {
+                  relay.close();
+                } catch {
+                  /* ignore */
+                }
+                resolve({ metaEv, relayEv });
+              };
 
-        const metaEv = evs.find((e) => e.kind === 0);
-        if (metaEv?.content) {
-          const meta = JSON.parse(metaEv.content ?? '{}');
-          setProfile(meta);
-          setProfileStatus('ok');
-          if (meta.nip05)
-            verifyNip05(meta.nip05, pk)
-              .then(setNip05Verified)
-              .catch(() => setNip05Verified(false));
-          else setNip05Verified(null);
-        } else {
-          setProfileStatus('error');
+              const timeoutId = window.setTimeout(() => finish('timeout'), 2400);
+              sub = relay.subscribe([{ kinds: [0, 10002], authors: [pk], limit: 2 }], {
+                eoseTimeout: 1400,
+                onevent: (ev: NostrEvent) => {
+                  if (ev.kind === 0 && !metaEv) metaEv = ev;
+                  if (ev.kind === 10002 && !relayEv) relayEv = ev;
+                },
+                oneose: () => {
+                  window.clearTimeout(timeoutId);
+                  finish('eose');
+                }
+              });
+            }
+          );
+        };
+
+        let metaEv: NostrEvent | null = null;
+        let relayEv: NostrEvent | null = null;
+        for (const target of targets) {
+          try {
+            const res = await fetchFromRelay(target);
+            if (!metaEv && res.metaEv) metaEv = res.metaEv;
+            if (!relayEv && res.relayEv) relayEv = res.relayEv;
+            if (metaEv) break;
+          } catch {
+            // ignore relay fetch failures
+          }
         }
 
-        const relayEv = evs.find((e) => e.kind === 10002);
+        let meta: ProfileMeta = {};
+        if (metaEv?.content) {
+          try {
+            meta = JSON.parse(metaEv.content ?? '{}') as ProfileMeta;
+          } catch {
+            meta = {};
+          }
+        }
+        setProfile(meta);
+        setProfileStatus('ok');
+        const nip05 = typeof meta.nip05 === 'string' ? meta.nip05 : null;
+        if (nip05) {
+          verifyNip05(nip05, pk)
+            .then(setNip05Verified)
+            .catch(() => setNip05Verified(false));
+        } else {
+          setNip05Verified(null);
+        }
+
         const relayTags =
           relayEv?.tags
             ?.filter?.((t: string[]) => t[0] === 'r' && t[1])
             .map((t: string[]) => t[1])
             .filter(isRelayUrl) ?? [];
-        if (relayTags.length) {
-          setSignerRelays((prev) => mergeRelays(prev, relayTags));
-        }
+        if (relayTags.length) setSignerRelays((prev) => mergeRelays(prev, relayTags));
       } catch (err) {
         console.warn('profile fetch failed', err);
         setProfileStatus('error');
@@ -776,22 +832,26 @@ export default function App() {
       const signed = (await window.nostr!.signEvent(template)) as NostrEvent;
       const r = await Relay.connect(relay);
       await r.publish(signed);
-      r.close();
+      try {
+        r.close();
+      } catch {
+        /* ignore */
+      }
       setRelayStats((prev) => ({
         ...prev,
         [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'ok', lastSentAt: Date.now() }
       }));
       setActivity((prev) =>
         [
-          {
-            id: `send-${relay}-${signed.id ?? signed.created_at}-${Date.now()}`,
-            ts: Date.now(),
-            relay,
-            direction: 'send',
-            label: signed.content || 'sent note',
-            sublabel: `kind ${signed.kind} · pubkey ${signed.pubkey.slice(0, 8)}…${signed.pubkey.slice(-4)}`,
-            payload: { relay, event: signed }
-          },
+	          {
+	            id: `send-${relay}-${signed.id ?? signed.created_at}-${Date.now()}`,
+	            ts: Date.now(),
+	            relay,
+	            direction: 'send' as const,
+	            label: signed.content || 'sent note',
+	            sublabel: `kind ${signed.kind} · pubkey ${signed.pubkey.slice(0, 8)}…${signed.pubkey.slice(-4)}`,
+	            payload: { relay, event: signed }
+	          },
           ...prev
         ].slice(0, 60)
       );
@@ -807,15 +867,15 @@ export default function App() {
       setLastNoteResult(err instanceof Error ? err.message : String(err));
       setActivity((prev) =>
         [
-          {
-            id: `send-error-${relay}-${Date.now()}`,
-            ts: Date.now(),
-            relay,
-            direction: 'send',
-            label: 'Send failed',
-            sublabel: err instanceof Error ? err.message : String(err),
-            payload: err instanceof Error ? { message: err.message, stack: err.stack } : err
-          },
+	          {
+	            id: `send-error-${relay}-${Date.now()}`,
+	            ts: Date.now(),
+	            relay,
+	            direction: 'send' as const,
+	            label: 'Send failed',
+	            sublabel: err instanceof Error ? err.message : String(err),
+	            payload: err instanceof Error ? { message: err.message, stack: err.stack } : err
+	          },
           ...prev
         ].slice(0, 60)
       );
@@ -877,7 +937,28 @@ export default function App() {
     pollPayment();
     const pollId = paymentRef ? window.setInterval(pollPayment, 1500) : null;
     return () => {
-      ws?.close();
+      if (ws) {
+        // Avoid InvalidStateError: WebSocket is already in CLOSING or CLOSED state.
+        if (ws.readyState === WebSocket.CONNECTING) {
+          const pending = ws;
+          pending.onopen = () => {
+            try {
+              if (pending.readyState === WebSocket.OPEN) pending.close();
+            } catch {
+              /* ignore */
+            }
+          };
+          pending.onmessage = null;
+          pending.onerror = null;
+          pending.onclose = null;
+        } else {
+          try {
+            if (ws.readyState === WebSocket.OPEN) ws.close();
+          } catch {
+            /* ignore */
+          }
+        }
+      }
       if (pollId) window.clearInterval(pollId);
     };
   }, [qrInvoice, apiBase, paymentRef, pollPayment]);
@@ -1725,17 +1806,18 @@ export default function App() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
               }}
             >
-          <Card title="Nostr profile">
-            <NostrProfileCard
-              pubkey={activePubkey ?? undefined}
-              seckey={undefined}
-              signerReady={signerReady}
-              relays={profileRelays}
-              relayStats={relayStats}
-              profile={profile}
-              fullProfile={profile}
-              nip05Verified={nip05Verified}
-            />
+	          <Card title="Nostr profile">
+	            <NostrProfileCard
+	              pubkey={activePubkey ?? undefined}
+	              seckey={undefined}
+	              signerReady={signerReady}
+	              relays={profileRelays}
+	              relayStats={relayStats}
+	              profile={profile ?? undefined}
+	              fullProfile={profile ?? undefined}
+	              profileStatus={profileStatus}
+	              nip05Verified={nip05Verified}
+	            />
             <div
               style={{
                 marginTop: '0.75rem',

@@ -7,6 +7,7 @@ import { NpubBar } from './NpubBar';
 import { RelayCard } from './RelayCard';
 import type { RelayStats } from './types/relay';
 import { Badge } from './ui/Badge';
+import { JsonView } from './ui/JsonView';
 
 type Props = {
   pubkey?: string | null;
@@ -14,6 +15,7 @@ type Props = {
   signerReady: boolean;
   relays: string[];
   relayStats?: RelayStats;
+  profileStatus?: 'idle' | 'loading' | 'ok' | 'error';
   profile?: { name?: string; about?: string; picture?: string };
   fullProfile?: {
     name?: string;
@@ -29,7 +31,7 @@ type Props = {
   nip05Verified?: boolean | null;
 };
 
-export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile, fullProfile, nip05Verified, relayStats }: Props) {
+export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profileStatus, profile, fullProfile, nip05Verified, relayStats }: Props) {
   const name = profile?.name || (fullProfile?.display_name as string) || 'Nostr user';
   const about = profile?.about || (fullProfile?.about as string) || '—';
   const avatar = profile?.picture || (fullProfile?.picture as string) || `https://robohash.org/${(pubkey ?? 'nostr').slice(0, 8)}?set=set3&size=120x120`;
@@ -185,7 +187,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
         </div>
       </div>
 
-      <ProfileDetails fullProfile={fullProfile} />
+      <ProfileDetails fullProfile={fullProfile} status={profileStatus} />
       <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         {relays.map((r) => (
           <RelayCard
@@ -196,6 +198,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profile,
               software: relayStats?.[r]?.software,
               version: relayStats?.[r]?.version,
               description: relayStats?.[r]?.description,
+              icon: relayStats?.[r]?.icon,
               supportedNips: relayStats?.[r]?.supportedNips,
               paymentRequired: relayStats?.[r]?.paymentRequired,
               authRequired: relayStats?.[r]?.authRequired
@@ -223,12 +226,28 @@ function safe<T>(fn: () => T): T | null {
   }
 }
 
-function ProfileDetails({ fullProfile }: { fullProfile?: Props['fullProfile'] }) {
-  if (!fullProfile) {
+function ProfileDetails({ fullProfile, status }: { fullProfile?: Props['fullProfile']; status?: Props['profileStatus'] }) {
+  if (status === 'loading') {
     return (
       <div style={{ border: '1px solid var(--nostrstack-color-border)', borderRadius: 'var(--nostrstack-radius-lg)', padding: '0.55rem 0.7rem', background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-text-muted)' }}>
         <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: 'var(--nostrstack-color-text)' }}>Profile details</div>
         <div>Loading profile…</div>
+      </div>
+    );
+  }
+  if (status === 'error') {
+    return (
+      <div style={{ border: '1px solid var(--nostrstack-color-border)', borderRadius: 'var(--nostrstack-radius-lg)', padding: '0.55rem 0.7rem', background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-danger)' }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: 'var(--nostrstack-color-text)' }}>Profile details</div>
+        <div>Profile fetch failed.</div>
+      </div>
+    );
+  }
+  if (!fullProfile) {
+    return (
+      <div style={{ border: '1px solid var(--nostrstack-color-border)', borderRadius: 'var(--nostrstack-radius-lg)', padding: '0.55rem 0.7rem', background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-text-muted)' }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: 'var(--nostrstack-color-text)' }}>Profile details</div>
+        <div>Connect a signer to load profile metadata.</div>
       </div>
     );
   }
@@ -267,6 +286,9 @@ function ProfileDetails({ fullProfile }: { fullProfile?: Props['fullProfile'] })
           </React.Fragment>
         ))}
       </dl>
+      <div style={{ marginTop: '0.75rem' }}>
+        <JsonView title="Raw metadata" value={fullProfile} maxHeight={220} />
+      </div>
     </div>
   );
 }

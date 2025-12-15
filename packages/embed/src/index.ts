@@ -727,10 +727,13 @@ export function autoMount() {
 
 // Auto-run if window is available
 if (typeof window !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoMount);
-  } else {
-    autoMount();
+  const w = window as unknown as { __nostrstackDisableAutoMount?: boolean };
+  if (!w.__nostrstackDisableAutoMount) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', autoMount);
+    } else {
+      autoMount();
+    }
   }
 }
 
@@ -802,6 +805,7 @@ type MountCommentOptions = {
   placeholder?: string;
   headerText?: string;
   onRelayInfo?: (info: { relays: string[]; mode: 'real' | 'mock' }) => void;
+  onEvent?: (event: NostrEvent, relay?: string) => void;
 };
 
 export function mountCommentWidget(container: HTMLElement, opts: MountCommentOptions = {}) {
@@ -810,6 +814,7 @@ export function mountCommentWidget(container: HTMLElement, opts: MountCommentOpt
     relays: opts.relays,
     placeholder: opts.placeholder ?? container.dataset.placeholder,
     headerText: opts.headerText ?? container.dataset.header,
-    onRelayInfo: opts.onRelayInfo
+    onRelayInfo: opts.onRelayInfo,
+    onEvent: opts.onEvent
   });
 }

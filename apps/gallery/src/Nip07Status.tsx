@@ -254,7 +254,7 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.1rem' }}>
         <button
           type="button"
-          onClick={detect}
+          onClick={() => detect()}
           className="nostrstack-btn nostrstack-btn--sm"
           style={{ borderRadius: 'var(--nostrstack-radius-pill)' }}
         >

@@ -207,7 +207,11 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
         if (!opened && variantIdx < variants.length - 1) {
           setErrorMsg(`Handshake failed (${msg})`);
           variantIdx += 1;
-          ws.close();
+          try {
+            ws.close();
+          } catch {
+            /* ignore */
+          }
           return;
         }
         setStatus('error');
@@ -234,12 +238,17 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
     connect();
     return () => {
       cancelled = true;
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      } else if (wsRef.current && wsRef.current.readyState === WebSocket.CONNECTING) {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.close();
+        } catch {
+          /* ignore */
+        }
+      } else if (ws && ws.readyState === WebSocket.CONNECTING) {
         // abort in-flight connection politely
         try {
-          wsRef.current.close();
+          ws.close();
         } catch {
           /* ignore */
         }
