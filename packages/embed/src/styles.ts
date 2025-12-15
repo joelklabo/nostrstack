@@ -1153,6 +1153,11 @@ export const nostrstackComponentsCss = `
   font-size: 0.75rem;
   background: var(--nostrstack-color-surface-strong);
   border-color: transparent;
+  display: none; /* Hidden by default */
+}
+
+.nostrstack-tip__panel .nostrstack-invoice-box.nostrstack-visible {
+  display: block;
 }
 
 /* Success celebration - lightning bolts! */
@@ -1325,6 +1330,7 @@ export const nostrstackComponentsCss = `
   max-width: 140px;
   padding: 0.4rem;
   margin: 0 auto;
+  background: white; /* Ensure contrast */
 }
 
 .nostrstack-tip--compact .nostrstack-tip__actions {
