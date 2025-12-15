@@ -1,13 +1,25 @@
-import { useActionState } from 'react';
+import { useActionState, useOptimistic, useRef } from 'react';
 import { upsertAppAction } from './actions';
 import { SubmitButton } from './SubmitButton';
 
 export function DashboardForm() {
   const [state, formAction] = useActionState(upsertAppAction, null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [optimisticName, setOptimisticName] = useOptimistic<string | null, string>(
+    null,
+    (_currentState, newName) => newName
+  );
+
+  const action = async (formData: FormData) => {
+    const name = formData.get('name') as string;
+    setOptimisticName(name);
+    await formAction(formData);
+    formRef.current?.reset();
+  };
 
   return (
-    <form action={formAction} className="nostrstack-card" style={{ padding: '1.5rem', display: 'grid', gap: '1rem' }}>
-      <h3 style={{ margin: 0 }}>Edit App</h3>
+    <form ref={formRef} action={action} className="nostrstack-card" style={{ padding: '1.5rem', display: 'grid', gap: '1rem' }}>
+      <h3 style={{ margin: 0 }}>Edit App {optimisticName ? `(Updating to: ${optimisticName})` : ''}</h3>
       
       <div style={{ display: 'grid', gap: '0.5rem' }}>
         <label htmlFor="name" style={{ fontWeight: 500 }}>App Name</label>
