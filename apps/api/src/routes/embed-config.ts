@@ -41,8 +41,7 @@ export async function registerEmbedConfigRoute(app: FastifyInstance) {
     const domain = hostHeader?.split(':')[0] || new URL(env.PUBLIC_ORIGIN).hostname;
     const lnAddress = `${tenant}@${domain}`;
 
-    const isMock = env.DEV_MOCKS;
-    const relays = isMock ? ['mock'] : parseRelays(env.NOSTR_RELAYS);
+    const relays = parseRelays(env.NOSTR_RELAYS);
 
     const theme = {
       accent: themeAccent ?? env.NOSTR_THEME_ACCENT,
@@ -56,9 +55,8 @@ export async function registerEmbedConfigRoute(app: FastifyInstance) {
       lnAddress,
       relays,
       embedScript: env.NOSTR_EMBED_CDN,
-      apiBase: isMock ? 'mock' : env.PUBLIC_ORIGIN,
-      theme,
-      mock: isMock
+      apiBase: env.PUBLIC_ORIGIN,
+      theme
     });
   });
 }

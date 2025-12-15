@@ -31,7 +31,7 @@ import { JsonView } from './ui/JsonView';
 import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
-type RelayInfo = { relays: string[]; mode: 'real' | 'mock' };
+type RelayInfo = { relays: string[]; mode: 'real' };
 type Health = {
   label: string;
   status: 'ok' | 'fail' | 'error' | 'skipped' | 'unknown';

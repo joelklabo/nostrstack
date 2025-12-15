@@ -127,7 +127,7 @@ export function ShareWidget({
   const cfg = useNostrstackConfig();
   const rootRef = useRef<HTMLDivElement>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error' | 'mock'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [shareState, setShareState] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<ShareEvent[]>([]);
@@ -136,10 +136,9 @@ export function ShareWidget({
 
   const relayList = useMemo(() => relays ?? cfg.relays ?? DEFAULT_RELAYS, [relays, cfg.relays]);
   const relayTargets = useMemo(
-    () => relayList.map((r) => r.trim()).filter(Boolean).filter((r) => r !== 'mock'),
+    () => relayList.map((r) => r.trim()).filter(Boolean),
     [relayList],
   );
-  const mockMode = useMemo(() => relayList.some((r) => r === 'mock'), [relayList]);
   const effectiveTag = useMemo(() => tag ?? `nostrstack:${itemId}`, [tag, itemId]);
   const note = useMemo(
     () => `${title}\n${url}${lnAddress ? `\n⚡ ${lnAddress}` : ''}`,
@@ -185,12 +184,6 @@ export function ShareWidget({
   }, []);
 
   useEffect(() => {
-    if (mockMode) {
-      setStatus('mock');
-      setError(null);
-      return;
-    }
-
     if (!relayTargets.length) {
       setStatus('error');
       setError('No relays configured.');
@@ -325,7 +318,7 @@ export function ShareWidget({
       closeAll();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [relayTargets.join(','), url, effectiveTag, maxItems, hydrateProfile, mockMode]);
+  }, [relayTargets.join(','), url, effectiveTag, maxItems, hydrateProfile]);
 
   const handleShare = useCallback(async () => {
     setError(null);
@@ -415,8 +408,6 @@ export function ShareWidget({
                 ? 'var(--nostrstack-color-success)'
                 : status === 'error'
                   ? 'var(--nostrstack-color-danger)'
-                  : status === 'mock'
-                    ? 'var(--nostrstack-color-warning)'
                   : 'var(--nostrstack-color-text-muted)',
             whiteSpace: 'nowrap',
           }}
@@ -432,8 +423,6 @@ export function ShareWidget({
                   ? 'var(--nostrstack-color-success)'
                   : status === 'error'
                     ? 'var(--nostrstack-color-danger)'
-                    : status === 'mock'
-                      ? 'var(--nostrstack-color-warning)'
                     : 'var(--nostrstack-color-border)',
             }}
           />
@@ -441,11 +430,9 @@ export function ShareWidget({
             ? 'Realtime'
             : status === 'connecting'
               ? 'Connecting'
-              : status === 'mock'
-                ? 'Mock'
-                : status === 'error'
-                  ? 'Offline'
-                  : 'Idle'}
+              : status === 'error'
+                ? 'Offline'
+                : 'Idle'}
         </span>
         <button
           type="button"

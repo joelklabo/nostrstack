@@ -48,7 +48,6 @@ const schema = z.object({
   NOSTR_THEME_TEXT: z.string().optional(),
   NOSTR_THEME_SURFACE: z.string().optional(),
   NOSTR_THEME_BORDER: z.string().optional(),
-  DEV_MOCKS: bool().default(false),
   OTEL_ENABLED: bool().default(false),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),

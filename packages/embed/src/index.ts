@@ -1902,7 +1902,7 @@ type MountCommentOptions = {
   relays?: string[];
   placeholder?: string;
   headerText?: string;
-  onRelayInfo?: (info: { relays: string[]; mode: 'real' | 'mock' }) => void;
+  onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
   onEvent?: (event: NostrEvent, relay?: string) => void;
 };
 

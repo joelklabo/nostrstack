@@ -681,11 +681,6 @@ export const nostrstackComponentsCss = `
   box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-color-warning) 55%, transparent);
   animation: nostrstack-pulse 2s infinite;
 }
-.nostrstack-relay-badge[data-mode="mock"] .relay-dot {
-  background: var(--nostrstack-color-text-subtle);
-  animation: none;
-  box-shadow: none;
-}
 .nostrstack-relay-badge[data-mode="real"] .relay-dot {
   background: var(--nostrstack-color-success);
   box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-color-success) 55%, transparent);
