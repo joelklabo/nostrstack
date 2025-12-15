@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Comments, NostrstackProvider, ShareButton, ShareWidget, TipButton } from './index';
+import { Comments, NostrstackProvider, ShareButton, ShareWidget, TipActivityFeed, TipButton, TipWidget } from './index';
 
 vi.mock('@nostrstack/embed', () => {
   return {
@@ -11,6 +11,8 @@ vi.mock('@nostrstack/embed', () => {
       btn.textContent = 'Send sats';
       el.appendChild(btn);
     }),
+    mountTipWidget: vi.fn(() => ({ destroy: vi.fn() })),
+    mountTipFeed: vi.fn(() => ({ destroy: vi.fn(), refresh: vi.fn() })),
     mountCommentWidget: vi.fn((el: HTMLElement) => {
       const div = document.createElement('div');
       div.textContent = 'Comments';
@@ -35,7 +37,7 @@ vi.mock('nostr-tools', () => {
   };
 });
 
-const { mountTipButton, mountCommentWidget } = await import('@nostrstack/embed');
+const { mountTipButton, mountTipWidget, mountTipFeed, mountCommentWidget } = await import('@nostrstack/embed');
 
 describe('blog-kit components', () => {
   beforeEach(() => {
@@ -56,6 +58,46 @@ describe('blog-kit components', () => {
       host: string;
     };
     expect(call.username).toBe('alice');
+    expect(call.host).toBe('example.com');
+  });
+
+  it('mounts tip widget with item id and presets', async () => {
+    render(
+      <NostrstackProvider lnAddress="alice@example.com">
+        <TipWidget itemId="post-123" presetAmountsSats={[5, 10, 21]} defaultAmountSats={10} />
+      </NostrstackProvider>,
+    );
+    await waitFor(() => {
+      expect(mountTipWidget).toHaveBeenCalled();
+    });
+    const call = (mountTipWidget as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      username: string;
+      itemId: string;
+      presetAmountsSats: number[];
+      defaultAmountSats: number;
+      host: string;
+    };
+    expect(call.username).toBe('alice');
+    expect(call.itemId).toBe('post-123');
+    expect(call.presetAmountsSats).toEqual([5, 10, 21]);
+    expect(call.defaultAmountSats).toBe(10);
+    expect(call.host).toBe('example.com');
+  });
+
+  it('mounts tip activity feed scoped to item id', async () => {
+    render(
+      <NostrstackProvider lnAddress="alice@example.com">
+        <TipActivityFeed itemId="post-123" />
+      </NostrstackProvider>,
+    );
+    await waitFor(() => {
+      expect(mountTipFeed).toHaveBeenCalled();
+    });
+    const call = (mountTipFeed as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      itemId: string;
+      host: string;
+    };
+    expect(call.itemId).toBe('post-123');
     expect(call.host).toBe('example.com');
   });
 
