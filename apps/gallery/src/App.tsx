@@ -316,10 +316,12 @@ function useMountWidgets(
 ) {
   useEffect(() => {
     const tipHost = document.getElementById('tip-container');
+    const tipCompactHost = document.getElementById('tip-compact-container');
     const commentsHost = document.getElementById('comments-container');
     const timeouts: number[] = [];
 
     if (tipHost) tipHost.innerHTML = '';
+    if (tipCompactHost) tipCompactHost.innerHTML = '';
     if (commentsHost) commentsHost.innerHTML = '';
 
     const tipItemId = 'gallery-demo-item';
@@ -333,6 +335,14 @@ function useMountWidgets(
       metadata: { ui: 'gallery', itemTitle: 'nostrstack demo', itemUrl: typeof window !== 'undefined' ? window.location.href : undefined }
     };
     if (tipHost) timeouts.push(window.setTimeout(() => mountTipWidget(tipHost, tipOpts), 50));
+    if (tipCompactHost) {
+      timeouts.push(
+        window.setTimeout(
+          () => mountTipWidget(tipCompactHost, { ...tipOpts, size: 'compact', text: 'Tip (compact)' }),
+          50
+        )
+      );
+    }
 
     if (commentsHost) {
       const relays = relaysList.length ? relaysList : relaysEnvDefault;
@@ -1383,7 +1393,16 @@ export default function App() {
                     title="Tips"
                     subtitle="3 presets + custom amount + live activity."
                   >
-                    <div id="tip-container" />
+                    <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+                      <div>
+                        <h4 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Full Size</h4>
+                        <div id="tip-container" />
+                      </div>
+                      <div>
+                        <h4 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Compact</h4>
+                        <div id="tip-compact-container" />
+                      </div>
+                    </div>
                     <div style={{ marginTop: '0.75rem' }}>
                       <button onClick={requestRealInvoice} disabled={realBusy}>
                         {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
