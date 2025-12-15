@@ -1,5 +1,5 @@
 import { nip19 } from 'nostr-tools';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 type Props = {
   npub?: string | null;
@@ -21,17 +21,6 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
   const [nostrPresent, setNostrPresent] = useState<boolean | null>(null);
   const [lastHint, setLastHint] = useState<string | null>(null);
 
-  // Dev shim: allows overriding signer for demos/tests if enableMock=true
-  const nostr = useMemo(() => {
-    if (enableMock && typeof window !== 'undefined') {
-      // minimal mock signer that returns fixed key
-      return {
-        getPublicKey: async () => 'f'.repeat(64)
-      } as Partial<typeof window.nostr>;
-    }
-    return typeof window !== 'undefined' ? window.nostr : undefined;
-  }, [enableMock]);
-
   useEffect(() => {
     if (!hasSigner) return;
     setStatus('ready');
@@ -49,9 +38,15 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
     }
     if (typeof window === 'undefined') return 'missing';
     if (hasSigner) return 'ready';
-    const hasGetPublicKey = typeof nostr?.getPublicKey === 'function';
-    setNostrPresent(hasGetPublicKey);
-    if (!hasGetPublicKey) {
+
+    // Always read the current injected API at call time (some extensions inject lazily).
+    const api = (enableMock
+      ? ({ getPublicKey: async () => 'f'.repeat(64) } as Partial<typeof window.nostr>)
+      : window.nostr) as Partial<typeof window.nostr> | undefined;
+
+    const getPublicKey = (api as unknown as { getPublicKey?: () => Promise<string> } | undefined)?.getPublicKey;
+    setNostrPresent(Boolean(api) && typeof getPublicKey === 'function');
+    if (!api || typeof getPublicKey !== 'function') {
       setStatus('missing');
       setError(null);
       setLastHint('No window.nostr found. Ensure a NIP-07 extension (Alby, nos2x, etc.) is installed and enabled for this site.');
@@ -61,16 +56,16 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
     setStatus('checking');
     setError(null);
     try {
-      // Avoid unbound method calls: some NIP-07 implementations rely on `this`.
-      const enable = (nostr as unknown as { enable?: () => Promise<unknown> } | undefined)?.enable;
+      // Call methods with `this` bound to the NIP-07 API object (some implementations rely on it).
+      const enable = (api as unknown as { enable?: () => Promise<unknown> } | undefined)?.enable;
       if (mode === 'request' && typeof enable === 'function') {
         await Promise.race([
-          (nostr as unknown as { enable: () => Promise<unknown> }).enable(),
+          enable.call(api),
           new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
         ]);
       }
       const pub = await Promise.race([
-        (nostr as unknown as { getPublicKey: () => Promise<string> }).getPublicKey(),
+        getPublicKey.call(api),
         new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;
@@ -81,12 +76,13 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       return 'ready';
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
+      const lower = typeof msg === 'string' ? msg.toLowerCase() : '';
       const looksLikeNeedsEnable =
-        typeof msg === 'string' &&
-        (msg.includes("reading 'enable'") ||
-          msg.includes("reading \"enable\"") ||
-          msg.toLowerCase().includes('not enabled') ||
-          msg.toLowerCase().includes('enable'));
+        lower.includes('not enabled') ||
+        lower.includes('not allowed') ||
+        lower.includes('permission') ||
+        lower.includes('denied') ||
+        lower.includes('enable');
 
       setError(msg);
       setStatus(looksLikeNeedsEnable ? 'missing' : 'error');
@@ -99,7 +95,7 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       setLastHint(hint);
       return looksLikeNeedsEnable ? 'missing' : 'error';
     }
-  }, [demoOff, nostr, hasSigner, timeoutMs]);
+  }, [demoOff, enableMock, hasSigner, timeoutMs]);
 
   const detect = useCallback(async (mode: DetectMode = 'auto') => {
     if (status === 'ready' || hasSigner) return;
