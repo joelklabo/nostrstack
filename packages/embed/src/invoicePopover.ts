@@ -1,5 +1,5 @@
-import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles, type NostrstackThemeMode } from './styles.js';
 import { renderQrCodeInto } from './qr.js';
+import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles, type NostrstackThemeMode } from './styles.js';
 
 export type InvoicePopoverOptions = {
   mount?: HTMLElement;

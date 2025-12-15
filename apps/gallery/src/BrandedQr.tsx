@@ -52,21 +52,24 @@ export function BrandedQr({
     const el = ref.current;
     if (!el) return;
     let alive = true;
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     setState('rendering');
-    renderQrCodeInto(el, value, { size, preset, verify, options: optionsRef.current })
+    renderQrCodeInto(el, value, { size, preset, verify, options: optionsRef.current, signal: controller?.signal })
       .then((res) => {
-        if (!alive) return;
+        if (!alive || controller?.signal.aborted) return;
         onResultRef.current?.(res);
         if (res.ok) setState(res.fallbackUsed ? 'fallback' : 'ok');
         else setState('error');
       })
       .catch((err) => {
-        if (!alive) return;
+        if (!alive || controller?.signal.aborted) return;
+        if (err && typeof err === 'object' && 'name' in err && (err as { name?: unknown }).name === 'AbortError') return;
         console.warn('qr render failed', err);
         setState('error');
       });
     return () => {
       alive = false;
+      controller?.abort();
     };
   }, [value, size, preset, verify, optionsKey]);
 

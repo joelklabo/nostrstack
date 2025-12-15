@@ -7,16 +7,15 @@ import { ensureNostrstackRoot } from './styles.js';
 
 export { invoicePopoverStyles, renderInvoicePopover } from './invoicePopover.js';
 export { nostrUserCardStyles, renderNostrUserCard } from './nostrUserCard.js';
-export { relayBadgeStyles, renderRelayBadge, updateRelayBadge } from './relayBadge.js';
 export {
-  nostrstackQrPresetOptions,
-  renderQrCodeInto,
   type NostrstackQrPreset,
+  nostrstackQrPresetOptions,
   type NostrstackQrRenderOptions,
   type NostrstackQrRenderResult,
   type NostrstackQrStyleOptions,
-  type NostrstackQrVerifyMode
-} from './qr.js';
+  type NostrstackQrVerifyMode,
+  renderQrCodeInto} from './qr.js';
+export { relayBadgeStyles, renderRelayBadge, updateRelayBadge } from './relayBadge.js';
 export type { NostrstackTheme, NostrstackThemeMode } from './styles.js';
 export {
   applyNostrstackTheme,

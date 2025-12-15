@@ -1,5 +1,5 @@
-import QRCode from 'qrcode';
 import jsQR from 'jsqr';
+import QRCode from 'qrcode';
 
 type QrCodeStylingType = typeof import('qr-code-styling').default;
 type QrCodeStylingOptions = import('qr-code-styling').Options;
@@ -16,6 +16,7 @@ export type NostrstackQrRenderOptions = {
   preset?: NostrstackQrPreset;
   verify?: NostrstackQrVerifyMode;
   options?: NostrstackQrStyleOptions;
+  signal?: AbortSignal;
 };
 
 export type NostrstackQrRenderResult =
@@ -171,8 +172,14 @@ async function renderFallbackImg(
   container: HTMLElement,
   data: string,
   size: number,
-  errorCorrectionLevel: QrCodeStylingErrorCorrectionLevel
+  errorCorrectionLevel: QrCodeStylingErrorCorrectionLevel,
+  signal?: AbortSignal
 ) {
+  throwIfAborted(signal);
+  const scale = Math.max(4, Math.round(size / 42));
+  const src = await QRCode.toDataURL(data, { errorCorrectionLevel, margin: 4, scale });
+  throwIfAborted(signal);
+
   container.replaceChildren();
   const img = document.createElement('img');
   img.alt = 'QR code';
@@ -182,9 +189,22 @@ async function renderFallbackImg(
   img.style.height = 'auto';
   img.style.display = 'block';
   img.style.borderRadius = 'var(--nostrstack-radius-md)';
+  img.src = src;
   container.appendChild(img);
-  const scale = Math.max(4, Math.round(size / 42));
-  img.src = await QRCode.toDataURL(data, { errorCorrectionLevel, margin: 4, scale });
+}
+
+function abortError() {
+  const err = new Error('aborted');
+  (err as unknown as { name?: string }).name = 'AbortError';
+  return err;
+}
+
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) throw abortError();
+}
+
+function isAbortError(err: unknown) {
+  return Boolean(err && typeof err === 'object' && 'name' in err && (err as { name?: unknown }).name === 'AbortError');
 }
 
 export async function renderQrCodeInto(
@@ -195,6 +215,7 @@ export async function renderQrCodeInto(
   const size = opts.size ?? DEFAULT_SIZE;
   const preset = opts.preset ?? 'brand';
   const verify = opts.verify ?? 'auto';
+  const signal = opts.signal;
   const base = nostrstackQrPresetOptions(preset);
   const options: Omit<QrCodeStylingOptions, 'data'> = {
     ...base,
@@ -207,7 +228,9 @@ export async function renderQrCodeInto(
   const needVerify = shouldVerify(verify, options);
 
   try {
+    throwIfAborted(signal);
     const QRCodeStyling = await loadQrCodeStyling();
+    throwIfAborted(signal);
     container.replaceChildren();
     const qr = new QRCodeStyling({ ...(options as QrCodeStylingOptions), data });
     qr.append(container);
@@ -217,16 +240,19 @@ export async function renderQrCodeInto(
     }
 
     const raw = await qr.getRawData('png');
+    throwIfAborted(signal);
     if (!raw) throw new Error('Could not render QR bitmap for verification');
     const blob = raw instanceof Blob ? raw : new Blob([raw], { type: 'image/png' });
     const canvas = await blobToCanvas(blob);
     const decoded = await decodeCanvas(canvas);
+    throwIfAborted(signal);
     if (decoded.ok && decoded.data === data) {
       return { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine };
     }
 
     if (verify === 'strict') {
-      await renderFallbackImg(container, data, size, requestedEcl);
+      throwIfAborted(signal);
+      await renderFallbackImg(container, data, size, requestedEcl, signal);
       return decoded.ok
         ? { ok: true, fallbackUsed: true, decodedText: decoded.data, verifyEngine: decoded.engine }
         : { ok: true, fallbackUsed: true, decodedText: data, verifyEngine: 'none' };
@@ -236,10 +262,12 @@ export async function renderQrCodeInto(
       ? { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine }
       : { ok: false, fallbackUsed: false, error: 'QR decode verification failed' };
   } catch (err) {
+    if (isAbortError(err) || signal?.aborted) throw err;
     try {
-      await renderFallbackImg(container, data, size, requestedEcl);
+      await renderFallbackImg(container, data, size, requestedEcl, signal);
       return { ok: false, fallbackUsed: true, error: err instanceof Error ? err.message : String(err) };
     } catch (fallbackErr) {
+      if (isAbortError(fallbackErr) || signal?.aborted) throw fallbackErr;
       return {
         ok: false,
         fallbackUsed: true,
