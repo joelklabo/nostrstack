@@ -15,6 +15,26 @@ export type QrLabCardProps = {
   suggestedValue?: string | null;
 };
 
+function mergeStyleOptions(
+  ...parts: Array<NostrstackQrStyleOptions | undefined>
+): NostrstackQrStyleOptions | undefined {
+  const defined = parts.filter(Boolean) as NostrstackQrStyleOptions[];
+  if (!defined.length) return undefined;
+
+  const out: Record<string, unknown> = {};
+  for (const part of defined) {
+    for (const [k, v] of Object.entries(part)) {
+      const prev = out[k];
+      if (prev && v && typeof prev === 'object' && typeof v === 'object' && !Array.isArray(prev) && !Array.isArray(v)) {
+        out[k] = { ...(prev as Record<string, unknown>), ...(v as Record<string, unknown>) };
+      } else {
+        out[k] = v;
+      }
+    }
+  }
+  return out as NostrstackQrStyleOptions;
+}
+
 function safeJsonParse(input: string): { value: unknown; error: string | null } {
   const txt = input.trim();
   if (!txt) return { value: null, error: null };
@@ -30,6 +50,10 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
   const [preset, setPreset] = useState<NostrstackQrPreset>('brandLogo');
   const [verify, setVerify] = useState<NostrstackQrVerifyMode>('strict');
   const [size, setSize] = useState<number>(320);
+  const [gradientStart, setGradientStart] = useState('#2563eb');
+  const [gradientEnd, setGradientEnd] = useState('#6d28d9');
+  const [useLogoUrl, setUseLogoUrl] = useState('');
+  const [logoEnabled, setLogoEnabled] = useState(false);
   const [overrideJson, setOverrideJson] = useState<string>('');
   const [lastResult, setLastResult] = useState<NostrstackQrRenderResult | null>(null);
 
@@ -38,11 +62,51 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
     ? (overrideParse.value as NostrstackQrStyleOptions)
     : undefined) satisfies NostrstackQrStyleOptions | undefined;
 
+  const uiOverrides = useMemo<NostrstackQrStyleOptions | undefined>(() => {
+    const hasGradient = Boolean(gradientStart && gradientEnd);
+    const hasLogo = logoEnabled && Boolean(useLogoUrl.trim());
+    if (!hasGradient && !hasLogo) return undefined;
+
+    const gradient = hasGradient
+      ? {
+          type: 'linear' as const,
+          rotation: 0.25 * Math.PI,
+          colorStops: [
+            { offset: 0, color: gradientStart },
+            { offset: 1, color: gradientEnd }
+          ]
+        }
+      : undefined;
+
+    const out: NostrstackQrStyleOptions = {};
+    if (gradient) {
+      out.dotsOptions = { type: 'rounded', gradient, roundSize: true };
+      out.cornersSquareOptions = { type: 'extra-rounded', gradient };
+      out.cornersDotOptions = { type: 'dot', gradient };
+    }
+    if (hasLogo) {
+      out.qrOptions = { errorCorrectionLevel: 'H' };
+      out.image = useLogoUrl.trim();
+      out.imageOptions = {
+        hideBackgroundDots: true,
+        imageSize: 0.22,
+        margin: 4,
+        crossOrigin: 'anonymous'
+      };
+    }
+    return out;
+  }, [gradientStart, gradientEnd, logoEnabled, useLogoUrl]);
+
+  const effectiveOverrides = useMemo(
+    () => mergeStyleOptions(uiOverrides, styleOverrides),
+    [uiOverrides, styleOverrides]
+  );
+
   const merged = useMemo(() => {
     const base = nostrstackQrPresetOptions(preset);
-    if (!styleOverrides) return base;
-    return { ...base, ...styleOverrides };
-  }, [preset, styleOverrides]);
+    if (!effectiveOverrides) return base;
+    return mergeStyleOptions(base as unknown as NostrstackQrStyleOptions, effectiveOverrides) ?? base;
+  }, [preset, effectiveOverrides]);
 
   const prettyValue = value.trim();
   const canSuggest = Boolean(suggestedValue && suggestedValue.trim());
@@ -133,7 +197,75 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <CopyButton text={prettyValue} label="Copy payload" size="sm" />
-            <CopyButton text={JSON.stringify({ preset, verify, size, options: styleOverrides ?? null }, null, 2)} label="Copy config" size="sm" />
+            <CopyButton text={JSON.stringify({ preset, verify, size, options: effectiveOverrides ?? null }, null, 2)} label="Copy config" size="sm" />
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gap: 10,
+              padding: '0.75rem',
+              borderRadius: 'var(--nostrstack-radius-lg)',
+              border: '1px solid var(--nostrstack-color-border)',
+              background: 'var(--nostrstack-color-surface-subtle)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <strong>Quick style controls</strong>
+              <button
+                type="button"
+                className="nostrstack-btn nostrstack-btn--sm"
+                onClick={() => {
+                  setGradientStart('#2563eb');
+                  setGradientEnd('#6d28d9');
+                  setLogoEnabled(false);
+                  setUseLogoUrl('');
+                }}
+              >
+                Reset
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+              <label style={{ display: 'grid', gap: 6 }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>Gradient</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <input type="color" value={gradientStart} onChange={(e) => setGradientStart(e.target.value)} aria-label="Gradient start color" />
+                  <input type="color" value={gradientEnd} onChange={(e) => setGradientEnd(e.target.value)} aria-label="Gradient end color" />
+                  <code className="nostrstack-code" style={{ fontSize: '0.85rem' }}>
+                    {gradientStart} → {gradientEnd}
+                  </code>
+                </div>
+              </label>
+
+              <label style={{ display: 'grid', gap: 6 }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>Logo (URL or data URI)</span>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={logoEnabled}
+                      onChange={(e) => setLogoEnabled(e.target.checked)}
+                      aria-label="Enable logo"
+                    />
+                    <span style={{ fontWeight: 700 }}>Enable logo</span>
+                  </div>
+                  <input
+                    className="nostrstack-input"
+                    value={useLogoUrl}
+                    onChange={(e) => setUseLogoUrl(e.target.value)}
+                    placeholder="https://…/logo.png or data:image/svg+xml,…"
+                    disabled={!logoEnabled}
+                  />
+                </div>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--nostrstack-color-text-muted)' }}>
+                Tip: use <code>verify=strict</code> to auto-fallback if a branded style becomes hard to scan.
+              </span>
+            </div>
           </div>
 
           <label style={{ display: 'grid', gap: '0.35rem' }}>
@@ -176,7 +308,7 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
                 preset={preset}
                 verify={verify}
                 size={size}
-                options={styleOverrides}
+                options={effectiveOverrides}
                 onResult={(r) => setLastResult(r)}
               />
             </div>
