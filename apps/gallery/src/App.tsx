@@ -25,6 +25,7 @@ import { QrLabCard } from './QrLabCard';
 import { BlockList } from './TelemetryCard';
 import { layout } from './tokens';
 import type { RelayStats } from './types/relay';
+import { JsonView } from './ui/JsonView';
 import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
@@ -404,6 +405,8 @@ export default function App() {
   const [relaysList, setRelaysList] = useState<string[]>(relaysEnvDefault);
   const [realInvoice, setRealInvoice] = useState<string | null>(null);
   const [realBusy, setRealBusy] = useState(false);
+  const [realInvoiceLastRequestBody, setRealInvoiceLastRequestBody] = useState<unknown | null>(null);
+  const [realInvoiceLastResponse, setRealInvoiceLastResponse] = useState<unknown | null>(null);
   const [qrInvoice, setQrInvoice] = useState<string | null>(null);
   const [paymentRef, setPaymentRef] = useState<string | null>(null);
   const [qrAmount, setQrAmount] = useState<number | undefined>(undefined);
@@ -420,6 +423,8 @@ export default function App() {
   const [payerInvoice, setPayerInvoice] = useState('');
   const [payerStatus, setPayerStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
   const [payerMessage, setPayerMessage] = useState<string | null>(null);
+  const [payerLastRequestBody, setPayerLastRequestBody] = useState<unknown | null>(null);
+  const [payerLastResponse, setPayerLastResponse] = useState<unknown | null>(null);
   const [payWsState, setPayWsState] = useState<'idle' | 'connecting' | 'open' | 'error'>('idle');
   const [health, setHealth] = useState<Health[]>([
     { label: 'API', status: 'unknown' },
@@ -1103,20 +1108,32 @@ export default function App() {
     setPaymentRef(null);
     setQrStatus('pending');
     try {
+      const reqBody = {
+        domain: demoHost,
+        action: 'tip',
+        amount: amount,
+        metadata: { ui: 'gallery' }
+      };
+      setRealInvoiceLastRequestBody(reqBody);
+      setRealInvoiceLastResponse(null);
       const res = await fetch(`${apiBase}/api/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          domain: demoHost,
-          action: 'tip',
-          amount: amount,
-          metadata: { ui: 'gallery' }
-        })
+        body: JSON.stringify(reqBody)
       });
+      const text = await res.text();
+      let body: unknown = text;
+      try {
+        body = JSON.parse(text) as unknown;
+      } catch {
+        // keep raw text
+      }
+      setRealInvoiceLastResponse({ http: res.status, body });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json();
-      const pr = body.payment_request ?? body.pr;
-      setPaymentRef(body.provider_ref ?? body.payment_hash ?? null);
+      const bodyObj = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      const prRaw = bodyObj.payment_request ?? bodyObj.pr;
+      const pr = typeof prRaw === 'string' ? prRaw : null;
+      setPaymentRef((bodyObj.provider_ref as string | undefined) ?? (bodyObj.providerRef as string | undefined) ?? (bodyObj.payment_hash as string | undefined) ?? null);
       setQrInvoice(pr);
       setQrAmount(amount);
       setQrStatus('pending');
@@ -1138,13 +1155,24 @@ export default function App() {
     setPayerStatus('paying');
     setPayerMessage(null);
     try {
+      const reqBody = { invoice: inv };
+      setPayerLastRequestBody(reqBody);
+      setPayerLastResponse(null);
       const res = await fetch(`${apiBase}/regtest/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoice: inv })
+        body: JSON.stringify(reqBody)
       });
-      const body = await res.json();
-      if (!res.ok || body?.ok === false) throw new Error(body?.error || `HTTP ${res.status}`);
+      const text = await res.text();
+      let body: unknown = text;
+      try {
+        body = JSON.parse(text) as unknown;
+      } catch {
+        // keep raw text
+      }
+      setPayerLastResponse({ http: res.status, body });
+      const bodyObj = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      if (!res.ok || bodyObj?.ok === false) throw new Error((bodyObj?.error as string | undefined) || `HTTP ${res.status}`);
       setPayerStatus('paid');
       setPayerMessage('Paid via test payer');
       setWalletRefresh((n) => n + 1);
@@ -1322,6 +1350,10 @@ export default function App() {
                           {payerMessage}
                         </div>
                       )}
+                      <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                        <JsonView title="Pay request body" value={payerLastRequestBody} maxHeight={140} />
+                        <JsonView title="Pay response" value={payerLastResponse} maxHeight={180} />
+                      </div>
                     </div>
 
                     <div className="nostrstack-action-block nostrstack-action-block--fund">
@@ -1346,6 +1378,10 @@ export default function App() {
                       <button onClick={requestRealInvoice} disabled={realBusy}>
                         {realBusy ? 'Requesting…' : `Request real invoice (${amount} sats)`}
                       </button>
+                      <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                        <JsonView title="Create invoice request body" value={realInvoiceLastRequestBody} maxHeight={140} />
+                        <JsonView title="Create invoice response" value={realInvoiceLastResponse} maxHeight={180} />
+                      </div>
                       {realInvoice && (
                         <div
                           data-testid="real-invoice"
