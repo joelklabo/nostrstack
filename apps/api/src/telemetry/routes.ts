@@ -13,7 +13,7 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
     publicOrigin: env.PUBLIC_ORIGIN
   }));
 
-  app.get('/health/lnbits', async () => {
+  const lnbitsHealthHandler = async () => {
     if (env.LIGHTNING_PROVIDER !== 'lnbits') {
       return { status: 'skipped', reason: 'provider_not_lnbits' };
     }
@@ -45,5 +45,9 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
       error: 'health endpoint not reachable',
       elapsedMs: Date.now() - started
     };
-  });
+  };
+
+  // Expose under both roots: some clients treat "/api" as their base.
+  app.get('/health/lnbits', lnbitsHealthHandler);
+  app.get('/api/health/lnbits', lnbitsHealthHandler);
 }

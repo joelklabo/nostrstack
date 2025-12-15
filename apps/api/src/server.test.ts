@@ -37,4 +37,9 @@ describe('server', () => {
     const res = await server.inject({ url: '/health' });
     expect(res.statusCode).toBe(200);
   });
+
+  it('responds to /api/health', async () => {
+    const res = await server.inject({ url: '/api/health' });
+    expect(res.statusCode).toBe(200);
+  });
 });

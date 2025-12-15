@@ -134,7 +134,7 @@ export function BlockList({ wsUrl, network = 'regtest' }: Props) {
 
       // lightweight health probe to avoid noisy failed handshakes when API isn't up yet
       try {
-        const res = await fetch('/api/health', { method: 'GET' });
+        const res = await fetch('/health', { method: 'GET' });
         healthOk = res.ok;
       } catch {
         healthOk = false;

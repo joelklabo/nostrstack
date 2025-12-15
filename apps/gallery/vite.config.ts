@@ -34,12 +34,45 @@ export default defineConfig({
     host: true,
     https: httpsConfig,
     proxy: {
+      '/health': {
+        target: 'https://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            /* swallow noisy dev proxy errors when API restarts */
+          });
+        }
+      },
+      '/logs': {
+        target: 'https://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            /* swallow noisy dev proxy errors when API restarts */
+          });
+        }
+      },
+      '/.well-known': {
+        target: 'https://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            /* swallow noisy dev proxy errors when API restarts */
+          });
+        }
+      },
       '/api': {
         target: 'https://localhost:3001',
         changeOrigin: true,
         secure: false,
         ws: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path,
         configure: (proxy) => {
           proxy.on('error', () => {
             /* swallow noisy dev proxy errors when API restarts */

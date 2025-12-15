@@ -123,6 +123,11 @@ export function resolvePayWsUrl(baseURL?: string): string | null {
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
   if (raw === 'mock') return null;
   const base = raw.replace(/\/$/, '');
+  // Dev convenience: treat "/api" as a proxy prefix, not a server mountpoint.
+  // This avoids generating "/api/ws/*" and "/api/api/*" footguns in local demos.
+  if (base === '/api') {
+    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
+  }
   if (!base) {
     return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
   }
@@ -135,7 +140,7 @@ export function resolvePayWsUrl(baseURL?: string): string | null {
 function resolveApiBaseUrl(baseURL?: string) {
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
   const base = raw.replace(/\/$/, '');
-  if (base) return base;
+  if (base && base !== '/api') return base;
   if (typeof window === 'undefined') return 'http://localhost:3001';
   return window.location.origin;
 }

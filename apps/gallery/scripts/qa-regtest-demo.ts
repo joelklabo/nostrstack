@@ -74,7 +74,10 @@ async function main() {
     if (!isLocalUrl(url)) return;
     const failure = req.failure();
     const errText = failure?.errorText ?? 'unknown error';
-    if (url.includes('/api/logs/stream') && (errText === 'net::ERR_ABORTED' || errText === 'net::ERR_NETWORK_IO_SUSPENDED')) {
+    if (
+      (url.includes('/logs/stream') || url.includes('/api/logs/stream')) &&
+      (errText === 'net::ERR_ABORTED' || errText === 'net::ERR_NETWORK_IO_SUSPENDED')
+    ) {
       return;
     }
     localRequestFailures.push(`${url} :: ${errText}`);

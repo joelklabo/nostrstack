@@ -12,7 +12,7 @@ export function FaucetButton({ apiBase, onFunded }: { apiBase: string; onFunded?
     setBusy(true);
     setMsg(null);
     try {
-      const target = `${apiBase.replace(/\/$/, '')}/regtest/fund`;
+      const target = `${apiBase.replace(/\/$/, '')}/api/regtest/fund`;
       setLastRequest(`POST ${target}`);
       setLastResponse(null);
       const res = await fetch(target, { method: 'POST' });

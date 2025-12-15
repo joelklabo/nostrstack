@@ -75,7 +75,14 @@ function demoPanelId(tab: DemoTabKey) {
 }
 
 const demoHost = import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost';
-const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
+function normalizeApiBase(raw: string) {
+  const trimmed = raw.trim().replace(/\/$/, '');
+  // Back-compat: older dev setup used Vite's /api prefix as "api base".
+  if (trimmed === '/api') return '';
+  return trimmed;
+}
+
+const apiBase = normalizeApiBase(import.meta.env.VITE_API_BASE_URL ?? '');
 const networkLabel = import.meta.env.VITE_NETWORK ?? 'regtest';
 const relaysEnvRaw = import.meta.env.VITE_NOSTRSTACK_RELAYS;
 const relaysEnvDefault = relaysEnvRaw
@@ -137,8 +144,8 @@ function bumpError(stat: RelayStats[string] | undefined, now: number, message?: 
 }
 
 function resolveLogStreamUrl(base: string) {
-  if (base.includes('localhost:3001')) return '/api/logs/stream';
-  return `${base.replace(/\/$/, '')}/logs/stream`;
+  const trimmed = base.replace(/\/$/, '');
+  return trimmed ? `${trimmed}/logs/stream` : '/logs/stream';
 }
 
 function resolveTelemetryWs(base: string) {
@@ -1053,9 +1060,7 @@ export default function App() {
       // always check against real API
       const results: Health[] = [];
       try {
-        const apiRes = await fetch(
-          apiBase.startsWith('/api') ? '/api/health' : `${apiBase}/health`
-        );
+        const apiRes = await fetch(`${apiBase}/health`);
         results.push({
           label: 'API',
           status: apiRes.ok ? 'ok' : 'fail',
@@ -1065,9 +1070,7 @@ export default function App() {
         results.push({ label: 'API', status: 'error', detail: formatError(err) });
       }
       try {
-        const lnRes = await fetch(
-          apiBase.startsWith('/api') ? '/api/health/lnbits' : `${apiBase}/health/lnbits`
-        );
+        const lnRes = await fetch(`${apiBase}/health/lnbits`);
         const body = await lnRes.json();
         results.push({
           label: 'LNbits',
@@ -1164,7 +1167,7 @@ export default function App() {
       const reqBody = { invoice: inv };
       setPayerLastRequestBody(reqBody);
       setPayerLastResponse(null);
-      const res = await fetch(`${apiBase}/regtest/pay`, {
+      const res = await fetch(`${apiBase}/api/regtest/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reqBody)
@@ -1250,7 +1253,7 @@ export default function App() {
 
           <div className="nostrstack-envbar" style={{ marginBottom: '1rem' }}>
             <Pill label="Host" value={demoHost} tone="info" />
-            <Pill label="API" value={apiBase} tone="info" />
+            <Pill label="API" value={apiBase || 'same-origin'} tone="info" />
             <Pill
               label="LNbits"
               value={lnbitsHealth.status}
@@ -1439,7 +1442,7 @@ export default function App() {
                     <>
                       Build: <code>{import.meta.env.VITE_APP_COMMIT ?? 'dev'}</code> •{' '}
                       <code>{import.meta.env.VITE_APP_BUILD_TIME ?? 'now'}</code> · Host:{' '}
-                      <code>{demoHost}</code> · API base: <code>{apiBase}</code>
+                      <code>{demoHost}</code> · API base: <code>{apiBase || 'same-origin'}</code>
                     </>
                   }
                 >

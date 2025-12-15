@@ -42,6 +42,13 @@ const payBtn = mountPayToAction(container, { username: 'alice', amountSats: 10, 
 mountCommentWidget(container, { threadId: 'post-123' });
 ```
 
+## `baseURL` (important)
+`baseURL` should point to the **nostrstack server origin** (not the `/api` prefix).
+
+- ✅ `baseURL: "https://api.example.com"`
+- ✅ `baseURL: ""` (use the current origin; great for local dev proxies)
+- ⚠️ `baseURL: "/api"` is treated as “same-origin” for dev convenience (to avoid `/api/api/*` footguns)
+
 ## UI building blocks
 All of these are exported from `@nostrstack/embed` for reuse in other apps:
 

@@ -153,4 +153,46 @@ describe('mountTipWidget', () => {
     expect(code).toMatch(/^ln/i);
     expect(write).toHaveBeenCalledWith(expect.stringMatching(/^ln/i));
   });
+
+  it('treats baseURL=/api as same-origin (no /api/api URLs)', async () => {
+    const host = document.createElement('div');
+    const write = vi.fn();
+    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard =
+      {
+        writeText: write
+      };
+
+    const pr = 'lnbc1testinvoice';
+    const providerRef = 'ref123';
+    const fetchSpy = vi
+      .spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
+      .mockImplementation(async (input) => {
+        const url = String(input);
+        if (url.includes('/api/pay')) {
+          return {
+            ok: true,
+            json: async () => ({ pr, provider_ref: providerRef })
+          } as Response;
+        }
+        // allow poll attempts to fail quietly
+        throw new Error(`Unexpected fetch: ${url}`);
+      });
+
+    mountTipWidget(host, {
+      username: 'alice',
+      itemId: 'post-123',
+      baseURL: '/api',
+      host: 'localhost',
+      presetAmountsSats: [5],
+      showFeed: false
+    });
+
+    const preset = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
+    await preset.onclick?.(new MouseEvent('click'));
+
+    expect(fetchSpy).toHaveBeenCalled();
+    const firstUrl = String(fetchSpy.mock.calls[0]?.[0] ?? '');
+    expect(firstUrl).toContain('/api/pay');
+    expect(firstUrl).not.toContain('/api/api/');
+  });
 });

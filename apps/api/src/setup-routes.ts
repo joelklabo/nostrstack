@@ -6,11 +6,15 @@ import { lnurlpHandler } from './well-known/lnurlp.js';
 import { nostrWellKnown } from './well-known/nostr.js';
 
 export function setupRoutes(app: FastifyInstance) {
-  app.get('/health', async () => ({
+  const healthHandler = async () => ({
     status: 'ok',
     env: env.NODE_ENV,
     uptime: process.uptime()
-  }));
+  });
+
+  // Expose under both roots: some clients treat "/api" as their base.
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
 
   app.get('/.well-known/nostr.json', {
     schema: {
