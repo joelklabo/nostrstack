@@ -337,6 +337,11 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   let currentInvoice: string | null = null;
   let currentProviderRef: string | null = null;
 
+  const normalizeInvoice = (pr: string | null | undefined) => {
+    if (!pr) return null;
+    return pr.trim().replace(/^(?:lightning:)+/i, '');
+  };
+
   const setRealtime = (next: typeof realtimeState) => {
     realtimeState = next;
     if (!wsUrl) {
@@ -365,8 +370,22 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       ws.onclose = () => setRealtime(realtimeState === 'error' ? 'error' : 'idle');
       ws.onmessage = (ev) => {
         try {
-          const msg = JSON.parse(ev.data as string) as { type?: string; pr?: string };
-          if (msg.type === 'invoice-paid' && msg.pr && msg.pr === pr) unlock();
+          const msg = JSON.parse(ev.data as string) as {
+            type?: string;
+            pr?: string;
+            providerRef?: string;
+            provider_ref?: string;
+          };
+          const msgProviderRef =
+            (typeof msg.providerRef === 'string' ? msg.providerRef : null) ??
+            (typeof msg.provider_ref === 'string' ? msg.provider_ref : null);
+          const msgInvoice = normalizeInvoice(msg.pr);
+          if (
+            msg.type === 'invoice-paid' &&
+            ((msgInvoice && msgInvoice === pr) || (msgProviderRef && msgProviderRef === currentProviderRef))
+          ) {
+            unlock();
+          }
         } catch {
           /* ignore malformed frames */
         }
@@ -424,10 +443,14 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
             return await client.getLnurlpInvoice(opts.username, amount);
           })();
 
-      const pr = invoiceRes.pr;
-      const maybeProviderRef = (invoiceRes as unknown as { provider_ref?: unknown }).provider_ref;
+      const rawPr = invoiceRes.pr;
+      const pr = normalizeInvoice(rawPr);
+      const maybeProviderRef = (invoiceRes as unknown as { provider_ref?: unknown; providerRef?: unknown }).provider_ref;
+      const maybeProviderRefCamel = (invoiceRes as unknown as { providerRef?: unknown }).providerRef;
       currentProviderRef = typeof maybeProviderRef === 'string' ? maybeProviderRef : null;
+      if (!currentProviderRef) currentProviderRef = typeof maybeProviderRefCamel === 'string' ? maybeProviderRefCamel : null;
 
+      if (!pr) throw new Error('Invoice not returned by LNURL endpoint');
       currentInvoice = pr;
       invoiceCode.textContent = pr;
       panel.style.display = 'block';

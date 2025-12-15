@@ -22,6 +22,11 @@ function apiUrl(apiBase: string, path: string) {
   return `${base}${p}`;
 }
 
+function normalizeInvoice(pr: string | null | undefined) {
+  if (!pr) return null;
+  return pr.trim().replace(/^(?:lightning:)+/i, '');
+}
+
 export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: PayToUnlockCardProps) {
   const [locked, setLocked] = useState(true);
   const [status, setStatus] = useState<'idle' | 'creating' | 'pending' | 'paid' | 'error'>('idle');
@@ -129,11 +134,16 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
           type?: string;
           pr?: string;
           providerRef?: string;
+          provider_ref?: string;
         };
         setLastWsMessage(msg);
+        const msgProviderRef =
+          (typeof msg.providerRef === 'string' ? msg.providerRef : null) ??
+          (typeof msg.provider_ref === 'string' ? msg.provider_ref : null);
+        const msgInvoice = normalizeInvoice(msg.pr);
         if (
           msg.type === 'invoice-paid' &&
-          ((msg.pr && msg.pr === invoice) || (msg.providerRef && msg.providerRef === providerRef))
+          ((msgInvoice && msgInvoice === invoice) || (msgProviderRef && msgProviderRef === providerRef))
         ) {
           markPaid('ws');
         }
@@ -209,9 +219,10 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
       setLastCreateResponse({ http: res.status, body });
       if (!res.ok) throw new Error(String(body.error ?? body.message ?? `HTTP ${res.status}`));
 
-      const pr = (body.payment_request as string | undefined) ?? (body.pr as string | undefined);
+      const pr = normalizeInvoice((body.payment_request as string | undefined) ?? (body.pr as string | undefined));
       const ref =
         (body.provider_ref as string | undefined) ??
+        (body.providerRef as string | undefined) ??
         (body.payment_hash as string | undefined) ??
         null;
       if (!pr || !ref) throw new Error('Invoice not returned by API');
