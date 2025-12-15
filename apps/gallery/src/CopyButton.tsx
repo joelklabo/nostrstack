@@ -16,7 +16,9 @@ type Props = {
 function toastMessageFromLabel(label: string) {
   const trimmed = (label ?? '').trim();
   if (!trimmed) return 'Copied';
-  if (trimmed.toLowerCase() === 'copy') return 'Copied';
+  const lower = trimmed.toLowerCase();
+  if (lower === 'copy') return 'Copied';
+  if (lower.startsWith('copy ')) return `Copied ${trimmed.slice(5)}`;
   return `${trimmed} copied`;
 }
 
@@ -55,6 +57,13 @@ export function CopyButton({
     }
   };
 
+  const buttonLabel =
+    state === 'copied'
+      ? 'Copied'
+      : state === 'error'
+        ? 'Copy failed'
+        : label;
+
   return (
     <div style={{ display: 'inline-flex' }}>
       <button
@@ -76,7 +85,7 @@ export function CopyButton({
         <span className="nostrstack-copybtn__icon" aria-hidden="true">
           {state === 'copied' ? <CheckIcon /> : state === 'error' ? <ErrorIcon /> : <CopyIcon />}
         </span>
-        {variant !== 'icon' ? <span className="nostrstack-copybtn__label">{label}</span> : null}
+        {variant !== 'icon' ? <span className="nostrstack-copybtn__label">{buttonLabel}</span> : null}
       </button>
     </div>
   );

@@ -1,3 +1,4 @@
+import { createCopyButton } from './copyButton.js';
 import { renderQrCodeInto } from './qr.js';
 import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles, type NostrstackThemeMode } from './styles.js';
 
@@ -66,21 +67,11 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   const actions = document.createElement('div');
   actions.className = 'nostrstack-popover-actions';
 
-  const copyBtn = document.createElement('button');
-  copyBtn.className = 'nostrstack-btn nostrstack-btn--sm';
-  copyBtn.type = 'button';
-  copyBtn.textContent = 'Copy invoice';
-  copyBtn.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(pr);
-      copyBtn.textContent = 'Copied';
-      setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
-    } catch (e) {
-      console.warn('copy failed', e);
-      copyBtn.textContent = 'Copy failed';
-      setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
-    }
-  };
+  const { el: copyBtn } = createCopyButton({
+    label: 'Copy invoice',
+    size: 'sm',
+    getText: () => pr
+  });
 
   const openWallet = document.createElement('a');
   openWallet.href = `lightning:${pr}`;

@@ -108,7 +108,7 @@ export function InvoicePopover({
   const copyInvoice = async () => {
     try {
       await copyToClipboard(invoice);
-      toast({ message: 'Invoice copied', tone: 'success' });
+      toast({ message: 'Copied invoice', tone: 'success' });
     } catch (err) {
       console.warn('copy invoice failed', err);
       toast({ message: 'Copy failed', tone: 'danger' });

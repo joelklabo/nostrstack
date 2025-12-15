@@ -98,10 +98,10 @@ async function main() {
     // Wallet panel copy buttons (scoped to avoid global "Copied" collisions).
     const copyUrlBtn = page.locator('li', { hasText: 'Open LNbits UI:' }).getByRole('button');
     await copyUrlBtn.click();
-    await expect(page.getByTestId('toast-region')).toContainText('Copy URL copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied URL');
     const copyKeyBtn = page.locator('li', { hasText: 'Admin key:' }).getByRole('button');
     await copyKeyBtn.click();
-    await expect(page.getByTestId('toast-region')).toContainText('Copy key copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied key');
     let adminKeyFromClipboard = '';
     try {
       adminKeyFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
@@ -185,11 +185,11 @@ async function main() {
     const selectorInput = page.getByPlaceholder('.nostrstack-theme').first();
     await selectorInput.fill('.qa-theme');
     await page.getByRole('button', { name: 'Copy CSS (light+dark)' }).click();
-    await expect(page.getByTestId('toast-region')).toContainText('Copy CSS (light+dark) copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied CSS (light+dark)');
     const cssFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
     expect(cssFromClipboard).toContain('.qa-theme');
     await page.getByRole('button', { name: 'Copy vars (json)' }).click();
-    await expect(page.getByTestId('toast-region')).toContainText('Copy vars (json) copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied vars (json)');
     const varsFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
     expect(varsFromClipboard).toContain('"--nostrstack-color-primary"');
 
@@ -207,7 +207,7 @@ async function main() {
     const relaysRow = page.getByRole('button', { name: 'Use real defaults' }).locator('..');
     const copyRelaysBtn = relaysRow.getByRole('button').nth(1);
     await copyRelaysBtn.click();
-    await expect(page.getByTestId('toast-region')).toContainText('Copy relays copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied relays');
 
     const relaysInput = page.locator('input[placeholder="wss://relay1,wss://relay2"]').first();
     const relaysBefore = await relaysInput.inputValue();
@@ -325,7 +325,7 @@ async function main() {
     await expect(page.getByTestId('real-invoice')).toContainText('lnbcrt', { timeout: 30_000 });
     await expect(dialog).toBeVisible({ timeout: 30_000 });
     await dialog.getByRole('button', { name: 'Copy invoice' }).click();
-    await expect(page.getByTestId('toast-region')).toContainText('Invoice copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied invoice');
     await dialog.getByRole('button', { name: 'Copy', exact: true }).click();
     await expect(page.getByTestId('toast-region')).toContainText('Copied');
     await page.evaluate(() => {

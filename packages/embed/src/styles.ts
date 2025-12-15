@@ -460,6 +460,80 @@ export const nostrstackComponentsCss = `
 }
 .nostrstack-btn--primary:hover { filter: saturate(1.03); }
 
+/* ===== Copy button ===== */
+.nostrstack-copybtn {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  --nostrstack-copybtn-icon: var(--nostrstack-color-text);
+}
+
+.nostrstack-copybtn__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.05em;
+  height: 1.05em;
+  color: var(--nostrstack-copybtn-icon);
+  flex: 0 0 auto;
+}
+
+.nostrstack-copybtn__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nostrstack-copybtn--icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.nostrstack-copybtn[data-copy-state="copied"] {
+  border-color: color-mix(in oklab, var(--nostrstack-color-success) 40%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-success) 10%, var(--nostrstack-color-surface));
+  --nostrstack-copybtn-icon: var(--nostrstack-color-success);
+}
+
+.nostrstack-copybtn[data-copy-state="error"] {
+  border-color: color-mix(in oklab, var(--nostrstack-color-danger) 45%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-danger) 8%, var(--nostrstack-color-surface));
+  --nostrstack-copybtn-icon: var(--nostrstack-color-danger);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nostrstack-copybtn[data-copy-state="copied"] {
+    animation: nostrstack-copybtn-pop 360ms var(--nostrstack-motion-ease-emphasized);
+  }
+
+  .nostrstack-copybtn[data-copy-state="copied"]::after {
+    content: '';
+    position: absolute;
+    inset: -45%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--nostrstack-color-success) 35%, transparent) 45%,
+      transparent 75%
+    );
+    transform: translateX(-70%) rotate(20deg);
+    pointer-events: none;
+    animation: nostrstack-copybtn-shine 650ms var(--nostrstack-motion-ease-standard);
+  }
+}
+
+@keyframes nostrstack-copybtn-pop {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-1px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes nostrstack-copybtn-shine {
+  0% { opacity: 0; transform: translateX(-70%) rotate(20deg); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(45%) rotate(20deg); }
+}
+
 .nostrstack-input, .nostrstack-textarea, .nostrstack-select {
   width: 100%;
   border-radius: var(--nostrstack-radius-md);

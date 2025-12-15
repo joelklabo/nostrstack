@@ -1,6 +1,7 @@
 import { NostrstackClient } from '@nostrstack/sdk';
 import QRCode from 'qrcode';
 
+import { copyToClipboard, createCopyButton } from './copyButton.js';
 import { renderInvoicePopover } from './invoicePopover.js';
 import { renderRelayBadge } from './relayBadge.js';
 import { ensureNostrstackRoot } from './styles.js';
@@ -287,10 +288,11 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   openWallet.rel = 'noreferrer';
   openWallet.style.display = 'none';
 
-  const copyBtn = document.createElement('button');
-  copyBtn.type = 'button';
-  copyBtn.textContent = 'Copy invoice';
-  copyBtn.className = 'nostrstack-btn nostrstack-btn--sm';
+  const { el: copyBtn, reset: resetCopyBtn } = createCopyButton({
+    label: 'Copy invoice',
+    size: 'sm',
+    getText: () => currentInvoice ?? ''
+  });
   copyBtn.style.display = 'none';
 
   const paidBtn = document.createElement('button');
@@ -461,21 +463,14 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       status.textContent = 'Pay invoice. Unlocks on confirmation.';
 
       if (opts.onInvoice) await opts.onInvoice(pr);
-      else if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(pr);
-      }
-
-      copyBtn.onclick = async () => {
+      else {
         try {
-          await navigator.clipboard.writeText(pr);
-          copyBtn.textContent = 'Copied';
-          window.setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
-        } catch (e) {
-          console.warn('copy failed', e);
-          copyBtn.textContent = 'Copy failed';
-          window.setTimeout(() => (copyBtn.textContent = 'Copy invoice'), 1200);
+          await copyToClipboard(pr);
+        } catch {
+          /* ignore clipboard failures */
         }
-      };
+      }
+      resetCopyBtn();
 
       const qrPayload = /^lightning:/i.test(pr) ? pr : `lightning:${pr}`;
       QRCode.toDataURL(qrPayload, { errorCorrectionLevel: 'M', margin: 1, scale: 6 })
