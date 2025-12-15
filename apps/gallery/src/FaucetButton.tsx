@@ -51,7 +51,7 @@ export function FaucetButton({ apiBase, onFunded }: { apiBase: string; onFunded?
           Last request: <code>{lastRequest}</code>
         </div>
       )}
-      <JsonView title="Last response" value={lastResponse} maxHeight={140} collapsible defaultCollapsed />
+      <JsonView title="Last response" value={lastResponse} maxHeight={140} />
     </div>
   );
 }

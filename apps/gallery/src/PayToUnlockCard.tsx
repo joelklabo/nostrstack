@@ -414,9 +414,9 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
       )}
 
       <div className="nostrstack-paywall__debug">
-        <JsonView title="Create invoice response" value={lastCreateResponse} maxHeight={160} collapsible defaultCollapsed />
-        <JsonView title="Last status poll response" value={lastStatusResponse} maxHeight={160} collapsible defaultCollapsed />
-        <JsonView title="Last WS message" value={lastWsMessage} maxHeight={160} collapsible defaultCollapsed />
+        <JsonView title="Create invoice response" value={lastCreateResponse} maxHeight={160} />
+        <JsonView title="Last status poll response" value={lastStatusResponse} maxHeight={160} />
+        <JsonView title="Last WS message" value={lastWsMessage} maxHeight={160} />
       </div>
     </div>
   );
