@@ -244,6 +244,7 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                     <input
                       type="checkbox"
+                      name="qrLabLogoEnabled"
                       checked={logoEnabled}
                       onChange={(e) => setLogoEnabled(e.target.checked)}
                       aria-label="Enable logo"
@@ -252,8 +253,10 @@ export function QrLabCard({ suggestedValue }: QrLabCardProps) {
                   </div>
                   <input
                     className="nostrstack-input"
+                    name="qrLabLogoUrl"
                     value={useLogoUrl}
                     onChange={(e) => setUseLogoUrl(e.target.value)}
+                    aria-label="Logo URL"
                     placeholder="https://…/logo.png or data:image/svg+xml,…"
                     disabled={!logoEnabled}
                   />
