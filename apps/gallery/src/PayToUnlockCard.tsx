@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
+import { JsonView } from './ui/JsonView';
 
 const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
 
@@ -29,6 +30,9 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
   const [qrUrl, setQrUrl] = useState<string>('');
   const [wsState, setWsState] = useState<PayWsState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [lastCreateResponse, setLastCreateResponse] = useState<unknown | null>(null);
+  const [lastStatusResponse, setLastStatusResponse] = useState<unknown | null>(null);
+  const [lastWsMessage, setLastWsMessage] = useState<unknown | null>(null);
   const createdAtRef = useRef<number | null>(null);
   const [ageMs, setAgeMs] = useState(0);
 
@@ -48,6 +52,9 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     setQrUrl('');
     setWsState('idle');
     setError(null);
+    setLastCreateResponse(null);
+    setLastStatusResponse(null);
+    setLastWsMessage(null);
     createdAtRef.current = null;
     setAgeMs(0);
   }, []);
@@ -99,6 +106,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
       );
       if (!res.ok) return false;
       const body = (await res.json()) as { status?: string };
+      setLastStatusResponse({ http: res.status, body });
       const s = String(body.status ?? '').toUpperCase();
       if (PAID_STATES.has(s)) {
         markPaid('poll');
@@ -131,6 +139,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
           pr?: string;
           providerRef?: string;
         };
+        setLastWsMessage(msg);
         if (
           msg.type === 'invoice-paid' &&
           ((msg.pr && msg.pr === invoice) || (msg.providerRef && msg.providerRef === providerRef))
@@ -175,6 +184,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     setQrUrl('');
     setAgeMs(0);
     createdAtRef.current = null;
+    setLastCreateResponse(null);
     try {
       const res = await fetch(apiUrl(apiBase, '/api/pay'), {
         method: 'POST',
@@ -187,6 +197,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
         })
       });
       const body = (await res.json()) as Record<string, unknown>;
+      setLastCreateResponse({ http: res.status, body });
       if (!res.ok) throw new Error(String(body.error ?? body.message ?? `HTTP ${res.status}`));
 
       const pr = (body.payment_request as string | undefined) ?? (body.pr as string | undefined);
@@ -374,6 +385,12 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
           </div>
         </div>
       )}
+
+      <div className="nostrstack-paywall__debug">
+        <JsonView title="Create invoice response" value={lastCreateResponse} maxHeight={160} collapsible defaultCollapsed />
+        <JsonView title="Last status poll response" value={lastStatusResponse} maxHeight={160} collapsible defaultCollapsed />
+        <JsonView title="Last WS message" value={lastWsMessage} maxHeight={160} collapsible defaultCollapsed />
+      </div>
     </div>
   );
 }

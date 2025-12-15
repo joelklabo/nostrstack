@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from './ui/Badge';
+import { JsonView } from './ui/JsonView';
 
 type Props = {
   lnbitsUrl?: string;
@@ -23,9 +24,10 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
-  const [lastResponse, setLastResponse] = useState<string | null>(null);
+  const [lastResponse, setLastResponse] = useState<unknown | null>(null);
   const [lastRequest, setLastRequest] = useState<string | null>(null);
   const [lastHeaders, setLastHeaders] = useState<string | null>(null);
+  const [lastRequestBody, setLastRequestBody] = useState<unknown | null>(null);
   const [lastWalletId, setLastWalletId] = useState<string | null>(() => (typeof window !== 'undefined' ? window.localStorage.getItem('nostrstack.lnbits.walletId') : null));
   const [keyStatuses, setKeyStatuses] = useState<KeyStatus[]>([
     { kind: 'admin', status: 'idle' },
@@ -111,34 +113,44 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
     const fetchBalance = async () => {
       setLoading(true);
       setError(null);
-      setLastResponse(null);
       setKeyStatuses((prev) => prev.map((k) => ({ ...k, status: 'idle', message: undefined, url: undefined })));
       const target = `${(apiBase || '/api').replace(/\/$/, '')}/wallet/info`;
 
       const attempt = async (key: string, kind: 'admin' | 'read') => {
         const payload = {
           baseUrl: lnbitsUrl,
-          apiKey: key,
+          apiKey: '••••••••',
           walletId: walletId || lastWalletId || undefined
         };
         try {
           setLastRequest(`${kind} → POST ${target}`);
           setLastHeaders('Content-Type: application/json');
+          setLastRequestBody(payload);
           const res = await fetch(target, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+              ...payload,
+              apiKey: key
+            })
           });
           const text = await res.text();
-          setLastResponse(text.slice(0, 400));
+          let parsed: unknown = text;
+          try {
+            parsed = JSON.parse(text) as unknown;
+          } catch {
+            // keep raw text
+          }
+          setLastResponse(parsed);
           if (!res.ok) {
             const friendly = res.status === 401 || res.status === 403 ? 'unauthorized (HTTP 401)' : `HTTP ${res.status}`;
             throw new Error(friendly);
           }
-          const body = JSON.parse(text);
-          if (!body?.wallet) throw new Error('missing wallet in response');
+          if (!parsed || typeof parsed !== 'object') throw new Error('missing wallet in response');
+          const walletRes = (parsed as { wallet?: WalletInfo }).wallet;
+          if (!walletRes) throw new Error('missing wallet in response');
           setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'ok', url: target } : k)));
-          return body.wallet as WalletInfo;
+          return walletRes;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           setKeyStatuses((prev) => prev.map((k) => (k.kind === kind ? { kind, status: 'error', message: msg, url: target } : k)));
@@ -250,12 +262,10 @@ export function WalletBalance({ lnbitsUrl, adminKey, readKey, walletId, apiBase,
         {lastRequest && <div style={{ color: 'var(--nostrstack-color-text-subtle)' }}>Last request: {lastRequest}</div>}
         {lastHeaders && <div style={{ color: 'var(--nostrstack-color-text-subtle)' }}>Headers: {lastHeaders}</div>}
       </div>
-      {lastResponse && (
-        <details open style={{ fontSize: '0.85rem', color: 'var(--nostrstack-color-text-muted)' }}>
-          <summary>Last response</summary>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>{lastResponse}</pre>
-        </details>
-      )}
+      <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+        <JsonView title="Last request body" value={lastRequestBody} maxHeight={140} />
+        <JsonView title="Last response" value={lastResponse} maxHeight={220} />
+      </div>
       {!error && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap' }}>
