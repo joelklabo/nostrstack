@@ -980,6 +980,22 @@ export const nostrstackComponentsCss = `
     var(--nostrstack-color-surface);
 }
 
+.nostrstack-tip__panel[data-state="idle"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 100px;
+}
+
+.nostrstack-tip__panel[data-state="idle"] .nostrstack-tip__ring,
+.nostrstack-tip__panel[data-state="idle"] .nostrstack-tip__realtime,
+.nostrstack-tip__panel[data-state="idle"] .nostrstack-tip__qr,
+.nostrstack-tip__panel[data-state="idle"] .nostrstack-tip__actions,
+.nostrstack-tip__panel[data-state="idle"] .nostrstack-invoice-box {
+  display: none;
+}
+
 /* Countdown ring */
 .nostrstack-tip__ring {
   grid-area: ring;

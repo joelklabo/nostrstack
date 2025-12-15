@@ -1132,9 +1132,6 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     }
   };
 
-  // Prime realtime connection so the status feels immediate.
-  if (wsUrl) startRealtime();
-
   // Expose a small imperative API for tests / consumers.
   return {
     tip: startTip,
