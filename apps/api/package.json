@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm run seed:dev && tsx src/server.ts",
+    "dev": "pnpm run seed:dev && tsx watch src/server.ts",
     "build": "tsup src/server.ts --format esm --dts --clean --external @opentelemetry/api,@opentelemetry/sdk-node,@opentelemetry/auto-instrumentations-node,@opentelemetry/exporter-trace-otlp-http,@opentelemetry/resources,@opentelemetry/semantic-conventions,@opentelemetry/context-async-hooks",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts --max-warnings=0",
