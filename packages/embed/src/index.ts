@@ -202,7 +202,14 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
   btn.onclick = handler;
   container.appendChild(btn);
   container.appendChild(status);
-  return btn;
+
+  return {
+    el: btn,
+    destroy: () => {
+      btn.removeEventListener('click', handler);
+      btn.onclick = null;
+    }
+  };
 }
 
 function resolveTenantDomain(host?: string): string | null {
@@ -1488,7 +1495,16 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
 
   container.appendChild(header);
   container.appendChild(panel);
-  return btn;
+
+  return {
+    el: btn,
+    destroy: () => {
+      closePayWs();
+      stopPoll();
+      btn.removeEventListener('click', getInvoice);
+      paidBtn.removeEventListener('click', markPaid);
+    }
+  };
 }
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
@@ -1500,7 +1516,8 @@ function getRelayInit() {
 type RelayConnection = {
   url?: string;
   connect: () => Promise<void>;
-  sub: (filters: unknown) => { on: (type: string, cb: (ev: NostrEvent) => void) => void };
+  close: () => void;
+  sub: (filters: unknown) => { on: (type: string, cb: (ev: NostrEvent) => void) => void; un: () => void };
   publish: (ev: NostrEvent) => Promise<unknown>;
 };
 
@@ -1585,6 +1602,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     list.appendChild(row);
   };
 
+  const subs: Array<{ un: () => void }> = [];
   const filters = [{ kinds: [1], '#t': [threadId] }];
   relays.forEach((relay) => {
     const sub = relay.sub(filters);
@@ -1592,9 +1610,10 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
       appendEvent(ev);
       opts.onEvent?.(ev, relay.url ?? undefined);
     });
+    subs.push(sub);
   });
 
-  form.addEventListener('submit', async (e) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!window.nostr) {
       status.textContent = 'Nostr signer (NIP-07) required to post';
@@ -1635,19 +1654,37 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     } finally {
       submit.disabled = false;
     }
-  });
+  };
+
+  form.addEventListener('submit', handleSubmit);
 
   header.append(headerText, relayBadge);
   container.appendChild(header);
   container.appendChild(list);
   container.appendChild(status);
   container.appendChild(form);
-  return container;
+
+  return {
+    el: container,
+    destroy: () => {
+      form.removeEventListener('submit', handleSubmit);
+      subs.forEach((s) => s.un());
+      relays.forEach((r) => r.close());
+    }
+  };
 }
 
 export function autoMount() {
   const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-tip]'));
   nodes.forEach((el) => {
+    // @ts-ignore
+    if (typeof el.__nostrstackDestroy === 'function') {
+      // @ts-ignore
+      el.__nostrstackDestroy();
+      // @ts-ignore
+      delete el.__nostrstackDestroy;
+    }
+
     const username = getBrandAttr(el, 'Tip');
     if (!username) return;
     const amount = el.dataset.amountMsat ? Number(el.dataset.amountMsat) : undefined;
@@ -1660,7 +1697,7 @@ export function autoMount() {
         .map((s) => Number(s.trim()))
         .filter((n) => Number.isFinite(n) && n > 0);
       const defaultAmountSats = el.dataset.defaultAmountSats ? Number(el.dataset.defaultAmountSats) : undefined;
-      renderTipWidget(el, {
+      const widget = renderTipWidget(el, {
         username,
         itemId,
         presetAmountsSats: presets.length ? presets : undefined,
@@ -1669,24 +1706,49 @@ export function autoMount() {
         host,
         text: el.dataset.label
       });
+      // @ts-ignore
+      el.__nostrstackDestroy = widget.destroy;
       return;
     }
-    renderTipButton(el, { username, amountMsat: amount, baseURL, host, text: el.dataset.label });
+    const btn = renderTipButton(el, { username, amountMsat: amount, baseURL, host, text: el.dataset.label });
+    // @ts-ignore
+    el.__nostrstackDestroy = btn.destroy;
   });
 
   const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-pay]'));
   payNodes.forEach((el) => {
+    // @ts-ignore
+    if (typeof el.__nostrstackDestroy === 'function') {
+      // @ts-ignore
+      el.__nostrstackDestroy();
+      // @ts-ignore
+      delete el.__nostrstackDestroy;
+    }
+
     const username = getBrandAttr(el, 'Pay');
     if (!username) return;
     const amount = el.dataset.amountMsat ? Number(el.dataset.amountMsat) : undefined;
-    renderPayToAction(el, { username, amountMsat: amount, text: el.dataset.label, baseURL: el.dataset.baseUrl, host: el.dataset.host });
+    const widget = renderPayToAction(el, { username, amountMsat: amount, text: el.dataset.label, baseURL: el.dataset.baseUrl, host: el.dataset.host });
+    // @ts-ignore
+    el.__nostrstackDestroy = widget.destroy;
   });
 
   const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-comments]'));
   commentNodes.forEach((el) => {
+    // @ts-ignore
+    if (typeof el.__nostrstackDestroy === 'function') {
+      // @ts-ignore
+      el.__nostrstackDestroy();
+      // @ts-ignore
+      delete el.__nostrstackDestroy;
+    }
+
     const thread = getBrandAttr(el, 'Comments') || undefined;
     const relays = el.dataset.relays ? el.dataset.relays.split(',').map((r) => r.trim()) : undefined;
-    renderCommentWidget(el, { threadId: thread, relays, headerText: el.dataset.header, placeholder: el.dataset.placeholder });
+    renderCommentWidget(el, { threadId: thread, relays, headerText: el.dataset.header, placeholder: el.dataset.placeholder }).then((widget) => {
+      // @ts-ignore
+      el.__nostrstackDestroy = widget.destroy;
+    });
   });
 }
 
