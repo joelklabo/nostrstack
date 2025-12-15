@@ -14,6 +14,7 @@ import type { Event as NostrEvent, EventTemplate } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { DashboardForm } from './admin/DashboardForm';
 import { CommentsPanel, type LiveActivityItem } from './comments/CommentsPanel';
 import { CopyButton } from './CopyButton';
 import { FaucetButton } from './FaucetButton';
@@ -30,7 +31,7 @@ import { JsonView } from './ui/JsonView';
 import { WalletBalance } from './WalletBalance';
 import { WalletPanel } from './WalletPanel';
 
-type RelayInfo = { relays: string[]; mode: 'real' };
+type RelayInfo = { relays: string[]; mode: 'real' | 'mock' };
 type Health = {
   label: string;
   status: 'ok' | 'fail' | 'error' | 'skipped' | 'unknown';
@@ -59,12 +60,13 @@ type ThemeStyles = {
   shadow: string;
 };
 
-type DemoTabKey = 'lightning' | 'nostr' | 'logs';
+type DemoTabKey = 'lightning' | 'nostr' | 'logs' | 'admin';
 
 const DEMO_TABS: { key: DemoTabKey; label: string }[] = [
   { key: 'lightning', label: 'Lightning' },
   { key: 'nostr', label: 'Nostr' },
-  { key: 'logs', label: 'Logs' }
+  { key: 'logs', label: 'Logs' },
+  { key: 'admin', label: 'Admin (React 19)' }
 ];
 
 function demoTabId(tab: DemoTabKey) {
@@ -448,7 +450,8 @@ export default function App() {
   const tabRefs = useRef<Record<DemoTabKey, HTMLButtonElement | null>>({
     lightning: null,
     nostr: null,
-    logs: null
+    logs: null,
+    admin: null
   });
   const handleTabKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -2132,6 +2135,21 @@ export default function App() {
               </div>
               <LogViewer backendUrl={resolveLogStreamUrl(apiBase)} />
             </Card>
+          )}
+        </section>
+
+        <section
+          id={demoPanelId('admin')}
+          role="tabpanel"
+          aria-labelledby={demoTabId('admin')}
+          hidden={tab !== 'admin'}
+          className="nostrstack-gallery-tab"
+          data-active={tab === 'admin' ? 'true' : 'false'}
+        >
+          {tab === 'admin' && (
+            <div style={{ maxWidth: 600, margin: '0 auto' }}>
+              <DashboardForm />
+            </div>
           )}
         </section>
 
