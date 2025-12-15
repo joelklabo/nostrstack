@@ -4,7 +4,8 @@ export default defineConfig({
   testDir: './tests',
   timeout: 60_000,
   use: {
-    baseURL: process.env.GALLERY_BASE_URL || 'http://localhost:4173',
+    baseURL: process.env.GALLERY_BASE_URL || 'https://localhost:4173',
+    ignoreHTTPSErrors: true,
     launchOptions: {
       args: process.env.CHROMIUM_USER_DATA_DIR
         ? [`--user-data-dir=${process.env.CHROMIUM_USER_DATA_DIR}`]
@@ -19,7 +20,8 @@ export default defineConfig({
   ],
   webServer: {
     command: 'pnpm dev -- --host --port 4173',
-    url: 'http://localhost:4173',
+    url: 'https://localhost:4173',
+    ignoreHTTPSErrors: true,
     reuseExistingServer: true,
     stdout: 'pipe',
     stderr: 'pipe',

@@ -1307,7 +1307,7 @@
 
 .nostrstack-paywall__panel {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   gap: var(--nostrstack-space-3);
   padding: var(--nostrstack-space-3);
   border-radius: var(--nostrstack-radius-lg);
@@ -1336,6 +1336,20 @@
     align-items: start;
   }
 
+  .nostrstack-paywall .nostrstack-paywall__actions,
+  .nostrstack-paywall .nostrstack-paywall__cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nostrstack-paywall__actions > *,
+  .nostrstack-paywall__cta > * {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@container paywall (max-width: 620px) {
   .nostrstack-paywall .nostrstack-paywall__actions,
   .nostrstack-paywall .nostrstack-paywall__cta {
     flex-direction: column;
@@ -1458,6 +1472,12 @@
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nostrstack-paywall__actions > *,
+.nostrstack-paywall__cta > * {
   min-width: 0;
   max-width: 100%;
 }

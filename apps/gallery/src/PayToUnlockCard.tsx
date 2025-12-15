@@ -205,6 +205,16 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     createdAtRef.current = null;
     setLastCreateResponse(null);
     try {
+      if (apiBase === 'mock') {
+        const pr =
+          'lnbcrt10u1p5demoqqpp5v9l8v0h3a4g6w2xk8v4m9y3n0n8s7g6f5d4c3b2a1q0p9sdpq2p5x7ar9v3jhxapqd9h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wgsx7en0d3h8vmmfvdjjqen0wg';
+        const ref = `mock-${Date.now()}`;
+        setLastCreateResponse({ http: 200, body: { payment_request: pr, provider_ref: ref, mock: true } });
+        setInvoice(pr);
+        setProviderRef(ref);
+        setStatus('pending');
+        return;
+      }
       const res = await fetch(apiUrl(apiBase, '/api/pay'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

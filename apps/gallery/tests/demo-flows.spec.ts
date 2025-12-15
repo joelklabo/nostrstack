@@ -1,6 +1,31 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { expectRelayMode, toggleTheme } from './helpers.ts';
+
+async function measureCardOverflow(page: Page) {
+  return page.evaluate(() => {
+    const paywall = document.querySelector('.nostrstack-paywall') as HTMLElement | null;
+    const card = paywall?.closest('section') as HTMLElement | null;
+    if (!paywall || !card) return null;
+    const cardRect = card.getBoundingClientRect();
+    let maxDelta = 0;
+    let offender: { tag: string; cls: string; text: string; delta: number } | null = null;
+    for (const el of Array.from(card.querySelectorAll('*'))) {
+      const rect = (el as HTMLElement).getBoundingClientRect();
+      const delta = rect.right - cardRect.right;
+      if (delta > maxDelta + 0.25) {
+        maxDelta = delta;
+        offender = {
+          tag: el.tagName.toLowerCase(),
+          cls: (el as HTMLElement).className || '',
+          text: ((el as HTMLElement).textContent || '').trim().slice(0, 80),
+          delta
+        };
+      }
+    }
+    return { maxDelta, offender };
+  });
+}
 
 test('tip button renders', async ({ page }) => {
   await page.goto('/');
@@ -10,6 +35,21 @@ test('tip button renders', async ({ page }) => {
 test('pay-to-unlock shows locked state', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('unlock-status')).toContainText(/locked/i);
+});
+
+test('pay-to-unlock does not overflow card at common widths', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('paywall-unlock').click();
+  await expect(page.locator('.nostrstack-paywall__invoice')).toBeVisible();
+
+  const widths = [1024, 1152, 1280, 1366, 1440, 1514];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForTimeout(50);
+    const overflow = await measureCardOverflow(page);
+    expect(overflow, 'paywall card not found').not.toBeNull();
+    expect(overflow!.maxDelta, `overflow at ${width}px: ${JSON.stringify(overflow!.offender)}`).toBeLessThanOrEqual(1);
+  }
 });
 
 test('tip flow generates invoice', async ({ page }) => {
