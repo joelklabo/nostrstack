@@ -171,13 +171,21 @@
 
 .nostrstack-invoice-modal__qrImg {
   width: min(320px, 100%);
-  height: auto;
   display: block;
   margin: 0 auto;
   border-radius: var(--nostrstack-radius-md);
   border: 1px solid var(--nostrstack-color-border);
   background: white;
+  overflow: hidden;
 }
+.nostrstack-invoice-modal__qrImg svg,
+.nostrstack-invoice-modal__qrImg canvas,
+.nostrstack-invoice-modal__qrImg img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.nostrstack-invoice-modal__qrImg canvas { aspect-ratio: 1 / 1; }
 
 .nostrstack-invoice-modal__qrSkeleton {
   width: min(320px, 100%);
@@ -1199,11 +1207,19 @@
 
 .nostrstack-paywall__qrimg {
   width: min(220px, 100%);
-  height: auto;
   border-radius: var(--nostrstack-radius-md);
   border: 1px solid var(--nostrstack-color-border);
   background: white;
+  overflow: hidden;
 }
+.nostrstack-paywall__qrimg svg,
+.nostrstack-paywall__qrimg canvas,
+.nostrstack-paywall__qrimg img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.nostrstack-paywall__qrimg canvas { aspect-ratio: 1 / 1; }
 
 .nostrstack-paywall__qrskeleton {
   width: min(220px, 100%);

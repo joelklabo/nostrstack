@@ -21,6 +21,7 @@ import { InvoicePopover } from './InvoicePopover';
 import { LogViewer } from './LogViewer';
 import { NostrProfileCard } from './NostrProfileCard';
 import { PayToUnlockCard } from './PayToUnlockCard';
+import { QrLabCard } from './QrLabCard';
 import { BlockList } from './TelemetryCard';
 import { layout } from './tokens';
 import type { RelayStats } from './types/relay';
@@ -1312,6 +1313,13 @@ export default function App() {
                     <PayToUnlockCard apiBase={apiBase} host={demoHost} amountSats={amount} onPayWsState={setPayWsState} />
                   </Card>
                 </div>
+
+                <Card
+                  title="QR Lab"
+                  subtitle="Design branded QR codes with built-in decode verification + fallback."
+                >
+                  <QrLabCard suggestedValue={realInvoice} />
+                </Card>
 
                 <Card
                   title="Status & build"

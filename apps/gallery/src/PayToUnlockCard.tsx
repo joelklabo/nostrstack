@@ -1,7 +1,7 @@
 import { resolvePayWsUrl } from '@nostrstack/embed';
-import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { BrandedQr } from './BrandedQr';
 import { CopyButton } from './CopyButton';
 import { JsonView } from './ui/JsonView';
 
@@ -27,7 +27,6 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
   const [status, setStatus] = useState<'idle' | 'creating' | 'pending' | 'paid' | 'error'>('idle');
   const [invoice, setInvoice] = useState<string | null>(null);
   const [providerRef, setProviderRef] = useState<string | null>(null);
-  const [qrUrl, setQrUrl] = useState<string>('');
   const [wsState, setWsState] = useState<PayWsState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [lastCreateResponse, setLastCreateResponse] = useState<unknown | null>(null);
@@ -49,7 +48,6 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     setStatus('idle');
     setInvoice(null);
     setProviderRef(null);
-    setQrUrl('');
     setWsState('idle');
     setError(null);
     setLastCreateResponse(null);
@@ -66,13 +64,6 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
   useEffect(() => {
     onPayWsState?.(wsState);
   }, [wsState, onPayWsState]);
-
-  useEffect(() => {
-    if (!invoice) return;
-    QRCode.toDataURL(invoice, { errorCorrectionLevel: 'M', margin: 1, scale: 7 })
-      .then(setQrUrl)
-      .catch((err: unknown) => console.warn('pay-to-unlock qr gen failed', err));
-  }, [invoice]);
 
   useEffect(() => {
     if (!invoice) return;
@@ -200,7 +191,6 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     setStatus('creating');
     setInvoice(null);
     setProviderRef(null);
-    setQrUrl('');
     setAgeMs(0);
     createdAtRef.current = null;
     setLastCreateResponse(null);
@@ -303,13 +293,10 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
               <strong>Unlocked</strong>
               <span>Payment confirmed.</span>
             </div>
-          ) : qrUrl ? (
-            <img
-              src={qrUrl}
-              alt="Lightning invoice QR"
-              className="nostrstack-paywall__qrimg"
-              draggable={false}
-            />
+          ) : invoice ? (
+            <div className="nostrstack-paywall__qrimg" draggable={false}>
+              <BrandedQr value={invoice} preset="brandLogo" verify="strict" size={260} />
+            </div>
           ) : (
             <div className="nostrstack-paywall__qrskeleton" aria-hidden="true" />
           )}

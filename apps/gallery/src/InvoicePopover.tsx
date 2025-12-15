@@ -1,6 +1,6 @@
-import QRCode from 'qrcode';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { BrandedQr } from './BrandedQr';
 import { CopyButton } from './CopyButton';
 import { copyToClipboard } from './clipboard';
 import { useToast } from './toast';
@@ -19,7 +19,6 @@ export function InvoicePopover({
   onClose
 }: InvoicePopoverProps) {
   const toast = useToast();
-  const [dataUrl, setDataUrl] = useState<string>('');
   const [ageMs, setAgeMs] = useState(0);
   const [celebrate, setCelebrate] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
@@ -42,13 +41,6 @@ export function InvoicePopover({
     const s = (rem % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   }, [ageMs]);
-
-  useEffect(() => {
-    if (!invoice) return;
-    QRCode.toDataURL(invoice, { errorCorrectionLevel: 'M', margin: 1, scale: 6 })
-      .then(setDataUrl)
-      .catch((err: unknown) => console.warn('qr gen failed', err));
-  }, [invoice]);
 
   useEffect(() => {
     if (!invoice) return;
@@ -168,11 +160,9 @@ export function InvoicePopover({
               aria-label="Copy invoice"
               className="nostrstack-invoice-modal__qrBtn"
             >
-              {dataUrl ? (
-                <img src={dataUrl} alt="Lightning invoice QR" className="nostrstack-invoice-modal__qrImg" />
-              ) : (
-                <div className="nostrstack-invoice-modal__qrSkeleton">Generating…</div>
-              )}
+              <div className="nostrstack-invoice-modal__qrImg">
+                <BrandedQr value={invoice} preset="brandLogo" verify="strict" size={320} />
+              </div>
             </button>
             <div id={descId} className="nostrstack-invoice-modal__hint">
               Scan to pay · Click QR to copy

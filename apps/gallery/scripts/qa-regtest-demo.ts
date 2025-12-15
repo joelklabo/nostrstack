@@ -194,6 +194,15 @@ async function main() {
     const varsFromClipboard = (await page.evaluate(async () => navigator.clipboard.readText())) ?? '';
     expect(varsFromClipboard).toContain('"--nostrstack-color-primary"');
 
+    // QR Lab: should verify (or fall back) without console errors.
+    const qrLabHeading = page.getByRole('heading', { name: 'QR Lab' }).first();
+    await qrLabHeading.scrollIntoViewIfNeeded();
+    const qrLabStatus = page.getByTestId('qr-lab-status');
+    await expect(qrLabStatus).toBeVisible({ timeout: 30_000 });
+    await expect
+      .poll(async () => (await qrLabStatus.textContent())?.trim() ?? '', { timeout: 30_000 })
+      .toMatch(/^(OK|Fallback used)$/);
+
     // Relays: apply defaults, copy, and exercise Add relay (with a duplicate).
     await page.getByRole('button', { name: 'Use real defaults' }).click();
     const relaysRow = page.getByRole('button', { name: 'Use real defaults' }).locator('..');

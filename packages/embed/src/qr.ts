@@ -1,0 +1,255 @@
+import QRCode from 'qrcode';
+import jsQR from 'jsqr';
+
+type QrCodeStylingType = typeof import('qr-code-styling').default;
+type QrCodeStylingOptions = import('qr-code-styling').Options;
+type QrCodeStylingErrorCorrectionLevel = import('qr-code-styling').ErrorCorrectionLevel;
+type QrCodeStylingGradient = import('qr-code-styling').Gradient;
+
+export type NostrstackQrPreset = 'safe' | 'brand' | 'brandLogo';
+export type NostrstackQrVerifyMode = 'off' | 'auto' | 'strict';
+
+export type NostrstackQrStyleOptions = Partial<Omit<QrCodeStylingOptions, 'data' | 'width' | 'height'>>;
+
+export type NostrstackQrRenderOptions = {
+  size?: number;
+  preset?: NostrstackQrPreset;
+  verify?: NostrstackQrVerifyMode;
+  options?: NostrstackQrStyleOptions;
+};
+
+export type NostrstackQrRenderResult =
+  | { ok: true; fallbackUsed: false; decodedText: string; verifyEngine: 'barcode-detector' | 'jsqr' | 'none' }
+  | { ok: true; fallbackUsed: true; decodedText: string; verifyEngine: 'barcode-detector' | 'jsqr' | 'none' }
+  | { ok: false; fallbackUsed: boolean; error: string };
+
+const DEFAULT_SIZE = 256;
+
+const brandGradient: QrCodeStylingGradient = {
+  type: 'linear',
+  rotation: 0.25 * Math.PI,
+  colorStops: [
+    { offset: 0, color: '#2563eb' }, // blue-600
+    { offset: 1, color: '#6d28d9' } // violet-700
+  ]
+};
+
+const lightningLogoDataUri =
+  'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%23111827%22%20d%3D%22M13%202%20L3%2014h7l-1%208%2012-14h-7l-1-6z%22/%3E%3C/svg%3E';
+
+export function nostrstackQrPresetOptions(preset: NostrstackQrPreset): Omit<QrCodeStylingOptions, 'data'> {
+  const base: Omit<QrCodeStylingOptions, 'data'> = {
+    type: 'svg',
+    shape: 'square',
+    margin: 4,
+    qrOptions: {
+      errorCorrectionLevel: 'M'
+    },
+    backgroundOptions: {
+      color: '#ffffff',
+      round: 16
+    },
+    dotsOptions: {
+      type: 'square',
+      color: '#0b0b12'
+    },
+    cornersSquareOptions: {
+      type: 'square',
+      color: '#0b0b12'
+    },
+    cornersDotOptions: {
+      type: 'square',
+      color: '#0b0b12'
+    }
+  };
+
+  if (preset === 'safe') return base;
+
+  const brand: Omit<QrCodeStylingOptions, 'data'> = {
+    ...base,
+    dotsOptions: {
+      type: 'rounded',
+      gradient: brandGradient,
+      roundSize: true
+    },
+    cornersSquareOptions: {
+      type: 'extra-rounded',
+      gradient: brandGradient
+    },
+    cornersDotOptions: {
+      type: 'dot',
+      gradient: brandGradient
+    }
+  };
+
+  if (preset === 'brand') return brand;
+
+  return {
+    ...brand,
+    qrOptions: { errorCorrectionLevel: 'H' },
+    image: lightningLogoDataUri,
+    imageOptions: {
+      hideBackgroundDots: true,
+      imageSize: 0.22,
+      margin: 4,
+      crossOrigin: 'anonymous'
+    }
+  };
+}
+
+let qrCodeStylingPromise: Promise<QrCodeStylingType> | null = null;
+async function loadQrCodeStyling(): Promise<QrCodeStylingType> {
+  if (!qrCodeStylingPromise) {
+    qrCodeStylingPromise = import('qr-code-styling').then((m) => m.default);
+  }
+  return qrCodeStylingPromise;
+}
+
+function shouldVerify(mode: NostrstackQrVerifyMode, opts: Partial<Omit<QrCodeStylingOptions, 'data'>>): boolean {
+  if (mode === 'off') return false;
+  if (mode === 'strict') return true;
+  const hasGradient = Boolean(
+    opts?.dotsOptions?.gradient || opts?.cornersDotOptions?.gradient || opts?.cornersSquareOptions?.gradient
+  );
+  const hasLogo = Boolean(opts?.image);
+  return hasGradient || hasLogo;
+}
+
+async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, img.naturalWidth || img.width || 1);
+    canvas.height = Math.max(1, img.naturalHeight || img.height || 1);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('2d context unavailable');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0);
+    return canvas;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data: string; engine: 'barcode-detector' | 'jsqr' } | { ok: false }> {
+  try {
+    type BarcodeDetectorCtor = new (opts: { formats: string[] }) => {
+      detect: (image: unknown) => Promise<Array<{ rawValue?: string }>>;
+    };
+    const BD = (globalThis as unknown as { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector;
+    if (BD) {
+      const detector = new BD({ formats: ['qr_code'] });
+      const detections = await detector.detect(canvas);
+      const raw = detections?.[0]?.rawValue;
+      if (raw) return { ok: true, data: raw, engine: 'barcode-detector' };
+    }
+  } catch {
+    // ignore and fall back
+  }
+
+  try {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return { ok: false };
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const decoded = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'attemptBoth'
+    });
+    if (decoded?.data) return { ok: true, data: decoded.data, engine: 'jsqr' };
+  } catch {
+    // ignore
+  }
+
+  return { ok: false };
+}
+
+async function renderFallbackImg(
+  container: HTMLElement,
+  data: string,
+  size: number,
+  errorCorrectionLevel: QrCodeStylingErrorCorrectionLevel
+) {
+  container.replaceChildren();
+  const img = document.createElement('img');
+  img.alt = 'QR code';
+  img.decoding = 'async';
+  img.loading = 'eager';
+  img.style.width = '100%';
+  img.style.height = 'auto';
+  img.style.display = 'block';
+  img.style.borderRadius = 'var(--nostrstack-radius-md)';
+  container.appendChild(img);
+  const scale = Math.max(4, Math.round(size / 42));
+  img.src = await QRCode.toDataURL(data, { errorCorrectionLevel, margin: 4, scale });
+}
+
+export async function renderQrCodeInto(
+  container: HTMLElement,
+  data: string,
+  opts: NostrstackQrRenderOptions = {}
+): Promise<NostrstackQrRenderResult> {
+  const size = opts.size ?? DEFAULT_SIZE;
+  const preset = opts.preset ?? 'brand';
+  const verify = opts.verify ?? 'auto';
+  const base = nostrstackQrPresetOptions(preset);
+  const options: Omit<QrCodeStylingOptions, 'data'> = {
+    ...base,
+    ...opts.options,
+    width: size,
+    height: size
+  };
+
+  const requestedEcl = (options.qrOptions?.errorCorrectionLevel ?? base.qrOptions?.errorCorrectionLevel ?? 'M') as QrCodeStylingErrorCorrectionLevel;
+  const needVerify = shouldVerify(verify, options);
+
+  try {
+    const QRCodeStyling = await loadQrCodeStyling();
+    container.replaceChildren();
+    const qr = new QRCodeStyling({ ...(options as QrCodeStylingOptions), data });
+    qr.append(container);
+
+    if (!needVerify) {
+      return { ok: true, fallbackUsed: false, decodedText: data, verifyEngine: 'none' };
+    }
+
+    const raw = await qr.getRawData('png');
+    if (!raw) throw new Error('Could not render QR bitmap for verification');
+    const blob = raw instanceof Blob ? raw : new Blob([raw], { type: 'image/png' });
+    const canvas = await blobToCanvas(blob);
+    const decoded = await decodeCanvas(canvas);
+    if (decoded.ok && decoded.data === data) {
+      return { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine };
+    }
+
+    if (verify === 'strict') {
+      await renderFallbackImg(container, data, size, requestedEcl);
+      return decoded.ok
+        ? { ok: true, fallbackUsed: true, decodedText: decoded.data, verifyEngine: decoded.engine }
+        : { ok: true, fallbackUsed: true, decodedText: data, verifyEngine: 'none' };
+    }
+
+    return decoded.ok
+      ? { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine }
+      : { ok: false, fallbackUsed: false, error: 'QR decode verification failed' };
+  } catch (err) {
+    try {
+      await renderFallbackImg(container, data, size, requestedEcl);
+      return { ok: false, fallbackUsed: true, error: err instanceof Error ? err.message : String(err) };
+    } catch (fallbackErr) {
+      return {
+        ok: false,
+        fallbackUsed: true,
+        error:
+          fallbackErr instanceof Error
+            ? fallbackErr.message
+            : err instanceof Error
+              ? err.message
+              : String(err)
+      };
+    }
+  }
+}

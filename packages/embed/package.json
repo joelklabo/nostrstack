@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@nostrstack/sdk": "workspace:*",
+    "jsqr": "^1.4.0",
+    "qr-code-styling": "^1.9.2",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {

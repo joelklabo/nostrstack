@@ -639,8 +639,17 @@ export const nostrstackComponentsCss = `
   border-radius: var(--nostrstack-radius-lg);
   border: 1px solid var(--nostrstack-color-border);
   box-shadow: var(--nostrstack-shadow-md);
+  overflow: hidden;
 }
-.nostrstack-qr img { width: 100%; height: auto; display: block; border-radius: var(--nostrstack-radius-md); }
+.nostrstack-qr img,
+.nostrstack-qr svg,
+.nostrstack-qr canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--nostrstack-radius-md);
+}
+.nostrstack-qr canvas { aspect-ratio: 1 / 1; }
 .nostrstack-popover-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; }
 .nostrstack-invoice-box {
   margin-top: 0.85rem;

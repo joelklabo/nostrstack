@@ -1,6 +1,5 @@
-import QRCode from 'qrcode';
-
 import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles, type NostrstackThemeMode } from './styles.js';
+import { renderQrCodeInto } from './qr.js';
 
 export type InvoicePopoverOptions = {
   mount?: HTMLElement;
@@ -57,11 +56,6 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
 
   const qrWrap = document.createElement('div');
   qrWrap.className = 'nostrstack-qr';
-  const qrImg = document.createElement('img');
-  qrImg.alt = 'Lightning invoice QR';
-  qrImg.decoding = 'async';
-  qrImg.loading = 'lazy';
-  qrWrap.appendChild(qrImg);
 
   const right = document.createElement('div');
   right.style.display = 'flex';
@@ -123,13 +117,9 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   mount.appendChild(overlay);
   closeBtn.focus();
 
-  QRCode.toDataURL(pr, { errorCorrectionLevel: 'M', margin: 1, scale: 6 })
-    .then((dataUrl) => {
-      qrImg.src = dataUrl;
-    })
-    .catch((err) => {
-      console.warn('qr gen failed', err);
-    });
+  renderQrCodeInto(qrWrap, pr, { preset: 'brandLogo', verify: 'strict', size: 320 }).catch((err) => {
+    console.warn('qr render failed', err);
+  });
 
   return overlay;
 }
