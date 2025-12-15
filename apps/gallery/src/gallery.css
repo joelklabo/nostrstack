@@ -332,7 +332,7 @@
 
 .nostrstack-lightning-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
   gap: var(--nostrstack-space-4);
   align-items: start;
 }
@@ -345,6 +345,11 @@
   min-width: 0;
 }
 
+.nostrstack-lightning-main {
+  container-type: inline-size;
+  container-name: lightning-main;
+}
+
 .nostrstack-lightning-main .nostrstack-gallery-card,
 .nostrstack-lightning-side .nostrstack-gallery-card {
   margin-bottom: 0;
@@ -352,7 +357,7 @@
 
 .nostrstack-lightning-widgets {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: var(--nostrstack-space-4);
 }
 
@@ -360,13 +365,19 @@
   min-width: 0;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .nostrstack-lightning-layout {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 840px) {
+  .nostrstack-lightning-widgets {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container lightning-main (max-width: 740px) {
   .nostrstack-lightning-widgets {
     grid-template-columns: 1fr;
   }
@@ -400,6 +411,12 @@
 }
 
 @media (max-width: 680px) {
+  .nostrstack-action-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container lightning-main (max-width: 680px) {
   .nostrstack-action-grid {
     grid-template-columns: 1fr;
   }
@@ -649,6 +666,23 @@
 @container paywall (max-width: 520px) {
   .nostrstack-paywall__panel {
     grid-template-columns: 1fr;
+  }
+
+  .nostrstack-paywall__row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .nostrstack-paywall__actions,
+  .nostrstack-paywall__cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nostrstack-paywall__actions > *,
+  .nostrstack-paywall__cta > * {
+    width: 100%;
+    justify-content: center;
   }
 }
 

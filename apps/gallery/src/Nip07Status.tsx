@@ -44,15 +44,14 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       setStatus('missing');
       setError(null);
       setLastHint('No window.nostr found. Ensure a NIP-07 extension (Alby, nos2x, etc.) is installed and enabled for this site.');
-      console.info('[nip07] window.nostr missing; check extension permission/host allowlist');
       return 'missing';
     }
 
     setStatus('checking');
     setError(null);
-      const started = Date.now();
-      try {
-        const pub = await Promise.race([
+    const started = Date.now();
+    try {
+      const pub = await Promise.race([
         getPublicKey(),
         new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
       ]);
@@ -61,7 +60,6 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       setStatus('ready');
       setLastCheckedAt(Date.now());
       setLastHint(null);
-      console.info('[nip07] signer detected', { pubkey: pub, ms: Date.now() - started });
       return 'ready';
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
@@ -72,7 +70,6 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
         ? 'Signer did not respond. Open your NIP-07 extension, unlock it, and allow https://localhost:4173 then retry.'
         : 'Signer responded with error. It may need you to approve access in the extension popup or settings.';
       setLastHint(hint);
-      console.warn('[nip07] signer error', { err, ms: Date.now() - started });
       return 'error';
     }
   }, [demoOff, nostr]);

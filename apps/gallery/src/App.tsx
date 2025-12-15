@@ -806,11 +806,19 @@ export default function App() {
     const wsUrl = resolvePayWsUrl(apiBase);
     const ws = wsUrl ? new WebSocket(wsUrl) : null;
     const pr = qrInvoice;
+    const ref = paymentRef;
     if (ws) {
       ws.onmessage = (ev) => {
         try {
-          const msg = JSON.parse(ev.data as string);
-          if (msg.type === 'invoice-paid' && msg.pr === pr) {
+          const msg = JSON.parse(ev.data as string) as {
+            type?: string;
+            pr?: string;
+            providerRef?: string;
+          };
+          if (
+            msg.type === 'invoice-paid' &&
+            ((msg.pr && msg.pr === pr) || (ref && msg.providerRef && msg.providerRef === ref))
+          ) {
             setQrStatus('paid');
           }
         } catch {
@@ -818,7 +826,9 @@ export default function App() {
         }
       };
     }
-    const pollId = paymentRef ? window.setInterval(pollPayment, 5000) : null;
+    // quick first poll (in case payment already happened)
+    pollPayment();
+    const pollId = paymentRef ? window.setInterval(pollPayment, 1500) : null;
     return () => {
       ws?.close();
       if (pollId) window.clearInterval(pollId);

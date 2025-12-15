@@ -126,8 +126,15 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
     };
     ws.onmessage = (ev) => {
       try {
-        const msg = JSON.parse(ev.data as string) as { type?: string; pr?: string };
-        if (msg.type === 'invoice-paid' && msg.pr && msg.pr === invoice) {
+        const msg = JSON.parse(ev.data as string) as {
+          type?: string;
+          pr?: string;
+          providerRef?: string;
+        };
+        if (
+          msg.type === 'invoice-paid' &&
+          ((msg.pr && msg.pr === invoice) || (msg.providerRef && msg.providerRef === providerRef))
+        ) {
           markPaid('ws');
         }
       } catch {
@@ -138,7 +145,7 @@ export function PayToUnlockCard({ apiBase, host, amountSats, onPayWsState }: Pay
       closed = true;
       ws.close();
     };
-  }, [invoice, status, wsUrl, markPaid]);
+  }, [invoice, providerRef, status, wsUrl, markPaid]);
 
   useEffect(() => {
     if (!providerRef || status !== 'pending') return;
