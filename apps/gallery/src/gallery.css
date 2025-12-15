@@ -528,7 +528,7 @@
 
 .nostrstack-lightning-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
   gap: var(--nostrstack-space-3);
   align-items: start;
 }

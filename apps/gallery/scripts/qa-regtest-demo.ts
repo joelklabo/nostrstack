@@ -273,7 +273,7 @@ async function main() {
 
     // Pay-to-unlock -> invoice -> pay -> unlocked content.
     // Regression: this layout used to overflow into the sidebar at some mid-width viewports.
-    await page.setViewportSize({ width: 1154, height: 900 });
+    await page.setViewportSize({ width: 1514, height: 900 });
     const measurePaywallOverflow = async () =>
       await page.evaluate(() => {
         const paywall = document.querySelector('.nostrstack-paywall') as HTMLElement | null;
