@@ -8,6 +8,14 @@ COMPOSE="docker compose -f deploy/regtest/docker-compose.yml"
 PASS="regtestpass"
 PASS_B64=$(printf "%s" "$PASS" | base64 | tr -d '\n')
 
+bitcoin_cli() {
+  $COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin "$@"
+}
+
+bitcoin_cli_miner() {
+  bitcoin_cli -rpcwallet=miner "$@"
+}
+
 host_rest_port() {
   case "$1" in
     lnd-merchant) echo 18080 ;;
@@ -79,19 +87,22 @@ rest_port() {
 
 wait_for_bitcoind() {
   echo "[+] Waiting for bitcoind..."
-  until $COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin getblockchaininfo >/dev/null 2>&1; do
+  until bitcoin_cli getblockchaininfo >/dev/null 2>&1; do
     sleep 2
   done
 }
 
 ensure_miner_wallet() {
-  echo "[+] Ensuring miner wallet exists"
-  $COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin createwallet miner >/dev/null 2>&1 || true
+  echo "[+] Ensuring miner wallet exists + loaded"
+  # Create if missing, then load (bitcoind may start with wallet unloaded after restarts).
+  bitcoin_cli createwallet miner >/dev/null 2>&1 || true
+  bitcoin_cli loadwallet miner >/dev/null 2>&1 || true
+  bitcoin_cli_miner getwalletinfo >/dev/null 2>&1 || true
 }
 
 maybe_mine_initial() {
   local height
-  height=$($COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin getblockcount)
+  height=$(bitcoin_cli getblockcount)
   if (( height < 101 )); then
     echo "[+] Mining $((101 - height)) blocks to bootstrap chain (current height: $height)"
     mine_blocks $((101 - height))
@@ -103,8 +114,8 @@ maybe_mine_initial() {
 mine_blocks() {
   local n="$1"
   local addr
-  addr=$($COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner getnewaddress)
-  $COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner generatetoaddress "$n" "$addr" >/dev/null
+  addr=$(bitcoin_cli_miner getnewaddress)
+  bitcoin_cli_miner generatetoaddress "$n" "$addr" >/dev/null
 }
 
 fund_payer() {
@@ -117,7 +128,7 @@ fund_payer() {
   echo "[+] Funding lnd-payer onchain"
   local addr
   addr=$($COMPOSE exec -T lnd-payer lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:$(rpc_port lnd-payer) --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert newaddress p2wkh | jq -r '.address')
-  $COMPOSE exec -T bitcoind bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin -rpcwallet=miner sendtoaddress "$addr" 1 >/dev/null
+  bitcoin_cli_miner sendtoaddress "$addr" 1 >/dev/null
   mine_blocks 6
 }
 
@@ -162,6 +173,110 @@ fetch_admin_key() {
   curl -s -b "$cookie" http://localhost:15001/api/v1/wallets | jq -r '.[0].adminkey'
 }
 
+lncli_cmd() {
+  local svc="$1"
+  shift
+  $COMPOSE exec -T "$svc" lncli --network=regtest --lnddir=/data --rpcserver="$svc:$(rpc_port "$svc")" --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert "$@"
+}
+
+lnd_info_field() {
+  local svc="$1"
+  local jqExpr="$2"
+  local out
+  out=$(lncli_cmd "$svc" getinfo 2>/dev/null || true)
+  if [[ -z "$out" ]]; then
+    echo ""
+    return 0
+  fi
+  echo "$out" | jq -r "$jqExpr" 2>/dev/null || echo ""
+}
+
+ensure_lnd_synced() {
+  echo "[+] Ensuring LND nodes are synced to chain"
+  local maxLoops=120
+  local loop=0
+  while (( loop < maxLoops )); do
+    loop=$((loop + 1))
+    local btcHeight payerSynced merchantSynced payerH merchantH
+    btcHeight=$(bitcoin_cli getblockcount 2>/dev/null || echo 0)
+    payerSynced=$(lnd_info_field lnd-payer '.synced_to_chain // false')
+    merchantSynced=$(lnd_info_field lnd-merchant '.synced_to_chain // false')
+    payerH=$(lnd_info_field lnd-payer '.block_height // 0')
+    merchantH=$(lnd_info_field lnd-merchant '.block_height // 0')
+
+    if [[ "$payerSynced" == "true" && "$merchantSynced" == "true" ]]; then
+      echo "[=] LND synced (bitcoind height ${btcHeight}, payer ${payerH}, merchant ${merchantH})"
+      return 0
+    fi
+
+    # If bitcoind is behind either node's known height, mine to catch up quickly.
+    local targetH="$btcHeight"
+    if [[ "$payerH" =~ ^[0-9]+$ ]] && (( payerH > targetH )); then targetH="$payerH"; fi
+    if [[ "$merchantH" =~ ^[0-9]+$ ]] && (( merchantH > targetH )); then targetH="$merchantH"; fi
+
+    if (( btcHeight < targetH )); then
+      local delta=$((targetH - btcHeight))
+      local chunk=$delta
+      if (( chunk > 50 )); then chunk=50; fi
+      echo "[+] Mining ${chunk} blocks to catch up (bitcoind ${btcHeight} -> ${targetH}; payer ${payerH} synced=${payerSynced}, merchant ${merchantH} synced=${merchantSynced})"
+      mine_blocks "$chunk"
+    else
+      echo "[+] Waiting for LND sync (bitcoind ${btcHeight}; payer ${payerH} synced=${payerSynced}, merchant ${merchantH} synced=${merchantSynced})"
+      mine_blocks 1
+    fi
+    sleep 1
+  done
+
+  echo "[!] Timed out waiting for LND to sync"
+  echo "bitcoind: $(bitcoin_cli getblockchaininfo 2>/dev/null || true)"
+  echo "payer getinfo: $(lncli_cmd lnd-payer getinfo 2>/dev/null || true)"
+  echo "merchant getinfo: $(lncli_cmd lnd-merchant getinfo 2>/dev/null || true)"
+  return 1
+}
+
+ensure_active_channel() {
+  echo "[+] Ensuring payer -> merchant has an active channel"
+  connect_nodes
+  local dest_pub
+  dest_pub=$(get_pubkey lnd-merchant)
+
+  local has_any has_active
+  has_any=$(lncli_cmd lnd-payer listchannels 2>/dev/null | jq -r --arg pk "$dest_pub" '[.channels[]? | select(.remote_pubkey==$pk)] | length' 2>/dev/null || echo 0)
+  has_active=$(lncli_cmd lnd-payer listchannels 2>/dev/null | jq -r --arg pk "$dest_pub" '[.channels[]? | select(.remote_pubkey==$pk and .active==true)] | length' 2>/dev/null || echo 0)
+
+  if [[ "$has_active" =~ ^[0-9]+$ ]] && (( has_active > 0 )); then
+    echo "[=] Active channel present"
+    return 0
+  fi
+
+  if [[ "$has_any" =~ ^[0-9]+$ ]] && (( has_any > 0 )); then
+    echo "[=] Channel exists but inactive; mining and retrying"
+    mine_blocks 6
+  else
+    open_channel
+  fi
+
+  local tries=0
+  while (( tries < 25 )); do
+    tries=$((tries + 1))
+    connect_nodes
+    has_active=$(lncli_cmd lnd-payer listchannels 2>/dev/null | jq -r --arg pk "$dest_pub" '[.channels[]? | select(.remote_pubkey==$pk and .active==true)] | length' 2>/dev/null || echo 0)
+    if [[ "$has_active" =~ ^[0-9]+$ ]] && (( has_active > 0 )); then
+      echo "[=] Channel is active"
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "[!] No active channel after retries"
+  echo "payer peers: $(lncli_cmd lnd-payer listpeers 2>/dev/null || true)"
+  echo "payer channels: $(lncli_cmd lnd-payer listchannels 2>/dev/null || true)"
+  echo "payer pending: $(lncli_cmd lnd-payer pendingchannels 2>/dev/null || true)"
+  echo "payer getinfo: $(lncli_cmd lnd-payer getinfo 2>/dev/null || true)"
+  echo "merchant getinfo: $(lncli_cmd lnd-merchant getinfo 2>/dev/null || true)"
+  return 1
+}
+
 usage() {
   echo "Usage: $0 {up|down|status}"
   exit 1
@@ -181,9 +296,9 @@ if [[ ${1:-} == "up" ]]; then
   wait_lnd_ready lnd-merchant
   wait_lnd_ready lnd-payer
 
+  ensure_lnd_synced
   fund_payer
-  connect_nodes
-  open_channel
+  ensure_active_channel
 
   echo "[+] Restarting LNbits so it sees LND macaroons"
   $COMPOSE restart lnbits >/dev/null
