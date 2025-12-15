@@ -49,11 +49,9 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
     }
     if (typeof window === 'undefined') return 'missing';
     if (hasSigner) return 'ready';
-    const enable = (nostr as unknown as { enable?: () => Promise<unknown> } | undefined)?.enable;
-    const getPublicKey = nostr?.getPublicKey;
-    const has = typeof getPublicKey === 'function';
-    setNostrPresent(has);
-    if (!has) {
+    const hasGetPublicKey = typeof nostr?.getPublicKey === 'function';
+    setNostrPresent(hasGetPublicKey);
+    if (!hasGetPublicKey) {
       setStatus('missing');
       setError(null);
       setLastHint('No window.nostr found. Ensure a NIP-07 extension (Alby, nos2x, etc.) is installed and enabled for this site.');
@@ -63,14 +61,16 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
     setStatus('checking');
     setError(null);
     try {
+      // Avoid unbound method calls: some NIP-07 implementations rely on `this`.
+      const enable = (nostr as unknown as { enable?: () => Promise<unknown> } | undefined)?.enable;
       if (mode === 'request' && typeof enable === 'function') {
         await Promise.race([
-          enable(),
+          (nostr as unknown as { enable: () => Promise<unknown> }).enable(),
           new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
         ]);
       }
       const pub = await Promise.race([
-        getPublicKey(),
+        (nostr as unknown as { getPublicKey: () => Promise<string> }).getPublicKey(),
         new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
       ]);
       const encoded = safe(() => nip19.npubEncode(pub)) ?? pub;
