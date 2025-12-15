@@ -9,6 +9,8 @@ type Props = {
 
 type Status = 'checking' | 'ready' | 'missing' | 'error';
 
+type DetectMode = 'auto' | 'request';
+
 export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
   const timeoutMs = 12000;
   const [status, setStatus] = useState<Status>('checking');
@@ -30,13 +32,24 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
     return typeof window !== 'undefined' ? window.nostr : undefined;
   }, [enableMock]);
 
-  const tryOnce = useCallback(async (): Promise<Status> => {
+  useEffect(() => {
+    if (!hasSigner) return;
+    setStatus('ready');
+    setError(null);
+    setLastHint(null);
+    setLastCheckedAt(Date.now());
+    if (npub) setDetectedNpub(npub);
+  }, [hasSigner, npub]);
+
+  const tryOnce = useCallback(async (mode: DetectMode): Promise<Status> => {
     if (demoOff) {
       setStatus('missing');
       setError(null);
       return 'missing';
     }
     if (typeof window === 'undefined') return 'missing';
+    if (hasSigner) return 'ready';
+    const enable = (nostr as unknown as { enable?: () => Promise<unknown> } | undefined)?.enable;
     const getPublicKey = nostr?.getPublicKey;
     const has = typeof getPublicKey === 'function';
     setNostrPresent(has);
@@ -51,6 +64,12 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
     setError(null);
     const started = Date.now();
     try {
+      if (mode === 'request' && typeof enable === 'function') {
+        await Promise.race([
+          enable(),
+          new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
+        ]);
+      }
       const pub = await Promise.race([
         getPublicKey(),
         new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
@@ -62,33 +81,43 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
       setLastHint(null);
       return 'ready';
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus('error');
-      setLastCheckedAt(Date.now());
-      const errMsg = err instanceof Error ? err.message : String(err);
-      const hint = errMsg === 'timeout'
-        ? 'Signer did not respond. Open your NIP-07 extension, unlock it, and allow https://localhost:4173 then retry.'
-        : 'Signer responded with error. It may need you to approve access in the extension popup or settings.';
-      setLastHint(hint);
-      return 'error';
-    }
-  }, [demoOff, nostr]);
+      const msg = err instanceof Error ? err.message : String(err);
+      const looksLikeNeedsEnable =
+        typeof msg === 'string' &&
+        (msg.includes("reading 'enable'") ||
+          msg.includes("reading \"enable\"") ||
+          msg.toLowerCase().includes('not enabled') ||
+          msg.toLowerCase().includes('enable'));
 
-  const detect = useCallback(async () => {
-    if (status === 'ready') return;
+      setError(msg);
+      setStatus(looksLikeNeedsEnable ? 'missing' : 'error');
+      setLastCheckedAt(Date.now());
+      const hint = msg === 'timeout'
+        ? 'Signer did not respond. Open your NIP-07 extension, unlock it, and allow https://localhost:4173 then retry.'
+        : looksLikeNeedsEnable
+          ? 'Signer requires permission. Click “Request permission” and approve in your NIP-07 extension.'
+          : 'Signer responded with error. It may need you to approve access in the extension popup or settings.';
+      setLastHint(hint);
+      return looksLikeNeedsEnable ? 'missing' : 'error';
+    }
+  }, [demoOff, nostr, hasSigner, timeoutMs]);
+
+  const detect = useCallback(async (mode: DetectMode = 'auto') => {
+    if (status === 'ready' || hasSigner) return;
     let finalStatus: Status = 'checking';
-    // run up to 3 attempts quickly; stop if ready
-    for (let i = 0; i < 3; i += 1) {
-      finalStatus = await tryOnce();
+    // auto: single attempt to avoid spamming extensions; request: allow a few retries
+    const attempts = mode === 'request' ? 3 : 1;
+    for (let i = 0; i < attempts; i += 1) {
+      finalStatus = await tryOnce(mode);
       if (finalStatus === 'ready') break;
-      if (i < 2) await new Promise((r) => setTimeout(r, 500));
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 500));
     }
     if (finalStatus === 'checking') {
       setStatus('missing');
       setError('timeout');
       setLastHint('No response after 5s. Open your NIP-07 extension and allow this site.');
     }
-  }, [status, tryOnce]);
+  }, [status, hasSigner, tryOnce]);
 
   useEffect(() => {
     detect();
@@ -233,7 +262,7 @@ export function Nip07Status({ npub, hasSigner, enableMock }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => window.nostr?.getPublicKey && detect()}
+          onClick={() => detect('request')}
           className="nostrstack-btn nostrstack-btn--sm"
           style={{
             borderRadius: 'var(--nostrstack-radius-pill)',
