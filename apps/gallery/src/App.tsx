@@ -108,6 +108,32 @@ function bumpRecv(stat: RelayStats[string] | undefined, now: number): RelayStats
   };
 }
 
+function bumpSend(stat: RelayStats[string] | undefined, now: number): RelayStats[string] {
+  const history = (stat?.sendHistory ?? []).filter((h) => now - h.ts <= 60000);
+  history.unshift({ ts: now });
+  const sendPerMin = history.length;
+  return {
+    recv: stat?.recv ?? 0,
+    ...stat,
+    send: (stat?.send ?? 0) + 1,
+    lastSentAt: now,
+    sendHistory: history.slice(0, 120),
+    sendPerMin
+  };
+}
+
+function bumpError(stat: RelayStats[string] | undefined, now: number, message?: string): RelayStats[string] {
+  return {
+    recv: stat?.recv ?? 0,
+    ...stat,
+    errorCount: (stat?.errorCount ?? 0) + 1,
+    lastError: message ?? stat?.lastError,
+    lastEvent: message
+      ? { ts: now, direction: 'error', label: 'Error', sublabel: message, payload: { message } }
+      : stat?.lastEvent
+  };
+}
+
 function resolveLogStreamUrl(base: string) {
   if (base.includes('localhost:3001')) return '/api/logs/stream';
   return `${base.replace(/\/$/, '')}/logs/stream`;
@@ -313,9 +339,8 @@ function useMountWidgets(
           const active = info.relays.length ? info.relays : relaysEnvDefault;
           setRelayStats((prev) => {
             const next = { ...prev };
-            const now = Date.now();
             active.forEach((r: string) => {
-              next[r] = { ...(next[r] ?? { recv: 0 }), last: now, sendStatus: 'ok' };
+              next[r] = { ...(next[r] ?? { recv: 0 }), sendStatus: 'ok' };
             });
             return next;
           });
@@ -345,7 +370,17 @@ function useMountWidgets(
           setRelayStats((prev: RelayStats) => {
             const next = { ...prev };
             targets.forEach((relay: string) => {
-              next[relay] = { ...bumpRecv(next[relay], now), sendStatus: 'ok' };
+              next[relay] = {
+                ...bumpRecv(next[relay], now),
+                sendStatus: 'ok',
+                lastEvent: {
+                  ts: now,
+                  direction: 'recv',
+                  label,
+                  sublabel,
+                  payload: { relay, event: ev }
+                }
+              };
             });
             return next;
           });
@@ -621,7 +656,6 @@ export default function App() {
               ...prev,
               [url]: {
                 ...(prev[url] ?? { recv: 0 }),
-                last: Date.now(),
                 sendStatus: 'ok',
                 online: true,
                 latencyMs,
@@ -819,10 +853,6 @@ export default function App() {
         return;
       }
       const relay = profileRelays[0] ?? 'wss://relay.damus.io';
-      setRelayStats((prev) => ({
-        ...prev,
-        [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'sending', lastSentAt: Date.now() }
-      }));
       const template: EventTemplate & { pubkey: string } = {
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -830,6 +860,22 @@ export default function App() {
         content: message || 'nostrstack ping',
         pubkey: activePubkey ?? ''
       };
+      const sendingAt = Date.now();
+      setRelayStats((prev) => ({
+        ...prev,
+        [relay]: {
+          ...(prev[relay] ?? { recv: 0 }),
+          sendStatus: 'sending',
+          lastSentAt: sendingAt,
+          lastEvent: {
+            ts: sendingAt,
+            direction: 'send',
+            label: 'Sending…',
+            sublabel: `kind ${template.kind}`,
+            payload: { relay, event: template }
+          }
+        }
+      }));
       const signed = (await window.nostr!.signEvent(template)) as NostrEvent;
       const r = await Relay.connect(relay);
       await r.publish(signed);
@@ -838,9 +884,20 @@ export default function App() {
       } catch {
         /* ignore */
       }
+      const sentAt = Date.now();
       setRelayStats((prev) => ({
         ...prev,
-        [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'ok', lastSentAt: Date.now() }
+        [relay]: {
+          ...bumpSend(prev[relay], sentAt),
+          sendStatus: 'ok',
+          lastEvent: {
+            ts: sentAt,
+            direction: 'send',
+            label: signed.content || 'sent note',
+            sublabel: `kind ${signed.kind} · pubkey ${signed.pubkey.slice(0, 8)}…${signed.pubkey.slice(-4)}`,
+            payload: { relay, event: signed }
+          }
+        }
       }));
       setActivity((prev) =>
         [
@@ -860,12 +917,25 @@ export default function App() {
       setLastNoteResult(`Published note to ${relay}`);
     } catch (err) {
       const relay = profileRelays[0] ?? 'wss://relay.damus.io';
+      const msg = err instanceof Error ? err.message : String(err);
+      const erroredAt = Date.now();
       setRelayStats((prev) => ({
         ...prev,
-        [relay]: { ...(prev[relay] ?? { recv: 0 }), sendStatus: 'error', lastSentAt: Date.now() }
+        [relay]: {
+          ...bumpError(prev[relay], erroredAt, msg),
+          sendStatus: 'error',
+          lastSentAt: erroredAt,
+          lastEvent: {
+            ts: erroredAt,
+            direction: 'error',
+            label: 'Send failed',
+            sublabel: msg,
+            payload: err instanceof Error ? { message: err.message, stack: err.stack } : err
+          }
+        }
       }));
       setLastNoteOk(false);
-      setLastNoteResult(err instanceof Error ? err.message : String(err));
+      setLastNoteResult(msg);
       setActivity((prev) =>
         [
           {

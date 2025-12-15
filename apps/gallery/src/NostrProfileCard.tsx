@@ -189,30 +189,46 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profileS
 
       <ProfileDetails fullProfile={fullProfile} status={profileStatus} />
       <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        {relays.map((r) => (
-          <RelayCard
-            key={r}
-            url={r}
-            meta={{
-              name: relayStats?.[r]?.name,
-              software: relayStats?.[r]?.software,
-              version: relayStats?.[r]?.version,
-              description: relayStats?.[r]?.description,
-              icon: relayStats?.[r]?.icon,
-              supportedNips: relayStats?.[r]?.supportedNips,
-              paymentRequired: relayStats?.[r]?.paymentRequired,
-              authRequired: relayStats?.[r]?.authRequired
-            }}
-            recv={relayStats?.[r]?.recv ?? 0}
-            recvPerMin={relayStats?.[r]?.recvPerMin}
-            sendStatus={relayStats?.[r]?.sendStatus}
-            last={relayStats?.[r]?.last}
-            lastSentAt={relayStats?.[r]?.lastSentAt}
-            latencyMs={relayStats?.[r]?.latencyMs}
-            online={relayStats?.[r]?.online}
-            lastProbeAt={relayStats?.[r]?.lastProbeAt}
-          />
-        ))}
+        {relays.map((r) => {
+          const stat = relayStats?.[r];
+          return (
+            <RelayCard
+              key={r}
+              url={r}
+              meta={{
+                name: stat?.name,
+                software: stat?.software,
+                version: stat?.version,
+                description: stat?.description,
+                icon: stat?.icon,
+                supportedNips: stat?.supportedNips,
+                paymentRequired: stat?.paymentRequired,
+                authRequired: stat?.authRequired,
+                contact: stat?.contact,
+                pubkey: stat?.pubkey,
+                paymentsUrl: stat?.paymentsUrl,
+                language: stat?.language,
+                tags: stat?.tags,
+                limitation: stat?.limitation
+              }}
+              recv={stat?.recv ?? 0}
+              recvPerMin={stat?.recvPerMin}
+              recvHistory={stat?.recvHistory}
+              send={stat?.send ?? 0}
+              sendPerMin={stat?.sendPerMin}
+              sendHistory={stat?.sendHistory}
+              errorCount={stat?.errorCount ?? 0}
+              lastError={stat?.lastError}
+              sendStatus={stat?.sendStatus}
+              last={stat?.last}
+              lastSentAt={stat?.lastSentAt}
+              lastEvent={stat?.lastEvent}
+              latencyMs={stat?.latencyMs}
+              online={stat?.online}
+              lastProbeAt={stat?.lastProbeAt}
+            />
+          );
+        })}
       </div>
     </div>
   );

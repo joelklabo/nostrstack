@@ -16,6 +16,18 @@ export type RelayStat = {
   recvHistory?: Array<{ ts: number }>;
   last?: number;
   lastSentAt?: number;
+  send?: number;
+  sendPerMin?: number;
+  sendHistory?: Array<{ ts: number }>;
+  errorCount?: number;
+  lastError?: string;
+  lastEvent?: {
+    ts: number;
+    direction: 'recv' | 'send' | 'error';
+    label: string;
+    sublabel?: string;
+    payload?: unknown;
+  };
   name?: string;
   description?: string;
   software?: string;

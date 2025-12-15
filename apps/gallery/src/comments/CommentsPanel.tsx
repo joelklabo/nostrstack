@@ -142,13 +142,26 @@ export function CommentsPanel({
                 icon: data.icon,
                 supportedNips: data.supportedNips,
                 paymentRequired: data.paymentRequired,
-                authRequired: data.authRequired
+                authRequired: data.authRequired,
+                contact: data.contact,
+                pubkey: data.pubkey,
+                paymentsUrl: data.paymentsUrl,
+                language: data.language,
+                tags: data.tags,
+                limitation: data.limitation
               }}
               recv={data.recv}
               recvPerMin={data.recvPerMin}
+              recvHistory={data.recvHistory}
+              send={data.send ?? 0}
+              sendPerMin={data.sendPerMin}
+              sendHistory={data.sendHistory}
+              errorCount={data.errorCount ?? 0}
+              lastError={data.lastError}
               sendStatus={data.sendStatus}
               last={data.last}
               lastSentAt={data.lastSentAt}
+              lastEvent={data.lastEvent}
               latencyMs={data.latencyMs}
               online={data.online}
               lastProbeAt={data.lastProbeAt}
