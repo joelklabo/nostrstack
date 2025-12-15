@@ -645,9 +645,27 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const invoiceBox = document.createElement('div');
   invoiceBox.className = 'nostrstack-invoice-box';
+  invoiceBox.style.position = 'relative'; // For inline copy button
   const invoiceCode = document.createElement('code');
   invoiceCode.className = 'nostrstack-code';
   invoiceBox.appendChild(invoiceCode);
+
+  const { el: inlineCopyBtn, reset: resetInlineCopyBtn } = createCopyButton({
+    label: 'Copy',
+    variant: 'icon',
+    size: 'sm',
+    getText: () => currentInvoice ?? ''
+  });
+  inlineCopyBtn.className += ' nostrstack-btn--ghost nostrstack-invoice-copy';
+  inlineCopyBtn.style.position = 'absolute';
+  inlineCopyBtn.style.top = '4px';
+  inlineCopyBtn.style.right = '4px';
+  inlineCopyBtn.style.padding = '4px';
+  inlineCopyBtn.style.width = '28px';
+  inlineCopyBtn.style.height = '28px';
+  inlineCopyBtn.style.background = 'var(--nostrstack-color-surface)';
+  inlineCopyBtn.style.border = '1px solid var(--nostrstack-color-border)';
+  invoiceBox.appendChild(inlineCopyBtn);
 
   const actions = document.createElement('div');
   actions.className = 'nostrstack-tip__actions';
@@ -1049,6 +1067,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       invoiceCode.textContent = pr;
       copyBtn.disabled = false;
       resetCopyBtn();
+      resetInlineCopyBtn();
       openWallet.href = `lightning:${pr}`;
       openWallet.style.display = '';
       paidBtn.disabled = false;
@@ -1061,7 +1080,8 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
         abortQr();
         qrAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
         const signal = qrAbort?.signal;
-        void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: 260, signal }).catch((err) => {
+        const qrSize = opts.size === 'compact' ? 180 : 260;
+        void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: qrSize, signal }).catch((err) => {
           const name = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
           if (name === 'AbortError') return;
           console.warn('tip qr render failed', err);

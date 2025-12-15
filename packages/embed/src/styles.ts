@@ -789,6 +789,7 @@ export const nostrstackComponentsCss = `
   gap: var(--nostrstack-space-4);
   position: relative;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 /* Header with lightning bolt accent */
@@ -832,9 +833,9 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip__amt {
   position: relative;
   border-radius: var(--nostrstack-radius-pill);
-  border: 1.5px solid var(--nostrstack-color-border);
+  border: 1px solid var(--nostrstack-color-border);
   background: var(--nostrstack-color-surface);
-  font-weight: 900;
+  font-weight: 700;
   font-size: 0.95rem;
   padding: 0.5rem 1rem;
   cursor: pointer;
@@ -843,7 +844,8 @@ export const nostrstackComponentsCss = `
     transform var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-snappy),
     box-shadow var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
     border-color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
-    background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
+    background var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard),
+    color var(--nostrstack-motion-fast) var(--nostrstack-motion-ease-standard);
 }
 
 .nostrstack-tip__amt::before {
@@ -858,9 +860,10 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip__amt:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px);
   border-color: var(--nostrstack-color-border-strong);
-  box-shadow: var(--nostrstack-shadow-md);
+  box-shadow: var(--nostrstack-shadow-sm);
+  background: var(--nostrstack-color-surface-subtle);
 }
 
 .nostrstack-tip__amt:active:not(:disabled) {
@@ -872,8 +875,7 @@ export const nostrstackComponentsCss = `
   color: var(--nostrstack-color-text-on-strong);
   box-shadow:
     0 0 0 1px color-mix(in oklab, var(--nostrstack-color-primary) 50%, transparent),
-    0 4px 16px color-mix(in oklab, var(--nostrstack-color-primary) 35%, transparent),
-    0 8px 32px color-mix(in oklab, var(--nostrstack-color-accent) 25%, transparent);
+    0 4px 12px color-mix(in oklab, var(--nostrstack-color-primary) 25%, transparent);
 }
 
 .nostrstack-tip__amt[data-selected="true"]::before {
@@ -883,7 +885,7 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip__amt[data-selected="true"] .nostrstack-tip__amtLabel {
   position: relative;
   z-index: 1;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -894,7 +896,7 @@ export const nostrstackComponentsCss = `
 
 @keyframes nostrstack-pill-select {
   0% { transform: scale(1); }
-  40% { transform: scale(1.08); }
+  40% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
@@ -910,40 +912,49 @@ export const nostrstackComponentsCss = `
   width: 100px;
   border-radius: var(--nostrstack-radius-pill);
   text-align: center;
-  font-weight: 800;
+  font-weight: 700;
+  border-color: var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface);
+  transition: all 0.2s ease;
+}
+.nostrstack-tip__customInput:focus {
+  width: 120px;
+  border-color: var(--nostrstack-color-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--nostrstack-color-primary) 20%, transparent);
 }
 
 .nostrstack-tip__go {
   border-radius: var(--nostrstack-radius-pill);
   min-width: 70px;
+  font-weight: 700;
 }
 
 /* Note input */
 .nostrstack-tip__note {
   width: 100%;
   border-radius: var(--nostrstack-radius-md);
+  font-size: 0.9rem;
+  background: var(--nostrstack-color-surface-subtle);
+  border-color: transparent;
+}
+.nostrstack-tip__note:focus {
+  background: var(--nostrstack-color-surface);
+  border-color: var(--nostrstack-color-primary);
 }
 
 /* Invoice panel - glassmorphism */
 .nostrstack-tip__panel {
   position: relative;
   border-radius: var(--nostrstack-radius-lg);
-  border: 1px solid color-mix(in oklab, var(--nostrstack-color-border) 70%, transparent);
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-border) 60%, transparent);
   background:
-    radial-gradient(ellipse 800px 600px at 20% 10%,
-      color-mix(in oklab, var(--nostrstack-color-primary) 15%, transparent),
-      transparent 60%),
-    radial-gradient(ellipse 600px 400px at 80% 90%,
-      color-mix(in oklab, var(--nostrstack-color-accent) 10%, transparent),
-      transparent 60%),
-    linear-gradient(180deg,
-      color-mix(in oklab, var(--nostrstack-color-surface) 95%, transparent),
-      color-mix(in oklab, var(--nostrstack-color-surface-subtle) 90%, transparent));
-  backdrop-filter: blur(12px);
+    radial-gradient(circle at 0% 0%, color-mix(in oklab, var(--nostrstack-color-primary) 6%, transparent), transparent 50%),
+    radial-gradient(circle at 100% 100%, color-mix(in oklab, var(--nostrstack-color-accent) 6%, transparent), transparent 50%),
+    var(--nostrstack-color-surface);
   padding: var(--nostrstack-space-4);
   box-shadow:
     var(--nostrstack-shadow-lg),
-    inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
+    inset 0 0 0 1px color-mix(in oklab, white 10%, transparent);
   display: grid;
   gap: var(--nostrstack-space-3);
   grid-template-columns: auto 1fr;
@@ -959,19 +970,23 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip__panel[data-state="waiting"] {
-  border-color: color-mix(in oklab, var(--nostrstack-color-primary) 35%, var(--nostrstack-color-border));
+  border-color: color-mix(in oklab, var(--nostrstack-color-primary) 40%, var(--nostrstack-color-border));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--nostrstack-color-primary) 20%, transparent), var(--nostrstack-shadow-lg);
 }
 
 .nostrstack-tip__panel[data-state="paid"] {
-  border-color: color-mix(in oklab, var(--nostrstack-color-success) 45%, var(--nostrstack-color-border));
+  border-color: color-mix(in oklab, var(--nostrstack-color-success) 50%, var(--nostrstack-color-border));
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--nostrstack-color-success) 8%, transparent), transparent 70%),
+    var(--nostrstack-color-surface);
 }
 
 /* Countdown ring */
 .nostrstack-tip__ring {
   grid-area: ring;
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
 }
@@ -986,14 +1001,14 @@ export const nostrstackComponentsCss = `
 
 .nostrstack-tip__ringBg {
   fill: none;
-  stroke: var(--nostrstack-color-border);
-  stroke-width: 4;
+  stroke: var(--nostrstack-color-surface-strong);
+  stroke-width: 5;
 }
 
 .nostrstack-tip__ringProgress {
   fill: none;
   stroke: var(--nostrstack-color-primary);
-  stroke-width: 4;
+  stroke-width: 5;
   stroke-linecap: round;
   stroke-dasharray: 188.5; /* 2 * PI * 30 */
   stroke-dashoffset: var(--ring-offset, 0);
@@ -1010,24 +1025,26 @@ export const nostrstackComponentsCss = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 0;
   z-index: 1;
 }
 
 .nostrstack-tip__ringTime {
-  font-weight: 950;
-  font-size: 0.95rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: var(--nostrstack-color-text);
   line-height: 1;
 }
 
 .nostrstack-tip__ringLabel {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--nostrstack-color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
 }
 
 .nostrstack-tip__ringIcon {
@@ -1039,6 +1056,7 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip__panel > .nostrstack-status {
   grid-area: status;
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 /* Realtime status with pulse */
@@ -1046,15 +1064,15 @@ export const nostrstackComponentsCss = `
   grid-area: realtime;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.82rem;
-  font-weight: 750;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--nostrstack-color-text-muted);
 }
 
 .nostrstack-tip__realtimeDot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--nostrstack-color-text-subtle);
   flex-shrink: 0;
@@ -1089,18 +1107,19 @@ export const nostrstackComponentsCss = `
 /* QR code */
 .nostrstack-tip__qr {
   grid-area: qr;
-  padding: 0.65rem;
-  background: var(--nostrstack-color-surface);
+  padding: 0.75rem;
+  background: white;
   border-radius: var(--nostrstack-radius-lg);
   border: 1px solid var(--nostrstack-color-border);
-  box-shadow: var(--nostrstack-shadow-md);
-  max-width: 220px;
+  box-shadow: var(--nostrstack-shadow-sm);
+  max-width: 200px;
   margin: 0 auto;
-  transition: box-shadow var(--nostrstack-motion-base) var(--nostrstack-motion-ease-standard);
+  transition: transform var(--nostrstack-motion-base) var(--nostrstack-motion-ease-standard);
 }
 
 .nostrstack-tip__qr:hover {
-  box-shadow: var(--nostrstack-shadow-lg);
+  transform: scale(1.02);
+  box-shadow: var(--nostrstack-shadow-md);
 }
 
 .nostrstack-tip__qr img,
@@ -1126,8 +1145,10 @@ export const nostrstackComponentsCss = `
   grid-area: invoice;
   width: 100%;
   margin-top: 0;
-  max-height: 100px;
-  font-size: 0.8rem;
+  max-height: 80px;
+  font-size: 0.75rem;
+  background: var(--nostrstack-color-surface-strong);
+  border-color: transparent;
 }
 
 /* Success celebration - lightning bolts! */
@@ -1142,17 +1163,17 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip__celebrationBolt {
   position: absolute;
   top: -15%;
-  font-size: 1.8rem;
+  font-size: 2rem;
   opacity: 0;
-  animation: nostrstack-bolt-rain 1.1s var(--nostrstack-motion-ease-emphasized) forwards;
-  filter: drop-shadow(0 4px 8px color-mix(in oklab, var(--nostrstack-color-warning) 50%, transparent));
+  animation: nostrstack-bolt-rain 1.2s var(--nostrstack-motion-ease-emphasized) forwards;
+  filter: drop-shadow(0 0 10px var(--nostrstack-color-warning));
 }
 
 @keyframes nostrstack-bolt-rain {
-  0% { transform: translateY(0) rotate(-15deg) scale(0.8); opacity: 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { transform: translateY(140vh) rotate(25deg) scale(1); opacity: 0; }
+  0% { transform: translateY(0) rotate(-15deg) scale(0.5); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(120%) rotate(25deg) scale(1.2); opacity: 0; }
 }
 
 /* Confetti particles */
@@ -1167,17 +1188,17 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip__confetti span {
   position: absolute;
   top: -10%;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 2px;
   opacity: 0;
-  animation: nostrstack-confetti-fall 1.2s var(--nostrstack-motion-ease-emphasized) forwards;
+  animation: nostrstack-confetti-fall 1.5s var(--nostrstack-motion-ease-emphasized) forwards;
 }
 
 @keyframes nostrstack-confetti-fall {
   0% { transform: translateY(-10%) rotate(0deg) scale(0.5); opacity: 0; }
   10% { opacity: 1; transform: translateY(0) rotate(45deg) scale(1); }
-  100% { transform: translateY(130%) rotate(720deg) scale(0.8); opacity: 0; }
+  100% { transform: translateY(150%) rotate(720deg) scale(0.8); opacity: 0; }
 }
 
 /* Success burst ring */
@@ -1189,24 +1210,26 @@ export const nostrstackComponentsCss = `
   height: 200px;
   margin: -100px 0 0 -100px;
   border-radius: 50%;
-  border: 3px solid var(--nostrstack-color-success);
+  border: 4px solid var(--nostrstack-color-success);
   pointer-events: none;
-  animation: nostrstack-success-burst 600ms var(--nostrstack-motion-ease-emphasized) forwards;
+  animation: nostrstack-success-burst 800ms var(--nostrstack-motion-ease-emphasized) forwards;
+  box-shadow: 0 0 20px var(--nostrstack-color-success);
 }
 
 @keyframes nostrstack-success-burst {
-  0% { transform: scale(0.3); opacity: 0.8; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% { transform: scale(0.2); opacity: 0; border-width: 10px; }
+  20% { opacity: 1; }
+  100% { transform: scale(2); opacity: 0; border-width: 0px; }
 }
 
 /* Paid state glow */
 .nostrstack-tip[data-celebrate="true"] {
-  animation: nostrstack-celebrate-glow 400ms var(--nostrstack-motion-ease-emphasized);
+  animation: nostrstack-celebrate-glow 600ms var(--nostrstack-motion-ease-emphasized);
 }
 
 @keyframes nostrstack-celebrate-glow {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-color-success) 30%, transparent); }
-  50% { box-shadow: 0 0 40px 10px color-mix(in oklab, var(--nostrstack-color-success) 25%, transparent); }
+  50% { box-shadow: 0 0 50px 10px color-mix(in oklab, var(--nostrstack-color-success) 20%, transparent); }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
@@ -1214,17 +1237,13 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip--compact {
   padding: var(--nostrstack-space-3);
   gap: var(--nostrstack-space-2);
+  max-width: 320px; /* Enforce compactness */
 }
 
 .nostrstack-tip--compact .nostrstack-tip__header {
   flex-direction: row;
   align-items: center;
-}
-
-.nostrstack-tip--compact .nostrstack-tip__headerLeft {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--nostrstack-space-2);
+  margin-bottom: 0;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__title {
@@ -1232,25 +1251,35 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip--compact .nostrstack-tip__sub {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__amountRow {
   gap: var(--nostrstack-space-1);
+  justify-content: stretch;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__amt {
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.6rem;
   font-size: 0.85rem;
+  flex: 1;
+  text-align: center;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__custom {
   gap: var(--nostrstack-space-1);
+  width: 100%;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__customInput {
-  width: 80px;
-  padding: 0.35rem 0.5rem;
+  flex: 1;
+  width: auto;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.nostrstack-tip--compact .nostrstack-tip__go {
+  padding: 0.3rem 0.8rem;
   font-size: 0.85rem;
 }
 
@@ -1262,41 +1291,53 @@ export const nostrstackComponentsCss = `
 .nostrstack-tip--compact .nostrstack-tip__panel {
   padding: var(--nostrstack-space-3);
   gap: var(--nostrstack-space-2);
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr;
   grid-template-areas:
-    "ring status"
-    "ring realtime"
-    "qr actions"
-    "invoice invoice";
+    "status"
+    "qr"
+    "ring"
+    "realtime"
+    "actions";
+  text-align: center;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__ring {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__ringTime {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__ringLabel {
-  font-size: 0.55rem;
+  font-size: 0.5rem;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__qr {
   max-width: 140px;
   padding: 0.4rem;
+  margin: 0 auto;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__actions {
   flex-direction: column;
   align-items: stretch;
   gap: var(--nostrstack-space-1);
+  width: 100%;
+}
+
+.nostrstack-tip--compact .nostrstack-tip__actions .nostrstack-btn {
+  width: 100%;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__panel .nostrstack-invoice-box {
-  max-height: 60px;
-  font-size: 0.7rem;
+  display: none; /* Hide invoice text in compact mode to save space */
+}
+
+.nostrstack-tip--compact .nostrstack-tip__realtime {
+  justify-content: center;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__feedWrap {
@@ -1318,14 +1359,11 @@ export const nostrstackComponentsCss = `
       "qr"
       "actions"
       "invoice";
+    text-align: center;
   }
 
   .nostrstack-tip__ring {
     justify-self: center;
-  }
-
-  .nostrstack-tip__panel > .nostrstack-status {
-    text-align: center;
   }
 
   .nostrstack-tip__realtime {
