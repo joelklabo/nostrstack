@@ -617,6 +617,28 @@
   --nostrstack-copybtn-icon: var(--nostrstack-color-text);
 }
 
+.nostrstack-gallery .nostrstack-copybtn__bubble {
+  position: absolute;
+  left: 50%;
+  top: -0.55rem;
+  transform: translate(-50%, 0) scale(0.96);
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background: color-mix(in oklab, var(--nostrstack-color-success) 18%, var(--nostrstack-color-surface));
+  border: 1px solid color-mix(in oklab, var(--nostrstack-color-success) 40%, var(--nostrstack-color-border));
+  color: var(--nostrstack-color-text);
+  box-shadow: var(--nostrstack-shadow-sm);
+  opacity: 0;
+  max-width: min(220px, 90%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
 .nostrstack-gallery .nostrstack-copybtn__icon {
   display: inline-grid;
   place-items: center;
@@ -654,6 +676,10 @@
     animation: nostrstack-copybtn-pop 360ms var(--nostrstack-motion-ease-emphasized);
   }
 
+  .nostrstack-gallery .nostrstack-copybtn[data-copy-state="copied"] .nostrstack-copybtn__bubble {
+    animation: nostrstack-copybtn-float 850ms var(--nostrstack-motion-ease-standard);
+  }
+
   .nostrstack-gallery .nostrstack-copybtn[data-copy-state="copied"]::after {
     content: '';
     position: absolute;
@@ -668,6 +694,10 @@
     pointer-events: none;
     animation: nostrstack-copybtn-shine 650ms var(--nostrstack-motion-ease-standard);
   }
+
+  .nostrstack-gallery .nostrstack-copybtn[data-copy-state="error"] {
+    animation: nostrstack-copybtn-shake 420ms var(--nostrstack-motion-ease-emphasized);
+  }
 }
 
 @keyframes nostrstack-copybtn-pop {
@@ -680,6 +710,22 @@
   0% { opacity: 0; transform: translateX(-70%) rotate(20deg); }
   15% { opacity: 1; }
   100% { opacity: 0; transform: translateX(45%) rotate(20deg); }
+}
+
+@keyframes nostrstack-copybtn-float {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.96); }
+  14% { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -14px) scale(1); }
+}
+
+@keyframes nostrstack-copybtn-shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
 }
 
 /* ===== JSON view ===== */

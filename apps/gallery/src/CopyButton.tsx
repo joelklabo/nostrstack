@@ -46,10 +46,20 @@ export function CopyButton({
     try {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
       await copyToClipboard(text);
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(10);
+      } catch {
+        /* ignore */
+      }
       setState('copied');
       toast({ message: toastMessageFromLabel(label), tone: 'success' });
     } catch (err) {
       console.warn('copy failed', err);
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate([15, 25, 15]);
+      } catch {
+        /* ignore */
+      }
       setState('error');
       toast({ message: 'Copy failed', tone: 'danger' });
     } finally {
@@ -82,6 +92,9 @@ export function CopyButton({
         data-variant={variant}
         disabled={isDisabled}
       >
+        <span className="nostrstack-copybtn__bubble" aria-hidden="true">
+          {toastMessageFromLabel(label)}
+        </span>
         <span className="nostrstack-copybtn__icon" aria-hidden="true">
           {state === 'copied' ? <CheckIcon /> : state === 'error' ? <ErrorIcon /> : <CopyIcon />}
         </span>

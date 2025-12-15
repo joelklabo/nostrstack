@@ -1607,7 +1607,7 @@ export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {
     onInvoice: async (pr) => {
       try {
         if (opts.onInvoice) await opts.onInvoice(pr);
-        else if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(pr);
+        else await copyToClipboard(pr);
       } catch (e) {
         console.warn('clipboard copy failed', e);
       }
@@ -1651,7 +1651,7 @@ export function mountTipWidget(container: HTMLElement, opts: MountTipWidgetOptio
     onInvoice: async (info) => {
       try {
         if (opts.onInvoice) await opts.onInvoice(info);
-        else if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(info.pr);
+        else await copyToClipboard(info.pr);
       } catch (e) {
         console.warn('clipboard copy failed', e);
       }
@@ -1705,7 +1705,7 @@ export function mountPayToAction(container: HTMLElement, opts: MountPayOptions =
     onInvoice: async (pr) => {
       try {
         if (opts.onInvoice) await opts.onInvoice(pr);
-        else if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(pr);
+        else await copyToClipboard(pr);
       } catch (e) {
         console.warn('clipboard copy failed', e);
       }
