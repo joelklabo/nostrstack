@@ -916,6 +916,9 @@ export const nostrstackComponentsCss = `
   border-color: var(--nostrstack-color-border);
   background: var(--nostrstack-color-surface);
   transition: all 0.2s ease;
+  padding: 0.35rem 0.65rem; /* Match btn--sm padding */
+  font-size: 0.92rem; /* Match btn--sm font size */
+  height: 34px; /* Explicit height to match buttons */
 }
 .nostrstack-tip__customInput:focus {
   width: 120px;
@@ -927,6 +930,7 @@ export const nostrstackComponentsCss = `
   border-radius: var(--nostrstack-radius-pill);
   min-width: 70px;
   font-weight: 700;
+  height: 34px; /* Explicit height to match input */
 }
 
 /* Note input */
@@ -1276,11 +1280,13 @@ export const nostrstackComponentsCss = `
   width: auto;
   padding: 0.3rem 0.5rem;
   font-size: 0.85rem;
+  height: 30px;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__go {
   padding: 0.3rem 0.8rem;
   font-size: 0.85rem;
+  height: 30px;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__note {

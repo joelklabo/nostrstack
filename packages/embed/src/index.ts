@@ -653,6 +653,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const invoiceBox = document.createElement('div');
   invoiceBox.className = 'nostrstack-invoice-box';
   invoiceBox.style.position = 'relative'; // For inline copy button
+  invoiceBox.style.display = 'none'; // Hidden until invoice generated
   const invoiceCode = document.createElement('code');
   invoiceCode.className = 'nostrstack-code';
   invoiceBox.appendChild(invoiceCode);
@@ -842,7 +843,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const setRealtime = (next: typeof realtimeState) => {
     realtimeState = next;
     realtime.dataset.state = next;
-    if (!wsUrl) {
+    if (!wsUrl || !currentInvoice) {
       realtimeText.textContent = '';
       return;
     }
@@ -1028,6 +1029,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     paidBtn.textContent = "I've paid";
     openWallet.style.display = 'none';
     invoiceCode.textContent = '';
+    invoiceBox.style.display = 'none';
     qrWrap.replaceChildren();
     abortQr();
     currentInvoice = null;
@@ -1072,6 +1074,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       currentInvoice = pr;
       currentProviderRef = providerRef;
       invoiceCode.textContent = pr;
+      invoiceBox.style.display = 'block';
       copyBtn.disabled = false;
       resetCopyBtn();
       resetInlineCopyBtn();
