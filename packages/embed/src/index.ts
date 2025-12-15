@@ -585,7 +585,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const panel = document.createElement('div');
   panel.className = 'nostrstack-tip__panel';
-  panel.dataset.state = 'idle';
+  panel.dataset.state = 'initial';
 
   // Countdown ring
   const ring = document.createElement('div');
@@ -632,7 +632,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   status.className = 'nostrstack-status nostrstack-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
-  status.textContent = 'Pick an amount to generate an invoice.';
+  status.textContent = '';
 
   // Realtime indicator with pulse dot
   const realtime = document.createElement('div');
@@ -1043,7 +1043,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     ringTime.style.color = '';
     ringLabel.textContent = 'left';
     ringProgress.style.setProperty('--ring-offset', '0');
-    panel.dataset.state = 'idle';
+    panel.dataset.state = 'loading';
 
     try {
       const meta: Record<string, unknown> = { ...(opts.metadata ?? {}) };
