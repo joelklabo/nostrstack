@@ -106,6 +106,12 @@ export function InvoicePopover({
 
   if (!invoice) return null;
 
+  const prettyInvoice = (() => {
+    const head = invoice.slice(0, 18);
+    const tail = invoice.length > 28 ? invoice.slice(-10) : '';
+    return tail ? `${head}…${tail}` : invoice;
+  })();
+
   const copyInvoice = async () => {
     try {
       if (!navigator?.clipboard?.writeText) throw new Error('Clipboard not available');
@@ -121,7 +127,7 @@ export function InvoicePopover({
     <div className="nostrstack-popover-overlay nostrstack-gallery-popover-overlay" onClick={onClose}>
       <style>{pulseCss}</style>
       <div
-        className="nostrstack-popover"
+        className="nostrstack-popover nostrstack-invoice-modal"
         onClick={(e) => e.stopPropagation()}
         aria-live="polite"
         role="dialog"
@@ -154,216 +160,131 @@ export function InvoicePopover({
           </button>
         </div>
 
-        <div style={{ display: 'grid', gap: '0.9rem' }}>
-          <div
-            className="nostrstack-popover-grid"
-          >
-            <div
-              className="nostrstack-qr"
+        <div className="nostrstack-invoice-modal__grid">
+          <div className="nostrstack-invoice-modal__qrCard">
+            <button
+              type="button"
+              onClick={copyInvoice}
+              aria-label="Copy invoice"
+              className="nostrstack-invoice-modal__qrBtn"
             >
-              <button
-                type="button"
-                onClick={copyInvoice}
-                aria-label="Copy invoice"
-                className="nostrstack-invoice-qr"
-                style={{
-                  width: '100%',
-                  border: 'none',
-                  padding: 0,
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  borderRadius: 'var(--nostrstack-radius-md)'
-                }}
-              >
-                {dataUrl ? (
-                  <img
-                    src={dataUrl}
-                    alt="Lightning invoice QR"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      maxWidth: 240,
-                      maxHeight: 240,
-                      display: 'block',
-                      margin: '0 auto',
-                      borderRadius: 'var(--nostrstack-radius-md)'
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      height: 240,
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: 'var(--nostrstack-color-text-subtle)'
-                    }}
-                  >
-                    Generating…
-                  </div>
-                )}
-              </button>
-              <div
-                id={descId}
-                style={{
-                  marginTop: 8,
-                  textAlign: 'center',
-                  fontSize: '0.9rem',
-                  color: 'var(--nostrstack-color-text-muted)'
-                }}
-              >
-                Scan to pay • Click QR to copy
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 240 }}>
-              <div style={statusVizWrapper}>
-                <div style={ringShell}>
-                  <div
-                    style={{
-                      ...ring,
-                      background: `conic-gradient(${toneFg} ${Math.max(14, progress * 360)}deg, var(--nostrstack-color-border) ${Math.max(14, progress * 360)}deg)`,
-                      boxShadow:
-                        visualState === 'pending'
-                          ? '0 0 0 12px color-mix(in oklab, var(--nostrstack-color-primary) 18%, transparent)'
-                          : visualState === 'paid'
-                            ? '0 0 0 14px color-mix(in oklab, var(--nostrstack-color-success) 22%, transparent)'
-                            : 'none',
-                      animation:
-                        visualState === 'pending'
-                          ? 'ring-spin 1.6s linear infinite'
-                          : visualState === 'paid'
-                            ? 'status-pop 260ms ease-out'
-                            : undefined
-                    }}
-                    aria-hidden
-                  >
-                    <div style={{ ...ringInner, color: toneFg, position: 'relative' }}>
-                      <span style={{ fontWeight: 800, textAlign: 'center' }}>{statusLabel}</span>
-                      <span
-                        style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-text-muted)' }}
-                      >
-                        {fmtRemaining} left
-                      </span>
-                      {visualState === 'pending' && <div style={ringHalo} />}
-                    </div>
-                  </div>
-                  {celebrate && <div key={burstKey} style={burst} aria-hidden />}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
-                  <div
-                    style={{ fontWeight: 800, color: 'var(--nostrstack-color-text)' }}
-                    aria-live="polite"
-                  >
-                    {statusLabel}
-                  </div>
-                  <div
-                    style={{
-                      color: 'var(--nostrstack-color-text-muted)',
-                      fontSize: '0.95rem',
-                      display: 'flex',
-                      gap: 8,
-                      flexWrap: 'wrap'
-                    }}
-                  >
-                    <span>Elapsed {fmtAge}</span>
-                    {!stale && <span>• Expires {fmtRemaining}</span>}
-                    {visualState === 'timeout' && <span>• Expired</span>}
-                  </div>
-                  <div style={beamWrap} aria-label="Time remaining">
-                    <div style={{ ...beamTrack }}>
-                      <div
-                        style={{
-                          ...beamFill,
-                          width: `${(1 - progress) * 100}%`,
-                          background:
-                            visualState === 'paid'
-                              ? 'var(--nostrstack-color-success)'
-                              : visualState === 'timeout' || visualState === 'error'
-                                ? 'var(--nostrstack-color-danger)'
-                                : 'var(--nostrstack-color-primary)'
-                        }}
-                      />
-                    </div>
-                    <div
-                      style={{
-                        ...beam,
-                        backgroundImage:
-                          visualState === 'paid'
-                            ? 'linear-gradient(90deg, var(--nostrstack-color-success), var(--nostrstack-color-primary))'
-                            : 'linear-gradient(90deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))',
-                        animation:
-                          visualState === 'paid'
-                            ? 'beam-slide 1s ease-out 1'
-                            : visualState === 'timeout' || visualState === 'error'
-                              ? 'none'
-                              : 'beam-slide 1.2s linear infinite'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="nostrstack-popover-actions">
-                <a
-                  href={`lightning:${invoice}`}
-                  className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
-                  style={{ textDecoration: 'none' }}
-                >
-                  Open in wallet
-                </a>
-                {stale && (
-                  <button type="button" onClick={onClose} className="nostrstack-btn nostrstack-btn--sm">
-                    Dismiss
-                  </button>
-                )}
-              </div>
-              {visualState === 'paid' && (
-                <div
-                  style={{
-                    color: 'var(--nostrstack-color-success)',
-                    fontWeight: 700,
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Payment confirmed
-                </div>
+              {dataUrl ? (
+                <img src={dataUrl} alt="Lightning invoice QR" className="nostrstack-invoice-modal__qrImg" />
+              ) : (
+                <div className="nostrstack-invoice-modal__qrSkeleton">Generating…</div>
               )}
-              {visualState === 'error' && (
-                <div
-                  style={{
-                    color: 'var(--nostrstack-color-danger)',
-                    fontWeight: 700,
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Payment failed
-                </div>
-              )}
-              {visualState === 'timeout' && (
-                <div
-                  style={{
-                    color: 'var(--nostrstack-color-danger)',
-                    fontWeight: 700,
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Invoice expired, request a new one.
-                </div>
-              )}
+            </button>
+            <div id={descId} className="nostrstack-invoice-modal__hint">
+              Scan to pay · Click QR to copy
             </div>
           </div>
 
-          <div className="nostrstack-invoice-box">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 6
-              }}
-            >
-              <div style={{ fontWeight: 700, color: 'var(--nostrstack-color-text)' }}>BOLT11</div>
-              <CopyButton text={invoice} label="Copy" size="sm" />
+          <div className="nostrstack-invoice-modal__side">
+            <div className="nostrstack-invoice-modal__statusCard" data-state={visualState}>
+              <div style={ringShell}>
+                <div
+                  style={{
+                    ...ring,
+                    background: `conic-gradient(${toneFg} ${Math.max(14, progress * 360)}deg, var(--nostrstack-color-border) ${Math.max(14, progress * 360)}deg)`,
+                    boxShadow:
+                      visualState === 'pending'
+                        ? '0 0 0 12px color-mix(in oklab, var(--nostrstack-color-primary) 18%, transparent)'
+                        : visualState === 'paid'
+                          ? '0 0 0 14px color-mix(in oklab, var(--nostrstack-color-success) 22%, transparent)'
+                          : 'none',
+                    animation:
+                      visualState === 'pending'
+                        ? 'ring-spin 1.6s linear infinite'
+                        : visualState === 'paid'
+                          ? 'status-pop 260ms ease-out'
+                          : undefined
+                  }}
+                  aria-hidden
+                >
+                  <div style={{ ...ringInner, color: toneFg, position: 'relative' }}>
+                    <span style={{ fontWeight: 900, fontSize: '1.05rem', lineHeight: 1 }}>
+                      {visualState === 'paid' ? '✓' : visualState === 'error' ? '!' : visualState === 'timeout' ? '0:00' : fmtRemaining}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-text-muted)' }}>
+                      {visualState === 'paid' ? 'Paid' : visualState === 'error' ? 'Error' : visualState === 'timeout' ? 'Expired' : 'left'}
+                    </span>
+                    {visualState === 'pending' && <div style={ringHalo} />}
+                  </div>
+                </div>
+                {celebrate && <div key={burstKey} style={burst} aria-hidden />}
+              </div>
+
+              <div className="nostrstack-invoice-modal__statusMeta">
+                <div className="nostrstack-invoice-modal__statusTitle" aria-live="polite">
+                  {statusLabel}
+                </div>
+                <div className="nostrstack-invoice-modal__statusSub">
+                  <span>Elapsed {fmtAge}</span>
+                  {!stale && <span>• Expires {fmtRemaining}</span>}
+                  {visualState === 'timeout' && <span>• Expired</span>}
+                </div>
+                <div className="nostrstack-invoice-modal__bar" aria-label="Time remaining">
+                  <div
+                    className="nostrstack-invoice-modal__barFill"
+                    style={{
+                      width: `${Math.max(0, (1 - progress) * 100)}%`,
+                      background:
+                        visualState === 'paid'
+                          ? 'var(--nostrstack-color-success)'
+                          : visualState === 'timeout' || visualState === 'error'
+                            ? 'var(--nostrstack-color-danger)'
+                            : 'var(--nostrstack-color-primary)'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <code className="nostrstack-code">{invoice}</code>
+
+            <div className="nostrstack-invoice-modal__actions">
+              <a
+                href={`lightning:${invoice}`}
+                className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                style={{ textDecoration: 'none' }}
+              >
+                Open in wallet
+              </a>
+              <CopyButton text={invoice} label="Copy BOLT11" size="sm" />
+              <CopyButton text={`lightning:${invoice}`} label="Copy URI" size="sm" />
+              {stale && (
+                <button type="button" onClick={onClose} className="nostrstack-btn nostrstack-btn--sm">
+                  Dismiss
+                </button>
+              )}
+            </div>
+
+            {visualState === 'paid' && (
+              <div className="nostrstack-invoice-modal__callout" data-tone="success">
+                Payment confirmed
+              </div>
+            )}
+            {visualState === 'error' && (
+              <div className="nostrstack-invoice-modal__callout" data-tone="danger">
+                Payment failed
+              </div>
+            )}
+            {visualState === 'timeout' && (
+              <div className="nostrstack-invoice-modal__callout" data-tone="danger">
+                Invoice expired — request a new one.
+              </div>
+            )}
+
+            <div className="nostrstack-invoice-modal__bolt11">
+              <div className="nostrstack-invoice-modal__bolt11Head">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                  <strong style={{ color: 'var(--nostrstack-color-text)' }}>BOLT11</strong>
+                  <span style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: '0.9rem' }}>
+                    {prettyInvoice}
+                  </span>
+                </div>
+                <CopyButton text={invoice} label="Copy" size="sm" />
+              </div>
+              <code className="nostrstack-code">{invoice}</code>
+            </div>
           </div>
         </div>
       </div>
@@ -371,37 +292,24 @@ export function InvoicePopover({
   );
 }
 
-const statusVizWrapper: React.CSSProperties = {
-  border: '1px solid var(--nostrstack-color-border)',
-  borderRadius: 'var(--nostrstack-radius-lg)',
-  padding: '0.75rem 0.85rem',
-  background: 'var(--nostrstack-color-surface-subtle)',
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
-  gap: '0.85rem',
-  alignItems: 'center',
-  position: 'relative',
-  overflow: 'hidden'
-};
-
 const ringShell: React.CSSProperties = {
   position: 'relative',
-  width: 86,
-  height: 86,
+  width: 92,
+  height: 92,
   display: 'grid',
   placeItems: 'center'
 };
 const ring: React.CSSProperties = {
-  width: 72,
-  height: 72,
+  width: 82,
+  height: 82,
   borderRadius: '50%',
   display: 'grid',
   placeItems: 'center',
   transition: 'all 220ms ease'
 };
 const ringInner: React.CSSProperties = {
-  width: 52,
-  height: 52,
+  width: 60,
+  height: 60,
   borderRadius: '50%',
   background: 'var(--nostrstack-color-surface)',
   display: 'grid',
@@ -419,37 +327,6 @@ const ringHalo: React.CSSProperties = {
   borderRadius: '50%',
   border: '2px solid var(--nostrstack-color-ring)',
   animation: 'ring-breathe 2.6s ease-in-out infinite'
-};
-
-const beamWrap: React.CSSProperties = {
-  width: '100%',
-  height: 12,
-  borderRadius: 999,
-  background: 'var(--nostrstack-color-surface-strong)',
-  overflow: 'hidden',
-  position: 'relative'
-};
-const beam: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'linear-gradient(90deg, var(--nostrstack-color-primary), var(--nostrstack-color-accent))',
-  backgroundSize: '200% 100%',
-  opacity: 0.35,
-  animation: 'beam-slide 2s linear infinite'
-};
-const beamTrack: React.CSSProperties = {
-  position: 'relative',
-  width: '100%',
-  height: '100%',
-  background: 'transparent'
-};
-const beamFill: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  borderRadius: 999,
-  transition: 'width 300ms ease',
-  background: 'var(--nostrstack-color-primary)'
 };
 
 const burst: React.CSSProperties = {
@@ -471,11 +348,6 @@ const pulseCss = `
   @keyframes ring-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-  }
-
-  @keyframes beam-slide {
-    0% { transform: translateX(-40%); }
-    100% { transform: translateX(40%); }
   }
 
   @keyframes burst {

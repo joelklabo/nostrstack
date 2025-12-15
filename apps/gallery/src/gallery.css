@@ -118,6 +118,188 @@
   backdrop-filter: blur(4px);
 }
 
+/* ===== Invoice modal ===== */
+.nostrstack-invoice-modal {
+  width: min(720px, 94vw);
+  padding: 1.15rem 1.25rem;
+}
+
+.nostrstack-invoice-modal__grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: var(--nostrstack-space-4);
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .nostrstack-invoice-modal {
+    padding: 1rem 1.05rem;
+  }
+
+  .nostrstack-invoice-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nostrstack-invoice-modal__qrCard {
+  padding: 0.75rem 0.85rem;
+  background: var(--nostrstack-color-surface-subtle);
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid var(--nostrstack-color-border);
+  box-shadow: var(--nostrstack-shadow-md);
+}
+
+.nostrstack-invoice-modal__qrBtn {
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--nostrstack-radius-md);
+}
+
+.nostrstack-invoice-modal__qrBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--nostrstack-shadow-focus);
+}
+
+.nostrstack-invoice-modal__qrImg {
+  width: min(320px, 100%);
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: white;
+}
+
+.nostrstack-invoice-modal__qrSkeleton {
+  width: min(320px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px dashed var(--nostrstack-color-border);
+  background: color-mix(in oklab, var(--nostrstack-color-surface-strong) 75%, transparent);
+  color: var(--nostrstack-color-text-subtle);
+}
+
+.nostrstack-invoice-modal__hint {
+  margin-top: 0.65rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--nostrstack-color-text-muted);
+}
+
+.nostrstack-invoice-modal__side {
+  display: grid;
+  gap: var(--nostrstack-space-3);
+  align-content: start;
+}
+
+.nostrstack-invoice-modal__statusCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--nostrstack-space-3);
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--nostrstack-radius-lg);
+  border: 1px solid var(--nostrstack-color-border);
+  background:
+    radial-gradient(900px circle at top left, color-mix(in oklab, var(--nostrstack-color-primary) 10%, transparent), transparent 62%),
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--nostrstack-color-surface) 92%, transparent),
+      color-mix(in oklab, var(--nostrstack-color-surface-subtle) 92%, transparent));
+  box-shadow: var(--nostrstack-shadow-sm);
+}
+
+.nostrstack-invoice-modal__statusMeta {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.nostrstack-invoice-modal__statusTitle {
+  font-weight: 950;
+  color: var(--nostrstack-color-text);
+  letter-spacing: -0.01em;
+}
+
+.nostrstack-invoice-modal__statusSub {
+  color: var(--nostrstack-color-text-muted);
+  font-size: 0.92rem;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nostrstack-invoice-modal__bar {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--nostrstack-radius-pill);
+  border: 1px solid var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface-strong);
+  overflow: hidden;
+}
+
+.nostrstack-invoice-modal__barFill {
+  height: 100%;
+  border-radius: var(--nostrstack-radius-pill);
+  transition: width 300ms ease;
+}
+
+.nostrstack-invoice-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nostrstack-space-2);
+  align-items: center;
+}
+
+.nostrstack-invoice-modal__callout {
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--nostrstack-radius-md);
+  border: 1px solid var(--nostrstack-color-border);
+  background: var(--nostrstack-color-surface-subtle);
+  font-weight: 750;
+}
+
+.nostrstack-invoice-modal__callout[data-tone="success"] {
+  border-color: color-mix(in oklab, var(--nostrstack-color-success) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-success) 10%, var(--nostrstack-color-surface));
+  color: color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text));
+}
+
+.nostrstack-invoice-modal__callout[data-tone="danger"] {
+  border-color: color-mix(in oklab, var(--nostrstack-color-danger) 35%, var(--nostrstack-color-border));
+  background: color-mix(in oklab, var(--nostrstack-color-danger) 10%, var(--nostrstack-color-surface));
+  color: color-mix(in oklab, var(--nostrstack-color-danger) 70%, var(--nostrstack-color-text));
+}
+
+.nostrstack-invoice-modal__bolt11 {
+  background: var(--nostrstack-color-surface-subtle);
+  border: 1px solid var(--nostrstack-color-border);
+  border-radius: var(--nostrstack-radius-md);
+  padding: 0.75rem;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.nostrstack-invoice-modal__bolt11Head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nostrstack-space-2);
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.nostrstack-invoice-modal__bolt11 .nostrstack-code {
+  font-size: 0.88rem;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
 .nostrstack-envbar {
   display: flex;
   gap: var(--nostrstack-space-2);
