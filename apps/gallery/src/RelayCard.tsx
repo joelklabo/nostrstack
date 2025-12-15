@@ -225,25 +225,27 @@ export function RelayCard({
             {statusLabel}
           </Badge>
           <div className="relay-card__actions">
-            <CopyButton text={url} label="Copy" size="sm" />
+            <CopyButton text={url} label="Copy" size="sm" variant="icon" ariaLabel="Copy relay URL" />
             <button
               type="button"
               onClick={() => {
                 if (typeof window === 'undefined') return;
                 window.open(url.replace(/^ws/, 'http'), '_blank', 'noreferrer');
               }}
-              className="nostrstack-btn nostrstack-btn--sm nostrstack-btn--ghost"
+              className="nostrstack-btn nostrstack-btn--sm nostrstack-btn--ghost relay-card__iconBtn"
+              aria-label="Open relay in browser"
             >
-              Open
+              <ExternalLinkIcon />
             </button>
             <button
               type="button"
               onClick={() => setInspectOpen(true)}
-              className="nostrstack-btn nostrstack-btn--sm"
+              className="nostrstack-btn nostrstack-btn--sm relay-card__iconBtn"
               disabled={!lastEvent}
               title={lastEvent ? 'Inspect last event' : 'No events yet'}
+              aria-label="Inspect last relay event"
             >
-              Inspect
+              <InspectIcon />
             </button>
           </div>
         </div>
@@ -443,4 +445,45 @@ function formatSeconds(sec: number) {
   if (m < 60) return `${m}m`;
   const h = Math.round(m / 60);
   return `${h}h`;
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      focusable="false"
+      aria-hidden="true"
+    >
+      <path d="M14 3h7v7" />
+      <path d="M10 14 21 3" />
+      <path d="M21 14v7H3V3h7" />
+    </svg>
+  );
+}
+
+function InspectIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      focusable="false"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
 }
