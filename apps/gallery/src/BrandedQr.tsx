@@ -1,5 +1,5 @@
 import { renderQrCodeInto, type NostrstackQrPreset, type NostrstackQrRenderResult, type NostrstackQrStyleOptions, type NostrstackQrVerifyMode } from '@nostrstack/embed';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export type BrandedQrProps = {
   value: string;
@@ -21,17 +21,36 @@ export function BrandedQr({
   onResult
 }: BrandedQrProps) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const onResultRef = useRef<typeof onResult>(onResult);
+  const optionsRef = useRef<NostrstackQrStyleOptions | undefined>(options);
   const [state, setState] = useState<'idle' | 'rendering' | 'ok' | 'fallback' | 'error'>('idle');
+
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
+  const optionsKey = useMemo(() => {
+    if (!options) return '';
+    try {
+      return JSON.stringify(options);
+    } catch {
+      return '[unstringifiable-options]';
+    }
+  }, [options]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     let alive = true;
     setState('rendering');
-    renderQrCodeInto(el, value, { size, preset, verify, options })
+    renderQrCodeInto(el, value, { size, preset, verify, options: optionsRef.current })
       .then((res) => {
         if (!alive) return;
-        onResult?.(res);
+        onResultRef.current?.(res);
         if (res.ok) setState(res.fallbackUsed ? 'fallback' : 'ok');
         else setState('error');
       })
@@ -43,7 +62,7 @@ export function BrandedQr({
     return () => {
       alive = false;
     };
-  }, [value, size, preset, verify, options, onResult]);
+  }, [value, size, preset, verify, optionsKey]);
 
   return <div ref={ref} className={className} data-qr-state={state} />;
 }
