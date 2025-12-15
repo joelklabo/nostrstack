@@ -273,34 +273,40 @@ async function main() {
 
     // Pay-to-unlock -> invoice -> pay -> unlocked content.
     // Regression: this layout used to overflow into the sidebar at some mid-width viewports.
-    await page.setViewportSize({ width: 1220, height: 900 });
+    await page.setViewportSize({ width: 1154, height: 900 });
+    const measurePaywallOverflow = async () =>
+      await page.evaluate(() => {
+        const paywall = document.querySelector('.nostrstack-paywall') as HTMLElement | null;
+        const card = paywall?.closest('section') as HTMLElement | null;
+        if (!paywall || !card) return null;
+        const cardRect = card.getBoundingClientRect();
+        let maxDelta = 0;
+        let offender: { tag: string; cls: string; text: string; delta: number } | null = null;
+        for (const el of Array.from(card.querySelectorAll('*'))) {
+          const rect = (el as HTMLElement).getBoundingClientRect();
+          const delta = rect.right - cardRect.right;
+          if (delta > maxDelta + 0.5) {
+            maxDelta = delta;
+            offender = {
+              tag: (el as HTMLElement).tagName.toLowerCase(),
+              cls: String((el as HTMLElement).className || ''),
+              text: ((el as HTMLElement).textContent || '').trim().slice(0, 60),
+              delta
+            };
+          }
+        }
+        return { maxDelta, offender };
+      });
+    const overflowLocked = await measurePaywallOverflow();
+    expect(overflowLocked).not.toBeNull();
+    expect(overflowLocked!.maxDelta).toBeLessThanOrEqual(1);
+
     await page.getByTestId('paywall-unlock').click();
     const invoiceCode = page.locator('.nostrstack-paywall__invoice').first();
     await expect(invoiceCode).toBeVisible({ timeout: 30_000 });
-    const overflow = await page.evaluate(() => {
-      const paywall = document.querySelector('.nostrstack-paywall') as HTMLElement | null;
-      const card = paywall?.closest('section') as HTMLElement | null;
-      if (!paywall || !card) return null;
-      const cardRect = card.getBoundingClientRect();
-      let maxDelta = 0;
-      let offender: { tag: string; cls: string; text: string; delta: number } | null = null;
-      for (const el of Array.from(card.querySelectorAll('*'))) {
-        const rect = (el as HTMLElement).getBoundingClientRect();
-        const delta = rect.right - cardRect.right;
-        if (delta > maxDelta + 0.5) {
-          maxDelta = delta;
-          offender = {
-            tag: (el as HTMLElement).tagName.toLowerCase(),
-            cls: String((el as HTMLElement).className || ''),
-            text: ((el as HTMLElement).textContent || '').trim().slice(0, 60),
-            delta
-          };
-        }
-      }
-      return { maxDelta, offender };
-    });
-    expect(overflow).not.toBeNull();
-    expect(overflow!.maxDelta).toBeLessThanOrEqual(1);
+    const overflowPending = await measurePaywallOverflow();
+    expect(overflowPending).not.toBeNull();
+    expect(overflowPending!.maxDelta).toBeLessThanOrEqual(1);
     const bolt11Unlock = (await invoiceCode.getAttribute('title'))?.trim() ?? '';
     expect(bolt11Unlock).toMatch(/^ln/i);
     await page.evaluate(async (invoice) => {
