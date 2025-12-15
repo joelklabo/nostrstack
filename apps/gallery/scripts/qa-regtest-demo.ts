@@ -241,18 +241,6 @@ async function main() {
 
     await page.getByRole('button', { name: 'Clear feed' }).click();
 
-    // Comments: switch relays to mock + post.
-    await page.getByRole('tab', { name: 'Lightning' }).click();
-    await relaysInput.fill('mock');
-    await page.waitForTimeout(300); // allow remount
-    await page.getByRole('tab', { name: 'Nostr' }).click();
-    const commentBox = page.locator('#comments-container textarea').first();
-    await commentBox.waitFor({ timeout: 15_000 });
-    const comment = `qa-${Date.now()}`;
-    await commentBox.fill(comment);
-    await page.locator('#comments-container button', { hasText: 'Post' }).first().click();
-    await expect(page.locator('#comments-container')).toContainText(comment, { timeout: 15_000 });
-
     // Back to Lightning for payment flows.
     await page.getByRole('tab', { name: 'Lightning' }).click();
 

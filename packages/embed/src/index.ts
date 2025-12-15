@@ -85,7 +85,7 @@ type CommentWidgetOptions = {
   placeholder?: string;
   headerText?: string;
   onEvent?: (event: NostrEvent, relay?: string) => void;
-  onRelayInfo?: (info: { relays: string[]; mode: 'real' | 'mock' }) => void;
+  onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
 };
 
 declare global {
@@ -115,14 +115,9 @@ function createClient(opts: { baseURL?: string; host?: string }) {
   });
 }
 
-function isMock(opts: { baseURL?: string; host?: string }) {
-  return opts.baseURL === 'mock' || opts.host === 'mock';
-}
-
 export function resolvePayWsUrl(baseURL?: string): string | null {
   if (typeof window === 'undefined') return null;
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  if (raw === 'mock') return null;
   const base = raw.replace(/\/$/, '');
   // Dev convenience: treat "/api" as a proxy prefix, not a server mountpoint.
   // This avoids generating "/api/ws/*" and "/api/api/*" footguns in local demos.
@@ -180,16 +175,6 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
     status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
     status.classList.add('nostrstack-status--muted');
     try {
-      if (isMock(opts)) {
-        const mockPr = 'lnbc1mock' + Math.random().toString(16).slice(2, 10);
-        await opts.onInvoice?.(mockPr);
-        if (!opts.onInvoice) {
-          renderInvoicePopover(mockPr, { mount: container, title: 'Invoice', subtitle: 'Mock payment' });
-        }
-        status.textContent = '';
-        return;
-      }
-
       const client = createClient(opts);
       const meta = await client.getLnurlpMetadata(opts.username);
       const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
@@ -1039,15 +1024,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       meta.to = opts.username;
       const noteVal = note.value.trim();
       if (noteVal) meta.note = noteVal;
-      const res = isMock(opts)
-        ? {
-            ok: true,
-            json: async () => ({
-              pr: 'lnbc1mock' + Math.random().toString(16).slice(2, 10),
-              provider_ref: 'mock-' + Math.random().toString(16).slice(2, 10)
-            })
-          }
-        : await fetch(`${apiBaseUrl}/api/pay`, {
+      const res = await fetch(`${apiBaseUrl}/api/pay`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
@@ -1389,9 +1366,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       stopPoll();
       currentProviderRef = null;
 
-      const invoiceRes = isMock(opts)
-        ? { pr: 'lnbc1mock' + Math.random().toString(16).slice(2, 10) }
-        : await (async () => {
+      const invoiceRes = await (async () => {
             const client = createClient(opts);
             const meta = await client.getLnurlpMetadata(opts.username);
             const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
@@ -1436,10 +1411,6 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       startPoll();
 
       const verify = opts.verifyPayment;
-      if (isMock(opts)) {
-        unlock();
-        return pr;
-      }
       if (verify) {
         // Fire-and-forget verification; realtime WS can unlock sooner.
         verify(pr)
@@ -1514,9 +1485,6 @@ type RelayConnection = {
 };
 
 async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
-  if (urls.includes('mock')) {
-    return [];
-  }
   const relayInit = getRelayInit();
   if (!relayInit) return [];
   const relays = await Promise.all(urls.map(async (url) => {
@@ -1538,25 +1506,21 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   container.classList.add('nostrstack-card', 'nostrstack-comments');
   container.replaceChildren();
 
-  const isMockMode = opts.relays?.includes('mock');
-  let relays = isMockMode ? [] : await connectRelays(opts.relays ?? DEFAULT_RELAYS);
-  let mockMode = isMockMode;
-  const mockEvents: NostrEvent[] = [];
-  if (!relays.length && !isMockMode) {
-    // If caller explicitly asked for relays and none reachable, show note; otherwise stay quiet.
+  let relays = await connectRelays(opts.relays ?? DEFAULT_RELAYS);
+  if (!relays.length) {
+    // If caller explicitly asked for relays and none reachable, show note.
     if (opts.relays && opts.relays.length) {
       const note = document.createElement('div');
-      note.textContent = 'No relays reachable; using mock comments.';
+      note.textContent = 'No relays reachable.';
       note.className = 'nostrstack-muted';
       container.appendChild(note);
     }
     relays = [];
-    mockMode = true;
   }
   const threadId = opts.threadId ?? (location?.href ?? 'thread');
   opts.onRelayInfo?.({
-    relays: mockMode ? ['mock'] : relays.map((r) => r.url ?? '').filter(Boolean),
-    mode: mockMode ? 'mock' : 'real'
+    relays: relays.map((r) => r.url ?? '').filter(Boolean),
+    mode: 'real'
   });
 
   const header = document.createElement('div');
@@ -1567,8 +1531,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   headerText.textContent = opts.headerText ?? 'Comments';
 
   const relayBadge = renderRelayBadge(
-    mockMode ? ['mock'] : relays.map((r) => r.url ?? '').filter(Boolean),
-    mockMode ? 'mock' : 'real'
+    relays.map((r) => r.url ?? '').filter(Boolean)
   );
   relayBadge.classList.add('nostrstack-comments-relays');
 
@@ -1602,20 +1565,18 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     list.appendChild(row);
   };
 
-  if (!mockMode) {
-    const filters = [{ kinds: [1], '#t': [threadId] }];
-    relays.forEach((relay) => {
-      const sub = relay.sub(filters);
-      sub.on('event', (ev: NostrEvent) => {
-        appendEvent(ev);
-        opts.onEvent?.(ev, relay.url ?? undefined);
-      });
+  const filters = [{ kinds: [1], '#t': [threadId] }];
+  relays.forEach((relay) => {
+    const sub = relay.sub(filters);
+    sub.on('event', (ev: NostrEvent) => {
+      appendEvent(ev);
+      opts.onEvent?.(ev, relay.url ?? undefined);
     });
-  }
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!window.nostr && !mockMode) {
+    if (!window.nostr) {
       status.textContent = 'Nostr signer (NIP-07) required to post';
       status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
       status.classList.add('nostrstack-status--danger');
@@ -1628,37 +1589,24 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
     status.classList.add('nostrstack-status--muted');
     try {
-      if (mockMode) {
-        const mockEvent: NostrEvent = {
-          kind: 1,
-          created_at: Math.floor(Date.now() / 1000),
-          tags: [['t', threadId]],
-          content,
-          pubkey: 'mock-' + Math.random().toString(16).slice(2, 8)
-        };
-        mockEvents.push(mockEvent);
-        appendEvent(mockEvent);
-        textarea.value = '';
-      } else {
-        const nostr = window.nostr;
-        if (!nostr?.getPublicKey || !nostr.signEvent) {
-          throw new Error('Nostr signer unavailable');
-        }
-        const pubkey = await nostr.getPublicKey();
-        const unsigned: NostrEvent = {
-          kind: 1,
-          created_at: Math.floor(Date.now() / 1000),
-          tags: [['t', threadId]],
-          content,
-          pubkey,
-          id: '',
-          sig: ''
-        };
-        const signed = await nostr.signEvent(unsigned);
-        await Promise.all(relays.map((relay) => relay.publish(signed)));
-        appendEvent(signed);
-        textarea.value = '';
+      const nostr = window.nostr;
+      if (!nostr?.getPublicKey || !nostr.signEvent) {
+        throw new Error('Nostr signer unavailable');
       }
+      const pubkey = await nostr.getPublicKey();
+      const unsigned: NostrEvent = {
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [['t', threadId]],
+        content,
+        pubkey,
+        id: '',
+        sig: ''
+      };
+      const signed = await nostr.signEvent(unsigned);
+      await Promise.all(relays.map((relay) => relay.publish(signed)));
+      appendEvent(signed);
+      textarea.value = '';
     } catch (err) {
       console.error('nostr post failed', err);
       status.textContent = 'Failed to post comment';
