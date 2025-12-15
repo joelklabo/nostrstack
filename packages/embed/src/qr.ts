@@ -106,6 +106,8 @@ async function loadQrCodeStyling(): Promise<QrCodeStylingType> {
   return qrCodeStylingPromise;
 }
 
+const activeRenderTokens = new WeakMap<HTMLElement, object>();
+
 function shouldVerify(mode: NostrstackQrVerifyMode, opts: Partial<Omit<QrCodeStylingOptions, 'data'>>): boolean {
   if (mode === 'off') return false;
   if (mode === 'strict') return true;
@@ -161,6 +163,59 @@ async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data
       inversionAttempts: 'attemptBoth'
     });
     if (decoded?.data) return { ok: true, data: decoded.data, engine: 'jsqr' };
+
+    // Some branded QRs (gradients/logos) produce false negatives in jsQR unless binarized first.
+    const hist = new Uint32Array(256);
+    let count = 0;
+    let sum = 0;
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const a = imageData.data[i + 3] ?? 0;
+      const r = imageData.data[i] ?? 0;
+      const g = imageData.data[i + 1] ?? 0;
+      const b = imageData.data[i + 2] ?? 0;
+      const lum = a < 20 ? 255 : Math.max(0, Math.min(255, Math.round((r * 299 + g * 587 + b * 114) / 1000)));
+      hist[lum] += 1;
+      count += 1;
+      sum += lum;
+    }
+
+    // Otsu thresholding (global) for better contrast.
+    let sumB = 0;
+    let wB = 0;
+    let wF = 0;
+    let varMax = 0;
+    let threshold = 128;
+    for (let t = 0; t < 256; t++) {
+      wB += hist[t] ?? 0;
+      if (wB === 0) continue;
+      wF = count - wB;
+      if (wF === 0) break;
+      sumB += t * (hist[t] ?? 0);
+      const mB = sumB / wB;
+      const mF = (sum - sumB) / wF;
+      const between = wB * wF * (mB - mF) * (mB - mF);
+      if (between > varMax) {
+        varMax = between;
+        threshold = t;
+      }
+    }
+
+    const bw = new Uint8ClampedArray(imageData.data.length);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const a = imageData.data[i + 3] ?? 0;
+      const r = imageData.data[i] ?? 0;
+      const g = imageData.data[i + 1] ?? 0;
+      const b = imageData.data[i + 2] ?? 0;
+      const lum = a < 20 ? 255 : Math.max(0, Math.min(255, Math.round((r * 299 + g * 587 + b * 114) / 1000)));
+      const v = lum > threshold ? 255 : 0;
+      bw[i] = v;
+      bw[i + 1] = v;
+      bw[i + 2] = v;
+      bw[i + 3] = 255;
+    }
+
+    const decodedBw = jsQR(bw, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (decodedBw?.data) return { ok: true, data: decodedBw.data, engine: 'jsqr' };
   } catch {
     // ignore
   }
@@ -169,18 +224,16 @@ async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data
 }
 
 async function renderFallbackImg(
-  container: HTMLElement,
   data: string,
   size: number,
   errorCorrectionLevel: QrCodeStylingErrorCorrectionLevel,
   signal?: AbortSignal
-) {
+): Promise<HTMLImageElement> {
   throwIfAborted(signal);
   const scale = Math.max(4, Math.round(size / 42));
   const src = await QRCode.toDataURL(data, { errorCorrectionLevel, margin: 4, scale });
   throwIfAborted(signal);
 
-  container.replaceChildren();
   const img = document.createElement('img');
   img.alt = 'QR code';
   img.decoding = 'async';
@@ -190,7 +243,7 @@ async function renderFallbackImg(
   img.style.display = 'block';
   img.style.borderRadius = 'var(--nostrstack-radius-md)';
   img.src = src;
-  container.appendChild(img);
+  return img;
 }
 
 function abortError() {
@@ -226,45 +279,60 @@ export async function renderQrCodeInto(
 
   const requestedEcl = (options.qrOptions?.errorCorrectionLevel ?? base.qrOptions?.errorCorrectionLevel ?? 'M') as QrCodeStylingErrorCorrectionLevel;
   const needVerify = shouldVerify(verify, options);
+  const token = {};
+  if (signal) activeRenderTokens.set(container, token);
+  const throwIfStale = () => {
+    throwIfAborted(signal);
+    if (signal && activeRenderTokens.get(container) !== token) throw abortError();
+  };
 
   try {
-    throwIfAborted(signal);
+    throwIfStale();
     const QRCodeStyling = await loadQrCodeStyling();
-    throwIfAborted(signal);
-    container.replaceChildren();
+    throwIfStale();
+    const next = document.createElement('div');
     const qr = new QRCodeStyling({ ...(options as QrCodeStylingOptions), data });
-    qr.append(container);
+    qr.append(next);
 
     if (!needVerify) {
+      throwIfStale();
+      container.replaceChildren(...Array.from(next.childNodes));
       return { ok: true, fallbackUsed: false, decodedText: data, verifyEngine: 'none' };
     }
 
     const raw = await qr.getRawData('png');
-    throwIfAborted(signal);
+    throwIfStale();
     if (!raw) throw new Error('Could not render QR bitmap for verification');
     const blob = raw instanceof Blob ? raw : new Blob([raw], { type: 'image/png' });
     const canvas = await blobToCanvas(blob);
     const decoded = await decodeCanvas(canvas);
-    throwIfAborted(signal);
+    throwIfStale();
     if (decoded.ok && decoded.data === data) {
+      container.replaceChildren(...Array.from(next.childNodes));
       return { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine };
     }
 
     if (verify === 'strict') {
-      throwIfAborted(signal);
-      await renderFallbackImg(container, data, size, requestedEcl, signal);
+      throwIfStale();
+      const fallbackImg = await renderFallbackImg(data, size, requestedEcl, signal);
+      throwIfStale();
+      container.replaceChildren(fallbackImg);
       return decoded.ok
         ? { ok: true, fallbackUsed: true, decodedText: decoded.data, verifyEngine: decoded.engine }
         : { ok: true, fallbackUsed: true, decodedText: data, verifyEngine: 'none' };
     }
 
+    throwIfStale();
+    container.replaceChildren(...Array.from(next.childNodes));
     return decoded.ok
       ? { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine }
       : { ok: false, fallbackUsed: false, error: 'QR decode verification failed' };
   } catch (err) {
     if (isAbortError(err) || signal?.aborted) throw err;
     try {
-      await renderFallbackImg(container, data, size, requestedEcl, signal);
+      const fallbackImg = await renderFallbackImg(data, size, requestedEcl, signal);
+      throwIfStale();
+      container.replaceChildren(fallbackImg);
       return { ok: false, fallbackUsed: true, error: err instanceof Error ? err.message : String(err) };
     } catch (fallbackErr) {
       if (isAbortError(fallbackErr) || signal?.aborted) throw fallbackErr;
