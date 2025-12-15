@@ -37,8 +37,11 @@ export async function registerPayRoutes(app: FastifyInstance) {
         provider: env.LIGHTNING_PROVIDER,
         providerRef: charge.id,
         invoice: charge.invoice,
+        action: body.action,
+        itemId: typeof body.metadata?.itemId === 'string' ? body.metadata.itemId : null,
         amountSats: body.amount,
-        status: 'PENDING'
+        status: 'PENDING',
+        metadata: body.metadata ? JSON.stringify(body.metadata) : null
       }
     });
 
@@ -92,7 +95,23 @@ export async function registerPayRoutes(app: FastifyInstance) {
       const normalized = statusRes?.status?.toUpperCase?.() ?? payment.status;
       if (paidStates.includes(normalized)) {
         await app.prisma.payment.update({ where: { id: payment.id }, data: { status: normalized } });
-        app.payEventHub?.broadcast({ type: 'invoice-paid', pr: payment.invoice, providerRef: id, amount: payment.amountSats });
+        let metadata: unknown | undefined;
+        if (payment.metadata) {
+          try {
+            metadata = JSON.parse(payment.metadata) as unknown;
+          } catch {
+            metadata = undefined;
+          }
+        }
+        app.payEventHub?.broadcast({
+          type: 'invoice-paid',
+          pr: payment.invoice,
+          providerRef: id,
+          amount: payment.amountSats,
+          action: payment.action ?? undefined,
+          itemId: payment.itemId ?? undefined,
+          metadata
+        });
       }
       return reply.send({ status: normalized });
     } catch (err) {

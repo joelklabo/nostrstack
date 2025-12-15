@@ -186,11 +186,22 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     }
 
     if (successStates.includes(normalizedStatus)) {
+      let metadata: unknown | undefined;
+      if (payment.metadata) {
+        try {
+          metadata = JSON.parse(payment.metadata) as unknown;
+        } catch {
+          metadata = undefined;
+        }
+      }
       app.payEventHub?.broadcast({
         type: 'invoice-paid',
         pr: payment.invoice,
         providerRef: id,
-        amount: payment.amountSats
+        amount: payment.amountSats,
+        action: payment.action ?? undefined,
+        itemId: payment.itemId ?? undefined,
+        metadata
       });
     }
 

@@ -3,7 +3,7 @@ import {
   autoMount,
   createNostrstackBrandTheme,
   mountCommentWidget,
-  mountTipButton,
+  mountTipWidget,
   type NostrstackBrandPreset,
   nostrstackBrandPresets,
   resolvePayWsUrl,
@@ -301,9 +301,6 @@ function nip11Url(url: string) {
 function useMountWidgets(
   username: string,
   amount: number,
-  setQrInvoice: (pr: string | null) => void,
-  setQrAmount: (n?: number) => void,
-  setQrStatus: React.Dispatch<React.SetStateAction<'pending' | 'paid' | 'error'>>,
   setRelayStats: React.Dispatch<React.SetStateAction<RelayStats>>,
   relaysList: string[],
   tab: DemoTabKey,
@@ -317,19 +314,17 @@ function useMountWidgets(
     if (tipHost) tipHost.innerHTML = '';
     if (commentsHost) commentsHost.innerHTML = '';
 
+    const tipItemId = 'gallery-demo-item';
     const tipOpts: Record<string, unknown> = {
       username,
-      amountSats: amount,
+      itemId: tipItemId,
+      presetAmountsSats: [amount, Math.max(1, amount * 2), Math.max(1, amount * 5)],
+      defaultAmountSats: amount,
       baseURL: apiBase,
-      onInvoice: (pr: string) => {
-        setQrInvoice(pr);
-        setQrAmount(amount);
-        setQrStatus('pending');
-      }
+      host: demoHost,
+      metadata: { ui: 'gallery', itemTitle: 'nostrstack demo', itemUrl: typeof window !== 'undefined' ? window.location.href : undefined }
     };
-    if (tipHost) {
-      timeouts.push(window.setTimeout(() => mountTipButton(tipHost, tipOpts), 50));
-    }
+    if (tipHost) timeouts.push(window.setTimeout(() => mountTipWidget(tipHost, tipOpts), 50));
 
     if (commentsHost) {
       const relays = relaysList.length ? relaysList : relaysEnvDefault;
@@ -1084,9 +1079,6 @@ export default function App() {
   useMountWidgets(
     username,
     amount,
-    setQrInvoice,
-    setQrAmount,
-    setQrStatus,
     setRelayStats,
     relaysList,
     tab,
@@ -1379,8 +1371,8 @@ export default function App() {
 
                 <div className="nostrstack-lightning-widgets">
                   <Card
-                    title="Tip button"
-                    subtitle="LNURLp flow. Request a real invoice from the API."
+                    title="Tips"
+                    subtitle="3 presets + custom amount + live activity."
                   >
                     <div id="tip-container" />
                     <div style={{ marginTop: '0.75rem' }}>

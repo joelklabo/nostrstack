@@ -24,7 +24,23 @@ export function startPaymentReconciler(app: FastifyInstance) {
           const normalized = statusRes?.status?.toString().toUpperCase() ?? p.status;
           if (PAID_STATES.has(normalized)) {
             await app.prisma.payment.update({ where: { id: p.id }, data: { status: normalized } });
-            app.payEventHub?.broadcast({ type: 'invoice-paid', pr: p.invoice, providerRef: p.providerRef, amount: p.amountSats });
+            let metadata: unknown | undefined;
+            if (p.metadata) {
+              try {
+                metadata = JSON.parse(p.metadata) as unknown;
+              } catch {
+                metadata = undefined;
+              }
+            }
+            app.payEventHub?.broadcast({
+              type: 'invoice-paid',
+              pr: p.invoice,
+              providerRef: p.providerRef,
+              amount: p.amountSats,
+              action: p.action ?? undefined,
+              itemId: p.itemId ?? undefined,
+              metadata
+            });
           }
         } catch (err) {
           app.log.warn({ err, providerRef: p.providerRef }, 'payment reconciler status check failed');

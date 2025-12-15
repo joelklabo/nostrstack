@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountPayToAction, mountTipButton } from './index.js';
+import { mountPayToAction, mountTipButton, mountTipWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -120,5 +120,37 @@ describe('mountPayToAction', () => {
 
     expect(write).toHaveBeenCalledWith(pr);
     expect(onUnlock).toHaveBeenCalled();
+  });
+});
+
+describe('mountTipWidget', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('generates a mock invoice from a preset', async () => {
+    const host = document.createElement('div');
+    const write = vi.fn();
+    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard =
+      {
+        writeText: write
+      };
+
+    mountTipWidget(host, {
+      username: 'alice',
+      itemId: 'post-123',
+      baseURL: 'mock',
+      host: 'mock',
+      presetAmountsSats: [5, 10, 21],
+      showFeed: false
+    });
+
+    const preset = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
+    expect(preset).toBeTruthy();
+    await preset.onclick?.(new MouseEvent('click'));
+
+    const code = host.querySelector('.nostrstack-invoice-box code')?.textContent?.trim() ?? '';
+    expect(code).toMatch(/^ln/i);
+    expect(write).toHaveBeenCalledWith(expect.stringMatching(/^ln/i));
   });
 });

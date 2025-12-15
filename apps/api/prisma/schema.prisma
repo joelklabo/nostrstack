@@ -38,6 +38,8 @@ model Payment {
   provider    String
   providerRef String
   invoice     String   @unique
+  action      String?
+  itemId      String?
   amountSats  Int
   status      String   @default("PENDING")
   metadata    String?
@@ -48,5 +50,7 @@ model Payment {
 
   @@unique([provider, providerRef, tenantId])
   @@index([tenantId])
+  @@index([tenantId, action])
+  @@index([tenantId, action, itemId])
   @@index([tenantId, userId])
 }

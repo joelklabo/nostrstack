@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 
 import { copyToClipboard, createCopyButton } from './copyButton.js';
 import { renderInvoicePopover } from './invoicePopover.js';
+import { renderQrCodeInto } from './qr.js';
 import { renderRelayBadge } from './relayBadge.js';
 import { ensureNostrstackRoot } from './styles.js';
 
@@ -42,6 +43,28 @@ type TipWidgetOptions = {
   baseURL?: string;
   host?: string;
   onInvoice?: (pr: string) => void;
+};
+
+type TipWidgetV2Options = {
+  username: string;
+  itemId: string;
+  presetAmountsSats?: number[];
+  defaultAmountSats?: number;
+  allowCustomAmount?: boolean;
+  showFeed?: boolean;
+  text?: string;
+  baseURL?: string;
+  host?: string;
+  metadata?: Record<string, unknown>;
+  onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
+  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
+};
+
+type TipFeedOptions = {
+  itemId: string;
+  maxItems?: number;
+  baseURL?: string;
+  host?: string;
 };
 
 type PayToActionOptions = {
@@ -189,6 +212,787 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
   container.appendChild(btn);
   container.appendChild(status);
   return btn;
+}
+
+function resolveTenantDomain(host?: string): string | null {
+  if (host && host.trim()) return host.trim();
+  if (typeof window === 'undefined') return null;
+  const h = window.location.host || window.location.hostname;
+  return h ? h : null;
+}
+
+function parseMaybeJson(raw: unknown): unknown | undefined {
+  if (typeof raw !== 'string' || !raw) return undefined;
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function extractPayEventItemId(msg: unknown): string | null {
+  if (!msg || typeof msg !== 'object') return null;
+  const rec = msg as Record<string, unknown>;
+  if (typeof rec.itemId === 'string') return rec.itemId;
+  const metadata = rec.metadata;
+  if (metadata && typeof metadata === 'object' && typeof (metadata as Record<string, unknown>).itemId === 'string') {
+    return (metadata as Record<string, unknown>).itemId as string;
+  }
+  const metaRaw = rec.meta;
+  if (metaRaw && typeof metaRaw === 'object' && typeof (metaRaw as Record<string, unknown>).itemId === 'string') {
+    return (metaRaw as Record<string, unknown>).itemId as string;
+  }
+  return null;
+}
+
+function extractPayEventAction(msg: unknown): string | null {
+  if (!msg || typeof msg !== 'object') return null;
+  const rec = msg as Record<string, unknown>;
+  if (typeof rec.action === 'string') return rec.action;
+  const metadata = rec.metadata;
+  if (metadata && typeof metadata === 'object' && typeof (metadata as Record<string, unknown>).action === 'string') {
+    return (metadata as Record<string, unknown>).action as string;
+  }
+  const metaRaw = rec.meta;
+  if (metaRaw && typeof metaRaw === 'object' && typeof (metaRaw as Record<string, unknown>).action === 'string') {
+    return (metaRaw as Record<string, unknown>).action as string;
+  }
+  return null;
+}
+
+function extractPayEventAmount(msg: unknown): number | null {
+  if (!msg || typeof msg !== 'object') return null;
+  const rec = msg as Record<string, unknown>;
+  const raw = rec.amount ?? rec.amountSats;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  return null;
+}
+
+function extractPayEventProviderRef(msg: unknown): string | null {
+  if (!msg || typeof msg !== 'object') return null;
+  const rec = msg as Record<string, unknown>;
+  if (typeof rec.providerRef === 'string') return rec.providerRef;
+  if (typeof rec.provider_ref === 'string') return rec.provider_ref;
+  return null;
+}
+
+function extractPayEventInvoice(msg: unknown): string | null {
+  if (!msg || typeof msg !== 'object') return null;
+  const rec = msg as Record<string, unknown>;
+  if (typeof rec.pr === 'string') return rec.pr;
+  if (typeof rec.payment_request === 'string') return rec.payment_request;
+  return null;
+}
+
+function renderTipFeedRow(opts: { amountSats: number; createdAt: Date; note?: string; newPulse?: boolean }) {
+  const row = document.createElement('div');
+  row.className = 'nostrstack-tip-feed__row';
+  if (opts.newPulse) row.dataset.pulse = 'true';
+
+  const left = document.createElement('div');
+  left.className = 'nostrstack-tip-feed__icon';
+  left.textContent = '⚡';
+
+  const body = document.createElement('div');
+  body.className = 'nostrstack-tip-feed__body';
+
+  const title = document.createElement('div');
+  title.className = 'nostrstack-tip-feed__title';
+  title.textContent = `${opts.amountSats} sats`;
+
+  const sub = document.createElement('div');
+  sub.className = 'nostrstack-tip-feed__sub';
+  const ageSecs = Math.max(0, Math.round((Date.now() - opts.createdAt.getTime()) / 1000));
+  const age = ageSecs < 60 ? `${ageSecs}s` : `${Math.round(ageSecs / 60)}m`;
+  sub.textContent = `${age} ago${opts.note ? ` · ${opts.note}` : ''}`;
+
+  body.append(title, sub);
+  row.append(left, body);
+  if (opts.newPulse) {
+    // Let the CSS animation play once.
+    window.setTimeout(() => {
+      try {
+        row.dataset.pulse = 'false';
+      } catch {
+        /* ignore */
+      }
+    }, 900);
+  }
+  return row;
+}
+
+export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
+  ensureNostrstackRoot(container);
+  container.classList.add('nostrstack-card', 'nostrstack-tip-feed');
+  container.replaceChildren();
+
+  const wsUrl = resolvePayWsUrl(opts.baseURL);
+  const apiBaseUrl = resolveApiBaseUrl(opts.baseURL);
+  const domain = resolveTenantDomain(opts.host);
+  const itemId = opts.itemId;
+  const maxItems = Math.max(5, Math.min(60, opts.maxItems ?? 25));
+
+  const header = document.createElement('div');
+  header.className = 'nostrstack-tip-feed__header';
+
+  const title = document.createElement('div');
+  title.className = 'nostrstack-tip-feed__heading';
+  title.textContent = 'Tip activity';
+
+  const stats = document.createElement('div');
+  stats.className = 'nostrstack-tip-feed__stats';
+  stats.textContent = '—';
+
+  header.append(title, stats);
+
+  const list = document.createElement('div');
+  list.className = 'nostrstack-tip-feed__list';
+
+  const status = document.createElement('div');
+  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  status.textContent = 'Loading…';
+
+  container.append(header, list, status);
+
+  let totalAmountSats = 0;
+  let count = 0;
+  const seen = new Set<string>();
+
+  const setStats = () => {
+    stats.textContent = `${count} tips · ${totalAmountSats} sats`;
+  };
+
+  const insertTip = (tip: { id: string; amountSats: number; createdAt: Date; note?: string }) => {
+    if (seen.has(tip.id)) return;
+    seen.add(tip.id);
+    count += 1;
+    totalAmountSats += tip.amountSats;
+    setStats();
+    list.prepend(renderTipFeedRow({ amountSats: tip.amountSats, createdAt: tip.createdAt, note: tip.note, newPulse: true }));
+    // Trim.
+    while (list.children.length > maxItems) list.lastElementChild?.remove();
+  };
+
+  const hydrate = async () => {
+    status.textContent = 'Loading…';
+    try {
+      const domainParam = domain ? `&domain=${encodeURIComponent(domain)}` : '';
+      const res = await fetch(
+        `${apiBaseUrl}/api/tips?itemId=${encodeURIComponent(itemId)}&limit=${encodeURIComponent(maxItems)}${domainParam}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = (await res.json()) as {
+        count?: number;
+        totalAmountSats?: number;
+        tips?: Array<{ id?: string; amountSats?: number; createdAt?: string; metadata?: unknown }>;
+      };
+      totalAmountSats = typeof body.totalAmountSats === 'number' ? body.totalAmountSats : 0;
+      count = typeof body.count === 'number' ? body.count : 0;
+      setStats();
+      list.replaceChildren();
+      seen.clear();
+      for (const tip of body.tips ?? []) {
+        const id = typeof tip.id === 'string' ? tip.id : null;
+        const amountSats = typeof tip.amountSats === 'number' ? tip.amountSats : null;
+        const createdAt = typeof tip.createdAt === 'string' ? new Date(tip.createdAt) : null;
+        if (!id || amountSats == null || !createdAt) continue;
+        const note =
+          tip.metadata && typeof tip.metadata === 'object' && typeof (tip.metadata as Record<string, unknown>).note === 'string'
+            ? ((tip.metadata as Record<string, unknown>).note as string)
+            : undefined;
+        seen.add(id);
+        list.append(renderTipFeedRow({ amountSats, createdAt, note }));
+      }
+      status.textContent = wsUrl ? 'Live' : '';
+    } catch (e) {
+      console.warn('tip feed hydrate failed', e);
+      status.textContent = 'Failed to load tip activity';
+      status.classList.remove('nostrstack-status--muted');
+      status.classList.add('nostrstack-status--danger');
+    }
+  };
+
+  hydrate();
+
+  let ws: WebSocket | null = null;
+  if (wsUrl) {
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as unknown;
+          if (!msg || typeof msg !== 'object') return;
+          const rec = msg as Record<string, unknown>;
+          if (rec.type !== 'invoice-paid') return;
+          const action = extractPayEventAction(msg);
+          if (action !== 'tip') return;
+          const evItemId = extractPayEventItemId(msg);
+          if (evItemId !== itemId) return;
+          const amountSats = extractPayEventAmount(msg);
+          const providerRef = extractPayEventProviderRef(msg);
+          if (amountSats == null || !providerRef) return;
+          const meta =
+            rec.metadata && typeof rec.metadata === 'object'
+              ? rec.metadata
+              : typeof rec.metadata === 'string'
+                ? parseMaybeJson(rec.metadata)
+                : undefined;
+          const note =
+            meta && typeof meta === 'object' && typeof (meta as Record<string, unknown>).note === 'string'
+              ? ((meta as Record<string, unknown>).note as string)
+              : undefined;
+          insertTip({ id: providerRef, amountSats, createdAt: new Date(), note });
+        } catch {
+          /* ignore */
+        }
+      };
+    } catch {
+      /* ignore ws */
+    }
+  }
+
+  return {
+    refresh: hydrate,
+    destroy: () => {
+      try {
+        ws?.close();
+      } catch {
+        /* ignore */
+      } finally {
+        ws = null;
+      }
+    }
+  };
+}
+
+export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options) {
+  ensureNostrstackRoot(container);
+  container.classList.add('nostrstack-card', 'nostrstack-tip');
+  container.replaceChildren();
+
+  const wsUrl = resolvePayWsUrl(opts.baseURL);
+  const apiBaseUrl = resolveApiBaseUrl(opts.baseURL);
+  const domain = resolveTenantDomain(opts.host);
+  const itemId = opts.itemId;
+
+  const header = document.createElement('div');
+  header.className = 'nostrstack-tip__header';
+
+  const title = document.createElement('div');
+  title.className = 'nostrstack-tip__title';
+  title.textContent = opts.text ?? 'Send a tip';
+
+  const subtitle = document.createElement('div');
+  subtitle.className = 'nostrstack-tip__sub';
+  subtitle.textContent = `Pay @${opts.username}`;
+
+  header.append(title, subtitle);
+
+  const amountRow = document.createElement('div');
+  amountRow.className = 'nostrstack-tip__amountRow';
+
+  const presets = (opts.presetAmountsSats?.filter((n) => Number.isFinite(n) && n > 0) ?? [5, 10, 21])
+    .slice(0, 3)
+    .map((n) => Math.round(n));
+  const defaultAmount = Math.round(opts.defaultAmountSats ?? presets[0] ?? 5);
+  let selectedAmountSats = defaultAmount;
+
+  const presetBtns: HTMLButtonElement[] = [];
+  const setSelected = (n: number) => {
+    selectedAmountSats = n;
+    presetBtns.forEach((b) => {
+      b.dataset.selected = b.dataset.amount === String(n) ? 'true' : 'false';
+    });
+    customInput.value = '';
+    customInput.dataset.dirty = 'false';
+  };
+
+  presets.forEach((n) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-tip__amt';
+    b.textContent = `${n} sats`;
+    b.dataset.amount = String(n);
+    b.dataset.selected = n === defaultAmount ? 'true' : 'false';
+    b.onclick = async () => {
+      setSelected(n);
+      await startTip(n);
+    };
+    presetBtns.push(b);
+    amountRow.appendChild(b);
+  });
+
+  const customWrap = document.createElement('div');
+  customWrap.className = 'nostrstack-tip__custom';
+  if (opts.allowCustomAmount === false) customWrap.style.display = 'none';
+
+  const customInput = document.createElement('input');
+  customInput.type = 'number';
+  customInput.name = 'amountSats';
+  customInput.inputMode = 'numeric';
+  customInput.placeholder = 'Custom';
+  customInput.min = '1';
+  customInput.className = 'nostrstack-input nostrstack-tip__customInput';
+  customInput.dataset.dirty = 'false';
+  customInput.oninput = () => {
+    customInput.dataset.dirty = customInput.value.trim() ? 'true' : 'false';
+    presetBtns.forEach((b) => (b.dataset.selected = 'false'));
+  };
+
+  const tipBtn = document.createElement('button');
+  tipBtn.type = 'button';
+  tipBtn.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm nostrstack-tip__go';
+  tipBtn.textContent = 'Tip';
+  tipBtn.onclick = async () => {
+    const n = Number(customInput.value);
+    if (Number.isFinite(n) && n > 0) {
+      selectedAmountSats = Math.round(n);
+      await startTip(selectedAmountSats);
+      return;
+    }
+    await startTip(selectedAmountSats);
+  };
+
+  customWrap.append(customInput, tipBtn);
+
+  const note = document.createElement('input');
+  note.type = 'text';
+  note.name = 'note';
+  note.placeholder = 'Add a note (optional)';
+  note.className = 'nostrstack-input nostrstack-tip__note';
+  note.maxLength = 140;
+
+  const panel = document.createElement('div');
+  panel.className = 'nostrstack-tip__panel';
+
+  const status = document.createElement('div');
+  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  status.textContent = 'Pick an amount to generate an invoice.';
+
+  const realtime = document.createElement('div');
+  realtime.className = 'nostrstack-tip__realtime';
+  realtime.textContent = '';
+
+  const timer = document.createElement('div');
+  timer.className = 'nostrstack-tip__timer';
+  timer.textContent = '';
+
+  const qrWrap = document.createElement('div');
+  qrWrap.className = 'nostrstack-tip__qr';
+
+  const invoiceBox = document.createElement('div');
+  invoiceBox.className = 'nostrstack-invoice-box';
+  const invoiceCode = document.createElement('code');
+  invoiceCode.className = 'nostrstack-code';
+  invoiceBox.appendChild(invoiceCode);
+
+  const actions = document.createElement('div');
+  actions.className = 'nostrstack-tip__actions';
+
+  const { el: copyBtn, reset: resetCopyBtn } = createCopyButton({
+    label: 'Copy invoice',
+    size: 'sm',
+    getText: () => currentInvoice ?? ''
+  });
+  copyBtn.disabled = true;
+
+  const openWallet = document.createElement('a');
+  openWallet.textContent = 'Open in wallet';
+  openWallet.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm';
+  openWallet.rel = 'noreferrer';
+  openWallet.style.display = 'none';
+
+  const paidBtn = document.createElement('button');
+  paidBtn.type = 'button';
+  paidBtn.textContent = "I've paid";
+  paidBtn.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-tip__paid';
+  paidBtn.disabled = true;
+
+  actions.append(copyBtn, openWallet, paidBtn);
+
+  panel.append(status, realtime, timer, qrWrap, actions, invoiceBox);
+
+  let feed: { refresh: () => void; destroy: () => void } | null = null;
+  let feedWrap: HTMLDivElement | null = null;
+  if (opts.showFeed !== false) {
+    feedWrap = document.createElement('div');
+    feedWrap.className = 'nostrstack-tip__feedWrap';
+    const feedHost = document.createElement('div');
+    feedWrap.appendChild(feedHost);
+    feed = renderTipFeed(feedHost, { itemId, baseURL: opts.baseURL, host: opts.host, maxItems: 12 });
+  }
+
+  container.append(header, amountRow, customWrap, note, panel);
+  if (feedWrap) container.appendChild(feedWrap);
+
+  let payWs: WebSocket | null = null;
+  let pollId: number | null = null;
+  let realtimeState: 'idle' | 'connecting' | 'open' | 'error' = 'idle';
+  let currentInvoice: string | null = null;
+  let currentProviderRef: string | null = null;
+  let currentAmountSats: number | null = null;
+  let didPay = false;
+  let invoiceStartedAt: number | null = null;
+  let invoiceTicker: number | null = null;
+  let qrAbort: AbortController | null = null;
+
+  const closePayWs = () => {
+    const ws = payWs;
+    payWs = null;
+    if (!ws) return;
+    try {
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+    } catch {
+      /* ignore */
+    }
+    try {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+        return;
+      }
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.addEventListener(
+          'open',
+          () => {
+            try {
+              ws.close();
+            } catch {
+              /* ignore */
+            }
+          },
+          { once: true }
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const stopPoll = () => {
+    if (pollId === null || typeof window === 'undefined') return;
+    try {
+      window.clearInterval(pollId);
+    } catch {
+      /* ignore */
+    } finally {
+      pollId = null;
+    }
+  };
+
+  const stopInvoiceTicker = () => {
+    if (invoiceTicker === null || typeof window === 'undefined') return;
+    try {
+      window.clearInterval(invoiceTicker);
+    } catch {
+      /* ignore */
+    } finally {
+      invoiceTicker = null;
+    }
+  };
+
+  const abortQr = () => {
+    const ctrl = qrAbort;
+    qrAbort = null;
+    if (!ctrl) return;
+    try {
+      ctrl.abort();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const fmtClock = (secs: number) => {
+    const s = Math.max(0, Math.floor(secs));
+    const m = Math.floor(s / 60)
+      .toString()
+      .padStart(2, '0');
+    const r = (s % 60).toString().padStart(2, '0');
+    return `${m}:${r}`;
+  };
+
+  const startInvoiceTicker = () => {
+    stopInvoiceTicker();
+    if (typeof window === 'undefined' || invoiceStartedAt === null) return;
+    const update = () => {
+      if (invoiceStartedAt === null) return;
+      const ageMs = Date.now() - invoiceStartedAt;
+      const elapsed = fmtClock(ageMs / 1000);
+      const remaining = fmtClock(Math.max(0, 120 - ageMs / 1000));
+      timer.textContent = didPay ? `Paid · Elapsed ${elapsed}` : `Elapsed ${elapsed} · Expires ${remaining}`;
+    };
+    update();
+    invoiceTicker = window.setInterval(update, 1000);
+  };
+
+  const setRealtime = (next: typeof realtimeState) => {
+    realtimeState = next;
+    if (!wsUrl) {
+      realtime.textContent = '';
+      return;
+    }
+    realtime.textContent =
+      realtimeState === 'open'
+        ? 'Realtime: connected'
+        : realtimeState === 'connecting'
+          ? 'Realtime: connecting…'
+          : realtimeState === 'error'
+            ? 'Realtime: error'
+            : 'Realtime: idle';
+  };
+
+  const normalizeInvoice = (pr: string | null | undefined) => {
+    if (!pr) return null;
+    return pr.trim().replace(/^(?:lightning:)+/i, '');
+  };
+
+  const celebrate = () => {
+    container.dataset.celebrate = 'true';
+    const confetti = document.createElement('div');
+    confetti.className = 'nostrstack-tip__confetti';
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('span');
+      p.style.left = `${Math.round(Math.random() * 96)}%`;
+      p.style.animationDelay = `${Math.random() * 120}ms`;
+      p.style.background = i % 3 === 0 ? 'var(--nostrstack-color-primary)' : i % 3 === 1 ? 'var(--nostrstack-color-accent)' : 'var(--nostrstack-color-success)';
+      confetti.appendChild(p);
+    }
+    panel.appendChild(confetti);
+    window.setTimeout(() => confetti.remove(), 1400);
+    window.setTimeout(() => {
+      try {
+        container.dataset.celebrate = 'false';
+      } catch {
+        /* ignore */
+      }
+    }, 1400);
+  };
+
+  const markPaid = () => {
+    if (didPay) return;
+    didPay = true;
+    status.textContent = 'Payment confirmed. Thank you!';
+    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
+    status.classList.add('nostrstack-status--success');
+    paidBtn.textContent = 'Paid ✓';
+    paidBtn.disabled = true;
+    tipBtn.disabled = false;
+    celebrate();
+    stopPoll();
+    startInvoiceTicker();
+    if (currentInvoice && currentAmountSats != null) {
+      opts.onPaid?.({
+        pr: currentInvoice,
+        providerRef: currentProviderRef,
+        amountSats: currentAmountSats,
+        itemId,
+        metadata: opts.metadata
+      });
+    }
+  };
+
+  const startRealtime = () => {
+    if (!wsUrl) return;
+    if (payWs && (payWs.readyState === WebSocket.OPEN || payWs.readyState === WebSocket.CONNECTING)) return;
+    closePayWs();
+    try {
+      setRealtime('connecting');
+      const ws = new WebSocket(wsUrl);
+      payWs = ws;
+      ws.onopen = () => setRealtime('open');
+      ws.onerror = () => setRealtime('error');
+      ws.onclose = () => setRealtime(realtimeState === 'error' ? 'error' : 'idle');
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as unknown;
+          if (!msg || typeof msg !== 'object') return;
+          const rec = msg as Record<string, unknown>;
+          if (rec.type !== 'invoice-paid') return;
+          const msgProviderRef = extractPayEventProviderRef(msg);
+          const msgInvoice = normalizeInvoice(extractPayEventInvoice(msg));
+          if (
+            (msgInvoice && currentInvoice && msgInvoice === currentInvoice) ||
+            (msgProviderRef && currentProviderRef && msgProviderRef === currentProviderRef)
+          ) {
+            markPaid();
+          }
+        } catch {
+          /* ignore */
+        }
+      };
+    } catch {
+      setRealtime('error');
+    }
+  };
+
+  const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
+  const pollOnce = async () => {
+    if (!currentProviderRef || didPay) return false;
+    try {
+      const domainParam = domain ? `?domain=${encodeURIComponent(domain)}` : '';
+      const res = await fetch(
+        `${apiBaseUrl}/api/lnurlp/pay/status/${encodeURIComponent(currentProviderRef)}${domainParam}`
+      );
+      if (!res.ok) return false;
+      const body = (await res.json()) as { status?: unknown };
+      const statusStr = String(body.status ?? '').toUpperCase();
+      if (PAID_STATES.has(statusStr)) {
+        markPaid();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const startPoll = () => {
+    stopPoll();
+    if (!currentProviderRef || typeof window === 'undefined') return;
+    pollOnce();
+    pollId = window.setInterval(pollOnce, 1500);
+  };
+
+  const startTip = async (amountSats: number) => {
+    if (!domain) {
+      status.textContent = 'Missing domain/host for tip payments';
+      status.classList.remove('nostrstack-status--muted');
+      status.classList.add('nostrstack-status--danger');
+      return;
+    }
+    didPay = false;
+    status.textContent = 'Generating invoice…';
+    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
+    status.classList.add('nostrstack-status--muted');
+    tipBtn.disabled = true;
+    copyBtn.disabled = true;
+    paidBtn.disabled = true;
+    paidBtn.textContent = "I've paid";
+    openWallet.style.display = 'none';
+    invoiceCode.textContent = '';
+    qrWrap.replaceChildren();
+    abortQr();
+    currentInvoice = null;
+    currentProviderRef = null;
+    currentAmountSats = amountSats;
+    stopPoll();
+    stopInvoiceTicker();
+    invoiceStartedAt = null;
+    timer.textContent = '';
+
+    try {
+      const meta: Record<string, unknown> = { ...(opts.metadata ?? {}) };
+      meta.itemId = itemId;
+      meta.to = opts.username;
+      const noteVal = note.value.trim();
+      if (noteVal) meta.note = noteVal;
+      const res = isMock(opts)
+        ? {
+            ok: true,
+            json: async () => ({
+              pr: 'lnbc1mock' + Math.random().toString(16).slice(2, 10),
+              provider_ref: 'mock-' + Math.random().toString(16).slice(2, 10)
+            })
+          }
+        : await fetch(`${apiBaseUrl}/api/pay`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              domain,
+              action: 'tip',
+              amount: amountSats,
+              metadata: meta
+            })
+          });
+
+      if (!res.ok) throw new Error(`HTTP ${'status' in res ? (res as Response).status : 0}`);
+      const body = (await (res as Response).json()) as Record<string, unknown>;
+      const pr = normalizeInvoice(extractPayEventInvoice(body));
+      const providerRef =
+        (typeof body.provider_ref === 'string' ? body.provider_ref : null) ??
+        (typeof body.providerRef === 'string' ? body.providerRef : null) ??
+        (typeof body.payment_hash === 'string' ? body.payment_hash : null);
+
+      if (!pr) throw new Error('Invoice not returned by /api/pay');
+      currentInvoice = pr;
+      currentProviderRef = providerRef;
+      invoiceCode.textContent = pr;
+      copyBtn.disabled = false;
+      resetCopyBtn();
+      openWallet.href = `lightning:${pr}`;
+      openWallet.style.display = '';
+      paidBtn.disabled = false;
+      status.textContent = 'Waiting for payment…';
+      invoiceStartedAt = Date.now();
+      startInvoiceTicker();
+
+      const qrPayload = /^lightning:/i.test(pr) ? pr : `lightning:${pr}`;
+      try {
+        abortQr();
+        qrAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const signal = qrAbort?.signal;
+        void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: 260, signal }).catch((err) => {
+          const name = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
+          if (name === 'AbortError') return;
+          console.warn('tip qr render failed', err);
+        });
+      } catch (err) {
+        console.warn('tip qr render failed', err);
+      }
+
+      if (opts.onInvoice) {
+        await opts.onInvoice({ pr, providerRef, amountSats });
+      } else {
+        try {
+          await copyToClipboard(pr);
+        } catch {
+          /* ignore */
+        }
+      }
+      startRealtime();
+      startPoll();
+      return pr;
+    } catch (e) {
+      console.error('tip v2 error', e);
+      status.textContent = 'Failed to generate invoice';
+      status.classList.remove('nostrstack-status--muted');
+      status.classList.add('nostrstack-status--danger');
+    } finally {
+      tipBtn.disabled = false;
+    }
+  };
+
+  paidBtn.onclick = async () => {
+    status.textContent = 'Checking payment…';
+    await pollOnce();
+    if (!didPay) {
+      status.textContent = 'Payment not detected yet';
+      status.classList.remove('nostrstack-status--success');
+      status.classList.add('nostrstack-status--muted');
+    }
+  };
+
+  // Prime realtime connection so the status feels immediate.
+  if (wsUrl) startRealtime();
+
+  // Expose a small imperative API for tests / consumers.
+  return {
+    tip: startTip,
+    refreshFeed: () => feed?.refresh(),
+    destroy: () => {
+      feed?.destroy();
+      closePayWs();
+      stopPoll();
+      stopInvoiceTicker();
+      abortQr();
+    }
+  };
 }
 
 export function renderPayToAction(container: HTMLElement, opts: PayToActionOptions) {
@@ -732,6 +1536,24 @@ export function autoMount() {
     const amount = el.dataset.amountMsat ? Number(el.dataset.amountMsat) : undefined;
     const baseURL = el.dataset.baseUrl;
     const host = el.dataset.host;
+    const itemId = el.dataset.itemId;
+    if (itemId) {
+      const presets = (el.dataset.presetAmountsSats ?? '')
+        .split(',')
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      const defaultAmountSats = el.dataset.defaultAmountSats ? Number(el.dataset.defaultAmountSats) : undefined;
+      renderTipWidget(el, {
+        username,
+        itemId,
+        presetAmountsSats: presets.length ? presets : undefined,
+        defaultAmountSats: Number.isFinite(defaultAmountSats as number) ? defaultAmountSats : undefined,
+        baseURL,
+        host,
+        text: el.dataset.label
+      });
+      return;
+    }
     renderTipButton(el, { username, amountMsat: amount, baseURL, host, text: el.dataset.label });
   });
 
@@ -790,6 +1612,72 @@ export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {
         console.warn('clipboard copy failed', e);
       }
     }
+  });
+}
+
+type MountTipWidgetOptions = {
+  username?: string;
+  itemId?: string;
+  text?: string;
+  presetAmountsSats?: number[];
+  defaultAmountSats?: number;
+  allowCustomAmount?: boolean;
+  showFeed?: boolean;
+  baseURL?: string;
+  host?: string;
+  metadata?: Record<string, unknown>;
+  onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
+  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
+};
+
+export function mountTipWidget(container: HTMLElement, opts: MountTipWidgetOptions = {}) {
+  const username = opts.username ?? getBrandAttr(container, 'Tip') ?? 'anonymous';
+  const itemId =
+    opts.itemId ??
+    container.dataset.itemId ??
+    container.id ??
+    (typeof window !== 'undefined' && window.location?.href ? window.location.href : 'item');
+  return renderTipWidget(container, {
+    username,
+    itemId,
+    presetAmountsSats: opts.presetAmountsSats,
+    defaultAmountSats: opts.defaultAmountSats,
+    allowCustomAmount: opts.allowCustomAmount,
+    showFeed: opts.showFeed,
+    text: opts.text,
+    baseURL: opts.baseURL,
+    host: opts.host,
+    metadata: opts.metadata,
+    onInvoice: async (info) => {
+      try {
+        if (opts.onInvoice) await opts.onInvoice(info);
+        else if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(info.pr);
+      } catch (e) {
+        console.warn('clipboard copy failed', e);
+      }
+    },
+    onPaid: opts.onPaid
+  });
+}
+
+type MountTipFeedOptions = {
+  itemId?: string;
+  maxItems?: number;
+  baseURL?: string;
+  host?: string;
+};
+
+export function mountTipFeed(container: HTMLElement, opts: MountTipFeedOptions = {}) {
+  const itemId =
+    opts.itemId ??
+    container.dataset.itemId ??
+    container.id ??
+    (typeof window !== 'undefined' && window.location?.href ? window.location.href : 'item');
+  return renderTipFeed(container, {
+    itemId,
+    maxItems: opts.maxItems,
+    baseURL: opts.baseURL,
+    host: opts.host
   });
 }
 

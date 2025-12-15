@@ -18,11 +18,26 @@ pnpm add @nostrstack/embed
 ```
 Widgets auto-mount on elements with `data-nostrstack-*` attributes.
 
+To opt into the newer tip widget (3 presets + custom + live activity), add an `itemId`:
+```html
+<div
+  data-nostrstack-tip="alice"
+  data-item-id="post-123"
+  data-preset-amounts-sats="5,10,21"
+  data-default-amount-sats="10"
+  data-label="Tip"
+></div>
+```
+
 ## Module usage
 ```ts
-import { mountTipButton, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
+import { mountTipButton, mountTipWidget, mountTipFeed, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
 
 const tipBtn = mountTipButton(container, { username: 'alice', amountSats: 5 });
+// Tip widget (includes built-in activity feed by default).
+const tipWidget = mountTipWidget(container, { username: 'alice', itemId: 'post-123', presetAmountsSats: [5, 10, 21] });
+// Standalone feed (optional).
+mountTipFeed(feedContainer, { itemId: 'post-123' });
 const payBtn = mountPayToAction(container, { username: 'alice', amountSats: 10, onUnlock: () => console.log('paid') });
 mountCommentWidget(container, { threadId: 'post-123' });
 ```

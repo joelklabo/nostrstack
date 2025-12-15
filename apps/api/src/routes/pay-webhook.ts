@@ -11,7 +11,23 @@ export async function registerPayWebhook(app: FastifyInstance) {
       if (!payment) return reply.code(200).send({ ok: true, ignored: true });
 
       await app.prisma.payment.update({ where: { id: payment.id }, data: { status: 'PAID' } });
-      app.payEventHub?.broadcast({ type: 'invoice-paid', pr: payment.invoice, providerRef: payment.providerRef, amount: payment.amountSats });
+      let metadata: unknown | undefined;
+      if (payment.metadata) {
+        try {
+          metadata = JSON.parse(payment.metadata) as unknown;
+        } catch {
+          metadata = undefined;
+        }
+      }
+      app.payEventHub?.broadcast({
+        type: 'invoice-paid',
+        pr: payment.invoice,
+        providerRef: payment.providerRef,
+        amount: payment.amountSats,
+        action: payment.action ?? undefined,
+        itemId: payment.itemId ?? undefined,
+        metadata
+      });
       return reply.send({ ok: true });
     } catch (err) {
       request.log.error({ err }, 'lnbits webhook handling failed');

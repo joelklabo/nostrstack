@@ -253,11 +253,13 @@ async function main() {
     // Back to Lightning for payment flows.
     await page.getByRole('tab', { name: 'Lightning' }).click();
 
-    // Tip button -> invoice popover -> pay via in-app test payer.
-    await page.locator('#tip-container button').first().click();
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible({ timeout: 30_000 });
-    const bolt11 = (await dialog.locator('code').last().textContent())?.trim() ?? '';
+    // Tip widget -> generate invoice -> pay via in-app test payer.
+    const tipPreset = page.locator('#tip-container .nostrstack-tip__amt').first();
+    await expect(tipPreset).toBeVisible({ timeout: 30_000 });
+    await tipPreset.click();
+    const tipInvoice = page.locator('#tip-container .nostrstack-invoice-box code').first();
+    await expect(tipInvoice).toHaveText(/^ln/i, { timeout: 30_000 });
+    const bolt11 = (await tipInvoice.textContent())?.trim() ?? '';
     expect(bolt11).toMatch(/^ln/i);
     await page.evaluate(async (invoice) => {
       await navigator.clipboard.writeText(invoice);
@@ -267,9 +269,7 @@ async function main() {
     const payerInput = page.locator('input[placeholder="Paste BOLT11"]').first();
     await expect(payerInput).toHaveValue(bolt11, { timeout: 10_000 });
     await payWithTestPayer(page);
-    await expect(dialog).toContainText(/Paid|Payment confirmed/i, { timeout: 30_000 });
-    await dialog.getByRole('button', { name: 'Close invoice' }).click();
-    await expect(dialog).toBeHidden({ timeout: 10_000 });
+    await expect(page.locator('#tip-container')).toContainText(/Payment confirmed|Paid ✓/i, { timeout: 30_000 });
 
     // Pay-to-unlock -> invoice -> pay -> unlocked content.
     // Regression: this layout used to overflow into the sidebar at some mid-width viewports.
@@ -319,6 +319,7 @@ async function main() {
     await expect(page.getByTestId('unlock-status')).toContainText(/Unlocked/i, { timeout: 30_000 });
 
     // Request real invoice (API /api/pay) -> recheck status -> pay.
+    const dialog = page.getByRole('dialog');
     const requestReal = page.getByRole('button', { name: /Request real invoice/i }).first();
     await requestReal.click();
     await expect(dialog).toContainText('6 sats', { timeout: 30_000 });
