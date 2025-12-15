@@ -43,6 +43,7 @@ type ProfileMeta = {
   display_name?: string;
   nip05?: string;
   lud16?: string;
+  lud06?: string;
   website?: string;
 };
 type ThemeStyles = {
@@ -559,6 +560,7 @@ export default function App() {
   const [signerReady, setSignerReady] = useState(false);
   const [signerRelays, setSignerRelays] = useState<string[]>([]);
   const [profile, setProfile] = useState<ProfileMeta | null>(null);
+  const [profileMetaEvent, setProfileMetaEvent] = useState<{ event: NostrEvent; relay: string } | null>(null);
   const [profileStatus, setProfileStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [nip05Verified, setNip05Verified] = useState<boolean | null>(null);
   const [message, setMessage] = useState<string>('Hello from nostrstack demo 👋');
@@ -577,6 +579,7 @@ export default function App() {
   useEffect(() => {
     setNip05Verified(null);
     setProfile(null);
+    setProfileMetaEvent(null);
     setProfileStatus('idle');
   }, [activePubkey]);
 
@@ -723,6 +726,7 @@ export default function App() {
       if (!targets.length) return;
       setProfileStatus('loading');
       setNip05Verified(null);
+      setProfileMetaEvent(null);
       try {
         const fetchFromRelay = async (target: string) => {
           const relay = await Relay.connect(target);
@@ -766,10 +770,14 @@ export default function App() {
 
         let metaEv: NostrEvent | null = null;
         let relayEv: NostrEvent | null = null;
+        let metaRelay: string | null = null;
         for (const target of targets) {
           try {
             const res = await fetchFromRelay(target);
-            if (!metaEv && res.metaEv) metaEv = res.metaEv;
+            if (!metaEv && res.metaEv) {
+              metaEv = res.metaEv;
+              metaRelay = target;
+            }
             if (!relayEv && res.relayEv) relayEv = res.relayEv;
             if (metaEv) break;
           } catch {
@@ -786,6 +794,7 @@ export default function App() {
           }
         }
         setProfile(meta);
+        if (metaEv && metaRelay) setProfileMetaEvent({ event: metaEv, relay: metaRelay });
         setProfileStatus('ok');
         const nip05 = typeof meta.nip05 === 'string' ? meta.nip05 : null;
         if (nip05) {
@@ -1929,6 +1938,8 @@ export default function App() {
                   relayStats={relayStats}
                   profile={profile ?? undefined}
                   fullProfile={profile ?? undefined}
+                  metaEvent={profileMetaEvent?.event}
+                  metaRelay={profileMetaEvent?.relay}
                   profileStatus={profileStatus}
                   nip05Verified={nip05Verified}
                 />

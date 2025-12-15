@@ -1,3 +1,4 @@
+import type { Event as NostrEvent } from 'nostr-tools';
 import { nip19 } from 'nostr-tools';
 import React, { useMemo } from 'react';
 
@@ -28,10 +29,12 @@ type Props = {
     lud06?: string;
     website?: string;
   };
+  metaEvent?: NostrEvent | null;
+  metaRelay?: string | null;
   nip05Verified?: boolean | null;
 };
 
-export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profileStatus, profile, fullProfile, nip05Verified, relayStats }: Props) {
+export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profileStatus, profile, fullProfile, metaEvent, metaRelay, nip05Verified, relayStats }: Props) {
   const name = profile?.name || (fullProfile?.display_name as string) || 'Nostr user';
   const about = profile?.about || (fullProfile?.about as string) || '—';
   const avatar = profile?.picture || (fullProfile?.picture as string) || `https://robohash.org/${(pubkey ?? 'nostr').slice(0, 8)}?set=set3&size=120x120`;
@@ -187,7 +190,7 @@ export function NostrProfileCard({ pubkey, seckey, signerReady, relays, profileS
         </div>
       </div>
 
-      <ProfileDetails fullProfile={fullProfile} status={profileStatus} />
+      <ProfileDetails fullProfile={fullProfile} status={profileStatus} metaEvent={metaEvent} metaRelay={metaRelay} nip05Verified={nip05Verified} />
       <div style={{ display: 'grid', gap: '0.4rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         {relays.map((r) => {
           const stat = relayStats?.[r];
@@ -242,7 +245,19 @@ function safe<T>(fn: () => T): T | null {
   }
 }
 
-function ProfileDetails({ fullProfile, status }: { fullProfile?: Props['fullProfile']; status?: Props['profileStatus'] }) {
+function ProfileDetails({
+  fullProfile,
+  status,
+  metaEvent,
+  metaRelay,
+  nip05Verified
+}: {
+  fullProfile?: Props['fullProfile'];
+  status?: Props['profileStatus'];
+  metaEvent?: NostrEvent | null;
+  metaRelay?: string | null;
+  nip05Verified?: boolean | null;
+}) {
   if (status === 'loading') {
     return (
       <div style={{ border: '1px solid var(--nostrstack-color-border)', borderRadius: 'var(--nostrstack-radius-lg)', padding: '0.55rem 0.7rem', background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-text-muted)' }}>
@@ -267,16 +282,21 @@ function ProfileDetails({ fullProfile, status }: { fullProfile?: Props['fullProf
       </div>
     );
   }
-  const rows = [
+  const rowsRaw: Array<[string, unknown]> = [
     ['Display name', fullProfile.display_name],
     ['Name', fullProfile.name],
     ['NIP-05', fullProfile.nip05],
     ['Lightning', fullProfile.lud16],
     ['LNURL (lud06)', fullProfile.lud06],
     ['Website', fullProfile.website],
+    ['Picture', fullProfile.picture],
     ['Banner', fullProfile.banner],
-    ['About', fullProfile.about]
-  ].filter(([, v]) => Boolean(v));
+    ['About', fullProfile.about],
+    ['Updated', metaEvent?.created_at ? new Date(metaEvent.created_at * 1000).toLocaleString() : undefined],
+    ['Event id', metaEvent?.id],
+    ['Relay', metaRelay]
+  ];
+  const rows = rowsRaw.filter(([, v]) => Boolean(v));
   if (!rows.length) {
     return (
       <div style={{ border: '1px solid var(--nostrstack-color-border)', borderRadius: 'var(--nostrstack-radius-lg)', padding: '0.55rem 0.7rem', background: 'var(--nostrstack-color-surface)', color: 'var(--nostrstack-color-text-muted)' }}>
@@ -288,13 +308,60 @@ function ProfileDetails({ fullProfile, status }: { fullProfile?: Props['fullProf
   return (
     <div style={{ border: '1px solid var(--nostrstack-color-border)', borderRadius: 'var(--nostrstack-radius-lg)', padding: '0.55rem 0.7rem', background: 'var(--nostrstack-color-surface)' }}>
       <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: 'var(--nostrstack-color-text)' }}>Profile details</div>
-      <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', rowGap: '0.35rem', columnGap: '0.5rem', margin: 0 }}>
+      <dl style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: '0.35rem', columnGap: '0.5rem', margin: 0 }}>
         {rows.map(([label, value]) => (
           <React.Fragment key={label}>
             <dt style={dt}>{label}</dt>
             <dd style={dd}>
               {label === 'Website' && typeof value === 'string' ? (
                 <a href={value} target="_blank" rel="noreferrer">{value}</a>
+              ) : label === 'NIP-05' && typeof value === 'string' ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span>{value}</span>
+                  <span
+                    style={{
+                      padding: '0.1rem 0.5rem',
+                      borderRadius: 'var(--nostrstack-radius-pill)',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      border: '1px solid var(--nostrstack-color-border)',
+                      background:
+                        nip05Verified === true
+                          ? 'color-mix(in oklab, var(--nostrstack-color-success) 14%, var(--nostrstack-color-surface))'
+                          : nip05Verified === false
+                            ? 'color-mix(in oklab, var(--nostrstack-color-warning) 14%, var(--nostrstack-color-surface))'
+                            : 'var(--nostrstack-color-surface-subtle)',
+                      color:
+                        nip05Verified === true
+                          ? 'color-mix(in oklab, var(--nostrstack-color-success) 70%, var(--nostrstack-color-text))'
+                          : nip05Verified === false
+                            ? 'color-mix(in oklab, var(--nostrstack-color-warning) 70%, var(--nostrstack-color-text))'
+                            : 'var(--nostrstack-color-text-muted)'
+                    }}
+                  >
+                    {nip05Verified === true ? 'verified' : nip05Verified === false ? 'unverified' : 'unknown'}
+                  </span>
+                  <CopyButton text={value} label="Copy" size="sm" />
+                </span>
+              ) : (label === 'Picture' || label === 'Banner') && typeof value === 'string' ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <a href={value} target="_blank" rel="noreferrer">
+                    {value}
+                  </a>
+                  <CopyButton text={value} label="Copy" size="sm" />
+                </span>
+              ) : label === 'Event id' && typeof value === 'string' ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <code style={{ fontFamily: 'var(--nostrstack-font-mono)' }}>
+                    {value.slice(0, 10)}…{value.slice(-6)}
+                  </code>
+                  <CopyButton text={value} label="Copy" size="sm" />
+                </span>
+              ) : label === 'Relay' && typeof value === 'string' ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <code style={{ fontFamily: 'var(--nostrstack-font-mono)' }}>{hostLabel(value)}</code>
+                  <CopyButton text={value} label="Copy" size="sm" />
+                </span>
               ) : (
                 value as React.ReactNode
               )}
