@@ -1859,8 +1859,14 @@ export default function App() {
                       <div
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
                       >
+                        <button type="button" onClick={() => setRelaysCsv('mock')}>
+                          Use mock
+                        </button>
+                        <button type="button" onClick={() => setRelaysCsv('wss://relay.damus.io,wss://relay.snort.social')}>
+                          Use public relays
+                        </button>
                         <button type="button" onClick={() => setRelaysCsv(relaysEnvDefault.join(','))}>
-                          Use real defaults
+                          Use env default
                         </button>
                         <CopyButton text={relayLabel} label="Copy relays" />
                       </div>

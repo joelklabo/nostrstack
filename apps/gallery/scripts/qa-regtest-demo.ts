@@ -206,9 +206,9 @@ async function main() {
       .toMatch(/^(OK|Fallback used)$/);
 
     // Relays: apply defaults, copy, and exercise Add relay (with a duplicate).
-    await page.getByRole('button', { name: 'Use real defaults' }).click();
-    const relaysRow = page.getByRole('button', { name: 'Use real defaults' }).locator('..');
-    const copyRelaysBtn = relaysRow.getByRole('button').nth(1);
+    await page.getByRole('button', { name: 'Use env default' }).click();
+    const relaysRow = page.getByRole('button', { name: 'Use env default' }).locator('..');
+    const copyRelaysBtn = relaysRow.getByRole('button', { name: 'Copy relays' });
     await copyRelaysBtn.click();
     await expect(page.getByTestId('toast-region')).toContainText('Copied relays');
 
