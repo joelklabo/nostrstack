@@ -267,16 +267,30 @@ async function main() {
     await page.getByTestId('paywall-unlock').click();
     const invoiceCode = page.locator('.nostrstack-paywall__invoice').first();
     await expect(invoiceCode).toBeVisible({ timeout: 30_000 });
-    const overflowPx = await page.evaluate(() => {
-      const invoice = document.querySelector('.nostrstack-paywall__invoice') as HTMLElement | null;
-      const card = invoice?.closest('section') as HTMLElement | null;
-      if (!invoice || !card) return null;
-      const invoiceRect = invoice.getBoundingClientRect();
+    const overflow = await page.evaluate(() => {
+      const paywall = document.querySelector('.nostrstack-paywall') as HTMLElement | null;
+      const card = paywall?.closest('section') as HTMLElement | null;
+      if (!paywall || !card) return null;
       const cardRect = card.getBoundingClientRect();
-      return invoiceRect.right - cardRect.right;
+      let maxDelta = 0;
+      let offender: { tag: string; cls: string; text: string; delta: number } | null = null;
+      for (const el of Array.from(card.querySelectorAll('*'))) {
+        const rect = (el as HTMLElement).getBoundingClientRect();
+        const delta = rect.right - cardRect.right;
+        if (delta > maxDelta + 0.5) {
+          maxDelta = delta;
+          offender = {
+            tag: (el as HTMLElement).tagName.toLowerCase(),
+            cls: String((el as HTMLElement).className || ''),
+            text: ((el as HTMLElement).textContent || '').trim().slice(0, 60),
+            delta
+          };
+        }
+      }
+      return { maxDelta, offender };
     });
-    expect(overflowPx).not.toBeNull();
-    expect(overflowPx!).toBeLessThanOrEqual(1);
+    expect(overflow).not.toBeNull();
+    expect(overflow!.maxDelta).toBeLessThanOrEqual(1);
     const bolt11Unlock = (await invoiceCode.getAttribute('title'))?.trim() ?? '';
     expect(bolt11Unlock).toMatch(/^ln/i);
     await page.evaluate(async (invoice) => {

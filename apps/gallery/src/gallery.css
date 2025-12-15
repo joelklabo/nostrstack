@@ -1196,6 +1196,8 @@
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .nostrstack-paywall__error {
