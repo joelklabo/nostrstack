@@ -1,6 +1,8 @@
 import { getPublicKey, nip19, utils } from 'nostr-tools';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { CopyButton } from './CopyButton';
+
 function widthBasedKeep(w: number) {
   if (!Number.isFinite(w)) return 10;
   if (w < 480) return 8;
@@ -16,7 +18,6 @@ type Props = {
 
 export function NpubBar({ pubkey, seckey }: Props) {
   const [format, setFormat] = useState<'npub' | 'hex'>('npub');
-  const [copied, setCopied] = useState(false);
   const [thumbPos, setThumbPos] = useState<'left' | 'right'>('left');
   const [keep, setKeep] = useState(() => widthBasedKeep(typeof window !== 'undefined' ? window.innerWidth : 1024));
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
@@ -80,16 +81,6 @@ export function NpubBar({ pubkey, seckey }: Props) {
     setThumbPos(format === 'npub' ? 'left' : 'right');
   }, [format]);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard?.writeText(full);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    } catch {
-      // ignore
-    }
-  };
-
   const truncated = useMemo(() => {
     if (!full) return '—';
     // approximate character width 8px for monospace; leave room for buttons (~200px)
@@ -131,36 +122,13 @@ export function NpubBar({ pubkey, seckey }: Props) {
         <span style={text} aria-label={`${format} key`}>
           {truncated}
         </span>
-        <button type="button" onClick={handleCopy} style={copy} aria-live="polite" aria-label="Copy key">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={copied ? 'var(--nostrstack-color-success)' : 'var(--nostrstack-color-text)'}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ transition: 'stroke 120ms ease', opacity: copied ? 0.9 : 1 }}
-          >
-            <rect x="9" y="9" width="11" height="11" rx="2" ry="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-          <span
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'grid',
-              placeItems: 'center',
-              opacity: copied ? 1 : 0,
-              color: 'var(--nostrstack-color-success)',
-              fontWeight: 800,
-              transition: 'opacity 120ms ease'
-            }}
-          >
-            ✓
-          </span>
-        </button>
+        <CopyButton
+          text={full}
+          label="Copy key"
+          size="sm"
+          variant="icon"
+          ariaLabel="Copy key"
+        />
       </div>
     </div>
   );
@@ -191,20 +159,6 @@ const text: React.CSSProperties = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis'
-};
-
-const copy: React.CSSProperties = {
-  position: 'relative',
-  width: 40,
-  height: 40,
-  borderRadius: 'var(--nostrstack-radius-md)',
-  border: '1px solid var(--nostrstack-color-border)',
-  background: 'var(--nostrstack-color-surface)',
-  cursor: 'pointer',
-  fontWeight: 800,
-  color: 'var(--nostrstack-color-text)',
-  display: 'grid',
-  placeItems: 'center'
 };
 
 const toggleShell: React.CSSProperties = {

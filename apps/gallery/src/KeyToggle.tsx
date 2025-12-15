@@ -12,19 +12,23 @@ export function KeyToggle({ pubkey, seckey }: Props) {
   const [showPriv, setShowPriv] = useState(false);
   const [format, setFormat] = useState<'hex' | 'npub'>('npub');
 
-  const display = useMemo(() => {
+  const fullValue = useMemo(() => {
     const key = showPriv ? seckey : pubkey;
-    if (!key) return '—';
+    if (!key) return '';
     if (format === 'npub') {
       try {
-        const encoded = showPriv ? nip19.nsecEncode(utils.hexToBytes(key)) : nip19.npubEncode(key);
-        return middleTruncate(encoded, 12);
+        return showPriv ? nip19.nsecEncode(utils.hexToBytes(key)) : nip19.npubEncode(key);
       } catch {
-        return middleTruncate(key, 12);
+        return key;
       }
     }
-    return middleTruncate(key, 12);
+    return key;
   }, [format, pubkey, seckey, showPriv]);
+
+  const display = useMemo(() => {
+    if (!fullValue) return '—';
+    return middleTruncate(fullValue, 12);
+  }, [fullValue]);
 
   return (
     <div style={wrapper}>
@@ -42,7 +46,7 @@ export function KeyToggle({ pubkey, seckey }: Props) {
           <option value="npub">npub/nsec</option>
           <option value="hex">hex</option>
         </select>
-        <CopyButton text={display ?? ''} label="Copy" />
+        <CopyButton text={fullValue} label="Copy" />
       </div>
       <div style={codeBox}>
         <code>{display}</code>

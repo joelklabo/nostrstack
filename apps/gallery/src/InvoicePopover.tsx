@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
+import { copyToClipboard } from './clipboard';
 import { useToast } from './toast';
 
 export type InvoicePopoverProps = {
@@ -114,8 +115,7 @@ export function InvoicePopover({
 
   const copyInvoice = async () => {
     try {
-      if (!navigator?.clipboard?.writeText) throw new Error('Clipboard not available');
-      await navigator.clipboard.writeText(invoice);
+      await copyToClipboard(invoice);
       toast({ message: 'Invoice copied', tone: 'success' });
     } catch (err) {
       console.warn('copy invoice failed', err);

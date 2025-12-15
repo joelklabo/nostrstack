@@ -1,6 +1,8 @@
 import { nip19, utils } from 'nostr-tools';
 import { useMemo, useState } from 'react';
 
+import { CopyButton } from './CopyButton';
+
 type Props = {
   pubkey?: string | null;
   seckey?: string | null;
@@ -83,14 +85,9 @@ export function KeyChip({ pubkey, seckey, defaultPriv = false, compact = true, s
           {display}
         </code>
       </div>
-      <button
-        type="button"
-        onClick={() => navigator.clipboard?.writeText(fullValue)}
-        className="nostrstack-btn nostrstack-btn--sm"
-        style={{ flexShrink: 0 }}
-      >
-        Copy
-      </button>
+      <div style={{ flexShrink: 0 }}>
+        <CopyButton text={fullValue} label="Copy" size="sm" />
+      </div>
     </div>
   );
 }

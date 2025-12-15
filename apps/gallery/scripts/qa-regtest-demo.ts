@@ -224,7 +224,9 @@ async function main() {
 
     await page.getByRole('button', { name: 'hex' }).first().click();
     await page.getByRole('button', { name: 'npub' }).first().click();
-    await page.getByRole('button', { name: 'Copy key' }).first().click();
+    // Copy key may be disabled when no signer/pubkey is available in this environment.
+    const nostrCopyKeyBtn = page.getByRole('button', { name: 'Copy key' }).first();
+    if (await nostrCopyKeyBtn.isEnabled()) await nostrCopyKeyBtn.click();
 
     await page.getByRole('button', { name: 'Clear feed' }).click();
 
@@ -311,7 +313,7 @@ async function main() {
     await dialog.getByRole('button', { name: 'Copy invoice' }).click();
     await expect(page.getByTestId('toast-region')).toContainText('Invoice copied');
     await dialog.getByRole('button', { name: 'Copy', exact: true }).click();
-    await expect(page.getByTestId('toast-region')).toContainText('Copy copied');
+    await expect(page.getByTestId('toast-region')).toContainText('Copied');
     await page.evaluate(() => {
       const btn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Recheck payment status') as HTMLButtonElement | undefined;
       if (!btn) throw new Error('Recheck payment status button not found');

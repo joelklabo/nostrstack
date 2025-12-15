@@ -9,4 +9,5 @@ if [[ "${DISABLE_EXTENSIONS}" != "0" ]]; then
   ARGS+=(--disable-extensions)
 fi
 
-open -a "Google Chrome" --args "${ARGS[@]}"
+# Use a new Chrome instance so the remote debugging port is reliably enabled even if the user already has Chrome open.
+open -na "Google Chrome" --args "${ARGS[@]}"
