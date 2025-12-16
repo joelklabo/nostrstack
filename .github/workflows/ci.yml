@@ -126,28 +126,51 @@ jobs:
 
   real-relay-comment:
     name: Real relay comment (opt-in)
-    if: ${{ secrets.REAL_RELAY != '' && secrets.NIP07_PROFILE_B64 != '' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Check secrets
+        id: check
+        env:
+          HAVE_RELAY: ${{ secrets.REAL_RELAY != '' }}
+          HAVE_PROFILE: ${{ secrets.NIP07_PROFILE_B64 != '' }}
+        run: |
+          if [ "$HAVE_RELAY" != "true" ] || [ "$HAVE_PROFILE" != "true" ]; then
+            echo "Skipping: Missing required secrets (REAL_RELAY or NIP07_PROFILE_B64)"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
+
       - uses: pnpm/action-setup@v4
+        if: steps.check.outputs.skip != 'true'
         with:
           version: 9.11.0
+
       - name: Setup Node
+        if: steps.check.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
+
       - name: Install
+        if: steps.check.outputs.skip != 'true'
         run: pnpm install --frozen-lockfile
+
       - name: Restore NIP-07 profile
+        if: steps.check.outputs.skip != 'true'
         run: |
           echo "$NIP07_PROFILE_B64" | base64 -d > /tmp/nip07-profile.zip
           mkdir -p /tmp/nip07-profile
           unzip -q /tmp/nip07-profile.zip -d /tmp/nip07-profile
         env:
           NIP07_PROFILE_B64: ${{ secrets.NIP07_PROFILE_B64 }}
+
       - name: Real relay comment test
+        if: steps.check.outputs.skip != 'true'
         working-directory: apps/gallery
         env:
           REAL_RELAY: ${{ secrets.REAL_RELAY }}
