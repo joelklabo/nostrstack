@@ -26,7 +26,7 @@
     "lint:sh": "shellcheck scripts/*.sh",
     "lint:secrets": "secretlint \"**\"",
     "lint:audit": "audit-ci --moderate",
-    "lint:dep": "depcruise apps packages",
+    "lint:dep": "depcruise --config .dependency-cruiser.cjs apps packages",
     "lint:deps": "syncpack list-mismatches",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
@@ -88,7 +88,6 @@
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^39.0.1",
     "syncpack": "^13.0.4",
-    "typescript": "5.6.2",
-    "nostr-tools": "^2.18.2"
+    "typescript": "5.6.2"
   }
 }

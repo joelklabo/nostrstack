@@ -344,6 +344,12 @@
     "Topup",
     "topup",
     "qrcode",
+    "paywalled",
+    "Paywalled",
+    "unlockable",
+    "webln",
+    "WebLN",
+    "Fira",
     "SLOWMO",
     "requestfailed",
     "domcontentloaded",
@@ -447,6 +453,9 @@
     "dont",
     "nums"
   ],
+  "ignoreRegExpList": [
+    "/nsec1[0-9a-z]{20,}/g"
+  ],
   "ignorePaths": [
     "node_modules",
     "dist",
@@ -456,6 +465,8 @@
     ".github",
     ".vscode",
     ".pnpm-store",
+    "plan.md",
+    "verification-plan.md",
     "pnpm-lock.yaml",
     "package-lock.json",
     "yarn.lock"

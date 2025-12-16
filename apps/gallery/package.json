@@ -18,8 +18,8 @@
     "buffer": "^6.0.3",
     "nostr-tools": "^2.18.2",
     "qrcode": "^1.5.4",
-    "react": "19.0.0-rc.1",
-    "react-dom": "19.0.0-rc.1",
+    "react": "^19.0.0-rc.1",
+    "react-dom": "^19.0.0-rc.1",
     "zod": "3.24.1"
   },
   "devDependencies": {

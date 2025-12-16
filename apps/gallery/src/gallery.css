@@ -5,7 +5,6 @@
   --terminal-accent: #f0f;
   --terminal-border: #333;
   --terminal-font: 'Fira Code', 'Courier New', monospace;
-  
   --color-surface: #111;
   --color-surface-hover: #1a1a1a;
 }
@@ -39,8 +38,8 @@ body {
 .login-terminal {
   width: 500px;
   border: 2px solid var(--terminal-text);
-  background: rgba(0, 0, 0, 0.9);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+  background: rgb(0 0 0 / 90%);
+  box-shadow: 0 0 20px rgb(0 255 65 / 20%);
 }
 
 .terminal-header {
@@ -114,7 +113,7 @@ body {
 }
 
 .warning-msg {
-  color: #ffaa00;
+  color: #fa0;
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
@@ -168,7 +167,7 @@ body {
   border: 1px solid var(--terminal-border);
   margin-bottom: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgb(255 255 255 / 2%);
 }
 
 .post-header {
@@ -204,9 +203,9 @@ body {
 }
 
 .zap-btn:hover {
-  border-color: #ffaa00;
-  color: #ffaa00;
-  text-shadow: 0 0 5px #ffaa00;
+  border-color: #fa0;
+  color: #fa0;
+  text-shadow: 0 0 5px #fa0;
 }
 
 /* Telemetry */
@@ -233,7 +232,7 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgb(0 0 0 / 80%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -243,7 +242,7 @@ body {
 .zap-modal-content {
   background: var(--terminal-bg);
   border: 2px solid var(--terminal-text);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+  box-shadow: 0 0 20px rgb(0 255 65 / 20%);
   width: 400px;
   max-width: 90vw;
 }
@@ -279,7 +278,7 @@ body {
   border: 1px solid var(--terminal-border);
   padding: 1rem;
   margin-bottom: 1rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgb(255 255 255 / 2%);
 }
 
 .editor-header {
@@ -326,7 +325,7 @@ body {
 }
 
 .profile-name {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
   color: var(--terminal-text);
   font-size: 1.8rem;
 }
@@ -383,14 +382,11 @@ h3 {
 
 .paywall-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgb(0 0 0 / 70%);
   backdrop-filter: blur(3px);
   z-index: 10;
 }
@@ -401,7 +397,7 @@ h3 {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgb(0 0 0 / 80%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -411,7 +407,7 @@ h3 {
 .paywall-payment-modal-content {
   background: var(--terminal-bg);
   border: 2px solid var(--terminal-text);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+  box-shadow: 0 0 20px rgb(0 255 65 / 20%);
   width: 400px;
   max-width: 90vw;
 }

@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "@nostrstack/embed": "workspace:*",
-    "@nostrstack/sdk": "workspace:*",
     "buffer": "^6.0.3",
     "nostr-tools": "^2.18.2",
     "qrcode.react": "^4.2.0"

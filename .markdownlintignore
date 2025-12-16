@@ -7,3 +7,5 @@ coverage
 .vscode
 .pnpm-store
 docs/**
+plan.md
+verification-plan.md

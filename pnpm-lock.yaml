@@ -64,9 +64,6 @@ importers:
       markdownlint-cli:
         specifier: ^0.47.0
         version: 0.47.0
-      nostr-tools:
-        specifier: ^2.18.2
-        version: 2.18.2(typescript@5.6.2)
       prettier:
         specifier: 3.2.5
         version: 3.2.5
@@ -231,10 +228,10 @@ importers:
         specifier: ^1.5.4
         version: 1.5.4
       react:
-        specifier: 19.0.0-rc.1
+        specifier: ^19.0.0-rc.1
         version: 19.0.0-rc.1
       react-dom:
-        specifier: 19.0.0-rc.1
+        specifier: ^19.0.0-rc.1
         version: 19.0.0-rc.1(react@19.0.0-rc.1)
       zod:
         specifier: 3.24.1
@@ -285,9 +282,6 @@ importers:
       '@nostrstack/embed':
         specifier: workspace:*
         version: link:../embed
-      '@nostrstack/sdk':
-        specifier: workspace:*
-        version: link:../sdk
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -539,7 +533,6 @@ packages:
   '@beads/bd@0.27.2':
     resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
     engines: {node: '>=14.0.0'}
-    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -1234,7 +1227,6 @@ packages:
 
   '@ls-lint/ls-lint@2.3.1':
     resolution: {integrity: sha512-vPe6IDByQnQRTxcAYjTxrmga/tSIui50VBFTB5KIJWY3OOFmxE2VtymjeSEfQfiMbhZV/ZPAqYy2lt8pZFQ0Rw==}
-    cpu: [x64, arm64, s390x, ppc64le]
     os: [darwin, linux, win32]
     hasBin: true
 

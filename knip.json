@@ -22,6 +22,7 @@
   ],
   "ignoreDependencies": [
     "eslint",
+    "buffer",
     "@fastify/static",
     "fastify-type-provider-zod",
     "pino-pretty",
@@ -35,7 +36,6 @@
     "@types/sinon",
     "wait-on",
     "@types/qrcode",
-    "@vitejs/plugin-basic-ssl",
     "@beads/bd",
     "@commitlint/cli",
     "@secretlint/secretlint-rule-preset-recommend",
@@ -53,7 +53,6 @@
   ],
   "ignoreExportsUsedInFile": true,
   "ignoreExports": {
-    "apps/gallery/src/tokens.ts": ["colors"],
     "apps/api/src/nostr/nostr-client.ts": ["PublishTemplate", "PublishInput"],
     "apps/api/src/providers/index.ts": ["LightningProvider"],
     "apps/api/src/providers/opennode.ts": ["CreateChargeInput"],
@@ -65,9 +64,6 @@
     "apps/gallery/src/PayToUnlockCard.tsx": ["PayToUnlockCardProps"],
     "apps/gallery/src/QrLabCard.tsx": ["QrLabCardProps"],
     "apps/gallery/src/toast.tsx": ["ToastTone"],
-    "apps/gallery/src/types/relay.ts": ["RelayStat"],
-    "apps/gallery/src/ui/Badge.tsx": ["BadgeProps"],
-    "apps/gallery/src/ui/Callout.tsx": ["CalloutProps"],
     "apps/gallery/src/ui/JsonView.tsx": ["JsonViewProps"],
     "apps/gallery/src/useCopyAction.ts": ["CopyState"],
     "packages/blog-kit/src/context.tsx": ["ThemeVars", "NostrstackConfig"],
