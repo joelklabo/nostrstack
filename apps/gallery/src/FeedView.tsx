@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { PostEditor, ZapButton, PaywalledContent, useStats } from '@nostrstack/blog-kit';
-import { Relay } from 'nostr-tools';
+import { SimplePool } from 'nostr-tools';
 import type { Event } from 'nostr-tools';
 import { JsonView } from './ui/JsonView';
 
@@ -76,42 +76,28 @@ export function FeedView() {
   const { incrementEvents } = useStats();
 
   useEffect(() => {
-    const subs: { relay: Relay; sub: ReturnType<Relay['subscribe']> }[] = [];
-    
-    const connect = async () => {
-      // Connect to first working relay for demo (in production use SimplePool)
-      for (const url of RELAYS) {
-        try {
-          const relay = await Relay.connect(url);
-          console.log(`Connected to ${url}`);
-          
-          const sub = relay.subscribe([
-            { kinds: [1], limit: 20 }
-          ], {
-            onevent(event) {
-              incrementEvents();
-              if (!seenIds.current.has(event.id)) {
-                seenIds.current.add(event.id);
-                setPosts(prev => {
-                  const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
-                  return next.slice(0, 50);
-                });
-              }
-            }
-          });
-          subs.push({ relay, sub });
-          // Just one relay for now to avoid duplicates logic complexity in "bare bones"
-          break; 
-        } catch (e) {
-          console.error(`Failed to connect to ${url}`);
-        }
-      }
-    };
+    const pool = new SimplePool();
 
-    connect();
+    const sub = pool.subscribeMany(
+      RELAYS,
+      [{ kinds: [1], limit: 20 }],
+      {
+        onevent(event) {
+          incrementEvents();
+          if (!seenIds.current.has(event.id)) {
+            seenIds.current.add(event.id);
+            setPosts(prev => {
+              const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
+              return next.slice(0, 50);
+            });
+          }
+        },
+      }
+    );
 
     return () => {
-      subs.forEach(({ relay }) => relay.close());
+      sub.close();
+      pool.close(RELAYS);
     };
   }, []);
 
