@@ -1357,8 +1357,8 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip--compact .nostrstack-tip__panel {
-  padding: var(--nostrstack-space-3);
-  gap: var(--nostrstack-space-2);
+  padding: var(--nostrstack-space-4);
+  gap: var(--nostrstack-space-3);
   grid-template-columns: 1fr;
   grid-template-areas:
     "status"
