@@ -1133,12 +1133,13 @@ export const nostrstackComponentsCss = `
 /* QR code */
 .nostrstack-tip__qr {
   grid-area: qr;
-  padding: 0.75rem;
+  padding: 0.5rem;
   background: white;
   border-radius: var(--nostrstack-radius-lg);
   border: 1px solid var(--nostrstack-color-border);
   box-shadow: var(--nostrstack-shadow-sm);
-  max-width: 200px;
+  width: 100%;
+  max-width: 280px;
   margin: 0 auto;
   transition: transform var(--nostrstack-motion-base) var(--nostrstack-motion-ease-standard);
 }
@@ -1171,15 +1172,49 @@ export const nostrstackComponentsCss = `
   grid-area: invoice;
   width: 100%;
   margin-top: 0;
-  max-height: 80px;
-  font-size: 0.75rem;
-  background: var(--nostrstack-color-surface-strong);
-  border-color: transparent;
+  padding: 0.5rem 0.75rem;
+  background: var(--nostrstack-color-surface-subtle);
+  border: 1px solid var(--nostrstack-color-border);
+  border-radius: var(--nostrstack-radius-md);
   display: none; /* Hidden by default */
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.nostrstack-tip__panel .nostrstack-invoice-box:hover {
+  background: var(--nostrstack-color-surface);
+  border-color: var(--nostrstack-color-primary);
+}
+
+.nostrstack-tip__panel .nostrstack-invoice-box[data-copied="true"] {
+  background: color-mix(in oklab, var(--nostrstack-color-success) 10%, var(--nostrstack-color-surface));
+  border-color: var(--nostrstack-color-success);
 }
 
 .nostrstack-tip__panel .nostrstack-invoice-box.nostrstack-visible {
-  display: block;
+  display: flex;
+}
+
+.nostrstack-invoice-icon {
+  display: flex;
+  align-items: center;
+  color: var(--nostrstack-color-text-muted);
+}
+
+.nostrstack-invoice-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--nostrstack-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nostrstack-tip__panel .nostrstack-invoice-box[data-copied="true"] .nostrstack-invoice-label {
+  color: var(--nostrstack-color-success);
 }
 
 /* Success celebration - lightning bolts! */
@@ -1335,21 +1370,21 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip--compact .nostrstack-tip__ring {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   margin: 0 auto;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__ringTime {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__ringLabel {
-  font-size: 0.5rem;
+  font-size: 0.55rem;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__qr {
-  max-width: 140px;
+  max-width: 200px;
   padding: 0.4rem;
   margin: 0 auto;
   background: white; /* Ensure contrast */
@@ -1367,7 +1402,11 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip--compact .nostrstack-tip__panel .nostrstack-invoice-box {
-  display: none; /* Hide invoice text in compact mode to save space */
+  display: none; /* Hidden by default, toggled via class */
+}
+
+.nostrstack-tip--compact .nostrstack-tip__panel .nostrstack-invoice-box.nostrstack-visible {
+  display: flex;
 }
 
 .nostrstack-tip--compact .nostrstack-tip__realtime {

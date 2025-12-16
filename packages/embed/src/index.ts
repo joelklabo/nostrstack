@@ -650,40 +650,41 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const qrWrap = document.createElement('div');
   qrWrap.className = 'nostrstack-tip__qr';
 
-  const invoiceBox = document.createElement('div');
+  const invoiceBox = document.createElement('button');
+  invoiceBox.type = 'button';
   invoiceBox.className = 'nostrstack-invoice-box';
-  invoiceBox.style.position = 'relative'; // For inline copy button
-  // invoiceBox.style.display = 'none'; // Hidden until invoice generated - handled by CSS class now
+  invoiceBox.title = 'Click to copy invoice';
+  
+  const invoiceIcon = document.createElement('span');
+  invoiceIcon.className = 'nostrstack-invoice-icon';
+  invoiceIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  
   const invoiceCode = document.createElement('code');
   invoiceCode.className = 'nostrstack-code';
-  invoiceBox.appendChild(invoiceCode);
+  
+  const invoiceCopyLabel = document.createElement('span');
+  invoiceCopyLabel.className = 'nostrstack-invoice-label';
+  invoiceCopyLabel.textContent = 'Copy';
 
-  const { el: inlineCopyBtn, reset: resetInlineCopyBtn } = createCopyButton({
-    label: 'Copy',
-    variant: 'icon',
-    size: 'sm',
-    getText: () => currentInvoice ?? ''
-  });
-  inlineCopyBtn.className += ' nostrstack-btn--ghost nostrstack-invoice-copy';
-  inlineCopyBtn.style.position = 'absolute';
-  inlineCopyBtn.style.top = '4px';
-  inlineCopyBtn.style.right = '4px';
-  inlineCopyBtn.style.padding = '4px';
-  inlineCopyBtn.style.width = '28px';
-  inlineCopyBtn.style.height = '28px';
-  inlineCopyBtn.style.background = 'var(--nostrstack-color-surface)';
-  inlineCopyBtn.style.border = '1px solid var(--nostrstack-color-border)';
-  invoiceBox.appendChild(inlineCopyBtn);
+  invoiceBox.append(invoiceIcon, invoiceCode, invoiceCopyLabel);
+
+  invoiceBox.onclick = async () => {
+    if (!currentInvoice) return;
+    try {
+      await copyToClipboard(currentInvoice);
+      invoiceBox.dataset.copied = 'true';
+      invoiceCopyLabel.textContent = 'Copied!';
+      setTimeout(() => {
+        invoiceBox.dataset.copied = 'false';
+        invoiceCopyLabel.textContent = 'Copy';
+      }, 2000);
+    } catch {
+      invoiceCopyLabel.textContent = 'Error';
+    }
+  };
 
   const actions = document.createElement('div');
   actions.className = 'nostrstack-tip__actions';
-
-  const { el: copyBtn, reset: resetCopyBtn } = createCopyButton({
-    label: 'Copy invoice',
-    size: 'sm',
-    getText: () => currentInvoice ?? ''
-  });
-  copyBtn.disabled = true;
 
   const openWallet = document.createElement('a');
   openWallet.textContent = 'Open in wallet';
@@ -697,9 +698,9 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   paidBtn.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-tip__paid';
   paidBtn.disabled = true;
 
-  actions.append(copyBtn, openWallet, paidBtn);
+  actions.append(openWallet, paidBtn);
 
-  panel.append(ring, status, realtime, qrWrap, actions, invoiceBox);
+  panel.append(ring, status, realtime, qrWrap, invoiceBox, actions);
 
   let feed: { refresh: () => void; destroy: () => void } | null = null;
   let feedWrap: HTMLDivElement | null = null;
@@ -1024,7 +1025,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
     status.classList.add('nostrstack-status--muted');
     tipBtn.disabled = true;
-    copyBtn.disabled = true;
+    // copyBtn.disabled = true; // Removed
     paidBtn.disabled = true;
     paidBtn.textContent = "I've paid";
     openWallet.style.display = 'none';
@@ -1073,11 +1074,11 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       if (!pr) throw new Error('Invoice not returned by /api/pay');
       currentInvoice = pr;
       currentProviderRef = providerRef;
-      invoiceCode.textContent = pr;
+      invoiceCode.textContent = pr.substring(0, 8) + '...' + pr.substring(pr.length - 8);
       invoiceBox.classList.add('nostrstack-visible');
-      copyBtn.disabled = false;
-      resetCopyBtn();
-      resetInlineCopyBtn();
+      // copyBtn.disabled = false; // Removed
+      // resetCopyBtn(); // Removed
+      // resetInlineCopyBtn(); // Removed
       openWallet.href = `lightning:${pr}`;
       openWallet.style.display = '';
       paidBtn.disabled = false;
@@ -1090,7 +1091,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
         abortQr();
         qrAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
         const signal = qrAbort?.signal;
-        const qrSize = opts.size === 'compact' ? 180 : 260;
+        const qrSize = opts.size === 'compact' ? 240 : 320;
         void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: qrSize, signal }).catch((err) => {
           const name = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
           if (name === 'AbortError') return;
