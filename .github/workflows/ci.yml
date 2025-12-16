@@ -126,7 +126,7 @@ jobs:
 
   real-relay-comment:
     name: Real relay comment (opt-in)
-    if: ${{ secrets.REAL_RELAY && secrets.NIP07_PROFILE_B64 }}
+    if: secrets.REAL_RELAY && secrets.NIP07_PROFILE_B64
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
