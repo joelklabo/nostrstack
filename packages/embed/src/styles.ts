@@ -1365,6 +1365,7 @@ export const nostrstackComponentsCss = `
     "qr"
     "ring"
     "realtime"
+    "invoice"
     "actions";
   text-align: center;
 }
@@ -1384,7 +1385,7 @@ export const nostrstackComponentsCss = `
 }
 
 .nostrstack-tip--compact .nostrstack-tip__qr {
-  max-width: 200px;
+  max-width: 240px;
   padding: 0.4rem;
   margin: 0 auto;
   background: white; /* Ensure contrast */
