@@ -87,7 +87,7 @@ async function main() {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      domain: 'default',
+      domain: 'localhost',
       action: ACTION,
       amount: AMOUNT
     }),

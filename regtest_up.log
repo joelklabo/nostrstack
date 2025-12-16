@@ -1,0 +1,32 @@
+[+] Starting regtest stack
+ Container regtest-bitcoind-1  Running
+ Container regtest-lnd-merchant-1  Running
+ Container regtest-lnd-payer-1  Running
+ Container regtest-lnbits-1  Running
+ Container regtest-bitcoind-1  Waiting
+ Container regtest-bitcoind-1  Waiting
+ Container regtest-bitcoind-1  Healthy
+ Container regtest-bitcoind-1  Healthy
+[+] Waiting for bitcoind...
+[+] Ensuring miner wallet exists + loaded
+[=] Chain already bootstrapped (height 1062); skipping initial mine
+[+] Ensuring LND nodes are synced to chain
+[=] LND synced (bitcoind height 1062, payer 1062, merchant 1062)
+[=] Payer already funded (balance: 298999834 sats); skipping onchain top-up
+[+] Ensuring payer -> merchant has an active channel
+[+] Connecting payer -> merchant
+[=] Active channel present
+[+] Restarting LNbits so it sees LND macaroons
+ Container regtest-lnbits-1  Restarting
+ Container regtest-lnbits-1  Started
+[+] Creating LNbits superuser (admin/changeme)
+
+Regtest LNbits is ready.
+- LNbits UI:        http://localhost:15001
+- Merchant LND REST: https://localhost:18080 (self-signed)
+- Admin key:         4d2dffa963df463ea117530798a253e0
+
+Use these envs for API:
+  LN_BITS_URL=http://localhost:15001
+  LN_BITS_API_KEY=4d2dffa963df463ea117530798a253e0
+  LIGHTNING_PROVIDER=lnbits

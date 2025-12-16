@@ -13,6 +13,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@nostrstack/blog-kit": "workspace:*",
     "@nostrstack/embed": "workspace:*",
     "nostr-tools": "^2.18.2",
     "qrcode": "^1.5.4",

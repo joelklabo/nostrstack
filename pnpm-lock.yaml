@@ -29,7 +29,7 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1
       '@nostrstack/config':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:packages/config
       '@secretlint/secretlint-rule-preset-recommend':
         specifier: ^11.2.5
@@ -115,6 +115,21 @@ importers:
       '@fastify/swagger-ui':
         specifier: 2.1.0
         version: 2.1.0
+      '@opentelemetry/auto-instrumentations-node':
+        specifier: 0.67.2
+        version: 0.67.2(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))
+      '@opentelemetry/exporter-trace-otlp-http':
+        specifier: 0.208.0
+        version: 0.208.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resources':
+        specifier: 2.2.0
+        version: 2.2.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-node':
+        specifier: 0.208.0
+        version: 0.208.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/semantic-conventions':
+        specifier: 1.38.0
+        version: 1.38.0
       '@prisma/client':
         specifier: 5.20.0
         version: 5.20.0(prisma@5.20.0)
@@ -152,21 +167,6 @@ importers:
         specifier: 3.24.1
         version: 3.24.1
     devDependencies:
-      '@opentelemetry/auto-instrumentations-node':
-        specifier: 0.67.2
-        version: 0.67.2(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))
-      '@opentelemetry/exporter-trace-otlp-http':
-        specifier: 0.208.0
-        version: 0.208.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources':
-        specifier: 2.2.0
-        version: 2.2.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-node':
-        specifier: 0.208.0
-        version: 0.208.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions':
-        specifier: 1.38.0
-        version: 1.38.0
       '@playwright/test':
         specifier: 1.57.0
         version: 1.57.0
@@ -212,6 +212,9 @@ importers:
 
   apps/gallery:
     dependencies:
+      '@nostrstack/blog-kit':
+        specifier: workspace:*
+        version: link:../../packages/blog-kit
       '@nostrstack/embed':
         specifier: workspace:*
         version: link:../../packages/embed
@@ -506,7 +509,6 @@ packages:
   '@beads/bd@0.27.2':
     resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
     engines: {node: '>=14.0.0'}
-    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -1189,7 +1191,6 @@ packages:
 
   '@ls-lint/ls-lint@2.3.1':
     resolution: {integrity: sha512-vPe6IDByQnQRTxcAYjTxrmga/tSIui50VBFTB5KIJWY3OOFmxE2VtymjeSEfQfiMbhZV/ZPAqYy2lt8pZFQ0Rw==}
-    cpu: [x64, arm64, s390x, ppc64le]
     os: [darwin, linux, win32]
     hasBin: true
 
