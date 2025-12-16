@@ -11,6 +11,7 @@ test.describe('Social App Flow', () => {
     await expect(page.getByText('AUTH_GATEWAY')).toBeVisible();
     await expect(page.getByText('EXTENSION_AUTH (NIP-07)')).toBeVisible();
     await expect(page.getByText('MANUAL_OVERRIDE (NSEC)')).toBeVisible();
+    await page.screenshot({ path: '../../docs/screenshots/login.png' });
   });
 
   test('User can login with nsec and see feed', async ({ page }) => {
@@ -31,31 +32,29 @@ test.describe('Social App Flow', () => {
 
     // 2. Verify Feed View & Screenshot
     await expect(page.getByText('NOSTRSTACK_V1')).toBeVisible(); // Sidebar
-    await page.screenshot({ path: 'test-results/screenshots/feed.png' });
+    await page.screenshot({ path: '../../docs/screenshots/feed.png' });
 
     await expect(page.getByText('STREAMING_LIVE_EVENTS...')).toBeVisible(); // Feed
     await expect(page.getByPlaceholder('WHAT ARE YOU HACKING ON?...')).toBeVisible(); // Post Editor
 
     // 3. Post a note
     await page.getByPlaceholder('WHAT ARE YOU HACKING ON?...').fill('Hello from Playwright E2E!');
-    await page.screenshot({ path: 'test-results/screenshots/posting.png' });
+    await page.screenshot({ path: '../../docs/screenshots/posting.png' });
     await page.getByText('PUBLISH_EVENT').click();
 
     // 4. Check for success status
     await expect(page.getByText(/STATUS: Signing event|SUCCESS:|ERROR:/)).toBeVisible({ timeout: 10000 });
-    await page.screenshot({ path: 'test-results/screenshots/post-result.png' });
+    await page.screenshot({ path: '../../docs/screenshots/post-result.png' });
 
     // 5. Interact: Click Zap (opens modal)
     // Wait for at least one post to load (PostItem)
     const zapBtn = page.locator('.zap-btn').first();
     // In real env, posts might take time to load from relays.
-    // If no posts, this part is skipped implicitly if we don't assert availability strongly.
-    // We'll try to wait for it.
     try {
       await zapBtn.waitFor({ state: 'visible', timeout: 5000 });
       await zapBtn.click();
       await expect(page.getByText('ZAP_INITIATE')).toBeVisible();
-      await page.screenshot({ path: 'test-results/screenshots/zap-modal.png' });
+      await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
       // Close modal
       await page.getByText('CANCEL').click();
     } catch {
@@ -74,12 +73,10 @@ test.describe('Social App Flow', () => {
     await page.getByRole('button', { name: 'PROFILE' }).click();
 
     // Check Profile View
-    // We expect UNKNOWN_USER initially or if metadata fetch fails (likely on real network without mock)
-    // But we check for structure.
     await expect(page.locator('.profile-view')).toBeVisible();
     
     // Interact: Follow
     await page.getByText('[+] FOLLOW_USER').click();
-    await page.screenshot({ path: 'test-results/screenshots/profile.png' });
+    await page.screenshot({ path: '../../docs/screenshots/profile.png' });
   });
 });

@@ -1,17 +1,20 @@
 import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import App from './App';
 import { ToastProvider } from './ui/toast';
 
 describe('App', () => {
-  it('renders login screen by default', () => {
-    const html = renderToString(
+  it('renders login screen by default', async () => {
+    render(
       <ToastProvider>
         <App />
       </ToastProvider>
     );
-    expect(html).toContain('AUTH_GATEWAY');
+    // It should transition to login
+    await waitFor(() => {
+      expect(screen.getByText('AUTH_GATEWAY')).toBeTruthy();
+    });
   });
 });
