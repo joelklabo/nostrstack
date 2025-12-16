@@ -79,4 +79,38 @@ test.describe('Social App Flow', () => {
     await page.getByText('[+] FOLLOW_USER').click();
     await page.screenshot({ path: '../../docs/screenshots/profile.png' });
   });
+
+  test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {
+    // Login
+    const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+    await page.getByText('MANUAL_OVERRIDE (NSEC)').click();
+    await page.getByPlaceholder('nsec1...').fill(validNsec);
+    await page.getByText('EXECUTE').click();
+
+    // Verify Sidebar Buttons exist and are clickable (even if no-op)
+    await page.getByRole('button', { name: 'NOTIFICATIONS' }).click();
+    await page.getByRole('button', { name: 'SETTINGS' }).click();
+
+    // Verify Post Actions
+    // Wait for at least one post
+    await expect(page.getByText('STREAMING_LIVE_EVENTS...')).toBeVisible({ timeout: 15000 });
+    // Click VIEW_SRC on the first post
+    await page.getByText('VIEW_SRC').first().click();
+    // Expect JSON view to appear (contains "EVENT_ID:")
+    await expect(page.getByText(/EVENT_ID:/)).toBeVisible();
+    
+    // Toggle back (HIDE_SRC)
+    await page.getByText('HIDE_SRC').first().click();
+    await expect(page.getByText(/EVENT_ID:/)).not.toBeVisible();
+
+    // Click REPLY (no-op but should not crash)
+    await page.getByText('REPLY').first().click();
+
+    // Logout
+    await page.getByRole('button', { name: 'LOGOUT' }).click();
+    
+    // Expect Login Screen
+    await expect(page.getByText('AUTH_GATEWAY')).toBeVisible();
+    await expect(page.getByText('MANUAL_OVERRIDE (NSEC)')).toBeVisible();
+  });
 });

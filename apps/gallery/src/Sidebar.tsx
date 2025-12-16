@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useStats } from '@nostrstack/blog-kit';
+import { useStats, useAuth } from '@nostrstack/blog-kit';
 
 interface SidebarProps {
   currentView: 'feed' | 'profile';
@@ -9,6 +9,7 @@ interface SidebarProps {
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const [uptime, setUptime] = useState(0);
   const { eventCount } = useStats();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const start = Date.now();
@@ -53,7 +54,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
       <button className="nav-item">SETTINGS</button>
       
       <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>
-        <button className="nav-item" onClick={() => window.location.reload()}>LOGOUT</button>
+        <button className="nav-item" onClick={logout}>LOGOUT</button>
       </div>
     </nav>
   );
