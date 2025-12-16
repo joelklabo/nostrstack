@@ -38,3 +38,7 @@ The Gallery is a static Single Page Application (SPA).
 
 ## Docker
 You can also use the provided `Dockerfile` in `apps/api` for containerized deployment.
+
+## Automated Deployment (CI/CD)
+The repository includes a GitHub Actions workflow `.github/workflows/azure-deploy.yml` for deploying the API to Azure Container Apps.
+For the frontend (Gallery), we recommend setting up a workflow with Cloudflare Pages or Vercel linked to the `apps/gallery` directory, with the build command `pnpm build`.
