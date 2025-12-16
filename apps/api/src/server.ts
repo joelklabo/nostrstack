@@ -22,6 +22,7 @@ import { OpenNodeProvider } from './providers/opennode.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryWs } from './routes/telemetry-ws.js';
 import { registerWalletWs } from './routes/wallet-ws.js';
+import type { LogHub } from './services/log-hub.js';
 import { createLogHub } from './services/log-hub.js';
 import { createPayEventHub } from './services/pay-events.js';
 import { startPaymentReconciler } from './services/payment-reconciler.js';
@@ -74,7 +75,7 @@ export async function buildServer() {
     return {};
   })();
   const stopTracing = startTracing(env);
-  const logHub = createLogHub({ bufferSize: 500 });
+  const logHub: LogHub = createLogHub({ bufferSize: 500 });
 
   const server = Fastify({
     ...httpsOpts,
