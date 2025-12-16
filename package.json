@@ -2,7 +2,7 @@
   "name": "nostrstack",
   "private": true,
   "version": "0.0.0",
-  "packageManager": "pnpm@10.25.0",
+  "packageManager": "pnpm@9.11.0",
   "scripts": {
     "lint": "pnpm -r lint",
     "lint:knip": "knip",

@@ -17,8 +17,7 @@ jobs:
           POSTGRES_USER: nostrstack
           POSTGRES_PASSWORD: nostrstack
           POSTGRES_DB: nostrstack
-        options: >-
-          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
+        options: --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -67,6 +66,9 @@ jobs:
 
       - name: Lint (Dependencies)
         run: pnpm lint:deps
+
+      - name: Lint (Architecture)
+        run: pnpm lint:dep
 
       - name: Prepare DB (Postgres)
         working-directory: apps/api
