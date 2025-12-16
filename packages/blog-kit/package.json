@@ -31,12 +31,13 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "react": "19.0.0-rc.1",
-    "react-dom": "19.0.0-rc.1"
+    "react": "^19.0.0-rc.1",
+    "react-dom": "^19.0.0-rc.1"
   },
   "dependencies": {
     "@nostrstack/embed": "workspace:*",
-    "nostr-tools": "^2.18.2"
+    "nostr-tools": "^2.18.2",
+    "qrcode.react": "^1.0.1"
   },
   "devDependencies": {
     "@testing-library/react": "16.1.0",

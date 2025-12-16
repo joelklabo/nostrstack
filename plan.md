@@ -22,7 +22,7 @@ Build a "bare bones" but "nerd hacker" style Nostr social network hosted at `nos
     -   *Zap Receipt:* If I zap someone *else*, their LSP handles it. If I want to *receive* zaps on my profile *on this site*, I need a Lightning Address. The site could provision one (`user@nostrstack.com`) via `apps/api`, mapped to an internal LNbits wallet or just a forwarder? *Complexity:* Provisioning wallets for every user is hard.
     -   *Simplification:* For this "bare bones" site, maybe we just display the user's *existing* lud16/lightning address from their profile and facilitate zapping them. We don't need to *host* their wallet unless they opt-in (which `apps/api` supports via multi-tenancy, but let's stick to client-side zapping first).
 
-4.  **Paywall:** "Selling paywalled content". Users can post "premium" notes? Or just the site has premium content? "Selling" implies users can sell.
+4.  **Paywall Feature:** "Selling paywalled content". Users can post "premium" notes? Or just the site has premium content? "Selling" implies users can sell.
     -   *Mechanism:* Encrypt content (NIP-04 or similar) or just hide it. Payment unlocks it.
     -   *Implementation:* A "Pay to Unlock" component wrapper.
 
@@ -89,34 +89,36 @@ Build a "bare bones" but "nerd hacker" style Nostr social network hosted at `nos
 1.  **Setup & Cleanup:**
     -   Clean up `apps/gallery` to be a Single Page App (SPA) structure, not just a widget demo.
     -   Ensure `packages/blog-kit` exports necessary components.
+    *Status: Initial refactor complete.*
 2.  **Authentication:**
     -   Create `AuthContext` in `blog-kit`.
     -   Support NIP-07 (window.nostr).
     -   Support "Encrypted Nsec" (using `nostr-tools/nip49`? or simple AES with user password).
+    *Status: `AuthContext` and NIP-07/nsec login implemented.*
 3.  **Feed Component (`blog-kit`):**
     -   Fetch Global Feed (kinds 1).
     -   Render events.
     -   "Hacker View": Button to expand raw JSON.
+    *Status: Basic global feed implemented with PostItem and JSON toggle.*
 4.  **Interaction Components (`blog-kit`):**
     -   `ZapButton`: Resolves LNURL from event author, requests invoice, displays QR/WebLN.
     -   `ShareButton`: Already exists.
-5.  **Paywall Integration:**
+    *Status: `ZapButton` implemented.*
+5.  **User Profiles (`apps/gallery`):**
+    -   `ProfileView`: Display user metadata (kind 0) and notes (kind 1).
+    *Status: `ProfileView` implemented and integrated.*
+6.  **Paywall Integration:**
     -   Use the existing `PayToUnlockCard` logic but styled for the social feed.
     -   Create a "Premium Post" type.
-6.  **Site Assembly (`apps/gallery`):**
+    *Next: Implement paywall.*
+7.  **Site Assembly (`apps/gallery`):
     -   Assemble the components into the "NostrStack" layout.
     -   Add the "Telemetry Console".
-7.  **Testing:**
+    *Status: Layout is in place, basic TelemetryBar placeholder implemented.*
+8.  **Testing:**
     -   Unit tests for new `blog-kit` components.
     -   E2E (Playwright) for the full flow: Login -> Scroll Feed -> Zap.
 
 ### Deployment
 -   Ensure `pnpm build` works for `apps/gallery`.
 -   The "deployment" step in the prompt is "site is DEPLOYED on nostrstack.com". I will verify the build artifacts and simulation. I cannot *actually* push to Cloudflare/Azure from here without credentials, but I will prepare the scripts and verify the *local* production build works perfectly.
-
-### Refined Requirements Checklist
-- [ ] **Auth:** NIP-07 + Local Nsec.
-- [ ] **Lightning:** Zap sending (client-side LNURL).
-- [ ] **Content:** Global feed, User feed.
-- [ ] **UI:** "Nerd/Hacker" aesthetic, real-time telemetry.
-- [ ] **Components:** Reusable in `packages/blog-kit`.

@@ -1,4 +1,5 @@
-import { type Event, nip19 } from 'nostr-tools';
+import { Buffer } from 'buffer';
+import { type Event, EventTemplate,nip19 } from 'nostr-tools';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect,useMemo, useRef, useState } from 'react';
 
@@ -37,6 +38,12 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
   const [invoice, setInvoice] = useState<string | null>(null);
   // const [lnurlpData, setLnurlpData] = useState<unknown>(null); // NIP-57 metadata
   const timerRef = useRef<number | null>(null);
+
+const RELAYS = [
+  'wss://relay.damus.io',
+  'wss://relay.snort.social',
+  'wss://nos.lol'
+];
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
@@ -90,13 +97,13 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
     setZapState('pending-lnurl');
     setErrorMessage(null);
     setInvoice(null);
-    setLnurlpData(null);
+    // setLnurlpData(null);
 
     try {
       // 1. Fetch LNURL-pay metadata
       const lnurlp = authorLightningAddress.startsWith('lnurl') ? authorLightningAddress : `https://${authorLightningAddress.split('@')[1]}/.well-known/lnurlp/${authorLightningAddress.split('@')[0]}`;
       const metadata = await getLnurlpMetadata(lnurlp);
-      setLnurlpData(metadata);
+      // setLnurlpData(metadata);
 
       if (metadata.tag !== 'payRequest') {
         throw new Error('LNURL does not support payRequest (NIP-57).');
@@ -145,7 +152,7 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
     setZapState('idle');
     setErrorMessage(null);
     setInvoice(null);
-    setLnurlpData(null);
+    // setLnurlpData(null);
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;

@@ -15,6 +15,7 @@
   "dependencies": {
     "@nostrstack/blog-kit": "workspace:*",
     "@nostrstack/embed": "workspace:*",
+    "buffer": "^6.0.3",
     "nostr-tools": "^2.18.2",
     "qrcode": "^1.5.4",
     "react": "19.0.0-rc.1",

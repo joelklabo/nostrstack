@@ -1,4 +1,4 @@
-import { PostEditor } from '@nostrstack/blog-kit';
+import { PaywalledContent,PostEditor, ZapButton } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
 import { Relay } from 'nostr-tools/relay';
 
@@ -14,6 +14,15 @@ interface Post extends Event {
 
 export function PostItem({ post }: { post: Post }) {
   const [showJson, setShowJson] = useState(false);
+  const isPaywalled = post.tags.some(tag => tag[0] === 'paywall');
+  const paywallAmount = isPaywalled ? Number(post.tags.find(tag => tag[0] === 'paywall')?.[1] || '0') : 0;
+  const paywallItemId = post.id; // Use event ID as item ID for paywall
+
+  const renderContent = () => (
+    <div className="post-content">
+      {post.content}
+    </div>
+  );
 
   return (
     <article className="post-card">
@@ -21,9 +30,23 @@ export function PostItem({ post }: { post: Post }) {
         <span title={post.pubkey}>{post.pubkey.slice(0, 8)}...</span>
         <span>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
       </header>
-      <div className="post-content">
-        {post.content}
-      </div>
+      {isPaywalled ? (
+        <PaywalledContent
+          itemId={paywallItemId}
+          amountSats={paywallAmount}
+          apiBase={import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'}
+          host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
+          unlockedContent={renderContent()}
+          lockedContent={
+            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--terminal-dim)' }}>
+              CLASSIFIED: ACCESS DENIED. (REQUIRES {paywallAmount} SATS)
+            </div>
+          }
+        />
+      ) : (
+        renderContent()
+      )}
+      
       <div className="post-actions">
         <ZapButton event={post} />
         <button className="action-btn">REPLY</button>
