@@ -1,9 +1,20 @@
 import { Buffer } from 'buffer';
-import { type Event, EventTemplate,nip19 } from 'nostr-tools';
+import { type Event, type EventTemplate, nip19 } from 'nostr-tools';
 import { QRCodeSVG } from 'qrcode.react';
-import { useCallback, useEffect,useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from './auth';
+
+interface WebLN {
+  enable: () => Promise<void>;
+  sendPayment: (invoice: string) => Promise<{ preimage: string }>;
+}
+
+declare global {
+  interface Window {
+    webln?: WebLN;
+  }
+}
 
 interface ZapButtonProps {
   event: Event; // The event to zap
@@ -20,7 +31,7 @@ async function getLnurlpMetadata(lnurl: string) {
   return res.json();
 }
 
-async function getLnurlpInvoice(callback: string, amountMsat: number, lnurlMetadata: string, event: Event) {
+async function getLnurlpInvoice(callback: string, amountMsat: number, lnurlMetadata: string, event: EventTemplate) {
   const url = new URL(callback);
   url.searchParams.set('amount', String(amountMsat));
   url.searchParams.set('nostr', JSON.stringify(event)); // NIP-57 specific
@@ -36,14 +47,13 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
   const [zapState, setZapState] = useState<'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<string | null>(null);
-  // const [lnurlpData, setLnurlpData] = useState<unknown>(null); // NIP-57 metadata
   const timerRef = useRef<number | null>(null);
 
-const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
+  const RELAYS = [
+    'wss://relay.damus.io',
+    'wss://relay.snort.social',
+    'wss://nos.lol'
+  ];
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
@@ -87,23 +97,23 @@ const RELAYS = [
   const handleZap = useCallback(async () => {
     if (!pubkey) {
       setErrorMessage('ERROR: You must be logged in to send a zap.');
+      setZapState('error');
       return;
     }
     if (!authorLightningAddress) {
       setErrorMessage('ERROR: Author does not have a Lightning Address/LNURL.');
+      setZapState('error');
       return;
     }
 
     setZapState('pending-lnurl');
     setErrorMessage(null);
     setInvoice(null);
-    // setLnurlpData(null);
 
     try {
       // 1. Fetch LNURL-pay metadata
       const lnurlp = authorLightningAddress.startsWith('lnurl') ? authorLightningAddress : `https://${authorLightningAddress.split('@')[1]}/.well-known/lnurlp/${authorLightningAddress.split('@')[0]}`;
       const metadata = await getLnurlpMetadata(lnurlp);
-      // setLnurlpData(metadata);
 
       if (metadata.tag !== 'payRequest') {
         throw new Error('LNURL does not support payRequest (NIP-57).');
@@ -116,7 +126,7 @@ const RELAYS = [
         tags: [
           ['relays', ...RELAYS], // Global relays or specific ones
           ['amount', String(amountSats * 1000)], // msat
-          ['lnurl', metadata.encoded.toUpperCase()], // NIP-57 encoded LNURL
+          ['lnurl', metadata.encoded ? metadata.encoded.toUpperCase() : lnurlp], // NIP-57 encoded LNURL
           ['p', authorPubkey],
           ['e', event.id],
           ['content', message],
@@ -126,13 +136,24 @@ const RELAYS = [
       };
       
       const signedZapRequest = await signEvent(zapRequestEventTemplate);
-      // const metadataStr = JSON.stringify(signedZapRequest); // Unused, removed
       
       // 3. Get invoice from callback URL
       setZapState('pending-invoice');
       const invoiceData = await getLnurlpInvoice(metadata.callback, amountSats * 1000, metadata.metadata, signedZapRequest);
-      setInvoice(invoiceData.pr);
+      const pr = invoiceData.pr;
+      setInvoice(pr);
       setZapState('waiting-payment');
+
+      // Attempt WebLN payment
+      if (typeof window !== 'undefined' && window.webln) {
+        try {
+          await window.webln.enable();
+          await window.webln.sendPayment(pr);
+          setZapState('paid');
+        } catch (weblnErr) {
+          console.warn('WebLN payment failed, falling back to QR:', weblnErr);
+        }
+      }
 
       // (Optional) Poll for payment status or use WebSockets for confirmation
       // For bare bones, just display QR and let user pay.
@@ -146,13 +167,12 @@ const RELAYS = [
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setZapState('error');
     }
-  }, [pubkey, signEvent, authorLightningAddress, authorPubkey, event, amountSats, message]);
+  }, [pubkey, signEvent, authorLightningAddress, authorPubkey, event, amountSats, message, RELAYS, authorNpub]);
 
   const handleCloseZap = useCallback(() => {
     setZapState('idle');
     setErrorMessage(null);
     setInvoice(null);
-    // setLnurlpData(null);
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -186,6 +206,7 @@ const RELAYS = [
               {zapState === 'error' && <div className="error-msg">{errorMessage}</div>}
               {zapState === 'pending-lnurl' && <p>STATUS: Resolving LNURL for {authorNpub}...</p>}
               {zapState === 'pending-invoice' && <p>STATUS: Requesting invoice...</p>}
+              {zapState === 'paid' && <div className="success-msg">STATUS: PAYMENT SUCCESSFUL!</div>}
               {zapState === 'waiting-payment' && invoice && (
                 <div>
                   <p>STATUS: Invoice generated. Scan QR or click to pay:</p>
@@ -203,6 +224,11 @@ const RELAYS = [
               )}
               {zapState === 'waiting-payment' && !invoice && (
                  <p>STATUS: Waiting for invoice...</p>
+              )}
+              {zapState === 'error' && (
+                <div className="form-actions">
+                  <button className="text-btn" onClick={handleCloseZap}>CLOSE</button>
+                </div>
               )}
             </div>
           </div>
