@@ -1,4 +1,4 @@
-import { AuthProvider, useAuth } from '@nostrstack/blog-kit';
+import { AuthProvider, useAuth, StatsProvider } from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
@@ -52,7 +52,9 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppShell />
+      <StatsProvider>
+        <AppShell />
+      </StatsProvider>
     </AuthProvider>
   );
 }

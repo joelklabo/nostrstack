@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useStats } from '@nostrstack/blog-kit';
 
 interface SidebarProps {
   currentView: 'feed' | 'profile';
@@ -7,6 +8,7 @@ interface SidebarProps {
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const [uptime, setUptime] = useState(0);
+  const { eventCount } = useStats();
 
   useEffect(() => {
     const start = Date.now();
@@ -29,6 +31,9 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         NOSTRSTACK_V1
         <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', color: 'var(--terminal-dim)' }}>
           UPTIME: {formatUptime(uptime)}
+        </div>
+        <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--terminal-dim)' }}>
+          EVENTS_RX: {eventCount}
         </div>
       </div>
       

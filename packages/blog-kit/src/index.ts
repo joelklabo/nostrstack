@@ -5,6 +5,7 @@ export { PaywalledContent } from './paywalled-content';
 export { PostEditor } from './post-editor';
 export { ShareButton, type ShareButtonProps } from './share-button';
 export { type NostrProfile, ShareWidget, type ShareWidgetProps } from './share-widget';
+export { StatsProvider, useStats } from './stats';
 export { TipActivityFeed, type TipActivityFeedProps } from './tip-activity-feed';
 export { TipButton, type TipButtonProps } from './tip-button';
 export { TipWidget, type TipWidgetProps } from './tip-widget';

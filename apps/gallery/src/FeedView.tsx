@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { PostEditor, ZapButton, PaywalledContent } from '@nostrstack/blog-kit';
+import { PostEditor, ZapButton, PaywalledContent, useStats } from '@nostrstack/blog-kit';
 import { Relay } from 'nostr-tools';
 import type { Event } from 'nostr-tools';
 import { JsonView } from './ui/JsonView';
@@ -30,7 +30,10 @@ export function PostItem({ post }: { post: Post }) {
     <article className="post-card">
       <header className="post-header">
         <span title={post.pubkey}>{post.pubkey.slice(0, 8)}...</span>
-        <span>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.3rem', border: '1px solid var(--terminal-dim)', borderRadius: '4px' }}>K{post.kind}</span>
+          <span>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
+        </div>
       </header>
       {isPaywalled ? (
         <PaywalledContent
@@ -70,6 +73,7 @@ export function PostItem({ post }: { post: Post }) {
 export function FeedView() {
   const [posts, setPosts] = useState<Post[]>([]);
   const seenIds = useRef(new Set<string>());
+  const { incrementEvents } = useStats();
 
   useEffect(() => {
     const subs: { relay: Relay; sub: ReturnType<Relay['subscribe']> }[] = [];
@@ -85,6 +89,7 @@ export function FeedView() {
             { kinds: [1], limit: 20 }
           ], {
             onevent(event) {
+              incrementEvents();
               if (!seenIds.current.has(event.id)) {
                 seenIds.current.add(event.id);
                 setPosts(prev => {
