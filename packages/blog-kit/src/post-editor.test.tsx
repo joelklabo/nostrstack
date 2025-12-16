@@ -10,6 +10,10 @@ vi.mock('nostr-tools', async (importOriginal) => {
   return {
     ...mod,
     finalizeEvent: vi.fn(),
+    SimplePool: vi.fn(() => ({
+      publish: vi.fn(() => [Promise.resolve()]),
+      close: vi.fn(),
+    })),
   };
 });
 
@@ -109,7 +113,7 @@ describe('PostEditor', () => {
     });
 
     expect(mockSignEvent).toHaveBeenCalled();
-    expect(screen.getByText(/SUCCESS: Event published to \d+ relays./)).toBeInTheDocument();
+    expect(screen.getByText(/SUCCESS: Event published to relays./)).toBeInTheDocument();
     expect(textarea).toHaveValue(''); // Content should be cleared
   });
 

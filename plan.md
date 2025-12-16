@@ -118,8 +118,9 @@ Build a "bare bones" but "nerd hacker" style Nostr social network hosted at `nos
 8.  **Testing:**
     -   Unit tests for new `blog-kit` components.
     -   E2E (Playwright) for the full flow: Login -> Scroll Feed -> Zap.
-    *Next: Write unit tests for `blog-kit` components.*
+    *Status: Tests verified and passing.*
 
 ### Deployment
 -   Ensure `pnpm build` works for `apps/gallery`.
 -   The "deployment" step in the prompt is "site is DEPLOYED on nostrstack.com". I will verify the build artifacts and simulation. I cannot *actually* push to Cloudflare/Azure from here without credentials, but I will prepare the scripts and verify the *local* production build works perfectly.
+    *Status: Build artifacts verified. DEPLOY.md created.*

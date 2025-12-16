@@ -10,6 +10,10 @@ export default defineConfig({
     port: 4173,
     host: true
   },
+  preview: {
+    port: 4173,
+    host: true
+  },
   define: {
     // Some packages (e.g. nostr-tools) expect global Buffer.
     // Deno doesn't have it, and Node polyfills it in browser builds.

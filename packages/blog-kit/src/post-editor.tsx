@@ -1,4 +1,4 @@
-import { type EventTemplate } from 'nostr-tools';
+import { type EventTemplate, SimplePool } from 'nostr-tools';
 import { useCallback, useState } from 'react';
 
 import { useAuth } from './auth';
@@ -36,10 +36,11 @@ export function PostEditor() {
       // For now, hardcode relays. Later, use user's configured relays.
       const relays = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
       
-      // In a real impl, use a SimplePool or similar for robust publishing
-      // For bare bones, just a placeholder.
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate publishing
-      setPublishStatus(`SUCCESS: Event published to ${relays.length} relays.`);
+      const pool = new SimplePool();
+      await Promise.any(pool.publish(relays, signedEvent));
+      pool.close(relays);
+      
+      setPublishStatus(`SUCCESS: Event published to relays.`);
       setContent('');
     } catch (err: unknown) {
       setPublishStatus(`ERROR: Failed to publish: ${(err instanceof Error ? err.message : String(err))}`);
