@@ -8,7 +8,7 @@
     "lint:knip": "knip",
     "lint:cpd": "jscpd .",
     "lint:ls": "ls-lint",
-    "lint:spell": "cspell \"**\"",
+    "lint:spell": "cspell \"**\" --exclude \"report/**\"",
     "lint:css": "stylelint \"**/*.css\"",
     "lint:md": "markdownlint \"**/*.md\"",
     "lint:pub": "pnpm -r exec publint",

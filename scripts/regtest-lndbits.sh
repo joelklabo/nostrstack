@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2046
 set -euo pipefail
 
 # Bring up regtest bitcoind + two LND nodes + LNbits wired to lnd-merchant.

@@ -7,7 +7,7 @@ set -euo pipefail
 # - Runs Prisma migrations
 # - Launches API + Gallery with mutinynet envs
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 PG_PORT="${PG_PORT:-65432}"
 PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"

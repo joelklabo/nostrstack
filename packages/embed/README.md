@@ -3,6 +3,7 @@
 Embeddable widgets (tip, pay-to-action, comments) for nostrstack.
 
 ## Install
+
 ```sh
 npm install @nostrstack/embed
 # or
@@ -10,15 +11,18 @@ pnpm add @nostrstack/embed
 ```
 
 ## Script-tag usage
+
 ```html
 <script src="https://unpkg.com/@nostrstack/embed/dist/index.global.js"></script>
 <div data-nostrstack-tip="alice" data-label="Send sats"></div>
 <div data-nostrstack-pay="alice" data-label="Unlock"></div>
 <div data-nostrstack-comments="post-123"></div>
 ```
+
 Widgets auto-mount on elements with `data-nostrstack-*` attributes.
 
 To opt into the newer tip widget (3 presets + custom + live activity), add an `itemId`:
+
 ```html
 <div
   data-nostrstack-tip="alice"
@@ -30,6 +34,7 @@ To opt into the newer tip widget (3 presets + custom + live activity), add an `i
 ```
 
 ## Module usage
+
 ```ts
 import { mountTipButton, mountTipWidget, mountTipFeed, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
 
@@ -43,6 +48,7 @@ mountCommentWidget(container, { threadId: 'post-123' });
 ```
 
 ## `baseURL` (important)
+
 `baseURL` should point to the **nostrstack server origin** (not the `/api` prefix).
 
 - ✅ `baseURL: "https://api.example.com"`
@@ -50,6 +56,7 @@ mountCommentWidget(container, { threadId: 'post-123' });
 - ⚠️ `baseURL: "/api"` is treated as “same-origin” for dev convenience (to avoid `/api/api/*` footguns)
 
 ## UI building blocks
+
 All of these are exported from `@nostrstack/embed` for reuse in other apps:
 
 - `renderInvoicePopover(pr: string)` – show a lightweight lightning invoice popover.
@@ -68,6 +75,7 @@ document.body.appendChild(badge);
 ```
 
 ## Theming
+
 Set the theme mode (light/dark) and optionally override brand colors.
 
 ```ts
@@ -99,4 +107,5 @@ Copy/paste example:
 ```
 
 ## Nostr comments
+
 Requires a NIP-07 signer in the browser. For live relay subscriptions, expose `window.NostrTools.relayInit` (optional); otherwise comments still post via the signer only.

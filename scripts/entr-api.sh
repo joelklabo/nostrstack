@@ -3,6 +3,7 @@
 set -euo pipefail
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+# shellcheck disable=SC2016
 find apps/api/src -type f | entr -r sh -c '
   echo "[entr] restarting API dev";
   cd apps/api && LN_BITS_URL=${LN_BITS_URL:-http://localhost:15001} \

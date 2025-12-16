@@ -3,6 +3,7 @@
 Typed client for the nostrstack API.
 
 ## Install
+
 ```sh
 npm install @nostrstack/sdk
 # or
@@ -10,6 +11,7 @@ pnpm add @nostrstack/sdk
 ```
 
 ## Usage
+
 ```ts
 import { NostrstackClient } from '@nostrstack/sdk';
 
@@ -34,5 +36,6 @@ await client.createUser({ tenantId: 'tenant-id', pubkey: 'npub1...' });
 ```
 
 ## Auth
+
 - Tenant/user endpoints may be open depending on deployment.
 - Admin endpoints require `ADMIN_API_KEY` set server-side; pass as `apiKey`.

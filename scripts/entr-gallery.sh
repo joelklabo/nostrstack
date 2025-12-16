@@ -3,6 +3,7 @@
 set -euo pipefail
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+# shellcheck disable=SC2016
 find apps/gallery/src -type f | entr -r sh -c '
   echo "[entr] restarting gallery dev";
   cd apps/gallery && VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001} \

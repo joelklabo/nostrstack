@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 # Load local API env if present (provides LN_BITS_API_KEY, DATABASE_URL, etc.)
 if [[ -f "apps/api/.env.local" ]]; then
   set -a
+# shellcheck disable=SC1091
   source apps/api/.env.local
   set +a
 fi
@@ -14,6 +15,7 @@ fi
 # Load local gallery env if present (provides VITE_* overrides)
 if [[ -f "apps/gallery/.env.local" ]]; then
   set -a
+# shellcheck disable=SC1091
   source apps/gallery/.env.local
   set +a
 fi
