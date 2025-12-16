@@ -25,7 +25,7 @@ az deployment group create \
 Parameters (see `main.bicep`):
 
 - `containerImage`: full image ref
-- `location`: default `eastus`
+- `location`: default `westus3`
 - `postgresSku`: default `Standard_B1ms`
 - `adminApiKey`, `opNodeApiKey`, `opNodeWebhookSecret`: secrets pushed into Key Vault
 - `otelEnabled` (bool, default false), `otelEndpoint` (OTLP HTTP), `otelHeaders` (comma-separated key=value) if you want OTEL trace/metrics export
@@ -48,5 +48,5 @@ Required GitHub secrets:
 
 Defaults:
 
-- Resource group `nostrstack-rg`, location `eastus`, image tag = commit SHA. Override via workflow_dispatch input `image_tag` and envs in the workflow if desired.
+- Resource group `nostrstack-rg`, location `westus3`, image tag = commit SHA. Override via workflow_dispatch input `image_tag` and envs in the workflow if desired.
 - Registry: GHCR. Container Apps auth uses `registryUsername=github.actor` and `registryPassword=GITHUB_TOKEN`; switch to ACR by passing `registryServer/registryUsername/registryPassword` inputs/secrets.
