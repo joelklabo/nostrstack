@@ -12,11 +12,11 @@
     "lint:css": "stylelint \"**/*.css\"",
     "lint:md": "markdownlint \"**/*.md\"",
     "lint:pub": "pnpm --filter @nostrstack/sdk run build && pnpm --filter @nostrstack/embed run build && pnpm --filter @nostrstack/blog-kit run build && pnpm -r exec publint",
-    "lint:attw": "pnpm -r exec attw --pack .",
+    "lint:attw": "pnpm --filter \"./packages/**\" -r exec attw --pack .",
     "lint:sh": "shellcheck scripts/*.sh",
     "lint:secrets": "secretlint \"**\"",
     "lint:audit": "audit-ci --moderate",
-    "lint:dep": "depcruise src",
+    "lint:dep": "depcruise apps packages",
     "lint:deps": "syncpack list-mismatches",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
@@ -46,7 +46,8 @@
   "pnpm": {
     "overrides": {
       "zod": "3.24.1",
-      "zod-to-json-schema": "3.24.1"
+      "zod-to-json-schema": "3.24.1",
+      "esbuild": "^0.25.0"
     },
     "onlyBuiltDependencies": [
       "@beads/bd"
@@ -58,7 +59,7 @@
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@ls-lint/ls-lint": "^2.3.1",
-    "@nostrstack/config": "workspace:^",
+    "@nostrstack/config": "workspace:*",
     "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
     "@types/node": "22.7.5",
     "audit-ci": "^7.1.0",

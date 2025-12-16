@@ -102,7 +102,9 @@ module.exports = {
         "This module depends on a module that cannot be found ('resolved to disk'). If it's an npm " +
         'module: add it to your package.json. In all other cases you likely already know what to do.',
       severity: 'error',
-      from: {},
+      from: {
+        pathNot: '[.]stories[.]tsx?$'
+      },
       to: {
         couldNotResolve: true
       }
@@ -149,7 +151,12 @@ module.exports = {
         'from.pathNot re of the not-to-dev-dep rule in the dependency-cruiser configuration',
       from: {
         path: '^()',
-        pathNot: '[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$'
+        pathNot: [
+          '[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$',
+          'config[.](?:js|mjs|cjs|ts|mts|cts)$',
+          '(?:^|/)scripts/',
+          '(?:^|/)tests/'
+        ]
       },
       to: {
         dependencyTypes: [
@@ -205,10 +212,10 @@ module.exports = {
     },
 
     /* Which modules to exclude */
-    // exclude : {
-    //   /* path: an array of regular expressions in strings to match against */
-    //   path: '',
-    // },
+    exclude : {
+      /* path: an array of regular expressions in strings to match against */
+      path: ['node_modules', 'dist', 'coverage', '.beads'],
+    },
 
     /* Which modules to exclusively include (array of regular expressions in strings)
        dependency-cruiser will skip everything not matching this pattern
