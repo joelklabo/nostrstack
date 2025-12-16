@@ -1,6 +1,6 @@
 import { PostEditor } from '@nostrstack/blog-kit';
-import { Relay } from 'nostr-tools/relay';
 import type { Event } from 'nostr-tools';
+import { Relay } from 'nostr-tools/relay';
 
 const RELAYS = [
   'wss://relay.damus.io',
@@ -12,7 +12,7 @@ interface Post extends Event {
   // Add any extra fields if needed
 }
 
-function PostItem({ post }: { post: Post }) {
+export function PostItem({ post }: { post: Post }) {
   const [showJson, setShowJson] = useState(false);
 
   return (
@@ -51,7 +51,7 @@ export function FeedView() {
   const seenIds = useRef(new Set<string>());
 
   useEffect(() => {
-    let subs: any[] = [];
+    const subs: { relay: Relay; sub: ReturnType<Relay['subscribe']> }[] = [];
     
     const connect = async () => {
       // Connect to first working relay for demo (in production use SimplePool)

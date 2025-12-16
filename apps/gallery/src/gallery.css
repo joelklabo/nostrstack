@@ -298,3 +298,72 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+
+/* Profile View */
+.profile-view {
+  padding: 1rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.profile-picture {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2px solid var(--terminal-text);
+  object-fit: cover;
+}
+
+.profile-info {
+  flex-grow: 1;
+}
+
+.profile-name {
+  margin: 0 0 0.5rem 0;
+  color: var(--terminal-text);
+  font-size: 1.8rem;
+}
+
+.profile-pubkey {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--terminal-dim);
+  margin-bottom: 0.5rem;
+}
+
+.profile-nip05,
+.profile-about,
+.profile-lud16,
+.profile-lud06,
+.profile-website {
+  font-size: 0.9rem;
+  color: var(--terminal-dim);
+  margin-bottom: 0.2rem;
+}
+
+.profile-website a {
+  color: var(--terminal-dim);
+  text-decoration: underline;
+}
+
+.profile-website a:hover {
+  color: var(--terminal-text);
+}
+
+h3 {
+  color: var(--terminal-text);
+  margin-bottom: 1rem;
+  border-bottom: 1px dashed var(--terminal-border);
+  padding-bottom: 0.5rem;
+}
+
+.user-events {
+  margin-top: 1rem;
+}

@@ -2,20 +2,23 @@ import { AuthProvider, useAuth } from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
-  type NostrstackBrandPreset,
-  nostrstackBrandPresets
+  type NostrstackBrandPreset
 } from '@nostrstack/embed';
 import { useEffect, useState } from 'react';
 
-import { LoginView } from './LoginView';
 import { FeedView } from './FeedView';
+import { LoginView } from './LoginView';
+import { ProfileView } from './ProfileView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 
+type View = 'feed' | 'profile';
+
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme] = useState<'light' | 'dark'>('dark');
   const [brandPreset] = useState<NostrstackBrandPreset>('default');
+  const [currentView, setCurrentView] = useState<View>('feed');
 
   useEffect(() => {
     applyNostrstackTheme(document.body, createNostrstackBrandTheme({ preset: brandPreset, mode: theme }));
@@ -31,9 +34,10 @@ function AppShell() {
 
   return (
     <div className="social-layout">
-      <Sidebar />
+      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <main className="feed-container">
-        <FeedView />
+        {currentView === 'feed' && <FeedView />}
+        {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
       </main>
       <aside className="telemetry-sidebar">
         <TelemetryBar />
