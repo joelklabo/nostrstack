@@ -63,4 +63,3 @@ If you’re upgrading from older integrations, `theme={{ accent, text, surface, 
 
 - `parseLnAddress(lnAddress)` → `{ username, domain }`
 - `parseRelays(csv)` → `string[]`
-
