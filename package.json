@@ -11,7 +11,7 @@
     "lint:spell": "cspell \"**\" --exclude \"report/**\"",
     "lint:css": "stylelint \"**/*.css\"",
     "lint:md": "markdownlint \"**/*.md\"",
-    "lint:pub": "pnpm --filter @nostrstack/sdk run build && pnpm --filter @nostrstack/embed run build && pnpm -r exec publint",
+    "lint:pub": "pnpm --filter @nostrstack/sdk run build && pnpm --filter @nostrstack/embed run build && pnpm --filter @nostrstack/blog-kit run build && pnpm -r exec publint",
     "lint:attw": "pnpm -r exec attw --pack .",
     "lint:sh": "shellcheck scripts/*.sh",
     "lint:secrets": "secretlint \"**\"",
