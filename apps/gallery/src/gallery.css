@@ -226,8 +226,53 @@ body {
   color: var(--terminal-dim);
 }
 
-.log-entry {
-  margin-bottom: 4px;
+/* Zap Modal */
+.zap-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.zap-modal-content {
+  background: var(--terminal-bg);
+  border: 2px solid var(--terminal-text);
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+  width: 400px;
+  max-width: 90vw;
+}
+
+.zap-modal-content .terminal-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.zap-modal-content .terminal-body p {
+  margin-bottom: 1rem;
+}
+
+.qr-code {
+  margin: 1.5rem auto;
+  padding: 1rem;
+  background: #fff;
+  width: fit-content;
+}
+
+.invoice-code {
+  word-break: break-all;
+  font-size: 0.8em;
+  color: var(--terminal-dim);
+}
+
+.zap-modal-content .form-actions {
+  justify-content: center;
+  margin-top: 1.5rem;
 }
 
 .post-editor-container {

@@ -25,7 +25,7 @@ function PostItem({ post }: { post: Post }) {
         {post.content}
       </div>
       <div className="post-actions">
-        <button className="action-btn zap-btn">⚡ ZAP</button>
+        <ZapButton event={post} />
         <button className="action-btn">REPLY</button>
         <button className="action-btn" onClick={() => setShowJson(!showJson)}>
           {showJson ? 'HIDE_SRC' : 'VIEW_SRC'}
