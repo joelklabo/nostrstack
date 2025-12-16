@@ -294,7 +294,7 @@ export const nostrstackTokensCss = `
 
   /* Typography */
   --nostrstack-font-body: Inter, system-ui, sans-serif;
-  --nostrstack-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --nostrstack-font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Motion */
   --nostrstack-motion-fast: 120ms;
