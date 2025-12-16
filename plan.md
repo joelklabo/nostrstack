@@ -110,11 +110,11 @@ Build a "bare bones" but "nerd hacker" style Nostr social network hosted at `nos
 6.  **Paywall Integration:**
     -   Use the existing `PayToUnlockCard` logic but styled for the social feed.
     -   Create a "Premium Post" type.
-    *Next: Implement paywall.*
-7.  **Site Assembly (`apps/gallery`):
+    *Status: `PaywalledContent` component implemented and integrated into `FeedView`.*
+7.  **Site Assembly (`apps/gallery`):**
     -   Assemble the components into the "NostrStack" layout.
     -   Add the "Telemetry Console".
-    *Status: Layout is in place, basic TelemetryBar placeholder implemented.*
+    *Next: Enhance Telemetry Console with real data from `apps/api`.*
 8.  **Testing:**
     -   Unit tests for new `blog-kit` components.
     -   E2E (Playwright) for the full flow: Login -> Scroll Feed -> Zap.

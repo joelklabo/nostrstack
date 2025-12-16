@@ -155,6 +155,22 @@ export function resolvePayWsUrl(baseURL?: string): string | null {
   return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/pay`;
 }
 
+export function resolveTelemetryWs(baseURL?: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
+  const base = raw.replace(/\/$/, '');
+  if (base === '/api') {
+    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
+  }
+  if (!base) {
+    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
+  }
+  if (/^https?:\/\//i.test(base)) {
+    return `${base.replace(/^http/i, 'ws')}/ws/telemetry`;
+  }
+  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
+}
+
 function resolveApiBaseUrl(baseURL?: string) {
   if (isMockBase(baseURL)) return '';
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
