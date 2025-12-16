@@ -34,7 +34,7 @@ jobs:
       - name: Lint (GitHub Actions Workflows)
         uses: reviewdog/action-actionlint@v1
         with:
-          fail_on_error: true
+          fail_level: error
           filter_mode: nofilter
 
       - name: Lint (Knip)
@@ -125,7 +125,7 @@ jobs:
           LNBITS_ADMIN_KEY: ${{ secrets.LNBITS_STG_ADMIN_KEY }}
           AMOUNT: 100
         run: |
-          if [ -z "${LNBITS_ADMIN_KEY}" ]; then echo "Skipping LNbits smoke (no admin key)"; exit 0; fi
+          if [ -z "$LNBITS_ADMIN_KEY" ]; then echo "Skipping LNbits smoke (no admin key)"; exit 0; fi
           ./scripts/lnbits-smoke.sh "${AMOUNT:-100}"
       - name: Lint & test (SDK, embed, gallery)
         run: pnpm -r --filter "./packages/..." --filter "./apps/gallery" test

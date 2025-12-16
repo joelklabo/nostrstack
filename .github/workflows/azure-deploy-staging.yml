@@ -98,25 +98,25 @@ jobs:
           LOG_WS_ID: ${{ secrets.AZURE_LOG_ANALYTICS_ID }}
           LOG_WS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
         run: |
-          az group create -n $AZURE_RG -l $AZURE_LOCATION
+          az group create -n "$AZURE_RG" -l "$AZURE_LOCATION"
           az deployment group create \
-            -g $AZURE_RG \
+            -g "$AZURE_RG" \
             -f deploy/azure/main.bicep \
-            -p containerImage=$IMAGE \
-               adminApiKey=$ADMIN_API_KEY \
-               opNodeApiKey=$OP_NODE_API_KEY \
-               opNodeWebhookSecret=$OP_NODE_WEBHOOK_SECRET \
-               location=$AZURE_LOCATION \
-               registryServer=$REGISTRY \
-               registryUsername=$REGISTRY_USERNAME \
-               registryPassword=$REGISTRY_PASSWORD \
-               appName=$APP_NAME \
-               envName=$ENV_NAME \
-               logAnalyticsWorkspaceId=$LOG_WS_ID \
-               logAnalyticsSharedKey=$LOG_WS_KEY
+            -p containerImage="$IMAGE" \
+               adminApiKey="$ADMIN_API_KEY" \
+               opNodeApiKey="$OP_NODE_API_KEY" \
+               opNodeWebhookSecret="$OP_NODE_WEBHOOK_SECRET" \
+               location="$AZURE_LOCATION" \
+               registryServer="$REGISTRY" \
+               registryUsername="$REGISTRY_USERNAME" \
+               registryPassword="$REGISTRY_PASSWORD" \
+               appName="$APP_NAME" \
+               envName="$ENV_NAME" \
+               logAnalyticsWorkspaceId="$LOG_WS_ID" \
+               logAnalyticsSharedKey="$LOG_WS_KEY"
 
       - name: Smoke test /health
         run: |
-          fqdn=$(az containerapp show -g $AZURE_RG -n $APP_NAME -o tsv --query properties.configuration.ingress.fqdn)
+          fqdn=$(az containerapp show -g "$AZURE_RG" -n "$APP_NAME" -o tsv --query properties.configuration.ingress.fqdn)
           echo "FQDN=$fqdn"
-          curl -sf https://$fqdn/health
+          curl -sf "https://$fqdn/health"

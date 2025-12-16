@@ -103,16 +103,16 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           az deployment group create \
-            -g $AZURE_RG \
+            -g "$AZURE_RG" \
             -f deploy/azure/main.bicep \
-            -p containerImage=$IMAGE \
-               adminApiKey=$ADMIN_API_KEY \
-               opNodeApiKey=$OP_NODE_API_KEY \
-               opNodeWebhookSecret=$OP_NODE_WEBHOOK_SECRET \
-               location=$AZURE_LOCATION \
-               registryServer=$REGISTRY \
-               registryUsername=$REGISTRY_USERNAME \
-               registryPassword=$REGISTRY_PASSWORD
+            -p containerImage="$IMAGE" \
+               adminApiKey="$ADMIN_API_KEY" \
+               opNodeApiKey="$OP_NODE_API_KEY" \
+               opNodeWebhookSecret="$OP_NODE_WEBHOOK_SECRET" \
+               location="$AZURE_LOCATION" \
+               registryServer="$REGISTRY" \
+               registryUsername="$REGISTRY_USERNAME" \
+               registryPassword="$REGISTRY_PASSWORD"
 
       - name: Show container app FQDN
-        run: az containerapp show -g $AZURE_RG -n nostrstack-api -o tsv --query properties.configuration.ingress.fqdn
+        run: az containerapp show -g "$AZURE_RG" -n nostrstack-api -o tsv --query properties.configuration.ingress.fqdn
