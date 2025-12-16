@@ -40,7 +40,7 @@ function AppShell() {
         {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
       </main>
       <aside className="telemetry-sidebar">
-        <TelemetryBar />
+        {/* <TelemetryBar /> */}
       </aside>
     </div>
   );

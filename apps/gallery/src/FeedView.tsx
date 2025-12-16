@@ -1,6 +1,7 @@
-import { PaywalledContent,PostEditor, ZapButton } from '@nostrstack/blog-kit';
+import { useState, useEffect, useRef } from 'react';
+import { PostEditor, ZapButton, PaywalledContent } from '@nostrstack/blog-kit';
+import { Relay } from 'nostr-tools';
 import type { Event } from 'nostr-tools';
-import { Relay } from 'nostr-tools/relay';
 
 const RELAYS = [
   'wss://relay.damus.io',
@@ -112,12 +113,10 @@ export function FeedView() {
     };
   }, []);
 
-  return (
-    <div className="feed-stream">
-      <PostEditor />
-              <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)', paddingTop: '1rem' }}>
-                {' >'} STREAMING_LIVE_EVENTS...      </div>
-      {posts.map(post => (
+      return (
+        <div className="feed-stream">
+          <PostEditor />
+          <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)', paddingTop: '1rem' }}>                {' >'} STREAMING_LIVE_EVENTS...      </div>      {posts.map(post => (
         <PostItem key={post.id} post={post} />
       ))}
     </div>

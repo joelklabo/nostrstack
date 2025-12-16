@@ -55,13 +55,14 @@ export function TelemetryBar() {
       error: '#f00',
       debug: '#008f11'
     };
-    const color = levelColor[msg.level.toLowerCase()] || 'var(--terminal-dim)';
+    const level = (msg.level || 'info').toLowerCase();
+    const color = levelColor[level] || 'var(--terminal-dim)';
     const data = msg.data ? JSON.stringify(msg.data) : '';
 
     return (
       <div className="log-entry" style={{ color }}>
         <span style={{ color: 'var(--terminal-text)' }}>[{new Date(msg.ts).toLocaleTimeString()}]</span>{' '}
-        <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{msg.level}</span>:{' '}
+        <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{level}</span>:{' '}
         {msg.message} {data}
       </div>
     );
@@ -73,9 +74,14 @@ export function TelemetryBar() {
         SYSTEM_TELEMETRY
       </div>
       <div style={{ padding: '0.5rem' }}>
-        {logs.map((log, i) => (
-          <div key={i} className="log-entry">{formatMessage(log)}</div>
-        ))}
+        {logs.map((log, i) => {
+          try {
+            return <div key={i} className="log-entry">{formatMessage(log)}</div>;
+          } catch (e) {
+            console.error('Failed to render log', e);
+            return null;
+          }
+        })}
       </div>
     </div>
   );
