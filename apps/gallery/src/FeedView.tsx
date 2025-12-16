@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { PostEditor } from '@nostrstack/blog-kit';
 import { Relay } from 'nostr-tools/relay';
 import type { Event } from 'nostr-tools';
 
@@ -91,7 +91,8 @@ export function FeedView() {
 
   return (
     <div className="feed-stream">
-              <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)' }}>
+      <PostEditor />
+              <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)', paddingTop: '1rem' }}>
                 {' >'} STREAMING_LIVE_EVENTS...      </div>
       {posts.map(post => (
         <PostItem key={post.id} post={post} />

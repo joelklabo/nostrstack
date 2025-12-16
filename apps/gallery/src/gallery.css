@@ -230,5 +230,26 @@ body {
   margin-bottom: 4px;
 }
 
-.log-entry.tx { color: #0ff; }
-.log-entry.rx { color: #f0f; }
+.post-editor-container {
+  border: 1px solid var(--terminal-border);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.editor-header {
+  margin-bottom: 0.5rem;
+  color: var(--terminal-text);
+}
+
+.editor-input {
+  width: calc(100% - 2rem); /* Account for padding */
+  min-height: 80px;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
