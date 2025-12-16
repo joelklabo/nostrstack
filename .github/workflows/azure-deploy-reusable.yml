@@ -1,0 +1,188 @@
+name: Reusable Azure Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (production or staging)'
+        required: true
+        type: string
+      image_tag:
+        description: 'Docker image tag (default: commit SHA)'
+        required: false
+        type: string
+      azure_rg:
+        description: 'Azure resource group name'
+        required: true
+        type: string
+      azure_location:
+        description: 'Azure region'
+        required: false
+        type: string
+        default: 'westus3'
+      app_name:
+        description: 'Azure Container App name'
+        required: false
+        type: string
+        default: 'nostrstack-api'
+      env_name:
+        description: 'Azure Container Apps Environment name'
+        required: false
+        type: string
+        default: 'nostrstack-env'
+      run_e2e_tests:
+        description: 'Whether to run e2e tests'
+        required: false
+        type: boolean
+        default: false
+      run_health_check:
+        description: 'Whether to run health check smoke test'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+      ADMIN_API_KEY:
+        required: true
+      OP_NODE_API_KEY:
+        required: true
+      OP_NODE_WEBHOOK_SECRET:
+        required: true
+      AZURE_LOG_ANALYTICS_ID:
+        required: false
+      AZURE_LOG_ANALYTICS_KEY:
+        required: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    services:
+      postgres:
+        image: postgres:15
+        ports: ["5432:5432"]
+        env:
+          POSTGRES_USER: nostrstack
+          POSTGRES_PASSWORD: nostrstack
+          POSTGRES_DB: nostrstack
+        options: >-
+          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.11.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
+
+      - name: Regtest e2e (Playwright)
+        if: ${{ inputs.run_e2e_tests }}
+        run: |
+          cd apps/api
+          DATABASE_URL="file:./test-e2e.db" ADMIN_API_KEY="test-admin" pnpm test:e2e
+
+      - name: Set image tag
+        id: vars
+        run: |
+          tag="${{ inputs.image_tag }}"
+          if [ -z "$tag" ]; then tag="${GITHUB_SHA}"; fi
+          echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ steps.vars.outputs.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create resource group (if needed)
+        if: ${{ inputs.environment == 'staging' }}
+        run: az group create -n "${{ inputs.azure_rg }}" -l "${{ inputs.azure_location }}"
+
+      - name: Deploy Bicep (${{ inputs.environment }})
+        env:
+          IMAGE: ${{ steps.vars.outputs.IMAGE }}
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
+          OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          LOG_WS_ID: ${{ secrets.AZURE_LOG_ANALYTICS_ID }}
+          LOG_WS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
+        run: |
+          params=(
+            -g "${{ inputs.azure_rg }}"
+            -f deploy/azure/main.bicep
+            -p containerImage="$IMAGE"
+            -p adminApiKey="$ADMIN_API_KEY"
+            -p opNodeApiKey="$OP_NODE_API_KEY"
+            -p opNodeWebhookSecret="$OP_NODE_WEBHOOK_SECRET"
+            -p location="${{ inputs.azure_location }}"
+            -p registryServer="$REGISTRY"
+            -p registryUsername="$REGISTRY_USERNAME"
+            -p registryPassword="$REGISTRY_PASSWORD"
+          )
+
+          # Add staging-specific parameters
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            params+=(-p appName="${{ inputs.app_name }}")
+            params+=(-p envName="${{ inputs.env_name }}")
+            if [ -n "$LOG_WS_ID" ]; then
+              params+=(-p logAnalyticsWorkspaceId="$LOG_WS_ID")
+            fi
+            if [ -n "$LOG_WS_KEY" ]; then
+              params+=(-p logAnalyticsSharedKey="$LOG_WS_KEY")
+            fi
+          fi
+
+          az deployment group create "${params[@]}"
+
+      - name: Show container app FQDN
+        run: |
+          fqdn=$(az containerapp show -g "${{ inputs.azure_rg }}" -n "${{ inputs.app_name }}" -o tsv --query properties.configuration.ingress.fqdn)
+          echo "🌐 Deployed to: https://$fqdn"
+          echo "FQDN=$fqdn" >> $GITHUB_OUTPUT
+
+      - name: Smoke test /health
+        if: ${{ inputs.run_health_check }}
+        run: |
+          fqdn=$(az containerapp show -g "${{ inputs.azure_rg }}" -n "${{ inputs.app_name }}" -o tsv --query properties.configuration.ingress.fqdn)
+          echo "Testing health endpoint at: https://$fqdn/health"
+          curl -sf "https://$fqdn/health"
+          echo "✅ Health check passed"

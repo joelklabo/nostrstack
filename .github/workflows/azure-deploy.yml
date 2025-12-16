@@ -10,12 +10,6 @@ on:
     paths:
       - '.github/workflows/azure-deploy.yml'
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-api
-  AZURE_RG: nostrstack-rg
-  AZURE_LOCATION: westus3
-
 jobs:
   meta:
     if: ${{ github.event_name == 'push' }}
@@ -25,94 +19,18 @@ jobs:
 
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    env:
-      NODE_OPTIONS: "--no-experimental-strip-types"
-    services:
-      postgres:
-        image: postgres:15
-        ports: ["5432:5432"]
-        env:
-          POSTGRES_USER: nostrstack
-          POSTGRES_PASSWORD: nostrstack
-          POSTGRES_DB: nostrstack
-        options: >-
-          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.11.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install deps
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test
-        env:
-          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
-          NODE_OPTIONS: "--no-experimental-strip-types"
-
-      - name: Regtest e2e (Playwright)
-        run: |
-          cd apps/api
-          NODE_OPTIONS="--no-experimental-strip-types" DATABASE_URL="file:./test-e2e.db" ADMIN_API_KEY="test-admin" pnpm test:e2e
-
-      - name: Set image tag
-        id: vars
-        run: |
-          tag="${{ github.event.inputs.image_tag }}"
-          if [ -z "$tag" ]; then tag="${GITHUB_SHA}"; fi
-          echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}" >> $GITHUB_OUTPUT
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/api/Dockerfile
-
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy Bicep (Container Apps)
-        env:
-          IMAGE: ${{ steps.vars.outputs.IMAGE }}
-          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
-          OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
-          OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          az deployment group create \
-            -g "$AZURE_RG" \
-            -f deploy/azure/main.bicep \
-            -p containerImage="$IMAGE" \
-               adminApiKey="$ADMIN_API_KEY" \
-               opNodeApiKey="$OP_NODE_API_KEY" \
-               opNodeWebhookSecret="$OP_NODE_WEBHOOK_SECRET" \
-               location="$AZURE_LOCATION" \
-               registryServer="$REGISTRY" \
-               registryUsername="$REGISTRY_USERNAME" \
-               registryPassword="$REGISTRY_PASSWORD"
-
-      - name: Show container app FQDN
-        run: az containerapp show -g "$AZURE_RG" -n nostrstack-api -o tsv --query properties.configuration.ingress.fqdn
+    uses: ./.github/workflows/azure-deploy-reusable.yml
+    with:
+      environment: production
+      image_tag: ${{ inputs.image_tag }}
+      azure_rg: nostrstack-rg
+      azure_location: westus3
+      app_name: nostrstack-api
+      env_name: nostrstack-env
+      run_e2e_tests: true
+      run_health_check: false
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+      OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
+      OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}

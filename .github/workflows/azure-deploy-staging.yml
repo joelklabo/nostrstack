@@ -10,14 +10,6 @@ on:
     paths:
       - '.github/workflows/azure-deploy-staging.yml'
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-api
-  AZURE_RG: nostrstack-stg-rg
-  AZURE_LOCATION: westus3
-  APP_NAME: nostrstack-api-stg
-  ENV_NAME: nostrstack-env-stg
-
 jobs:
   meta:
     if: ${{ github.event_name == 'push' }}
@@ -27,96 +19,20 @@ jobs:
 
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        ports: ["5432:5432"]
-        env:
-          POSTGRES_USER: nostrstack
-          POSTGRES_PASSWORD: nostrstack
-          POSTGRES_DB: nostrstack
-        options: >-
-          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.11.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install deps
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test
-        env:
-          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
-
-      - name: Set image tag
-        id: vars
-        run: |
-          tag="${{ github.event.inputs.image_tag }}"
-          if [ -z "$tag" ]; then tag="${GITHUB_SHA}"; fi
-          echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}" >> $GITHUB_OUTPUT
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/api/Dockerfile
-
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy Bicep (staging)
-        env:
-          IMAGE: ${{ steps.vars.outputs.IMAGE }}
-          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY_STG }}
-          OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY_STG }}
-          OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET_STG }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          LOG_WS_ID: ${{ secrets.AZURE_LOG_ANALYTICS_ID }}
-          LOG_WS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
-        run: |
-          az group create -n "$AZURE_RG" -l "$AZURE_LOCATION"
-          az deployment group create \
-            -g "$AZURE_RG" \
-            -f deploy/azure/main.bicep \
-            -p containerImage="$IMAGE" \
-               adminApiKey="$ADMIN_API_KEY" \
-               opNodeApiKey="$OP_NODE_API_KEY" \
-               opNodeWebhookSecret="$OP_NODE_WEBHOOK_SECRET" \
-               location="$AZURE_LOCATION" \
-               registryServer="$REGISTRY" \
-               registryUsername="$REGISTRY_USERNAME" \
-               registryPassword="$REGISTRY_PASSWORD" \
-               appName="$APP_NAME" \
-               envName="$ENV_NAME" \
-               logAnalyticsWorkspaceId="$LOG_WS_ID" \
-               logAnalyticsSharedKey="$LOG_WS_KEY"
-
-      - name: Smoke test /health
-        run: |
-          fqdn=$(az containerapp show -g "$AZURE_RG" -n "$APP_NAME" -o tsv --query properties.configuration.ingress.fqdn)
-          echo "FQDN=$fqdn"
-          curl -sf "https://$fqdn/health"
+    uses: ./.github/workflows/azure-deploy-reusable.yml
+    with:
+      environment: staging
+      image_tag: ${{ inputs.image_tag }}
+      azure_rg: nostrstack-stg-rg
+      azure_location: westus3
+      app_name: nostrstack-api-stg
+      env_name: nostrstack-env-stg
+      run_e2e_tests: false
+      run_health_check: true
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY_STG }}
+      OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY_STG }}
+      OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET_STG }}
+      AZURE_LOG_ANALYTICS_ID: ${{ secrets.AZURE_LOG_ANALYTICS_ID }}
+      AZURE_LOG_ANALYTICS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
