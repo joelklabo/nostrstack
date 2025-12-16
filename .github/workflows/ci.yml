@@ -130,6 +130,19 @@ jobs:
       - name: Lint & test (SDK, embed, gallery)
         run: pnpm -r --filter "./packages/..." --filter "./apps/gallery" test
 
+      - name: Gallery E2E (Social Flow)
+        run: |
+          pnpm exec playwright install chromium
+          pnpm --filter gallery exec playwright test tests/social-flow.spec.ts --project=chromium
+        env:
+          # Use mock values for CI to avoid external dependencies if possible, 
+          # but our test connects to real relays. 
+          # We might need to skip or mock relays in CI if network is restricted.
+          # GitHub Actions usually allow outbound.
+          VITE_NOSTRSTACK_RELAYS: wss://relay.damus.io
+          VITE_API_BASE_URL: http://localhost:3001
+          VITE_NOSTRSTACK_HOST: localhost:3001
+
   real-relay-comment:
     name: Real relay comment (opt-in)
     runs-on: ubuntu-latest
