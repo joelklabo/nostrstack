@@ -20,6 +20,8 @@ interface ZapButtonProps {
   event: Event; // The event to zap
   amountSats?: number;
   message?: string;
+  apiBase?: string;
+  host?: string;
 }
 
 // Minimal LNURL-pay client, just enough for zaps.
@@ -126,7 +128,7 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
         tags: [
           ['relays', ...RELAYS], // Global relays or specific ones
           ['amount', String(amountSats * 1000)], // msat
-          ['lnurl', metadata.encoded ? metadata.encoded.toUpperCase() : lnurlp], // NIP-57 encoded LNURL
+          ['lnurl', metadata.encoded ? metadata.encoded.toUpperCase() : authorLightningAddress], // NIP-57 encoded LNURL
           ['p', authorPubkey],
           ['e', event.id],
           ['content', message],
@@ -138,7 +140,6 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
       const signedZapRequest = await signEvent(zapRequestEventTemplate);
       
       // 3. Get invoice from callback URL
-      setZapState('pending-invoice');
       const invoiceData = await getLnurlpInvoice(metadata.callback, amountSats * 1000, metadata.metadata, signedZapRequest);
       const pr = invoiceData.pr;
       setInvoice(pr);
@@ -155,9 +156,7 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
         }
       }
 
-      // (Optional) Poll for payment status or use WebSockets for confirmation
-      // For bare bones, just display QR and let user pay.
-      // After a timeout, reset.
+      // (Optional) Poll for payment status
       timerRef.current = window.setTimeout(() => {
         setZapState('idle');
         setInvoice(null);

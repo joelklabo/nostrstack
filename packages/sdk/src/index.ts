@@ -67,8 +67,11 @@ export class NostrstackClient {
     return this.request(`/.well-known/lnurlp/${encodeURIComponent(username)}`);
   }
 
-  async getLnurlpInvoice(username: string, amountMsat: number): Promise<InvoiceResponse> {
-    return this.request(`/api/lnurlp/${encodeURIComponent(username)}/invoice?amount=${amountMsat}`);
+  async getLnurlpInvoice(username: string, amountMsat: number, zapRequest?: string, lnurl?: string): Promise<InvoiceResponse> {
+    const params = new URLSearchParams({ amount: String(amountMsat) });
+    if (zapRequest) params.set('nostr', zapRequest);
+    if (lnurl) params.set('lnurl', lnurl);
+    return this.request(`/api/lnurlp/${encodeURIComponent(username)}/invoice?${params.toString()}`);
   }
 
   async getNip05(name: string): Promise<Nip05Response> {
