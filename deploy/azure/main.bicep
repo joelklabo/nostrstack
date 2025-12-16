@@ -23,6 +23,7 @@ param otelHeaders string = ''
 param logAnalyticsWorkspaceId string = ''
 @secure()
 param logAnalyticsSharedKey string = ''
+param deployerObjectId string = ''
 
 var useRegistry = !empty(registryServer)
 var useOtel = otelEnabled && !empty(otelEndpoint)
@@ -34,7 +35,15 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   properties: {
     tenantId: subscription().tenantId
     sku: { family: 'A', name: 'standard' }
-    accessPolicies: []
+    accessPolicies: !empty(deployerObjectId) ? [
+      {
+        objectId: deployerObjectId
+        tenantId: subscription().tenantId
+        permissions: {
+          secrets: ['get', 'list', 'set', 'delete']
+        }
+      }
+    ] : []
     enableSoftDelete: true
     enabledForDeployment: true
   }
