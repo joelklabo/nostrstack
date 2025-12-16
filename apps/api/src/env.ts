@@ -26,6 +26,7 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3001),
   LOG_LEVEL: z.string().default('info'),
+  DEV_MOCKS: bool().default(false),
   USE_HTTPS: bool().default(false),
   HTTPS_CERT: z.string().optional(),
   HTTPS_KEY: z.string().optional(),

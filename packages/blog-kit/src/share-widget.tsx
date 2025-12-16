@@ -197,7 +197,15 @@ export function ShareWidget({
     let closeTimer: number | null = null;
 
     const closeAll = () => {
+      const subsToClose = shareSub;
       shareSub = [];
+      subsToClose.forEach((s) => {
+        try {
+          s.close();
+        } catch {
+          // ignore
+        }
+      });
       const toClose = connections;
       connections = [];
 
@@ -317,7 +325,6 @@ export function ShareWidget({
       cancelled = true;
       closeAll();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [relayTargets.join(','), url, effectiveTag, maxItems, hydrateProfile]);
 
   const handleShare = useCallback(async () => {

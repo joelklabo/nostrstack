@@ -1714,6 +1714,7 @@
     transform: translateY(var(--nostrstack-motion-distance-mid));
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;

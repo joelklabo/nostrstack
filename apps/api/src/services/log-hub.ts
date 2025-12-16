@@ -31,3 +31,4 @@ export function createLogHub(opts: LogHubOptions = {}) {
   return { publish, subscribe, bufferSize };
 }
 
+export type LogHub = ReturnType<typeof createLogHub>;

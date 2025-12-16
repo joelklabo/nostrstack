@@ -172,7 +172,15 @@ export function ShareWidget({
     let closeTimer: number | null = null;
 
     const closeAll = () => {
+      const subsToClose = shareSub;
       shareSub = [];
+      subsToClose.forEach((s) => {
+        try {
+          s.close();
+        } catch {
+          // ignore
+        }
+      });
       const toClose = connections;
       connections = [];
 

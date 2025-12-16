@@ -9,8 +9,8 @@ import { registerPayRoutes } from './pay.js';
 import { registerPayWebhook } from './pay-webhook.js';
 import { registerRegtestFundRoute } from './regtest-fund.js';
 import { registerRegtestPayRoute } from './regtest-pay.js';
-import { registerTipRoutes } from './tips.js';
 import { registerTenantRoutes } from './tenants.js';
+import { registerTipRoutes } from './tips.js';
 import { registerWalletRoutes } from './wallet.js';
 
 export async function registerRoutes(app: FastifyInstance) {

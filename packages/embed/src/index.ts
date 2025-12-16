@@ -108,7 +108,28 @@ type NostrEvent = {
   sig?: string;
 };
 
-function createClient(opts: { baseURL?: string; host?: string }) {
+type LnurlClient = Pick<NostrstackClient, 'getLnurlpMetadata' | 'getLnurlpInvoice'>;
+const isMockBase = (baseURL?: string) => baseURL === 'mock';
+
+function createClient(opts: { baseURL?: string; host?: string }): LnurlClient {
+  if (isMockBase(opts.baseURL)) {
+    return {
+      async getLnurlpMetadata(username: string) {
+        return {
+          callback: 'mock',
+          minSendable: 1000,
+          maxSendable: 1_000_000,
+          metadata: JSON.stringify([['text/plain', `mock lnurlp for ${username}`]]),
+          tag: 'payRequest'
+        };
+      },
+      async getLnurlpInvoice(_username: string, amountMsat: number) {
+        const amount = Math.max(1000, Math.round(amountMsat));
+        return { pr: `lnbc1mock${amount}`, routes: [] };
+      }
+    };
+  }
+
   return new NostrstackClient({
     baseURL: opts.baseURL,
     host: opts.host
@@ -116,6 +137,7 @@ function createClient(opts: { baseURL?: string; host?: string }) {
 }
 
 export function resolvePayWsUrl(baseURL?: string): string | null {
+  if (isMockBase(baseURL)) return null;
   if (typeof window === 'undefined') return null;
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
   const base = raw.replace(/\/$/, '');
@@ -134,6 +156,7 @@ export function resolvePayWsUrl(baseURL?: string): string | null {
 }
 
 function resolveApiBaseUrl(baseURL?: string) {
+  if (isMockBase(baseURL)) return '';
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
   const base = raw.replace(/\/$/, '');
   if (base && base !== '/api') return base;
@@ -480,6 +503,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const wsUrl = resolvePayWsUrl(opts.baseURL);
   const apiBaseUrl = resolveApiBaseUrl(opts.baseURL);
+  const isMock = isMockBase(opts.baseURL);
   const domain = resolveTenantDomain(opts.host);
   const itemId = opts.itemId;
 
@@ -1059,6 +1083,46 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       meta.to = opts.username;
       const noteVal = note.value.trim();
       if (noteVal) meta.note = noteVal;
+      if (isMock) {
+        const pr = `lnbc1mock${Math.max(1, Math.round(amountSats))}`;
+        currentInvoice = pr;
+        currentProviderRef = null;
+        invoiceCode.textContent = pr.substring(0, 8) + '...' + pr.substring(pr.length - 8);
+        invoiceBox.classList.add('nostrstack-visible');
+        openWallet.href = `lightning:${pr}`;
+        openWallet.style.display = '';
+        status.textContent = 'Waiting for payment…';
+        invoiceStartedAt = Date.now();
+        startInvoiceTicker();
+
+        const qrPayload = /^lightning:/i.test(pr) ? pr : `lightning:${pr}`;
+        try {
+          abortQr();
+          qrAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          const signal = qrAbort?.signal;
+          const qrSize = opts.size === 'compact' ? 240 : 320;
+          void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: qrSize, signal }).catch((err) => {
+            const name = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
+            if (name === 'AbortError') return;
+            console.warn('tip qr render failed', err);
+          });
+        } catch (err) {
+          console.warn('tip qr render failed', err);
+        }
+
+        if (opts.onInvoice) {
+          await opts.onInvoice({ pr, providerRef: null, amountSats });
+        } else {
+          try {
+            await copyToClipboard(pr);
+          } catch {
+            /* ignore */
+          }
+        }
+        startRealtime();
+        startPoll();
+        return pr;
+      }
       const res = await fetch(`${apiBaseUrl}/api/pay`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
@@ -1134,11 +1198,10 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   refreshBtn.onclick = async () => {
     refreshBtn.disabled = true;
     refreshBtn.style.opacity = '0.5';
-    const originalIcon = refreshBtn.innerHTML;
     // Spin animation class could be added here
-    
+
     await pollOnce();
-    
+
     if (!didPay) {
       // Visual feedback that check happened but no payment found
       refreshBtn.style.color = 'var(--nostrstack-color-warning)';
@@ -1797,7 +1860,7 @@ type MountTipOptions = {
 
 export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {}) {
   const amountMsat = opts.amountSats ? opts.amountSats * 1000 : undefined;
-  return renderTipButton(container, {
+  const widget = renderTipButton(container, {
     username: opts.username ?? getBrandAttr(container, 'Tip') ?? 'anonymous',
     text: opts.text,
     amountMsat,
@@ -1812,6 +1875,9 @@ export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {
       }
     }
   });
+  const el = widget.el as HTMLElement & { destroy?: () => void };
+  el.destroy = widget.destroy;
+  return el;
 }
 
 type MountTipWidgetOptions = {
@@ -1895,7 +1961,7 @@ type MountPayOptions = {
 
 export function mountPayToAction(container: HTMLElement, opts: MountPayOptions = {}) {
   const amountMsat = opts.amountSats ? opts.amountSats * 1000 : undefined;
-  return renderPayToAction(container, {
+  const widget = renderPayToAction(container, {
     username: opts.username ?? getBrandAttr(container, 'Pay') ?? 'anonymous',
     text: opts.text ?? container.dataset.label,
     amountMsat,
@@ -1912,6 +1978,9 @@ export function mountPayToAction(container: HTMLElement, opts: MountPayOptions =
       }
     }
   });
+  const el = widget.el as HTMLElement & { destroy?: () => void };
+  el.destroy = widget.destroy;
+  return el;
 }
 
 type MountCommentOptions = {
