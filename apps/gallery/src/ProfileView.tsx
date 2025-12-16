@@ -106,6 +106,9 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
             {profile?.lud16 && <p className="profile-lud16">Lightning: {profile.lud16}</p>}
             {profile?.lud06 && <p className="profile-lud06">LNURL: {profile.lud06}</p>}
             {profile?.website && <p className="profile-website">Web: <a href={profile.website} target="_blank" rel="noopener noreferrer">{profile.website}</a></p>}
+            <button className="action-btn" style={{ marginTop: '1rem', borderColor: 'var(--terminal-accent)', color: 'var(--terminal-accent)' }}>
+              [+] FOLLOW_USER
+            </button>
           </div>
         </div>
       )}

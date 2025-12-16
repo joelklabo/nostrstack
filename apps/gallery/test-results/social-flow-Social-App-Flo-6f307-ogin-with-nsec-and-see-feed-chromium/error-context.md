@@ -1,0 +1,437 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - text: NOSTRSTACK_V1
+      - generic [ref=e6]: "UPTIME: 00:00:59.7"
+      - generic [ref=e7]: "EVENTS_RX: 72"
+    - button "> FEED_GLOBAL" [ref=e8] [cursor=pointer]
+    - button "> PROFILE" [ref=e9] [cursor=pointer]
+    - button "> NOTIFICATIONS" [ref=e10] [cursor=pointer]
+    - button "> SETTINGS" [ref=e11] [cursor=pointer]
+    - button "> LOGOUT" [ref=e13] [cursor=pointer]
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: "[NSEC] >"
+          - text: "Post a new note:"
+        - textbox "WHAT ARE YOU HACKING ON?..." [ref=e19]
+        - button "PUBLISH_EVENT" [ref=e21] [cursor=pointer]
+        - generic [ref=e22]: "SUCCESS: Event published to relays."
+      - generic [ref=e23]: "> STREAMING_LIVE_EVENTS..."
+      - article [ref=e24]:
+        - generic [ref=e25]:
+          - generic "6d088b653a1bffe728b9b17e5c7afcfc18d85f70502feac83400524eb6a8d5e9" [ref=e26]: 6d088b65...
+          - generic [ref=e27]:
+            - generic [ref=e28]: K1
+            - generic [ref=e29]: 12:27:27 PM
+        - generic [ref=e30]: "#AIBikini 【随机AI泳装】 https://blsm.bostr.shop/1e5e4bec142b942ca2e282a359420e1c76226c78610aefe32a504d68cd12ce59.png e22f5098-fa60-4e2d-9fda-0342c728f9c3"
+        - generic [ref=e31]:
+          - button "⚡ ZAP 21" [ref=e32] [cursor=pointer]
+          - button "REPLY" [ref=e33] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e34] [cursor=pointer]
+      - article [ref=e35]:
+        - generic [ref=e36]:
+          - generic "0fdb4c25ac659e5ef841dad7417e7a57bc8099d4f78c3c41a4094d4b9c8993b4" [ref=e37]: 0fdb4c25...
+          - generic [ref=e38]:
+            - generic [ref=e39]: K1
+            - generic [ref=e40]: 12:27:08 PM
+        - generic [ref=e41]: "Game 3 Day 1 Adelaide ❤️🏏 #cricket https://image.nostr.build/d1b5c7f5bb6afb319a304db4cc22a0e01f18b82a4ab99ed632e014b16cb366dc.jpg"
+        - generic [ref=e42]:
+          - button "⚡ ZAP 21" [ref=e43] [cursor=pointer]
+          - button "REPLY" [ref=e44] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e45] [cursor=pointer]
+      - article [ref=e46]:
+        - generic [ref=e47]:
+          - generic "12d2c9f0c9eb8f8792b8ef8b509121859dd90a3779f1af308fba60bcb1d9e107" [ref=e48]: 12d2c9f0...
+          - generic [ref=e49]:
+            - generic [ref=e50]: K1
+            - generic [ref=e51]: 12:27:03 PM
+        - generic [ref=e52]: "アンコールワット近くにタイ軍による空爆 カンボジア政府発表 #nhk_news https://news.web.nhk/newsweb/na/na-k10015006021000"
+        - generic [ref=e53]:
+          - button "⚡ ZAP 21" [ref=e54] [cursor=pointer]
+          - button "REPLY" [ref=e55] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e56] [cursor=pointer]
+      - article [ref=e57]:
+        - generic [ref=e58]:
+          - generic "bb1c5151439e9abb680c15b191c1606b03333db3acc35a713091d9913751c3b3" [ref=e59]: bb1c5151...
+          - generic [ref=e60]:
+            - generic [ref=e61]: K1
+            - generic [ref=e62]: 12:26:55 PM
+        - generic [ref=e63]: Sell it all - then buy bitcoin... We all start with shit coins but embarrassing for him to still not get it
+        - generic [ref=e64]:
+          - button "⚡ ZAP 21" [ref=e65] [cursor=pointer]
+          - button "REPLY" [ref=e66] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e67] [cursor=pointer]
+      - article [ref=e68]:
+        - generic [ref=e69]:
+          - generic "c3c7122c63af5281fee3b9338d10ae65b166ffe6f73f1c272c5c1120607731d7" [ref=e70]: c3c7122c...
+          - generic [ref=e71]:
+            - generic [ref=e72]: K1
+            - generic [ref=e73]: 12:26:54 PM
+        - generic [ref=e74]: I didnt know they gave grants to paid services.
+        - generic [ref=e75]:
+          - button "⚡ ZAP 21" [ref=e76] [cursor=pointer]
+          - button "REPLY" [ref=e77] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e78] [cursor=pointer]
+      - article [ref=e79]:
+        - generic [ref=e80]:
+          - generic "9322bd922f20c6fcd9e913454727b3bbc2d096be4811971055a826dda3d4cb0b" [ref=e81]: 9322bd92...
+          - generic [ref=e82]:
+            - generic [ref=e83]: K1
+            - generic [ref=e84]: 12:26:53 PM
+        - generic [ref=e85]: "When all theories fail in #Bitcoin they still have that one that will stand the test, 100 years 🙄🙄🙄😭😭"
+        - generic [ref=e86]:
+          - button "⚡ ZAP 21" [ref=e87] [cursor=pointer]
+          - button "REPLY" [ref=e88] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e89] [cursor=pointer]
+      - article [ref=e90]:
+        - generic [ref=e91]:
+          - generic "06f4638e1640e01a8789575e8f2985727ca1e3227aa518dc4291ca39b6704e26" [ref=e92]: 06f4638e...
+          - generic [ref=e93]:
+            - generic [ref=e94]: K1
+            - generic [ref=e95]: 12:26:47 PM
+        - generic [ref=e96]: Good night 🥰🥰 https://blossom.primal.net/6310629e975bdebab36fd8844ee1e9bbcbe0d1a93067ee8618c0fd26bc907487.jpg
+        - generic [ref=e97]:
+          - button "⚡ ZAP 21" [ref=e98] [cursor=pointer]
+          - button "REPLY" [ref=e99] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e100] [cursor=pointer]
+      - article [ref=e101]:
+        - generic [ref=e102]:
+          - generic "d28b07a802beff62b4335858713c7a903c7734a369f02f6192be3cafd46c00e8" [ref=e103]: d28b07a8...
+          - generic [ref=e104]:
+            - generic [ref=e105]: K1
+            - generic [ref=e106]: 12:26:46 PM
+        - generic [ref=e107]: "\"c. 1300, nacioun, \"a race of people, large group of people with common ancestry and language,\" from Old French nacion \"birth, rank; descendants, relatives; country, homeland\" (12c.) and directly from Latin nationem (nominative natio) \"birth, origin; breed, stock, kind, species; race of people, tribe,\" literally \"that which has been born,\" from natus, past participle of nasci \"be born\" (Old Latin gnasci), from PIE root *gene- \"give birth, beget,\" with derivatives referring to procreation and familial and tribal groups.\" How're you even possibly bending the etymology of the word nation that comes from OLD FRENCH into \"Soviet/commie notions\" ? How're you doing this? \"Real men band together based on mutual interest\" like what? Preserving their homeland? Protecting their people? Keeping their culture and way of life in tact? Fighting for their race? Like those things? You mean like that? Is that what you mean? It seems like you're really just trying to do some kinda anti central banking George W. Bush era conspiracy schtick that I'm not even remotely interested in talking about. I'm talking about the meaning of words and how it is respectable to go to war for your people. Your country. Your race. And here you are giving me some Reddit ass garbage."
+        - generic [ref=e108]:
+          - button "⚡ ZAP 21" [ref=e109] [cursor=pointer]
+          - button "REPLY" [ref=e110] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e111] [cursor=pointer]
+      - article [ref=e112]:
+        - generic [ref=e113]:
+          - generic "0d97beae567fcec9c6574f1c6ef6126ea969d4992c3198e51c0fac52c5274a14" [ref=e114]: 0d97beae...
+          - generic [ref=e115]:
+            - generic [ref=e116]: K1
+            - generic [ref=e117]: 12:26:46 PM
+        - generic [ref=e118]: What if it was a pyramid?
+        - generic [ref=e119]:
+          - button "⚡ ZAP 21" [ref=e120] [cursor=pointer]
+          - button "REPLY" [ref=e121] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e122] [cursor=pointer]
+      - article [ref=e123]:
+        - generic [ref=e124]:
+          - generic "8aedc87160819e490cb0162acbd8c9a26d79e63db74f5b1b65939012924a7f05" [ref=e125]: 8aedc871...
+          - generic [ref=e126]:
+            - generic [ref=e127]: K1
+            - generic [ref=e128]: 12:26:42 PM
+        - generic [ref=e129]: Jokes on you. Federal government has NO ROLE in healthcare of any kind nostr:nevent1qqsxk96kxq884jz098e23nqnwv9ytr9m0ha6974v709taq2q85llungpz4mhxue69uhkg6t5w3hjuur4vghhyetvv9us4a9694
+        - generic [ref=e130]:
+          - button "⚡ ZAP 21" [ref=e131] [cursor=pointer]
+          - button "REPLY" [ref=e132] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e133] [cursor=pointer]
+      - article [ref=e134]:
+        - generic [ref=e135]:
+          - generic "8abbfe83b18047a5499d52c9a431782d5168be0559085d90dc7c6a01511434d9" [ref=e136]: 8abbfe83...
+          - generic [ref=e137]:
+            - generic [ref=e138]: K1
+            - generic [ref=e139]: 12:26:41 PM
+        - generic [ref=e140]: https://www.instagram.com/reel/DSGvNULCSnA/?igsh=NjZiM2M3MzIxNA== Elon Musk’s X fined $140 million by European Commission over ‘deceptive’ blue checkmark and lack of transparency 🤬🙏 https://blossom.primal.net/7d3aab8a542388c2e03036507f164da0446341b9717177a57c69da56ea899feb.jpg
+        - generic [ref=e141]:
+          - button "⚡ ZAP 21" [ref=e142] [cursor=pointer]
+          - button "REPLY" [ref=e143] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e144] [cursor=pointer]
+      - article [ref=e145]:
+        - generic [ref=e146]:
+          - generic "184dca27c18fec7d9e38e15552a6d5c2cd22741a7fe356fd13c4bd99c63594ee" [ref=e147]: 184dca27...
+          - generic [ref=e148]:
+            - generic [ref=e149]: K1
+            - generic [ref=e150]: 12:26:40 PM
+        - generic [ref=e151]: "Timechain info: Block height: 928,176 Network difficulty: 148.20T Next difficulty adjustment(est.): 148.69T Market dominance %: 54.45% BTC price per 1K sats($): 0.88 24H median transaction fee($): 0.16 #meme #memes #btc #nostr #plebchain #memestr #pleb #laugh #funny #jokes #primal #serioushumour Title: It's a diabolical, and nothing can be done about it https://i.redd.it/6iw8jp772l7g1.png"
+        - generic [ref=e152]:
+          - button "⚡ ZAP 21" [ref=e153] [cursor=pointer]
+          - button "REPLY" [ref=e154] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e155] [cursor=pointer]
+      - article [ref=e156]:
+        - generic [ref=e157]:
+          - generic "30eb26a2febae1c1f407246a1e2591b629b12ae5bbc65fb0bd2ade6cf30b6075" [ref=e158]: 30eb26a2...
+          - generic [ref=e159]:
+            - generic [ref=e160]: K1
+            - generic [ref=e161]: 12:26:35 PM
+        - generic [ref=e162]: 山で熊に襲「おそ」われそうになった。略奪「りゃくだつ」
+        - generic [ref=e163]:
+          - button "⚡ ZAP 21" [ref=e164] [cursor=pointer]
+          - button "REPLY" [ref=e165] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e166] [cursor=pointer]
+      - article [ref=e167]:
+        - generic [ref=e168]:
+          - generic "7e7e9c42a91bfef19fa929e5fda1b72e0ebc1a4c1141673e2794234d86addf4e" [ref=e169]: 7e7e9c42...
+          - generic [ref=e170]:
+            - generic [ref=e171]: K1
+            - generic [ref=e172]: 12:26:28 PM
+        - generic [ref=e173]: Hello from Playwright E2E!
+        - generic [ref=e174]:
+          - button "⚡ ZAP 21" [disabled] [ref=e175] [cursor=pointer]
+          - generic [ref=e177]:
+            - generic [ref=e182]: ZAP_INITIATE
+            - generic [ref=e183]:
+              - generic [ref=e184]: "ERROR: Author does not have a Lightning Address/LNURL."
+              - button "CLOSE" [ref=e186]
+          - button "REPLY" [ref=e187] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e188] [cursor=pointer]
+      - article [ref=e189]:
+        - generic [ref=e190]:
+          - generic "16cb4b38fe9a748b6608f6a596913992dfc50906524c8311cd360bc40222ab94" [ref=e191]: 16cb4b38...
+          - generic [ref=e192]:
+            - generic [ref=e193]: K1
+            - generic [ref=e194]: 12:26:15 PM
+        - generic [ref=e195]: Its an evil 33 demu plot to get sick vibrations into your ear. Careful now you're on a list.
+        - generic [ref=e196]:
+          - button "⚡ ZAP 21" [ref=e197] [cursor=pointer]
+          - button "REPLY" [ref=e198] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e199] [cursor=pointer]
+      - article [ref=e200]:
+        - generic [ref=e201]:
+          - generic "9887797d06372fa7aa79950328e0754277ee748efa2222204c713ac03f1a5a81" [ref=e202]: 9887797d...
+          - generic [ref=e203]:
+            - generic [ref=e204]: K1
+            - generic [ref=e205]: 12:26:13 PM
+        - generic [ref=e206]: "A departure delay has been issued for LaGuardia #Airport (#LGA) due to traffic management initiatives. Current delays are 16-30 minutes and increasing. #AirportStatusBot"
+        - generic [ref=e207]:
+          - button "⚡ ZAP 21" [ref=e208] [cursor=pointer]
+          - button "REPLY" [ref=e209] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e210] [cursor=pointer]
+      - article [ref=e211]:
+        - generic [ref=e212]:
+          - generic "de7ab932ca17278b2144a6628c3531a0628fcc7b58074111d6e5b949ecb0e377" [ref=e213]: de7ab932...
+          - generic [ref=e214]:
+            - generic [ref=e215]: K1
+            - generic [ref=e216]: 12:26:08 PM
+        - generic [ref=e217]: "shownodes #runnodes nostr:note1qqqqp99tezpcmay9v98qq3px29fn8ng2xj6a53ympksxkg0s7nysrmxs8s"
+        - generic [ref=e218]:
+          - button "⚡ ZAP 21" [ref=e219] [cursor=pointer]
+          - button "REPLY" [ref=e220] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e221] [cursor=pointer]
+      - article [ref=e222]:
+        - generic [ref=e223]:
+          - generic "4a916109ff33c5ecec755eb8d2e2f57d78b684b067a4a12b5301a42db0c26f86" [ref=e224]: 4a916109...
+          - generic [ref=e225]:
+            - generic [ref=e226]: K1
+            - generic [ref=e227]: 12:26:03 PM
+        - generic [ref=e228]: Using a normal playing card deck lacks the astral connection. Of course, if adept one can do without such imagery. The magick simply happens...
+        - generic [ref=e229]:
+          - button "⚡ ZAP 21" [ref=e230] [cursor=pointer]
+          - button "REPLY" [ref=e231] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e232] [cursor=pointer]
+      - article [ref=e233]:
+        - generic [ref=e234]:
+          - generic "fbbbf7c8f17b7a59a1b955f363939b74d5cd79f52556acb0712ce4f3bc1cca4a" [ref=e235]: fbbbf7c8...
+          - generic [ref=e236]:
+            - generic [ref=e237]: K1
+            - generic [ref=e238]: 12:25:56 PM
+        - generic [ref=e239]: No it's a monetary chain exclusively. Is this a good faith question? Surely you know that about Monero by now.
+        - generic [ref=e240]:
+          - button "⚡ ZAP 21" [ref=e241] [cursor=pointer]
+          - button "REPLY" [ref=e242] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e243] [cursor=pointer]
+      - article [ref=e244]:
+        - generic [ref=e245]:
+          - generic "b06eae8f7a7b3cfc2a3439ca8c9b7d8b69c75e92b220f1e682a5cc3f3b661974" [ref=e246]: b06eae8f...
+          - generic [ref=e247]:
+            - generic [ref=e248]: K1
+            - generic [ref=e249]: 12:25:55 PM
+        - generic [ref=e250]: "The UK is now on about enforcing ID on social media completely, good luck enforcing that on #nostr I live in Jersey 🇯🇪, I’m shielded from most of UK & EU bad decisions. I just cut down on using centralised services which I’ve already done over 6 months ago. Give them an inch, they’ll go the full mile, just don’t give them the inch!"
+        - generic [ref=e251]:
+          - button "⚡ ZAP 21" [ref=e252] [cursor=pointer]
+          - button "REPLY" [ref=e253] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e254] [cursor=pointer]
+      - article [ref=e255]:
+        - generic [ref=e256]:
+          - generic "7bdef7bdebb8721f77927d0e77c66059360fa62371fdf15f3add93923a613229" [ref=e257]: 7bdef7bd...
+          - generic [ref=e258]:
+            - generic [ref=e259]: K1
+            - generic [ref=e260]: 12:25:47 PM
+        - generic [ref=e261]: https://blossom.primal.net/490788467b3acf86c1a07ec245497e37692210e7c4f0f3657fdfd45a1cdffa3d.jpg
+        - generic [ref=e262]:
+          - button "⚡ ZAP 21" [ref=e263] [cursor=pointer]
+          - button "REPLY" [ref=e264] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e265] [cursor=pointer]
+      - article [ref=e266]:
+        - generic [ref=e267]:
+          - generic "f03df3d4134230420cdf7acbb35f96a2542424246ab052ba24c6fec6a4d4f676" [ref=e268]: f03df3d4...
+          - generic [ref=e269]:
+            - generic [ref=e270]: K1
+            - generic [ref=e271]: 12:25:42 PM
+        - generic [ref=e272]: "Block 928175 1 - high priority 1 - medium priority 1 - low priority 1 - no priority 1 - purging #bitcoinfees #mempool"
+        - generic [ref=e273]:
+          - button "⚡ ZAP 21" [ref=e274] [cursor=pointer]
+          - button "REPLY" [ref=e275] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e276] [cursor=pointer]
+      - article [ref=e277]:
+        - generic [ref=e278]:
+          - generic "9bfa99b42aeefeabcaf640eb0c8cbc32426ba1300159e8a4425acff2ec2326eb" [ref=e279]: 9bfa99b4...
+          - generic [ref=e280]:
+            - generic [ref=e281]: K1
+            - generic [ref=e282]: 12:25:38 PM
+        - generic [ref=e283]: Everywhere I turn my head I hear that England / Great Britain / UK is shit and is facing rock bottom. Everything is like a tremendous disaster. Is that because of leaving EU?
+        - generic [ref=e284]:
+          - button "⚡ ZAP 21" [ref=e285] [cursor=pointer]
+          - button "REPLY" [ref=e286] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e287] [cursor=pointer]
+      - article [ref=e288]:
+        - generic [ref=e289]:
+          - generic "ab7d91705025289d6149ad9ea1abc4ce4c49555df71904f29136c223785ea6f7" [ref=e290]: ab7d9170...
+          - generic [ref=e291]:
+            - generic [ref=e292]: K1
+            - generic [ref=e293]: 12:25:35 PM
+        - generic [ref=e294]: "All good 😊 I went off before realizing it was a scam since ima #bitcoin only 😂"
+        - generic [ref=e295]:
+          - button "⚡ ZAP 21" [ref=e296] [cursor=pointer]
+          - button "REPLY" [ref=e297] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e298] [cursor=pointer]
+      - article [ref=e299]:
+        - generic [ref=e300]:
+          - generic "6d088b653a1bffe728b9b17e5c7afcfc18d85f70502feac83400524eb6a8d5e9" [ref=e301]: 6d088b65...
+          - generic [ref=e302]:
+            - generic [ref=e303]: K1
+            - generic [ref=e304]: 12:25:31 PM
+        - generic [ref=e305]: "#AILolita 【随机AI Lolita】 https://blsm.bostr.shop/e51fd49e563ec20d2fa1c3c5fb49555a85f7e6a7fce15f156c14ba37d764aa6f.png e22f5098-fa60-4e2d-9fda-0342c728f9c3"
+        - generic [ref=e306]:
+          - button "⚡ ZAP 21" [ref=e307] [cursor=pointer]
+          - button "REPLY" [ref=e308] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e309] [cursor=pointer]
+      - article [ref=e310]:
+        - generic [ref=e311]:
+          - generic "2bb2abbfc5892b7bda8f78d53682d913cc9a446b45e11929f0935d8fdfcb40bd" [ref=e312]: 2bb2abbf...
+          - generic [ref=e313]:
+            - generic [ref=e314]: K1
+            - generic [ref=e315]: 12:25:29 PM
+        - generic [ref=e316]: もう5時か、おはよう
+        - generic [ref=e317]:
+          - button "⚡ ZAP 21" [ref=e318] [cursor=pointer]
+          - button "REPLY" [ref=e319] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e320] [cursor=pointer]
+      - article [ref=e321]:
+        - generic [ref=e322]:
+          - generic "b3320cbc0e54ebf79e6eb877fa609c8d645d6722882dc6d961c6b21f0503a468" [ref=e323]: b3320cbc...
+          - generic [ref=e324]:
+            - generic [ref=e325]: K1
+            - generic [ref=e326]: 12:25:28 PM
+        - generic [ref=e327]: うにゅう、おはよう
+        - generic [ref=e328]:
+          - button "⚡ ZAP 21" [ref=e329] [cursor=pointer]
+          - button "REPLY" [ref=e330] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e331] [cursor=pointer]
+      - article [ref=e332]:
+        - generic [ref=e333]:
+          - generic "f4d89779148ccd245c8d50914a284fd62d97cb0fb68b797a70f24a172b522db9" [ref=e334]: f4d89779...
+          - generic [ref=e335]:
+            - generic [ref=e336]: K1
+            - generic [ref=e337]: 12:25:27 PM
+        - generic [ref=e338]: App pairs in android are 🤌
+        - generic [ref=e339]:
+          - button "⚡ ZAP 21" [ref=e340] [cursor=pointer]
+          - button "REPLY" [ref=e341] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e342] [cursor=pointer]
+      - article [ref=e343]:
+        - generic [ref=e344]:
+          - generic "e4c6e2e6dc696849330048bf121f7e8865536b7b3a7d877c5345ae4ac0fea008" [ref=e345]: e4c6e2e6...
+          - generic [ref=e346]:
+            - generic [ref=e347]: K1
+            - generic [ref=e348]: 12:25:27 PM
+        - generic [ref=e349]: Don’t Go Wobbly on China https://www.theepochtimes.com/opinion/dont-go-wobbly-on-china-5957301 the Trump administration has just signaled a troubling shift in its export control posture by permitting Nvidia to sell certain high-performance artificial intelligence (AI) chips—including the company’s advanced H200 series processors—to China. This decision severely reduces the United States’ comparative computing and semiconductor advantage over China, thereby abetting the boosting of China’s military and surveillance capabilities at a time of heightened and harrowing great power competition. There is no economic justification for such a strategic empowerment of our preeminent adversary. These chips are the engines that drive modern AI. Allowing their sale to China, no matter the regulatory strings attached, is senseless.
+        - generic [ref=e350]:
+          - button "⚡ ZAP 21" [ref=e351] [cursor=pointer]
+          - button "REPLY" [ref=e352] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e353] [cursor=pointer]
+      - article [ref=e354]:
+        - generic [ref=e355]:
+          - generic "625d9ef67c9cf8dc51674030446dd7c1d8928f80827dabb3c378f4d74bb8be7b" [ref=e356]: 625d9ef6...
+          - generic [ref=e357]:
+            - generic [ref=e358]: K1
+            - generic [ref=e359]: 12:25:26 PM
+        - generic [ref=e360]: Perfect 👌 https://fountain.fm/track/1QVlKhJBkN4OudNtoGK7
+        - generic [ref=e361]:
+          - button "⚡ ZAP 21" [ref=e362] [cursor=pointer]
+          - button "REPLY" [ref=e363] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e364] [cursor=pointer]
+      - article [ref=e365]:
+        - generic [ref=e366]:
+          - generic "4d4fb5ff0afb8c04e6c6e03f51281b664576f985e5bc34a3a7ee310a1e821f47" [ref=e367]: 4d4fb5ff...
+          - generic [ref=e368]:
+            - generic [ref=e369]: K1
+            - generic [ref=e370]: 12:25:23 PM
+        - generic [ref=e371]: Essentially all insurance is a scam, add some risk in your life and live free my dudes 🤙
+        - generic [ref=e372]:
+          - button "⚡ ZAP 21" [ref=e373] [cursor=pointer]
+          - button "REPLY" [ref=e374] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e375] [cursor=pointer]
+      - article [ref=e376]:
+        - generic [ref=e377]:
+          - generic "867d7d8f08f454618ff50ec981de1a66bac5149d88b138589a0861789ce5b04f" [ref=e378]: 867d7d8f...
+          - generic [ref=e379]:
+            - generic [ref=e380]: K1
+            - generic [ref=e381]: 12:25:20 PM
+        - generic [ref=e382]: Yeaa let escape the Matrix together bro https://blossom.primal.net/823bedc4a44e7205c0b15ad06460fe24f51003faab0a875e3baad77bf4678057.jpg https://blossom.primal.net/64a35024af017300787ffcd76e1e15c0ca6d9e5ef80e74ea91f31deb994ba098.jpg https://blossom.primal.net/4353572246591ee70f0ce26a9c6c59f15fd20235dabb75aa0e660b7bd84927ad.jpg
+        - generic [ref=e383]:
+          - button "⚡ ZAP 21" [ref=e384] [cursor=pointer]
+          - button "REPLY" [ref=e385] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e386] [cursor=pointer]
+      - article [ref=e387]:
+        - generic [ref=e388]:
+          - generic "b3320cbc0e54ebf79e6eb877fa609c8d645d6722882dc6d961c6b21f0503a468" [ref=e389]: b3320cbc...
+          - generic [ref=e390]:
+            - generic [ref=e391]: K1
+            - generic [ref=e392]: 12:25:11 PM
+        - generic [ref=e393]: ログボ nostr:npub17dxnfw2vrhgtk4fgqdmpuqxv05u9raau3w0shay7msmr0dzs4m7s6ng4yl nostr:npub1823chanrkmyrfgz2v4pwmu22s8fjy0s9ps7vnd68n7xgd8zr9neqlc2e5r
+        - generic [ref=e394]:
+          - button "⚡ ZAP 21" [ref=e395] [cursor=pointer]
+          - button "REPLY" [ref=e396] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e397] [cursor=pointer]
+      - article [ref=e398]:
+        - generic [ref=e399]:
+          - generic "aa4fc8665f5696e33db7e1a572e3b0f5b3d615837b0f362dcb1c8068b098c7b4" [ref=e400]: aa4fc866...
+          - generic [ref=e401]:
+            - generic [ref=e402]: K1
+            - generic [ref=e403]: 12:25:06 PM
+        - generic [ref=e404]: "Bitcoin price: $87417, Sats per USD: 1144"
+        - generic [ref=e405]:
+          - button "⚡ ZAP 21" [ref=e406] [cursor=pointer]
+          - button "REPLY" [ref=e407] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e408] [cursor=pointer]
+      - article [ref=e409]:
+        - generic [ref=e410]:
+          - generic "3493b0c2376fe2a91dc804985ffd681f50210611597a2003f724c6744ce7120f" [ref=e411]: 3493b0c2...
+          - generic [ref=e412]:
+            - generic [ref=e413]: K1
+            - generic [ref=e414]: 12:25:03 PM
+        - generic [ref=e415]: "Tue - Dec 16 - 12:25 PM - PST // bit.site ☹️ Error connecting to node-1.ipfs.bit.site 4001 - [Errno -2] Name or service not known // pinnable.xyz ✅ Connection successful: 167.71.172.216 4001 ✅ Connection successful: 188.166.180.196 4001 ✅ Connection successful: 143.198.18.166 4001 // 4everland.io ✅ Connection successful: node-1.ipfs.4everland.net 4001"
+        - generic [ref=e416]:
+          - button "⚡ ZAP 21" [ref=e417] [cursor=pointer]
+          - button "REPLY" [ref=e418] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e419] [cursor=pointer]
+      - article [ref=e420]:
+        - generic [ref=e421]:
+          - generic "d2e94a63f173541dc21380f4dad6ff6c5783f9c79ccf87c7e74ae912fc520ed7" [ref=e422]: d2e94a63...
+          - generic [ref=e423]:
+            - generic [ref=e424]: K1
+            - generic [ref=e425]: 12:07:33 PM
+        - generic [ref=e426]: You are talking about soviet/commie notions, free men don't fight and die for gov employees who under threat of death/prison rob them of their private property. There's nothing noble about going to war or enlisting in your lord's army. It's the worst grift of all, in fact. Whitewashed killing of others, by decree. Talk about being a tool. The only thing a standing army is protecting is the monopolies of those who are not going to fight "for their countrymen." Real men band together based on mutual interests, not career paths paid for by the central bank with promises of killing others.
+        - generic [ref=e427]:
+          - button "⚡ ZAP 21" [ref=e428] [cursor=pointer]
+          - button "REPLY" [ref=e429] [cursor=pointer]
+          - button "VIEW_SRC" [ref=e430] [cursor=pointer]
+  - complementary [ref=e431]:
+    - generic [ref=e432]:
+      - generic [ref=e433]: SYSTEM_TELEMETRY
+      - generic [ref=e434]:
+        - generic [ref=e435]: "MONITORED RELAYS:"
+        - generic [ref=e436]: wss://relay.damus.io [OK]
+        - generic [ref=e437]: wss://relay.snort.social [OK]
+        - generic [ref=e438]: wss://nos.lol [OK]
+      - generic [ref=e441]:
+        - generic [ref=e442]: "[12:26:28 PM]"
+        - text: "error: Telemetry WS URL not resolved."
+```
