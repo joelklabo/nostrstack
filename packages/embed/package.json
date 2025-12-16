@@ -7,6 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --dts --format iife,esm --global-name NostrstackEmbed",
+    "prepare": "pnpm build",
+    "prepack": "pnpm build",
     "lint": "eslint . --ext .ts --max-warnings=0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
