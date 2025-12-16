@@ -1,7 +1,7 @@
 ls:
-  .js: kebab-case
-  .ts: kebab-case
-  .d.ts: kebab-case
+  .js: regex:^([a-z][a-z0-9]*)(-[a-z0-9]+)*$|^([a-z][a-z0-9]*)([A-Z][a-z0-9]*)*$
+  .ts: regex:^([a-z][a-z0-9]*)(-[a-z0-9]+)*$|^([a-z][a-z0-9]*)([A-Z][a-z0-9]*)*$
+  .d.ts: regex:^([a-z][a-z0-9]*)(-[a-z0-9]+)*$|^([a-z][a-z0-9]*)([A-Z][a-z0-9]*)*$
   .tsx: PascalCase | kebab-case
   .json: kebab-case
   .css: kebab-case

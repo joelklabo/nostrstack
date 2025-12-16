@@ -5,12 +5,3 @@ export const layout = {
   border: 'var(--nostrstack-color-border)'
 };
 
-export const colors = {
-  surface: 'var(--nostrstack-color-bg)',
-  text: 'var(--nostrstack-color-text)',
-  subtle: 'var(--nostrstack-color-text-muted)',
-  accent: 'var(--nostrstack-color-primary)',
-  ok: 'var(--nostrstack-color-success)',
-  warn: 'var(--nostrstack-color-warning)',
-  error: 'var(--nostrstack-color-danger)'
-};

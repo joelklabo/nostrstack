@@ -1,6 +1,6 @@
 {
   "statistics": {
-    "detectionDate": "2025-12-16T01:49:19.891Z",
+    "detectionDate": "2025-12-16T02:23:31.706Z",
     "formats": {
       "sql": {
         "sources": {
@@ -95,42 +95,6 @@
           "/Users/honk/code/nostrstack/apps/gallery/src/admin/actions.ts": {
             "lines": 25,
             "tokens": 236,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/tests/utils/wait-for-health.ts": {
-            "lines": 16,
-            "tokens": 192,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/tests/utils/pay-config.ts": {
-            "lines": 8,
-            "tokens": 63,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/tests/utils/pay-and-settle.ts": {
-            "lines": 108,
-            "tokens": 1425,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -249,8 +213,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/apps/api/src/services/log-hub.ts": {
-            "lines": 33,
-            "tokens": 328,
+            "lines": 31,
+            "tokens": 311,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -380,18 +344,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-provider.test.ts": {
-            "lines": 49,
-            "tokens": 514,
-            "sources": 1,
-            "clones": 5,
-            "duplicatedLines": 60,
-            "duplicatedTokens": 638,
-            "percentage": 122.45,
-            "percentageTokens": 124.12,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-callback.ts": {
             "lines": 281,
             "tokens": 3117,
@@ -401,18 +353,6 @@
             "duplicatedTokens": 201,
             "percentage": 8.19,
             "percentageTokens": 6.45,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-callback.test.ts": {
-            "lines": 63,
-            "tokens": 706,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 26,
-            "duplicatedTokens": 280,
-            "percentage": 41.27,
-            "percentageTokens": 39.66,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -437,18 +377,6 @@
             "duplicatedTokens": 0,
             "percentage": 0,
             "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/src/routes/embed-config.test.ts": {
-            "lines": 68,
-            "tokens": 782,
-            "sources": 1,
-            "clones": 1,
-            "duplicatedLines": 15,
-            "duplicatedTokens": 156,
-            "percentage": 22.06,
-            "percentageTokens": 19.95,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -560,30 +488,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/apps/api/src/nostr/relaylist.test.ts": {
-            "lines": 67,
-            "tokens": 691,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/src/nostr/nostr.test.ts": {
-            "lines": 92,
-            "tokens": 1121,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 19,
-            "duplicatedTokens": 202,
-            "percentage": 20.65,
-            "percentageTokens": 18.02,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/apps/api/src/nostr/nostr-client.ts": {
             "lines": 61,
             "tokens": 589,
@@ -620,30 +524,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/packages/sdk/src/index.test.ts": {
-            "lines": 32,
-            "tokens": 398,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/packages/sdk/scripts/generate.ts": {
-            "lines": 18,
-            "tokens": 223,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/packages/embed/src/themePresets.ts": {
             "lines": 60,
             "tokens": 864,
@@ -657,8 +537,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/packages/embed/src/relayBadge.ts": {
-            "lines": 30,
-            "tokens": 368,
+            "lines": 28,
+            "tokens": 348,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -704,18 +584,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts": {
-            "lines": 197,
-            "tokens": 2139,
-            "sources": 1,
-            "clones": 6,
-            "duplicatedLines": 66,
-            "duplicatedTokens": 834,
-            "percentage": 33.5,
-            "percentageTokens": 38.99,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/packages/embed/src/copyButton.ts": {
             "lines": 156,
             "tokens": 1475,
@@ -752,54 +620,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/apps/gallery/tests/helpers.ts": {
-            "lines": 43,
-            "tokens": 534,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/gallery/tests/demo-regtest.spec.ts": {
-            "lines": 65,
-            "tokens": 733,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/gallery/tests/demo-flows.spec.ts": {
-            "lines": 115,
-            "tokens": 1530,
-            "sources": 1,
-            "clones": 1,
-            "duplicatedLines": 10,
-            "duplicatedTokens": 217,
-            "percentage": 8.7,
-            "percentageTokens": 14.18,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/gallery/tests/comment-relay.spec.ts": {
-            "lines": 21,
-            "tokens": 237,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/apps/gallery/src/useNow.ts": {
             "lines": 44,
             "tokens": 359,
@@ -825,8 +645,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/apps/gallery/src/tokens.ts": {
-            "lines": 15,
-            "tokens": 100,
+            "lines": 5,
+            "tokens": 38,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -845,54 +665,6 @@
             "duplicatedTokens": 0,
             "percentage": 0,
             "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/gallery/scripts/qa-regtest-demo.ts": {
-            "lines": 397,
-            "tokens": 5813,
-            "sources": 1,
-            "clones": 5,
-            "duplicatedLines": 30,
-            "duplicatedTokens": 621,
-            "percentage": 7.56,
-            "percentageTokens": 10.68,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/tests/pay-to-act.spec.ts": {
-            "lines": 207,
-            "tokens": 2181,
-            "sources": 1,
-            "clones": 4,
-            "duplicatedLines": 61,
-            "duplicatedTokens": 819,
-            "percentage": 29.47,
-            "percentageTokens": 37.55,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/tests/nostr-auth.spec.ts": {
-            "lines": 60,
-            "tokens": 712,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 36,
-            "duplicatedTokens": 485,
-            "percentage": 60,
-            "percentageTokens": 68.12,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/tests/lnurlp.spec.ts": {
-            "lines": 67,
-            "tokens": 819,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 25,
-            "duplicatedTokens": 334,
-            "percentage": 37.31,
-            "percentageTokens": 40.78,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -932,93 +704,9 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/apps/api/src/server.test.ts": {
-            "lines": 44,
-            "tokens": 476,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/apps/api/src/env.ts": {
             "lines": 58,
             "tokens": 758,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/seed.ts": {
-            "lines": 36,
-            "tokens": 387,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/regtest-demo-smoke.ts": {
-            "lines": 132,
-            "tokens": 1463,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/openapi-schema.ts": {
-            "lines": 44,
-            "tokens": 453,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/mutinynet-smoke.ts": {
-            "lines": 45,
-            "tokens": 569,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/mutinynet-demo-smoke.ts": {
-            "lines": 44,
-            "tokens": 497,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/e2e-server.ts": {
-            "lines": 15,
-            "tokens": 174,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1126,14 +814,14 @@
           }
         },
         "total": {
-          "lines": 6001,
-          "tokens": 66836,
-          "sources": 90,
-          "clones": 21,
-          "duplicatedLines": 235,
-          "duplicatedTokens": 3009,
-          "percentage": 3.92,
-          "percentageTokens": 4.5,
+          "lines": 3934,
+          "tokens": 41905,
+          "sources": 64,
+          "clones": 6,
+          "duplicatedLines": 61,
+          "duplicatedTokens": 716,
+          "percentage": 1.55,
+          "percentageTokens": 1.71,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
@@ -1203,6 +891,18 @@
           "/Users/honk/code/nostrstack/apps/gallery/src/admin/DashboardForm.tsx": {
             "lines": 25,
             "tokens": 266,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/report/html/js/prism.js": {
+            "lines": 15,
+            "tokens": 4580,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -1548,18 +1248,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/apps/api/scripts/lnbits-prod-smoke.js": {
-            "lines": 35,
-            "tokens": 421,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/packages/embed/README.md": {
             "lines": 0,
             "tokens": 0,
@@ -1607,17 +1295,29 @@
             "percentageTokens": 0,
             "newDuplicatedLines": 0,
             "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/.dependency-cruiser.js": {
+            "lines": 405,
+            "tokens": 1397,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
           }
         },
         "total": {
-          "lines": 3049,
-          "tokens": 29773,
-          "sources": 39,
+          "lines": 3434,
+          "tokens": 35329,
+          "sources": 40,
           "clones": 6,
           "duplicatedLines": 152,
           "duplicatedTokens": 1530,
-          "percentage": 4.99,
-          "percentageTokens": 5.14,
+          "percentage": 4.43,
+          "percentageTokens": 4.33,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
@@ -2070,6 +1770,70 @@
           "newClones": 0
         }
       },
+      "css": {
+        "sources": {
+          "/Users/honk/code/nostrstack/report/html/styles/prism.css": {
+            "lines": 7,
+            "tokens": 232,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/apps/gallery/src/TelemetryCard.tsx": {
+            "lines": 2,
+            "tokens": 49,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/apps/gallery/src/LogViewer.tsx": {
+            "lines": 41,
+            "tokens": 1325,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/apps/gallery/src/InvoicePopover.tsx": {
+            "lines": 0,
+            "tokens": 2,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 50,
+          "tokens": 1608,
+          "sources": 4,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
       "markup": {
         "sources": {
           "/Users/honk/code/nostrstack/packages/embed/assets/nostr.svg": {
@@ -2136,18 +1900,6 @@
       },
       "json": {
         "sources": {
-          "/Users/honk/code/nostrstack/deploy/azure/observability/workbook-lnbits.json": {
-            "lines": 72,
-            "tokens": 403,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/packages/tsconfig/tsconfig.base.json": {
             "lines": 5,
             "tokens": 24,
@@ -2353,8 +2105,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/package.json": {
-            "lines": 55,
-            "tokens": 351,
+            "lines": 81,
+            "tokens": 533,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2377,8 +2129,56 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/knip.json": {
-            "lines": 39,
-            "tokens": 200,
+            "lines": 92,
+            "tokens": 539,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/cspell.json": {
+            "lines": 343,
+            "tokens": 1377,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/.stylelintrc.json": {
+            "lines": 13,
+            "tokens": 66,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/.secretlintrc.json": {
+            "lines": 6,
+            "tokens": 23,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "/Users/honk/code/nostrstack/.markdownlint.json": {
+            "lines": 5,
+            "tokens": 29,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2389,8 +2189,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/.jscpd.json": {
-            "lines": 14,
-            "tokens": 71,
+            "lines": 20,
+            "tokens": 95,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2402,355 +2202,23 @@
           }
         },
         "total": {
-          "lines": 733,
-          "tokens": 4179,
-          "sources": 22,
+          "lines": 1113,
+          "tokens": 5816,
+          "sources": 25,
           "clones": 1,
           "duplicatedLines": 32,
           "duplicatedTokens": 157,
-          "percentage": 4.37,
-          "percentageTokens": 3.76,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "bash": {
-        "sources": {
-          "/Users/honk/code/nostrstack/deploy/azure/observability/create-alerts.sh": {
-            "lines": 61,
-            "tokens": 319,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/prisma-generate.sh": {
-            "lines": 3,
-            "tokens": 18,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/prisma-generate-pg.sh": {
-            "lines": 4,
-            "tokens": 22,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/pg-migrate.sh": {
-            "lines": 5,
-            "tokens": 31,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/local-lnbits-start.sh": {
-            "lines": 10,
-            "tokens": 71,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/api/scripts/dev-seed.sh": {
-            "lines": 9,
-            "tokens": 69,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/entrypoint.sh": {
-            "lines": 60,
-            "tokens": 504,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/regtest-status.sh": {
-            "lines": 39,
-            "tokens": 279,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/regtest-lndbits.sh": {
-            "lines": 326,
-            "tokens": 2670,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/mcp-devtools-server.sh": {
-            "lines": 20,
-            "tokens": 133,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/mcp-chrome.sh": {
-            "lines": 12,
-            "tokens": 82,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/lnbits-status.sh": {
-            "lines": 19,
-            "tokens": 134,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/lnbits-smoke.sh": {
-            "lines": 40,
-            "tokens": 250,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/lnbits-cutover-mainnet.sh": {
-            "lines": 110,
-            "tokens": 800,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/entr-gallery.sh": {
-            "lines": 11,
-            "tokens": 47,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/entr-api.sh": {
-            "lines": 13,
-            "tokens": 51,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/dev-logs.sh": {
-            "lines": 97,
-            "tokens": 784,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/dev-demo.sh": {
-            "lines": 92,
-            "tokens": 272,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/demo-regtest.sh": {
-            "lines": 77,
-            "tokens": 305,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/demo-mutinynet.sh": {
-            "lines": 58,
-            "tokens": 198,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/scripts/demo-mainnet.sh": {
-            "lines": 52,
-            "tokens": 205,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 1118,
-          "tokens": 7244,
-          "sources": 21,
-          "clones": 0,
-          "duplicatedLines": 0,
-          "duplicatedTokens": 0,
-          "percentage": 0,
-          "percentageTokens": 0,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "css": {
-        "sources": {
-          "/Users/honk/code/nostrstack/apps/gallery/src/TelemetryCard.tsx": {
-            "lines": 2,
-            "tokens": 49,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/gallery/src/LogViewer.tsx": {
-            "lines": 41,
-            "tokens": 1325,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/apps/gallery/src/InvoicePopover.tsx": {
-            "lines": 0,
-            "tokens": 2,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 43,
-          "tokens": 1376,
-          "sources": 3,
-          "clones": 0,
-          "duplicatedLines": 0,
-          "duplicatedTokens": 0,
-          "percentage": 0,
-          "percentageTokens": 0,
+          "percentage": 2.88,
+          "percentageTokens": 2.7,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
       },
       "markdown": {
         "sources": {
-          "/Users/honk/code/nostrstack/apps/api/tests/lnbits.e2e.md": {
-            "lines": 13,
-            "tokens": 179,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/packages/sdk/README.md": {
-            "lines": 35,
-            "tokens": 219,
+            "lines": 38,
+            "tokens": 222,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2761,8 +2229,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/packages/embed/README.md": {
-            "lines": 99,
-            "tokens": 936,
+            "lines": 108,
+            "tokens": 945,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -2811,18 +2279,6 @@
           "/Users/honk/code/nostrstack/docs/mcp-scripts/comment-flow.md": {
             "lines": 18,
             "tokens": 213,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/azure/README.md": {
-            "lines": 43,
-            "tokens": 607,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3060,18 +2516,6 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
-          "/Users/honk/code/nostrstack/deploy/azure-app-service.md": {
-            "lines": 8,
-            "tokens": 154,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/.beads/README.md": {
             "lines": 78,
             "tokens": 543,
@@ -3085,8 +2529,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/verification-plan.md": {
-            "lines": 18,
-            "tokens": 255,
+            "lines": 22,
+            "tokens": 259,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3097,8 +2541,8 @@
             "newClones": 0
           },
           "/Users/honk/code/nostrstack/README.md": {
-            "lines": 46,
-            "tokens": 483,
+            "lines": 55,
+            "tokens": 492,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -3134,9 +2578,9 @@
           }
         },
         "total": {
-          "lines": 1276,
-          "tokens": 14745,
-          "sources": 33,
+          "lines": 1237,
+          "tokens": 13830,
+          "sources": 30,
           "clones": 0,
           "duplicatedLines": 0,
           "duplicatedTokens": 0,
@@ -3148,90 +2592,6 @@
       },
       "yaml": {
         "sources": {
-          "/Users/honk/code/nostrstack/deploy/regtest/docker-compose.yml": {
-            "lines": 121,
-            "tokens": 794,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 32,
-            "duplicatedTokens": 232,
-            "percentage": 26.45,
-            "percentageTokens": 29.22,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/docker-compose.yml": {
-            "lines": 15,
-            "tokens": 86,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/docker-compose.local.yml": {
-            "lines": 3,
-            "tokens": 14,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/.github/workflows/ci.yml": {
-            "lines": 119,
-            "tokens": 879,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 24,
-            "duplicatedTokens": 186,
-            "percentage": 20.17,
-            "percentageTokens": 21.16,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/.github/workflows/build-ghcr-amd64.yml": {
-            "lines": 30,
-            "tokens": 226,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/.github/workflows/azure-deploy.yml": {
-            "lines": 117,
-            "tokens": 764,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 59,
-            "duplicatedTokens": 402,
-            "percentage": 50.43,
-            "percentageTokens": 52.62,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/.github/workflows/azure-deploy-staging.yml": {
-            "lines": 121,
-            "tokens": 750,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 59,
-            "duplicatedTokens": 402,
-            "percentage": 48.76,
-            "percentageTokens": 53.6,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
           "/Users/honk/code/nostrstack/.beads/config.yaml": {
             "lines": 58,
             "tokens": 106,
@@ -3256,6 +2616,18 @@
             "newDuplicatedLines": 0,
             "newClones": 0
           },
+          "/Users/honk/code/nostrstack/.ls-lint.yml": {
+            "lines": 15,
+            "tokens": 111,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
           "/Users/honk/code/nostrstack/.beads.yaml": {
             "lines": 36,
             "tokens": 419,
@@ -3270,104 +2642,28 @@
           }
         },
         "total": {
-          "lines": 642,
-          "tokens": 4156,
-          "sources": 10,
-          "clones": 4,
-          "duplicatedLines": 87,
-          "duplicatedTokens": 611,
-          "percentage": 13.55,
-          "percentageTokens": 14.7,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "python": {
-        "sources": {
-          "/Users/honk/code/nostrstack/deploy/lnbits/status_public.py": {
-            "lines": 17,
-            "tokens": 136,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/sitecustomize.py": {
-            "lines": 96,
-            "tokens": 638,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/lndgrpc.py": {
-            "lines": 429,
-            "tokens": 3581,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/lnd_shim.py": {
-            "lines": 35,
-            "tokens": 235,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "/Users/honk/code/nostrstack/deploy/lnbits/db.py": {
-            "lines": 735,
-            "tokens": 6602,
-            "sources": 1,
-            "clones": 2,
-            "duplicatedLines": 22,
-            "duplicatedTokens": 238,
-            "percentage": 2.99,
-            "percentageTokens": 3.6,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 1312,
-          "tokens": 11192,
-          "sources": 5,
-          "clones": 1,
-          "duplicatedLines": 11,
-          "duplicatedTokens": 119,
-          "percentage": 0.84,
-          "percentageTokens": 1.06,
+          "lines": 131,
+          "tokens": 754,
+          "sources": 4,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
       }
     },
     "total": {
-      "lines": 21417,
-      "tokens": 214112,
-      "sources": 265,
-      "clones": 67,
-      "duplicatedLines": 1095,
-      "duplicatedTokens": 11307,
-      "percentage": 5.11,
-      "percentageTokens": 5.28,
+      "lines": 17142,
+      "tokens": 173853,
+      "sources": 209,
+      "clones": 47,
+      "duplicatedLines": 823,
+      "duplicatedTokens": 8284,
+      "percentage": 4.8,
+      "percentageTokens": 4.76,
       "newDuplicatedLines": 0,
       "newClones": 0
     }
@@ -3482,186 +2778,6 @@
       }
     },
     {
-      "format": "typescript",
-      "lines": 12,
-      "fragment": "import { execSync } from 'node:child_process';\nimport { resolve } from 'node:path';\n\nimport { afterAll,beforeAll, describe, expect, it } from 'vitest';\n\nimport type { buildServer as buildServerFn } from '../server.js';\n\nprocess.env.NODE_ENV = 'test';\nprocess.env.VITEST = 'true';\nprocess.env.LOG_LEVEL = 'error';\nprocess.env.OP_NODE_WEBHOOK_SECRET = '';\nprocess.env.DATABASE_URL = 'file:./tmp-lnurl.db'",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-callback.test.ts",
-        "start": 1,
-        "end": 12,
-        "startLoc": {
-          "line": 1,
-          "column": 1,
-          "position": 0
-        },
-        "endLoc": {
-          "line": 12,
-          "column": 22,
-          "position": 124
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-provider.test.ts",
-        "start": 1,
-        "end": 12,
-        "startLoc": {
-          "line": 1,
-          "column": 1,
-          "position": 0
-        },
-        "endLoc": {
-          "line": 12,
-          "column": 31,
-          "position": 125
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 16,
-      "fragment": ", () => {\n  beforeAll(async () => {\n    const schema = resolve(process.cwd(), 'prisma/schema.prisma');\n    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {\n      stdio: 'inherit',\n      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }\n    });\n    const { buildServer } = await import('../server.js');\n    server = await buildServer();\n  });\n\n  afterAll(async () => {\n    await server.close();\n  });\n\n  it('returns 202 for unknown payment (replay-safe)'",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-callback.test.ts",
-        "start": 16,
-        "end": 31,
-        "startLoc": {
-          "line": 16,
-          "column": 16,
-          "position": 147
-        },
-        "endLoc": {
-          "line": 31,
-          "column": 48,
-          "position": 303
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-provider.test.ts",
-        "start": 17,
-        "end": 32,
-        "startLoc": {
-          "line": 17,
-          "column": 31,
-          "position": 159
-        },
-        "endLoc": {
-          "line": 32,
-          "column": 58,
-          "position": 315
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 16,
-      "fragment": ", () => {\n  beforeAll(async () => {\n    const schema = resolve(process.cwd(), 'prisma/schema.prisma');\n    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {\n      stdio: 'inherit',\n      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }\n    });\n    const { buildServer } = await import('../server.js');\n    server = await buildServer();\n  });\n\n  afterAll(async () => {\n    await server.close();\n  });\n\n  it('requires tenant param'",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/embed-config.test.ts",
-        "start": 20,
-        "end": 35,
-        "startLoc": {
-          "line": 20,
-          "column": 16,
-          "position": 199
-        },
-        "endLoc": {
-          "line": 35,
-          "column": 24,
-          "position": 355
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-provider.test.ts",
-        "start": 17,
-        "end": 32,
-        "startLoc": {
-          "line": 17,
-          "column": 31,
-          "position": 159
-        },
-        "endLoc": {
-          "line": 32,
-          "column": 58,
-          "position": 315
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 9,
-      "fragment": "} from 'vitest';\n\nimport type { buildServer as buildServerFn } from '../server.js';\n\nprocess.env.NODE_ENV = 'test';\nprocess.env.VITEST = 'true';\nprocess.env.LOG_LEVEL = 'error';\nprocess.env.OP_NODE_WEBHOOK_SECRET = '';\nprocess.env.NOSTR_SECRET_KEY",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/nostr/nostr.test.ts",
-        "start": 4,
-        "end": 12,
-        "startLoc": {
-          "line": 4,
-          "column": 2,
-          "position": 51
-        },
-        "endLoc": {
-          "line": 12,
-          "column": 17,
-          "position": 127
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-provider.test.ts",
-        "start": 4,
-        "end": 12,
-        "startLoc": {
-          "line": 4,
-          "column": 2,
-          "position": 45
-        },
-        "endLoc": {
-          "line": 12,
-          "column": 13,
-          "position": 121
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 12,
-      "fragment": ", () => {\n  beforeAll(async () => {\n    const schema = resolve(process.cwd(), 'prisma/schema.prisma');\n    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {\n      stdio: 'inherit',\n      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }\n    });\n    const { buildServer } = await import('../server.js');\n    server = await buildServer();\n  });\n\n  beforeEach",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/nostr/nostr.test.ts",
-        "start": 17,
-        "end": 28,
-        "startLoc": {
-          "line": 17,
-          "column": 8,
-          "position": 170
-        },
-        "endLoc": {
-          "line": 28,
-          "column": 11,
-          "position": 296
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/src/routes/lnurlp-provider.test.ts",
-        "start": 17,
-        "end": 28,
-        "startLoc": {
-          "line": 17,
-          "column": 31,
-          "position": 159
-        },
-        "endLoc": {
-          "line": 28,
-          "column": 9,
-          "position": 285
-        }
-      }
-    },
-    {
       "format": "sql",
       "lines": 69,
       "fragment": "-- CreateTable\nCREATE TABLE \"Tenant\" (\n    \"id\" TEXT NOT NULL,\n    \"domain\" TEXT NOT NULL,\n    \"displayName\" TEXT NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"Tenant_pkey\" PRIMARY KEY (\"id\")\n);\n\n-- CreateTable\nCREATE TABLE \"User\" (\n    \"id\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"pubkey\" TEXT NOT NULL,\n    \"lightningAddress\" TEXT,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"User_pkey\" PRIMARY KEY (\"id\")\n);\n\n-- CreateTable\nCREATE TABLE \"Payment\" (\n    \"id\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"userId\" TEXT,\n    \"provider\" TEXT NOT NULL,\n    \"providerRef\" TEXT NOT NULL,\n    \"invoice\" TEXT NOT NULL,\n    \"amountSats\" INTEGER NOT NULL,\n    \"status\" TEXT NOT NULL DEFAULT 'PENDING',\n    \"metadata\" TEXT,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"Payment_pkey\" PRIMARY KEY (\"id\")\n);\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"Tenant_domain_key\" ON \"Tenant\"(\"domain\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"User_tenantId_pubkey_key\" ON \"User\"(\"tenantId\", \"pubkey\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"User_tenantId_lightningAddress_key\" ON \"User\"(\"tenantId\", \"lightningAddress\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"Payment_invoice_key\" ON \"Payment\"(\"invoice\");\n\n-- CreateIndex\nCREATE INDEX \"Payment_tenantId_idx\" ON \"Payment\"(\"tenantId\");\n\n-- CreateIndex\nCREATE INDEX \"Payment_tenantId_userId_idx\" ON \"Payment\"(\"tenantId\", \"userId\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"Payment_provider_providerRef_tenantId_key\" ON \"Payment\"(\"provider\", \"providerRef\", \"tenantId\");\n\n-- AddForeignKey\nALTER TABLE \"User\" ADD CONSTRAINT \"User_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"Tenant\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"Payment\" ADD CONSTRAINT \"Payment_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"Tenant\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"Payment\" ADD CONSTRAINT \"Payment_userId_fkey\" FOREIGN KEY (\"userId\") REFERENCES \"User\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
@@ -3730,114 +2846,6 @@
           "line": 177,
           "column": 5,
           "position": 1937
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 15,
-      "fragment": ";\n    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({\n      ok: true,\n      json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })\n    } as Response).mockResolvedValueOnce({\n      ok: true,\n      json: async () => ({ pr })\n    } as Response);\n\n    const write = vi.fn();\n    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {\n      writeText: write\n    };\n\n    const onUnlock",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts",
-        "start": 46,
-        "end": 60,
-        "startLoc": {
-          "line": 46,
-          "column": 18,
-          "position": 529
-        },
-        "endLoc": {
-          "line": 60,
-          "column": 9,
-          "position": 719
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts",
-        "start": 18,
-        "end": 31,
-        "startLoc": {
-          "line": 18,
-          "column": 19,
-          "position": 191
-        },
-        "endLoc": {
-          "line": 31,
-          "column": 7,
-          "position": 380
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 12,
-      "fragment": ");\n\n    const write = vi.fn();\n    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {\n      writeText: write\n    };\n\n    const onUnlock = vi.fn();\n    const button = mountPayToAction(host, {\n      username: 'alice',\n      amountSats: 10,\n      onUnlock",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts",
-        "start": 104,
-        "end": 115,
-        "startLoc": {
-          "line": 104,
-          "column": 2,
-          "position": 1182
-        },
-        "endLoc": {
-          "line": 115,
-          "column": 9,
-          "position": 1305
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts",
-        "start": 53,
-        "end": 64,
-        "startLoc": {
-          "line": 53,
-          "column": 9,
-          "position": 636
-        },
-        "endLoc": {
-          "line": 64,
-          "column": 14,
-          "position": 759
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 9,
-      "fragment": ", async () => {\n    const host = document.createElement('div');\n    const write = vi.fn();\n    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard =\n      {\n        writeText: write\n      };\n\n    const",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts",
-        "start": 157,
-        "end": 165,
-        "startLoc": {
-          "line": 157,
-          "column": 56,
-          "position": 1698
-        },
-        "endLoc": {
-          "line": 165,
-          "column": 6,
-          "position": 1802
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/packages/embed/src/index.test.ts",
-        "start": 131,
-        "end": 139,
-        "startLoc": {
-          "line": 131,
-          "column": 41,
-          "position": 1416
-        },
-        "endLoc": {
-          "line": 139,
-          "column": 15,
-          "position": 1520
         }
       }
     },
@@ -5318,330 +4326,6 @@
       }
     },
     {
-      "format": "typescript",
-      "lines": 11,
-      "fragment": "page.evaluate(() => {\n        const paywall = document.querySelector('.nostrstack-paywall') as HTMLElement | null;\n        const card = paywall?.closest('section') as HTMLElement | null;\n        if (!paywall || !card) return null;\n        const cardRect = card.getBoundingClientRect();\n        let maxDelta = 0;\n        let offender: { tag: string; cls: string; text: string; delta: number } | null = null;\n        for (const el of Array.from(card.querySelectorAll('*'))) {\n          const rect = (el as HTMLElement).getBoundingClientRect();\n          const delta = rect.right - cardRect.right;\n          if (delta > maxDelta + 0.5",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/gallery/scripts/qa-regtest-demo.ts",
-        "start": 269,
-        "end": 279,
-        "startLoc": {
-          "line": 269,
-          "column": 2,
-          "position": 3715
-        },
-        "endLoc": {
-          "line": 279,
-          "column": 4,
-          "position": 3932
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/gallery/tests/demo-flows.spec.ts",
-        "start": 6,
-        "end": 16,
-        "startLoc": {
-          "line": 6,
-          "column": 2,
-          "position": 56
-        },
-        "endLoc": {
-          "line": 16,
-          "column": 5,
-          "position": 273
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 6,
-      "fragment": ").toMatch(/^ln/i);\n    await page.evaluate(async (invoice) => {\n      await navigator.clipboard.writeText(invoice);\n      const paste = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Paste') as HTMLButtonElement | undefined;\n      paste?.click();\n    }, bolt11Unlock",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/gallery/scripts/qa-regtest-demo.ts",
-        "start": 302,
-        "end": 307,
-        "startLoc": {
-          "line": 302,
-          "column": 13,
-          "position": 4231
-        },
-        "endLoc": {
-          "line": 307,
-          "column": 13,
-          "position": 4332
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/gallery/scripts/qa-regtest-demo.ts",
-        "start": 254,
-        "end": 259,
-        "startLoc": {
-          "line": 254,
-          "column": 7,
-          "position": 3479
-        },
-        "endLoc": {
-          "line": 259,
-          "column": 7,
-          "position": 3580
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 6,
-      "fragment": ").toMatch(/^ln/i);\n    await page.evaluate(async (invoice) => {\n      await navigator.clipboard.writeText(invoice);\n      const paste = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Paste') as HTMLButtonElement | undefined;\n      paste?.click();\n    }, bolt11Real",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/gallery/scripts/qa-regtest-demo.ts",
-        "start": 329,
-        "end": 334,
-        "startLoc": {
-          "line": 329,
-          "column": 11,
-          "position": 4765
-        },
-        "endLoc": {
-          "line": 334,
-          "column": 11,
-          "position": 4866
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/gallery/scripts/qa-regtest-demo.ts",
-        "start": 254,
-        "end": 259,
-        "startLoc": {
-          "line": 254,
-          "column": 7,
-          "position": 3479
-        },
-        "endLoc": {
-          "line": 259,
-          "column": 7,
-          "position": 3580
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 10,
-      "fragment": ";\n\ntest.beforeAll(async ({ playwright }) => {\n  test.setTimeout(120_000);\n  process.env.NODE_ENV = 'test';\n  process.env.VITEST = 'true';\n  process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';\n  process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';\n  process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';\n  const",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/nostr-auth.spec.ts",
-        "start": 11,
-        "end": 20,
-        "startLoc": {
-          "line": 11,
-          "column": 22,
-          "position": 68
-        },
-        "endLoc": {
-          "line": 20,
-          "column": 6,
-          "position": 187
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/pay-to-act.spec.ts",
-        "start": 13,
-        "end": 22,
-        "startLoc": {
-          "line": 13,
-          "column": 2,
-          "position": 102
-        },
-        "endLoc": {
-          "line": 22,
-          "column": 8,
-          "position": 221
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 28,
-      "fragment": ";\n  const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';\n  process.env.DATABASE_URL = dbPath;\n  const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';\n  execSync(`pnpm exec prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {\n    stdio: 'inherit',\n    env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }\n  });\n\n  const { buildServer } = await import('../src/server.js');\n  const server = await buildServer();\n  await server.listen({ port: 0, host: '127.0.0.1' });\n  const port = server.server.address()?.port;\n  const baseUrl = `http://127.0.0.1:${port}`;\n  stopServer = async () => server.close();\n  await waitForHealth(`${baseUrl}/health`, 30000, true);\n\n  api = await playwright.request.newContext({\n    baseURL: baseUrl,\n    extraHTTPHeaders: { host: DOMAIN }\n  });\n\n  await api.post('/api/admin/tenants', {\n    data: { domain: DOMAIN, displayName: 'Demo Tenant' },\n    headers: { 'x-api-key': process.env.ADMIN_API_KEY ?? '' }\n  });\n  await api.post('/api/admin/users', {\n    data: { domain: DOMAIN, lightningAddress: 'demo@demo.nostrstack.lol', pubkey: 'f'",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/nostr-auth.spec.ts",
-        "start": 19,
-        "end": 46,
-        "startLoc": {
-          "line": 19,
-          "column": 13,
-          "position": 184
-        },
-        "endLoc": {
-          "line": 46,
-          "column": 4,
-          "position": 550
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/pay-to-act.spec.ts",
-        "start": 22,
-        "end": 49,
-        "startLoc": {
-          "line": 22,
-          "column": 7,
-          "position": 239
-        },
-        "endLoc": {
-          "line": 49,
-          "column": 12,
-          "position": 605
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 14,
-      "fragment": ";\n\ntest.beforeAll(async ({ playwright }) => {\n  test.setTimeout(120_000);\n  process.env.NODE_ENV = 'test';\n  process.env.VITEST = 'true';\n  process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';\n  process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';\n  process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';\n  const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';\n  process.env.DATABASE_URL = dbPath;\n  const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';\n\n  const",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/lnurlp.spec.ts",
-        "start": 10,
-        "end": 23,
-        "startLoc": {
-          "line": 10,
-          "column": 5,
-          "position": 84
-        },
-        "endLoc": {
-          "line": 23,
-          "column": 6,
-          "position": 258
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/pay-to-act.spec.ts",
-        "start": 13,
-        "end": 23,
-        "startLoc": {
-          "line": 13,
-          "column": 2,
-          "position": 102
-        },
-        "endLoc": {
-          "line": 23,
-          "column": 9,
-          "position": 241
-        }
-      }
-    },
-    {
-      "format": "typescript",
-      "lines": 13,
-      "fragment": ", {\n    stdio: 'inherit',\n    env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }\n  });\n\n  const { buildServer } = await import('../src/server.js');\n  const server = await buildServer();\n  await server.listen({ port: 0, host: '127.0.0.1' });\n  const port = server.server.address()?.port;\n  const baseUrl = `http://127.0.0.1:${port}`;\n  stopServer = async () => server.close();\n\n  await waitForHealth(`${baseUrl}/health`)",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/lnurlp.spec.ts",
-        "start": 24,
-        "end": 36,
-        "startLoc": {
-          "line": 24,
-          "column": 8,
-          "position": 275
-        },
-        "endLoc": {
-          "line": 36,
-          "column": 2,
-          "position": 435
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/apps/api/tests/pay-to-act.spec.ts",
-        "start": 26,
-        "end": 37,
-        "startLoc": {
-          "line": 26,
-          "column": 2,
-          "position": 303
-        },
-        "endLoc": {
-          "line": 37,
-          "column": 2,
-          "position": 462
-        }
-      }
-    },
-    {
-      "format": "yaml",
-      "lines": 17,
-      "fragment": ":\n    image: lightninglabs/lnd:v0.18.4-beta\n    restart: unless-stopped\n    depends_on:\n      bitcoind:\n        condition: service_healthy\n    command:\n      - --lnddir=/data\n      - --bitcoin.active\n      - --bitcoin.regtest\n      - --bitcoin.node=bitcoind\n      - --bitcoind.rpchost=bitcoind\n      - --bitcoind.rpcuser=bitcoin\n      - --bitcoind.rpcpass=bitcoin\n      - --bitcoind.zmqpubrawblock=tcp://bitcoind:28332\n      - --bitcoind.zmqpubrawtx=tcp://bitcoind:28333\n      - --rpclisten=0.0.0.0:10010",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/deploy/regtest/docker-compose.yml",
-        "start": 64,
-        "end": 80,
-        "startLoc": {
-          "line": 64,
-          "column": 10,
-          "position": 419
-        },
-        "endLoc": {
-          "line": 80,
-          "column": 6,
-          "position": 535
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/deploy/regtest/docker-compose.yml",
-        "start": 30,
-        "end": 46,
-        "startLoc": {
-          "line": 30,
-          "column": 13,
-          "position": 189
-        },
-        "endLoc": {
-          "line": 46,
-          "column": 6,
-          "position": 305
-        }
-      }
-    },
-    {
-      "format": "python",
-      "lines": 12,
-      "fragment": ")\n\n    async def fetch_page(\n        self,\n        query: str,\n        where: list[str] | None = None,\n        values: dict | None = None,\n        filters: Filters | None = None,\n        model: type[TModel] | None = None,\n        group_by: list[str] | None = None,\n    ) -> Page[TModel]:\n        async",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/deploy/lnbits/db.py",
-        "start": 420,
-        "end": 431,
-        "startLoc": {
-          "line": 420,
-          "column": 6,
-          "position": 3737
-        },
-        "endLoc": {
-          "line": 431,
-          "column": 6,
-          "position": 3856
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/deploy/lnbits/db.py",
-        "start": 227,
-        "end": 238,
-        "startLoc": {
-          "line": 227,
-          "column": 2,
-          "position": 1982
-        },
-        "endLoc": {
-          "line": 238,
-          "column": 3,
-          "position": 2101
-        }
-      }
-    },
-    {
       "format": "json",
       "lines": 33,
       "fragment": ": {\n      \"post\": {\n        \"requestBody\": {\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"domain\": {\n                    \"type\": \"string\"\n                  },\n                  \"displayName\": {\n                    \"type\": \"string\"\n                  }\n                },\n                \"required\": [\n                  \"domain\",\n                  \"displayName\"\n                ],\n                \"additionalProperties\": false\n              }\n            }\n          },\n          \"required\": true\n        },\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Default Response\"\n          }\n        }\n      }\n    },\n    \"/api/admin/users\"",
@@ -5674,114 +4358,6 @@
           "line": 177,
           "column": 21,
           "position": 881
-        }
-      }
-    },
-    {
-      "format": "yaml",
-      "lines": 13,
-      "fragment": "steps:\n      - uses: actions/checkout@v4\n      - uses: pnpm/action-setup@v4\n        with:\n          version: 9.11.0\n      - name: Setup Node\n        uses: actions/setup-node@v4\n        with:\n          node-version: 20\n          cache: 'pnpm'\n      - name: Install\n        run: pnpm install --frozen-lockfile\n      - name: Restore",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/.github/workflows/ci.yml",
-        "start": 93,
-        "end": 105,
-        "startLoc": {
-          "line": 93,
-          "column": 5,
-          "position": 662
-        },
-        "endLoc": {
-          "line": 105,
-          "column": 8,
-          "position": 755
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/.github/workflows/ci.yml",
-        "start": 22,
-        "end": 34,
-        "startLoc": {
-          "line": 22,
-          "column": 5,
-          "position": 139
-        },
-        "endLoc": {
-          "line": 34,
-          "column": 8,
-          "position": 232
-        }
-      }
-    },
-    {
-      "format": "yaml",
-      "lines": 35,
-      "fragment": "services:\n      postgres:\n        image: postgres:15\n        ports: [\"5432:5432\"]\n        env:\n          POSTGRES_USER: nostrstack\n          POSTGRES_PASSWORD: nostrstack\n          POSTGRES_DB: nostrstack\n        options: >-\n          --health-cmd \"pg_isready -U nostrstack\" --health-interval=10s --health-timeout=5s --health-retries=5\n    permissions:\n      contents: read\n      packages: write\n      id-token: write\n    steps:\n      - uses: actions/checkout@v4\n\n      - uses: pnpm/action-setup@v4\n        with:\n          version: 9.11.0\n\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n          cache: pnpm\n\n      - name: Install deps\n        run: pnpm install --frozen-lockfile\n\n      - name: Run tests\n        run: pnpm test\n        env:\n          DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack\n\n      -",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/.github/workflows/azure-deploy-staging.yml",
-        "start": 31,
-        "end": 65,
-        "startLoc": {
-          "line": 31,
-          "column": 5,
-          "position": 213
-        },
-        "endLoc": {
-          "line": 65,
-          "column": 2,
-          "position": 441
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/.github/workflows/azure-deploy.yml",
-        "start": 31,
-        "end": 64,
-        "startLoc": {
-          "line": 31,
-          "column": 5,
-          "position": 197
-        },
-        "endLoc": {
-          "line": 64,
-          "column": 13,
-          "position": 424
-        }
-      }
-    },
-    {
-      "format": "yaml",
-      "lines": 26,
-      "fragment": "- name: Set image tag\n        id: vars\n        run: |\n          tag=\"${{ github.event.inputs.image_tag }}\"\n          if [ -z \"$tag\" ]; then tag=\"${GITHUB_SHA}\"; fi\n          echo \"IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}\" >> $GITHUB_OUTPUT\n\n      - name: Login to GHCR\n        uses: docker/login-action@v3\n        with:\n          registry: ${{ env.REGISTRY }}\n          username: ${{ github.actor }}\n          password: ${{ secrets.GITHUB_TOKEN }}\n\n      - name: Build & push image\n        uses: docker/build-push-action@v6\n        with:\n          context: .\n          file: apps/api/Dockerfile\n\n      - name: Azure login\n        uses: azure/login@v2\n        with:\n          creds: ${{ secrets.AZURE_CREDENTIALS }}\n\n      - name: Deploy Bicep (staging)",
-      "tokens": 0,
-      "firstFile": {
-        "name": "/Users/honk/code/nostrstack/.github/workflows/azure-deploy-staging.yml",
-        "start": 65,
-        "end": 90,
-        "startLoc": {
-          "line": 65,
-          "column": 7,
-          "position": 441
-        },
-        "endLoc": {
-          "line": 90,
-          "column": 10,
-          "position": 615
-        }
-      },
-      "secondFile": {
-        "name": "/Users/honk/code/nostrstack/.github/workflows/azure-deploy.yml",
-        "start": 71,
-        "end": 96,
-        "startLoc": {
-          "line": 71,
-          "column": 7,
-          "position": 451
-        },
-        "endLoc": {
-          "line": 96,
-          "column": 11,
-          "position": 625
         }
       }
     }

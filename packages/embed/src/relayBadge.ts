@@ -1,5 +1,3 @@
-export type RelayBadgeState = 'connecting' | 'real' | 'offline';
-
 import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles } from './styles.js';
 
 export function renderRelayBadge(relays: string[], target?: HTMLElement) {
