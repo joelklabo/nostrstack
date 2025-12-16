@@ -1,5 +1,14 @@
 {
   "name": "nostrstack",
+  "description": "Nostr & Lightning Social Network Toolkit - Nerd Hacker Edition",
+  "keywords": [
+    "nostr",
+    "lightning",
+    "bitcoin",
+    "social-network",
+    "react",
+    "sdk"
+  ],
   "private": true,
   "type": "module",
   "version": "0.0.0",
