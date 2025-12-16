@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
+    "prepare": "pnpm build",
     "prepack": "pnpm build",
     "generate": "pnpm --filter api exec tsx scripts/openapi-schema.ts && tsx scripts/generate.ts",
     "lint": "eslint . --ext .ts --max-warnings=0",
