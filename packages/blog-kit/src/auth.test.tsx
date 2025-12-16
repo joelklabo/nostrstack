@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { finalizeEvent, getPublicKey, nip19 } from 'nostr-tools';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider, useAuth } from './auth';
 
@@ -44,8 +44,8 @@ describe('AuthProvider and useAuth', () => {
       value: mockWindowNostr,
     });
     // Mock nostr-tools functions
-    (getPublicKey as vi.Mock).mockReturnValue(mockPubkey);
-    (finalizeEvent as vi.Mock).mockImplementation((template) => ({ ...template, id: 'mockedId', sig: 'mockedSig' }));
+    (getPublicKey as Mock).mockReturnValue(mockPubkey);
+    (finalizeEvent as Mock).mockImplementation((template: any) => ({ ...template, id: 'mockedId', sig: 'mockedSig' }));
   });
 
   afterEach(() => {
@@ -105,7 +105,7 @@ describe('AuthProvider and useAuth', () => {
   });
 
   it('NIP-07 login fails gracefully if getPublicKey throws', async () => {
-    (window.nostr!.getPublicKey as vi.Mock).mockRejectedValueOnce(new Error('User denied'));
+    (window.nostr!.getPublicKey as Mock).mockRejectedValueOnce(new Error('User denied'));
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await act(async () => { vi.advanceTimersByTime(0); });
 
@@ -202,7 +202,7 @@ describe('AuthProvider and useAuth', () => {
     });
 
     const mockEventTemplate = { kind: 1, content: 'test', tags: [], created_at: 123 };
-    let signedEvent;
+    let signedEvent: any;
     await act(async () => {
       if (result.current) {
         signedEvent = await result.current.signEvent(mockEventTemplate);
@@ -224,7 +224,7 @@ describe('AuthProvider and useAuth', () => {
       }
     });
     const mockEventTemplate = { kind: 1, content: 'test', tags: [], created_at: 123 };
-    let signedEvent;
+    let signedEvent: any;
     await act(async () => {
       if (result.current) {
         signedEvent = await result.current.signEvent(mockEventTemplate);

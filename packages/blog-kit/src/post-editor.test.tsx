@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { finalizeEvent } from 'nostr-tools';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { PostEditor } from './post-editor';
 
@@ -30,7 +30,7 @@ describe('PostEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers(); // Enable fake timers
-    (finalizeEvent as vi.Mock).mockImplementation((template) => ({
+    (finalizeEvent as Mock).mockImplementation((template: any) => ({
       ...template,
       id: 'mockedEventId',
       sig: 'mockedSig',
