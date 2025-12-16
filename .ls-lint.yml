@@ -1,0 +1,16 @@
+ls:
+  .js: kebab-case
+  .ts: kebab-case
+  .d.ts: kebab-case
+  .tsx: PascalCase | kebab-case
+  .json: kebab-case
+  .css: kebab-case
+  .md: kebab-case | regex:^[A-Z_]+$
+ignore:
+  - '**/node_modules'
+  - '**/dist'
+  - '**/coverage'
+  - '.git'
+  - '.github'
+  - '.vscode'
+  - '.pnpm-store'

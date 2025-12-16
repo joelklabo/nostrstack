@@ -31,6 +31,43 @@ jobs:
           cache: 'pnpm'
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      - name: Lint (Knip)
+        run: pnpm lint:knip
+
+      - name: Lint (Copy/Paste)
+        run: pnpm lint:cpd
+
+      - name: Lint (File Naming)
+        run: pnpm lint:ls
+
+      - name: Lint (Spell Check)
+        run: pnpm lint:spell
+
+      - name: Lint (CSS)
+        run: pnpm lint:css
+
+      - name: Lint (Markdown)
+        run: pnpm lint:md
+
+      - name: Lint (Publishing)
+        run: pnpm lint:pub
+
+      - name: Lint (Types)
+        run: pnpm lint:attw
+
+      - name: Lint (Shell Scripts)
+        run: pnpm lint:sh
+
+      - name: Lint (Secrets)
+        run: pnpm lint:secrets
+
+      - name: Lint (Audit)
+        run: pnpm lint:audit
+
+      - name: Lint (Dependencies)
+        run: pnpm lint:deps
+
       - name: Prepare DB (Postgres)
         working-directory: apps/api
         env:
@@ -48,7 +85,6 @@ jobs:
           OP_NODE_WEBHOOK_SECRET: whsec_test
         run: |
           pnpm --filter api prisma:generate
-          pnpm --filter api lint
           pnpm --filter api test
       - name: E2E (Playwright LNURL)
         env:

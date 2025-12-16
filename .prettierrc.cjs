@@ -1,1 +1,1 @@
-module.exports = require('@satoshis/config/prettier');
+module.exports = require('@nostrstack/config/prettier');

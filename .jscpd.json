@@ -1,0 +1,15 @@
+{
+  "threshold": 0,
+  "reporters": ["console", "html"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/*.d.ts",
+    "**/pnpm-lock.yaml",
+    "**/package-lock.json",
+    "**/yarn.lock"
+  ],
+  "absolute": true,
+  "gitignore": true
+}
