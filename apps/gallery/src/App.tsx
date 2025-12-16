@@ -6,11 +6,12 @@ import {
 } from '@nostrstack/embed';
 import { useEffect, useState } from 'react';
 
-import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
+import { FeedView } from './FeedView';
 import { ProfileView } from './ProfileView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
+import { ErrorBoundary } from './ErrorBoundary';
 
 type View = 'feed' | 'profile';
 
@@ -40,7 +41,9 @@ function AppShell() {
         {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
       </main>
       <aside className="telemetry-sidebar">
-        {/* <TelemetryBar /> */}
+        <ErrorBoundary fallback={<div style={{ padding: '1rem', color: '#666' }}>Telemetry Unavailable</div>}>
+          <TelemetryBar />
+        </ErrorBoundary>
       </aside>
     </div>
   );

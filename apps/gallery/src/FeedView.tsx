@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { PostEditor, ZapButton, PaywalledContent } from '@nostrstack/blog-kit';
 import { Relay } from 'nostr-tools';
 import type { Event } from 'nostr-tools';
+import { JsonView } from './ui/JsonView';
 
 const RELAYS = [
   'wss://relay.damus.io',
@@ -56,15 +57,11 @@ export function PostItem({ post }: { post: Post }) {
         </button>
       </div>
       {showJson && (
-        <pre style={{ 
-          fontSize: '0.7rem', 
-          color: 'var(--terminal-dim)', 
-          overflow: 'auto',
-          marginTop: '1rem',
-          borderTop: '1px dashed var(--terminal-border)'
-        }}>
-          {JSON.stringify(post, null, 2)}
-        </pre>
+        <JsonView 
+          value={post} 
+          title={`EVENT_ID: ${post.id.slice(0, 8)}...`}
+          style={{ marginTop: '1rem', borderTop: '1px dashed var(--terminal-border)' }} 
+        />
       )}
     </article>
   );

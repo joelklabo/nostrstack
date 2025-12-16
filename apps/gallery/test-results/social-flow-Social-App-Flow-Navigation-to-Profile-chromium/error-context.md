@@ -23,5 +23,10 @@
               - /url: https://web.archive.org/web/20050110015510/http://www.lemonparty.org/
       - heading "USER_ACTIVITY" [level=3] [ref=e22]
       - paragraph [ref=e24]: NO EVENTS FOUND.
-  - complementary [ref=e25]
+  - complementary [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]: SYSTEM_TELEMETRY
+      - generic [ref=e30]:
+        - generic [ref=e31]: "[11:48:50 AM]"
+        - text: "error: Telemetry WS URL not resolved."
 ```

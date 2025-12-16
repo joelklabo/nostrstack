@@ -156,6 +156,7 @@ export function resolvePayWsUrl(baseURL?: string): string | null {
 }
 
 export function resolveTelemetryWs(baseURL?: string): string | null {
+  if (isMockBase(baseURL)) return null;
   if (typeof window === 'undefined') return null;
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
   const base = raw.replace(/\/$/, '');
