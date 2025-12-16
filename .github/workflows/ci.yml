@@ -142,9 +142,9 @@ jobs:
         run: |
           if [ "$HAVE_RELAY" != "true" ] || [ "$HAVE_PROFILE" != "true" ]; then
             echo "Skipping: Missing required secrets (REAL_RELAY or NIP07_PROFILE_B64)"
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/checkout@v4

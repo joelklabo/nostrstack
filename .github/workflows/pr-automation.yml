@@ -77,16 +77,15 @@ jobs:
 
             // Comment if PR is too large
             if (changes > 500) {
-              const comment = `## ${emoji} Large PR Warning
-
-This PR has **${changes.toLocaleString()} lines changed** (+${additions.toLocaleString()}, -${deletions.toLocaleString()}).
-
-Large PRs are harder to review and more likely to introduce bugs. Consider:
-- Breaking this into smaller, focused PRs
-- Separating refactoring from feature changes
-- Moving generated files or large data to a separate PR
-
-**Size label:** \`size/${size}\``;
+              const sizeLabelText = 'size/' + size;
+              const comment = '## ' + emoji + ' Large PR Warning\n\n' +
+                'This PR has **' + changes.toLocaleString() + ' lines changed** (+' +
+                additions.toLocaleString() + ', -' + deletions.toLocaleString() + ').\n\n' +
+                'Large PRs are harder to review and more likely to introduce bugs. Consider:\n' +
+                '- Breaking this into smaller, focused PRs\n' +
+                '- Separating refactoring from feature changes\n' +
+                '- Moving generated files or large data to a separate PR\n\n' +
+                '**Size label:** `' + sizeLabelText + '`';
 
               // Check if we already commented
               const { data: comments } = await github.rest.issues.listComments({
@@ -122,13 +121,11 @@ Large PRs are harder to review and more likely to introduce bugs. Consider:
             const hasIssueRef = issueRefs && issueRefs.length > 0;
 
             if (!hasIssueRef && !body.includes('no-issue-needed')) {
-              const comment = `## ⚠️ Missing Issue Reference
-
-This PR doesn't appear to reference any issues. Please:
-- Link to the issue this PR addresses using keywords like \`Fixes #123\` or \`Closes #456\`
-- Or add \`no-issue-needed\` to the PR description if no issue is required
-
-This helps track changes and provides context for reviewers.`;
+              const comment = '## ⚠️ Missing Issue Reference\n\n' +
+                'This PR doesn\'t appear to reference any issues. Please:\n' +
+                '- Link to the issue this PR addresses using keywords like `Fixes #123` or `Closes #456`\n' +
+                '- Or add `no-issue-needed` to the PR description if no issue is required\n\n' +
+                'This helps track changes and provides context for reviewers.';
 
               // Check if we already commented
               const { data: comments } = await github.rest.issues.listComments({
