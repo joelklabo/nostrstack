@@ -1,0 +1,176 @@
+name: 🔄 PR Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  pr-metadata:
+    name: PR Metadata & Labels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auto-label by file paths
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const changes = additions + deletions;
+
+            let size = 'xs';
+            let color = '0e8a16'; // green
+            let emoji = '🟢';
+
+            if (changes > 1000) {
+              size = 'xl';
+              color = 'd93f0b'; // red
+              emoji = '🔴';
+            } else if (changes > 500) {
+              size = 'l';
+              color = 'fbca04'; // yellow
+              emoji = '🟡';
+            } else if (changes > 100) {
+              size = 'm';
+              color = '0366d6'; // blue
+              emoji = '🔵';
+            } else if (changes > 30) {
+              size = 's';
+              color = '0e8a16'; // green
+              emoji = '🟢';
+            }
+
+            // Remove old size labels
+            const oldSizeLabels = ['size/xs', 'size/s', 'size/m', 'size/l', 'size/xl'];
+            for (const label of oldSizeLabels) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  name: label
+                });
+              } catch (e) {
+                // Label might not exist, that's ok
+              }
+            }
+
+            // Add new size label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: [`size/${size}`]
+            });
+
+            // Comment if PR is too large
+            if (changes > 500) {
+              const comment = `## ${emoji} Large PR Warning
+
+This PR has **${changes.toLocaleString()} lines changed** (+${additions.toLocaleString()}, -${deletions.toLocaleString()}).
+
+Large PRs are harder to review and more likely to introduce bugs. Consider:
+- Breaking this into smaller, focused PRs
+- Separating refactoring from feature changes
+- Moving generated files or large data to a separate PR
+
+**Size label:** \`size/${size}\``;
+
+              // Check if we already commented
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number
+              });
+
+              const botComment = comments.find(c =>
+                c.user.type === 'Bot' &&
+                c.body.includes('Large PR Warning')
+              );
+
+              if (!botComment) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: comment
+                });
+              }
+            }
+
+      - name: Check for linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+
+            // Check for issue references
+            const issueRefs = body.match(/(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#\d+/gi);
+            const hasIssueRef = issueRefs && issueRefs.length > 0;
+
+            if (!hasIssueRef && !body.includes('no-issue-needed')) {
+              const comment = `## ⚠️ Missing Issue Reference
+
+This PR doesn't appear to reference any issues. Please:
+- Link to the issue this PR addresses using keywords like \`Fixes #123\` or \`Closes #456\`
+- Or add \`no-issue-needed\` to the PR description if no issue is required
+
+This helps track changes and provides context for reviewers.`;
+
+              // Check if we already commented
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number
+              });
+
+              const botComment = comments.find(c =>
+                c.user.type === 'Bot' &&
+                c.body.includes('Missing Issue Reference')
+              );
+
+              if (!botComment) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: comment
+                });
+              }
+            }
+
+      - name: Check for breaking changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const title = pr.title.toLowerCase();
+            const body = (pr.body || '').toLowerCase();
+
+            const hasBreakingIndicator =
+              title.includes('breaking') ||
+              title.includes('!:') ||
+              body.includes('breaking change') ||
+              body.includes('breaking-change');
+
+            if (hasBreakingIndicator) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: ['breaking-change']
+              });
+            }

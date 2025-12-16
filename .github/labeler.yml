@@ -1,0 +1,67 @@
+# Auto-labeling configuration for PRs based on file paths
+
+'area: api':
+  - changed-files:
+    - any-glob-to-any-file: 'apps/api/**/*'
+
+'area: gallery':
+  - changed-files:
+    - any-glob-to-any-file: 'apps/gallery/**/*'
+
+'area: packages':
+  - changed-files:
+    - any-glob-to-any-file: 'packages/**/*'
+
+'area: docs':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**/*'
+      - '*.md'
+      - 'README.md'
+
+'area: ci/cd':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**/*'
+      - 'scripts/**/*'
+
+'area: infrastructure':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'deploy/**/*'
+      - 'docker-compose*.yml'
+      - 'Dockerfile*'
+
+'area: config':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.json'
+      - '*.yml'
+      - '*.yaml'
+      - '*.toml'
+      - '.*.json'
+      - '.*.yml'
+
+'type: dependencies':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '**/package.json'
+
+'type: tests':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.test.ts'
+      - '**/*.test.tsx'
+      - '**/*.spec.ts'
+      - '**/*.spec.tsx'
+      - '**/tests/**/*'
+
+'type: linting':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'cspell.json'
+      - '.eslintrc*'
+      - '.prettierrc*'
+      - 'stylelint*'
