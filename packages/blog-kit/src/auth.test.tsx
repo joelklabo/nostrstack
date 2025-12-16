@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { finalizeEvent, getPublicKey, nip19 } from 'nostr-tools';
+import { type Event, type EventTemplate, finalizeEvent, getPublicKey, nip19 } from 'nostr-tools';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 import { AuthProvider, useAuth } from './auth';
 
@@ -45,7 +45,7 @@ describe('AuthProvider and useAuth', () => {
     });
     // Mock nostr-tools functions
     (getPublicKey as Mock).mockReturnValue(mockPubkey);
-    (finalizeEvent as Mock).mockImplementation((template: any) => ({ ...template, id: 'mockedId', sig: 'mockedSig' }));
+    (finalizeEvent as Mock).mockImplementation((template: EventTemplate) => ({ ...template, id: 'mockedId', sig: 'mockedSig' }));
   });
 
   afterEach(() => {
@@ -202,7 +202,7 @@ describe('AuthProvider and useAuth', () => {
     });
 
     const mockEventTemplate = { kind: 1, content: 'test', tags: [], created_at: 123 };
-    let signedEvent: any;
+    let signedEvent: Event | undefined;
     await act(async () => {
       if (result.current) {
         signedEvent = await result.current.signEvent(mockEventTemplate);
@@ -224,7 +224,7 @@ describe('AuthProvider and useAuth', () => {
       }
     });
     const mockEventTemplate = { kind: 1, content: 'test', tags: [], created_at: 123 };
-    let signedEvent: any;
+    let signedEvent: Event | undefined;
     await act(async () => {
       if (result.current) {
         signedEvent = await result.current.signEvent(mockEventTemplate);

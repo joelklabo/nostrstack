@@ -1,4 +1,4 @@
-import { AuthProvider, useAuth, StatsProvider } from '@nostrstack/blog-kit';
+import { AuthProvider, StatsProvider,useAuth } from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
@@ -6,12 +6,12 @@ import {
 } from '@nostrstack/embed';
 import { useEffect, useState } from 'react';
 
-import { LoginView } from './LoginView';
+import { ErrorBoundary } from './ErrorBoundary';
 import { FeedView } from './FeedView';
+import { LoginView } from './LoginView';
 import { ProfileView } from './ProfileView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
-import { ErrorBoundary } from './ErrorBoundary';
 
 type View = 'feed' | 'profile';
 

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type Event, nip19, Relay } from 'nostr-tools';
+import { useCallback, useEffect, useMemo,useState } from 'react';
+
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
 
 const DEFAULT_RELAYS = [
@@ -41,14 +42,14 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
           }
         },
         oneose: () => {
-          try { relay.close(); } catch {}
+          try { relay.close(); } catch { /* ignore */ }
           setProfileLoading(false);
         }
       });
       // Cleanup subscription on unmount
       return () => {
-        try { sub.close(); } catch {}
-        try { relay.close(); } catch {}
+        try { sub.close(); } catch { /* ignore */ }
+        try { relay.close(); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch profile', e);
@@ -66,13 +67,13 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
           setEvents(prev => [...prev, event].sort((a, b) => b.created_at - a.created_at));
         },
         oneose: () => {
-          try { relay.close(); } catch {}
+          try { relay.close(); } catch { /* ignore */ }
           setEventsLoading(false);
         }
       });
       return () => {
-        try { sub.close(); } catch {}
-        try { relay.close(); } catch {}
+        try { sub.close(); } catch { /* ignore */ }
+        try { relay.close(); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch events', e);

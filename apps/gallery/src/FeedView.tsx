@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { PostEditor, ZapButton, PaywalledContent, useStats } from '@nostrstack/blog-kit';
-import { SimplePool } from 'nostr-tools';
+import { PaywalledContent, PostEditor, useStats,ZapButton } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
+import { SimplePool } from 'nostr-tools';
+import { useEffect, useRef,useState } from 'react';
+
 import { JsonView } from './ui/JsonView';
 
 const RELAYS = [

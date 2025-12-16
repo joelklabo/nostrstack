@@ -1,5 +1,5 @@
+import { useAuth,useStats } from '@nostrstack/blog-kit';
 import { useEffect, useState } from 'react';
-import { useStats, useAuth } from '@nostrstack/blog-kit';
 
 interface SidebarProps {
   currentView: 'feed' | 'profile';
