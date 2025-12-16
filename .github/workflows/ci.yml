@@ -1,10 +1,10 @@
-name: CI
+name: ✅ CI (Lint, Test & Build)
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -30,6 +30,12 @@ jobs:
           cache: 'pnpm'
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      - name: Lint (GitHub Actions Workflows)
+        uses: reviewdog/action-actionlint@v1
+        with:
+          fail_on_error: true
+          filter_mode: nofilter
 
       - name: Lint (Knip)
         run: pnpm lint:knip

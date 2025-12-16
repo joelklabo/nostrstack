@@ -1,10 +1,10 @@
-name: Build API GHCR amd64
+name: 🐳 Build & Push Docker Image (AMD64)
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag (default stg-amd64)"
+        description: "Image tag (default: stg-amd64)"
         required: false
         default: "stg-amd64"
 

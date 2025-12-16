@@ -1,10 +1,10 @@
-name: Azure Deploy Staging
+name: 🧪 Deploy to Azure (Staging)
 
 on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Image tag (default: commit SHA)"
+        description: "Docker image tag (default: commit SHA)"
         required: false
   push:
     paths:
