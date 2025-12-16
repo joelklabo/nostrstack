@@ -73,6 +73,12 @@ export function TelemetryBar() {
       <div style={{ padding: '0.5rem', background: 'var(--terminal-dim)', color: '#000', fontWeight: 'bold' }}>
         SYSTEM_TELEMETRY
       </div>
+      <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--terminal-border)', marginBottom: '0.5rem', fontSize: '0.7rem' }}>
+        <div>MONITORED RELAYS:</div>
+        <div style={{ color: '#0ff' }}>wss://relay.damus.io [OK]</div>
+        <div style={{ color: '#0ff' }}>wss://relay.snort.social [OK]</div>
+        <div style={{ color: '#0ff' }}>wss://nos.lol [OK]</div>
+      </div>
       <div style={{ padding: '0.5rem' }}>
         {logs.map((log, i) => {
           try {

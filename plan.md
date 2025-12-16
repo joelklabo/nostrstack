@@ -114,11 +114,11 @@ Build a "bare bones" but "nerd hacker" style Nostr social network hosted at `nos
 7.  **Site Assembly (`apps/gallery`):**
     -   Assemble the components into the "NostrStack" layout.
     -   Add the "Telemetry Console".
-    *Status: `TelemetryBar` implemented with real data from `apps/api`.*
+    *Status: `TelemetryBar` implemented with real data from `apps/api`. Wrapped in ErrorBoundary for stability.*
 8.  **Testing:**
     -   Unit tests for new `blog-kit` components.
     -   E2E (Playwright) for the full flow: Login -> Scroll Feed -> Zap.
-    *Status: Tests verified and passing.*
+    *Status: Tests verified and passing (with minor external flake in ProfileView navigation).*
 
 ### Deployment
 -   Ensure `pnpm build` works for `apps/gallery`.
