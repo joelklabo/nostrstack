@@ -1,7 +1,7 @@
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 
-import { CopyButton } from '../CopyButton';
+import { CopyButton } from './CopyButton';
 
 export type JsonViewProps = Omit<HTMLAttributes<HTMLDivElement>, 'title'> & {
   title?: ReactNode;

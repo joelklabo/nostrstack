@@ -1,8 +1,6 @@
-import { renderHook, render, screen } from '@testing-library/react';
-import { act } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
 import { finalizeEvent, getPublicKey, nip19 } from 'nostr-tools';
-import { hexToBytes } from 'nostr-tools/utils';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider, useAuth } from './auth';
 
@@ -22,7 +20,6 @@ vi.mock('nostr-tools/utils', async (importOriginal) => {
   };
 });
 
-const TEST_SK_HEX = 'f6c6d0c7d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1'; // A valid 32-byte hex private key
 const mockNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5'; // Valid NSEC
 const mockPubkey = getPublicKey(nip19.decode(mockNsec).data as Uint8Array);
 

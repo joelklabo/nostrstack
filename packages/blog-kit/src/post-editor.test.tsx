@@ -1,6 +1,6 @@
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { finalizeEvent } from 'nostr-tools';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PostEditor } from './post-editor';
 

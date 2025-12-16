@@ -5,7 +5,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import App from './App';
-import { ToastProvider } from './toast';
+import { ToastProvider } from './ui/toast';
 
 ensureNostrstackEmbedStyles();
 
