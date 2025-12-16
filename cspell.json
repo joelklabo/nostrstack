@@ -359,7 +359,16 @@
     "evts",
     "qrnotice",
     "mockpp",
-    "payreq"
+    "payreq",
+    "qrimg",
+    "qrskeleton",
+    "logviewer",
+    "logv",
+    "demoqqpp",
+    "sdpq",
+    "jhxapqd",
+    "vmmfvdjjqen",
+    "wgsx"
   ],
   "ignorePaths": [
     "node_modules",
