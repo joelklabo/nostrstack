@@ -2,8 +2,10 @@
   "name": "@nostrstack/config",
   "version": "0.0.0",
   "private": true,
+  "type": "commonjs",
   "main": "eslint.cjs",
   "exports": {
+    ".": "./eslint.cjs",
     "./eslint": "./eslint.cjs",
     "./prettier": "./prettier.cjs"
   },

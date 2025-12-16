@@ -3,10 +3,21 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
+    "prepack": "pnpm build",
     "generate": "pnpm --filter api exec tsx scripts/openapi-schema.ts && tsx scripts/generate.ts",
     "lint": "eslint . --ext .ts --max-warnings=0",
     "test": "vitest run",
