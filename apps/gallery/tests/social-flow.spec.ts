@@ -55,8 +55,8 @@ test.describe('Social App Flow', () => {
       await zapBtn.click();
       await expect(page.getByText('ZAP_INITIATE')).toBeVisible();
       await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
-      // Close modal
-      await page.getByText('CANCEL').click();
+      // Close modal (might be CANCEL or CLOSE if error)
+      await page.getByText(/CANCEL|CLOSE/).click();
     } catch {
       console.log('No posts found to zap, skipping zap test step.');
     }
