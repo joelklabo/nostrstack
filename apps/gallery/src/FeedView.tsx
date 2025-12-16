@@ -80,7 +80,7 @@ export function FeedView() {
 
     const sub = pool.subscribeMany(
       RELAYS,
-      [{ kinds: [1], limit: 20 }],
+      { kinds: [1], limit: 20 },
       {
         onevent(event) {
           incrementEvents();
