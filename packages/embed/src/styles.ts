@@ -1154,7 +1154,7 @@ export const nostrstackComponentsCss = `
 /* QR code */
 .nostrstack-tip__qr {
   grid-area: qr;
-  padding: 0.5rem;
+  padding: 0.25rem;
   background: white;
   border-radius: var(--nostrstack-radius-lg);
   border: 1px solid var(--nostrstack-color-border);

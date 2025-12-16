@@ -826,6 +826,10 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       ringLabel.textContent = remainingSecs > 0 ? 'left' : 'expired';
       ringIcon.style.display = 'none';
       panel.dataset.state = 'waiting';
+      
+      if (remainingSecs <= 0) {
+        refreshBtn.style.display = 'inline-flex';
+      }
     }
   };
 
@@ -1085,7 +1089,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       openWallet.href = `lightning:${pr}`;
       openWallet.style.display = '';
       // paidBtn.disabled = false; // Removed
-      refreshBtn.style.display = 'inline-flex';
+      // refreshBtn.style.display = 'inline-flex'; // Only show on expiry
       status.textContent = 'Waiting for payment…';
       invoiceStartedAt = Date.now();
       startInvoiceTicker();
