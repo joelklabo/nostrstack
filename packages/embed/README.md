@@ -66,6 +66,7 @@ All of these are exported from `@nostrstack/embed` for reuse in other apps:
 - `designTokens` – shared spacing, color, radius, and typography tokens.
 
 Example:
+
 ```ts
 import { renderRelayBadge, designTokens } from '@nostrstack/embed';
 
@@ -94,6 +95,7 @@ const vars = themeToCssVars(theme); // { "--nostrstack-color-primary": "...", ..
 ```
 
 Copy/paste example:
+
 ```css
 .nostrstack-theme[data-nostrstack-theme="dark"] {
   --nostrstack-color-accent: hsl(210 85% 72%);
