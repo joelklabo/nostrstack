@@ -64,6 +64,9 @@ importers:
       markdownlint-cli:
         specifier: ^0.47.0
         version: 0.47.0
+      nostr-tools:
+        specifier: ^2.18.2
+        version: 2.18.2(typescript@5.6.2)
       prettier:
         specifier: 3.2.5
         version: 3.2.5
@@ -276,6 +279,9 @@ importers:
       '@nostrstack/embed':
         specifier: workspace:*
         version: link:../embed
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       nostr-tools:
         specifier: ^2.18.2
         version: 2.18.2(typescript@5.6.2)
@@ -283,10 +289,10 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1(react@19.0.0-rc.1)
       react:
-        specifier: 19.0.0-rc.1
+        specifier: ^19.0.0-rc.1
         version: 19.0.0-rc.1
       react-dom:
-        specifier: 19.0.0-rc.1
+        specifier: ^19.0.0-rc.1
         version: 19.0.0-rc.1(react@19.0.0-rc.1)
     devDependencies:
       '@testing-library/react':
