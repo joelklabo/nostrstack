@@ -5,3 +5,15 @@ export const layout = {
   border: 'var(--nostrstack-color-border)'
 };
 
+export const theme = {
+  font: {
+    mono: '"Fira Code", "Courier New", monospace',
+  },
+  colors: {
+    terminalBg: '#0d0d0d',
+    terminalText: '#00ff41',
+    terminalDim: '#008f11',
+    terminalAccent: '#f0f',
+    terminalBorder: '#333',
+  }
+};
