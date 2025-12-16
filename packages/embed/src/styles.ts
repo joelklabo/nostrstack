@@ -1104,6 +1104,27 @@ export const nostrstackComponentsCss = `
   flex-shrink: 0;
 }
 
+.nostrstack-tip__refresh {
+  padding: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--nostrstack-color-text-muted);
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.nostrstack-tip__refresh:hover {
+  background: var(--nostrstack-color-surface-strong);
+  color: var(--nostrstack-color-text);
+}
+
+.nostrstack-tip__refresh:disabled {
+  cursor: wait;
+}
+
 .nostrstack-tip__realtime[data-state="open"] .nostrstack-tip__realtimeDot {
   background: var(--nostrstack-color-success);
   box-shadow: 0 0 0 0 color-mix(in oklab, var(--nostrstack-color-success) 55%, transparent);

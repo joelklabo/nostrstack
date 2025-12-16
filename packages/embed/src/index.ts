@@ -645,7 +645,14 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const realtimeText = document.createElement('span');
   realtimeText.textContent = '';
 
-  realtime.append(realtimeDot, realtimeText);
+  const refreshBtn = document.createElement('button');
+  refreshBtn.type = 'button';
+  refreshBtn.className = 'nostrstack-btn--ghost nostrstack-tip__refresh';
+  refreshBtn.title = 'Check payment status';
+  refreshBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>';
+  refreshBtn.style.display = 'none';
+
+  realtime.append(realtimeDot, realtimeText, refreshBtn);
 
   const qrWrap = document.createElement('div');
   qrWrap.className = 'nostrstack-tip__qr';
@@ -692,13 +699,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   openWallet.rel = 'noreferrer';
   openWallet.style.display = 'none';
 
-  const paidBtn = document.createElement('button');
-  paidBtn.type = 'button';
-  paidBtn.textContent = "I've paid";
-  paidBtn.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-tip__paid';
-  paidBtn.disabled = true;
-
-  actions.append(openWallet, paidBtn);
+  actions.append(openWallet);
 
   panel.append(ring, status, realtime, qrWrap, invoiceBox, actions);
 
@@ -930,8 +931,9 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     status.textContent = 'Payment confirmed. Thank you!';
     status.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
     status.classList.add('nostrstack-status--success');
-    paidBtn.textContent = 'Paid ✓';
-    paidBtn.disabled = true;
+    // paidBtn.textContent = 'Paid ✓'; // Removed
+    // paidBtn.disabled = true; // Removed
+    refreshBtn.style.display = 'none';
     tipBtn.disabled = false;
     celebrate();
     stopPoll();
@@ -1026,9 +1028,10 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     status.classList.add('nostrstack-status--muted');
     tipBtn.disabled = true;
     // copyBtn.disabled = true; // Removed
-    paidBtn.disabled = true;
-    paidBtn.textContent = "I've paid";
+    // paidBtn.disabled = true; // Removed
+    // paidBtn.textContent = "I've paid"; // Removed
     openWallet.style.display = 'none';
+    refreshBtn.style.display = 'none';
     invoiceCode.textContent = '';
     invoiceBox.classList.remove('nostrstack-visible');
     qrWrap.replaceChildren();
@@ -1081,7 +1084,8 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       // resetInlineCopyBtn(); // Removed
       openWallet.href = `lightning:${pr}`;
       openWallet.style.display = '';
-      paidBtn.disabled = false;
+      // paidBtn.disabled = false; // Removed
+      refreshBtn.style.display = 'inline-flex';
       status.textContent = 'Waiting for payment…';
       invoiceStartedAt = Date.now();
       startInvoiceTicker();
@@ -1123,13 +1127,24 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     }
   };
 
-  paidBtn.onclick = async () => {
-    status.textContent = 'Checking payment…';
+  refreshBtn.onclick = async () => {
+    refreshBtn.disabled = true;
+    refreshBtn.style.opacity = '0.5';
+    const originalIcon = refreshBtn.innerHTML;
+    // Spin animation class could be added here
+    
     await pollOnce();
+    
     if (!didPay) {
-      status.textContent = 'Payment not detected yet';
-      status.classList.remove('nostrstack-status--success');
-      status.classList.add('nostrstack-status--muted');
+      // Visual feedback that check happened but no payment found
+      refreshBtn.style.color = 'var(--nostrstack-color-warning)';
+      setTimeout(() => {
+        refreshBtn.style.color = '';
+        refreshBtn.disabled = false;
+        refreshBtn.style.opacity = '';
+      }, 500);
+    } else {
+      refreshBtn.style.display = 'none';
     }
   };
 
