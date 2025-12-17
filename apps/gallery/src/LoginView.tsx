@@ -51,7 +51,7 @@ export function LoginView() {
                 onChange={e => setNsec(e.target.value)}
               />
               <div className="form-actions">
-                <button className="auth-btn" onClick={() => loginWithNsec(nsec)}>EXECUTE</button>
+                <button className="auth-btn" onClick={() => loginWithNsec(nsec).catch(() => {})}>EXECUTE</button>
                 <button className="text-btn" onClick={() => setMode('menu')}>CANCEL</button>
               </div>
             </div>
