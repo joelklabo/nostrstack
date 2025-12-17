@@ -15,7 +15,6 @@ jobs:
     uses: ./.github/workflows/azure-deploy-reusable.yml
     with:
       environment: production
-      image_tag: ${{ github.event.inputs.image_tag || '' }}
       azure_rg: nostrstack-rg
       azure_location: westus3
       app_name: nostrstack-api
