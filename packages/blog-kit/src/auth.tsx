@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
         if (nsec) {
           try {
-            const { type, data } = nip19.decode(nsec);
+            const { type, data } = nip19.decode(nsec.trim().toLowerCase());
             if (type === 'nsec') {
               const pubkey = getPublicKey(data as Uint8Array);
               setState({ pubkey, mode: 'nsec', isLoading: false, error: null });
@@ -106,11 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithNsec = useCallback(async (nsec: string) => {
     try {
-      const { type, data } = nip19.decode(nsec);
+      const cleanNsec = nsec.trim().toLowerCase();
+      const { type, data } = nip19.decode(cleanNsec);
       if (type !== 'nsec') throw new Error('Invalid nsec');
       const pubkey = getPublicKey(data as Uint8Array);
       localStorage.setItem(STORAGE_KEY_MODE, 'nsec');
-      localStorage.setItem(STORAGE_KEY_NSEC, nsec);
+      localStorage.setItem(STORAGE_KEY_NSEC, cleanNsec);
       setState({ pubkey, mode: 'nsec', isLoading: false, error: null });
     } catch (err: unknown) {
       setState(s => ({ ...s, error: (err instanceof Error ? err.message : String(err)) }));
