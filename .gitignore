@@ -25,3 +25,6 @@ report/
 !apps/api/.env.payer.example
 !apps/gallery/.env.example
 .gemini-clipboard/
+
+.gemini/
+gha-creds-*.json
