@@ -2,8 +2,8 @@ import { useAuth,useStats } from '@nostrstack/blog-kit';
 import { useEffect, useState } from 'react';
 
 interface SidebarProps {
-  currentView: 'feed' | 'profile';
-  setCurrentView: (view: 'feed' | 'profile') => void;
+  currentView: 'feed' | 'profile' | 'notifications';
+  setCurrentView: (view: 'feed' | 'profile' | 'notifications') => void;
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
@@ -50,7 +50,12 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
       >
         PROFILE
       </button>
-      <button className="nav-item">NOTIFICATIONS</button>
+      <button 
+        className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
+        onClick={() => setCurrentView('notifications')}
+      >
+        NOTIFICATIONS
+      </button>
       <button className="nav-item">SETTINGS</button>
       
       <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>

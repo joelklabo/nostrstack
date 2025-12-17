@@ -15,6 +15,10 @@ type TelemetryEvent =
     interval?: number;
     mempoolTxs?: number;
     mempoolBytes?: number;
+    network?: string;
+    version?: number;
+    subversion?: string;
+    connections?: number;
   }
   | { type: 'tx'; txid: string; time: number }
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
@@ -112,6 +116,8 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       const size = Number(block.size) || 0;
       const weight = Number(block.weight) || 0;
       const mempool = (await rpcCall('getmempoolinfo').catch(() => null)) as { size?: number; bytes?: number } | null;
+      const networkInfo = (await rpcCall('getnetworkinfo').catch(() => null)) as { version?: number; subversion?: string; connections?: number } | null;
+      const blockchainInfo = (await rpcCall('getblockchaininfo').catch(() => null)) as { chain?: string } | null;
 
       const interval = lastBlockTime ? Math.max(0, time - lastBlockTime) : null;
 
@@ -125,7 +131,11 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         weight,
         interval: interval ?? undefined,
         mempoolTxs: mempool?.size,
-        mempoolBytes: mempool?.bytes
+        mempoolBytes: mempool?.bytes,
+        network: blockchainInfo?.chain,
+        version: networkInfo?.version,
+        subversion: networkInfo?.subversion,
+        connections: networkInfo?.connections
       };
     } catch (err) {
       app.log.warn({ err }, 'telemetry fetchBlock failed');

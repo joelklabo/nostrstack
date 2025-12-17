@@ -9,11 +9,12 @@ import { useEffect, useState } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
+import { NotificationsView } from './NotificationsView';
 import { ProfileView } from './ProfileView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 
-type View = 'feed' | 'profile';
+type View = 'feed' | 'profile' | 'notifications';
 
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
@@ -39,6 +40,7 @@ function AppShell() {
       <main className="feed-container">
         {currentView === 'feed' && <FeedView />}
         {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
+        {currentView === 'notifications' && <NotificationsView />}
       </main>
       <aside className="telemetry-sidebar">
         <ErrorBoundary fallback={<div style={{ padding: '1rem', color: '#666' }}>Telemetry Unavailable</div>}>
