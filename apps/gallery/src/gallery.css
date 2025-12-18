@@ -197,7 +197,7 @@ body {
   font-family: inherit;
 }
 
-.action-btn:hover {
+.action-btn:hover, .action-btn.active {
   border-color: var(--terminal-text);
   color: var(--terminal-text);
 }
@@ -419,4 +419,76 @@ h3 {
 
 .paywall-widget-host {
   margin-top: 1.5rem;
+}
+
+/* Bitcoin Node Card */
+.nostrstack-node-card {
+  border: 1px solid var(--terminal-border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.nostrstack-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.nostrstack-node-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: var(--terminal-text);
+}
+
+.nostrstack-node-icon {
+  font-size: 1.2rem;
+  color: #f7931a; /* Bitcoin orange */
+}
+
+.nostrstack-node-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.nostrstack-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.nostrstack-stat.full-width {
+  grid-column: 1 / -1;
+}
+
+.nostrstack-stat-label {
+  font-size: 0.7rem;
+  color: var(--terminal-dim);
+  margin-bottom: 0.2rem;
+}
+
+.nostrstack-stat-value {
+  font-family: var(--terminal-font);
+  font-weight: bold;
+}
+
+.nostrstack-stat-value.sm {
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.nostrstack-hash-bar {
+  border-top: 1px dashed var(--terminal-border);
+  padding-top: 0.5rem;
+}
+
+.nostrstack-hash-label {
+  font-size: 0.7rem;
+  color: var(--terminal-dim);
+  margin-bottom: 0.2rem;
 }

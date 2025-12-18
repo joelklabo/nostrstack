@@ -1,6 +1,8 @@
 import { resolveTelemetryWs } from '@nostrstack/embed';
 import { useEffect, useRef, useState } from 'react';
 
+import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
+
 type TelemetryEvent =
   | {
       type: 'block';
@@ -105,12 +107,8 @@ export function TelemetryBar() {
       </div>
       
       {nodeState && (
-        <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--terminal-border)', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-          <div style={{ color: 'var(--terminal-accent)', fontWeight: 'bold' }}>BITCOIN NODE</div>
-          <div>NETWORK: <span style={{ color: '#fff' }}>{nodeState.network?.toUpperCase() || 'UNKNOWN'}</span></div>
-          <div>HEIGHT: <span style={{ color: '#fff' }}>{nodeState.height}</span></div>
-          <div>VERSION: <span style={{ color: '#fff' }}>{nodeState.version || 'UNKNOWN'}</span></div>
-          <div>PEERS: <span style={{ color: '#fff' }}>{nodeState.connections ?? '?'}</span></div>
+        <div style={{ padding: '0.5rem' }}>
+          <BitcoinNodeCard info={nodeState} />
         </div>
       )}
 

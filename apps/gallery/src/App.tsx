@@ -11,15 +11,16 @@ import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
 import { NotificationsView } from './NotificationsView';
 import { ProfileView } from './ProfileView';
+import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 
-type View = 'feed' | 'profile' | 'notifications';
+type View = 'feed' | 'profile' | 'notifications' | 'settings';
 
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
-  const [theme] = useState<'light' | 'dark'>('dark');
-  const [brandPreset] = useState<NostrstackBrandPreset>('default');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
   const [currentView, setCurrentView] = useState<View>('feed');
 
   useEffect(() => {
@@ -41,6 +42,14 @@ function AppShell() {
         {currentView === 'feed' && <FeedView />}
         {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
         {currentView === 'notifications' && <NotificationsView />}
+        {currentView === 'settings' && (
+          <SettingsView 
+            theme={theme} 
+            setTheme={setTheme} 
+            brandPreset={brandPreset} 
+            setBrandPreset={setBrandPreset} 
+          />
+        )}
       </main>
       <aside className="telemetry-sidebar">
         <ErrorBoundary fallback={<div style={{ padding: '1rem', color: '#666' }}>Telemetry Unavailable</div>}>

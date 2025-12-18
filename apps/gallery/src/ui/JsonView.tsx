@@ -49,7 +49,7 @@ export function JsonView({
                 {isCollapsed ? 'Expand' : 'Collapse'}
               </button>
             ) : null}
-            {canCopy ? <CopyButton text={formatted.copyText} label={copyLabel} /> : null}
+            {canCopy ? <CopyButton text={formatted.copyText} label={copyLabel} variant="icon" size="sm" /> : null}
           </div>
         </div>
       ) : null}
