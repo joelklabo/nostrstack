@@ -1,6 +1,8 @@
 import { useAuth,useStats } from '@nostrstack/blog-kit';
 import { useEffect, useState } from 'react';
 
+import { useWallet } from './hooks/useWallet';
+
 interface SidebarProps {
   currentView: 'feed' | 'profile' | 'notifications' | 'settings';
   setCurrentView: (view: 'feed' | 'profile' | 'notifications' | 'settings') => void;
@@ -10,6 +12,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const [uptime, setUptime] = useState(0);
   const { eventCount } = useStats();
   const { logout } = useAuth();
+  const wallet = useWallet();
 
   useEffect(() => {
     const start = Date.now();
@@ -36,6 +39,17 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--terminal-dim)' }}>
           EVENTS_RX: {eventCount}
         </div>
+        {wallet && (
+          <div style={{ marginTop: '1rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--terminal-dim)' }}>
+            <div style={{ color: 'var(--terminal-accent)', fontWeight: 'bold', fontSize: '0.8rem' }}>WALLET_STATUS</div>
+            <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--terminal-text)' }}>
+              {wallet.name || 'LNBITS'}
+            </div>
+            <div style={{ fontSize: '0.9rem', marginTop: '0.1rem', color: 'var(--nostrstack-color-warning)', fontWeight: 'bold' }}>
+              {wallet.balance?.toLocaleString() ?? 0} sats
+            </div>
+          </div>
+        )}
       </div>
       
       <button 
