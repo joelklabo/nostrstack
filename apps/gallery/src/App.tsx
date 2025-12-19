@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
+import { NostrEventView } from './NostrEventView';
 import { NotificationsView } from './NotificationsView';
 import { ProfileView } from './ProfileView';
 import { RelaysView } from './RelaysView';
@@ -18,17 +19,48 @@ import { TelemetryBar } from './TelemetryBar';
 
 type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
 
+function usePathname() {
+  const [pathname, setPathname] = useState(() =>
+    typeof window === 'undefined' ? '/' : window.location.pathname
+  );
+
+  useEffect(() => {
+    const handle = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', handle);
+    return () => window.removeEventListener('popstate', handle);
+  }, []);
+
+  return pathname;
+}
+
+function getNostrRouteId(pathname: string) {
+  const match = pathname.match(/^\/nostr\/([^/?#]+)/i);
+  if (!match) return null;
+  try {
+    const raw = decodeURIComponent(match[1]);
+    return raw.replace(/^nostr:/i, '');
+  } catch {
+    return match[1];
+  }
+}
+
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
   const [currentView, setCurrentView] = useState<View>('feed');
+  const pathname = usePathname();
+  const nostrRouteId = getNostrRouteId(pathname);
 
   useEffect(() => {
     // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
     applyNostrstackTheme(document.body, createNostrstackBrandTheme({ preset: brandPreset, mode: theme }));
     document.body.setAttribute('data-theme', theme);
   }, [brandPreset, theme]);
+
+  if (nostrRouteId) {
+    return <NostrEventView rawId={nostrRouteId} />;
+  }
 
   if (isLoading) {
     return (
