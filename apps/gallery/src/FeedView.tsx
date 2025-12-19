@@ -1,7 +1,7 @@
-import { PaywalledContent, PostEditor, useStats,ZapButton } from '@nostrstack/blog-kit';
+import { PaywalledContent, PostEditor, useStats, ZapButton } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { JsonView } from './ui/JsonView';
 
@@ -30,12 +30,27 @@ export function PostItem({ post }: { post: Post }) {
   return (
     <article className="post-card">
       <header className="post-header">
-        <span title={post.pubkey}>{post.pubkey.slice(0, 8)}...</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ fontWeight: '600', color: 'var(--color-fg-default)' }} title={post.pubkey}>
+            {post.pubkey.slice(0, 8)}...
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>•</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
+        </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.3rem', border: '1px solid var(--terminal-dim)', borderRadius: '4px' }}>K{post.kind}</span>
-          <span>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
+          <span style={{ 
+            fontSize: '0.7rem', 
+            padding: '2px 6px', 
+            border: '1px solid var(--color-border-default)', 
+            borderRadius: '10px',
+            backgroundColor: 'var(--color-canvas-subtle)',
+            color: 'var(--color-fg-muted)'
+          }}>
+            Kind {post.kind}
+          </span>
         </div>
       </header>
+      
       {isPaywalled ? (
         <PaywalledContent
           itemId={paywallItemId}
@@ -44,8 +59,16 @@ export function PostItem({ post }: { post: Post }) {
           host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
           unlockedContent={renderContent()}
           lockedContent={
-            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--terminal-dim)' }}>
-              CLASSIFIED: ACCESS DENIED. (REQUIRES {paywallAmount} SATS)
+            <div style={{ 
+              padding: '2rem', 
+              textAlign: 'center', 
+              color: 'var(--color-fg-muted)',
+              background: 'var(--color-canvas-subtle)',
+              borderRadius: '6px',
+              border: '1px dashed var(--color-border-default)'
+            }}>
+              <div style={{ marginBottom: '0.5rem', fontWeight: '600' }}>Premium Content</div>
+              <div>This content requires a payment of {paywallAmount} sats to view.</div>
             </div>
           }
         />
@@ -55,16 +78,21 @@ export function PostItem({ post }: { post: Post }) {
       
       <div className="post-actions">
         <ZapButton event={post} />
-        <button className="action-btn">REPLY</button>
-        <button className="action-btn" onClick={() => setShowJson(!showJson)}>
-          {showJson ? 'HIDE_SRC' : 'VIEW_SRC'}
+        <button className="action-btn">Reply</button>
+        <button 
+          className="action-btn" 
+          onClick={() => setShowJson(!showJson)}
+          style={{ marginLeft: 'auto' }}
+        >
+          {showJson ? 'Hide Source' : 'View Source'}
         </button>
       </div>
+      
       {showJson && (
         <JsonView 
           value={post} 
-          title={`EVENT_ID: ${post.id.slice(0, 8)}...`}
-          style={{ marginTop: '1rem', borderTop: '1px dashed var(--terminal-border)' }} 
+          title={`Event ID: ${post.id.slice(0, 8)}...`}
+          style={{ marginTop: '1rem' }} 
         />
       )}
     </article>
@@ -102,10 +130,35 @@ export function FeedView() {
     };
   }, []);
 
-      return (
-        <div className="feed-stream">
-          <PostEditor />
-          <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)', paddingTop: '1rem' }}>                {' >'} STREAMING_LIVE_EVENTS...      </div>      {posts.map(post => (
+  return (
+    <div className="feed-stream">
+      <div style={{ marginBottom: '1.5rem' }}>
+        <PostEditor />
+      </div>
+      
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        marginBottom: '1rem', 
+        paddingBottom: '0.5rem', 
+        borderBottom: '1px solid var(--color-border-default)' 
+      }}>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>Live Feed</h2>
+        <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>
+          <span style={{ 
+            display: 'inline-block', 
+            width: '8px', 
+            height: '8px', 
+            borderRadius: '50%', 
+            background: 'var(--color-success-fg)', 
+            marginRight: '6px' 
+          }} />
+          Streaming
+        </div>
+      </div>
+
+      {posts.map(post => (
         <PostItem key={post.id} post={post} />
       ))}
     </div>

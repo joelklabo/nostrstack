@@ -1,6 +1,4 @@
-import { useAuth,useStats } from '@nostrstack/blog-kit';
-import { useEffect, useState } from 'react';
-
+import { useAuth, useStats } from '@nostrstack/blog-kit';
 import { useWallet } from './hooks/useWallet';
 
 interface SidebarProps {
@@ -9,76 +7,67 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
-  const [uptime, setUptime] = useState(0);
   const { eventCount } = useStats();
   const { logout } = useAuth();
   const wallet = useWallet();
 
-  useEffect(() => {
-    const start = Date.now();
-    const id = setInterval(() => {
-      setUptime(Date.now() - start);
-    }, 100);
-    return () => clearInterval(id);
-  }, []);
-
-  const formatUptime = (ms: number) => {
-    const s = Math.floor(ms / 1000);
-    const m = Math.floor(s / 60);
-    const h = Math.floor(m / 60);
-    return `${h.toString().padStart(2, '0')}:${(m % 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}.${Math.floor((ms % 1000) / 100)}`;
-  };
-
   return (
-    <nav className="sidebar-nav" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ marginBottom: '2rem', padding: '0.8rem', border: '1px solid var(--terminal-text)' }}>
-        NOSTRSTACK_V1
-        <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', color: 'var(--terminal-dim)' }}>
-          UPTIME: {formatUptime(uptime)}
+    <nav className="sidebar-nav">
+      <div className="sidebar-header">
+        <div className="sidebar-title">
+          <span>NostrStack</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--color-fg-muted)', fontWeight: 'normal', border: '1px solid var(--color-border-default)', padding: '0 4px', borderRadius: '4px' }}>v1.0</span>
         </div>
-        <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--terminal-dim)' }}>
-          EVENTS_RX: {eventCount}
-        </div>
-        {wallet && (
-          <div style={{ marginTop: '1rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--terminal-dim)' }}>
-            <div style={{ color: 'var(--terminal-accent)', fontWeight: 'bold', fontSize: '0.8rem' }}>WALLET_STATUS</div>
-            <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--terminal-text)' }}>
-              {wallet.name || 'LNBITS'}
-            </div>
-            <div style={{ fontSize: '0.9rem', marginTop: '0.1rem', color: 'var(--nostrstack-color-warning)', fontWeight: 'bold' }}>
-              {wallet.balance?.toLocaleString() ?? 0} sats
-            </div>
-          </div>
-        )}
       </div>
       
-      <button 
-        className={`nav-item ${currentView === 'feed' ? 'active' : ''}`}
-        onClick={() => setCurrentView('feed')}
-      >
-        FEED_GLOBAL
-      </button>
-      <button 
-        className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
-        onClick={() => setCurrentView('profile')}
-      >
-        PROFILE
-      </button>
-      <button 
-        className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
-        onClick={() => setCurrentView('notifications')}
-      >
-        NOTIFICATIONS
-      </button>
-      <button 
-        className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
-        onClick={() => setCurrentView('settings')}
-      >
-        SETTINGS
-      </button>
-      
-      <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>
-        <button className="nav-item" onClick={logout}>LOGOUT</button>
+      <div style={{ padding: '0 0.5rem', marginBottom: '1rem' }}>
+        <button 
+          className={`nav-item ${currentView === 'feed' ? 'active' : ''}`}
+          onClick={() => setCurrentView('feed')}
+        >
+          Feed
+        </button>
+        <button 
+          className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
+          onClick={() => setCurrentView('profile')}
+        >
+          Profile
+        </button>
+        <button 
+          className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
+          onClick={() => setCurrentView('notifications')}
+        >
+          Notifications
+        </button>
+        <button 
+          className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
+          onClick={() => setCurrentView('settings')}
+        >
+          Settings
+        </button>
+      </div>
+
+      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--color-border-default)' }}>
+        {wallet && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Wallet</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+              {wallet.balance?.toLocaleString() ?? 0} <span style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>sats</span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>{wallet.name || 'LNbits'}</div>
+          </div>
+        )}
+        
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Network</div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-default)' }}>
+            Events: {eventCount}
+          </div>
+        </div>
+
+        <button className="nav-item" onClick={logout} style={{ color: 'var(--color-danger-fg)', paddingLeft: 0 }}>
+          Log out
+        </button>
       </div>
     </nav>
   );

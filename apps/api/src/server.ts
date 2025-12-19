@@ -126,6 +126,9 @@ export async function buildServer() {
     : env.LIGHTNING_PROVIDER === 'mock'
       ? LightningProviderKind.Mock
       : LightningProviderKind.OpenNode;
+  
+  server.log.info({ provider: providerKind }, 'Initializing Lightning Provider');
+
   const lightningProvider = buildLightningProvider(providerKind, {
     openNode: () => new OpenNodeProvider(env.OP_NODE_API_KEY, server.log),
     lnbits: () => {

@@ -39,6 +39,15 @@ export async function registerWalletWs(app: FastifyInstance) {
   };
 
   const fetchWallet = async (): Promise<WalletSnapshot | null> => {
+    if (process.env.LIGHTNING_PROVIDER === 'mock') {
+      return {
+        type: 'wallet',
+        id: 'mock-wallet',
+        name: 'Mock Wallet',
+        balance: 50000,
+        time: Math.floor(Date.now() / 1000)
+      };
+    }
     try {
       const res = await fetch(`${baseUrl}/api/v1/wallet`, {
         headers: {

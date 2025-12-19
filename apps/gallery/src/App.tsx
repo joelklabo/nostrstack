@@ -1,4 +1,4 @@
-import { AuthProvider, StatsProvider,useAuth } from '@nostrstack/blog-kit';
+import { AuthProvider, StatsProvider, useAuth } from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
@@ -19,17 +19,30 @@ type View = 'feed' | 'profile' | 'notifications' | 'settings';
 
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
   const [currentView, setCurrentView] = useState<View>('feed');
 
   useEffect(() => {
+    // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
     applyNostrstackTheme(document.body, createNostrstackBrandTheme({ preset: brandPreset, mode: theme }));
     document.body.setAttribute('data-theme', theme);
-    document.documentElement.style.setProperty('--nostrstack-font-family', '"Fira Code", monospace');
   }, [brandPreset, theme]);
 
-  if (isLoading) return <div className="loading-screen">INITIALIZING SYSTEM...</div>;
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        color: 'var(--color-fg-muted)',
+        fontFamily: 'var(--font-body)'
+      }}>
+        Loading NostrStack...
+      </div>
+    );
+  }
 
   if (!pubkey) {
     return <LoginView />;

@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 export type CreateChargeInput = {
   amount: number; // in sats
   description: string;
+  descriptionHash?: string;
   metadata?: Record<string, string>;
   callbackUrl?: string;
 };

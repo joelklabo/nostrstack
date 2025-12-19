@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
@@ -61,7 +62,8 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          amount: { type: 'integer' }
+          amount: { type: 'integer' },
+          nostr: { type: 'string' }
         },
         required: ['amount'],
         additionalProperties: false
@@ -69,7 +71,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     }
   }, async (request, reply) => {
     const { username } = request.params as { username: string };
-    const { amount } = request.query as { amount: number };
+    const { amount, nostr } = request.query as { amount: number; nostr?: string };
     const tenant = await getTenantForRequest(app, request);
     const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
     const identifier = `${username}@${tenant.domain}`;
@@ -84,9 +86,21 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     }
 
     const amountSats = Math.ceil(amount / 1000);
+    
+    let descriptionHash: string | undefined;
+    let metadataStr: string | undefined;
+
+    if (nostr) {
+      // NIP-57 Zap Request logic
+      // Ideally we validate the event signature here, but for now we trust the hash.
+      descriptionHash = createHash('sha256').update(nostr).digest('hex');
+      metadataStr = nostr; // Store the raw zap request event
+    }
+
     const charge = await app.lightningProvider.createCharge({
       amount: amountSats,
-      description: `nostrstack payment to ${identifier}`,
+      description: descriptionHash ? '' : `nostrstack payment to ${identifier}`,
+      descriptionHash,
       callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(username)}/webhook`,
       // LNbits uses a `webhook` field rather than OpenNode-style callbacks; our webhook handler updates Payment + broadcasts /ws/pay.
       webhookUrl: `${origin}/api/pay/webhook/lnbits`
@@ -100,7 +114,8 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         providerRef: charge.id,
         invoice: charge.invoice,
         amountSats,
-        status: 'PENDING'
+        status: 'PENDING',
+        metadata: metadataStr
       }
     });
 
@@ -170,17 +185,62 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     if (successStates.includes(normalizedStatus) && app.nostrClient && payment.user?.pubkey) {
       const amountMsat = payment.amountSats * 1000;
       const identifier = `${username}@${tenant.domain}`;
-      const tags = [
-        ['p', payment.user.pubkey],
-        ['bolt11', payment.invoice],
-        ['description', JSON.stringify({ identifier, amount: amountMsat })],
-        ['amount', String(amountMsat)]
-      ];
+      
+      let descriptionTag: string | undefined;
+      let tags: string[][] = [];
+
+      if (payment.metadata && payment.metadata.trim().startsWith('{')) {
+        // Assume metadata contains the Zap Request JSON (NIP-57)
+        // We must include it as the 'description' tag (serialized JSON)
+        descriptionTag = payment.metadata;
+        
+        // Also we should try to extract 'p' and 'e' tags from the zap request to include them in the receipt
+        // but strictly speaking, NIP-57 receipt tags are:
+        // ['p', <recipient_pubkey>]
+        // ['bolt11', <invoice>]
+        // ['description', <zap_request_json>]
+        // ['amount', <msats>]
+        // ... and ideally 'e' tag pointing to the original zap request event ID (if we had it, but we stored the JSON)
+        // Actually, 'description' tag IS the serialized zap request.
+        
+        tags = [
+          ['p', payment.user.pubkey],
+          ['bolt11', payment.invoice],
+          ['description', descriptionTag],
+          ['amount', String(amountMsat)]
+        ];
+        
+        // Attempt to parse zap request to get other tags if needed (e.g. 'e' tag being zapped)
+        try {
+          const zapReq = JSON.parse(payment.metadata);
+          // If the zap request zapped an event ('e' tag), we should copy it? 
+          // NIP-57 says: "The receipt event... MUST contain the same 'p' and 'e' tags as the zap request."
+          if (zapReq.tags) {
+             for (const t of zapReq.tags) {
+               if (t[0] === 'e' || t[0] === 'a') {
+                 tags.push(t);
+               }
+             }
+          }
+        } catch (e) {
+          // ignore parse error
+        }
+
+      } else {
+        // Fallback for non-NIP-57 payments
+        tags = [
+          ['p', payment.user.pubkey],
+          ['bolt11', payment.invoice],
+          ['description', JSON.stringify({ identifier, amount: amountMsat })],
+          ['amount', String(amountMsat)]
+        ];
+      }
+
       try {
         await app.nostrClient.publish({
           template: {
             kind: 9735,
-            content: `Zap ${amountMsat} msat to ${identifier}`,
+            content: '', // NIP-57 receipts have empty content
             tags
           },
           relays: app.nostrRelays ?? ['wss://relay.damus.io']

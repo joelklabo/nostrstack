@@ -1,13 +1,22 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { config } from 'dotenv';
 import { z } from 'zod';
 
-config();
-
 // Resolve paths relative to the package root so DB defaults work whether run from src or dist.
 const packageRoot = fileURLToPath(new URL('..', import.meta.url));
+const envLocal = resolve(packageRoot, '.env.local');
+const envDefault = resolve(packageRoot, '.env');
+
+if (existsSync(envLocal)) {
+  config({ path: envLocal });
+}
+if (existsSync(envDefault)) {
+  config({ path: envDefault });
+}
+
 const sqliteDefault = `file:${resolve(packageRoot, 'dev.db')}`;
 const postgresDefault = 'postgres://nostrstack:nostrstack@localhost:5432/nostrstack';
 

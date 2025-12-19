@@ -13,9 +13,12 @@ export class LnbitsProvider {
     return { 'Content-Type': 'application/json', 'X-Api-Key': this.cfg.apiKey };
   }
 
-  async createCharge(input: { amount: number; description: string; webhookUrl?: string }) {
+  async createCharge(input: { amount: number; description: string; descriptionHash?: string; webhookUrl?: string }) {
     // amount in sats
     const body: Record<string, unknown> = { out: false, amount: input.amount, memo: input.description };
+    if (input.descriptionHash) {
+      body.description_hash = input.descriptionHash;
+    }
     const webhook = input.webhookUrl || this.cfg.webhookUrl;
     if (webhook) body.webhook = webhook;
     const res = await fetch(`${this.cfg.baseUrl}/api/v1/payments`, {

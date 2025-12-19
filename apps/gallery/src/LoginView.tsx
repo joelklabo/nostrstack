@@ -10,39 +10,51 @@ export function LoginView() {
     <div className="login-container">
       <div className="login-terminal">
         <div className="terminal-header">
-          <span className="terminal-dot red"></span>
-          <span className="terminal-dot yellow"></span>
-          <span className="terminal-dot green"></span>
-          <span className="terminal-title">AUTH_GATEWAY</span>
+          <span className="terminal-title">Sign in to NostrStack</span>
         </div>
         <div className="terminal-body">
-          <div className="ascii-art">
-{`
- _   _           _            _             _    
-| \\ | | ___  ___| |_ _ __ ___| |_ __ _  ___| | __
-|  \\| |/ _ \\/ __| __| '__/ __| __/ _\` |/ __| |/ /
-| |\\  | (_) \\__ \\ |_| |  \\__ \\ || (_| | (__|   < 
-|_| \\_|\\___/|___/\\__|_|  |___/\\__\\__,_|\\___|_|\\_\\
-`}
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--color-fg-default)' }}>Welcome back</h1>
+            <p style={{ color: 'var(--color-fg-muted)' }}>Connect your Nostr identity to continue</p>
           </div>
-          <p className="system-msg"> {'>'} SYSTEM READY. AUTHENTICATE TO PROCEED.</p>
           
-          {error && <div className="error-msg">{`[ERROR]: ${error}`}</div>}
+          {error && (
+            <div style={{ 
+              backgroundColor: 'var(--color-danger-fg)', 
+              color: 'white', 
+              padding: '0.75rem', 
+              borderRadius: '6px', 
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem' 
+            }}>
+              {error}
+            </div>
+          )}
 
           {mode === 'menu' && (
             <div className="auth-options">
               <button className="auth-btn" onClick={() => loginWithNip07()}>
-                <span className="key-icon">🔑</span> EXTENSION_AUTH (NIP-07)
+                Sign in with Extension (NIP-07)
               </button>
-              <button className="auth-btn" onClick={() => setMode('nsec')}> 
-                <span className="key-icon">🗝️</span> MANUAL_OVERRIDE (NSEC)
+              <button className="auth-btn" style={{ background: 'transparent', borderStyle: 'dashed' }} onClick={() => setMode('nsec')}> 
+                Enter nsec manually
               </button>
             </div>
           )}
 
           {mode === 'nsec' && (
             <div className="nsec-form">
-              <p className="warning-msg">WARNING: UNSAFE KEY ENTRY DETECTED. USE BURNER KEYS ONLY.</p>
+              <div style={{ 
+                fontSize: '0.8rem', 
+                color: 'var(--color-attention-fg)', 
+                marginBottom: '1rem',
+                backgroundColor: '#fff8c5',
+                padding: '0.5rem',
+                borderRadius: '6px',
+                border: '1px solid var(--color-attention-fg)'
+              }}>
+                <strong>Warning:</strong> Entering your private key directly is risky. Use a burner key or an extension if possible.
+              </div>
               <input 
                 type="password" 
                 className="terminal-input"
@@ -50,9 +62,17 @@ export function LoginView() {
                 value={nsec}
                 onChange={e => setNsec(e.target.value)}
               />
-              <div className="form-actions">
-                <button className="auth-btn" onClick={() => loginWithNsec(nsec).catch(() => {})}>EXECUTE</button>
-                <button className="text-btn" onClick={() => setMode('menu')}>CANCEL</button>
+              <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
+                <button className="auth-btn" style={{ backgroundColor: 'var(--color-accent-fg)', color: 'white', border: 'none' }} onClick={() => loginWithNsec(nsec).catch(() => {})}>
+                  Sign in
+                </button>
+                <button 
+                  className="auth-btn" 
+                  style={{ width: 'auto', border: 'none' }} 
+                  onClick={() => setMode('menu')}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}
