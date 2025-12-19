@@ -277,20 +277,29 @@ body {
   font-size: 0.75rem;
   color: var(--color-fg-muted);
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .relay-kv-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25rem 0.75rem;
+  gap: 0.35rem 0.75rem;
   font-size: 0.72rem;
   color: var(--color-fg-muted);
 }
 
 .relay-kv {
   display: flex;
-  justify-content: space-between;
-  gap: 0.35rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.relay-kv span,
+.relay-kv strong {
+  width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .relay-kv strong {
