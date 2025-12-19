@@ -53,6 +53,8 @@ const FALLBACK_RELAYS = [
 ];
 
 const numberFormat = new Intl.NumberFormat('en-US');
+const RELAY_INFO_TTL_MS = 15000;
+const relayInfoCache = new Map<string, { ts: number; promise: Promise<RelayInfo> }>();
 
 function normalizeRelayUrls(raw?: string | null) {
   const parsed = parseRelays(raw);
@@ -142,6 +144,25 @@ async function fetchRelayInfo(url: string, signal: AbortSignal) {
   return (await res.json()) as RelayInfo;
 }
 
+function fetchRelayInfoCached(url: string, signal: AbortSignal) {
+  const now = Date.now();
+  const cached = relayInfoCache.get(url);
+  if (cached && now - cached.ts < RELAY_INFO_TTL_MS) {
+    return cached.promise;
+  }
+
+  const promise = fetchRelayInfo(url, signal).catch((err) => {
+    const current = relayInfoCache.get(url);
+    if (current?.promise === promise) {
+      relayInfoCache.delete(url);
+    }
+    throw err;
+  });
+
+  relayInfoCache.set(url, { ts: now, promise });
+  return promise;
+}
+
 export function RelaysView() {
   const relayUrls = useMemo(
     () => normalizeRelayUrls(import.meta.env.VITE_NOSTRSTACK_RELAYS),
@@ -171,7 +192,7 @@ export function RelaysView() {
       const controller = new AbortController();
       controllers.set(url, controller);
       try {
-        const info = await withTimeout(fetchRelayInfo(url, controller.signal), 5000, 'NIP-11');
+        const info = await withTimeout(fetchRelayInfoCached(url, controller.signal), 5000, 'NIP-11');
         if (cancelled) return;
         updateRelay(url, {
           status: 'online',
