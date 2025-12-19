@@ -15,7 +15,13 @@ interface Post extends Event {
   // Add any extra fields if needed
 }
 
-export function PostItem({ post }: { post: Post }) {
+export function PostItem({
+  post,
+  authorLightningAddress
+}: {
+  post: Post;
+  authorLightningAddress?: string;
+}) {
   const [showJson, setShowJson] = useState(false);
   const isPaywalled = post.tags.some(tag => tag[0] === 'paywall');
   const paywallAmount = isPaywalled ? Number(post.tags.find(tag => tag[0] === 'paywall')?.[1] || '0') : 0;
@@ -77,7 +83,7 @@ export function PostItem({ post }: { post: Post }) {
       )}
       
       <div className="post-actions">
-        <ZapButton event={post} />
+        <ZapButton event={post} authorLightningAddress={authorLightningAddress} />
         <button className="action-btn">Reply</button>
         <button 
           className="action-btn" 

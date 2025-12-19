@@ -119,7 +119,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
         <div className="user-events">
           {events.length === 0 ? <p>NO EVENTS FOUND.</p> : (
             events.map(event => (
-              <PostItem key={event.id} post={event} />
+              <PostItem key={event.id} post={event} authorLightningAddress={profile?.lud16 ?? profile?.lud06} />
             ))
           )}
         </div>
