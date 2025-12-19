@@ -14,7 +14,7 @@ describe('App', () => {
     );
     // It should transition to login
     await waitFor(() => {
-      expect(screen.getByText('AUTH_GATEWAY')).toBeTruthy();
+      expect(screen.getByText('Sign in to NostrStack')).toBeTruthy();
     });
   });
 });

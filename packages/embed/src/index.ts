@@ -140,7 +140,7 @@ export function resolvePayWsUrl(baseURL?: string): string | null {
   if (isMockBase(baseURL)) return null;
   if (typeof window === 'undefined') return null;
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = raw.replace(/\/$/, '');
+  const base = preferSecureBase(raw.replace(/\/$/, ''));
   // Dev convenience: treat "/api" as a proxy prefix, not a server mountpoint.
   // This avoids generating "/api/ws/*" and "/api/api/*" footguns in local demos.
   if (base === '/api') {
@@ -159,7 +159,7 @@ export function resolveTelemetryWs(baseURL?: string): string | null {
   if (isMockBase(baseURL)) return null;
   if (typeof window === 'undefined') return null;
   const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = raw.replace(/\/$/, '');
+  const base = preferSecureBase(raw.replace(/\/$/, ''));
   if (base === '/api') {
     return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
   }
@@ -170,6 +170,14 @@ export function resolveTelemetryWs(baseURL?: string): string | null {
     return `${base.replace(/^http/i, 'ws')}/ws/telemetry`;
   }
   return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
+}
+
+function preferSecureBase(base: string) {
+  if (typeof window === 'undefined') return base;
+  if (window.location.protocol !== 'https:') return base;
+  if (!/^http:\/\//i.test(base)) return base;
+  // Browsers block ws/http mixed content on https pages; prefer secure endpoints.
+  return base.replace(/^http:/i, 'https:');
 }
 
 function resolveApiBaseUrl(baseURL?: string) {
