@@ -58,6 +58,8 @@ export function LoginView() {
               <input 
                 type="password" 
                 className="terminal-input"
+                id="nsec-input"
+                name="nsec"
                 placeholder="nsec1..." 
                 value={nsec}
                 onChange={e => setNsec(e.target.value)}

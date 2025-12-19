@@ -106,6 +106,7 @@ export function FeedView() {
 
   useEffect(() => {
     const pool = new SimplePool();
+    let closeTimer: number | null = null;
 
     const sub = pool.subscribeMany(
       RELAYS,
@@ -125,8 +126,21 @@ export function FeedView() {
     );
 
     return () => {
-      sub.close();
-      pool.close(RELAYS);
+      try {
+        sub.close();
+      } catch {
+        // Ignore websocket close errors during teardown.
+      }
+      if (closeTimer == null) {
+        closeTimer = globalThis.setTimeout(() => {
+          closeTimer = null;
+          try {
+            pool.close(RELAYS);
+          } catch {
+            // Ignore websocket close errors during teardown.
+          }
+        }, 0);
+      }
     };
   }, []);
 

@@ -65,6 +65,8 @@ export function PostEditor() {
       </div>
       <textarea
         className="terminal-input editor-input"
+        id="post-editor"
+        name="post"
         placeholder="WHAT ARE YOU HACKING ON?..."
         value={content}
         onChange={(e) => setContent(e.target.value)}

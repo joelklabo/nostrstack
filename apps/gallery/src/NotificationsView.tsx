@@ -19,6 +19,7 @@ export function NotificationsView() {
   useEffect(() => {
     if (!pubkey) return;
     const pool = new SimplePool();
+    let closeTimer: number | null = null;
     const sub = pool.subscribeMany(
       RELAYS,
       [{ kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 }],
@@ -36,8 +37,21 @@ export function NotificationsView() {
       }
     );
     return () => {
-      sub.close();
-      pool.close(RELAYS);
+      try {
+        sub.close();
+      } catch {
+        // Ignore websocket close errors during teardown.
+      }
+      if (closeTimer == null) {
+        closeTimer = globalThis.setTimeout(() => {
+          closeTimer = null;
+          try {
+            pool.close(RELAYS);
+          } catch {
+            // Ignore websocket close errors during teardown.
+          }
+        }, 0);
+      }
     };
   }, [pubkey]);
 

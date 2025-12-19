@@ -11,11 +11,12 @@ import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
 import { NotificationsView } from './NotificationsView';
 import { ProfileView } from './ProfileView';
+import { RelaysView } from './RelaysView';
 import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 
-type View = 'feed' | 'profile' | 'notifications' | 'settings';
+type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
 
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
@@ -55,6 +56,7 @@ function AppShell() {
         {currentView === 'feed' && <FeedView />}
         {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
         {currentView === 'notifications' && <NotificationsView />}
+        {currentView === 'relays' && <RelaysView />}
         {currentView === 'settings' && (
           <SettingsView 
             theme={theme} 

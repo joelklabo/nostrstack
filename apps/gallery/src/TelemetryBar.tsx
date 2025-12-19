@@ -1,4 +1,3 @@
-import { resolveTelemetryWs } from '@nostrstack/embed';
 import { useEffect, useRef, useState } from 'react';
 
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
@@ -30,6 +29,40 @@ interface LogEntry {
   level: 'info' | 'warn' | 'error';
 }
 
+function resolveTelemetryWs(baseURL?: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
+  const base = preferSecureBase(raw.replace(/\/$/, ''));
+  if (base === '/api') {
+    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
+  }
+  if (!base) {
+    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
+  }
+  if (/^https?:\/\//i.test(base)) {
+    return `${base.replace(/^http/i, 'ws')}/ws/telemetry`;
+  }
+  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
+}
+
+function preferSecureBase(base: string) {
+  if (typeof window === 'undefined') return base;
+  if (window.location.protocol !== 'https:') return base;
+  if (!/^http:\/\//i.test(base)) return base;
+  return base.replace(/^http:/i, 'https:');
+}
+
+function safeClose(socket: WebSocket | null) {
+  if (!socket) return;
+  if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+    try {
+      socket.close();
+    } catch {
+      // Ignore close errors from already-closed sockets.
+    }
+  }
+}
+
 export function TelemetryBar() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [nodeState, setNodeState] = useState<{
@@ -48,53 +81,59 @@ export function TelemetryBar() {
       setLogs([{ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' }]);
       return;
     }
+    let cancelled = false;
+    const timer = globalThis.setTimeout(() => {
+      if (cancelled) return;
+      const ws = new WebSocket(telemetryWsUrl);
+      wsRef.current = ws;
 
-    const ws = new WebSocket(telemetryWsUrl);
-    wsRef.current = ws;
+      ws.onopen = () => {
+        setLogs(prev => [...prev, { ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' }]);
+      };
 
-    ws.onopen = () => {
-      setLogs(prev => [...prev, { ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' }]);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data) as TelemetryEvent;
-        
-        if (msg.type === 'block') {
-          setNodeState({
-            network: msg.network,
-            height: msg.height,
-            version: msg.subversion || (msg.version ? String(msg.version) : undefined),
-            connections: msg.connections,
-            hash: msg.hash
-          });
-          setLogs(prev => [...prev, { 
-            ts: msg.time * 1000, 
-            level: 'info', 
-            message: `New Block: ${msg.height} (${msg.txs} txs)` 
-          }].slice(-50));
-        } else if (msg.type === 'error') {
-          setLogs(prev => [...prev, { 
-            ts: msg.time * 1000, 
-            level: 'error', 
-            message: msg.message 
-          }].slice(-50));
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data) as TelemetryEvent;
+          
+          if (msg.type === 'block') {
+            setNodeState({
+              network: msg.network,
+              height: msg.height,
+              version: msg.subversion || (msg.version ? String(msg.version) : undefined),
+              connections: msg.connections,
+              hash: msg.hash
+            });
+            setLogs(prev => [...prev, { 
+              ts: msg.time * 1000, 
+              level: 'info', 
+              message: `New Block: ${msg.height} (${msg.txs} txs)` 
+            }].slice(-50));
+          } else if (msg.type === 'error') {
+            setLogs(prev => [...prev, { 
+              ts: msg.time * 1000, 
+              level: 'error', 
+              message: msg.message 
+            }].slice(-50));
+          }
+        } catch (e) {
+          console.error('Failed to parse telemetry message', e);
         }
-      } catch (e) {
-        console.error('Failed to parse telemetry message', e);
-      }
-    };
+      };
 
-    ws.onerror = () => {
-      setLogs(prev => [...prev, { ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' }]);
-    };
+      ws.onerror = () => {
+        setLogs(prev => [...prev, { ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' }]);
+      };
 
-    ws.onclose = () => {
-      setLogs(prev => [...prev, { ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry' }]);
-    };
+      ws.onclose = () => {
+        setLogs(prev => [...prev, { ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry' }]);
+      };
+    }, 0);
 
     return () => {
-      wsRef.current?.close();
+      cancelled = true;
+      globalThis.clearTimeout(timer);
+      safeClose(wsRef.current);
+      wsRef.current = null;
     };
   }, []);
 

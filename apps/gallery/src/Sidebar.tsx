@@ -2,8 +2,8 @@ import { useAuth, useStats } from '@nostrstack/blog-kit';
 import { useWallet } from './hooks/useWallet';
 
 interface SidebarProps {
-  currentView: 'feed' | 'profile' | 'notifications' | 'settings';
-  setCurrentView: (view: 'feed' | 'profile' | 'notifications' | 'settings') => void;
+  currentView: 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
+  setCurrentView: (view: 'feed' | 'profile' | 'notifications' | 'relays' | 'settings') => void;
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
@@ -38,6 +38,12 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           onClick={() => setCurrentView('notifications')}
         >
           Notifications
+        </button>
+        <button 
+          className={`nav-item ${currentView === 'relays' ? 'active' : ''}`}
+          onClick={() => setCurrentView('relays')}
+        >
+          Relays
         </button>
         <button 
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
