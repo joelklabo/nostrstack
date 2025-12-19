@@ -29,7 +29,7 @@
 # actor: ""
 
 # Branch to sync .beads changes (optional; leave unset for single-branch workflows)
-# sync-branch: main
+sync-branch: beads-sync
 
 # Path to database (overridden by BEADS_DB or --db)
 # db: ""
