@@ -91,6 +91,16 @@ function normalizeLightningAddress(value: string | null | undefined): string | n
   return decodeLnurl(trimmed);
 }
 
+function encodeLnurl(url: string): string | null {
+  try {
+    const normalized = new URL(url).toString();
+    const words = bech32.toWords(new TextEncoder().encode(normalized));
+    return bech32.encode('lnurl', words, 1000).toUpperCase();
+  } catch {
+    return null;
+  }
+}
+
 // Minimal LNURL-pay client, just enough for zaps.
 // In a real scenario, use @nostrstack/sdk or similar for robust client.
 async function getLnurlpMetadata(lnurl: string) {
@@ -201,13 +211,17 @@ export function ZapButton({
       }
 
       // 2. Create a NIP-57 Zap Request Event
+      const lnurlTag = metadata.encoded
+        ? String(metadata.encoded).toUpperCase()
+        : encodeLnurl(lnurlp) ?? resolvedAddress;
+
       const zapRequestEventTemplate: EventTemplate = {
         kind: 9734, // Zap Request
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['relays', ...relayTargets], // Global relays or specific ones
           ['amount', String(amountSats * 1000)], // msat
-          ['lnurl', metadata.encoded ? metadata.encoded.toUpperCase() : resolvedAddress], // NIP-57 encoded LNURL
+          ['lnurl', lnurlTag], // NIP-57 encoded LNURL
           ['p', authorPubkey],
           ['e', event.id],
           ['content', message],
