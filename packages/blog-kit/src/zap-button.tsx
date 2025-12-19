@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { type Event, type EventTemplate, nip19 } from 'nostr-tools';
+import { type Event, type EventTemplate, SimplePool, nip19 } from 'nostr-tools';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -22,6 +22,51 @@ interface ZapButtonProps {
   message?: string;
   apiBase?: string;
   host?: string;
+}
+
+const RELAYS = [
+  'wss://relay.damus.io',
+  'wss://relay.snort.social',
+  'wss://nos.lol'
+];
+
+function decodeLnurl(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.toLowerCase().startsWith('lnurl')) return trimmed;
+  try {
+    const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
+    if (decoded.toLowerCase().startsWith('lnurl')) return decoded;
+  } catch {
+    // ignore invalid base64
+  }
+  return null;
+}
+
+function extractLightningAddressFromProfile(raw: unknown): string | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const rec = raw as Record<string, unknown>;
+  if (typeof rec.lud16 === 'string' && rec.lud16.trim()) return rec.lud16.trim();
+  if (typeof rec.lud06 === 'string' && rec.lud06.trim()) return decodeLnurl(rec.lud06) ?? null;
+  return null;
+}
+
+function extractLightningAddressFromEvent(event: Event): string | null {
+  const lud16Tag = event.tags.find(tag => tag[0] === 'lud16');
+  if (lud16Tag && lud16Tag[1]) return lud16Tag[1];
+
+  const lud06Tag = event.tags.find(tag => tag[0] === 'lud06');
+  if (lud06Tag && lud06Tag[1]) return decodeLnurl(lud06Tag[1]);
+
+  if (event.kind === 0 && event.content) {
+    try {
+      const profile = JSON.parse(event.content) as unknown;
+      return extractLightningAddressFromProfile(profile);
+    } catch {
+      // ignore
+    }
+  }
+  return null;
 }
 
 // Minimal LNURL-pay client, just enough for zaps.
@@ -51,59 +96,29 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
   const [invoice, setInvoice] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  const RELAYS = [
-    'wss://relay.damus.io',
-    'wss://relay.snort.social',
-    'wss://nos.lol'
-  ];
-
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
 
-  const authorLightningAddress = useMemo(() => {
-    // Find lud16 or lud06 tag
-    const lud16Tag = event.tags.find(tag => tag[0] === 'lud16');
-    if (lud16Tag && lud16Tag[1]) return lud16Tag[1];
-    
-    const lud06Tag = event.tags.find(tag => tag[0] === 'lud06');
-    if (lud06Tag && lud06Tag[1]) {
-      // Decode lud06 (LNURL-encode)
-      try {
-        const decoded = Buffer.from(lud06Tag[1], 'base64').toString('utf8');
-        if (decoded.startsWith('lnurl')) {
-          return decoded; // It's an LNURL
-        }
-      } catch (e) {
-        console.warn('Failed to decode lud06', e);
-      }
+  const authorLightningAddress = useMemo(() => extractLightningAddressFromEvent(event), [event]);
+
+  const resolveLightningAddress = useCallback(async () => {
+    if (authorLightningAddress) return authorLightningAddress;
+    const pool = new SimplePool();
+    try {
+      const meta = await pool.get(RELAYS, { kinds: [0], authors: [authorPubkey] });
+      if (!meta?.content) return null;
+      return extractLightningAddressFromProfile(JSON.parse(meta.content) as unknown);
+    } catch (err) {
+      console.warn('Failed to fetch author metadata for lightning address', err);
+      return null;
+    } finally {
+      pool.close(RELAYS);
     }
-    
-    // Fallback to profile content (kind 0 event)
-    if (event.kind === 0 && event.content) {
-      try {
-        const profile = JSON.parse(event.content);
-        if (profile.lud16) return profile.lud16;
-        if (profile.lud06) {
-          try {
-            const decoded = Buffer.from(profile.lud06, 'base64').toString('utf8');
-            if (decoded.startsWith('lnurl')) {
-              return decoded;
-            }
-          } catch (e) { /* ignore */ }
-        }
-      } catch (e) { /* ignore */ }
-    }
-    return null;
-  }, [event]);
+  }, [authorLightningAddress, authorPubkey]);
 
   const handleZap = useCallback(async () => {
     if (!pubkey) {
       setErrorMessage('ERROR: You must be logged in to send a zap.');
-      setZapState('error');
-      return;
-    }
-    if (!authorLightningAddress) {
-      setErrorMessage('ERROR: Author does not have a Lightning Address/LNURL.');
       setZapState('error');
       return;
     }
@@ -113,8 +128,17 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
     setInvoice(null);
 
     try {
+      const resolvedAddress = await resolveLightningAddress();
+      if (!resolvedAddress) {
+        setErrorMessage('ERROR: Author does not have a Lightning Address/LNURL.');
+        setZapState('error');
+        return;
+      }
+
       // 1. Fetch LNURL-pay metadata
-      const lnurlp = authorLightningAddress.startsWith('lnurl') ? authorLightningAddress : `https://${authorLightningAddress.split('@')[1]}/.well-known/lnurlp/${authorLightningAddress.split('@')[0]}`;
+      const lnurlp = resolvedAddress.startsWith('lnurl')
+        ? resolvedAddress
+        : `https://${resolvedAddress.split('@')[1]}/.well-known/lnurlp/${resolvedAddress.split('@')[0]}`;
       const metadata = await getLnurlpMetadata(lnurlp);
 
       if (metadata.tag !== 'payRequest') {
@@ -128,7 +152,7 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
         tags: [
           ['relays', ...RELAYS], // Global relays or specific ones
           ['amount', String(amountSats * 1000)], // msat
-          ['lnurl', metadata.encoded ? metadata.encoded.toUpperCase() : authorLightningAddress], // NIP-57 encoded LNURL
+          ['lnurl', metadata.encoded ? metadata.encoded.toUpperCase() : resolvedAddress], // NIP-57 encoded LNURL
           ['p', authorPubkey],
           ['e', event.id],
           ['content', message],
@@ -166,7 +190,7 @@ export function ZapButton({ event, amountSats = 21, message = 'Zap!' }: ZapButto
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setZapState('error');
     }
-  }, [pubkey, signEvent, authorLightningAddress, authorPubkey, event, amountSats, message, RELAYS, authorNpub]);
+  }, [pubkey, signEvent, resolveLightningAddress, authorPubkey, event, amountSats, message, authorNpub]);
 
   const handleCloseZap = useCallback(() => {
     setZapState('idle');
