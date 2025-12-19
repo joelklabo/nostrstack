@@ -2,6 +2,7 @@ import { parseRelays } from '@nostrstack/blog-kit';
 import { type Event, nip19, SimplePool } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
 
+import { getEventKindLabel, parseProfileContent, ProfileCard, renderEvent, type ProfileMeta } from './nostr/eventRenderers';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
 
@@ -9,16 +10,6 @@ type Target =
   | { type: 'event'; id: string; relays: string[] }
   | { type: 'profile'; pubkey: string; relays: string[] }
   | { type: 'address'; kind: number; pubkey: string; identifier: string; relays: string[] };
-
-type ProfileMeta = {
-  name?: string;
-  display_name?: string;
-  about?: string;
-  picture?: string;
-  website?: string;
-  nip05?: string;
-  lud16?: string;
-};
 
 type LoadState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
@@ -112,16 +103,6 @@ function toNote(id?: string) {
   }
 }
 
-function parseProfile(content?: string): ProfileMeta | null {
-  if (!content) return null;
-  try {
-    const parsed = JSON.parse(content) as ProfileMeta;
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 function withTimeout<T>(promise: Promise<T>, ms: number) {
   return Promise.race([
     promise,
@@ -210,9 +191,9 @@ export function NostrEventView({ rawId }: { rawId: string }) {
             pool.get(relayList, { kinds: [0], authors: [event.pubkey] }),
             REQUEST_TIMEOUT_MS
           );
-          authorProfile = parseProfile(profileEvent?.content);
+          authorProfile = parseProfileContent(profileEvent?.content);
         } else {
-          authorProfile = parseProfile(event.content);
+          authorProfile = parseProfileContent(event.content);
         }
 
         if (cancelled) return;
@@ -245,7 +226,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
   const event = state.event;
   const authorProfile = state.authorProfile;
-  const title = event ? `Kind ${event.kind}` : 'Nostr Event';
+  const title = event ? getEventKindLabel(event.kind) : 'Nostr Event';
+  const rendered = event ? renderEvent(event) : null;
 
   return (
     <div className="nostr-event-page">
@@ -315,23 +297,9 @@ export function NostrEventView({ rawId }: { rawId: string }) {
             </div>
 
             <div className="nostr-event-content">
-              {authorProfile && (
-                <div className="nostr-profile-card">
-                  {authorProfile.picture && (
-                    <img className="nostr-profile-avatar" src={authorProfile.picture} alt="" />
-                  )}
-                  <div className="nostr-profile-meta">
-                    <div className="nostr-profile-name">
-                      {authorProfile.display_name || authorProfile.name || 'Unnamed profile'}
-                    </div>
-                    {authorProfile.nip05 && <div className="nostr-profile-nip05">{authorProfile.nip05}</div>}
-                    {authorProfile.about && <div className="nostr-profile-about">{authorProfile.about}</div>}
-                  </div>
-                </div>
-              )}
-              {event.kind === 0 && authorProfile ? null : (
-                <div className="nostr-event-text">{event.content || 'No content for this event.'}</div>
-              )}
+              {authorProfile && event.kind !== 0 && <ProfileCard profile={authorProfile} />}
+              {rendered?.body}
+              {rendered?.footer}
             </div>
 
             <div className="nostr-event-tags">
