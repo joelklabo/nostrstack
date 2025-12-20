@@ -1,0 +1,5 @@
+# Ignore generated docs screenshots.
+*.png
+
+# If a screenshot should be tracked, add it explicitly:
+#   git add -f docs/screenshots/<name>.png
