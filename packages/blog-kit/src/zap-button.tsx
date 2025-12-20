@@ -262,6 +262,7 @@ export function ZapButton({
       const signedZapRequest = await signEvent(zapRequestEventTemplate);
       
       // 3. Get invoice from callback URL
+      setZapState('pending-invoice');
       const invoiceData = await getLnurlpInvoice(metadata.callback, amountSats * 1000, metadata.metadata, signedZapRequest);
       const pr = invoiceData.pr;
       setInvoice(pr);

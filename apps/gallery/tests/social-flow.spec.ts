@@ -54,6 +54,7 @@ test.describe('Social App Flow', () => {
       await zapBtn.waitFor({ state: 'visible', timeout: 5000 });
       await zapBtn.click();
       await expect(page.locator('.zap-modal')).toBeVisible();
+      await page.getByText('Requesting invoice...').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
       await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
       // Close modal (might be CANCEL or CLOSE if error)
       await page.getByRole('button', { name: /CLOSE/ }).first().click();
