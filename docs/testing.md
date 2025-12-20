@@ -3,6 +3,7 @@
 ## Regtest/local
 - Run API unit + Playwright: `NODE_OPTIONS=--no-experimental-strip-types pnpm --filter api test` and `pnpm --filter api test:e2e`.
 - Pay-to-act suite (SQLite): `NODE_OPTIONS=--no-experimental-strip-types DATABASE_URL=file:./test-e2e.db pnpm --filter api test:e2e:pay`.
+- Regtest zap UI: start API with `ENABLE_REGTEST_PAY=true` and gallery with `VITE_ENABLE_REGTEST_PAY=true`, then run `pnpm qa:regtest-demo`.
 
 ## Mutinynet (staging LNbits)
 - Env needed:
@@ -18,3 +19,4 @@
 
 ## Gallery real-payments
 - Set `VITE_API_BASE_URL` to the API origin and `VITE_NOSTRSTACK_HOST` to the embed host (e.g., `lnbits-stg-west...`). Real invoices are always enabled.
+- For regtest zap payments, also set `VITE_ENABLE_REGTEST_PAY=true` and ensure the API has `ENABLE_REGTEST_PAY=true`.

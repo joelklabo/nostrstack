@@ -27,6 +27,15 @@ pnpm dev
 
 Runs at `http://localhost:4173`. Connects to `http://localhost:3001` (API) by default.
 
+### Regtest zaps (local)
+
+To pay zap invoices using the regtest wallet:
+
+1) Start the regtest stack and API (see `docs/local-demo.md`).
+2) Ensure the API has `ENABLE_REGTEST_PAY=true`.
+3) Run the gallery with `VITE_ENABLE_REGTEST_PAY=true` and `VITE_API_BASE_URL` pointing to the API.
+4) Click **ZAP** and choose **PAY_REGTEST** in the modal.
+
 ### Build
 
 ```bash
@@ -49,6 +58,7 @@ pnpm exec playwright test tests/social-flow.spec.ts
 
 - `VITE_API_BASE_URL`: URL of the NostrStack API (default: `http://localhost:3001`).
 - `VITE_NOSTRSTACK_HOST`: Hostname for display/logic (default: `localhost`).
+- `VITE_ENABLE_REGTEST_PAY`: Set to `true` to show the regtest pay action in the zap modal (requires API regtest pay enabled).
 
 ## Visuals
 

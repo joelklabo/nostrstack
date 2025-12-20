@@ -24,6 +24,8 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
    LN_BITS_URL=http://localhost:15001 \
    LN_BITS_API_KEY=<ADMINKY> \
    LIGHTNING_PROVIDER=lnbits \
+   ENABLE_REGTEST_PAY=true \
+   ENABLE_REGTEST_FUND=true \
    PUBLIC_ORIGIN=http://localhost:3001 \
    pnpm dev
    ```
@@ -32,10 +34,15 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
    cd apps/gallery
    VITE_API_BASE_URL=http://localhost:3001 \
    VITE_NOSTRSTACK_HOST=localhost:3001 \
+   VITE_ENABLE_REGTEST_PAY=true \
    pnpm dev -- --host --port 4173
    ```
    Open http://127.0.0.1:4173 and try tips/paywall/comments; invoices settle over the local regtest channel.
-4) **(Optional) Pay an invoice from the payer node**
+4) **Pay a zap via regtest**
+   - Click **ZAP** on a post to open the modal.
+   - Use **PAY_REGTEST** to pay the invoice with the local payer node.
+   - If the wallet is empty, use **Fund regtest wallet** or call `curl -X POST http://localhost:3001/regtest/fund`.
+5) **(Optional) Pay an invoice from the payer node**
    ```sh
    docker compose -f deploy/regtest/docker-compose.yml exec \
      lnd-payer lncli --network=regtest --lnddir=/data \
@@ -43,7 +50,7 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
      --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon \
      --tlscertpath=/data/tls.cert payinvoice <BOLT11>
    ```
-5) **Stop everything**
+6) **Stop everything**
    ```sh
    ./scripts/regtest-lndbits.sh down
    ```
