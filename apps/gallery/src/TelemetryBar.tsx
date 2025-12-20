@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { type PaymentFailureReason, type PaymentMethod, type PaymentTelemetryEvent,subscribeTelemetry } from '@nostrstack/blog-kit';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
 
@@ -27,6 +28,54 @@ interface LogEntry {
   ts: number;
   message: string;
   level: 'info' | 'warn' | 'error';
+}
+
+function formatTelemetryMethod(method?: PaymentMethod): string {
+  if (!method) return '';
+  const labels: Record<PaymentMethod, string> = {
+    nwc: 'NWC',
+    webln: 'WebLN',
+    manual: 'Manual',
+    regtest: 'Regtest'
+  };
+  return labels[method];
+}
+
+function formatTelemetryReason(reason?: PaymentFailureReason): string {
+  if (!reason) return '';
+  switch (reason) {
+    case 'lnurl':
+      return 'LNURL';
+    case 'validation':
+      return 'Validation';
+    case 'unknown':
+      return 'Unknown';
+    default:
+      return formatTelemetryMethod(reason as PaymentMethod) || String(reason);
+  }
+}
+
+function formatPaymentTelemetry(event: PaymentTelemetryEvent): LogEntry {
+  const flowLabel = event.flow === 'send-sats' ? 'Send sats' : 'Zap';
+  const amountLabel = typeof event.amountSats === 'number' ? ` (${event.amountSats} sats)` : '';
+  const methodLabel = formatTelemetryMethod(event.method);
+  const reasonLabel = formatTelemetryReason(event.reason);
+  const methodSuffix = methodLabel ? ` via ${methodLabel}` : '';
+  const reasonSuffix = reasonLabel && reasonLabel !== methodLabel ? ` (${reasonLabel})` : '';
+  const ts = event.timestamp;
+
+  switch (event.stage) {
+    case 'invoice_requested':
+      return { ts, level: 'info', message: `${flowLabel}: invoice requested${amountLabel}` };
+    case 'invoice_ready':
+      return { ts, level: 'info', message: `${flowLabel}: invoice ready${amountLabel}` };
+    case 'payment_sent':
+      return { ts, level: 'info', message: `${flowLabel}: payment sent${amountLabel}${methodSuffix}` };
+    case 'payment_failed':
+      return { ts, level: 'error', message: `${flowLabel}: payment failed${amountLabel}${methodSuffix}${reasonSuffix}` };
+    default:
+      return { ts, level: 'info', message: `${flowLabel}: event` };
+  }
 }
 
 function resolveTelemetryWs(baseURL?: string): string | null {
@@ -74,11 +123,17 @@ export function TelemetryBar() {
   } | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
+  const appendLog = useCallback((entry: LogEntry, limit = 50) => {
+    setLogs(prev => {
+      const next = [...prev, entry];
+      return next.slice(-limit);
+    });
+  }, []);
 
   useEffect(() => {
     const telemetryWsUrl = resolveTelemetryWs(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001');
     if (!telemetryWsUrl) {
-      setLogs([{ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' }]);
+      appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' });
       return;
     }
     let cancelled = false;
@@ -86,12 +141,6 @@ export function TelemetryBar() {
       if (cancelled) return;
       const ws = new WebSocket(telemetryWsUrl);
       wsRef.current = ws;
-      const appendLog = (entry: LogEntry, limit?: number) => {
-        setLogs(prev => {
-          const next = [...prev, entry];
-          return typeof limit === 'number' ? next.slice(-limit) : next;
-        });
-      };
 
       ws.onopen = () => {
         appendLog({ ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' });
@@ -147,7 +196,14 @@ export function TelemetryBar() {
       safeClose(wsRef.current);
       wsRef.current = null;
     };
-  }, []);
+  }, [appendLog]);
+
+  useEffect(() => {
+    return subscribeTelemetry((event) => {
+      if (event.type !== 'payment') return;
+      appendLog(formatPaymentTelemetry(event));
+    });
+  }, [appendLog]);
 
   return (
     <div className="telemetry-sidebar">

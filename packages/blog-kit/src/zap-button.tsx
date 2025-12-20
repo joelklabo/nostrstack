@@ -16,6 +16,7 @@ import {
   parseLnurlPayMetadata,
   sanitizeSuccessAction} from './lnurl';
 import { useNwcPayment } from './nwc-pay';
+import { emitTelemetryEvent, type PaymentFailureReason, type PaymentMethod, type PaymentStage } from './telemetry';
 
 interface WebLN {
   enable: () => Promise<void>;
@@ -94,6 +95,13 @@ export function ZapButton({
   const copyTimerRef = useRef<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const amountSnapshotRef = useRef(amountSats);
+  const telemetryStateRef = useRef({
+    invoiceRequested: false,
+    invoiceReady: false,
+    paymentSuccess: false,
+    paymentFailures: new Set<string>()
+  });
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
@@ -127,6 +135,45 @@ export function ZapButton({
   }, [relays, cfg.relays]);
 
   const eventLightningAddress = useMemo(() => extractLightningAddressFromEvent(event), [event]);
+
+  const resetTelemetry = useCallback(() => {
+    telemetryStateRef.current = {
+      invoiceRequested: false,
+      invoiceReady: false,
+      paymentSuccess: false,
+      paymentFailures: new Set<string>()
+    };
+  }, []);
+
+  const emitPaymentTelemetry = useCallback((
+    stage: PaymentStage,
+    options: { method?: PaymentMethod; reason?: PaymentFailureReason } = {}
+  ) => {
+    const state = telemetryStateRef.current;
+    if (stage === 'invoice_requested') {
+      if (state.invoiceRequested) return;
+      state.invoiceRequested = true;
+    } else if (stage === 'invoice_ready') {
+      if (state.invoiceReady) return;
+      state.invoiceReady = true;
+    } else if (stage === 'payment_sent') {
+      if (state.paymentSuccess) return;
+      state.paymentSuccess = true;
+    } else if (stage === 'payment_failed') {
+      if (state.paymentSuccess) return;
+      const failureKey = options.method ?? options.reason ?? 'unknown';
+      if (state.paymentFailures.has(failureKey)) return;
+      state.paymentFailures.add(failureKey);
+    }
+    emitTelemetryEvent({
+      type: 'payment',
+      flow: 'zap',
+      stage,
+      method: options.method,
+      reason: options.reason,
+      amountSats: amountSnapshotRef.current
+    });
+  }, []);
 
   const resolveLightningAddress = useCallback(async () => {
     const globalOverride = typeof window !== 'undefined'
@@ -185,6 +232,9 @@ export function ZapButton({
     setStatusUrl(null);
     resetNwcPayment();
     setCopyStatus('idle');
+    amountSnapshotRef.current = amountSats;
+    resetTelemetry();
+    emitPaymentTelemetry('invoice_requested');
 
     try {
       const resolvedAddress = await resolveLightningAddress();
@@ -267,10 +317,15 @@ export function ZapButton({
       setSuccessAction(nextSuccessAction);
       setStatusUrl(nextStatusUrl);
       setZapState('waiting-payment');
+      emitPaymentTelemetry('invoice_ready');
 
       if (nwcEnabled) {
         const paidViaNwc = await payInvoiceViaNwc(pr, amountMsat);
-        if (paidViaNwc) return;
+        if (paidViaNwc) {
+          emitPaymentTelemetry('payment_sent', { method: 'nwc' });
+          return;
+        }
+        emitPaymentTelemetry('payment_failed', { method: 'nwc', reason: 'nwc' });
       }
 
       // Attempt WebLN payment
@@ -278,9 +333,11 @@ export function ZapButton({
         try {
           await window.webln.enable();
           await window.webln.sendPayment(pr);
+          emitPaymentTelemetry('payment_sent', { method: 'webln' });
           setZapState('paid');
         } catch (weblnErr) {
           console.warn('WebLN payment failed, falling back to QR:', weblnErr);
+          emitPaymentTelemetry('payment_failed', { method: 'webln', reason: 'webln' });
         }
       }
 
@@ -293,6 +350,7 @@ export function ZapButton({
     } catch (err: unknown) {
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setZapState('error');
+      emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
     }
   }, [
     pubkey,
@@ -306,7 +364,9 @@ export function ZapButton({
     payInvoiceViaNwc,
     nwcEnabled,
     resolvedApiBase,
-    resetNwcPayment
+    resetNwcPayment,
+    emitPaymentTelemetry,
+    resetTelemetry
   ]);
 
   const handleCopyInvoice = useCallback(async () => {
@@ -352,15 +412,20 @@ export function ZapButton({
       if (!res.ok) {
         throw new Error(text || `HTTP ${res.status}`);
       }
+      emitPaymentTelemetry('payment_sent', { method: 'regtest' });
       setZapState('paid');
     } catch (err: unknown) {
       setRegtestError(err instanceof Error ? err.message : 'Regtest pay failed.');
+      emitPaymentTelemetry('payment_failed', { method: 'regtest', reason: 'regtest' });
     } finally {
       setRegtestPaying(false);
     }
-  }, [invoice, regtestEnabled, apiBaseConfig.isConfigured, resolvedApiBase]);
+  }, [invoice, regtestEnabled, apiBaseConfig.isConfigured, resolvedApiBase, emitPaymentTelemetry]);
 
   const handleCloseZap = useCallback(() => {
+    if (zapState === 'waiting-payment' && invoice) {
+      emitPaymentTelemetry('payment_failed', { method: 'manual', reason: 'manual' });
+    }
     setZapState('idle');
     setErrorMessage(null);
     setRegtestError(null);
@@ -378,7 +443,7 @@ export function ZapButton({
       copyTimerRef.current = null;
     }
     triggerRef.current?.focus();
-  }, [resetNwcPayment]);
+  }, [resetNwcPayment, zapState, invoice, emitPaymentTelemetry]);
 
   useEffect(() => {
     return () => {
@@ -456,6 +521,7 @@ export function ZapButton({
         const data = (await res.json()) as { status?: string };
         if (!active) return;
         if (isPaidStatus(data.status)) {
+          emitPaymentTelemetry('payment_sent', { method: 'manual' });
           setZapState('paid');
           return;
         }

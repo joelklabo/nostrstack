@@ -18,6 +18,7 @@ import {
   sanitizeSuccessAction
 } from './lnurl';
 import { useNwcPayment } from './nwc-pay';
+import { emitTelemetryEvent, type PaymentFailureReason, type PaymentMethod, type PaymentStage } from './telemetry';
 
 interface WebLN {
   enable: () => Promise<void>;
@@ -81,6 +82,13 @@ export function SendSats({
   const copyTimerRef = useRef<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const amountSnapshotRef = useRef(defaultAmountSats);
+  const telemetryStateRef = useRef({
+    invoiceRequested: false,
+    invoiceReady: false,
+    paymentSuccess: false,
+    paymentFailures: new Set<string>()
+  });
 
   const apiBaseRaw = apiBase ?? cfg.apiBase ?? cfg.baseUrl ?? '';
   const apiBaseConfig = useMemo(
@@ -114,6 +122,45 @@ export function SendSats({
   const normalizedAddress = useMemo(() => normalizeLightningAddress(lightningAddress ?? null), [lightningAddress]);
   const recipientNpub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
 
+  const resetTelemetry = useCallback(() => {
+    telemetryStateRef.current = {
+      invoiceRequested: false,
+      invoiceReady: false,
+      paymentSuccess: false,
+      paymentFailures: new Set<string>()
+    };
+  }, []);
+
+  const emitPaymentTelemetry = useCallback((
+    stage: PaymentStage,
+    options: { method?: PaymentMethod; reason?: PaymentFailureReason } = {}
+  ) => {
+    const state = telemetryStateRef.current;
+    if (stage === 'invoice_requested') {
+      if (state.invoiceRequested) return;
+      state.invoiceRequested = true;
+    } else if (stage === 'invoice_ready') {
+      if (state.invoiceReady) return;
+      state.invoiceReady = true;
+    } else if (stage === 'payment_sent') {
+      if (state.paymentSuccess) return;
+      state.paymentSuccess = true;
+    } else if (stage === 'payment_failed') {
+      if (state.paymentSuccess) return;
+      const failureKey = options.method ?? options.reason ?? 'unknown';
+      if (state.paymentFailures.has(failureKey)) return;
+      state.paymentFailures.add(failureKey);
+    }
+    emitTelemetryEvent({
+      type: 'payment',
+      flow: 'send-sats',
+      stage,
+      method: options.method,
+      reason: options.reason,
+      amountSats: amountSnapshotRef.current
+    });
+  }, []);
+
   const handleSend = useCallback(async () => {
     if (!senderPubkey) {
       setErrorMessage('ERROR: You must be logged in to send sats.');
@@ -129,6 +176,9 @@ export function SendSats({
     setRegtestError(null);
     resetNwcPayment();
     setCopyStatus('idle');
+    amountSnapshotRef.current = amountSats;
+    resetTelemetry();
+    emitPaymentTelemetry('invoice_requested');
 
     try {
       if (!normalizedAddress) {
@@ -211,22 +261,27 @@ export function SendSats({
       setSuccessAction(nextSuccessAction);
       setStatusUrl(nextStatusUrl);
       setSendState('waiting-payment');
+      emitPaymentTelemetry('invoice_ready');
 
       if (nwcEnabled) {
         const paidViaNwc = await payInvoiceViaNwc(pr, amountMsat);
         if (paidViaNwc) {
+          emitPaymentTelemetry('payment_sent', { method: 'nwc' });
           setSendState('paid');
           return;
         }
+        emitPaymentTelemetry('payment_failed', { method: 'nwc', reason: 'nwc' });
       }
 
       if (typeof window !== 'undefined' && window.webln) {
         try {
           await window.webln.enable();
           await window.webln.sendPayment(pr);
+          emitPaymentTelemetry('payment_sent', { method: 'webln' });
           setSendState('paid');
         } catch (weblnErr) {
           console.warn('WebLN payment failed, falling back to QR:', weblnErr);
+          emitPaymentTelemetry('payment_failed', { method: 'webln', reason: 'webln' });
         }
       }
 
@@ -237,6 +292,7 @@ export function SendSats({
     } catch (err: unknown) {
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setSendState('error');
+      emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
     }
   }, [
     senderPubkey,
@@ -249,7 +305,9 @@ export function SendSats({
     resetNwcPayment,
     nwcEnabled,
     payInvoiceViaNwc,
-    resolvedApiBase
+    resolvedApiBase,
+    emitPaymentTelemetry,
+    resetTelemetry
   ]);
 
   const handleCopyInvoice = useCallback(async () => {
@@ -295,15 +353,20 @@ export function SendSats({
       if (!res.ok) {
         throw new Error(text || `HTTP ${res.status}`);
       }
+      emitPaymentTelemetry('payment_sent', { method: 'regtest' });
       setSendState('paid');
     } catch (err: unknown) {
       setRegtestError(err instanceof Error ? err.message : 'Regtest pay failed.');
+      emitPaymentTelemetry('payment_failed', { method: 'regtest', reason: 'regtest' });
     } finally {
       setRegtestPaying(false);
     }
-  }, [invoice, regtestEnabled, apiBaseConfig.isConfigured, resolvedApiBase]);
+  }, [invoice, regtestEnabled, apiBaseConfig.isConfigured, resolvedApiBase, emitPaymentTelemetry]);
 
   const handleClose = useCallback(() => {
+    if (sendState === 'waiting-payment' && invoice) {
+      emitPaymentTelemetry('payment_failed', { method: 'manual', reason: 'manual' });
+    }
     setSendState('idle');
     setErrorMessage(null);
     setRegtestError(null);
@@ -321,7 +384,7 @@ export function SendSats({
       copyTimerRef.current = null;
     }
     triggerRef.current?.focus();
-  }, [resetNwcPayment]);
+  }, [resetNwcPayment, sendState, invoice, emitPaymentTelemetry]);
 
   useEffect(() => {
     return () => {
@@ -399,6 +462,7 @@ export function SendSats({
         const data = (await res.json()) as { status?: string };
         if (!active) return;
         if (isPaidStatus(data.status)) {
+          emitPaymentTelemetry('payment_sent', { method: 'manual' });
           setSendState('paid');
           return;
         }
