@@ -11,6 +11,7 @@ import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
 import { NostrEventView } from './NostrEventView';
 import { NotificationsView } from './NotificationsView';
+import { OffersView } from './OffersView';
 import { ProfileView } from './ProfileView';
 import { RelaysView } from './RelaysView';
 import { SettingsView } from './SettingsView';
@@ -18,7 +19,7 @@ import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 import { resolveApiBase } from './utils/api-base';
 
-type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
+type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -90,6 +91,7 @@ function AppShell() {
         {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
         {currentView === 'notifications' && <NotificationsView />}
         {currentView === 'relays' && <RelaysView />}
+        {currentView === 'offers' && <OffersView />}
         {currentView === 'settings' && (
           <SettingsView 
             theme={theme} 

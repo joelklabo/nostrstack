@@ -124,7 +124,7 @@ export function FeedView() {
   useEffect(() => {
     const pool = new SimplePool();
 
-    pool.subscribeMany(
+    const sub = pool.subscribeMany(
       RELAYS,
       { kinds: [1], limit: 20 },
       {
@@ -142,11 +142,17 @@ export function FeedView() {
     );
 
     return () => {
-      try {
-        pool.close(RELAYS);
-      } catch {
-        // Ignore websocket close errors during teardown.
-      }
+      void Promise.resolve(sub.close('unmount'))
+        .then(() => {
+          try {
+            pool.close(RELAYS);
+          } catch {
+            // Ignore websocket close errors during teardown.
+          }
+        })
+        .catch(() => {
+          // Ignore close failures during teardown.
+        });
     };
   }, []);
 

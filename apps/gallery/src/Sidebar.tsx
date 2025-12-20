@@ -7,8 +7,8 @@ import { resolveApiBase } from './utils/api-base';
 import { WalletView } from './WalletView';
 
 interface SidebarProps {
-  currentView: 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
-  setCurrentView: (view: 'feed' | 'profile' | 'notifications' | 'relays' | 'settings') => void;
+  currentView: 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
+  setCurrentView: (view: 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings') => void;
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
@@ -25,6 +25,8 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const apiBase = apiBaseConfig.baseUrl;
   const regtestFundEnabled =
     String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  const bolt12Enabled =
+    String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
   const showRegtestActions = regtestFundEnabled;
   const withdrawEnabled =
     String(import.meta.env.VITE_ENABLE_LNURL_WITHDRAW ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
@@ -102,6 +104,14 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         >
           Relays
         </button>
+        {bolt12Enabled && (
+          <button
+            className={`nav-item ${currentView === 'offers' ? 'active' : ''}`}
+            onClick={() => setCurrentView('offers')}
+          >
+            Offers
+          </button>
+        )}
         <button 
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
           onClick={() => setCurrentView('settings')}
