@@ -41,6 +41,8 @@ describe('lnurl-auth routes', () => {
     const sig = secp256k1.sign(Buffer.from(body.k1, 'hex'), privkey).toCompactRawBytes();
     const sigHex = Buffer.from(sig).toString('hex');
     const keyHex = Buffer.from(pubkey).toString('hex');
+    const point = secp256k1.ProjectivePoint.fromHex(pubkey);
+    const xOnly = Buffer.from(point.toRawBytes(false).slice(1, 33)).toString('hex');
 
     const cb = await server.inject({
       url: `/api/lnurl-auth/callback?tag=login&k1=${body.k1}&sig=${sigHex}&key=${keyHex}`
@@ -52,7 +54,7 @@ describe('lnurl-auth routes', () => {
     expect(statusRes.statusCode).toBe(200);
     const statusBody = statusRes.json() as { status: string; linkingKey: string | null };
     expect(statusBody.status).toBe('VERIFIED');
-    expect(statusBody.linkingKey).toBe(keyHex);
+    expect(statusBody.linkingKey).toBe(xOnly);
   });
 
   it('rejects invalid signatures', async () => {

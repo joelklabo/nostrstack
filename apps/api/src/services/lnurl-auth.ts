@@ -13,6 +13,22 @@ function isHex(value: string, length?: number) {
   return value.length % 2 === 0;
 }
 
+function normalizeLinkingKey(key: string): string | null {
+  const clean = key.toLowerCase();
+  if (!isHex(clean)) return null;
+  if (clean.length === 64) return clean;
+  if (clean.length === 66 || clean.length === 130) {
+    try {
+      const point = secp256k1.ProjectivePoint.fromHex(clean);
+      const raw = point.toRawBytes(false);
+      return Buffer.from(raw.slice(1, 33)).toString('hex');
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export function encodeLnurl(url: string): string {
   const normalized = new URL(url).toString();
   const words = bech32.toWords(new TextEncoder().encode(normalized));
@@ -76,8 +92,12 @@ export async function verifyLnurlAuthSession(
   if (!verifySignature(params.k1, params.sig, params.key)) {
     return { ok: false as const, reason: 'invalid_signature' };
   }
+  const normalizedKey = normalizeLinkingKey(params.key);
+  if (!normalizedKey) {
+    return { ok: false as const, reason: 'invalid_key' };
+  }
   if (session.status === 'VERIFIED') {
-    if (session.linkingKey === params.key) {
+    if (session.linkingKey === normalizedKey) {
       return { ok: true as const, session };
     }
     return { ok: false as const, reason: 'already_used' };
@@ -89,7 +109,7 @@ export async function verifyLnurlAuthSession(
     where: { k1: params.k1 },
     data: {
       status: 'VERIFIED',
-      linkingKey: params.key
+      linkingKey: normalizedKey
     }
   });
   return { ok: true as const, session: updated };
