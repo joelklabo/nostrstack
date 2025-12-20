@@ -39,7 +39,11 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
       return reply.code(404).send({ ok: false, error: 'regtest_pay_disabled' });
     }
     const { invoice } = request.body as { invoice: string };
-    if (!invoice || invoice.length < 10) return reply.code(400).send({ ok: false, error: 'invalid_invoice' });
+    if (!invoice || invoice.length < 10) {
+      request.log.warn({ invoiceLength: invoice?.length ?? 0 }, 'regtest pay invalid invoice');
+      return reply.code(400).send({ ok: false, error: 'invalid_invoice' });
+    }
+    request.log.info({ invoicePrefix: invoice.slice(0, 12) }, 'regtest pay requested');
 
     // Compose file and CWD from server config/env
     const composeFile = app.config?.REGTEST_COMPOSE ?? path.resolve(process.cwd(), '..', '..', 'deploy', 'regtest', 'docker-compose.yml');

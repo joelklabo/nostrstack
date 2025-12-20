@@ -227,15 +227,33 @@ export function ZapButton({
       const lnurlp = resolvedAddress.includes('@')
         ? `https://${resolvedAddress.split('@')[1]}/.well-known/lnurlp/${resolvedAddress.split('@')[0]}`
         : resolvedAddress;
-      const metadata = await getLnurlpMetadata(lnurlp);
+      const lnurlMetadata = await getLnurlpMetadata(lnurlp);
+      if (!lnurlMetadata || typeof lnurlMetadata !== 'object') {
+        throw new Error('LNURL metadata is invalid.');
+      }
 
-      if (metadata.tag !== 'payRequest') {
+      if (lnurlMetadata.tag !== 'payRequest') {
         throw new Error('LNURL does not support payRequest (NIP-57).');
+      }
+      const minSendable = Number(lnurlMetadata.minSendable);
+      const maxSendable = Number(lnurlMetadata.maxSendable);
+      if (!Number.isFinite(minSendable) || !Number.isFinite(maxSendable)) {
+        throw new Error('LNURL metadata missing sendable limits.');
+      }
+      const amountMsat = amountSats * 1000;
+      if (amountMsat < minSendable || amountMsat > maxSendable) {
+        throw new Error(`Zap amount must be between ${Math.ceil(minSendable / 1000)} and ${Math.floor(maxSendable / 1000)} sats.`);
+      }
+      if (typeof lnurlMetadata.callback !== 'string' || !lnurlMetadata.callback) {
+        throw new Error('LNURL metadata missing callback URL.');
+      }
+      if (typeof lnurlMetadata.metadata !== 'string' || !lnurlMetadata.metadata) {
+        throw new Error('LNURL metadata missing metadata string.');
       }
 
       // 2. Create a NIP-57 Zap Request Event
-      const lnurlTag = metadata.encoded
-        ? String(metadata.encoded).toUpperCase()
+      const lnurlTag = lnurlMetadata.encoded
+        ? String(lnurlMetadata.encoded).toUpperCase()
         : encodeLnurl(lnurlp) ?? resolvedAddress;
 
       const zapRequestEventTemplate: EventTemplate = {
@@ -243,7 +261,7 @@ export function ZapButton({
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['relays', ...relayTargets], // Global relays or specific ones
-          ['amount', String(amountSats * 1000)], // msat
+          ['amount', String(amountMsat)], // msat
           ['lnurl', lnurlTag], // NIP-57 encoded LNURL
           ['p', authorPubkey],
           ['e', event.id],
@@ -257,7 +275,12 @@ export function ZapButton({
       
       // 3. Get invoice from callback URL
       setZapState('pending-invoice');
-      const invoiceData = await getLnurlpInvoice(metadata.callback, amountSats * 1000, metadata.metadata, signedZapRequest);
+      const invoiceData = await getLnurlpInvoice(
+        lnurlMetadata.callback,
+        amountMsat,
+        lnurlMetadata.metadata,
+        signedZapRequest
+      );
       const pr = invoiceData.pr;
       setInvoice(pr);
       setZapState('waiting-payment');
