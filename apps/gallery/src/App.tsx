@@ -18,6 +18,7 @@ import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 import { resolveApiBase } from './utils/api-base';
+import { resolveProfileRoute } from './utils/navigation';
 
 type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
 
@@ -53,6 +54,15 @@ function AppShell() {
   const [currentView, setCurrentView] = useState<View>('feed');
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
+  const profileRoute = resolveProfileRoute(pathname);
+  const profileRoutePubkey = profileRoute.pubkey;
+  const profileRouteError = profileRoute.error;
+
+  useEffect(() => {
+    if (profileRoutePubkey) {
+      setCurrentView('profile');
+    }
+  }, [profileRoutePubkey]);
 
   useEffect(() => {
     // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
@@ -87,18 +97,29 @@ function AppShell() {
     <div className="social-layout">
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <main className="feed-container">
-        {currentView === 'feed' && <FeedView />}
-        {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
-        {currentView === 'notifications' && <NotificationsView />}
-        {currentView === 'relays' && <RelaysView />}
-        {currentView === 'offers' && <OffersView />}
-        {currentView === 'settings' && (
-          <SettingsView 
-            theme={theme} 
-            setTheme={setTheme} 
-            brandPreset={brandPreset} 
-            setBrandPreset={setBrandPreset} 
-          />
+        {profileRouteError && (
+          <div className="error-msg" style={{ marginBottom: '1rem' }}>
+            Invalid profile id. Showing your current view instead.
+          </div>
+        )}
+        {profileRoutePubkey ? (
+          <ProfileView pubkey={profileRoutePubkey} />
+        ) : (
+          <>
+            {currentView === 'feed' && <FeedView />}
+            {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
+            {currentView === 'notifications' && <NotificationsView />}
+            {currentView === 'relays' && <RelaysView />}
+            {currentView === 'offers' && <OffersView />}
+            {currentView === 'settings' && (
+              <SettingsView
+                theme={theme}
+                setTheme={setTheme}
+                brandPreset={brandPreset}
+                setBrandPreset={setBrandPreset}
+              />
+            )}
+          </>
         )}
       </main>
       <aside className="telemetry-sidebar">

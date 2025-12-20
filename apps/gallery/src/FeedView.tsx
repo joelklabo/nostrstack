@@ -4,6 +4,7 @@ import { SimplePool } from 'nostr-tools';
 import { useEffect, useRef, useState } from 'react';
 
 import { JsonView } from './ui/JsonView';
+import { ProfileLink } from './ui/ProfileLink';
 
 const RELAYS = [
   'wss://relay.damus.io',
@@ -41,9 +42,16 @@ export function PostItem({
     <article className="post-card">
       <header className="post-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ fontWeight: '600', color: 'var(--color-fg-default)' }} title={post.pubkey}>
-            {post.pubkey.slice(0, 8)}...
-          </div>
+          <ProfileLink
+            pubkey={post.pubkey}
+            label={`${post.pubkey.slice(0, 8)}...`}
+            title={post.pubkey}
+            style={{
+              fontWeight: 600,
+              color: 'var(--color-fg-default)',
+              textDecoration: 'none'
+            }}
+          />
           <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>•</span>
           <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
         </div>
