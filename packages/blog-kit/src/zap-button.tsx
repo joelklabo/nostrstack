@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveApiBase } from './api-base';
 import { useAuth } from './auth';
 import { useNostrstackConfig } from './context';
+import { NwcClient } from './nwc';
 
 interface WebLN {
   enable: () => Promise<void>;
@@ -44,6 +45,7 @@ const RELAYS = [
   'wss://relay.snort.social',
   'wss://nos.lol'
 ];
+const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
 
 function decodeLnurl(value: string): string | null {
   const trimmed = value.trim();
@@ -149,6 +151,8 @@ export function ZapButton({
   const [successAction, setSuccessAction] = useState<LnurlSuccessAction | null>(null);
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
+  const [nwcPayStatus, setNwcPayStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
+  const [nwcPayMessage, setNwcPayMessage] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const timerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
@@ -168,6 +172,9 @@ export function ZapButton({
   const regtestUnavailableReason =
     regtestEnabled && !apiBaseConfig.isConfigured ? 'Regtest pay unavailable (API base not configured).' : null;
   const effectiveRegtestError = regtestError ?? regtestUnavailableReason;
+  const nwcUri = cfg.nwcUri?.trim();
+  const nwcRelays = cfg.nwcRelays;
+  const nwcEnabled = Boolean(nwcUri);
 
   const relayTargets = useMemo(() => {
     const base = relays ?? cfg.relays ?? RELAYS;
@@ -212,6 +219,41 @@ export function ZapButton({
     }
   }, [authorLightningAddress, eventLightningAddress, authorPubkey, relayTargets]);
 
+  const persistNwcPayment = useCallback((payload: { status: 'success' | 'error'; message: string; ts: number }) => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(NWC_PAYMENT_KEY, JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent('nostrstack:nwc-payment', { detail: payload }));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const attemptNwcPayment = useCallback(async (invoice: string, amountMsat: number) => {
+    if (!nwcUri) return false;
+    setNwcPayStatus('paying');
+    setNwcPayMessage('Paying via NWC…');
+    let client: NwcClient | null = null;
+    try {
+      client = new NwcClient({ uri: nwcUri, relays: nwcRelays });
+      await client.payInvoice(invoice, amountMsat);
+      const message = 'NWC payment sent.';
+      setNwcPayStatus('paid');
+      setNwcPayMessage(message);
+      persistNwcPayment({ status: 'success', message, ts: Date.now() });
+      setZapState('paid');
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'NWC payment failed.';
+      setNwcPayStatus('error');
+      setNwcPayMessage(message);
+      persistNwcPayment({ status: 'error', message, ts: Date.now() });
+      return false;
+    } finally {
+      client?.close();
+    }
+  }, [nwcRelays, nwcUri, persistNwcPayment]);
+
   const handleZap = useCallback(async () => {
     if (!pubkey) {
       setErrorMessage('ERROR: You must be logged in to send a zap.');
@@ -224,6 +266,8 @@ export function ZapButton({
     setRegtestError(null);
     setInvoice(null);
     setSuccessAction(null);
+    setNwcPayStatus('idle');
+    setNwcPayMessage(null);
     setCopyStatus('idle');
 
     try {
@@ -301,6 +345,11 @@ export function ZapButton({
       setSuccessAction(nextSuccessAction);
       setZapState('waiting-payment');
 
+      if (nwcEnabled) {
+        const paidViaNwc = await attemptNwcPayment(pr, amountMsat);
+        if (paidViaNwc) return;
+      }
+
       // Attempt WebLN payment
       if (typeof window !== 'undefined' && window.webln) {
         try {
@@ -322,7 +371,18 @@ export function ZapButton({
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setZapState('error');
     }
-  }, [pubkey, signEvent, resolveLightningAddress, authorPubkey, event, amountSats, message, relayTargets]);
+  }, [
+    pubkey,
+    signEvent,
+    resolveLightningAddress,
+    authorPubkey,
+    event,
+    amountSats,
+    message,
+    relayTargets,
+    attemptNwcPayment,
+    nwcEnabled
+  ]);
 
   const handleCopyInvoice = useCallback(async () => {
     if (!invoice) return;
@@ -381,6 +441,8 @@ export function ZapButton({
     setRegtestError(null);
     setInvoice(null);
     setSuccessAction(null);
+    setNwcPayStatus('idle');
+    setNwcPayMessage(null);
     setCopyStatus('idle');
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
@@ -478,6 +540,17 @@ export function ZapButton({
     }
   }, [zapState, authorNpub, invoice, errorMessage]);
 
+  const nwcStatusDisplay = useMemo(() => {
+    if (nwcPayStatus === 'idle') return null;
+    if (nwcPayStatus === 'paying') {
+      return { text: nwcPayMessage ?? 'Paying via NWC…', tone: 'neutral', spinner: true };
+    }
+    if (nwcPayStatus === 'paid') {
+      return { text: nwcPayMessage ?? 'NWC payment sent.', tone: 'success', spinner: false };
+    }
+    return { text: nwcPayMessage ?? 'NWC payment failed.', tone: 'error', spinner: false };
+  }, [nwcPayStatus, nwcPayMessage]);
+
   const successActionDisplay = useMemo(() => {
     if (!successAction) return null;
     const tag = successAction.tag?.toLowerCase();
@@ -546,6 +619,20 @@ export function ZapButton({
                 {statusConfig.spinner && <span className="zap-spinner" aria-hidden="true" />}
                 <span>{statusConfig.text}</span>
               </div>
+              {nwcStatusDisplay && (
+                <div
+                  className={`zap-status ${
+                    nwcStatusDisplay.tone === 'success'
+                      ? 'zap-status--success'
+                      : nwcStatusDisplay.tone === 'error'
+                        ? 'zap-status--error'
+                        : ''
+                  }`}
+                >
+                  {nwcStatusDisplay.spinner && <span className="zap-spinner" aria-hidden="true" />}
+                  <span>{nwcStatusDisplay.text}</span>
+                </div>
+              )}
               {effectiveRegtestError && <div className="zap-status zap-status--error">{effectiveRegtestError}</div>}
 
               {showInvoice && invoice && (

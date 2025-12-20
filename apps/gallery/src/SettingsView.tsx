@@ -1,7 +1,31 @@
+import './styles/nwc.css';
+
+import { NwcClient } from '@nostrstack/blog-kit';
 import { type NostrstackBrandPreset } from '@nostrstack/embed';
 import { useEffect, useMemo, useState } from 'react';
 
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
+const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
+
+type NwcLastPayment = {
+  status: 'success' | 'error';
+  message: string;
+  ts: number;
+};
+
+function readLastPayment(): NwcLastPayment | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(NWC_PAYMENT_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as NwcLastPayment;
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (!parsed.message || !parsed.ts || !parsed.status) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 interface SettingsViewProps {
   theme: 'light' | 'dark';
@@ -14,7 +38,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   const [nwcUri, setNwcUri] = useState('');
   const [nwcRelays, setNwcRelays] = useState('');
   const [persistNwc, setPersistNwc] = useState(false);
-  const [nwcStatus, setNwcStatus] = useState<string | null>(null);
+  const [nwcMessage, setNwcMessage] = useState<string | null>(null);
+  const [nwcCheckStatus, setNwcCheckStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>('idle');
+  const [nwcCheckMessage, setNwcCheckMessage] = useState<string | null>(null);
+  const [nwcBalanceMsat, setNwcBalanceMsat] = useState<number | null>(null);
+  const [nwcLastPayment, setNwcLastPayment] = useState<NwcLastPayment | null>(null);
   const nwcUriTrimmed = nwcUri.trim();
 
   useEffect(() => {
@@ -29,6 +57,24 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     } catch {
       // ignore invalid storage
     }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const refresh = () => {
+      setNwcLastPayment(readLastPayment());
+    };
+    refresh();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === NWC_PAYMENT_KEY) refresh();
+    };
+    const handleCustom = () => refresh();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('nostrstack:nwc-payment', handleCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('nostrstack:nwc-payment', handleCustom as EventListener);
+    };
   }, []);
 
   const nwcUriError = useMemo(() => {
@@ -55,6 +101,35 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     [nwcRelays]
   );
 
+  const hasNwcConfig = Boolean(nwcUriTrimmed);
+
+  const nwcStatusLabel = useMemo(() => {
+    if (!hasNwcConfig) return 'DISCONNECTED';
+    if (nwcCheckStatus === 'checking') return 'CHECKING';
+    if (nwcCheckStatus === 'connected') return 'CONNECTED';
+    if (nwcCheckStatus === 'error') return 'ERROR';
+    return 'CONFIGURED';
+  }, [hasNwcConfig, nwcCheckStatus]);
+
+  const nwcStatusTone = useMemo(() => {
+    if (!hasNwcConfig) return 'neutral';
+    if (nwcCheckStatus === 'connected') return 'success';
+    if (nwcCheckStatus === 'error') return 'error';
+    if (nwcCheckStatus === 'checking') return 'pending';
+    return 'neutral';
+  }, [hasNwcConfig, nwcCheckStatus]);
+
+  const balanceSats = useMemo(() => {
+    if (nwcBalanceMsat === null) return null;
+    return Math.floor(nwcBalanceMsat / 1000);
+  }, [nwcBalanceMsat]);
+
+  useEffect(() => {
+    setNwcCheckStatus('idle');
+    setNwcCheckMessage(null);
+    setNwcBalanceMsat(null);
+  }, [nwcUriTrimmed, nwcRelays]);
+
   const handleSaveNwc = () => {
     if (nwcUriError) return;
     const payload = {
@@ -69,20 +144,54 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       }
       window.dispatchEvent(new CustomEvent('nostrstack:nwc-update', { detail: payload }));
     }
-    setNwcStatus('Saved');
-    window.setTimeout(() => setNwcStatus(null), 1500);
+    setNwcMessage('Saved');
+    window.setTimeout(() => setNwcMessage(null), 1500);
   };
 
   const handleClearNwc = () => {
     setNwcUri('');
     setNwcRelays('');
     setPersistNwc(false);
+    setNwcCheckStatus('idle');
+    setNwcCheckMessage(null);
+    setNwcBalanceMsat(null);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(NWC_STORAGE_KEY);
       window.dispatchEvent(new CustomEvent('nostrstack:nwc-update', { detail: null }));
     }
-    setNwcStatus('Cleared');
-    window.setTimeout(() => setNwcStatus(null), 1500);
+    setNwcMessage('Disconnected');
+    window.setTimeout(() => setNwcMessage(null), 1500);
+  };
+
+  const handleCheckNwc = async () => {
+    if (nwcUriError || !nwcUriTrimmed) {
+      setNwcCheckStatus('error');
+      setNwcCheckMessage(nwcUriError ?? 'Enter a valid NWC URI to connect.');
+      setNwcBalanceMsat(null);
+      return;
+    }
+    setNwcCheckStatus('checking');
+    setNwcCheckMessage('Checking wallet connection…');
+    let client: NwcClient | null = null;
+    try {
+      client = new NwcClient({ uri: nwcUriTrimmed, relays: parsedRelays.length ? parsedRelays : undefined });
+      const result = await client.getBalance();
+      setNwcBalanceMsat(result.balance);
+      setNwcCheckStatus('connected');
+      setNwcCheckMessage('Wallet reachable.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to reach wallet.';
+      setNwcCheckStatus('error');
+      setNwcCheckMessage(message);
+      setNwcBalanceMsat(null);
+    } finally {
+      client?.close();
+    }
+  };
+
+  const handleConnectNwc = async () => {
+    handleSaveNwc();
+    await handleCheckNwc();
   };
 
   return (
@@ -125,10 +234,38 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         </div>
       </div>
 
-      <div className="paywall-container">
-        <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>NWC_CONNECTION</h4>
-        <div style={{ display: 'grid', gap: '0.75rem', maxWidth: '540px' }}>
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--terminal-dim)' }}>
+      <div className="paywall-container nwc-card">
+        <div className="nwc-header">
+          <h4 style={{ color: 'var(--terminal-dim)', marginBottom: 0 }}>NWC_CONNECTION</h4>
+          <span className={`nwc-status-pill ${nwcStatusTone !== 'neutral' ? `is-${nwcStatusTone}` : ''}`}>
+            {nwcStatusLabel}
+          </span>
+        </div>
+        <div className="nwc-status-row">
+          {nwcCheckStatus === 'checking' && <span className="nwc-spinner" aria-hidden="true" />}
+          <span className="nwc-status-text">
+            {nwcCheckMessage ?? (hasNwcConfig ? 'Wallet configured. Connect to verify.' : 'Add a wallet URI to connect.')}
+          </span>
+        </div>
+        {balanceSats !== null && (
+          <div className="nwc-balance">
+            Balance: {balanceSats.toLocaleString()} sats
+            {nwcBalanceMsat !== null && (
+              <span className="nwc-balance-msat">{nwcBalanceMsat.toLocaleString()} msat</span>
+            )}
+          </div>
+        )}
+        {nwcLastPayment && (
+          <div className="nwc-last-payment">
+            <span className={`nwc-last-pill ${nwcLastPayment.status === 'success' ? 'is-success' : 'is-error'}`}>
+              {nwcLastPayment.status === 'success' ? 'LAST_PAYMENT_OK' : 'LAST_PAYMENT_ERROR'}
+            </span>
+            <span className="nwc-last-message">{nwcLastPayment.message}</span>
+            <span className="nwc-last-time">{new Date(nwcLastPayment.ts).toLocaleString()}</span>
+          </div>
+        )}
+        <div className="nwc-form">
+          <label className="nwc-label">
             NWC_URI
             <input
               className="nostrstack-input"
@@ -139,10 +276,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               onChange={(event) => setNwcUri(event.target.value)}
             />
           </label>
-          {nwcUriError && (
-            <span style={{ fontSize: '0.8rem', color: '#b91c1c' }}>{nwcUriError}</span>
-          )}
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--terminal-dim)' }}>
+          <label className="nwc-label">
             RELAYS (comma or space separated)
             <input
               className="nostrstack-input"
@@ -153,24 +287,36 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               onChange={(event) => setNwcRelays(event.target.value)}
             />
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--terminal-dim)' }}>
-            <input
-              type="checkbox"
-              name="nwc-remember"
-              checked={persistNwc}
-              onChange={(event) => setPersistNwc(event.target.checked)}
-            />
-            REMEMBER_ON_THIS_DEVICE
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button className="action-btn" onClick={handleSaveNwc} disabled={Boolean(nwcUriError)}>
-              SAVE_NWC
-            </button>
-            <button className="action-btn" onClick={handleClearNwc}>
-              CLEAR
-            </button>
-            {nwcStatus && <span style={{ fontSize: '0.8rem', color: 'var(--terminal-dim)' }}>{nwcStatus}</span>}
-          </div>
+        </div>
+        {nwcUriError && <div className="nwc-error">{nwcUriError}</div>}
+        <label className="nwc-remember">
+          <input
+            type="checkbox"
+            name="nwc-remember"
+            checked={persistNwc}
+            onChange={(event) => setPersistNwc(event.target.checked)}
+          />
+          REMEMBER_ON_THIS_DEVICE
+        </label>
+        <div className="nwc-actions">
+          <button
+            className="action-btn"
+            onClick={handleConnectNwc}
+            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || nwcCheckStatus === 'checking'}
+          >
+            CONNECT
+          </button>
+          <button
+            className="action-btn"
+            onClick={handleCheckNwc}
+            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || nwcCheckStatus === 'checking'}
+          >
+            CHECK_BALANCE
+          </button>
+          <button className="action-btn" onClick={handleClearNwc} disabled={!hasNwcConfig}>
+            DISCONNECT
+          </button>
+          {nwcMessage && <span className="nwc-message">{nwcMessage}</span>}
         </div>
       </div>
     </div>
