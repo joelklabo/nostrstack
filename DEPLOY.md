@@ -28,6 +28,8 @@ The API is a Node.js application.
    - `PUBLIC_ORIGIN`: The public URL of this API (e.g., `https://api.nostrstack.com`).
    - `NOSTR_SECRET_KEY`: (Optional) nsec for the system bot.
    - `PORT`: Port to listen on (default 3001).
+   - `ENABLE_REGTEST_PAY`: **Dev-only** toggle for `/api/regtest/pay` (default false; keep unset in staging/prod).
+   - `ENABLE_REGTEST_FUND`: **Dev-only** toggle for `/api/regtest/fund` (default false; keep unset in staging/prod).
 
 ## Deploying the Gallery (Frontend)
 

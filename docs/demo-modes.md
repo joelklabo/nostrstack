@@ -3,6 +3,7 @@
 ## Lightning tab
 - Tip & Paywall use animated QR popover (copy, lightning: link, status text).
 - Regtest faucet button calls `/api/regtest/fund` (TS service).
+- Regtest zap pay uses `/api/regtest/pay` and requires `ENABLE_REGTEST_PAY=true` (API) + `VITE_ENABLE_REGTEST_PAY=true` (gallery).
 - Network badge shows VITE_NETWORK (regtest/mutinynet/mainnet).
 - Status card with pulsing badges; TelemetryCard placeholder (blocks + node URI/IP).
 

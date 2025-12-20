@@ -15,6 +15,7 @@
 - `lnd-macaroon-hex` — admin macaroon hex
 - `lnd-macaroon` / `lnd-grpc-macaroon-b64` — base64 macaroon
 - LNBITS uses `LNBITS_BACKEND_WALLET_CLASS=LndWallet`
+- **Regtest-only flags**: keep `ENABLE_REGTEST_PAY` and `ENABLE_REGTEST_FUND` unset/false in staging/prod.
 
 ## First-install / admin
 - First-install is **complete**. A superuser was created; if you need to reset, delete the DB or set `FIRST_INSTALL=true` and rerun `/first_install`.
