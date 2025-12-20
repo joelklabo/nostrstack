@@ -6,6 +6,8 @@ import {
   buildWithdrawRequest,
   createWithdrawSession,
   getWithdrawSession,
+  normalizeWithdrawBounds,
+  parseInvoiceAmountMsat,
   settleWithdrawInvoice
 } from '../services/lnurl-withdraw.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
@@ -106,14 +108,53 @@ export async function registerLnurlWithdrawRoutes(app: FastifyInstance) {
       return reply.send({ status: 'OK' });
     }
 
+    const invoiceAmountMsat = parseInvoiceAmountMsat(pr);
+    if (invoiceAmountMsat === null) {
+      request.log.warn({ reqId: request.id, k1 }, 'lnurl-withdraw invalid invoice');
+      return reply.code(400).send({ status: 'ERROR', reason: 'invalid_invoice' });
+    }
+    const { minMsat, maxMsat } = normalizeWithdrawBounds(session);
+    if (invoiceAmountMsat < minMsat || invoiceAmountMsat > maxMsat) {
+      request.log.warn(
+        { reqId: request.id, k1, invoiceAmountMsat: invoiceAmountMsat.toString(), minMsat: minMsat.toString(), maxMsat: maxMsat.toString() },
+        'lnurl-withdraw invoice amount out of bounds'
+      );
+      return reply.code(400).send({ status: 'ERROR', reason: 'amount_out_of_bounds' });
+    }
+
+    const lockResult = await app.prisma.lnurlWithdrawSession.updateMany({
+      where: { k1: session.k1, status: 'PENDING' },
+      data: { status: 'PROCESSING' }
+    });
+    if (lockResult.count === 0) {
+      const latest = await getWithdrawSession(app.prisma, k1);
+      if (!latest) {
+        return reply.code(404).send({ status: 'ERROR', reason: 'not_found' });
+      }
+      if (latest.status === 'PAID') {
+        return reply.send({ status: 'OK' });
+      }
+      if (latest.status === 'PROCESSING') {
+        request.log.info({ reqId: request.id, k1 }, 'lnurl-withdraw already processing');
+        return reply.code(409).send({ status: 'ERROR', reason: 'processing' });
+      }
+      request.log.warn({ reqId: request.id, k1, status: latest.status }, 'lnurl-withdraw not pending');
+      return reply.code(400).send({ status: 'ERROR', reason: 'invalid_state' });
+    }
+
     try {
       await settleWithdrawInvoice(app.prisma, session, pr);
+      request.log.info(
+        { reqId: request.id, k1, invoiceAmountMsat: invoiceAmountMsat.toString() },
+        'lnurl-withdraw settled'
+      );
       return reply.send({ status: 'OK' });
     } catch (err) {
       await app.prisma.lnurlWithdrawSession.update({
         where: { k1: session.k1 },
-        data: { status: 'FAILED' }
+        data: { status: 'PENDING' }
       });
+      request.log.warn({ reqId: request.id, k1, err }, 'lnurl-withdraw failed');
       return reply.code(400).send({ status: 'ERROR', reason: formatWithdrawError(err) });
     }
   });

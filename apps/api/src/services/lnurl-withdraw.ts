@@ -6,9 +6,48 @@ import { bech32 } from '@scure/base';
 import { env } from '../env.js';
 
 const DEFAULT_TTL_MS = 10 * 60 * 1000;
+const MSAT_PER_BTC = 100_000_000_000n;
+const HRP_PREFIXES = ['lnbcrt', 'lntb', 'lnbc'] as const;
 
 function toNumber(value: bigint | number) {
   return typeof value === 'bigint' ? Number(value) : value;
+}
+
+function toBigInt(value: bigint | number) {
+  return typeof value === 'bigint' ? value : BigInt(value);
+}
+
+export function parseInvoiceAmountMsat(invoice: string): bigint | null {
+  if (!invoice) return null;
+  const normalized = invoice.toLowerCase();
+  let hrp: string;
+  try {
+    hrp = bech32.decode(normalized as `${string}1${string}`, 2000).prefix;
+  } catch {
+    return null;
+  }
+  if (!hrp.startsWith('ln')) return null;
+  const prefix = HRP_PREFIXES.find((item) => hrp.startsWith(item));
+  if (!prefix) return null;
+  const amountPart = hrp.slice(prefix.length);
+  if (!amountPart) return null;
+  const unit = amountPart.slice(-1);
+  const hasUnit = unit === 'm' || unit === 'u' || unit === 'n' || unit === 'p';
+  const digits = hasUnit ? amountPart.slice(0, -1) : amountPart;
+  if (!digits || !/^\d+$/.test(digits)) return null;
+  const value = BigInt(digits);
+  const divisor = hasUnit
+    ? unit === 'm'
+      ? 1000n
+      : unit === 'u'
+        ? 1_000_000n
+        : unit === 'n'
+          ? 1_000_000_000n
+          : 1_000_000_000_000n
+    : 1n;
+  const numerator = value * MSAT_PER_BTC;
+  if (numerator % divisor !== 0n) return null;
+  return numerator / divisor;
 }
 
 export function encodeLnurl(url: string): string {
@@ -76,6 +115,16 @@ export function buildWithdrawRequest(
     minWithdrawable: toNumber(session.minWithdrawable),
     maxWithdrawable: toNumber(session.maxWithdrawable),
     defaultDescription: session.defaultDescription ?? 'nostrstack withdraw'
+  };
+}
+
+export function normalizeWithdrawBounds(session: {
+  minWithdrawable: bigint | number;
+  maxWithdrawable: bigint | number;
+}) {
+  return {
+    minMsat: toBigInt(session.minWithdrawable),
+    maxMsat: toBigInt(session.maxWithdrawable)
   };
 }
 
