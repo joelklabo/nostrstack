@@ -267,6 +267,11 @@ body {
   background: var(--color-canvas-subtle);
 }
 
+.zap-close:focus-visible {
+  outline: 2px solid var(--color-accent-emphasis);
+  outline-offset: 2px;
+}
+
 .zap-body {
   padding: 1.5rem;
   display: flex;
@@ -351,6 +356,11 @@ body {
 .zap-action:hover:not(:disabled) {
   background: var(--color-canvas-subtle);
   border-color: var(--color-border-muted);
+}
+
+.zap-action:focus-visible {
+  outline: 2px solid var(--color-accent-emphasis);
+  outline-offset: 2px;
 }
 
 .zap-action-primary {

@@ -380,7 +380,12 @@ export function ZapButton({
 
   useEffect(() => {
     if (zapState === 'idle') return;
-    modalRef.current?.focus();
+    const modal = modalRef.current;
+    if (!modal) return;
+    const focusable = modal.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    (focusable ?? modal).focus();
   }, [zapState]);
 
   useEffect(() => {
@@ -389,6 +394,28 @@ export function ZapButton({
       if (event.key === 'Escape') {
         event.preventDefault();
         handleCloseZap();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const modal = modalRef.current;
+      if (!modal) return;
+      const focusable = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (event.shiftKey) {
+        if (active === first || active === modal) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
     document.addEventListener('keydown', handleKeydown);
