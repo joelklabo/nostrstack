@@ -492,6 +492,13 @@ export function ZapButton({
                     <QRCodeSVG value={invoice} size={240} bgColor="#ffffff" fgColor="#0f172a" level="L" />
                   </div>
                   <div className="zap-panel">
+                    <div className="zap-panel-header">
+                      <div className="zap-panel-title">INVOICE</div>
+                      {regtestAvailable && <div className="zap-panel-badge">REGTEST</div>}
+                    </div>
+                    <div className="zap-invoice-box">
+                      <code>{invoice}</code>
+                    </div>
                     <div className="zap-actions">
                       <button className="zap-action" type="button" onClick={handleCopyInvoice} disabled={!invoice}>
                         {copyStatus === 'copied'
@@ -520,9 +527,6 @@ export function ZapButton({
                       <button className="zap-action" type="button" onClick={handleCloseZap}>
                         CLOSE
                       </button>
-                    </div>
-                    <div className="zap-invoice-box">
-                      <code>{invoice}</code>
                     </div>
                   </div>
                 </div>
