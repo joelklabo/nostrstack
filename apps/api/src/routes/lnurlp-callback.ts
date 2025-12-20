@@ -5,6 +5,24 @@ import type { FastifyInstance } from 'fastify';
 import { env } from '../env.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
+function resolveNumber(...values: Array<number | null | undefined>) {
+  for (const value of values) {
+    if (typeof value === 'number') return value;
+  }
+  return undefined;
+}
+
+function parseSuccessAction(raw: string | null | undefined) {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch {
+    // ignore invalid successAction
+  }
+  return undefined;
+}
+
 const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
 
 export async function registerLnurlCallback(app: FastifyInstance) {
@@ -81,6 +99,10 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     });
     if (!user) return reply.code(404).send({ status: 'not found' });
 
+    const successActionRaw = user.lnurlSuccessAction ?? tenant.lnurlSuccessAction;
+    const successAction = parseSuccessAction(successActionRaw);
+    const commentAllowed = resolveNumber(user.lnurlCommentAllowed, tenant.lnurlCommentAllowed);
+
     // amount is in millisats per LNURL spec
     if (amount < 1000) {
       return reply.badRequest('Amount too low');
@@ -123,7 +145,9 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     return reply.send({
       pr: charge.invoice,
       routes: [],
-      provider_ref: charge.id
+      provider_ref: charge.id,
+      ...(commentAllowed !== undefined ? { commentAllowed } : {}),
+      ...(successAction ? { successAction } : {})
     });
   });
 
