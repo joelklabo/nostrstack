@@ -46,6 +46,12 @@ Observability:
 - Prometheus metrics at `/metrics` (per-tenant labels), enabled by default.
 - OpenTelemetry traces/metrics optional: set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` (plus `OTEL_EXPORTER_OTLP_HEADERS` if needed). Service name defaults to `nostrstack-api`.
 
+Public Nostr event landing:
+
+- View any event/profile/address at `https://nostrstack.com/nostr/<id>` (local dev: `https://localhost:4173/nostr/<id>`).
+- Supported IDs: 64-char hex, `note`, `nevent`, `naddr`, `npub`, `nprofile` (optional `nostr:` prefix).
+- API: `GET /api/nostr/event/:id` on the API server (local dev: `https://localhost:3001/api/nostr/event/<id>`).
+
 ## Demo modes (phased)
 
 - See `docs/demo-modes.md` for the three presets (regtest, mutinynet, mainnet) and one-liners.
