@@ -14,14 +14,19 @@ test.describe('regtest demo (zap pay)', () => {
     await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
 
     const zapButtons = page.locator('.zap-btn');
-    await zapButtons.first().waitFor({ state: 'visible', timeout: 15000 });
     const total = await zapButtons.count();
+    if (total === 0) {
+      test.skip(true, 'No posts available to zap');
+      return;
+    }
+    await zapButtons.first().waitFor({ state: 'visible', timeout: 15000 });
     let paid = false;
+    let sawInvoice = false;
     for (let i = 0; i < Math.min(total, 5); i += 1) {
       await zapButtons.nth(i).click();
       await expect(page.locator('.zap-modal')).toBeVisible();
       const invoiceReady = await page
-        .locator('.zap-invoice-box')
+        .locator('.zap-grid')
         .waitFor({ state: 'visible', timeout: 8000 })
         .then(() => true)
         .catch(() => false);
@@ -29,10 +34,14 @@ test.describe('regtest demo (zap pay)', () => {
         await page.getByRole('button', { name: /CLOSE/ }).first().click();
         continue;
       }
+      sawInvoice = true;
+      await expect(page.locator('.zap-qr')).toBeVisible();
+      await expect(page.locator('.zap-panel')).toBeVisible();
+      await expect(page.locator('.zap-panel-title')).toHaveText('INVOICE');
+      await expect(page.locator('.zap-invoice-box')).toBeVisible();
       const regtestBtn = page.getByRole('button', { name: /PAY_REGTEST/ });
       if (!(await regtestBtn.isVisible())) {
-        await page.getByRole('button', { name: /CLOSE/ }).first().click();
-        continue;
+        throw new Error('Regtest pay button missing after invoice ready.');
       }
       await regtestBtn.click();
       await expect(page.getByText('Payment confirmed.')).toBeVisible({ timeout: 20000 });
@@ -42,7 +51,11 @@ test.describe('regtest demo (zap pay)', () => {
     }
 
     if (!paid) {
-      test.skip(true, 'No zap invoice with regtest pay available');
+      if (!sawInvoice) {
+        test.skip(true, 'No zap invoice available to pay');
+        return;
+      }
+      throw new Error('Unable to pay a zap invoice via regtest.');
     }
   });
 });

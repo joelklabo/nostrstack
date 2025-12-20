@@ -34,7 +34,7 @@ async function tryZapPay(page: Page) {
     await zapButtons.nth(i).click();
     await expect(page.locator('.zap-modal')).toBeVisible();
     const invoiceReady = await page
-      .locator('.zap-invoice-box')
+      .locator('.zap-grid')
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
@@ -42,10 +42,13 @@ async function tryZapPay(page: Page) {
       await page.getByRole('button', { name: /CLOSE/ }).first().click();
       continue;
     }
+    await expect(page.locator('.zap-qr')).toBeVisible();
+    await expect(page.locator('.zap-panel')).toBeVisible();
+    await expect(page.locator('.zap-panel-title')).toHaveText('INVOICE');
+    await expect(page.locator('.zap-invoice-box')).toBeVisible();
     const regtestBtn = page.getByRole('button', { name: /PAY_REGTEST/ });
     if (!(await regtestBtn.isVisible())) {
-      await page.getByRole('button', { name: /CLOSE/ }).first().click();
-      continue;
+      throw new Error('Regtest pay button missing after invoice ready.');
     }
     await regtestBtn.click();
     await expect(page.getByText('Payment confirmed.')).toBeVisible({ timeout: 20_000 });

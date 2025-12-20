@@ -1,4 +1,4 @@
-import { expect,test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Social App Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -49,34 +49,42 @@ test.describe('Social App Flow', () => {
     // 5. Interact: Click Zap (opens modal)
     // Wait for at least one post to load (PostItem)
     const zapBtn = page.locator('.zap-btn').first();
-    // In real env, posts might take time to load from relays.
-    try {
-      await zapBtn.waitFor({ state: 'visible', timeout: 5000 });
-      const feedContainer = page.locator('.feed-container');
-      const feedBox = await feedContainer.boundingBox();
-      await zapBtn.click();
-      await expect(page.locator('.zap-modal')).toBeVisible();
-      const overlay = page.locator('.zap-overlay');
-      await expect(overlay).toBeVisible();
-      const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
-      expect(overlayPosition).toBe('fixed');
-      const feedBoxAfter = await feedContainer.boundingBox();
-      if (feedBox && feedBoxAfter) {
-        expect(Math.abs(feedBoxAfter.x - feedBox.x)).toBeLessThan(1);
-        expect(Math.abs(feedBoxAfter.width - feedBox.width)).toBeLessThan(1);
-      }
-      await page.getByText('Requesting invoice...').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
-      const invoiceBox = page.locator('.zap-invoice-box');
-      const hasInvoice = await invoiceBox.waitFor({ state: 'visible', timeout: 4000 }).then(() => true).catch(() => false);
-      if (hasInvoice) {
-        await expect(page.locator('.zap-qr')).toBeVisible();
-      }
-      await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
-      // Close modal (might be CANCEL or CLOSE if error)
-      await page.getByRole('button', { name: /CLOSE/ }).first().click();
-    } catch {
-      console.log('No posts found to zap, skipping zap test step.');
+    const hasZap = await zapBtn
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!hasZap) {
+      test.skip(true, 'No posts found to zap');
+      return;
     }
+    const feedContainer = page.locator('.feed-container');
+    const feedBox = await feedContainer.boundingBox();
+    await zapBtn.click();
+    await expect(page.locator('.zap-modal')).toBeVisible();
+    const overlay = page.locator('.zap-overlay');
+    await expect(overlay).toBeVisible();
+    const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
+    expect(overlayPosition).toBe('fixed');
+    const feedBoxAfter = await feedContainer.boundingBox();
+    if (feedBox && feedBoxAfter) {
+      expect(Math.abs(feedBoxAfter.x - feedBox.x)).toBeLessThan(1);
+      expect(Math.abs(feedBoxAfter.width - feedBox.width)).toBeLessThan(1);
+    }
+    await expect(page.locator('.zap-status')).toBeVisible();
+    const invoiceReady = await page
+      .locator('.zap-grid')
+      .waitFor({ state: 'visible', timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+    if (invoiceReady) {
+      await expect(page.locator('.zap-qr')).toBeVisible();
+      await expect(page.locator('.zap-panel')).toBeVisible();
+      await expect(page.locator('.zap-panel-title')).toHaveText('INVOICE');
+      await expect(page.locator('.zap-invoice-box')).toBeVisible();
+    }
+    await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
+    // Close modal (might be CANCEL or CLOSE if error)
+    await page.getByRole('button', { name: /CLOSE/ }).first().click();
   });
 
   test('Navigation to Profile, Follow, and Screenshot', async ({ page }) => {
