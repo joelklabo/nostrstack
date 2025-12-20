@@ -32,7 +32,25 @@ describe('regtest pay route', () => {
         url: '/api/regtest/pay',
         payload: { invoice: 'lnbc1invalidinvoice' }
       });
-      expect([403, 404]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toMatchObject({ ok: false, error: 'regtest_pay_disabled' });
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('returns 400 when payload is missing', async () => {
+    process.env.ENABLE_REGTEST_PAY = 'true';
+    vi.resetModules();
+    client.register.clear();
+    const { buildServer } = await import('../server.js');
+    const server = await buildServer();
+    try {
+      const res = await server.inject({
+        method: 'POST',
+        url: '/api/regtest/pay'
+      });
+      expect(res.statusCode).toBe(400);
     } finally {
       await server.close();
     }
