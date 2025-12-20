@@ -63,6 +63,9 @@ check_port() {
 check_port "$PORT"
 check_port "$DEV_SERVER_PORT"
 
+echo "🧬 applying Prisma migrations"
+pnpm --filter api exec prisma migrate deploy --schema "$ROOT/apps/api/prisma/schema.prisma"
+
 # Start regtest stack (bitcoind + LND + LNbits) and export LNbits admin key for dev
 if command -v docker >/dev/null 2>&1; then
   echo "🚀 starting regtest stack (docker compose)"
