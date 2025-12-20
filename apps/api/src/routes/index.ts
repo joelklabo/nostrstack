@@ -9,6 +9,7 @@ import { registerLnurlAuthRoutes } from './lnurl-auth.js';
 import { registerLnurlWithdrawRoutes } from './lnurl-withdraw.js';
 import { registerLnurlCallback } from './lnurlp-callback.js';
 import { registerLogStreamRoute } from './log-stream.js';
+import { registerNostrEventRoute } from './nostr-event.js';
 import { registerPayRoutes } from './pay.js';
 import { registerPayWebhook } from './pay-webhook.js';
 import { registerRegtestFundRoute } from './regtest-fund.js';
@@ -28,6 +29,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerTenantRoutes(app);
   await registerAdminTenantRoutes(app);
   await registerAdminUserRoutes(app);
+  await registerNostrEventRoute(app);
   await registerPayWebhook(app);
   await registerPayRoutes(app);
   await registerTipRoutes(app);
@@ -49,6 +51,10 @@ declare module 'fastify' {
       REGTEST_CWD?: string;
       REGTEST_PAY_ENABLED?: boolean;
       REGTEST_FUND_ENABLED?: boolean;
+      NOSTR_EVENT_CACHE_TTL_SECONDS?: number;
+      NOSTR_EVENT_CACHE_MAX_ENTRIES?: number;
+      NOSTR_EVENT_MAX_RELAYS?: number;
+      NOSTR_EVENT_FETCH_TIMEOUT_MS?: number;
     };
   }
 }
