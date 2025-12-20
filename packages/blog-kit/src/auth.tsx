@@ -14,7 +14,7 @@ declare global {
   }
 }
 
-type AuthMode = 'nip07' | 'nsec' | 'guest';
+type AuthMode = 'nip07' | 'nsec' | 'lnurl' | 'guest';
 
 interface AuthState {
   pubkey: string | null;
@@ -26,6 +26,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   loginWithNip07: () => Promise<void>;
   loginWithNsec: (nsec: string) => Promise<void>;
+  loginWithLnurl: (linkingKey: string) => Promise<void>;
   logout: () => void;
   signEvent: (template: EventTemplate) => Promise<Event>;
 }
@@ -34,6 +35,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY_MODE = 'nostrstack.auth.mode';
 const STORAGE_KEY_NSEC = 'nostrstack.auth.nsec'; // In a real app, encrypt this!
+const STORAGE_KEY_LNURL = 'nostrstack.auth.lnurl';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -82,6 +84,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
            setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
         }
+      } else if (mode === 'lnurl') {
+        const linkingKey = localStorage.getItem(STORAGE_KEY_LNURL);
+        if (linkingKey && /^[0-9a-f]{64}$/i.test(linkingKey)) {
+          setState({ pubkey: linkingKey, mode: 'lnurl', isLoading: false, error: null });
+        } else {
+          localStorage.removeItem(STORAGE_KEY_MODE);
+          localStorage.removeItem(STORAGE_KEY_LNURL);
+          setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
+        }
       } else {
         setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
       }
@@ -119,9 +130,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const loginWithLnurl = useCallback(async (linkingKey: string) => {
+    const cleanKey = linkingKey.trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/i.test(cleanKey)) {
+      const err = new Error('Invalid LNURL linking key');
+      setState(s => ({ ...s, error: err.message }));
+      throw err;
+    }
+    localStorage.setItem(STORAGE_KEY_MODE, 'lnurl');
+    localStorage.setItem(STORAGE_KEY_LNURL, cleanKey);
+    setState({ pubkey: cleanKey, mode: 'lnurl', isLoading: false, error: null });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY_MODE);
     localStorage.removeItem(STORAGE_KEY_NSEC);
+    localStorage.removeItem(STORAGE_KEY_LNURL);
     setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
   }, []);
 
@@ -133,12 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!nsec) throw new Error('No nsec found');
       const { data } = nip19.decode(nsec);
       return finalizeEvent(template, data as Uint8Array);
+    } else if (state.mode === 'lnurl') {
+      throw new Error('LNURL-auth sessions cannot sign events');
     }
     throw new Error('No signer available');
   }, [state.mode]);
 
   return (
-    <AuthContext.Provider value={{ ...state, loginWithNip07, loginWithNsec, logout, signEvent }}>
+    <AuthContext.Provider value={{ ...state, loginWithNip07, loginWithNsec, loginWithLnurl, logout, signEvent }}>
       {children}
     </AuthContext.Provider>
   );
