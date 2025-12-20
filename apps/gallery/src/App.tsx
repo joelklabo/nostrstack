@@ -1,4 +1,4 @@
-import { AuthProvider, StatsProvider, useAuth } from '@nostrstack/blog-kit';
+import { AuthProvider, NostrstackProvider, StatsProvider, parseRelays, useAuth } from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
@@ -108,11 +108,17 @@ function AppShell() {
 }
 
 export default function App() {
+  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const enableRegtestPay = String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true';
+  const relays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+
   return (
-    <AuthProvider>
-      <StatsProvider>
-        <AppShell />
-      </StatsProvider>
-    </AuthProvider>
+    <NostrstackProvider apiBase={apiBase} baseUrl={apiBase} relays={relays.length ? relays : undefined} enableRegtestPay={enableRegtestPay}>
+      <AuthProvider>
+        <StatsProvider>
+          <AppShell />
+        </StatsProvider>
+      </AuthProvider>
+    </NostrstackProvider>
   );
 }

@@ -18,10 +18,12 @@ export type ThemeVars = {
 };
 
 export type NostrstackConfig = {
+  apiBase?: string;
   baseUrl?: string;
   host?: string;
   lnAddress?: string;
   relays?: string[];
+  enableRegtestPay?: boolean;
   theme?: ThemeVars;
   nostrstackTheme?: NostrstackTheme;
   brandPreset?: NostrstackBrandPreset;

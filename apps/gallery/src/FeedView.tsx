@@ -17,10 +17,14 @@ interface Post extends Event {
 
 export function PostItem({
   post,
-  authorLightningAddress
+  authorLightningAddress,
+  apiBase,
+  enableRegtestPay
 }: {
   post: Post;
   authorLightningAddress?: string;
+  apiBase?: string;
+  enableRegtestPay?: boolean;
 }) {
   const [showJson, setShowJson] = useState(false);
   const isPaywalled = post.tags.some(tag => tag[0] === 'paywall');
@@ -83,7 +87,12 @@ export function PostItem({
       )}
       
       <div className="post-actions">
-        <ZapButton event={post} authorLightningAddress={authorLightningAddress} />
+        <ZapButton
+          event={post}
+          authorLightningAddress={authorLightningAddress}
+          apiBase={apiBase}
+          enableRegtestPay={enableRegtestPay}
+        />
         <button className="action-btn">Reply</button>
         <button 
           className="action-btn" 
@@ -109,6 +118,8 @@ export function FeedView() {
   const [posts, setPosts] = useState<Post[]>([]);
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
+  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const enableRegtestPay = String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true';
 
   useEffect(() => {
     const pool = new SimplePool();
@@ -179,7 +190,7 @@ export function FeedView() {
       </div>
 
       {posts.map(post => (
-        <PostItem key={post.id} post={post} />
+        <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
       ))}
     </div>
   );

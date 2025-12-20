@@ -26,6 +26,7 @@ interface ZapButtonProps {
   host?: string;
   authorLightningAddress?: string;
   relays?: string[];
+  enableRegtestPay?: boolean;
 }
 
 const RELAYS = [
@@ -101,6 +102,21 @@ function encodeLnurl(url: string): string | null {
   }
 }
 
+function preferSecureBase(base: string) {
+  if (typeof window === 'undefined') return base;
+  if (window.location.protocol !== 'https:') return base;
+  if (!/^http:\/\//i.test(base)) return base;
+  return base.replace(/^http:/i, 'https:');
+}
+
+function normalizeApiBase(raw?: string | null): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === 'mock') return '';
+  if (trimmed === '/api') return '';
+  return preferSecureBase(trimmed.replace(/\/$/, ''));
+}
+
 // Minimal LNURL-pay client, just enough for zaps.
 // In a real scenario, use @nostrstack/sdk or similar for robust client.
 async function getLnurlpMetadata(lnurl: string) {
@@ -125,18 +141,25 @@ export function ZapButton({
   event,
   amountSats = 21,
   message = 'Zap!',
+  apiBase,
   authorLightningAddress,
-  relays
+  relays,
+  enableRegtestPay
 }: ZapButtonProps) {
   const { pubkey, signEvent } = useAuth();
   const cfg = useNostrstackConfig();
   const [zapState, setZapState] = useState<'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<string | null>(null);
+  const [regtestError, setRegtestError] = useState<string | null>(null);
+  const [regtestPaying, setRegtestPaying] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
+  const apiBaseRaw = apiBase ?? cfg.apiBase ?? cfg.baseUrl ?? '';
+  const resolvedApiBase = useMemo(() => normalizeApiBase(apiBaseRaw), [apiBaseRaw]);
+  const regtestEnabled = enableRegtestPay ?? cfg.enableRegtestPay ?? false;
 
   const relayTargets = useMemo(() => {
     const base = relays ?? cfg.relays ?? RELAYS;
@@ -190,6 +213,7 @@ export function ZapButton({
 
     setZapState('pending-lnurl');
     setErrorMessage(null);
+    setRegtestError(null);
     setInvoice(null);
 
     try {
@@ -261,9 +285,41 @@ export function ZapButton({
     }
   }, [pubkey, signEvent, resolveLightningAddress, authorPubkey, event, amountSats, message, relayTargets]);
 
+  const handleRegtestPay = useCallback(async () => {
+    if (!invoice) return;
+    if (!regtestEnabled) {
+      setRegtestError('Regtest pay disabled.');
+      return;
+    }
+    if (!resolvedApiBase && apiBaseRaw !== '/api') {
+      setRegtestError('Regtest pay unavailable (API base not configured).');
+      return;
+    }
+    setRegtestPaying(true);
+    setRegtestError(null);
+    try {
+      const url = resolvedApiBase ? `${resolvedApiBase}/api/regtest/pay` : '/api/regtest/pay';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice })
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      setZapState('paid');
+    } catch (err: unknown) {
+      setRegtestError(err instanceof Error ? err.message : 'Regtest pay failed.');
+    } finally {
+      setRegtestPaying(false);
+    }
+  }, [invoice, regtestEnabled, resolvedApiBase, apiBaseRaw]);
+
   const handleCloseZap = useCallback(() => {
     setZapState('idle');
     setErrorMessage(null);
+    setRegtestError(null);
     setInvoice(null);
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
@@ -306,10 +362,16 @@ export function ZapButton({
                     <QRCodeSVG value={invoice} size={256} bgColor="#000" fgColor="#00ff41" level="L" />
                   </div>
                   <p className="invoice-code">{invoice}</p>
+                  {regtestError && <div className="error-msg">{regtestError}</div>}
                   <div className="form-actions">
                     <button className="auth-btn" onClick={() => window.open(`lightning:${invoice}`, '_blank')}>
                       OPEN_WALLET
                     </button>
+                    {regtestEnabled && (
+                      <button className="auth-btn" onClick={handleRegtestPay} disabled={regtestPaying}>
+                        {regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
+                      </button>
+                    )}
                     <button className="text-btn" onClick={handleCloseZap}>CANCEL</button>
                   </div>
                 </div>
