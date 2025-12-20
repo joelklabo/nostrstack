@@ -37,6 +37,7 @@ interface SettingsViewProps {
 export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: SettingsViewProps) {
   const [nwcUri, setNwcUri] = useState('');
   const [nwcRelays, setNwcRelays] = useState('');
+  const [nwcMaxSats, setNwcMaxSats] = useState('');
   const [persistNwc, setPersistNwc] = useState(false);
   const [nwcMessage, setNwcMessage] = useState<string | null>(null);
   const [nwcCheckStatus, setNwcCheckStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>('idle');
@@ -50,9 +51,12 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     const raw = window.localStorage.getItem(NWC_STORAGE_KEY);
     if (!raw) return;
     try {
-      const parsed = JSON.parse(raw) as { uri?: string; relays?: string[] };
+      const parsed = JSON.parse(raw) as { uri?: string; relays?: string[]; maxSats?: number };
       if (parsed?.uri) setNwcUri(parsed.uri);
       if (parsed?.relays?.length) setNwcRelays(parsed.relays.join(', '));
+      if (typeof parsed?.maxSats === 'number' && Number.isFinite(parsed.maxSats)) {
+        setNwcMaxSats(String(parsed.maxSats));
+      }
       setPersistNwc(true);
     } catch {
       // ignore invalid storage
@@ -91,6 +95,21 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       return 'Invalid NWC URI';
     }
   }, [nwcUriTrimmed]);
+
+  const nwcMaxSatsValue = useMemo(() => {
+    if (!nwcMaxSats.trim()) return null;
+    const value = Number(nwcMaxSats);
+    if (!Number.isFinite(value) || value <= 0) return null;
+    return Math.floor(value);
+  }, [nwcMaxSats]);
+
+  const nwcLimitError = useMemo(() => {
+    if (!nwcMaxSats.trim()) return null;
+    const value = Number(nwcMaxSats);
+    if (!Number.isFinite(value)) return 'Max sats must be a number.';
+    if (value <= 0) return 'Max sats must be greater than zero.';
+    return null;
+  }, [nwcMaxSats]);
 
   const parsedRelays = useMemo(
     () =>
@@ -131,10 +150,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   }, [nwcUriTrimmed, nwcRelays]);
 
   const handleSaveNwc = () => {
-    if (nwcUriError) return;
+    if (nwcUriError || nwcLimitError) return;
     const payload = {
       uri: nwcUriTrimmed || undefined,
-      relays: parsedRelays.length ? parsedRelays : undefined
+      relays: parsedRelays.length ? parsedRelays : undefined,
+      maxSats: nwcMaxSatsValue ?? undefined
     };
     if (typeof window !== 'undefined') {
       if (persistNwc) {
@@ -151,6 +171,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   const handleClearNwc = () => {
     setNwcUri('');
     setNwcRelays('');
+    setNwcMaxSats('');
     setPersistNwc(false);
     setNwcCheckStatus('idle');
     setNwcCheckMessage(null);
@@ -164,9 +185,9 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   };
 
   const handleCheckNwc = async () => {
-    if (nwcUriError || !nwcUriTrimmed) {
+    if (nwcUriError || nwcLimitError || !nwcUriTrimmed) {
       setNwcCheckStatus('error');
-      setNwcCheckMessage(nwcUriError ?? 'Enter a valid NWC URI to connect.');
+      setNwcCheckMessage(nwcUriError ?? nwcLimitError ?? 'Enter a valid NWC URI to connect.');
       setNwcBalanceMsat(null);
       return;
     }
@@ -269,7 +290,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             NWC_URI
             <input
               className="nostrstack-input"
-              type="text"
+              type="password"
               name="nwc-uri"
               placeholder="nostr+walletconnect://..."
               value={nwcUri}
@@ -287,8 +308,25 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               onChange={(event) => setNwcRelays(event.target.value)}
             />
           </label>
+          <label className="nwc-label">
+            MAX_SATS_PER_PAYMENT
+            <input
+              className="nostrstack-input"
+              type="number"
+              name="nwc-max-sats"
+              min="1"
+              placeholder="e.g. 5000"
+              value={nwcMaxSats}
+              onChange={(event) => setNwcMaxSats(event.target.value)}
+            />
+          </label>
         </div>
-        {nwcUriError && <div className="nwc-error">{nwcUriError}</div>}
+        {(nwcUriError || nwcLimitError) && (
+          <div className="nwc-error">
+            {nwcUriError && <div>{nwcUriError}</div>}
+            {nwcLimitError && <div>{nwcLimitError}</div>}
+          </div>
+        )}
         <label className="nwc-remember">
           <input
             type="checkbox"
@@ -302,14 +340,14 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <button
             className="action-btn"
             onClick={handleConnectNwc}
-            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || nwcCheckStatus === 'checking'}
+            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
           >
             CONNECT
           </button>
           <button
             className="action-btn"
             onClick={handleCheckNwc}
-            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || nwcCheckStatus === 'checking'}
+            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
           >
             CHECK_BALANCE
           </button>

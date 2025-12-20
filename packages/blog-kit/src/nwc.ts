@@ -7,12 +7,15 @@ import { type ParsedNwcUri,parseNwcUri } from './utils';
 const REQUEST_KIND = 23194;
 const RESPONSE_KIND = 23195;
 const DEFAULT_TIMEOUT_MS = 15000;
+const ALLOWED_RELAY_PROTOCOLS = new Set(['wss:', 'ws:']);
+const LOCALHOST_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 export type NwcClientOptions = {
   uri: string;
   relays?: string[];
   timeoutMs?: number;
   preferNip44?: boolean;
+  maxAmountMsat?: number;
 };
 
 export type NwcError = {
@@ -67,6 +70,41 @@ function generateRequestId(): string {
     return globalThis.crypto.randomUUID();
   }
   return `nwc-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+}
+
+function isAllowedRelay(url: URL): boolean {
+  if (!ALLOWED_RELAY_PROTOCOLS.has(url.protocol)) return false;
+  if (url.protocol === 'ws:') {
+    return LOCALHOST_HOSTS.has(url.hostname);
+  }
+  return true;
+}
+
+function normalizeRelays(relays: string[]): string[] {
+  const invalid: string[] = [];
+  const normalized = relays
+    .map(relay => relay.trim())
+    .filter(Boolean)
+    .map(relay => {
+      try {
+        const url = new URL(relay);
+        if (!isAllowedRelay(url)) {
+          invalid.push(relay);
+          return null;
+        }
+        return url.toString();
+      } catch {
+        invalid.push(relay);
+        return null;
+      }
+    })
+    .filter((relay): relay is string => Boolean(relay));
+
+  if (invalid.length) {
+    const first = invalid[0];
+    throw new Error(`Invalid NWC relay URL${invalid.length > 1 ? 's' : ''}: ${first}`);
+  }
+  return [...new Set(normalized)];
 }
 
 function encryptPayload(
@@ -182,11 +220,13 @@ export class NwcClient {
   private readonly timeoutMs: number;
   private readonly preferNip44: boolean;
   private readonly pool: SimplePool;
+  private readonly maxAmountMsat?: number;
 
   constructor(options: NwcClientOptions) {
     this.parsed = parseNwcUri(options.uri);
-    const overrideRelays = options.relays?.map(relay => relay.trim()).filter(Boolean);
-    this.relays = (overrideRelays && overrideRelays.length ? overrideRelays : this.parsed.relays).slice();
+    const overrideRelays = options.relays && options.relays.length ? normalizeRelays(options.relays) : [];
+    const baseRelays = overrideRelays.length ? overrideRelays : normalizeRelays(this.parsed.relays);
+    this.relays = baseRelays.slice();
     if (!this.relays.length) {
       throw new Error('No relays configured for NWC.');
     }
@@ -194,6 +234,7 @@ export class NwcClient {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.preferNip44 = options.preferNip44 ?? false;
     this.pool = new SimplePool();
+    this.maxAmountMsat = options.maxAmountMsat;
   }
 
   close(): void {
@@ -201,6 +242,15 @@ export class NwcClient {
   }
 
   async payInvoice(invoice: string, amountMsat?: number): Promise<NwcPayInvoiceResult> {
+    if (typeof this.maxAmountMsat === 'number') {
+      if (typeof amountMsat !== 'number' || !Number.isFinite(amountMsat)) {
+        throw new Error('NWC payment limit requires a valid amount.');
+      }
+      if (amountMsat > this.maxAmountMsat) {
+        const limitSats = Math.floor(this.maxAmountMsat / 1000);
+        throw new Error(`NWC payment exceeds limit of ${limitSats.toLocaleString()} sats.`);
+      }
+    }
     const params: Record<string, unknown> = { invoice };
     if (typeof amountMsat === 'number') params.amount = amountMsat;
     return this.request<NwcPayInvoiceResult>('pay_invoice', params);

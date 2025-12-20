@@ -28,6 +28,7 @@ export type NostrstackConfig = {
   relays?: string[];
   nwcUri?: string;
   nwcRelays?: string[];
+  nwcMaxSats?: number;
   enableRegtestPay?: boolean;
   theme?: ThemeVars;
   nostrstackTheme?: NostrstackTheme;
@@ -45,6 +46,7 @@ export type NostrstackProviderProps = React.PropsWithChildren<NostrstackConfig> 
 type StoredNwcConfig = {
   uri?: string;
   relays?: string[];
+  maxSats?: number;
 };
 
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
@@ -67,7 +69,8 @@ export function NostrstackProvider({ children, className, style, ...config }: No
     () => ({
       ...config,
       nwcUri: config.nwcUri ?? storedNwc?.uri,
-      nwcRelays: config.nwcRelays ?? storedNwc?.relays
+      nwcRelays: config.nwcRelays ?? storedNwc?.relays,
+      nwcMaxSats: config.nwcMaxSats ?? storedNwc?.maxSats
     }),
     [config, storedNwc]
   );

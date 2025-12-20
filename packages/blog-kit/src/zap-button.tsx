@@ -175,6 +175,8 @@ export function ZapButton({
   const nwcUri = cfg.nwcUri?.trim();
   const nwcRelays = cfg.nwcRelays;
   const nwcEnabled = Boolean(nwcUri);
+  const nwcMaxSats = cfg.nwcMaxSats;
+  const nwcMaxMsat = typeof nwcMaxSats === 'number' ? nwcMaxSats * 1000 : undefined;
 
   const relayTargets = useMemo(() => {
     const base = relays ?? cfg.relays ?? RELAYS;
@@ -235,7 +237,7 @@ export function ZapButton({
     setNwcPayMessage('Paying via NWC…');
     let client: NwcClient | null = null;
     try {
-      client = new NwcClient({ uri: nwcUri, relays: nwcRelays });
+      client = new NwcClient({ uri: nwcUri, relays: nwcRelays, maxAmountMsat: nwcMaxMsat });
       await client.payInvoice(invoice, amountMsat);
       const message = 'NWC payment sent.';
       setNwcPayStatus('paid');
@@ -252,7 +254,7 @@ export function ZapButton({
     } finally {
       client?.close();
     }
-  }, [nwcRelays, nwcUri, persistNwcPayment]);
+  }, [nwcRelays, nwcUri, nwcMaxMsat, persistNwcPayment]);
 
   const handleZap = useCallback(async () => {
     if (!pubkey) {
