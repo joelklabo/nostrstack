@@ -26,13 +26,28 @@ async function loginWithNsec(page: Page, nsec: string) {
   await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20_000 });
 }
 
-async function tryZapPay(page: Page) {
+async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
   const zapButtons = page.locator('.zap-btn');
   await zapButtons.first().waitFor({ state: 'visible', timeout: 20_000 });
   const total = await zapButtons.count();
   for (let i = 0; i < Math.min(total, 5); i += 1) {
     await zapButtons.nth(i).click();
     await expect(page.locator('.zap-modal')).toBeVisible();
+    if (mode === 'nwc') {
+      const nwcPaid = await page
+        .getByText('NWC payment sent.')
+        .waitFor({ state: 'visible', timeout: 20_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!nwcPaid) {
+        await page.getByRole('button', { name: /CLOSE/ }).first().click();
+        continue;
+      }
+      await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
+      await page.getByRole('button', { name: /CLOSE/ }).first().click();
+      return true;
+    }
+
     const invoiceReady = await page
       .locator('.zap-grid')
       .waitFor({ state: 'visible', timeout: 8000 })
@@ -58,6 +73,21 @@ async function tryZapPay(page: Page) {
   return false;
 }
 
+async function configureNwc(page: Page, options: { uri: string; relays?: string; maxSats?: string }) {
+  await page.getByRole('button', { name: /Settings/i }).click();
+  await page.getByLabel('NWC_URI').fill(options.uri);
+  if (options.relays) {
+    await page.getByLabel(/RELAYS/i).fill(options.relays);
+  }
+  if (options.maxSats) {
+    await page.getByLabel(/MAX_SATS_PER_PAYMENT/i).fill(options.maxSats);
+  }
+  await page.getByRole('button', { name: 'CONNECT' }).click();
+  await expect(page.locator('.nwc-status-pill')).toHaveText(/CONNECTED/, { timeout: 20_000 });
+  await page.getByRole('button', { name: /Feed/i }).click();
+  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20_000 });
+}
+
 async function main() {
   // Allow Node-side HTTPS calls to the self-signed dev cert (only for local QA).
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED ?? '0';
@@ -67,6 +97,9 @@ async function main() {
   const slowMo = Number(process.env.SLOWMO_MS ?? 0) || 0;
   const testNsec =
     process.env.TEST_NSEC ?? 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+  const nwcUri = process.env.NWC_URI;
+  const nwcRelays = process.env.NWC_RELAYS;
+  const nwcMaxSats = process.env.NWC_MAX_SATS;
 
   const failures: Failure[] = [];
   const consoleErrors: string[] = [];
@@ -125,14 +158,19 @@ async function main() {
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await loginWithNsec(page, testNsec);
 
-    const fundBtn = page.getByRole('button', { name: /Add funds \(regtest\)/ });
-    if (await fundBtn.count()) {
-      await fundBtn.click();
-      const toastRegion = page.getByTestId('toast-region');
-      await expect(toastRegion).toContainText(/Funded|Mining regtest/i, { timeout: 120_000 });
+    const usingNwc = Boolean(nwcUri);
+    if (usingNwc && nwcUri) {
+      await configureNwc(page, { uri: nwcUri, relays: nwcRelays, maxSats: nwcMaxSats });
+    } else {
+      const fundBtn = page.getByRole('button', { name: /Add funds \(regtest\)/ });
+      if (await fundBtn.count()) {
+        await fundBtn.click();
+        const toastRegion = page.getByTestId('toast-region');
+        await expect(toastRegion).toContainText(/Funded|Mining regtest/i, { timeout: 120_000 });
+      }
     }
 
-    const paid = await tryZapPay(page);
+    const paid = await tryZapPay(page, usingNwc ? 'nwc' : 'regtest');
     if (!paid) {
       throw new Error('Unable to pay a zap invoice via regtest; no zap-enabled posts found.');
     }

@@ -195,6 +195,14 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     setNwcCheckMessage('Checking wallet connection…');
     let client: NwcClient | null = null;
     try {
+      const mock = typeof window !== 'undefined' ? (window as { __NOSTRSTACK_NWC_MOCK__?: { getBalance?: () => Promise<{ balance: number }> } }).__NOSTRSTACK_NWC_MOCK__ : null;
+      if (mock?.getBalance) {
+        const result = await mock.getBalance();
+        setNwcBalanceMsat(result.balance);
+        setNwcCheckStatus('connected');
+        setNwcCheckMessage('Wallet reachable.');
+        return;
+      }
       client = new NwcClient({ uri: nwcUriTrimmed, relays: parsedRelays.length ? parsedRelays : undefined });
       const result = await client.getBalance();
       setNwcBalanceMsat(result.balance);

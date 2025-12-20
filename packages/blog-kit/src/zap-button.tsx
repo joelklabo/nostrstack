@@ -187,7 +187,10 @@ export function ZapButton({
   const eventLightningAddress = useMemo(() => extractLightningAddressFromEvent(event), [event]);
 
   const resolveLightningAddress = useCallback(async () => {
-    const override = normalizeLightningAddress(authorLightningAddress);
+    const globalOverride = typeof window !== 'undefined'
+      ? (window as { __NOSTRSTACK_ZAP_ADDRESS__?: string }).__NOSTRSTACK_ZAP_ADDRESS__
+      : undefined;
+    const override = normalizeLightningAddress(authorLightningAddress ?? globalOverride);
     if (override) return override;
 
     const fromEvent = normalizeLightningAddress(eventLightningAddress);
@@ -237,8 +240,15 @@ export function ZapButton({
     setNwcPayMessage('Paying via NWC…');
     let client: NwcClient | null = null;
     try {
-      client = new NwcClient({ uri: nwcUri, relays: nwcRelays, maxAmountMsat: nwcMaxMsat });
-      await client.payInvoice(invoice, amountMsat);
+      const mock = typeof window !== 'undefined'
+        ? (window as { __NOSTRSTACK_NWC_MOCK__?: { payInvoice?: (invoice: string, amountMsat: number) => Promise<void> } }).__NOSTRSTACK_NWC_MOCK__
+        : null;
+      if (mock?.payInvoice) {
+        await mock.payInvoice(invoice, amountMsat);
+      } else {
+        client = new NwcClient({ uri: nwcUri, relays: nwcRelays, maxAmountMsat: nwcMaxMsat });
+        await client.payInvoice(invoice, amountMsat);
+      }
       const message = 'NWC payment sent.';
       setNwcPayStatus('paid');
       setNwcPayMessage(message);
