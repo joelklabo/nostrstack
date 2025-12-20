@@ -1,4 +1,6 @@
+import { parseRelays } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
+import { normalizeURL } from 'nostr-tools/utils';
 
 import type { ProfileMeta } from './eventRenderers';
 
@@ -30,6 +32,95 @@ export type ApiNostrEventResponse = {
   };
   references: ApiNostrReferences;
 };
+
+const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
+const RELAY_FAILURE_KEY = 'nostrstack.relayFailures.v1';
+const RELAY_FAILURE_TTL_MS = 10 * 60 * 1000;
+
+type RelayFailureState = Record<string, number>;
+
+function relayStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readRelayFailures(storage: Storage | null): RelayFailureState {
+  if (!storage) return {};
+  try {
+    const raw = storage.getItem(RELAY_FAILURE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as RelayFailureState;
+    if (!parsed || typeof parsed !== 'object') return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function writeRelayFailures(storage: Storage | null, state: RelayFailureState) {
+  if (!storage) return;
+  try {
+    storage.setItem(RELAY_FAILURE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore storage failures (private mode, etc.)
+  }
+}
+
+function normalizeRelayList(relays: string[]): string[] {
+  const cleaned = relays
+    .map((relay) => relay.trim())
+    .filter(Boolean)
+    .map((relay) => {
+      try {
+        return normalizeURL(relay);
+      } catch {
+        return null;
+      }
+    })
+    .filter((relay): relay is string => Boolean(relay));
+  return Array.from(new Set(cleaned));
+}
+
+export function getDefaultRelays(raw?: string | null): string[] {
+  const parsed = parseRelays(raw);
+  const base = parsed.length ? parsed : DEFAULT_RELAYS;
+  const normalized = normalizeRelayList(base);
+  const storage = relayStorage();
+  if (!storage) return normalized;
+  const failures = readRelayFailures(storage);
+  const now = Date.now();
+  let mutated = false;
+  const filtered = normalized.filter((relay) => {
+    const failedAt = failures[relay];
+    if (!failedAt) return true;
+    if (now - failedAt > RELAY_FAILURE_TTL_MS) {
+      delete failures[relay];
+      mutated = true;
+      return true;
+    }
+    return false;
+  });
+  if (mutated) writeRelayFailures(storage, failures);
+  return filtered.length ? filtered : normalized;
+}
+
+export function markRelayFailure(relay: string) {
+  const storage = relayStorage();
+  if (!storage) return;
+  let normalized: string;
+  try {
+    normalized = normalizeURL(relay);
+  } catch {
+    return;
+  }
+  const failures = readRelayFailures(storage);
+  failures[normalized] = Date.now();
+  writeRelayFailures(storage, failures);
+}
 
 type ApiErrorResponse = {
   error?: string;

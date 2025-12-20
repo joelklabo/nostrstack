@@ -1,20 +1,21 @@
 import { PaywalledContent, PostEditor, useStats, ZapButton } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
-import { useEffect, useRef, useState } from 'react';
+import type { AbstractRelay } from 'nostr-tools/abstract-relay';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { getDefaultRelays, markRelayFailure } from './nostr/api';
 import { JsonView } from './ui/JsonView';
 import { ProfileLink } from './ui/ProfileLink';
-
-const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
 
 interface Post extends Event {
   // Add any extra fields if needed
 }
+
+type RelayStatus = {
+  status: 'connecting' | 'online' | 'error';
+  reason?: string;
+};
 
 export function PostItem({
   post,
@@ -129,12 +130,46 @@ export function FeedView() {
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  const relayList = useMemo(
+    () => getDefaultRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS),
+    []
+  );
+  const [relayStatus, setRelayStatus] = useState<Record<string, RelayStatus>>(() => {
+    const initial: Record<string, RelayStatus> = {};
+    relayList.forEach((relay) => {
+      initial[relay] = { status: 'connecting' };
+    });
+    return initial;
+  });
+
+  const relaySummary = useMemo(() => {
+    const entries = Object.values(relayStatus);
+    const total = entries.length;
+    const online = entries.filter((entry) => entry.status === 'online').length;
+    const errors = entries.filter((entry) => entry.status === 'error').length;
+    return { total, online, errors };
+  }, [relayStatus]);
 
   useEffect(() => {
     const pool = new SimplePool();
+    let didUnmount = false;
+
+    const updateRelayStatus = (relay: string, next: RelayStatus) => {
+      setRelayStatus((prev) => {
+        const current = prev[relay];
+        if (
+          current &&
+          current.status === next.status &&
+          (current.reason ?? '') === (next.reason ?? '')
+        ) {
+          return prev;
+        }
+        return { ...prev, [relay]: next };
+      });
+    };
 
     const sub = pool.subscribeMany(
-      RELAYS,
+      relayList,
       { kinds: [1], limit: 20 },
       {
         onevent(event) {
@@ -147,14 +182,38 @@ export function FeedView() {
             });
           }
         },
+        receivedEvent(relay: AbstractRelay) {
+          updateRelayStatus(relay.url, { status: 'online' });
+        },
+        onclose(reasons) {
+          if (didUnmount) return;
+          reasons.forEach((reason, index) => {
+            const relay = relayList[index];
+            if (!relay || !reason) return;
+            updateRelayStatus(relay, { status: 'error', reason });
+            markRelayFailure(relay);
+            console.warn(`[nostr] relay ${relay} closed: ${reason}`);
+          });
+        }
       }
     );
+    const statusTimer = globalThis.setTimeout(() => {
+      const statuses = pool.listConnectionStatus();
+      relayList.forEach((relay) => {
+        const isOnline = statuses.get(relay);
+        if (isOnline) {
+          updateRelayStatus(relay, { status: 'online' });
+        }
+      });
+    }, 2000);
 
     return () => {
+      didUnmount = true;
+      globalThis.clearTimeout(statusTimer);
       void Promise.resolve(sub.close('unmount'))
         .then(() => {
           try {
-            pool.close(RELAYS);
+            pool.close(relayList);
           } catch {
             // Ignore websocket close errors during teardown.
           }
@@ -163,7 +222,7 @@ export function FeedView() {
           // Ignore close failures during teardown.
         });
     };
-  }, []);
+  }, [incrementEvents, relayList]);
 
   return (
     <div className="feed-stream">
@@ -186,12 +245,29 @@ export function FeedView() {
             width: '8px', 
             height: '8px', 
             borderRadius: '50%', 
-            background: 'var(--color-success-fg)', 
+            background: relaySummary.errors > 0 ? 'var(--color-attention-fg)' : 'var(--color-success-fg)', 
             marginRight: '6px' 
           }} />
-          Streaming
+          {relaySummary.online}/{relaySummary.total} relays
         </div>
       </div>
+
+      {relaySummary.errors > 0 && (
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            border: '1px solid var(--color-attention-muted)',
+            background: 'var(--color-attention-subtle)',
+            color: 'var(--color-fg-muted)',
+            fontSize: '0.85rem'
+          }}
+        >
+          Some relays are temporarily unavailable. Streaming continues from {relaySummary.online} active relay
+          {relaySummary.online === 1 ? '' : 's'}.
+        </div>
+      )}
 
       {posts.map(post => (
         <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
