@@ -3,22 +3,12 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
+import { normalizeLnurlMetadata, parseLnurlSuccessAction } from '../services/lnurl-pay.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
 function resolveNumber(...values: Array<number | null | undefined>) {
   for (const value of values) {
     if (typeof value === 'number') return value;
-  }
-  return undefined;
-}
-
-function parseSuccessAction(raw: string | null | undefined) {
-  if (!raw) return undefined;
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch {
-    // ignore invalid successAction
   }
   return undefined;
 }
@@ -99,8 +89,22 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     });
     if (!user) return reply.code(404).send({ status: 'not found' });
 
+    const metadataRaw = user.lnurlMetadata ?? tenant.lnurlMetadata;
+    if (metadataRaw) {
+      const metadataResult = normalizeLnurlMetadata(metadataRaw);
+      if (metadataResult.error) {
+        app.log.warn({ username, tenant: tenant.domain, reason: metadataResult.error }, 'invalid lnurl metadata');
+        return reply.code(400).send({ status: 'ERROR', reason: metadataResult.error });
+      }
+    }
+
     const successActionRaw = user.lnurlSuccessAction ?? tenant.lnurlSuccessAction;
-    const successAction = parseSuccessAction(successActionRaw);
+    const successActionResult = parseLnurlSuccessAction(successActionRaw);
+    if (successActionResult.error) {
+      app.log.warn({ username, tenant: tenant.domain, reason: successActionResult.error }, 'invalid lnurl successAction');
+      return reply.code(400).send({ status: 'ERROR', reason: successActionResult.error });
+    }
+    const successAction = successActionResult.value;
     const commentAllowed = resolveNumber(user.lnurlCommentAllowed, tenant.lnurlCommentAllowed);
 
     // amount is in millisats per LNURL spec

@@ -61,4 +61,40 @@ describe('lnurl webhook', () => {
     expect(statusRes.statusCode).toBe(200);
     expect(statusRes.json().status).toBe('PAID');
   });
+
+  it('rejects invalid successAction payloads', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-success-action' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-success-action',
+        lightningAddress: 'badaction@default',
+        lnurlSuccessAction: '{not-json'
+      },
+      update: { lnurlSuccessAction: '{not-json' }
+    });
+
+    const res = await server.inject({ url: '/api/lnurlp/badaction/invoice?amount=1000' });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().status).toBe('ERROR');
+  });
+
+  it('rejects invalid metadata payloads', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-metadata' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-metadata',
+        lightningAddress: 'badmeta@default',
+        lnurlMetadata: 'not-json'
+      },
+      update: { lnurlMetadata: 'not-json' }
+    });
+
+    const res = await server.inject({ url: '/api/lnurlp/badmeta/invoice?amount=1000' });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().status).toBe('ERROR');
+  });
 });
