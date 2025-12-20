@@ -456,6 +456,32 @@ body {
   font-weight: 600;
 }
 
+.zap-success-action {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--color-fg-default);
+  font-weight: 500;
+}
+
+.zap-success-action-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-fg-muted);
+}
+
+.zap-success-action a {
+  color: var(--color-accent-emphasis);
+  text-decoration: none;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.zap-success-action a:hover {
+  text-decoration: underline;
+}
+
 .zap-success-icon {
   width: 32px;
   height: 32px;

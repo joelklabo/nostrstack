@@ -1,5 +1,8 @@
+import './styles/lightning-card.css';
+
 import { type Event, nip19, Relay } from 'nostr-tools';
-import { useCallback, useEffect, useMemo,useState } from 'react';
+import QRCode from 'qrcode';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
 
@@ -26,12 +29,16 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   const [profileLoading, setProfileLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lightningQr, setLightningQr] = useState<string | null>(null);
+  const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
   const fetchProfile = useCallback(async () => {
     setProfileLoading(true);
     setError(null);
     try {
       const relay = await Relay.connect(DEFAULT_RELAYS[0]); // Connect to one relay for metadata
+      let closed = false;
+      let closeRelay = () => {};
       const sub = relay.subscribe([{ kinds: [0], authors: [pubkey] }], {
         onevent: (event) => {
           try {
@@ -42,14 +49,18 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
           }
         },
         oneose: () => {
-          try { relay.close(); } catch { /* ignore */ }
           setProfileLoading(false);
         }
       });
-      // Cleanup subscription on unmount
-      return () => {
+      closeRelay = () => {
+        if (closed) return;
+        closed = true;
         try { sub.close(); } catch { /* ignore */ }
         try { relay.close(); } catch { /* ignore */ }
+      };
+      // Cleanup subscription on unmount
+      return () => {
+        closeRelay();
       };
     } catch (e) {
       console.error('Failed to fetch profile', e);
@@ -62,18 +73,24 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     setEventsLoading(true);
     try {
       const relay = await Relay.connect(DEFAULT_RELAYS[0]);
+      let closed = false;
+      let closeRelay = () => {};
       const sub = relay.subscribe([{ kinds: [1], authors: [pubkey], limit: 20 }], {
         onevent: (event) => {
           setEvents(prev => [...prev, event].sort((a, b) => b.created_at - a.created_at));
         },
         oneose: () => {
-          try { relay.close(); } catch { /* ignore */ }
           setEventsLoading(false);
         }
       });
-      return () => {
+      closeRelay = () => {
+        if (closed) return;
+        closed = true;
         try { sub.close(); } catch { /* ignore */ }
         try { relay.close(); } catch { /* ignore */ }
+      };
+      return () => {
+        closeRelay();
       };
     } catch (e) {
       console.error('Failed to fetch events', e);
@@ -92,6 +109,48 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   }, [fetchProfile, fetchEvents]);
 
   const npub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
+  const lightningAddress = profile?.lud16 ?? profile?.lud06;
+  const lightningLabel = profile?.lud16 ? 'LIGHTNING_ADDRESS' : 'LNURL';
+  const lightningUri = useMemo(() => {
+    if (!lightningAddress) return null;
+    const trimmed = lightningAddress.trim();
+    if (!trimmed) return null;
+    return `lightning:${trimmed}`;
+  }, [lightningAddress]);
+
+  useEffect(() => {
+    if (!lightningUri) {
+      setLightningQr(null);
+      return;
+    }
+    let active = true;
+    QRCode.toDataURL(lightningUri, { width: 160, margin: 1 })
+      .then((url) => {
+        if (active) setLightningQr(url);
+      })
+      .catch(() => {
+        if (active) setLightningQr(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [lightningUri]);
+
+  const handleCopyLightning = useCallback(async () => {
+    if (!lightningAddress) return;
+    try {
+      await navigator.clipboard.writeText(lightningAddress);
+      setLightningCopyStatus('copied');
+    } catch {
+      setLightningCopyStatus('error');
+    }
+    window.setTimeout(() => setLightningCopyStatus('idle'), 1500);
+  }, [lightningAddress]);
+
+  const handleOpenWallet = useCallback(() => {
+    if (!lightningUri) return;
+    window.open(lightningUri, '_blank');
+  }, [lightningUri]);
 
   return (
     <div className="profile-view">
@@ -104,8 +163,36 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
             <code className="profile-pubkey">{npub}</code>
             {profile?.nip05 && <p className="profile-nip05">NIP-05: {profile.nip05}</p>}
             {profile?.about && <p className="profile-about">{profile.about}</p>}
-            {profile?.lud16 && <p className="profile-lud16">Lightning: {profile.lud16}</p>}
-            {profile?.lud06 && <p className="profile-lud06">LNURL: {profile.lud06}</p>}
+            {lightningAddress && (
+              <div className="lightning-card">
+                <div className="lightning-card-header">
+                  <div className="lightning-card-title">{lightningLabel}</div>
+                  {lightningCopyStatus === 'error' && (
+                    <span className="lightning-card-hint">COPY_FAILED</span>
+                  )}
+                </div>
+                <div className="lightning-card-body">
+                  <div className="lightning-card-qr">
+                    {lightningQr ? (
+                      <img src={lightningQr} alt="Lightning QR" />
+                    ) : (
+                      <div className="lightning-card-qr-fallback">QR</div>
+                    )}
+                  </div>
+                  <div className="lightning-card-details">
+                    <code className="lightning-card-value">{lightningAddress}</code>
+                    <div className="lightning-card-actions">
+                      <button className="action-btn" onClick={handleCopyLightning}>
+                        {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
+                      </button>
+                      <button className="action-btn" onClick={handleOpenWallet} disabled={!lightningUri}>
+                        OPEN_WALLET
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {profile?.website && <p className="profile-website">Web: <a href={profile.website} target="_blank" rel="noopener noreferrer">{profile.website}</a></p>}
             <button className="action-btn" style={{ marginTop: '1rem', borderColor: 'var(--terminal-accent)', color: 'var(--terminal-accent)' }}>
               [+] FOLLOW_USER

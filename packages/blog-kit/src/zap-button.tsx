@@ -30,6 +30,15 @@ interface ZapButtonProps {
   enableRegtestPay?: boolean;
 }
 
+type LnurlSuccessAction = {
+  tag?: string;
+  message?: string;
+  url?: string;
+  description?: string;
+  ciphertext?: string;
+  iv?: string;
+};
+
 const RELAYS = [
   'wss://relay.damus.io',
   'wss://relay.snort.social',
@@ -137,6 +146,7 @@ export function ZapButton({
   const [zapState, setZapState] = useState<'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<string | null>(null);
+  const [successAction, setSuccessAction] = useState<LnurlSuccessAction | null>(null);
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
@@ -213,6 +223,7 @@ export function ZapButton({
     setErrorMessage(null);
     setRegtestError(null);
     setInvoice(null);
+    setSuccessAction(null);
     setCopyStatus('idle');
 
     try {
@@ -282,7 +293,12 @@ export function ZapButton({
         signedZapRequest
       );
       const pr = invoiceData.pr;
+      const nextSuccessAction =
+        invoiceData?.successAction && typeof invoiceData.successAction === 'object'
+          ? (invoiceData.successAction as LnurlSuccessAction)
+          : null;
       setInvoice(pr);
+      setSuccessAction(nextSuccessAction);
       setZapState('waiting-payment');
 
       // Attempt WebLN payment
@@ -364,6 +380,7 @@ export function ZapButton({
     setErrorMessage(null);
     setRegtestError(null);
     setInvoice(null);
+    setSuccessAction(null);
     setCopyStatus('idle');
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
@@ -460,6 +477,28 @@ export function ZapButton({
         return { text: '', tone: 'neutral', spinner: false };
     }
   }, [zapState, authorNpub, invoice, errorMessage]);
+
+  const successActionDisplay = useMemo(() => {
+    if (!successAction) return null;
+    const tag = successAction.tag?.toLowerCase();
+    if (tag === 'message' && successAction.message) {
+      return { title: 'MESSAGE', body: successAction.message };
+    }
+    if (tag === 'url' && successAction.url) {
+      return {
+        title: 'OPEN_LINK',
+        url: successAction.url,
+        label: successAction.description ?? successAction.url
+      };
+    }
+    if (tag === 'aes') {
+      return {
+        title: successAction.description ?? 'ENCRYPTED_MESSAGE',
+        body: 'Open your wallet to view the encrypted message.'
+      };
+    }
+    return null;
+  }, [successAction]);
 
   const showInvoice = zapState === 'waiting-payment' && Boolean(invoice);
 
@@ -559,6 +598,18 @@ export function ZapButton({
                 <div className="zap-success">
                   <div className="zap-success-icon">✓</div>
                   <div>Payment confirmed.</div>
+                  {successActionDisplay && (
+                    <div className="zap-success-action">
+                      <div className="zap-success-action-title">{successActionDisplay.title}</div>
+                      {successActionDisplay.url ? (
+                        <a href={successActionDisplay.url} target="_blank" rel="noopener noreferrer">
+                          {successActionDisplay.label}
+                        </a>
+                      ) : (
+                        <div>{successActionDisplay.body}</div>
+                      )}
+                    </div>
+                  )}
                   <button className="zap-action zap-action-primary" type="button" onClick={handleCloseZap}>
                     CLOSE
                   </button>

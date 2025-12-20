@@ -1,0 +1,87 @@
+.lightning-card {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--color-canvas-subtle);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lightning-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.lightning-card-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-fg-muted);
+}
+
+.lightning-card-body {
+  display: grid;
+  grid-template-columns: minmax(110px, 140px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.lightning-card-qr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-muted);
+  background: #fff;
+  min-height: 120px;
+}
+
+.lightning-card-qr img {
+  width: 120px;
+  height: 120px;
+  image-rendering: pixelated;
+}
+
+.lightning-card-qr-fallback {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+}
+
+.lightning-card-details {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.lightning-card-value {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-fg-default);
+  word-break: break-all;
+}
+
+.lightning-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lightning-card-hint {
+  font-size: 0.7rem;
+  color: var(--color-danger-fg);
+}
+
+@media (max-width: 720px) {
+  .lightning-card-body {
+    grid-template-columns: 1fr;
+  }
+
+  .lightning-card-qr {
+    justify-self: start;
+  }
+}
