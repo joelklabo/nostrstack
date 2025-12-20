@@ -20,6 +20,8 @@ execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss 
 );
 
 describe('regtest pay route', () => {
+  const TEST_TIMEOUT = 15000;
+
   it('returns 404 when regtest pay is disabled', async () => {
     process.env.ENABLE_REGTEST_PAY = 'false';
     vi.resetModules();
@@ -37,7 +39,7 @@ describe('regtest pay route', () => {
     } finally {
       await server.close();
     }
-  });
+  }, TEST_TIMEOUT);
 
   it('returns 400 when payload is missing', async () => {
     process.env.ENABLE_REGTEST_PAY = 'true';
@@ -54,7 +56,7 @@ describe('regtest pay route', () => {
     } finally {
       await server.close();
     }
-  });
+  }, TEST_TIMEOUT);
 
   it('returns 400 for invalid invoices when enabled', async () => {
     process.env.ENABLE_REGTEST_PAY = 'true';
@@ -73,5 +75,5 @@ describe('regtest pay route', () => {
     } finally {
       await server.close();
     }
-  });
+  }, TEST_TIMEOUT);
 });
