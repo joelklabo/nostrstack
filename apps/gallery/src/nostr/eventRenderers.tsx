@@ -1,6 +1,5 @@
-import type { Event } from 'nostr-tools';
+import { type Event, nip19 } from 'nostr-tools';
 import type { ReactNode } from 'react';
-import { nip19 } from 'nostr-tools';
 
 export type ProfileMeta = {
   name?: string;
