@@ -16,6 +16,7 @@ import { RelaysView } from './RelaysView';
 import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
+import { resolveApiBase } from './utils/api-base';
 
 type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
 
@@ -109,11 +110,18 @@ function AppShell() {
 
 export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBaseConfig = resolveApiBase(apiBase);
   const enableRegtestPay = String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true';
   const relays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
 
   return (
-    <NostrstackProvider apiBase={apiBase} baseUrl={apiBase} relays={relays.length ? relays : undefined} enableRegtestPay={enableRegtestPay}>
+    <NostrstackProvider
+      apiBase={apiBase}
+      apiBaseConfig={apiBaseConfig}
+      baseUrl={apiBase}
+      relays={relays.length ? relays : undefined}
+      enableRegtestPay={enableRegtestPay}
+    >
       <AuthProvider>
         <StatsProvider>
           <AppShell />

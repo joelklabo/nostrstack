@@ -4,6 +4,7 @@ import { type Event, type EventTemplate, nip19, SimplePool } from 'nostr-tools';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { resolveApiBase } from './api-base';
 import { useAuth } from './auth';
 import { useNostrstackConfig } from './context';
 
@@ -102,21 +103,6 @@ function encodeLnurl(url: string): string | null {
   }
 }
 
-function preferSecureBase(base: string) {
-  if (typeof window === 'undefined') return base;
-  if (window.location.protocol !== 'https:') return base;
-  if (!/^http:\/\//i.test(base)) return base;
-  return base.replace(/^http:/i, 'https:');
-}
-
-function normalizeApiBase(raw?: string | null): string {
-  if (!raw) return '';
-  const trimmed = raw.trim();
-  if (!trimmed || trimmed === 'mock') return '';
-  if (trimmed === '/api') return '';
-  return preferSecureBase(trimmed.replace(/\/$/, ''));
-}
-
 // Minimal LNURL-pay client, just enough for zaps.
 // In a real scenario, use @nostrstack/sdk or similar for robust client.
 async function getLnurlpMetadata(lnurl: string) {
@@ -162,8 +148,16 @@ export function ZapButton({
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
   const apiBaseRaw = apiBase ?? cfg.apiBase ?? cfg.baseUrl ?? '';
-  const resolvedApiBase = useMemo(() => normalizeApiBase(apiBaseRaw), [apiBaseRaw]);
+  const apiBaseConfig = useMemo(
+    () => cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw),
+    [cfg.apiBaseConfig, apiBaseRaw]
+  );
+  const resolvedApiBase = apiBaseConfig.baseUrl;
   const regtestEnabled = enableRegtestPay ?? cfg.enableRegtestPay ?? false;
+  const regtestAvailable = regtestEnabled && apiBaseConfig.isConfigured;
+  const regtestUnavailableReason =
+    regtestEnabled && !apiBaseConfig.isConfigured ? 'Regtest pay unavailable (API base not configured).' : null;
+  const effectiveRegtestError = regtestError ?? regtestUnavailableReason;
 
   const relayTargets = useMemo(() => {
     const base = relays ?? cfg.relays ?? RELAYS;
@@ -317,7 +311,7 @@ export function ZapButton({
       setRegtestError('Regtest pay disabled.');
       return;
     }
-    if (!resolvedApiBase && apiBaseRaw !== '/api') {
+    if (!apiBaseConfig.isConfigured) {
       setRegtestError('Regtest pay unavailable (API base not configured).');
       return;
     }
@@ -340,7 +334,7 @@ export function ZapButton({
     } finally {
       setRegtestPaying(false);
     }
-  }, [invoice, regtestEnabled, resolvedApiBase, apiBaseRaw]);
+  }, [invoice, regtestEnabled, apiBaseConfig.isConfigured, resolvedApiBase]);
 
   const handleCloseZap = useCallback(() => {
     setZapState('idle');
@@ -490,7 +484,7 @@ export function ZapButton({
                 {statusConfig.spinner && <span className="zap-spinner" aria-hidden="true" />}
                 <span>{statusConfig.text}</span>
               </div>
-              {regtestError && <div className="zap-status zap-status--error">{regtestError}</div>}
+              {effectiveRegtestError && <div className="zap-status zap-status--error">{effectiveRegtestError}</div>}
 
               {showInvoice && invoice && (
                 <div className="zap-grid">
@@ -518,9 +512,9 @@ export function ZapButton({
                           className="zap-action zap-action-warning"
                           type="button"
                           onClick={handleRegtestPay}
-                          disabled={regtestPaying}
+                          disabled={regtestPaying || !regtestAvailable}
                         >
-                          {regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
+                          {!regtestAvailable ? 'REGTEST_CONFIG_REQUIRED' : regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
                         </button>
                       )}
                       <button className="zap-action" type="button" onClick={handleCloseZap}>

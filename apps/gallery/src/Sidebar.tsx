@@ -1,8 +1,9 @@
-import { useAuth, useStats } from '@nostrstack/blog-kit';
+import { useAuth, useNostrstackConfig, useStats } from '@nostrstack/blog-kit';
 import { useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
 import { useToast } from './ui/toast';
+import { resolveApiBase } from './utils/api-base';
 
 interface SidebarProps {
   currentView: 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
@@ -12,19 +13,23 @@ interface SidebarProps {
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout } = useAuth();
+  const cfg = useNostrstackConfig();
   const wallet = useWallet();
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
 
-  const apiBaseRaw = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-  const isMockBase = apiBaseRaw === 'mock';
-  const apiBase = preferSecureBase(apiBaseRaw === '/api' ? '' : apiBaseRaw.replace(/\/$/, ''));
+  const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
+  const apiBase = apiBaseConfig.baseUrl;
   const showRegtestActions = import.meta.env.DEV;
+  const regtestUnavailableReason = apiBaseConfig.isConfigured
+    ? null
+    : 'Regtest funding unavailable (API base not configured).';
 
   const handleRegtestFund = async () => {
     if (isFunding) return;
-    if (isMockBase) {
-      toast({ message: 'Regtest funding unavailable (API base not configured).', tone: 'danger' });
+    if (!apiBaseConfig.isConfigured) {
+      toast({ message: regtestUnavailableReason ?? 'Regtest funding unavailable.', tone: 'danger' });
       return;
     }
     setIsFunding(true);
@@ -49,13 +54,6 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
       setIsFunding(false);
     }
   };
-
-  function preferSecureBase(base: string) {
-    if (typeof window === 'undefined') return base;
-    if (window.location.protocol !== 'https:') return base;
-    if (!/^http:\/\//i.test(base)) return base;
-    return base.replace(/^http:/i, 'https:');
-  }
 
   return (
     <nav className="sidebar-nav">
@@ -113,10 +111,19 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                   type="button"
                   className="wallet-action-btn"
                   onClick={handleRegtestFund}
-                  disabled={isFunding}
+                  disabled={isFunding || !apiBaseConfig.isConfigured}
                 >
-                  {isFunding ? 'Mining regtest blocks…' : 'Add funds (regtest)'}
+                  {!apiBaseConfig.isConfigured
+                    ? 'REGTEST_CONFIG_REQUIRED'
+                    : isFunding
+                      ? 'Mining regtest blocks…'
+                      : 'Add funds (regtest)'}
                 </button>
+                {regtestUnavailableReason && (
+                  <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--color-fg-muted)' }}>
+                    {regtestUnavailableReason}
+                  </div>
+                )}
               </div>
             )}
           </div>

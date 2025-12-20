@@ -10,6 +10,8 @@ import {
 } from '@nostrstack/embed';
 import React, { createContext, useContext, useMemo } from 'react';
 
+import type { ApiBaseResolution } from './api-base';
+
 export type ThemeVars = {
   accent?: string;
   text?: string;
@@ -19,6 +21,7 @@ export type ThemeVars = {
 
 export type NostrstackConfig = {
   apiBase?: string;
+  apiBaseConfig?: ApiBaseResolution;
   baseUrl?: string;
   host?: string;
   lnAddress?: string;
