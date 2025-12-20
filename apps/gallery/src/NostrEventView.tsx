@@ -3,7 +3,8 @@ import { type Event, nip19, SimplePool } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
 
 import { fetchNostrEventFromApi } from './nostr/api';
-import { getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
+import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
+import { ReferencePreview } from './nostr/ReferencePreview';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
 import { resolveGalleryApiBase } from './utils/api-base';
@@ -19,6 +20,7 @@ type LoadState = {
   targetLabel?: string;
   relays: string[];
   event?: Event;
+  references?: EventReferences;
   authorProfile?: ProfileMeta | null;
   authorPubkey?: string;
 };
@@ -103,6 +105,27 @@ function toNote(id?: string) {
   } catch {
     return id;
   }
+}
+
+function toNaddr(coord: string) {
+  const parts = coord.split(':');
+  if (parts.length < 3) return coord;
+  const kind = Number(parts[0]);
+  const pubkey = parts[1];
+  const identifier = parts.slice(2).join(':');
+  if (!Number.isFinite(kind)) return coord;
+  try {
+    return nip19.naddrEncode({ kind, pubkey, identifier });
+  } catch {
+    return coord;
+  }
+}
+
+function sliceWithOverflow(items: string[], limit: number) {
+  if (items.length <= limit) {
+    return { items, overflow: 0 };
+  }
+  return { items: items.slice(0, limit), overflow: items.length - limit };
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number) {
@@ -204,12 +227,16 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     };
 
     const load = async () => {
-      setState((prev) => ({
-        ...prev,
+      setState({
         status: 'loading',
         relays: relayList,
-        error: undefined
-      }));
+        error: undefined,
+        event: undefined,
+        references: undefined,
+        authorProfile: undefined,
+        authorPubkey: undefined,
+        targetLabel: rawId
+      });
 
       let apiError: string | null = null;
 
@@ -230,6 +257,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               status: 'ready',
               relays,
               event: apiResult.event,
+              references: apiResult.references,
               authorProfile: apiResult.author?.profile ?? null,
               authorPubkey: apiResult.author?.pubkey ?? apiResult.event.pubkey,
               targetLabel: apiResult.target?.input ?? rawId
@@ -247,6 +275,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           status: 'ready',
           relays: relayList,
           event: relayResult.event,
+          references: extractEventReferences(relayResult.event),
           authorProfile: relayResult.authorProfile,
           authorPubkey: relayResult.authorPubkey,
           targetLabel: rawId
@@ -272,6 +301,50 @@ export function NostrEventView({ rawId }: { rawId: string }) {
   const authorProfile = state.authorProfile;
   const title = event ? getEventKindLabel(event.kind) : 'Nostr Event';
   const rendered = event ? renderEvent(event) : null;
+  const references = state.references;
+  const hasReferences =
+    !!references &&
+    (references.root.length > 0 ||
+      references.reply.length > 0 ||
+      references.mention.length > 0 ||
+      references.quote.length > 0 ||
+      references.address.length > 0 ||
+      references.profiles.length > 0);
+  const previewsEnabled = apiBaseConfig.isConfigured;
+
+  const referencePreviewSections = useMemo(() => {
+    if (!references || !previewsEnabled) return [];
+    const sections = [
+      { key: 'root', label: 'Thread root', items: references.root, limit: 1 },
+      { key: 'reply', label: 'In reply to', items: references.reply, limit: 1 },
+      { key: 'quote', label: 'Quoted events', items: references.quote, limit: 3 },
+      {
+        key: 'address',
+        label: 'Addressable references',
+        items: references.address.map(toNaddr),
+        limit: 3
+      },
+      { key: 'mention', label: 'Mentions', items: references.mention, limit: 3 }
+    ];
+
+    return sections.map((section) => {
+      const deduped = Array.from(new Set(section.items.filter(Boolean)));
+      const { items, overflow } = sliceWithOverflow(deduped, section.limit);
+      return { ...section, items, overflow };
+    });
+  }, [previewsEnabled, references]);
+
+  const profileChips = useMemo(() => {
+    if (!references) return { items: [], overflow: 0 };
+    const deduped = Array.from(new Set(references.profiles.filter(Boolean)));
+    return sliceWithOverflow(deduped, 8);
+  }, [references]);
+
+  const addressChips = useMemo(() => {
+    if (!references) return { items: [], overflow: 0 };
+    const deduped = Array.from(new Set(references.address.filter(Boolean).map(toNaddr)));
+    return sliceWithOverflow(deduped, 8);
+  }, [references]);
 
   return (
     <div className="nostr-event-page">
@@ -345,6 +418,73 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               {rendered?.body}
               {rendered?.footer}
             </div>
+
+            {hasReferences && (
+              <div className="nostr-event-reference-sections">
+                {previewsEnabled && referencePreviewSections.map((section) => {
+                  if (section.items.length === 0) return null;
+                  return (
+                    <div key={section.key} className="nostr-event-preview-group">
+                      <div className="nostr-event-preview-header">
+                        <span className="nostr-event-label">{section.label}</span>
+                        {section.overflow > 0 && (
+                          <span className="nostr-event-preview-overflow">+{section.overflow} more</span>
+                        )}
+                      </div>
+                      <div className="nostr-event-preview-grid">
+                        {section.items.map((id) => (
+                          <ReferencePreview
+                            key={`${section.key}-${id}`}
+                            target={id}
+                            apiBase={apiBase}
+                            hrefTarget={section.key === 'address' ? id : undefined}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {profileChips.items.length > 0 && (
+                  <div className="nostr-event-ref">
+                    <span className="nostr-event-label">Mentioned profiles</span>
+                    <div className="nostr-event-chiplist">
+                      {profileChips.items.map((pk) => {
+                        const npub = toNpub(pk);
+                        return (
+                          <a key={pk} href={`/nostr/${encodeURIComponent(npub)}`} className="nostr-event-chip">
+                            {npub}
+                          </a>
+                        );
+                      })}
+                      {profileChips.overflow > 0 && (
+                        <span className="nostr-event-chip">+{profileChips.overflow} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {addressChips.items.length > 0 && (
+                  <div className="nostr-event-ref">
+                    <span className="nostr-event-label">Addressable coords</span>
+                    <div className="nostr-event-chiplist">
+                      {addressChips.items.map((coord) => (
+                        <a
+                          key={coord}
+                          href={`/nostr/${encodeURIComponent(coord)}`}
+                          className="nostr-event-chip"
+                        >
+                          {coord}
+                        </a>
+                      ))}
+                      {addressChips.overflow > 0 && (
+                        <span className="nostr-event-chip">+{addressChips.overflow} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="nostr-event-tags">
               <span className="nostr-event-label">Tags</span>

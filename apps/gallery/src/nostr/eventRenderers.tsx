@@ -11,6 +11,15 @@ export type ProfileMeta = {
   lud16?: string;
 };
 
+export type EventReferences = {
+  root: string[];
+  reply: string[];
+  mention: string[];
+  quote: string[];
+  address: string[];
+  profiles: string[];
+};
+
 export type RenderedEvent = {
   label: string;
   body: ReactNode;
@@ -18,6 +27,7 @@ export type RenderedEvent = {
 };
 
 const LINK_RE = /(nostr:[0-9a-z]+|https?:\/\/\S+)/gi;
+const NOSTR_URI_RE = /nostr:([0-9a-z]+)/gi;
 
 export function parseProfileContent(content?: string): ProfileMeta | null {
   if (!content) return null;
@@ -27,6 +37,49 @@ export function parseProfileContent(content?: string): ProfileMeta | null {
   } catch {
     return null;
   }
+}
+
+function uniq<T>(items: T[]) {
+  return Array.from(new Set(items));
+}
+
+function parseInlineMentions(content?: string) {
+  const events: string[] = [];
+  const profiles: string[] = [];
+  const addresses: string[] = [];
+  if (!content) return { events, profiles, addresses };
+
+  for (const match of content.matchAll(NOSTR_URI_RE)) {
+    const token = match[1];
+    if (!token) continue;
+    try {
+      const decoded = nip19.decode(token.toLowerCase());
+      if (decoded.type === 'note') {
+        events.push(decoded.data as string);
+      } else if (decoded.type === 'nevent') {
+        const data = decoded.data as { id: string };
+        if (data?.id) events.push(data.id);
+      } else if (decoded.type === 'npub') {
+        profiles.push(decoded.data as string);
+      } else if (decoded.type === 'nprofile') {
+        const data = decoded.data as { pubkey: string };
+        if (data?.pubkey) profiles.push(data.pubkey);
+      } else if (decoded.type === 'naddr') {
+        const data = decoded.data as { kind: number; pubkey: string; identifier: string };
+        if (data?.pubkey && data?.identifier != null && data?.kind != null) {
+          addresses.push(`${data.kind}:${data.pubkey}:${data.identifier}`);
+        }
+      }
+    } catch {
+      // ignore invalid mentions
+    }
+  }
+
+  return {
+    events: uniq(events),
+    profiles: uniq(profiles),
+    addresses: uniq(addresses)
+  };
 }
 
 export function ProfileCard({ profile }: { profile: ProfileMeta }) {
@@ -108,6 +161,14 @@ function renderContentWithLinks(content: string) {
         if (!part) return null;
         if (part.toLowerCase().startsWith('nostr:')) {
           const id = part.slice(6);
+          try {
+            const decoded = nip19.decode(id.toLowerCase());
+            if (!['note', 'nevent', 'npub', 'nprofile', 'naddr'].includes(decoded.type)) {
+              return <span key={`text-${idx}`}>{part}</span>;
+            }
+          } catch {
+            return <span key={`text-${idx}`}>{part}</span>;
+          }
           return (
             <a key={`nostr-${idx}`} href={`/nostr/${encodeURIComponent(id)}`} className="nostr-event-link">
               {part}
@@ -125,6 +186,66 @@ function renderContentWithLinks(content: string) {
       })}
     </>
   );
+}
+
+function normalizeEventId(id: string) {
+  return id.trim().toLowerCase();
+}
+
+function normalizeCoordinate(coord: string) {
+  return coord.trim().toLowerCase();
+}
+
+function limitList(list: string[], limit?: number) {
+  if (!limit || list.length <= limit) return list;
+  return list.slice(0, limit);
+}
+
+export function extractEventReferences(event: Event, limit?: number): EventReferences {
+  const root: string[] = [];
+  const reply: string[] = [];
+  const mention: string[] = [];
+  const quote: string[] = [];
+  const address: string[] = [];
+  const profiles: string[] = [];
+
+  const unmarked: string[] = [];
+  for (const tag of event.tags) {
+    if (tag[0] !== 'e') continue;
+    const id = tag[1];
+    if (!id) continue;
+    const marker = tag[3];
+    if (marker === 'root') root.push(id);
+    else if (marker === 'reply') reply.push(id);
+    else if (marker === 'mention') mention.push(id);
+    else unmarked.push(id);
+  }
+
+  if (root.length === 0 && unmarked.length > 0) root.push(unmarked[0]);
+  if (reply.length === 0 && unmarked.length > 1) reply.push(unmarked[unmarked.length - 1]);
+
+  const used = new Set([...root, ...reply]);
+  for (const id of unmarked) {
+    if (!used.has(id)) mention.push(id);
+  }
+
+  quote.push(...getTagValues(event, 'q'));
+  address.push(...getTagValues(event, 'a'));
+  profiles.push(...getTagValues(event, 'p'));
+
+  const inline = parseInlineMentions(event.content);
+  mention.push(...inline.events);
+  address.push(...inline.addresses);
+  profiles.push(...inline.profiles);
+
+  return {
+    root: limitList(uniq(root.map(normalizeEventId)), limit),
+    reply: limitList(uniq(reply.map(normalizeEventId)), limit),
+    mention: limitList(uniq(mention.map(normalizeEventId)), limit),
+    quote: limitList(uniq(quote.map(normalizeEventId)), limit),
+    address: limitList(uniq(address.map(normalizeCoordinate)), limit),
+    profiles: limitList(uniq(profiles.map(normalizeEventId)), limit)
+  };
 }
 
 function renderReferences(event: Event) {
