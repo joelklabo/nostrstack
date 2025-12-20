@@ -50,3 +50,36 @@ model Payment {
   @@index([tenantId])
   @@index([tenantId, userId])
 }
+
+model NostrEventCache {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  eventJson String
+  pubkey    String
+  kind      Int
+  relays    String?
+  fetchedAt DateTime
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
+model NostrAddressCache {
+  id         String   @id @default(cuid())
+  kind       Int
+  pubkey     String
+  identifier String
+  eventId    String
+  eventJson  String
+  relays     String?
+  fetchedAt  DateTime
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([kind, pubkey, identifier])
+  @@index([eventId])
+  @@index([expiresAt])
+}
