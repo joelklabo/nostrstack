@@ -21,8 +21,7 @@ function runCompose(args: string[], cwd?: string): Promise<string> {
 
 export async function registerRegtestPayRoute(app: FastifyInstance) {
   if (!app.config?.REGTEST_PAY_ENABLED) {
-    app.log.warn('regtest pay disabled; skipping /api/regtest/pay');
-    return;
+    app.log.warn('regtest pay disabled; /api/regtest/pay will return 404');
   }
   const handlerOpts = {
     schema: {
@@ -36,6 +35,9 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
   } as const;
 
   const handler: RouteHandlerMethod = async (request, reply) => {
+    if (!app.config?.REGTEST_PAY_ENABLED) {
+      return reply.code(404).send({ ok: false, error: 'regtest_pay_disabled' });
+    }
     const { invoice } = request.body as { invoice: string };
     if (!invoice || invoice.length < 10) return reply.code(400).send({ ok: false, error: 'invalid_invoice' });
 
