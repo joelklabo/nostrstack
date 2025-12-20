@@ -47,6 +47,8 @@ const schema = z.object({
   LND_GRPC_ENDPOINT: z.string().optional(),
   LND_GRPC_MACAROON: z.string().optional(),
   LND_GRPC_CERT: z.string().optional(),
+  ENABLE_REGTEST_PAY: bool().default(false),
+  ENABLE_REGTEST_FUND: bool().default(false),
   DATABASE_URL: z.string().default(defaultDatabaseUrl),
   PUBLIC_ORIGIN: z.string().url().default('http://localhost:3001'),
   ADMIN_API_KEY: z.string().optional(),

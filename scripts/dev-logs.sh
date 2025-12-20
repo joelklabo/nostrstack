@@ -27,6 +27,8 @@ export HTTPS_KEY="${HTTPS_KEY:-$ROOT/certs/dev-key.pem}"
 export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:3001}"
 export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
 export LIGHTNING_PROVIDER="${LIGHTNING_PROVIDER:-lnbits}"
+export ENABLE_REGTEST_PAY="${ENABLE_REGTEST_PAY:-true}"
+export ENABLE_REGTEST_FUND="${ENABLE_REGTEST_FUND:-true}"
 export PORT="${PORT:-3001}"
 export DEV_SERVER_PORT="${DEV_SERVER_PORT:-4173}"
 

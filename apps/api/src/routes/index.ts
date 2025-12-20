@@ -38,6 +38,8 @@ declare module 'fastify' {
     config?: {
       REGTEST_COMPOSE?: string;
       REGTEST_CWD?: string;
+      REGTEST_PAY_ENABLED?: boolean;
+      REGTEST_FUND_ENABLED?: boolean;
     };
   }
 }

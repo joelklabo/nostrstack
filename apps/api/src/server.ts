@@ -142,6 +142,13 @@ export async function buildServer() {
   });
   server.decorate('lightningProvider', lightningProvider);
 
+  server.decorate('config', {
+    REGTEST_COMPOSE: process.env.REGTEST_COMPOSE,
+    REGTEST_CWD: process.env.REGTEST_CWD,
+    REGTEST_PAY_ENABLED: env.ENABLE_REGTEST_PAY,
+    REGTEST_FUND_ENABLED: env.ENABLE_REGTEST_FUND
+  });
+
   if (env.NOSTR_SECRET_KEY) {
     const relays = env.NOSTR_RELAYS?.split(',').map((s) => s.trim()).filter(Boolean) || ['wss://relay.damus.io'];
     server.decorate('nostrClient', new NostrClient(env.NOSTR_SECRET_KEY, server.log.child({ scope: 'nostr' })));
@@ -164,10 +171,6 @@ export async function buildServer() {
   await registerWalletWs(server);
   createPayEventHub(server);
   const stopReconciler = startPaymentReconciler(server);
-  server.decorate('config', {
-    REGTEST_COMPOSE: process.env.REGTEST_COMPOSE,
-    REGTEST_CWD: process.env.REGTEST_CWD
-  });
   await ensureDefaultTenant(server);
 
   if (stopTracing) {

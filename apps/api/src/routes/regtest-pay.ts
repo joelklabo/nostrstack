@@ -20,6 +20,10 @@ function runCompose(args: string[], cwd?: string): Promise<string> {
 }
 
 export async function registerRegtestPayRoute(app: FastifyInstance) {
+  if (!app.config?.REGTEST_PAY_ENABLED) {
+    app.log.warn('regtest pay disabled; skipping /api/regtest/pay');
+    return;
+  }
   const handlerOpts = {
     schema: {
       body: {

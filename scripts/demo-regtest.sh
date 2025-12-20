@@ -65,6 +65,8 @@ env \
   LIGHTNING_PROVIDER=lnbits \
   LN_BITS_URL=http://localhost:15001 \
   LN_BITS_API_KEY="$LNBITS_ADMIN_KEY" \
+  ENABLE_REGTEST_PAY=true \
+  ENABLE_REGTEST_FUND=true \
   PUBLIC_ORIGIN="http://localhost:${API_PORT}" \
   VITE_API_BASE_URL="http://localhost:${API_PORT}" \
   VITE_NOSTRSTACK_HOST="localhost:${API_PORT}" \
