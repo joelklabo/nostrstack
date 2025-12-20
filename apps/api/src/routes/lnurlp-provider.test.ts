@@ -47,5 +47,46 @@ describe('lnurl invoice provider field', () => {
     const payment = await server.prisma.payment.findFirstOrThrow();
     expect(payment.provider).toBe('mock');
   });
-});
 
+  it('returns successAction for valid payloads', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-success' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-success',
+        lightningAddress: 'success@default',
+        lnurlSuccessAction: JSON.stringify({ tag: 'message', message: 'Thanks!' })
+      },
+      update: {
+        lnurlSuccessAction: JSON.stringify({ tag: 'message', message: 'Thanks!' })
+      }
+    });
+
+    const res = await server.inject({ url: '/.well-known/lnurlp/success' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { successAction?: { tag?: string; message?: string } };
+    expect(body.successAction?.tag).toBe('message');
+    expect(body.successAction?.message).toBe('Thanks!');
+  });
+
+  it('rejects invalid successAction payloads', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-invalid' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-invalid',
+        lightningAddress: 'invalid@default',
+        lnurlSuccessAction: '{"tag":"url","url":"javascript:alert(1)"}'
+      },
+      update: {
+        lnurlSuccessAction: '{"tag":"url","url":"javascript:alert(1)"}'
+      }
+    });
+
+    const res = await server.inject({ url: '/.well-known/lnurlp/invalid' });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().status).toBe('ERROR');
+  });
+});
