@@ -44,6 +44,9 @@ const schema = z.object({
   LN_BITS_URL: z.string().url().optional(),
   LN_BITS_API_KEY: z.string().optional(),
   LIGHTNING_PROVIDER: z.enum(['opennode', 'lnbits', 'mock']).default('opennode'),
+  BOLT12_PROVIDER: z.enum(['cln-rest', 'mock']).optional(),
+  BOLT12_REST_URL: z.string().url().optional(),
+  BOLT12_REST_API_KEY: z.string().optional(),
   LND_GRPC_ENDPOINT: z.string().optional(),
   LND_GRPC_MACAROON: z.string().optional(),
   LND_GRPC_CERT: z.string().optional(),
@@ -69,6 +72,32 @@ const schema = z.object({
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
   OTEL_SERVICE_NAME: z.string().default('nostrstack-api')
+}).superRefine((data, ctx) => {
+  if (!data.ENABLE_BOLT12) return;
+  if (!data.BOLT12_PROVIDER) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BOLT12_PROVIDER'],
+      message: 'BOLT12_PROVIDER is required when ENABLE_BOLT12=true'
+    });
+    return;
+  }
+  if (data.BOLT12_PROVIDER === 'cln-rest') {
+    if (!data.BOLT12_REST_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['BOLT12_REST_URL'],
+        message: 'BOLT12_REST_URL is required for cln-rest provider'
+      });
+    }
+    if (!data.BOLT12_REST_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['BOLT12_REST_API_KEY'],
+        message: 'BOLT12_REST_API_KEY is required for cln-rest provider'
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof schema>;
