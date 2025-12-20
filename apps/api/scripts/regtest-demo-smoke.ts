@@ -18,12 +18,20 @@ function normalizeBase(base: string) {
   return base.replace(/\/+$/, '');
 }
 
+function envFlag(name: string, fallback = false) {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  return raw === '1' || raw.toLowerCase() === 'true' || raw.toLowerCase() === 'yes';
+}
+
 const DEFAULT_API_BASE =
   process.env.PUBLIC_ORIGIN ??
   (process.env.USE_HTTPS === 'false' ? 'http://localhost:3001' : 'https://localhost:3001');
 const API_BASE = normalizeBase(process.env.API_BASE ?? DEFAULT_API_BASE);
 const AMOUNT = Number(process.env.AMOUNT ?? 123);
 const ACTION = process.env.ACTION ?? 'regtest-smoke';
+const BOLT12_ENABLED = envFlag('ENABLE_BOLT12') || envFlag('BOLT12_SMOKE');
+const BOLT12_AMOUNT_MSAT = Number(process.env.BOLT12_AMOUNT_MSAT ?? AMOUNT * 1000);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const REGTEST_COMPOSE = path.join(ROOT, 'deploy', 'regtest', 'docker-compose.yml');
@@ -113,6 +121,7 @@ async function main() {
 
   console.log('⏳ Polling status...');
   const deadline = Date.now() + 15_000;
+  let paid = false;
   while (Date.now() < deadline) {
     const statusRes = await requestJson<{ status: string }>(
       `${API_BASE}/api/lnurlp/pay/status/${encodeURIComponent(payJson.provider_ref)}`,
@@ -120,11 +129,45 @@ async function main() {
     );
     if (statusRes.json.status?.toUpperCase?.() === 'PAID') {
       console.log('🎉 Payment settled (PAID)');
-      return;
+      paid = true;
+      break;
     }
     await new Promise((r) => setTimeout(r, 1000));
   }
-  throw new Error('Timed out waiting for payment to settle');
+  if (!paid) {
+    throw new Error('Timed out waiting for payment to settle');
+  }
+
+  if (BOLT12_ENABLED) {
+    console.log('🧪 Running BOLT12 offer smoke...');
+    const offerRes = await requestText(`${API_BASE}/api/bolt12/offers`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ description: 'regtest smoke offer', amountMsat: BOLT12_AMOUNT_MSAT }),
+      insecure
+    });
+    if (offerRes.status < 200 || offerRes.status >= 300) {
+      throw new Error(`bolt12 offer failed ${offerRes.status}: ${offerRes.body}`);
+    }
+    const offerJson = JSON.parse(offerRes.body) as { offer?: string };
+    if (!offerJson.offer) {
+      throw new Error('bolt12 offer missing offer string');
+    }
+    const invoiceRes = await requestText(`${API_BASE}/api/bolt12/invoices`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ offer: offerJson.offer, amountMsat: BOLT12_AMOUNT_MSAT }),
+      insecure
+    });
+    if (invoiceRes.status < 200 || invoiceRes.status >= 300) {
+      throw new Error(`bolt12 invoice failed ${invoiceRes.status}: ${invoiceRes.body}`);
+    }
+    const invoiceJson = JSON.parse(invoiceRes.body) as { invoice?: string };
+    if (!invoiceJson.invoice) {
+      throw new Error('bolt12 invoice missing invoice string');
+    }
+    console.log(`✅ BOLT12 invoice created: ${invoiceJson.invoice.slice(0, 18)}...`);
+  }
 }
 
 main().catch((err) => {

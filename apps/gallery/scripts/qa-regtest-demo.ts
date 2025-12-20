@@ -73,6 +73,30 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
   return false;
 }
 
+async function tryBolt12Flow(page: Page) {
+  await page.getByRole('button', { name: /Offers/i }).click();
+  await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByLabel('Description').fill('Regtest QA offer');
+  await page.getByRole('button', { name: 'CREATE_OFFER' }).click();
+
+  const offerWidget = page.locator('.offer-widget__title', { hasText: 'Offer' });
+  await expect(offerWidget).toBeVisible({ timeout: 20_000 });
+
+  const offerError = page.locator('.offer-error');
+  if (await offerError.isVisible()) {
+    throw new Error(`BOLT12 offer error: ${await offerError.textContent()}`);
+  }
+
+  await page.getByRole('button', { name: 'REQUEST_INVOICE' }).click();
+  const invoiceWidget = page.locator('.offer-widget__title', { hasText: 'Invoice' });
+  await expect(invoiceWidget).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('.offer-widget__value').nth(1)).toBeVisible({ timeout: 20_000 });
+
+  await page.getByRole('button', { name: /Feed/i }).click();
+  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20_000 });
+}
+
 async function configureNwc(page: Page, options: { uri: string; relays?: string; maxSats?: string }) {
   await page.getByRole('button', { name: /Settings/i }).click();
   await page.getByLabel('NWC_URI').fill(options.uri);
@@ -100,6 +124,7 @@ async function main() {
   const nwcUri = process.env.NWC_URI;
   const nwcRelays = process.env.NWC_RELAYS;
   const nwcMaxSats = process.env.NWC_MAX_SATS;
+  const enableBolt12 = envFlag('ENABLE_BOLT12', false) || envFlag('VITE_ENABLE_BOLT12', false);
 
   const failures: Failure[] = [];
   const consoleErrors: string[] = [];
@@ -168,6 +193,10 @@ async function main() {
         const toastRegion = page.getByTestId('toast-region');
         await expect(toastRegion).toContainText(/Funded|Mining regtest/i, { timeout: 120_000 });
       }
+    }
+
+    if (enableBolt12) {
+      await tryBolt12Flow(page);
     }
 
     const paid = await tryZapPay(page, usingNwc ? 'nwc' : 'regtest');
