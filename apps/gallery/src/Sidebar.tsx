@@ -21,10 +21,13 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
   const apiBase = apiBaseConfig.baseUrl;
-  const showRegtestActions = import.meta.env.DEV;
-  const regtestUnavailableReason = apiBaseConfig.isConfigured
-    ? null
-    : 'Regtest funding unavailable (API base not configured).';
+  const regtestFundEnabled =
+    String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  const showRegtestActions = regtestFundEnabled;
+  const regtestUnavailableReason =
+    regtestFundEnabled && !apiBaseConfig.isConfigured
+      ? 'Regtest funding unavailable (API base not configured).'
+      : null;
 
   const handleRegtestFund = async () => {
     if (isFunding) return;

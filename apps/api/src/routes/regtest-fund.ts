@@ -1,13 +1,15 @@
-import type { FastifyInstance , FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { regtestFund } from '../services/regtest-fund.js';
 
 export async function registerRegtestFundRoute(app: FastifyInstance) {
   if (!app.config?.REGTEST_FUND_ENABLED) {
-    app.log.warn('regtest fund disabled; skipping /api/regtest/fund');
-    return;
+    app.log.warn('regtest fund disabled; /api/regtest/fund will return 404');
   }
   const handler = async (_req: FastifyRequest, reply: FastifyReply) => {
+    if (!app.config?.REGTEST_FUND_ENABLED) {
+      return reply.code(404).send({ ok: false, error: 'regtest_fund_disabled' });
+    }
     try {
       const res = await regtestFund();
       reply.send({ ok: true, ...res });
