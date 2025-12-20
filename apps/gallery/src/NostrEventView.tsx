@@ -1,10 +1,12 @@
-import { parseRelays } from '@nostrstack/blog-kit';
+import { parseRelays, useNostrstackConfig } from '@nostrstack/blog-kit';
 import { type Event, nip19, SimplePool } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
 
-import { getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta,renderEvent } from './nostr/eventRenderers';
+import { fetchNostrEventFromApi } from './nostr/api';
+import { getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
+import { resolveGalleryApiBase } from './utils/api-base';
 
 type Target =
   | { type: 'event'; id: string; relays: string[] }
@@ -121,12 +123,23 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     relays: []
   });
 
+  const cfg = useNostrstackConfig();
   const target = useMemo(() => resolveTarget(rawId), [rawId]);
+  const apiBaseConfig = useMemo(
+    () =>
+      resolveGalleryApiBase({
+        apiBase: cfg.apiBase,
+        baseUrl: cfg.baseUrl,
+        apiBaseConfig: cfg.apiBaseConfig
+      }),
+    [cfg.apiBase, cfg.apiBaseConfig, cfg.baseUrl]
+  );
+  const apiBase = apiBaseConfig.baseUrl;
   const relayList = useMemo(() => {
-    const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+    const envRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
     const targetRelays = target?.relays ?? [];
     return uniqRelays([...targetRelays, ...envRelays, ...FALLBACK_RELAYS]);
-  }, [target]);
+  }, [cfg.relays, target]);
 
   useEffect(() => {
     if (!target) {
@@ -139,24 +152,18 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     }
 
     let cancelled = false;
-    const pool = new SimplePool();
-    const closePool = () => {
-      globalThis.setTimeout(() => {
-        try {
-          pool.close(relayList);
-        } catch {
-          // ignore close errors
-        }
-      }, 0);
-    };
 
-    const load = async () => {
-      setState((prev) => ({
-        ...prev,
-        status: 'loading',
-        relays: relayList,
-        error: undefined
-      }));
+    const loadFromRelays = async () => {
+      const pool = new SimplePool();
+      const closePool = () => {
+        globalThis.setTimeout(() => {
+          try {
+            pool.close(relayList);
+          } catch {
+            // ignore close errors
+          }
+        }, 0);
+      };
 
       try {
         let event: Event | null = null;
@@ -175,14 +182,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           );
         }
 
-        if (cancelled) return;
         if (!event) {
-          setState({
-            status: 'error',
-            relays: relayList,
-            error: 'Event not found on available relays.'
-          });
-          return;
+          throw new Error('Event not found on available relays.');
         }
 
         let authorProfile: ProfileMeta | null = null;
@@ -196,33 +197,76 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           authorProfile = parseProfileContent(event.content);
         }
 
+        return { event, authorProfile, authorPubkey: event.pubkey };
+      } finally {
+        closePool();
+      }
+    };
+
+    const load = async () => {
+      setState((prev) => ({
+        ...prev,
+        status: 'loading',
+        relays: relayList,
+        error: undefined
+      }));
+
+      let apiError: string | null = null;
+
+      try {
+        if (apiBaseConfig.isConfigured) {
+          try {
+            const apiResult = await withTimeout(
+              fetchNostrEventFromApi({
+                baseUrl: apiBase,
+                id: rawId,
+                relays: relayList
+              }),
+              REQUEST_TIMEOUT_MS
+            );
+            if (cancelled) return;
+            const relays = apiResult.target?.relays?.length ? apiResult.target.relays : relayList;
+            setState({
+              status: 'ready',
+              relays,
+              event: apiResult.event,
+              authorProfile: apiResult.author?.profile ?? null,
+              authorPubkey: apiResult.author?.pubkey ?? apiResult.event.pubkey,
+              targetLabel: apiResult.target?.input ?? rawId
+            });
+            return;
+          } catch (err) {
+            apiError = err instanceof Error ? err.message : String(err);
+          }
+        }
+
+        if (cancelled) return;
+        const relayResult = await loadFromRelays();
         if (cancelled) return;
         setState({
           status: 'ready',
           relays: relayList,
-          event,
-          authorProfile,
-          authorPubkey: event.pubkey,
+          event: relayResult.event,
+          authorProfile: relayResult.authorProfile,
+          authorPubkey: relayResult.authorPubkey,
           targetLabel: rawId
         });
       } catch (err) {
         if (cancelled) return;
+        const relayMessage = err instanceof Error ? err.message : String(err);
         setState({
           status: 'error',
           relays: relayList,
-          error: err instanceof Error ? err.message : String(err)
+          error: apiError ? `${relayMessage} (API: ${apiError})` : relayMessage
         });
-      } finally {
-        closePool();
       }
     };
 
     load();
     return () => {
       cancelled = true;
-      closePool();
     };
-  }, [rawId, relayList, target]);
+  }, [apiBase, apiBaseConfig.isConfigured, rawId, relayList, target]);
 
   const event = state.event;
   const authorProfile = state.authorProfile;
@@ -254,7 +298,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           </div>
           <div>
             <span className="nostr-event-label">Relays</span>
-            <div className="nostr-event-value">{relayList.length}</div>
+            <div className="nostr-event-value">{state.relays.length}</div>
           </div>
           <div>
             <span className="nostr-event-label">Status</span>
