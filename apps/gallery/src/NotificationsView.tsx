@@ -20,22 +20,19 @@ export function NotificationsView() {
     if (!pubkey) return;
     const pool = new SimplePool();
     let closeTimer: number | null = null;
-    const sub = pool.subscribeMany(
-      RELAYS,
-      [{ kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 }],
-      {
-        onevent(event) {
-          incrementEvents();
-          if (!seenIds.current.has(event.id)) {
-            seenIds.current.add(event.id);
-            setEvents(prev => {
-              const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
-              return next.slice(0, 50);
-            });
-          }
-        },
+    const filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
+    const sub = pool.subscribeMany(RELAYS, filter, {
+      onevent(event) {
+        incrementEvents();
+        if (!seenIds.current.has(event.id)) {
+          seenIds.current.add(event.id);
+          setEvents((prev) => {
+            const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
+            return next.slice(0, 50);
+          });
+        }
       }
-    );
+    });
     return () => {
       try {
         sub.close();
