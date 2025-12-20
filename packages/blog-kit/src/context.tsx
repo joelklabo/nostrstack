@@ -8,7 +8,7 @@ import {
   type NostrstackThemeMode,
   themeToCssVars
 } from '@nostrstack/embed';
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
 import type { ApiBaseResolution } from './api-base';
 
@@ -26,6 +26,8 @@ export type NostrstackConfig = {
   host?: string;
   lnAddress?: string;
   relays?: string[];
+  nwcUri?: string;
+  nwcRelays?: string[];
   enableRegtestPay?: boolean;
   theme?: ThemeVars;
   nostrstackTheme?: NostrstackTheme;
@@ -40,11 +42,56 @@ export type NostrstackProviderProps = React.PropsWithChildren<NostrstackConfig> 
   style?: React.CSSProperties;
 };
 
+type StoredNwcConfig = {
+  uri?: string;
+  relays?: string[];
+};
+
+const NWC_STORAGE_KEY = 'nostrstack.nwc';
+
+function readStoredNwcConfig(): StoredNwcConfig | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(NWC_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as StoredNwcConfig;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function NostrstackProvider({ children, className, style, ...config }: NostrstackProviderProps) {
-  const value = useMemo(() => config, [config]);
+  const [storedNwc, setStoredNwc] = useState<StoredNwcConfig | null>(() => readStoredNwcConfig());
+  const value = useMemo(
+    () => ({
+      ...config,
+      nwcUri: config.nwcUri ?? storedNwc?.uri,
+      nwcRelays: config.nwcRelays ?? storedNwc?.relays
+    }),
+    [config, storedNwc]
+  );
   const legacy = config.theme ?? {};
   React.useEffect(() => {
     ensureNostrstackEmbedStyles();
+  }, []);
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === NWC_STORAGE_KEY) {
+        setStoredNwc(readStoredNwcConfig());
+      }
+    };
+    const handleCustom = (event: Event) => {
+      const custom = event as CustomEvent<StoredNwcConfig | null>;
+      setStoredNwc(custom.detail ?? null);
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('nostrstack:nwc-update', handleCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('nostrstack:nwc-update', handleCustom as EventListener);
+    };
   }, []);
   const baseTheme: NostrstackTheme = {
     color: {
