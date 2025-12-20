@@ -1,6 +1,6 @@
-import { Buffer } from 'buffer';
-import { type Event, type EventTemplate, SimplePool, nip19 } from 'nostr-tools';
 import { bech32 } from '@scure/base';
+import { Buffer } from 'buffer';
+import { type Event, type EventTemplate, nip19, SimplePool } from 'nostr-tools';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

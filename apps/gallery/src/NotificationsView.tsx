@@ -1,5 +1,5 @@
 import { useAuth, useStats } from '@nostrstack/blog-kit';
-import { SimplePool } from 'nostr-tools';
+import { type Event, SimplePool } from 'nostr-tools';
 import { useEffect, useRef, useState } from 'react';
 
 import { PostItem } from './FeedView';
@@ -12,7 +12,7 @@ const RELAYS = [
 
 export function NotificationsView() {
   const { pubkey } = useAuth();
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
 
@@ -57,10 +57,12 @@ export function NotificationsView() {
       <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)' }}>
         {' >'} INCOMING_TRANSMISSIONS...
       </div>
-      {events.map(event => (
+      {events.map((event) => (
         <PostItem key={event.id} post={event} />
       ))}
-      {events.length === 0 && <div style={{padding: '1rem', color: 'var(--terminal-dim)'}}>NO_ACTIVITY_DETECTED</div>}
+      {events.length === 0 && (
+        <div style={{ padding: '1rem', color: 'var(--terminal-dim)' }}>NO_ACTIVITY_DETECTED</div>
+      )}
     </div>
   );
 }

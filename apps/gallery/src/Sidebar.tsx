@@ -1,5 +1,6 @@
 import { useAuth, useStats } from '@nostrstack/blog-kit';
 import { useState } from 'react';
+
 import { useWallet } from './hooks/useWallet';
 import { useToast } from './ui/toast';
 

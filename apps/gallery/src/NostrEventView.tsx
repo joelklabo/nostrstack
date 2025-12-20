@@ -2,7 +2,7 @@ import { parseRelays } from '@nostrstack/blog-kit';
 import { type Event, nip19, SimplePool } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
 
-import { getEventKindLabel, parseProfileContent, ProfileCard, renderEvent, type ProfileMeta } from './nostr/eventRenderers';
+import { getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta,renderEvent } from './nostr/eventRenderers';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
 

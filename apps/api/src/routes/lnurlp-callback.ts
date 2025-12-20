@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+
 import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';

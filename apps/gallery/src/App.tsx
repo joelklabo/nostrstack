@@ -1,4 +1,4 @@
-import { AuthProvider, NostrstackProvider, StatsProvider, parseRelays, useAuth } from '@nostrstack/blog-kit';
+import { AuthProvider, NostrstackProvider, parseRelays, StatsProvider, useAuth } from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
