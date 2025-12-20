@@ -177,31 +177,35 @@ async function fetchAuthorProfile(pool: SimplePool, pubkey: string, relays: stri
 }
 
 export async function resolveNostrEvent(rawId: string, options: ResolveOptions = {}): Promise<ResolvedEvent> {
-  const cleanedInput = rawId.trim();
-  if (!cleanedInput || cleanedInput.length > MAX_INPUT_LENGTH) {
-    throw new Error('invalid_id');
-  }
-  const target = decodeNostrTarget(cleanedInput);
-  if (!target) {
-    throw new Error('unsupported_id');
-  }
-
-  const relays = selectRelays({
-    targetRelays: target.relays,
-    overrideRelays: options.relays,
-    defaultRelays: options.defaultRelays,
-    maxRelays: options.maxRelays
-  });
-
-  if (relays.length === 0) {
-    throw new Error('no_relays');
-  }
-
-  const timeoutMs = options.timeoutMs ?? 8000;
-  const pool = new SimplePool();
   const prisma = options.prisma;
+  let relays: string[] = [];
+  let pool: SimplePool | null = null;
 
   try {
+    const cleanedInput = rawId.trim();
+    if (!cleanedInput || cleanedInput.length > MAX_INPUT_LENGTH) {
+      throw new Error('invalid_id');
+    }
+    const target = decodeNostrTarget(cleanedInput);
+    if (!target) {
+      throw new Error('unsupported_id');
+    }
+
+    relays = selectRelays({
+      targetRelays: target.relays,
+      overrideRelays: options.relays,
+      defaultRelays: options.defaultRelays,
+      maxRelays: options.maxRelays
+    });
+
+    if (relays.length === 0) {
+      throw new Error('no_relays');
+    }
+
+    const timeoutMs = options.timeoutMs ?? 8000;
+    const activePool = new SimplePool();
+    pool = activePool;
+
     if (prisma) {
       let cached = await getCachedEvent(prisma, target);
       if (cached && !isVerifiedEvent(cached.event)) {
@@ -245,7 +249,7 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
     const fetchStart = Date.now();
     let event: Event | null = null;
     try {
-      event = await fetchEventByTarget(pool, target, relays, timeoutMs);
+      event = await fetchEventByTarget(activePool, target, relays, timeoutMs);
     } catch (err) {
       const fetchDuration = (Date.now() - fetchStart) / 1000;
       nostrEventRelayFetchDuration.labels('failure').observe(fetchDuration);
@@ -260,7 +264,7 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
 
     const profileEvent = event.kind === 0
       ? event
-      : await fetchAuthorProfile(pool, event.pubkey, relays, timeoutMs);
+      : await fetchAuthorProfile(activePool, event.pubkey, relays, timeoutMs);
     const verifiedProfileEvent = profileEvent && isVerifiedEvent(profileEvent) ? profileEvent : null;
     const authorProfile = parseProfileContent(verifiedProfileEvent?.content);
     const references = extractReferences(event, options.referenceLimit);
@@ -289,12 +293,15 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
     nostrEventResolveFailureCounter.labels(getFailureReason(err)).inc();
     throw err;
   } finally {
-    globalThis.setTimeout(() => {
-      try {
-        pool.close(relays);
-      } catch {
-        // ignore close errors
-      }
-    }, 0);
+    if (pool) {
+      const poolToClose = pool;
+      globalThis.setTimeout(() => {
+        try {
+          poolToClose.close(relays);
+        } catch {
+          // ignore close errors
+        }
+      }, 0);
+    }
   }
 }
