@@ -1,9 +1,11 @@
 import './styles/lightning-card.css';
 
+import { SendSats } from '@nostrstack/blog-kit';
 import { type Event, nip19, Relay } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { paymentConfig } from './config/payments';
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
 
 const DEFAULT_RELAYS = [
@@ -152,6 +154,10 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     window.open(lightningUri, '_blank');
   }, [lightningUri]);
 
+  const showLightningAddress = Boolean(lightningAddress);
+  const showSendSats = paymentConfig.enableProfilePay && showLightningAddress;
+  const showLightningCallout = !profileLoading && !showLightningAddress;
+
   return (
     <div className="profile-view">
       {error && <div className="error-msg">{error}</div>}
@@ -163,34 +169,54 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
             <code className="profile-pubkey">{npub}</code>
             {profile?.nip05 && <p className="profile-nip05">NIP-05: {profile.nip05}</p>}
             {profile?.about && <p className="profile-about">{profile.about}</p>}
-            {lightningAddress && (
-              <div className="lightning-card">
-                <div className="lightning-card-header">
-                  <div className="lightning-card-title">{lightningLabel}</div>
-                  {lightningCopyStatus === 'error' && (
-                    <span className="lightning-card-hint">COPY_FAILED</span>
-                  )}
-                </div>
-                <div className="lightning-card-body">
-                  <div className="lightning-card-qr">
-                    {lightningQr ? (
-                      <img src={lightningQr} alt="Lightning QR" />
-                    ) : (
-                      <div className="lightning-card-qr-fallback">QR</div>
-                    )}
-                  </div>
-                  <div className="lightning-card-details">
-                    <code className="lightning-card-value">{lightningAddress}</code>
-                    <div className="lightning-card-actions">
-                      <button className="action-btn" onClick={handleCopyLightning}>
-                        {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
-                      </button>
-                      <button className="action-btn" onClick={handleOpenWallet} disabled={!lightningUri}>
-                        OPEN_WALLET
-                      </button>
+            {(showLightningAddress || showLightningCallout || showSendSats) && (
+              <div className="lightning-stack">
+                {showLightningAddress && (
+                  <div className="lightning-card">
+                    <div className="lightning-card-header">
+                      <div className="lightning-card-title">{lightningLabel}</div>
+                      {lightningCopyStatus === 'error' && (
+                        <span className="lightning-card-hint">COPY_FAILED</span>
+                      )}
+                    </div>
+                    <div className="lightning-card-body">
+                      <div className="lightning-card-qr">
+                        {lightningQr ? (
+                          <img src={lightningQr} alt="Lightning QR" />
+                        ) : (
+                          <div className="lightning-card-qr-fallback">QR</div>
+                        )}
+                      </div>
+                      <div className="lightning-card-details">
+                        <code className="lightning-card-value">{lightningAddress}</code>
+                        <div className="lightning-card-actions">
+                          <button className="action-btn" onClick={handleCopyLightning}>
+                            {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
+                          </button>
+                          <button className="action-btn" onClick={handleOpenWallet} disabled={!lightningUri}>
+                            OPEN_WALLET
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+                {showLightningCallout && (
+                  <div className="lightning-card lightning-card--empty">
+                    <div className="lightning-card-header">
+                      <div className="lightning-card-title">LIGHTNING</div>
+                    </div>
+                    <div className="lightning-card-empty">Lightning address not available.</div>
+                  </div>
+                )}
+                {showSendSats && (
+                  <SendSats
+                    pubkey={pubkey}
+                    lightningAddress={lightningAddress ?? undefined}
+                    defaultAmountSats={paymentConfig.defaultSendSats}
+                    presetAmountsSats={paymentConfig.presetSendSats}
+                  />
+                )}
               </div>
             )}
             {profile?.website && <p className="profile-website">Web: <a href={profile.website} target="_blank" rel="noopener noreferrer">{profile.website}</a></p>}

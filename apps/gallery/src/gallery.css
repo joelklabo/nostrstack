@@ -993,6 +993,87 @@ body {
   font-weight: 600;
 }
 
+.send-sats-card {
+  border: 1px solid var(--color-border-muted);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--color-canvas-subtle);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.send-sats-header {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-fg-muted);
+}
+
+.send-sats-amount,
+.send-sats-note {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.send-sats-amount label,
+.send-sats-note label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.send-sats-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.send-sats-card .nostrstack-input,
+.send-sats-card .nostrstack-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.send-sats-status {
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+}
+
+.send-sats-status--error {
+  color: var(--color-danger-fg);
+  border-color: rgba(207, 34, 46, 0.5);
+  background: rgba(207, 34, 46, 0.08);
+}
+
+.send-sats-card > .action-btn {
+  align-self: flex-start;
+}
+
+@media (max-width: 900px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-picture {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 720px) {
+  .send-sats-card > .action-btn {
+    width: 100%;
+  }
+}
+
 h3 {
   font-size: 1.25rem;
   font-weight: 600;

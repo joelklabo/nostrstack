@@ -1,11 +1,16 @@
 .lightning-card {
-  margin-top: 1rem;
   border: 1px solid var(--color-border-muted);
   border-radius: 12px;
   padding: 1rem;
   background: var(--color-canvas-subtle);
   display: grid;
   gap: 0.75rem;
+}
+
+.lightning-stack {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
 }
 
 .lightning-card-header {
@@ -74,6 +79,15 @@
 .lightning-card-hint {
   font-size: 0.7rem;
   color: var(--color-danger-fg);
+}
+
+.lightning-card--empty {
+  background: var(--color-canvas-inset);
+}
+
+.lightning-card-empty {
+  font-size: 0.85rem;
+  color: var(--color-fg-muted);
 }
 
 @media (max-width: 720px) {
