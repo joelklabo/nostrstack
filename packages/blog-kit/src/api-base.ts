@@ -20,7 +20,7 @@ function preferSecureBase(base: string) {
   if (!/^http:\/\//i.test(base)) return base;
   try {
     const url = new URL(base);
-    if (isLocalhost(url.hostname)) return base;
+    if (!isLocalhost(url.hostname)) return base;
   } catch {
     return base;
   }

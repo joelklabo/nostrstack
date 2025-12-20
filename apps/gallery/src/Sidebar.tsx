@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useWallet } from './hooks/useWallet';
 import { useToast } from './ui/toast';
 import { resolveApiBase } from './utils/api-base';
+import { WalletView } from './WalletView';
 
 interface SidebarProps {
   currentView: 'feed' | 'profile' | 'notifications' | 'relays' | 'settings';
@@ -17,6 +18,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const wallet = useWallet();
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
@@ -24,6 +26,14 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const regtestFundEnabled =
     String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
   const showRegtestActions = regtestFundEnabled;
+  const withdrawEnabled =
+    String(import.meta.env.VITE_ENABLE_LNURL_WITHDRAW ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  const withdrawAvailable = withdrawEnabled && apiBaseConfig.isConfigured && (wallet?.balance ?? 0) >= 1;
+  const withdrawUnavailableReason = !withdrawEnabled
+    ? 'Withdrawals disabled.'
+    : !apiBaseConfig.isConfigured
+      ? 'Withdrawals require API base.'
+      : 'Insufficient balance.';
   const regtestUnavailableReason =
     regtestFundEnabled && !apiBaseConfig.isConfigured
       ? 'Regtest funding unavailable (API base not configured).'
@@ -122,6 +132,14 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                       ? 'Mining regtest blocks…'
                       : 'Add funds (regtest)'}
                 </button>
+                <button
+                  type="button"
+                  className="wallet-action-btn"
+                  onClick={() => setWithdrawOpen(true)}
+                  disabled={!withdrawAvailable}
+                >
+                  {!withdrawAvailable ? withdrawUnavailableReason : 'Withdraw via LNURL'}
+                </button>
                 {regtestUnavailableReason && (
                   <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--color-fg-muted)' }}>
                     {regtestUnavailableReason}
@@ -143,6 +161,17 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           Log out
         </button>
       </div>
+
+      {withdrawOpen && (
+        <WalletView
+          open={withdrawOpen}
+          onClose={() => setWithdrawOpen(false)}
+          balanceSats={wallet?.balance}
+          apiBase={apiBase}
+          apiConfigured={apiBaseConfig.isConfigured}
+          withdrawEnabled={withdrawEnabled}
+        />
+      )}
     </nav>
   );
 }

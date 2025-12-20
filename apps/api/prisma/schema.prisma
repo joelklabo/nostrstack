@@ -79,8 +79,8 @@ model LnurlWithdrawSession {
   id                 String   @id @default(cuid())
   tenantId           String
   k1                 String   @unique
-  minWithdrawable    Int
-  maxWithdrawable    Int
+  minWithdrawable    BigInt
+  maxWithdrawable    BigInt
   defaultDescription String?
   status             String   @default("PENDING")
   expiresAt          DateTime

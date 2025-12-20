@@ -7,6 +7,10 @@ import { env } from '../env.js';
 
 const DEFAULT_TTL_MS = 10 * 60 * 1000;
 
+function toNumber(value: bigint | number) {
+  return typeof value === 'bigint' ? Number(value) : value;
+}
+
 export function encodeLnurl(url: string): string {
   const normalized = new URL(url).toString();
   const words = bech32.toWords(new TextEncoder().encode(normalized));
@@ -35,8 +39,8 @@ export async function createWithdrawSession(
     data: {
       tenantId: params.tenantId,
       k1,
-      minWithdrawable: params.minWithdrawable,
-      maxWithdrawable: params.maxWithdrawable,
+      minWithdrawable: BigInt(params.minWithdrawable),
+      maxWithdrawable: BigInt(params.maxWithdrawable),
       defaultDescription: params.defaultDescription,
       status: 'PENDING',
       expiresAt
@@ -60,8 +64,8 @@ export function buildWithdrawRequest(
   origin: string,
   session: {
     k1: string;
-    minWithdrawable: number;
-    maxWithdrawable: number;
+    minWithdrawable: bigint | number;
+    maxWithdrawable: bigint | number;
     defaultDescription?: string | null;
   }
 ) {
@@ -69,8 +73,8 @@ export function buildWithdrawRequest(
     tag: 'withdrawRequest',
     callback: `${origin}/api/lnurl-withdraw/callback`,
     k1: session.k1,
-    minWithdrawable: session.minWithdrawable,
-    maxWithdrawable: session.maxWithdrawable,
+    minWithdrawable: toNumber(session.minWithdrawable),
+    maxWithdrawable: toNumber(session.maxWithdrawable),
     defaultDescription: session.defaultDescription ?? 'nostrstack withdraw'
   };
 }
