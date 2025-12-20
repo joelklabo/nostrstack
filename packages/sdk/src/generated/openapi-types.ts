@@ -58,6 +58,57 @@ export type paths = {
     };
   };
 
+  "/api/bolt12/offers": {
+    post: {
+      requestBody: {
+        content: {
+          "application/json": {
+            description: string;
+            amountMsat?: number;
+            label?: string;
+            issuer?: string;
+            expiresIn?: number;
+          };
+        };
+      };
+      responses: {
+        201: {
+          content: {
+            "application/json": {
+              offer: string;
+              offerId?: string;
+              label?: string;
+            };
+          };
+        };
+      };
+    };
+  };
+
+  "/api/bolt12/invoices": {
+    post: {
+      requestBody: {
+        content: {
+          "application/json": {
+            offer: string;
+            amountMsat?: number;
+            quantity?: number;
+            payerNote?: string;
+          };
+        };
+      };
+      responses: {
+        200: {
+          content: {
+            "application/json": {
+              invoice: string;
+            };
+          };
+        };
+      };
+    };
+  };
+
   "/.well-known/nostr.json": {
     get: {
       parameters: {

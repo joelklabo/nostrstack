@@ -8,6 +8,14 @@ type InvoiceResponse =
   paths['/api/lnurlp/{username}/invoice']['get']['responses'][200]['content']['application/json'];
 type Nip05Response =
   paths['/.well-known/nostr.json']['get']['responses'][200]['content']['application/json'];
+type Bolt12OfferBody =
+  paths['/api/bolt12/offers']['post']['requestBody']['content']['application/json'];
+type Bolt12OfferResponse =
+  paths['/api/bolt12/offers']['post']['responses'][201]['content']['application/json'];
+type Bolt12InvoiceBody =
+  paths['/api/bolt12/invoices']['post']['requestBody']['content']['application/json'];
+type Bolt12InvoiceResponse =
+  paths['/api/bolt12/invoices']['post']['responses'][200]['content']['application/json'];
 type CreateTenantBody =
   paths['/api/admin/tenants']['post']['requestBody']['content']['application/json'];
 type CreateTenantResponse =
@@ -77,6 +85,22 @@ export class NostrstackClient {
   async getNip05(name: string): Promise<Nip05Response> {
     const q = name ? `?name=${encodeURIComponent(name)}` : '';
     return this.request(`/.well-known/nostr.json${q}`);
+  }
+
+  async createBolt12Offer(body: Bolt12OfferBody): Promise<Bolt12OfferResponse> {
+    return this.request('/api/bolt12/offers', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  }
+
+  async fetchBolt12Invoice(body: Bolt12InvoiceBody): Promise<Bolt12InvoiceResponse> {
+    return this.request('/api/bolt12/invoices', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
   }
 
   async createTenant(body: CreateTenantBody): Promise<CreateTenantResponse> {

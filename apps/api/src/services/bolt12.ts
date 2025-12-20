@@ -30,6 +30,14 @@ export interface Bolt12Provider {
   fetchInvoice(input: Bolt12InvoiceRequest): Promise<Bolt12InvoiceResponse>;
 }
 
+export async function createBolt12Offer(provider: Bolt12Provider, input: Bolt12OfferRequest) {
+  return provider.createOffer(input);
+}
+
+export async function fetchBolt12Invoice(provider: Bolt12Provider, input: Bolt12InvoiceRequest) {
+  return provider.fetchInvoice(input);
+}
+
 type ClnRestConfig = {
   baseUrl: string;
   apiKey?: string;

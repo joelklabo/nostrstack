@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 
+import { env } from '../env.js';
 import { registerAdminTenantRoutes } from './admin-tenants.js';
 import { registerAdminUserRoutes } from './admin-users.js';
+import { registerBolt12Routes } from './bolt12.js';
 import { registerEmbedConfigRoute } from './embed-config.js';
 import { registerLnurlAuthRoutes } from './lnurl-auth.js';
 import { registerLnurlWithdrawRoutes } from './lnurl-withdraw.js';
@@ -19,6 +21,9 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerLnurlCallback(app);
   await registerLnurlAuthRoutes(app);
   await registerLnurlWithdrawRoutes(app);
+  if (env.ENABLE_BOLT12) {
+    await registerBolt12Routes(app);
+  }
   await registerEmbedConfigRoute(app);
   await registerTenantRoutes(app);
   await registerAdminTenantRoutes(app);
