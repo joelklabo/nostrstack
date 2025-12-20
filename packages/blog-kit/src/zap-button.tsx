@@ -123,11 +123,13 @@ async function getLnurlpMetadata(lnurl: string) {
   return res.json();
 }
 
-async function getLnurlpInvoice(callback: string, amountMsat: number, lnurlMetadata: string, event: EventTemplate) {
+async function getLnurlpInvoice(callback: string, amountMsat: number, lnurl: string | null, event: EventTemplate) {
   const url = new URL(callback);
   url.searchParams.set('amount', String(amountMsat));
   url.searchParams.set('nostr', JSON.stringify(event)); // NIP-57 specific
-  url.searchParams.set('lnurl', lnurlMetadata); // NIP-57 specific
+  if (lnurl) {
+    url.searchParams.set('lnurl', lnurl); // NIP-57 specific
+  }
   
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -193,6 +195,9 @@ export function ZapButton({
     const override = normalizeLightningAddress(authorLightningAddress ?? globalOverride);
     if (override) return override;
 
+    const configAddress = normalizeLightningAddress(cfg.lnAddress);
+    if (configAddress) return configAddress;
+
     const fromEvent = normalizeLightningAddress(eventLightningAddress);
     if (fromEvent) return fromEvent;
 
@@ -222,7 +227,7 @@ export function ZapButton({
         // ignore close errors
       }
     }
-  }, [authorLightningAddress, eventLightningAddress, authorPubkey, relayTargets]);
+  }, [authorLightningAddress, cfg.lnAddress, eventLightningAddress, authorPubkey, relayTargets]);
 
   const persistNwcPayment = useCallback((payload: { status: 'success' | 'error'; message: string; ts: number }) => {
     if (typeof window === 'undefined') return;
@@ -345,7 +350,7 @@ export function ZapButton({
       const invoiceData = await getLnurlpInvoice(
         lnurlMetadata.callback,
         amountMsat,
-        lnurlMetadata.metadata,
+        lnurlTag ?? null,
         signedZapRequest
       );
       const pr = invoiceData.pr;

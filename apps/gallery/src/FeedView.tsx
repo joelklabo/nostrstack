@@ -119,7 +119,8 @@ export function FeedView() {
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-  const enableRegtestPay = String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true';
+  const enableRegtestPay =
+    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
 
   useEffect(() => {
     const pool = new SimplePool();

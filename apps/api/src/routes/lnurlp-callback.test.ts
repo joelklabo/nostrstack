@@ -10,6 +10,7 @@ process.env.VITEST = 'true';
 process.env.LOG_LEVEL = 'error';
 process.env.OP_NODE_WEBHOOK_SECRET = '';
 process.env.DATABASE_URL = 'file:./tmp-lnurl.db';
+process.env.LIGHTNING_PROVIDER = 'mock';
 
 let server: Awaited<ReturnType<typeof buildServerFn>>;
 

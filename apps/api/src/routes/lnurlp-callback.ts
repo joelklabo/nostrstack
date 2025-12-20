@@ -72,7 +72,8 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         type: 'object',
         properties: {
           amount: { type: 'integer' },
-          nostr: { type: 'string' }
+          nostr: { type: 'string' },
+          lnurl: { type: 'string' }
         },
         required: ['amount'],
         additionalProperties: false
@@ -80,7 +81,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
     }
   }, async (request, reply) => {
     const { username } = request.params as { username: string };
-    const { amount, nostr } = request.query as { amount: number; nostr?: string };
+    const { amount, nostr } = request.query as { amount: number; nostr?: string; lnurl?: string };
     const tenant = await getTenantForRequest(app, request);
     const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
     const identifier = `${username}@${tenant.domain}`;
