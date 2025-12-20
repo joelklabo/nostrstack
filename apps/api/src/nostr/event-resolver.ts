@@ -1,5 +1,7 @@
+import type { PrismaClient } from '@prisma/client';
 import { type Event,SimplePool } from 'nostr-tools';
 
+import { getCachedEvent, storeCachedEvent } from './event-cache.js';
 import {
   decodeNostrTarget,
   getTagValues,
@@ -40,6 +42,8 @@ export type ResolveOptions = {
   maxRelays?: number;
   timeoutMs?: number;
   referenceLimit?: number;
+  cacheTtlSeconds?: number;
+  prisma?: PrismaClient;
 };
 
 function withTimeout<T>(promise: Promise<T>, ms: number) {
@@ -162,6 +166,42 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
 
   const timeoutMs = options.timeoutMs ?? 8000;
   const pool = new SimplePool();
+  const prisma = options.prisma;
+
+  if (prisma) {
+    const cached = await getCachedEvent(prisma, target);
+    if (cached) {
+      let profileEvent: Event | null = null;
+      let authorProfile: ProfileMeta | null = null;
+
+      if (cached.event.kind === 0) {
+        profileEvent = cached.event;
+        authorProfile = parseProfileContent(cached.event.content);
+      } else {
+        const cachedProfile = await getCachedEvent(prisma, {
+          type: 'profile',
+          pubkey: cached.event.pubkey,
+          relays: []
+        });
+        if (cachedProfile) {
+          profileEvent = cachedProfile.event;
+          authorProfile = parseProfileContent(cachedProfile.event.content);
+        }
+      }
+
+      return {
+        target,
+        event: cached.event,
+        author: {
+          pubkey: cached.event.pubkey,
+          profile: authorProfile,
+          profileEvent
+        },
+        relays: cached.relays.length ? cached.relays : relays,
+        references: extractReferences(cached.event, options.referenceLimit)
+      };
+    }
+  }
 
   try {
     const event = await fetchEventByTarget(pool, target, relays, timeoutMs);
@@ -172,6 +212,15 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
       : await fetchAuthorProfile(pool, event.pubkey, relays, timeoutMs);
     const authorProfile = parseProfileContent(profileEvent?.content);
     const references = extractReferences(event, options.referenceLimit);
+    const ttlSeconds = options.cacheTtlSeconds ?? 0;
+
+    if (prisma && ttlSeconds > 0) {
+      const fetchedAt = new Date();
+      await storeCachedEvent(prisma, { event, relays, fetchedAt, ttlSeconds, target });
+      if (profileEvent && profileEvent.id !== event.id) {
+        await storeCachedEvent(prisma, { event: profileEvent, relays, fetchedAt, ttlSeconds });
+      }
+    }
 
     return {
       target,
