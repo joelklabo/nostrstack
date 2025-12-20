@@ -15,6 +15,7 @@
   "packageManager": "pnpm@10.26.1",
   "scripts": {
     "lint": "pnpm -r lint",
+    "compile": "pnpm -r typecheck",
     "lint:knip": "knip",
     "lint:cpd": "jscpd .",
     "lint:ls": "ls-lint",
@@ -29,6 +30,7 @@
     "lint:dep": "depcruise --config .dependency-cruiser.cjs apps packages",
     "lint:deps": "syncpack list-mismatches",
     "test": "pnpm -r test",
+    "test:unit": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "dev": "pnpm --filter api dev",
