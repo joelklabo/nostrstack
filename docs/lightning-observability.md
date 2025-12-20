@@ -57,6 +57,11 @@ Useful KQL snippets
   | order by TimeGenerated desc
   ```
 
+Regtest zap signals (dev)
+- API logs include `regtest pay invoice settled` with `invoicePrefix`, `paymentHash`, and `feesSat` for successful regtest pays.
+- `ws/pay` broadcasts emit `invoice-paid` with `source: "regtest"` and any stored `metadata` (NIP-57 zap request) when available.
+- Disabled regtest pay returns 404 with `regtest_pay_disabled`, which should be visible in local API logs.
+
 Alert ideas (configure in Azure Portal)
 - LNbits health redirect/5xx: HTTP probe on `/status/health` expecting 200 JSON; alert if failed for 5 minutes.
 - Container restarts: `ContainerAppSystemLogs` with `Restarting` count > 0 in 10 minutes.

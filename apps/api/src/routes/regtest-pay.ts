@@ -66,12 +66,41 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
 
       // Broadcast to any live listeners that this invoice was paid
       if (parsed?.payment_hash && app.payEventHub) {
+        let metadata: unknown | undefined;
+        let action: string | undefined;
+        let itemId: string | undefined;
+        let amountSats = 0;
+        try {
+          const payment = await app.prisma.payment.findFirst({ where: { invoice } });
+          if (payment) {
+            amountSats = payment.amountSats;
+            action = payment.action ?? undefined;
+            itemId = payment.itemId ?? undefined;
+            if (payment.metadata) {
+              try {
+                metadata = JSON.parse(payment.metadata) as unknown;
+              } catch {
+                metadata = payment.metadata;
+              }
+            }
+          }
+        } catch (err) {
+          request.log.warn({ err }, 'regtest pay metadata lookup failed');
+        }
+        request.log.info({
+          invoicePrefix: invoice.slice(0, 12),
+          paymentHash: parsed.payment_hash,
+          feesSat: fees
+        }, 'regtest pay invoice settled');
         app.payEventHub.broadcast({
           type: 'invoice-paid',
           ts: Date.now(),
           pr: invoice,
           providerRef: parsed.payment_hash,
-          amount: 0,
+          amount: amountSats,
+          action,
+          itemId,
+          metadata,
           source: 'regtest'
         });
       }
