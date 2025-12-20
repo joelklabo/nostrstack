@@ -27,6 +27,7 @@ export function LoginView() {
   const [lnurlError, setLnurlError] = useState<string | null>(null);
   const [lnurlQr, setLnurlQr] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const enableLnurlAuth = String(import.meta.env.VITE_ENABLE_LNURL_AUTH ?? '').toLowerCase() === 'true';
 
   const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? '';
   const apiBaseConfig = useMemo(
@@ -43,6 +44,9 @@ export function LoginView() {
   }, [apiBaseConfig.baseUrl, apiBaseConfig.isRelative]);
 
   const openLnurlModal = useCallback(async () => {
+    if (!enableLnurlAuth) {
+      return;
+    }
     setLnurlModalOpen(true);
     setLnurlRequest(null);
     setLnurlQr(null);
@@ -74,7 +78,7 @@ export function LoginView() {
       setLnurlStatus('error');
       setLnurlError(err instanceof Error ? err.message : 'Lightning login failed.');
     }
-  }, [apiBase, apiBaseConfig.isConfigured]);
+  }, [apiBase, apiBaseConfig.isConfigured, enableLnurlAuth]);
 
   const closeLnurlModal = useCallback(() => {
     setLnurlModalOpen(false);
@@ -222,9 +226,11 @@ export function LoginView() {
               <button className="auth-btn" onClick={() => loginWithNip07()}>
                 Sign in with Extension (NIP-07)
               </button>
-              <button className="auth-btn" onClick={openLnurlModal}>
-                Login with Lightning (LNURL-auth)
-              </button>
+              {enableLnurlAuth && (
+                <button className="auth-btn" onClick={openLnurlModal}>
+                  Login with Lightning (LNURL-auth)
+                </button>
+              )}
               <button className="auth-btn" style={{ background: 'transparent', borderStyle: 'dashed' }} onClick={() => setMode('nsec')}> 
                 Enter nsec manually
               </button>

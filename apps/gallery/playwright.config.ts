@@ -32,6 +32,7 @@ export default defineConfig({
       VITE_API_BASE_URL: process.env.VITE_API_BASE_URL ?? 'mock',
       VITE_NOSTRSTACK_RELAYS: process.env.VITE_NOSTRSTACK_RELAYS ?? 'mock',
       VITE_ENABLE_TEST_SIGNER: process.env.VITE_ENABLE_TEST_SIGNER ?? 'false',
+      VITE_ENABLE_LNURL_AUTH: process.env.VITE_ENABLE_LNURL_AUTH ?? 'true',
       VITE_TEST_SIGNER_SK: process.env.VITE_TEST_SIGNER_SK
     }
   }
