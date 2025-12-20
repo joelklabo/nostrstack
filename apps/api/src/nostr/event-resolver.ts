@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { type Event,SimplePool } from 'nostr-tools';
+import { type Event, SimplePool, validateEvent, verifyEvent } from 'nostr-tools';
 
 import { getCachedEvent, storeCachedEvent } from './event-cache.js';
 import {
@@ -56,6 +56,12 @@ function withTimeout<T>(promise: Promise<T>, ms: number) {
       }, ms);
     })
   ]);
+}
+
+const MAX_INPUT_LENGTH = 512;
+
+function isVerifiedEvent(event: Event) {
+  return validateEvent(event) && verifyEvent(event);
 }
 
 function limitList(list: string[], limit?: number) {
@@ -148,7 +154,11 @@ async function fetchAuthorProfile(pool: SimplePool, pubkey: string, relays: stri
 }
 
 export async function resolveNostrEvent(rawId: string, options: ResolveOptions = {}): Promise<ResolvedEvent> {
-  const target = decodeNostrTarget(rawId);
+  const cleanedInput = rawId.trim();
+  if (!cleanedInput || cleanedInput.length > MAX_INPUT_LENGTH) {
+    throw new Error('invalid_id');
+  }
+  const target = decodeNostrTarget(cleanedInput);
   if (!target) {
     throw new Error('unsupported_id');
   }
@@ -169,7 +179,10 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
   const prisma = options.prisma;
 
   if (prisma) {
-    const cached = await getCachedEvent(prisma, target);
+    let cached = await getCachedEvent(prisma, target);
+    if (cached && !isVerifiedEvent(cached.event)) {
+      cached = null;
+    }
     if (cached) {
       let profileEvent: Event | null = null;
       let authorProfile: ProfileMeta | null = null;
@@ -183,7 +196,7 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
           pubkey: cached.event.pubkey,
           relays: []
         });
-        if (cachedProfile) {
+        if (cachedProfile && isVerifiedEvent(cachedProfile.event)) {
           profileEvent = cachedProfile.event;
           authorProfile = parseProfileContent(cachedProfile.event.content);
         }
@@ -206,19 +219,23 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
   try {
     const event = await fetchEventByTarget(pool, target, relays, timeoutMs);
     if (!event) throw new Error('not_found');
+    if (!isVerifiedEvent(event)) {
+      throw new Error('invalid_event');
+    }
 
     const profileEvent = event.kind === 0
       ? event
       : await fetchAuthorProfile(pool, event.pubkey, relays, timeoutMs);
-    const authorProfile = parseProfileContent(profileEvent?.content);
+    const verifiedProfileEvent = profileEvent && isVerifiedEvent(profileEvent) ? profileEvent : null;
+    const authorProfile = parseProfileContent(verifiedProfileEvent?.content);
     const references = extractReferences(event, options.referenceLimit);
     const ttlSeconds = options.cacheTtlSeconds ?? 0;
 
     if (prisma && ttlSeconds > 0) {
       const fetchedAt = new Date();
       await storeCachedEvent(prisma, { event, relays, fetchedAt, ttlSeconds, target });
-      if (profileEvent && profileEvent.id !== event.id) {
-        await storeCachedEvent(prisma, { event: profileEvent, relays, fetchedAt, ttlSeconds });
+      if (verifiedProfileEvent && verifiedProfileEvent.id !== event.id) {
+        await storeCachedEvent(prisma, { event: verifiedProfileEvent, relays, fetchedAt, ttlSeconds });
       }
     }
 
@@ -228,7 +245,7 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
       author: {
         pubkey: event.pubkey,
         profile: authorProfile,
-        profileEvent: profileEvent ?? null
+        profileEvent: verifiedProfileEvent ?? null
       },
       relays,
       references

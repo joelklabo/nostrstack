@@ -83,6 +83,7 @@ function parseInlineMentions(content?: string) {
 }
 
 export function ProfileCard({ profile }: { profile: ProfileMeta }) {
+  const website = safeExternalUrl(profile.website);
   return (
     <div className="nostr-profile-card">
       {profile.picture && <img className="nostr-profile-avatar" src={profile.picture} alt="" />}
@@ -92,10 +93,10 @@ export function ProfileCard({ profile }: { profile: ProfileMeta }) {
         </div>
         {profile.nip05 && <div className="nostr-profile-nip05">{profile.nip05}</div>}
         {profile.about && <div className="nostr-profile-about">{profile.about}</div>}
-        {profile.website && (
+        {website && (
           <div className="nostr-profile-link">
-            <a href={profile.website} target="_blank" rel="noreferrer">
-              {profile.website}
+            <a href={website} target="_blank" rel="noreferrer noopener">
+              {website}
             </a>
           </div>
         )}
@@ -177,7 +178,13 @@ function renderContentWithLinks(content: string) {
         }
         if (part.startsWith('http://') || part.startsWith('https://')) {
           return (
-            <a key={`http-${idx}`} href={part} target="_blank" rel="noreferrer" className="nostr-event-link">
+            <a
+              key={`http-${idx}`}
+              href={part}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="nostr-event-link"
+            >
               {part}
             </a>
           );
@@ -186,6 +193,19 @@ function renderContentWithLinks(content: string) {
       })}
     </>
   );
+}
+
+function safeExternalUrl(value?: string) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return url.toString();
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 function normalizeEventId(id: string) {
@@ -363,7 +383,7 @@ export function renderEvent(event: Event): RenderedEvent {
   }
 
   if (event.kind === 1063) {
-    const url = getTagValue(event, 'url');
+    const url = safeExternalUrl(getTagValue(event, 'url'));
     const mime = getTagValue(event, 'm');
     const size = getTagValue(event, 'size');
     return {
@@ -372,7 +392,7 @@ export function renderEvent(event: Event): RenderedEvent {
         <div className="nostr-event-text">
           {url && (
             <div>
-              File: <a href={url} target="_blank" rel="noreferrer">{url}</a>
+              File: <a href={url} target="_blank" rel="noreferrer noopener">{url}</a>
             </div>
           )}
           {mime && <div>Type: {mime}</div>}

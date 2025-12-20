@@ -2,15 +2,19 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { env } from '../env.js';
 import { resolveNostrEvent } from '../nostr/event-resolver.js';
+import { isAllowedRelayUrl } from '../nostr/relay-utils.js';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 
 function parseRelays(raw?: string) {
-  if (!raw) return [];
-  return raw
+  if (!raw) return { relays: [], invalid: [] as string[] };
+  const entries = raw
     .split(',')
     .map((relay) => relay.trim())
     .filter(Boolean);
+  const relays = entries.filter((relay) => isAllowedRelayUrl(relay));
+  const invalid = entries.filter((relay) => !isAllowedRelayUrl(relay));
+  return { relays, invalid };
 }
 
 function parseIntParam(value?: string) {
@@ -50,7 +54,15 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
     }
 
     const relayOverride = parseRelays(request.query.relays);
-    if (request.query.relays && relayOverride.length === 0) {
+    if (request.query.relays && relayOverride.invalid.length > 0) {
+      return reply.code(400).send({
+        error: 'invalid_relays',
+        message: 'Relays must use wss:// (or ws://localhost for dev).',
+        invalidRelays: relayOverride.invalid,
+        requestId: request.id
+      });
+    }
+    if (request.query.relays && relayOverride.relays.length === 0) {
       return reply.code(400).send({
         error: 'invalid_relays',
         message: 'relays must include at least one valid relay URL.',
@@ -58,12 +70,12 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
       });
     }
 
-    const defaultRelays = parseRelays(env.NOSTR_RELAYS) || [];
-    const relays = defaultRelays.length ? defaultRelays : DEFAULT_RELAYS;
+    const defaultRelays = parseRelays(env.NOSTR_RELAYS);
+    const relays = defaultRelays.relays.length ? defaultRelays.relays : DEFAULT_RELAYS;
 
     try {
       const resolved = await resolveNostrEvent(id, {
-        relays: relayOverride.length ? relayOverride : undefined,
+        relays: relayOverride.relays.length ? relayOverride.relays : undefined,
         defaultRelays: relays,
         maxRelays: app.config?.NOSTR_EVENT_MAX_RELAYS,
         timeoutMs: timeoutMs ?? app.config?.NOSTR_EVENT_FETCH_TIMEOUT_MS,
@@ -103,10 +115,24 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
           requestId: request.id
         });
       }
+      if (message === 'invalid_id') {
+        return reply.code(400).send({
+          error: 'invalid_id',
+          message: 'Identifier is empty or exceeds the maximum length.',
+          requestId: request.id
+        });
+      }
       if (message === 'not_found') {
         return reply.code(404).send({
           error: 'not_found',
           message: 'Event not found on available relays.',
+          requestId: request.id
+        });
+      }
+      if (message === 'invalid_event') {
+        return reply.code(422).send({
+          error: 'invalid_event',
+          message: 'Event failed signature verification.',
           requestId: request.id
         });
       }
