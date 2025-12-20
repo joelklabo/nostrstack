@@ -52,6 +52,10 @@ Public Nostr event landing:
 - Supported IDs: 64-char hex, `note`, `nevent`, `naddr`, `npub`, `nprofile` (optional `nostr:` prefix).
 - API: `GET /api/nostr/event/:id` on the API server (local dev: `https://localhost:3001/api/nostr/event/<id>`).
 
+Payments:
+
+- Profile SendSats and zap flow notes: `docs/payments.md`.
+
 ## Demo modes (phased)
 
 - See `docs/demo-modes.md` for the three presets (regtest, mutinynet, mainnet) and one-liners.
