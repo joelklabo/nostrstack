@@ -514,14 +514,14 @@ export function ZapButton({
                       >
                         OPEN_WALLET
                       </button>
-                      {regtestEnabled && (
+                      {regtestAvailable && (
                         <button
                           className="zap-action zap-action-warning"
                           type="button"
                           onClick={handleRegtestPay}
-                          disabled={regtestPaying || !regtestAvailable}
+                          disabled={regtestPaying}
                         >
-                          {!regtestAvailable ? 'REGTEST_CONFIG_REQUIRED' : regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
+                          {regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
                         </button>
                       )}
                       <button className="zap-action" type="button" onClick={handleCloseZap}>
