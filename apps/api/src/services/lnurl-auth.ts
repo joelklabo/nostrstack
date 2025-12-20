@@ -76,8 +76,14 @@ export async function verifyLnurlAuthSession(
   if (!verifySignature(params.k1, params.sig, params.key)) {
     return { ok: false as const, reason: 'invalid_signature' };
   }
-  if (session.status === 'VERIFIED' && session.linkingKey === params.key) {
-    return { ok: true as const, session };
+  if (session.status === 'VERIFIED') {
+    if (session.linkingKey === params.key) {
+      return { ok: true as const, session };
+    }
+    return { ok: false as const, reason: 'already_used' };
+  }
+  if (session.status !== 'PENDING') {
+    return { ok: false as const, reason: 'invalid_status' };
   }
   const updated = await prisma.lnurlAuthSession.update({
     where: { k1: params.k1 },

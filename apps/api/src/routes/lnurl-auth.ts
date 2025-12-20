@@ -34,14 +34,23 @@ export async function registerLnurlAuthRoutes(app: FastifyInstance) {
     }
     const { k1, sig, key } = request.query as Record<string, string | undefined>;
     if (!k1 || !sig || !key) {
+      request.log.warn({ reqId: request.id, k1 }, 'lnurl-auth missing params');
       return reply.code(400).send({ status: 'ERROR', reason: 'missing_params' });
     }
 
     const result = await verifyLnurlAuthSession(app.prisma, { k1, sig, key });
     if (!result.ok) {
+      request.log.warn(
+        { reqId: request.id, k1, reason: result.reason, keyPrefix: key.slice(0, 12) },
+        'lnurl-auth rejected'
+      );
       return reply.code(400).send({ status: 'ERROR', reason: result.reason });
     }
 
+    request.log.info(
+      { reqId: request.id, k1, keyPrefix: key.slice(0, 12), status: result.session.status },
+      'lnurl-auth verified'
+    );
     return reply.send({ status: 'OK' });
   });
 
