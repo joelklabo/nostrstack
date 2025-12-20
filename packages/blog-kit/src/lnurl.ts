@@ -4,6 +4,25 @@ import type { EventTemplate } from 'nostr-tools';
 
 const PAID_STATUSES = new Set(['PAID', 'SETTLED', 'CONFIRMED', 'COMPLETED', 'SUCCESS']);
 
+export type LnurlPayMetadata = {
+  tag: 'payRequest';
+  callback: string;
+  minSendable: number;
+  maxSendable: number;
+  metadata: string;
+  commentAllowed?: number;
+  encoded?: string;
+};
+
+export type LnurlSuccessAction = {
+  tag?: string;
+  message?: string;
+  url?: string;
+  description?: string;
+  ciphertext?: string;
+  iv?: string;
+};
+
 export function decodeLnurl(value: string): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -91,4 +110,96 @@ export async function getLnurlpInvoice(
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   return res.json() as Promise<Record<string, unknown>>;
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '[::1]';
+}
+
+export function validateLnurlCallbackUrl(callback: string, allowHttp: boolean): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(callback);
+  } catch {
+    throw new Error('LNURL metadata callback is invalid.');
+  }
+  if (parsed.protocol === 'https:') return;
+  if (parsed.protocol === 'http:' && (allowHttp || isLocalhost(parsed.hostname))) return;
+  throw new Error('LNURL callback must use https.');
+}
+
+export function parseLnurlPayMetadata(raw: Record<string, unknown>, options: { allowHttp?: boolean } = {}): LnurlPayMetadata {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('LNURL metadata is invalid.');
+  }
+  if (raw.tag !== 'payRequest') {
+    throw new Error('LNURL does not support payRequest (NIP-57).');
+  }
+  const callback = typeof raw.callback === 'string' ? raw.callback : '';
+  if (!callback) {
+    throw new Error('LNURL metadata missing callback URL.');
+  }
+  validateLnurlCallbackUrl(callback, Boolean(options.allowHttp));
+
+  const minSendable = Number(raw.minSendable);
+  const maxSendable = Number(raw.maxSendable);
+  if (!Number.isFinite(minSendable) || !Number.isFinite(maxSendable)) {
+    throw new Error('LNURL metadata missing sendable limits.');
+  }
+  if (minSendable > maxSendable) {
+    throw new Error('LNURL metadata has invalid sendable limits.');
+  }
+
+  const metadata = typeof raw.metadata === 'string' ? raw.metadata : '';
+  if (!metadata) {
+    throw new Error('LNURL metadata missing metadata string.');
+  }
+
+  const commentAllowedRaw = raw.commentAllowed;
+  const commentAllowedNum = Number(commentAllowedRaw);
+  const commentAllowed = Number.isFinite(commentAllowedNum)
+    ? Math.max(0, Math.floor(commentAllowedNum))
+    : undefined;
+
+  return {
+    tag: 'payRequest',
+    callback,
+    minSendable,
+    maxSendable,
+    metadata,
+    commentAllowed,
+    encoded: typeof raw.encoded === 'string' ? raw.encoded : undefined
+  };
+}
+
+export function sanitizeSuccessAction(raw: unknown): LnurlSuccessAction | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const candidate = raw as LnurlSuccessAction;
+  const tag = typeof candidate.tag === 'string' ? candidate.tag.toLowerCase() : '';
+  if (tag === 'message') {
+    return { tag: 'message', message: typeof candidate.message === 'string' ? candidate.message : undefined };
+  }
+  if (tag === 'url') {
+    if (typeof candidate.url !== 'string') return null;
+    try {
+      const parsed = new URL(candidate.url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+      return {
+        tag: 'url',
+        url: parsed.toString(),
+        description: typeof candidate.description === 'string' ? candidate.description : undefined
+      };
+    } catch {
+      return null;
+    }
+  }
+  if (tag === 'aes') {
+    return {
+      tag: 'aes',
+      ciphertext: typeof candidate.ciphertext === 'string' ? candidate.ciphertext : undefined,
+      iv: typeof candidate.iv === 'string' ? candidate.iv : undefined,
+      description: typeof candidate.description === 'string' ? candidate.description : undefined
+    };
+  }
+  return null;
 }

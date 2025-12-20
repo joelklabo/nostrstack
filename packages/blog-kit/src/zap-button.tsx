@@ -11,8 +11,10 @@ import {
   getLnurlpInvoice,
   getLnurlpMetadata,
   isPaidStatus,
-  normalizeLightningAddress
-} from './lnurl';
+  type LnurlSuccessAction,
+  normalizeLightningAddress,
+  parseLnurlPayMetadata,
+  sanitizeSuccessAction} from './lnurl';
 import { useNwcPayment } from './nwc-pay';
 
 interface WebLN {
@@ -36,15 +38,6 @@ interface ZapButtonProps {
   relays?: string[];
   enableRegtestPay?: boolean;
 }
-
-type LnurlSuccessAction = {
-  tag?: string;
-  message?: string;
-  url?: string;
-  description?: string;
-  ciphertext?: string;
-  iv?: string;
-};
 
 const RELAYS = [
   'wss://relay.damus.io',
@@ -205,29 +198,19 @@ export function ZapButton({
       const lnurlp = resolvedAddress.includes('@')
         ? `https://${resolvedAddress.split('@')[1]}/.well-known/lnurlp/${resolvedAddress.split('@')[0]}`
         : resolvedAddress;
-      const lnurlMetadata = await getLnurlpMetadata(lnurlp);
-      if (!lnurlMetadata || typeof lnurlMetadata !== 'object') {
-        throw new Error('LNURL metadata is invalid.');
-      }
-
-      if (lnurlMetadata.tag !== 'payRequest') {
-        throw new Error('LNURL does not support payRequest (NIP-57).');
-      }
-      const minSendable = Number(lnurlMetadata.minSendable);
-      const maxSendable = Number(lnurlMetadata.maxSendable);
-      if (!Number.isFinite(minSendable) || !Number.isFinite(maxSendable)) {
-        throw new Error('LNURL metadata missing sendable limits.');
-      }
+      const lnurlMetadataRaw = await getLnurlpMetadata(lnurlp);
+      const allowHttp =
+        typeof window !== 'undefined' &&
+        ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(window.location.hostname);
+      const lnurlMetadata = parseLnurlPayMetadata(lnurlMetadataRaw, { allowHttp });
+      const minSendable = lnurlMetadata.minSendable;
+      const maxSendable = lnurlMetadata.maxSendable;
       const amountMsat = amountSats * 1000;
       if (amountMsat < minSendable || amountMsat > maxSendable) {
         throw new Error(`Zap amount must be between ${Math.ceil(minSendable / 1000)} and ${Math.floor(maxSendable / 1000)} sats.`);
       }
-      if (typeof lnurlMetadata.callback !== 'string' || !lnurlMetadata.callback) {
-        throw new Error('LNURL metadata missing callback URL.');
-      }
-      if (typeof lnurlMetadata.metadata !== 'string' || !lnurlMetadata.metadata) {
-        throw new Error('LNURL metadata missing metadata string.');
-      }
+      const commentAllowed = lnurlMetadata.commentAllowed;
+      const zapMessage = typeof commentAllowed === 'number' ? message.slice(0, commentAllowed) : message;
 
       // 2. Create a NIP-57 Zap Request Event
       const lnurlTag = lnurlMetadata.encoded
@@ -243,10 +226,10 @@ export function ZapButton({
           ['lnurl', lnurlTag], // NIP-57 encoded LNURL
           ['p', authorPubkey],
           ['e', event.id],
-          ['content', message],
+          ['content', zapMessage],
           ['p', pubkey] // My pubkey as sender
         ],
-        content: message,
+        content: zapMessage,
       };
       
       const signedZapRequest = await signEvent(zapRequestEventTemplate);
@@ -279,10 +262,7 @@ export function ZapButton({
           nextStatusUrl = null;
         }
       }
-      const nextSuccessAction =
-        invoiceData?.successAction && typeof invoiceData.successAction === 'object'
-          ? (invoiceData.successAction as LnurlSuccessAction)
-          : null;
+      const nextSuccessAction = sanitizeSuccessAction(invoiceData?.successAction);
       setInvoice(pr);
       setSuccessAction(nextSuccessAction);
       setStatusUrl(nextStatusUrl);
