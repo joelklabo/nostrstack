@@ -15,6 +15,25 @@ const requestCount = new client.Counter({
   labelNames: ['method', 'route', 'status_code', 'tenant']
 });
 
+export const nostrEventCacheCounter = new client.Counter({
+  name: 'nostr_event_cache_total',
+  help: 'Nostr event cache hits and misses',
+  labelNames: ['result']
+});
+
+export const nostrEventResolveFailureCounter = new client.Counter({
+  name: 'nostr_event_resolve_failures_total',
+  help: 'Nostr event resolver failures',
+  labelNames: ['reason']
+});
+
+export const nostrEventRelayFetchDuration = new client.Histogram({
+  name: 'nostr_event_relay_fetch_duration_seconds',
+  help: 'Latency for fetching Nostr events from relays',
+  labelNames: ['outcome'],
+  buckets: [0.1, 0.25, 0.5, 1, 2, 5, 10]
+});
+
 client.collectDefaultMetrics();
 
 export const metricsPlugin = fp(async function metricsPlugin(app: FastifyInstance) {

@@ -1,6 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
 import { type Event, SimplePool, validateEvent, verifyEvent } from 'nostr-tools';
 
+import {
+  nostrEventCacheCounter,
+  nostrEventRelayFetchDuration,
+  nostrEventResolveFailureCounter
+} from '../telemetry/metrics.js';
 import { getCachedEvent, storeCachedEvent } from './event-cache.js';
 import {
   decodeNostrTarget,
@@ -62,6 +67,24 @@ const MAX_INPUT_LENGTH = 512;
 
 function isVerifiedEvent(event: Event) {
   return validateEvent(event) && verifyEvent(event);
+}
+
+function getFailureReason(err: unknown) {
+  if (err instanceof Error) {
+    switch (err.message) {
+      case 'invalid_id':
+      case 'unsupported_id':
+      case 'no_relays':
+      case 'not_found':
+      case 'invalid_event':
+        return err.message;
+      case 'Request timed out':
+        return 'timeout';
+      default:
+        return 'error';
+    }
+  }
+  return 'error';
 }
 
 function limitList(list: string[], limit?: number) {
@@ -178,46 +201,58 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
   const pool = new SimplePool();
   const prisma = options.prisma;
 
-  if (prisma) {
-    let cached = await getCachedEvent(prisma, target);
-    if (cached && !isVerifiedEvent(cached.event)) {
-      cached = null;
-    }
-    if (cached) {
-      let profileEvent: Event | null = null;
-      let authorProfile: ProfileMeta | null = null;
-
-      if (cached.event.kind === 0) {
-        profileEvent = cached.event;
-        authorProfile = parseProfileContent(cached.event.content);
-      } else {
-        const cachedProfile = await getCachedEvent(prisma, {
-          type: 'profile',
-          pubkey: cached.event.pubkey,
-          relays: []
-        });
-        if (cachedProfile && isVerifiedEvent(cachedProfile.event)) {
-          profileEvent = cachedProfile.event;
-          authorProfile = parseProfileContent(cachedProfile.event.content);
-        }
-      }
-
-      return {
-        target,
-        event: cached.event,
-        author: {
-          pubkey: cached.event.pubkey,
-          profile: authorProfile,
-          profileEvent
-        },
-        relays: cached.relays.length ? cached.relays : relays,
-        references: extractReferences(cached.event, options.referenceLimit)
-      };
-    }
-  }
-
   try {
-    const event = await fetchEventByTarget(pool, target, relays, timeoutMs);
+    if (prisma) {
+      let cached = await getCachedEvent(prisma, target);
+      if (cached && !isVerifiedEvent(cached.event)) {
+        cached = null;
+      }
+      if (cached) {
+        nostrEventCacheCounter.labels('hit').inc();
+        let profileEvent: Event | null = null;
+        let authorProfile: ProfileMeta | null = null;
+
+        if (cached.event.kind === 0) {
+          profileEvent = cached.event;
+          authorProfile = parseProfileContent(cached.event.content);
+        } else {
+          const cachedProfile = await getCachedEvent(prisma, {
+            type: 'profile',
+            pubkey: cached.event.pubkey,
+            relays: []
+          });
+          if (cachedProfile && isVerifiedEvent(cachedProfile.event)) {
+            profileEvent = cachedProfile.event;
+            authorProfile = parseProfileContent(cachedProfile.event.content);
+          }
+        }
+
+        return {
+          target,
+          event: cached.event,
+          author: {
+            pubkey: cached.event.pubkey,
+            profile: authorProfile,
+            profileEvent
+          },
+          relays: cached.relays.length ? cached.relays : relays,
+          references: extractReferences(cached.event, options.referenceLimit)
+        };
+      }
+      nostrEventCacheCounter.labels('miss').inc();
+    }
+
+    const fetchStart = Date.now();
+    let event: Event | null = null;
+    try {
+      event = await fetchEventByTarget(pool, target, relays, timeoutMs);
+    } catch (err) {
+      const fetchDuration = (Date.now() - fetchStart) / 1000;
+      nostrEventRelayFetchDuration.labels('failure').observe(fetchDuration);
+      throw err;
+    }
+    const fetchDuration = (Date.now() - fetchStart) / 1000;
+    nostrEventRelayFetchDuration.labels(event ? 'success' : 'failure').observe(fetchDuration);
     if (!event) throw new Error('not_found');
     if (!isVerifiedEvent(event)) {
       throw new Error('invalid_event');
@@ -250,6 +285,9 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
       relays,
       references
     };
+  } catch (err) {
+    nostrEventResolveFailureCounter.labels(getFailureReason(err)).inc();
+    throw err;
   } finally {
     globalThis.setTimeout(() => {
       try {
