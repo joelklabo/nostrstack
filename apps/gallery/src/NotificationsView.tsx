@@ -19,7 +19,7 @@ export function NotificationsView() {
   useEffect(() => {
     if (!pubkey) return;
     const pool = new SimplePool();
-    let closeTimer: number | null = null;
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
     const filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
     const sub = pool.subscribeMany(RELAYS, filter, {
       onevent(event) {

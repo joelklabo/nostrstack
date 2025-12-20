@@ -86,9 +86,15 @@ export function TelemetryBar() {
       if (cancelled) return;
       const ws = new WebSocket(telemetryWsUrl);
       wsRef.current = ws;
+      const appendLog = (entry: LogEntry, limit?: number) => {
+        setLogs(prev => {
+          const next = [...prev, entry];
+          return typeof limit === 'number' ? next.slice(-limit) : next;
+        });
+      };
 
       ws.onopen = () => {
-        setLogs(prev => [...prev, { ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' }]);
+        appendLog({ ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' });
       };
 
       ws.onmessage = (event) => {
@@ -103,17 +109,23 @@ export function TelemetryBar() {
               connections: msg.connections,
               hash: msg.hash
             });
-            setLogs(prev => [...prev, { 
-              ts: msg.time * 1000, 
-              level: 'info', 
-              message: `New Block: ${msg.height} (${msg.txs} txs)` 
-            }].slice(-50));
+            appendLog(
+              {
+                ts: msg.time * 1000,
+                level: 'info',
+                message: `New Block: ${msg.height} (${msg.txs} txs)`
+              },
+              50
+            );
           } else if (msg.type === 'error') {
-            setLogs(prev => [...prev, { 
-              ts: msg.time * 1000, 
-              level: 'error', 
-              message: msg.message 
-            }].slice(-50));
+            appendLog(
+              {
+                ts: msg.time * 1000,
+                level: 'error',
+                message: msg.message
+              },
+              50
+            );
           }
         } catch (e) {
           console.error('Failed to parse telemetry message', e);
@@ -121,11 +133,11 @@ export function TelemetryBar() {
       };
 
       ws.onerror = () => {
-        setLogs(prev => [...prev, { ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' }]);
+        appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' });
       };
 
       ws.onclose = () => {
-        setLogs(prev => [...prev, { ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry' }]);
+        appendLog({ ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry' });
       };
     }, 0);
 

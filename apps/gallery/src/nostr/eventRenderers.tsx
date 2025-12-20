@@ -1,4 +1,5 @@
 import type { Event } from 'nostr-tools';
+import type { ReactNode } from 'react';
 import { nip19 } from 'nostr-tools';
 
 export type ProfileMeta = {
@@ -13,8 +14,8 @@ export type ProfileMeta = {
 
 export type RenderedEvent = {
   label: string;
-  body: JSX.Element;
-  footer?: JSX.Element;
+  body: ReactNode;
+  footer?: ReactNode;
 };
 
 const LINK_RE = /(nostr:[0-9a-z]+|https?:\/\/\S+)/gi;

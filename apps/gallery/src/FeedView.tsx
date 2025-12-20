@@ -123,7 +123,7 @@ export function FeedView() {
 
   useEffect(() => {
     const pool = new SimplePool();
-    let closeTimer: number | null = null;
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
 
     const sub = pool.subscribeMany(
       RELAYS,
