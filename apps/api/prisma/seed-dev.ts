@@ -6,6 +6,7 @@ async function main() {
   const domain = 'localhost';
   const username = 'alice';
   const lightningAddress = `${username}@${domain}`;
+  const lnurlSuccessAction = JSON.stringify({ tag: 'message', message: 'Thanks for the lightning tip!' });
 
   const tenant = await prisma.tenant.upsert({
     where: { domain },
@@ -15,11 +16,12 @@ async function main() {
 
   await prisma.user.upsert({
     where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'demo-pubkey' } },
-    update: { lightningAddress },
+    update: { lightningAddress, lnurlSuccessAction },
     create: {
       tenantId: tenant.id,
       pubkey: 'demo-pubkey',
-      lightningAddress
+      lightningAddress,
+      lnurlSuccessAction
     }
   });
 

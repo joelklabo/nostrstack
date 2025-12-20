@@ -46,6 +46,7 @@ const RELAYS = [
   'wss://nos.lol'
 ];
 const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
+const PAID_STATUSES = new Set(['PAID', 'SETTLED', 'CONFIRMED', 'COMPLETED', 'SUCCESS']);
 
 function decodeLnurl(value: string): string | null {
   const trimmed = value.trim();
@@ -114,6 +115,30 @@ function encodeLnurl(url: string): string | null {
   }
 }
 
+function deriveLnurlStatusUrl(callback: string, providerRef: string | null): string | null {
+  if (!providerRef) return null;
+  try {
+    const url = new URL(callback);
+    const segments = url.pathname.split('/').filter(Boolean);
+    const lnurlIndex = segments.lastIndexOf('lnurlp');
+    if (lnurlIndex === -1) return null;
+    const username = segments[lnurlIndex + 1];
+    const invoiceSegment = segments[lnurlIndex + 2];
+    if (!username || invoiceSegment !== 'invoice') return null;
+    url.pathname = `/api/lnurlp/${encodeURIComponent(username)}/status/${encodeURIComponent(providerRef)}`;
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function isPaidStatus(status: unknown): boolean {
+  if (!status) return false;
+  return PAID_STATUSES.has(String(status).toUpperCase());
+}
+
 // Minimal LNURL-pay client, just enough for zaps.
 // In a real scenario, use @nostrstack/sdk or similar for robust client.
 async function getLnurlpMetadata(lnurl: string) {
@@ -151,6 +176,7 @@ export function ZapButton({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<string | null>(null);
   const [successAction, setSuccessAction] = useState<LnurlSuccessAction | null>(null);
+  const [statusUrl, setStatusUrl] = useState<string | null>(null);
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
   const [nwcPayStatus, setNwcPayStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
@@ -283,6 +309,7 @@ export function ZapButton({
     setRegtestError(null);
     setInvoice(null);
     setSuccessAction(null);
+    setStatusUrl(null);
     setNwcPayStatus('idle');
     setNwcPayMessage(null);
     setCopyStatus('idle');
@@ -354,12 +381,32 @@ export function ZapButton({
         signedZapRequest
       );
       const pr = invoiceData.pr;
+      if (typeof pr !== 'string' || !pr) {
+        throw new Error('Invoice response missing payment request.');
+      }
+      const nextProviderRef =
+        invoiceData?.provider_ref && typeof invoiceData.provider_ref === 'string'
+          ? invoiceData.provider_ref
+          : null;
+      let nextStatusUrl = nextProviderRef ? deriveLnurlStatusUrl(lnurlMetadata.callback, nextProviderRef) : null;
+      if (nextStatusUrl && resolvedApiBase) {
+        try {
+          const expectedOrigin = new URL(resolvedApiBase).origin;
+          const statusOrigin = new URL(nextStatusUrl).origin;
+          if (expectedOrigin !== statusOrigin) {
+            nextStatusUrl = null;
+          }
+        } catch {
+          nextStatusUrl = null;
+        }
+      }
       const nextSuccessAction =
         invoiceData?.successAction && typeof invoiceData.successAction === 'object'
           ? (invoiceData.successAction as LnurlSuccessAction)
           : null;
       setInvoice(pr);
       setSuccessAction(nextSuccessAction);
+      setStatusUrl(nextStatusUrl);
       setZapState('waiting-payment');
 
       if (nwcEnabled) {
@@ -398,7 +445,8 @@ export function ZapButton({
     message,
     relayTargets,
     attemptNwcPayment,
-    nwcEnabled
+    nwcEnabled,
+    resolvedApiBase
   ]);
 
   const handleCopyInvoice = useCallback(async () => {
@@ -458,6 +506,7 @@ export function ZapButton({
     setRegtestError(null);
     setInvoice(null);
     setSuccessAction(null);
+    setStatusUrl(null);
     setNwcPayStatus('idle');
     setNwcPayMessage(null);
     setCopyStatus('idle');
@@ -535,6 +584,35 @@ export function ZapButton({
     document.addEventListener('keydown', handleKeydown);
     return () => document.removeEventListener('keydown', handleKeydown);
   }, [zapState, handleCloseZap]);
+
+  useEffect(() => {
+    if (zapState !== 'waiting-payment' || !statusUrl) return;
+    let active = true;
+    let timer: number | null = null;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(statusUrl);
+        if (!res.ok) return;
+        const data = (await res.json()) as { status?: string };
+        if (!active) return;
+        if (isPaidStatus(data.status)) {
+          setZapState('paid');
+          return;
+        }
+      } catch {
+        // ignore polling errors
+      }
+      if (!active) return;
+      timer = window.setTimeout(poll, 4000);
+    };
+
+    poll();
+    return () => {
+      active = false;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [zapState, statusUrl]);
 
   const statusConfig = useMemo(() => {
     switch (zapState) {

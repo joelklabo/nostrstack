@@ -50,6 +50,9 @@ until docker exec nostrstack-postgres pg_isready -U nostrstack >/dev/null 2>&1; 
 log "Running Prisma migrations against ${PG_URL}"
 DATABASE_URL="$PG_URL" pnpm --filter api exec prisma migrate deploy --schema prisma/pg/schema.prisma >/dev/null
 
+log "Seeding demo LNURL user (alice@localhost)"
+DATABASE_URL="$PG_URL" pnpm --filter api exec tsx prisma/seed-dev.ts >/dev/null
+
 log "Config:"
 echo "  LNbits UI:              http://localhost:15001"
 echo "  LNbits admin key:       $LNBITS_ADMIN_KEY"
