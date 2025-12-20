@@ -31,6 +31,8 @@ const bool = () =>
     z.boolean()
   );
 
+const positiveInt = (fallback: number) => z.coerce.number().int().positive().default(fallback);
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3001),
@@ -47,6 +49,15 @@ const schema = z.object({
   BOLT12_PROVIDER: z.enum(['cln-rest', 'mock']).optional(),
   BOLT12_REST_URL: z.string().url().optional(),
   BOLT12_REST_API_KEY: z.string().optional(),
+  BOLT12_MIN_AMOUNT_MSAT: positiveInt(1000),
+  BOLT12_MAX_AMOUNT_MSAT: positiveInt(100000000),
+  BOLT12_MIN_EXPIRY_SECONDS: positiveInt(60),
+  BOLT12_MAX_EXPIRY_SECONDS: positiveInt(86400),
+  BOLT12_MAX_DESCRIPTION_CHARS: positiveInt(140),
+  BOLT12_MAX_LABEL_CHARS: positiveInt(64),
+  BOLT12_MAX_ISSUER_CHARS: positiveInt(64),
+  BOLT12_MAX_PAYER_NOTE_CHARS: positiveInt(200),
+  BOLT12_MAX_QUANTITY: positiveInt(100),
   LND_GRPC_ENDPOINT: z.string().optional(),
   LND_GRPC_MACAROON: z.string().optional(),
   LND_GRPC_CERT: z.string().optional(),
@@ -97,6 +108,34 @@ const schema = z.object({
         message: 'BOLT12_REST_API_KEY is required for cln-rest provider'
       });
     }
+  }
+  if (data.BOLT12_MIN_AMOUNT_MSAT > data.BOLT12_MAX_AMOUNT_MSAT) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BOLT12_MIN_AMOUNT_MSAT'],
+      message: 'BOLT12_MIN_AMOUNT_MSAT must be less than or equal to BOLT12_MAX_AMOUNT_MSAT'
+    });
+  }
+  if (data.BOLT12_MIN_EXPIRY_SECONDS > data.BOLT12_MAX_EXPIRY_SECONDS) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BOLT12_MIN_EXPIRY_SECONDS'],
+      message: 'BOLT12_MIN_EXPIRY_SECONDS must be less than or equal to BOLT12_MAX_EXPIRY_SECONDS'
+    });
+  }
+  if (data.NODE_ENV === 'production' && data.BOLT12_PROVIDER === 'mock') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BOLT12_PROVIDER'],
+      message: 'BOLT12 mock provider is not allowed in production'
+    });
+  }
+  if (data.NODE_ENV === 'production' && data.BOLT12_REST_URL?.startsWith('http://')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BOLT12_REST_URL'],
+      message: 'BOLT12_REST_URL must use https in production'
+    });
   }
 });
 

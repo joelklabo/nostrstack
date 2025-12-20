@@ -25,9 +25,160 @@ export type Bolt12InvoiceResponse = {
   invoice: string;
 };
 
+export type Bolt12Limits = {
+  minAmountMsat: number;
+  maxAmountMsat: number;
+  minExpirySeconds: number;
+  maxExpirySeconds: number;
+  maxDescriptionChars: number;
+  maxLabelChars: number;
+  maxIssuerChars: number;
+  maxPayerNoteChars: number;
+  maxQuantity: number;
+};
+
+export class Bolt12ValidationError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message);
+    this.name = 'Bolt12ValidationError';
+  }
+}
+
+export class Bolt12GuardrailError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message);
+    this.name = 'Bolt12GuardrailError';
+  }
+}
+
 export interface Bolt12Provider {
   createOffer(input: Bolt12OfferRequest): Promise<Bolt12OfferResponse>;
   fetchInvoice(input: Bolt12InvoiceRequest): Promise<Bolt12InvoiceResponse>;
+}
+
+function normalizeOptional(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function requireNonEmpty(value: string, code: string, message: string) {
+  if (!value.trim()) {
+    throw new Bolt12ValidationError(code, message);
+  }
+  return value.trim();
+}
+
+function assertSafeInteger(value: number, code: string, message: string) {
+  if (!Number.isSafeInteger(value)) {
+    throw new Bolt12ValidationError(code, message);
+  }
+}
+
+function assertRange(value: number, min: number, max: number, code: string, message: string) {
+  if (value < min || value > max) {
+    throw new Bolt12ValidationError(code, message);
+  }
+}
+
+export function validateBolt12OfferInput(input: Bolt12OfferRequest, limits: Bolt12Limits): Bolt12OfferRequest {
+  const description = requireNonEmpty(input.description, 'bolt12_description_required', 'Description is required.');
+  if (description.length > limits.maxDescriptionChars) {
+    throw new Bolt12ValidationError(
+      'bolt12_description_too_long',
+      `Description must be ${limits.maxDescriptionChars} characters or fewer.`
+    );
+  }
+
+  const amountMsat = input.amountMsat;
+  if (amountMsat !== undefined) {
+    assertSafeInteger(amountMsat, 'bolt12_amount_invalid', 'Amount must be a whole number of millisats.');
+    assertRange(
+      amountMsat,
+      limits.minAmountMsat,
+      limits.maxAmountMsat,
+      'bolt12_amount_out_of_range',
+      `Amount must be between ${limits.minAmountMsat} and ${limits.maxAmountMsat} msat.`
+    );
+  }
+
+  const label = normalizeOptional(input.label);
+  if (label && label.length > limits.maxLabelChars) {
+    throw new Bolt12ValidationError(
+      'bolt12_label_too_long',
+      `Label must be ${limits.maxLabelChars} characters or fewer.`
+    );
+  }
+
+  const issuer = normalizeOptional(input.issuer);
+  if (issuer && issuer.length > limits.maxIssuerChars) {
+    throw new Bolt12ValidationError(
+      'bolt12_issuer_too_long',
+      `Issuer must be ${limits.maxIssuerChars} characters or fewer.`
+    );
+  }
+
+  const expiresIn = input.expiresIn;
+  if (expiresIn !== undefined) {
+    assertSafeInteger(expiresIn, 'bolt12_expiry_invalid', 'Expiry must be a whole number of seconds.');
+    assertRange(
+      expiresIn,
+      limits.minExpirySeconds,
+      limits.maxExpirySeconds,
+      'bolt12_expiry_out_of_range',
+      `Expiry must be between ${limits.minExpirySeconds} and ${limits.maxExpirySeconds} seconds.`
+    );
+  }
+
+  return {
+    description,
+    amountMsat,
+    label,
+    issuer,
+    expiresIn
+  };
+}
+
+export function validateBolt12InvoiceInput(input: Bolt12InvoiceRequest, limits: Bolt12Limits): Bolt12InvoiceRequest {
+  const offer = requireNonEmpty(input.offer, 'bolt12_offer_required', 'Offer is required.');
+
+  const amountMsat = input.amountMsat;
+  if (amountMsat !== undefined) {
+    assertSafeInteger(amountMsat, 'bolt12_amount_invalid', 'Amount must be a whole number of millisats.');
+    assertRange(
+      amountMsat,
+      limits.minAmountMsat,
+      limits.maxAmountMsat,
+      'bolt12_amount_out_of_range',
+      `Amount must be between ${limits.minAmountMsat} and ${limits.maxAmountMsat} msat.`
+    );
+  }
+
+  const quantity = input.quantity;
+  if (quantity !== undefined) {
+    assertSafeInteger(quantity, 'bolt12_quantity_invalid', 'Quantity must be a whole number.');
+    assertRange(
+      quantity,
+      1,
+      limits.maxQuantity,
+      'bolt12_quantity_out_of_range',
+      `Quantity must be between 1 and ${limits.maxQuantity}.`
+    );
+  }
+
+  const payerNote = normalizeOptional(input.payerNote);
+  if (payerNote && payerNote.length > limits.maxPayerNoteChars) {
+    throw new Bolt12ValidationError(
+      'bolt12_payer_note_too_long',
+      `Payer note must be ${limits.maxPayerNoteChars} characters or fewer.`
+    );
+  }
+
+  return {
+    offer,
+    amountMsat,
+    quantity,
+    payerNote
+  };
 }
 
 export async function createBolt12Offer(provider: Bolt12Provider, input: Bolt12OfferRequest) {
