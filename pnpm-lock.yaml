@@ -37,6 +37,12 @@ importers:
       '@types/node':
         specifier: 22.7.5
         version: 22.7.5
+      '@typescript-eslint/eslint-plugin':
+        specifier: 7.2.0
+        version: 7.2.0(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.6.2))(eslint@8.57.0)(typescript@5.6.2)
+      '@typescript-eslint/parser':
+        specifier: 7.2.0
+        version: 7.2.0(eslint@8.57.0)(typescript@5.6.2)
       audit-ci:
         specifier: ^7.1.0
         version: 7.1.0
@@ -542,6 +548,7 @@ packages:
   '@beads/bd@0.27.2':
     resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
     engines: {node: '>=14.0.0'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -1236,6 +1243,7 @@ packages:
 
   '@ls-lint/ls-lint@2.3.1':
     resolution: {integrity: sha512-vPe6IDByQnQRTxcAYjTxrmga/tSIui50VBFTB5KIJWY3OOFmxE2VtymjeSEfQfiMbhZV/ZPAqYy2lt8pZFQ0Rw==}
+    cpu: [x64, arm64, s390x, ppc64le]
     os: [darwin, linux, win32]
     hasBin: true
 

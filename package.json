@@ -12,7 +12,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "packageManager": "pnpm@9.11.0",
+  "packageManager": "pnpm@10.26.1",
   "scripts": {
     "lint": "pnpm -r lint",
     "lint:knip": "knip",
@@ -60,7 +60,12 @@
       "esbuild": "^0.25.0"
     },
     "onlyBuiltDependencies": [
-      "@beads/bd"
+      "@beads/bd",
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "protobufjs"
     ]
   },
   "devDependencies": {
@@ -72,6 +77,8 @@
     "@nostrstack/config": "workspace:*",
     "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
     "@types/node": "22.7.5",
+    "@typescript-eslint/eslint-plugin": "7.2.0",
+    "@typescript-eslint/parser": "7.2.0",
     "audit-ci": "^7.1.0",
     "chrome-devtools-mcp": "0.12.1",
     "concurrently": "^9.2.1",
