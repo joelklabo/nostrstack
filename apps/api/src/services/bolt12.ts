@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import type { FastifyBaseLogger } from 'fastify';
 
 export type Bolt12OfferRequest = {
@@ -272,11 +274,18 @@ export class ClnRestBolt12Provider implements Bolt12Provider {
 }
 
 export class MockBolt12Provider implements Bolt12Provider {
-  async createOffer(): Promise<Bolt12OfferResponse> {
-    throw new Error('BOLT12 mock provider is not configured');
+  async createOffer(input: Bolt12OfferRequest): Promise<Bolt12OfferResponse> {
+    const offerId = randomBytes(4).toString('hex');
+    const offer = `lno1mock${offerId}${randomBytes(6).toString('hex')}`;
+    return {
+      offer,
+      offerId,
+      label: input.label
+    };
   }
 
-  async fetchInvoice(): Promise<Bolt12InvoiceResponse> {
-    throw new Error('BOLT12 mock provider is not configured');
+  async fetchInvoice(_input: Bolt12InvoiceRequest): Promise<Bolt12InvoiceResponse> {
+    const invoice = `lni1mock${randomBytes(8).toString('hex')}`;
+    return { invoice };
   }
 }
