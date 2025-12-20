@@ -6,6 +6,7 @@ export { type NwcBalanceResult, NwcClient, type NwcClientOptions, type NwcPayInv
 export { OfferWidget, type OfferWidgetProps } from './offer-widget';
 export { PaywalledContent } from './paywalled-content';
 export { PostEditor } from './post-editor';
+export { SendSats } from './send-sats';
 export { ShareButton, type ShareButtonProps } from './share-button';
 export { type NostrProfile, ShareWidget, type ShareWidgetProps } from './share-widget';
 export { StatsProvider, useStats } from './stats';
