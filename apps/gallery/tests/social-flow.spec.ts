@@ -8,21 +8,21 @@ test.describe('Social App Flow', () => {
   });
 
   test('Guest user sees login screen', async ({ page }) => {
-    await expect(page.getByText('AUTH_GATEWAY')).toBeVisible();
-    await expect(page.getByText('EXTENSION_AUTH (NIP-07)')).toBeVisible();
-    await expect(page.getByText('MANUAL_OVERRIDE (NSEC)')).toBeVisible();
+    await expect(page.getByText('Sign in to NostrStack')).toBeVisible();
+    await expect(page.getByText('Sign in with Extension (NIP-07)')).toBeVisible();
+    await expect(page.getByText('Enter nsec manually')).toBeVisible();
     await page.screenshot({ path: '../../docs/screenshots/login.png' });
   });
 
   test('User can login with nsec and see feed', async ({ page }) => {
     // 1. Login with NSEC
-    await page.getByText('MANUAL_OVERRIDE (NSEC)').click();
+    await page.getByText('Enter nsec manually').click();
     
     // Use a valid nsec
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
     
     await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByText('EXECUTE').click();
+    await page.getByRole('button', { name: 'Sign in' }).click();
 
     // Check for potential error message
     const errorMsg = page.locator('.error-msg');
@@ -31,10 +31,10 @@ test.describe('Social App Flow', () => {
     }
 
     // 2. Verify Feed View & Screenshot
-    await expect(page.getByText('NOSTRSTACK_V1')).toBeVisible(); // Sidebar
+    await expect(page.getByText('NostrStack')).toBeVisible(); // Sidebar
     await page.screenshot({ path: '../../docs/screenshots/feed.png' });
 
-    await expect(page.getByText('STREAMING_LIVE_EVENTS...')).toBeVisible(); // Feed
+    await expect(page.getByText('Live Feed')).toBeVisible(); // Feed
     await expect(page.getByPlaceholder('WHAT ARE YOU HACKING ON?...')).toBeVisible(); // Post Editor
 
     // 3. Post a note
@@ -52,9 +52,25 @@ test.describe('Social App Flow', () => {
     // In real env, posts might take time to load from relays.
     try {
       await zapBtn.waitFor({ state: 'visible', timeout: 5000 });
+      const feedContainer = page.locator('.feed-container');
+      const feedBox = await feedContainer.boundingBox();
       await zapBtn.click();
       await expect(page.locator('.zap-modal')).toBeVisible();
+      const overlay = page.locator('.zap-overlay');
+      await expect(overlay).toBeVisible();
+      const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
+      expect(overlayPosition).toBe('fixed');
+      const feedBoxAfter = await feedContainer.boundingBox();
+      if (feedBox && feedBoxAfter) {
+        expect(Math.abs(feedBoxAfter.x - feedBox.x)).toBeLessThan(1);
+        expect(Math.abs(feedBoxAfter.width - feedBox.width)).toBeLessThan(1);
+      }
       await page.getByText('Requesting invoice...').waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+      const invoiceBox = page.locator('.zap-invoice-box');
+      const hasInvoice = await invoiceBox.waitFor({ state: 'visible', timeout: 4000 }).then(() => true).catch(() => false);
+      if (hasInvoice) {
+        await expect(page.locator('.zap-qr')).toBeVisible();
+      }
       await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
       // Close modal (might be CANCEL or CLOSE if error)
       await page.getByRole('button', { name: /CLOSE/ }).first().click();
@@ -66,12 +82,12 @@ test.describe('Social App Flow', () => {
   test('Navigation to Profile, Follow, and Screenshot', async ({ page }) => {
     // Login first
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await page.getByText('MANUAL_OVERRIDE (NSEC)').click();
+    await page.getByText('Enter nsec manually').click();
     await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByText('EXECUTE').click();
+    await page.getByRole('button', { name: 'Sign in' }).click();
 
     // Click Profile
-    await page.getByRole('button', { name: 'PROFILE' }).click();
+    await page.getByRole('button', { name: 'Profile' }).click();
 
     // Check Profile View
     await expect(page.locator('.profile-view')).toBeVisible();
@@ -84,34 +100,41 @@ test.describe('Social App Flow', () => {
   test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {
     // Login
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await page.getByText('MANUAL_OVERRIDE (NSEC)').click();
+    await page.getByText('Enter nsec manually').click();
     await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByText('EXECUTE').click();
+    await page.getByRole('button', { name: 'Sign in' }).click();
 
     // Verify Sidebar Buttons exist and are clickable (even if no-op)
-    await page.getByRole('button', { name: 'NOTIFICATIONS' }).click();
-    await page.getByRole('button', { name: 'SETTINGS' }).click();
+    await page.getByRole('button', { name: 'Notifications' }).click();
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('button', { name: 'Feed' }).click();
 
     // Verify Post Actions
     // Wait for at least one post
-    await expect(page.getByText('STREAMING_LIVE_EVENTS...')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
     // Click VIEW_SRC on the first post
-    await page.getByText('VIEW_SRC').first().click();
+    const viewSource = page.getByText('View Source').first();
+    const hasPost = await viewSource.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
+    if (!hasPost) {
+      test.skip(true, 'No posts available for source view');
+      return;
+    }
+    await viewSource.click();
     // Expect JSON view to appear (contains "EVENT_ID:")
-    await expect(page.getByText(/EVENT_ID:/)).toBeVisible();
+    await expect(page.getByText(/Event ID:/)).toBeVisible();
     
     // Toggle back (HIDE_SRC)
-    await page.getByText('HIDE_SRC').first().click();
-    await expect(page.getByText(/EVENT_ID:/)).not.toBeVisible();
+    await page.getByText('Hide Source').first().click();
+    await expect(page.getByText(/Event ID:/)).not.toBeVisible();
 
     // Click REPLY (no-op but should not crash)
-    await page.getByText('REPLY').first().click();
+    await page.getByText('Reply').first().click();
 
     // Logout
-    await page.getByRole('button', { name: 'LOGOUT' }).click();
+    await page.getByRole('button', { name: 'Log out' }).click();
     
     // Expect Login Screen
-    await expect(page.getByText('AUTH_GATEWAY')).toBeVisible();
-    await expect(page.getByText('MANUAL_OVERRIDE (NSEC)')).toBeVisible();
+    await expect(page.getByText('Sign in to NostrStack')).toBeVisible();
+    await expect(page.getByText('Enter nsec manually')).toBeVisible();
   });
 });

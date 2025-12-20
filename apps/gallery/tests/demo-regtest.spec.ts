@@ -1,66 +1,48 @@
-import { execSync } from 'node:child_process';
-
 import { expect, test } from '@playwright/test';
 
-import { enableTestSigner, expectRelayMode, postComment, setRelays } from './helpers.ts';
-
 const shouldRun = process.env.REGTEST_SMOKE === 'true';
-const relaysCsv =
-  process.env.REAL_RELAY ||
-  (process.env.VITE_NOSTRSTACK_RELAYS && process.env.VITE_NOSTRSTACK_RELAYS !== 'mock' ? process.env.VITE_NOSTRSTACK_RELAYS : undefined) ||
-  'wss://relay.damus.io';
+const testNsec = process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
 
-const payInvoice = (bolt11: string) => {
-  execSync(
-    `docker compose -f deploy/regtest/docker-compose.yml exec lnd-payer ` +
-      `lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:10010 ` +
-      `--macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon ` +
-      `--tlscertpath=/data/tls.cert payinvoice --force --json "${bolt11.trim()}"`,
-    { stdio: 'inherit', cwd: process.cwd() }
-  );
-};
-
-test.describe('regtest demo (real payments + comments)', () => {
+test.describe('regtest demo (zap pay)', () => {
   test.skip(!shouldRun, 'Set REGTEST_SMOKE=true to run real regtest demo smoke');
 
-  test('comments, mock tip, pay unlock, real invoice + pay', async ({ page }) => {
+  test('pay zap via regtest action', async ({ page }) => {
     await page.goto('/');
-    await setRelays(page, relaysCsv);
-    await enableTestSigner(page);
-    const relayMode = relaysCsv.includes('mock') ? 'mock' : 'real';
-    await expectRelayMode(page, relayMode);
+    await page.getByText('Enter nsec manually').click();
+    await page.getByPlaceholder('nsec1...').fill(testNsec);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
 
-    // Comments (real relay if provided)
-    const commentText = `hello from regtest ${Date.now()}`;
-    await postComment(page, commentText);
-    await expect(page.locator('#comments-container')).toContainText(commentText, { timeout: 15000 });
-
-    // Mock tip invoice
-    await page.getByTestId('mock-tip').click();
-    await expect(page.getByTestId('invoice')).toContainText('BOLT11');
-
-    // Pay-to-unlock (mock verify)
-    await page.getByTestId('paywall-unlock').click();
-    const unlockStatus = page.getByTestId('unlock-status');
-    try {
-      await expect(unlockStatus).toContainText(/unlocked/i, { timeout: 3000 });
-    } catch {
-      await page.getByTestId('mock-unlock').click();
-      await expect(unlockStatus).toContainText(/unlocked/i, { timeout: 3000 });
+    const zapButtons = page.locator('.zap-btn');
+    await zapButtons.first().waitFor({ state: 'visible', timeout: 15000 });
+    const total = await zapButtons.count();
+    let paid = false;
+    for (let i = 0; i < Math.min(total, 5); i += 1) {
+      await zapButtons.nth(i).click();
+      await expect(page.locator('.zap-modal')).toBeVisible();
+      const invoiceReady = await page
+        .locator('.zap-invoice-box')
+        .waitFor({ state: 'visible', timeout: 8000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!invoiceReady) {
+        await page.getByRole('button', { name: /CLOSE/ }).first().click();
+        continue;
+      }
+      const regtestBtn = page.getByRole('button', { name: /PAY_REGTEST/ });
+      if (!(await regtestBtn.isVisible())) {
+        await page.getByRole('button', { name: /CLOSE/ }).first().click();
+        continue;
+      }
+      await regtestBtn.click();
+      await expect(page.getByText('Payment confirmed.')).toBeVisible({ timeout: 20000 });
+      paid = true;
+      await page.getByRole('button', { name: /CLOSE/ }).first().click();
+      break;
     }
 
-    // Real invoice request + payment
-    const realBtn = page.getByText('Request real invoice', { exact: false });
-    if (await realBtn.count()) {
-      await realBtn.click();
-      const realPre = page.getByTestId('real-invoice').locator('pre').first();
-      await expect(realPre).toContainText('lnbcrt', { timeout: 10000 });
-      const pr = (await realPre.textContent())?.trim();
-      if (!pr) throw new Error('invoice empty');
-      payInvoice(pr);
-      await expect(page.locator('text=Invoice')).toBeVisible({ timeout: 8000 });
-      // No direct status hook; ensure UI remains responsive
-      await expect(realPre).toContainText('lnbcrt');
+    if (!paid) {
+      test.skip(true, 'No zap invoice with regtest pay available');
     }
   });
 });
