@@ -153,7 +153,11 @@ export function ZapButton({
   const [invoice, setInvoice] = useState<string | null>(null);
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const timerRef = useRef<number | null>(null);
+  const copyTimerRef = useRef<number | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
@@ -215,6 +219,7 @@ export function ZapButton({
     setErrorMessage(null);
     setRegtestError(null);
     setInvoice(null);
+    setCopyStatus('idle');
 
     try {
       const resolvedAddress = await resolveLightningAddress();
@@ -285,6 +290,26 @@ export function ZapButton({
     }
   }, [pubkey, signEvent, resolveLightningAddress, authorPubkey, event, amountSats, message, relayTargets]);
 
+  const handleCopyInvoice = useCallback(async () => {
+    if (!invoice) return;
+    try {
+      if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+        throw new Error('Clipboard unavailable');
+      }
+      await navigator.clipboard.writeText(invoice);
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('error');
+    } finally {
+      if (copyTimerRef.current) {
+        window.clearTimeout(copyTimerRef.current);
+      }
+      copyTimerRef.current = window.setTimeout(() => {
+        setCopyStatus('idle');
+      }, 2000);
+    }
+  }, [invoice]);
+
   const handleRegtestPay = useCallback(async () => {
     if (!invoice) return;
     if (!regtestEnabled) {
@@ -321,10 +346,16 @@ export function ZapButton({
     setErrorMessage(null);
     setRegtestError(null);
     setInvoice(null);
+    setCopyStatus('idle');
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    if (copyTimerRef.current) {
+      window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = null;
+    }
+    triggerRef.current?.focus();
   }, []);
 
   useEffect(() => {
@@ -332,56 +363,164 @@ export function ZapButton({
       if (timerRef.current) {
         window.clearTimeout(timerRef.current);
       }
+      if (copyTimerRef.current) {
+        window.clearTimeout(copyTimerRef.current);
+      }
     };
   }, []);
 
+  useEffect(() => {
+    if (zapState === 'idle' || typeof document === 'undefined') return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [zapState]);
+
+  useEffect(() => {
+    if (zapState === 'idle') return;
+    modalRef.current?.focus();
+  }, [zapState]);
+
+  useEffect(() => {
+    if (zapState === 'idle') return;
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleCloseZap();
+      }
+    };
+    document.addEventListener('keydown', handleKeydown);
+    return () => document.removeEventListener('keydown', handleKeydown);
+  }, [zapState, handleCloseZap]);
+
+  const statusConfig = useMemo(() => {
+    switch (zapState) {
+      case 'pending-lnurl':
+        return { text: `Resolving LNURL for ${authorNpub}...`, tone: 'neutral', spinner: true };
+      case 'pending-invoice':
+        return { text: 'Requesting invoice...', tone: 'neutral', spinner: true };
+      case 'waiting-payment':
+        return {
+          text: invoice ? 'Invoice ready. Scan the QR or pay with your wallet.' : 'Waiting for invoice...',
+          tone: 'neutral',
+          spinner: !invoice
+        };
+      case 'paid':
+        return { text: 'Payment successful!', tone: 'success', spinner: false };
+      case 'error':
+        return { text: errorMessage ?? 'Zap failed.', tone: 'error', spinner: false };
+      default:
+        return { text: '', tone: 'neutral', spinner: false };
+    }
+  }, [zapState, authorNpub, invoice, errorMessage]);
+
+  const showInvoice = zapState === 'waiting-payment' && Boolean(invoice);
+
   return (
     <>
-      <button className="action-btn zap-btn" onClick={handleZap} disabled={zapState !== 'idle'}>
+      <button ref={triggerRef} className="action-btn zap-btn" onClick={handleZap} disabled={zapState !== 'idle'}>
         ⚡ ZAP {amountSats}
       </button>
 
       {zapState !== 'idle' && (
-        <div className="zap-modal">
-          <div className="zap-modal-content">
-            <div className="terminal-header">
-              <span className="terminal-dot red"></span>
-              <span className="terminal-dot yellow"></span>
-              <span className="terminal-dot green"></span>
-              <span className="terminal-title">ZAP_INITIATE</span>
-            </div>
-            <div className="terminal-body">
-              {zapState === 'error' && <div className="error-msg">{errorMessage}</div>}
-              {zapState === 'pending-lnurl' && <p>STATUS: Resolving LNURL for {authorNpub}...</p>}
-              {zapState === 'pending-invoice' && <p>STATUS: Requesting invoice...</p>}
-              {zapState === 'paid' && <div className="success-msg">STATUS: PAYMENT SUCCESSFUL!</div>}
-              {zapState === 'waiting-payment' && invoice && (
-                <div>
-                  <p>STATUS: Invoice generated. Scan QR or click to pay:</p>
-                  <div className="qr-code">
-                    <QRCodeSVG value={invoice} size={256} bgColor="#000" fgColor="#00ff41" level="L" />
+        <div className="zap-overlay" onClick={handleCloseZap} role="presentation">
+          <div
+            className="zap-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="zap-title"
+            aria-describedby="zap-status"
+            tabIndex={-1}
+            ref={modalRef}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="zap-header">
+              <div>
+                <div className="zap-title" id="zap-title">
+                  ZAP ⚡ {amountSats}
+                </div>
+                <div className="zap-subtitle">{authorNpub}</div>
+              </div>
+              <button className="zap-close" type="button" aria-label="Close zap dialog" onClick={handleCloseZap}>
+                ×
+              </button>
+            </header>
+            <div className="zap-body">
+              <div
+                className={`zap-status ${
+                  statusConfig.tone === 'success'
+                    ? 'zap-status--success'
+                    : statusConfig.tone === 'error'
+                      ? 'zap-status--error'
+                      : ''
+                }`}
+                id="zap-status"
+                aria-live="polite"
+              >
+                {statusConfig.spinner && <span className="zap-spinner" aria-hidden="true" />}
+                <span>{statusConfig.text}</span>
+              </div>
+              {regtestError && <div className="zap-status zap-status--error">{regtestError}</div>}
+
+              {showInvoice && invoice && (
+                <div className="zap-grid">
+                  <div className="zap-qr">
+                    <QRCodeSVG value={invoice} size={240} bgColor="#ffffff" fgColor="#0f172a" level="L" />
                   </div>
-                  <p className="invoice-code">{invoice}</p>
-                  {regtestError && <div className="error-msg">{regtestError}</div>}
-                  <div className="form-actions">
-                    <button className="auth-btn" onClick={() => window.open(`lightning:${invoice}`, '_blank')}>
-                      OPEN_WALLET
-                    </button>
-                    {regtestEnabled && (
-                      <button className="auth-btn" onClick={handleRegtestPay} disabled={regtestPaying}>
-                        {regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
+                  <div className="zap-panel">
+                    <div className="zap-actions">
+                      <button className="zap-action" type="button" onClick={handleCopyInvoice} disabled={!invoice}>
+                        {copyStatus === 'copied'
+                          ? 'COPIED'
+                          : copyStatus === 'error'
+                            ? 'COPY_FAILED'
+                            : 'COPY_INVOICE'}
                       </button>
-                    )}
-                    <button className="text-btn" onClick={handleCloseZap}>CANCEL</button>
+                      <button
+                        className="zap-action zap-action-primary"
+                        type="button"
+                        onClick={() => window.open(`lightning:${invoice}`, '_blank')}
+                      >
+                        OPEN_WALLET
+                      </button>
+                      {regtestEnabled && (
+                        <button
+                          className="zap-action zap-action-warning"
+                          type="button"
+                          onClick={handleRegtestPay}
+                          disabled={regtestPaying}
+                        >
+                          {regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
+                        </button>
+                      )}
+                      <button className="zap-action" type="button" onClick={handleCloseZap}>
+                        CLOSE
+                      </button>
+                    </div>
+                    <div className="zap-invoice-box">
+                      <code>{invoice}</code>
+                    </div>
                   </div>
                 </div>
               )}
-              {zapState === 'waiting-payment' && !invoice && (
-                 <p>STATUS: Waiting for invoice...</p>
+
+              {zapState === 'paid' && (
+                <div className="zap-success">
+                  <div className="zap-success-icon">✓</div>
+                  <div>Payment confirmed.</div>
+                  <button className="zap-action zap-action-primary" type="button" onClick={handleCloseZap}>
+                    CLOSE
+                  </button>
+                </div>
               )}
+
               {zapState === 'error' && (
-                <div className="form-actions">
-                  <button className="text-btn" onClick={handleCloseZap}>CLOSE</button>
+                <div className="zap-actions">
+                  <button className="zap-action" type="button" onClick={handleCloseZap}>
+                    CLOSE
+                  </button>
                 </div>
               )}
             </div>
