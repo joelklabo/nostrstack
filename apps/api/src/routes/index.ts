@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { registerAdminTenantRoutes } from './admin-tenants.js';
 import { registerAdminUserRoutes } from './admin-users.js';
 import { registerEmbedConfigRoute } from './embed-config.js';
+import { registerLnurlAuthRoutes } from './lnurl-auth.js';
 import { registerLnurlCallback } from './lnurlp-callback.js';
 import { registerLogStreamRoute } from './log-stream.js';
 import { registerPayRoutes } from './pay.js';
@@ -15,6 +16,7 @@ import { registerWalletRoutes } from './wallet.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await registerLnurlCallback(app);
+  await registerLnurlAuthRoutes(app);
   await registerEmbedConfigRoute(app);
   await registerTenantRoutes(app);
   await registerAdminTenantRoutes(app);
