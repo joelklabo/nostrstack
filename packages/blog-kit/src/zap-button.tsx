@@ -1,5 +1,3 @@
-import { bech32 } from '@scure/base';
-import { Buffer } from 'buffer';
 import { type Event, type EventTemplate, nip19, SimplePool } from 'nostr-tools';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +5,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveApiBase } from './api-base';
 import { useAuth } from './auth';
 import { useNostrstackConfig } from './context';
-import { NwcClient } from './nwc';
+import {
+  deriveLnurlStatusUrl,
+  encodeLnurl,
+  getLnurlpInvoice,
+  getLnurlpMetadata,
+  isPaidStatus,
+  normalizeLightningAddress
+} from './lnurl';
+import { useNwcPayment } from './nwc-pay';
 
 interface WebLN {
   enable: () => Promise<void>;
@@ -45,30 +51,6 @@ const RELAYS = [
   'wss://relay.snort.social',
   'wss://nos.lol'
 ];
-const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
-const PAID_STATUSES = new Set(['PAID', 'SETTLED', 'CONFIRMED', 'COMPLETED', 'SUCCESS']);
-
-function decodeLnurl(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const lower = trimmed.toLowerCase();
-  if (lower.startsWith('lnurl')) {
-    try {
-      const { words } = bech32.decode(lower, 1000);
-      const data = bech32.fromWords(words);
-      return new TextDecoder().decode(data);
-    } catch {
-      // ignore invalid bech32
-    }
-  }
-  try {
-    const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
-    if (decoded.toLowerCase().startsWith('http')) return decoded;
-  } catch {
-    // ignore invalid base64
-  }
-  return null;
-}
 
 function extractLightningAddressFromProfile(raw: unknown): string | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -96,71 +78,6 @@ function extractLightningAddressFromEvent(event: Event): string | null {
   return null;
 }
 
-function normalizeLightningAddress(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  if (trimmed.includes('@')) return trimmed;
-  return decodeLnurl(trimmed);
-}
-
-function encodeLnurl(url: string): string | null {
-  try {
-    const normalized = new URL(url).toString();
-    const words = bech32.toWords(new TextEncoder().encode(normalized));
-    return bech32.encode('lnurl', words, 1000).toUpperCase();
-  } catch {
-    return null;
-  }
-}
-
-function deriveLnurlStatusUrl(callback: string, providerRef: string | null): string | null {
-  if (!providerRef) return null;
-  try {
-    const url = new URL(callback);
-    const segments = url.pathname.split('/').filter(Boolean);
-    const lnurlIndex = segments.lastIndexOf('lnurlp');
-    if (lnurlIndex === -1) return null;
-    const username = segments[lnurlIndex + 1];
-    const invoiceSegment = segments[lnurlIndex + 2];
-    if (!username || invoiceSegment !== 'invoice') return null;
-    url.pathname = `/api/lnurlp/${encodeURIComponent(username)}/status/${encodeURIComponent(providerRef)}`;
-    url.search = '';
-    url.hash = '';
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function isPaidStatus(status: unknown): boolean {
-  if (!status) return false;
-  return PAID_STATUSES.has(String(status).toUpperCase());
-}
-
-// Minimal LNURL-pay client, just enough for zaps.
-// In a real scenario, use @nostrstack/sdk or similar for robust client.
-async function getLnurlpMetadata(lnurl: string) {
-  const url = new URL(lnurl);
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-  return res.json();
-}
-
-async function getLnurlpInvoice(callback: string, amountMsat: number, lnurl: string | null, event: EventTemplate) {
-  const url = new URL(callback);
-  url.searchParams.set('amount', String(amountMsat));
-  url.searchParams.set('nostr', JSON.stringify(event)); // NIP-57 specific
-  if (lnurl) {
-    url.searchParams.set('lnurl', lnurl); // NIP-57 specific
-  }
-  
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-  return res.json(); // { pr: string }
-}
-
 export function ZapButton({
   event,
   amountSats = 21,
@@ -179,8 +96,6 @@ export function ZapButton({
   const [statusUrl, setStatusUrl] = useState<string | null>(null);
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
-  const [nwcPayStatus, setNwcPayStatus] = useState<'idle' | 'paying' | 'paid' | 'error'>('idle');
-  const [nwcPayMessage, setNwcPayMessage] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const timerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
@@ -202,9 +117,15 @@ export function ZapButton({
   const effectiveRegtestError = regtestError ?? regtestUnavailableReason;
   const nwcUri = cfg.nwcUri?.trim();
   const nwcRelays = cfg.nwcRelays;
-  const nwcEnabled = Boolean(nwcUri);
   const nwcMaxSats = cfg.nwcMaxSats;
   const nwcMaxMsat = typeof nwcMaxSats === 'number' ? nwcMaxSats * 1000 : undefined;
+  const {
+    status: nwcPayStatus,
+    message: nwcPayMessage,
+    enabled: nwcEnabled,
+    payInvoice: payInvoiceViaNwc,
+    reset: resetNwcPayment
+  } = useNwcPayment({ uri: nwcUri, relays: nwcRelays, maxAmountMsat: nwcMaxMsat });
 
   const relayTargets = useMemo(() => {
     const base = relays ?? cfg.relays ?? RELAYS;
@@ -255,47 +176,6 @@ export function ZapButton({
     }
   }, [authorLightningAddress, cfg.lnAddress, eventLightningAddress, authorPubkey, relayTargets]);
 
-  const persistNwcPayment = useCallback((payload: { status: 'success' | 'error'; message: string; ts: number }) => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(NWC_PAYMENT_KEY, JSON.stringify(payload));
-      window.dispatchEvent(new CustomEvent('nostrstack:nwc-payment', { detail: payload }));
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
-
-  const attemptNwcPayment = useCallback(async (invoice: string, amountMsat: number) => {
-    if (!nwcUri) return false;
-    setNwcPayStatus('paying');
-    setNwcPayMessage('Paying via NWC…');
-    let client: NwcClient | null = null;
-    try {
-      const mock = typeof window !== 'undefined'
-        ? (window as { __NOSTRSTACK_NWC_MOCK__?: { payInvoice?: (invoice: string, amountMsat: number) => Promise<void> } }).__NOSTRSTACK_NWC_MOCK__
-        : null;
-      if (mock?.payInvoice) {
-        await mock.payInvoice(invoice, amountMsat);
-      } else {
-        client = new NwcClient({ uri: nwcUri, relays: nwcRelays, maxAmountMsat: nwcMaxMsat });
-        await client.payInvoice(invoice, amountMsat);
-      }
-      const message = 'NWC payment sent.';
-      setNwcPayStatus('paid');
-      setNwcPayMessage(message);
-      persistNwcPayment({ status: 'success', message, ts: Date.now() });
-      setZapState('paid');
-      return true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'NWC payment failed.';
-      setNwcPayStatus('error');
-      setNwcPayMessage(message);
-      persistNwcPayment({ status: 'error', message, ts: Date.now() });
-      return false;
-    } finally {
-      client?.close();
-    }
-  }, [nwcRelays, nwcUri, nwcMaxMsat, persistNwcPayment]);
 
   const handleZap = useCallback(async () => {
     if (!pubkey) {
@@ -310,8 +190,7 @@ export function ZapButton({
     setInvoice(null);
     setSuccessAction(null);
     setStatusUrl(null);
-    setNwcPayStatus('idle');
-    setNwcPayMessage(null);
+    resetNwcPayment();
     setCopyStatus('idle');
 
     try {
@@ -410,7 +289,7 @@ export function ZapButton({
       setZapState('waiting-payment');
 
       if (nwcEnabled) {
-        const paidViaNwc = await attemptNwcPayment(pr, amountMsat);
+        const paidViaNwc = await payInvoiceViaNwc(pr, amountMsat);
         if (paidViaNwc) return;
       }
 
@@ -444,9 +323,10 @@ export function ZapButton({
     amountSats,
     message,
     relayTargets,
-    attemptNwcPayment,
+    payInvoiceViaNwc,
     nwcEnabled,
-    resolvedApiBase
+    resolvedApiBase,
+    resetNwcPayment
   ]);
 
   const handleCopyInvoice = useCallback(async () => {
@@ -507,8 +387,7 @@ export function ZapButton({
     setInvoice(null);
     setSuccessAction(null);
     setStatusUrl(null);
-    setNwcPayStatus('idle');
-    setNwcPayMessage(null);
+    resetNwcPayment();
     setCopyStatus('idle');
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
@@ -519,7 +398,7 @@ export function ZapButton({
       copyTimerRef.current = null;
     }
     triggerRef.current?.focus();
-  }, []);
+  }, [resetNwcPayment]);
 
   useEffect(() => {
     return () => {
