@@ -14,9 +14,14 @@ function normalizeProfileId(raw: string): string | null {
   if (/^[0-9a-f]{64}$/i.test(trimmed)) return trimmed.toLowerCase();
   try {
     const decoded = nip19.decode(trimmed.toLowerCase());
-    const data = decoded.data as unknown as Uint8Array;
-    if (decoded.type === 'npub' && data instanceof Uint8Array) {
-      return bytesToHex(data);
+    const data = decoded.data as unknown;
+    if (decoded.type === 'npub') {
+      if (data instanceof Uint8Array) {
+        return bytesToHex(data);
+      }
+      if (typeof data === 'string' && /^[0-9a-f]{64}$/i.test(data)) {
+        return data.toLowerCase();
+      }
     }
   } catch {
     // ignore invalid ids
