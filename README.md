@@ -56,6 +56,12 @@ Payments:
 
 - Profile SendSats and zap flow notes: `docs/payments.md`.
 
+Find friend + tip flow:
+
+- Open `/search` (or “Find friend” in the sidebar) to resolve `npub`, `nprofile`, hex pubkeys, or `nip05`.
+- Open the profile, zap posts, and send a 500-sat tip (enable `VITE_ENABLE_PROFILE_PAY=true`).
+- Setup + troubleshooting: `docs/find-friend-tip.md`.
+
 ## Demo modes (phased)
 
 - See `docs/demo-modes.md` for the three presets (regtest, mutinynet, mainnet) and one-liners.
