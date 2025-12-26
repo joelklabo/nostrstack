@@ -34,6 +34,25 @@ export const nostrEventRelayFetchDuration = new client.Histogram({
   buckets: [0.1, 0.25, 0.5, 1, 2, 5, 10]
 });
 
+export const nip05ProxyCacheCounter = new client.Counter({
+  name: 'nip05_proxy_cache_total',
+  help: 'NIP-05 proxy cache hits and misses',
+  labelNames: ['result']
+});
+
+export const nip05ProxyErrorCounter = new client.Counter({
+  name: 'nip05_proxy_errors_total',
+  help: 'NIP-05 proxy errors by reason',
+  labelNames: ['reason']
+});
+
+export const nip05ProxyFetchDuration = new client.Histogram({
+  name: 'nip05_proxy_fetch_duration_seconds',
+  help: 'Latency for fetching NIP-05 nostr.json responses',
+  labelNames: ['outcome'],
+  buckets: [0.1, 0.25, 0.5, 1, 2, 5]
+});
+
 client.collectDefaultMetrics();
 
 export const metricsPlugin = fp(async function metricsPlugin(app: FastifyInstance) {

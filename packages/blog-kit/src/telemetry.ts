@@ -13,11 +13,26 @@ export type PaymentTelemetryEvent = {
   timestamp: number;
 };
 
-export type ClientTelemetryEvent = PaymentTelemetryEvent;
+export type SearchStage = 'start' | 'success' | 'failure';
+export type SearchSource = 'npub' | 'nprofile' | 'hex' | 'nip05';
+export type SearchTelemetryEvent = {
+  type: 'search';
+  stage: SearchStage;
+  query: string;
+  source?: SearchSource;
+  pubkey?: string;
+  reason?: string;
+  timestamp: number;
+};
+
+export type ClientTelemetryEvent = PaymentTelemetryEvent | SearchTelemetryEvent;
+export type ClientTelemetryEventInput =
+  | Omit<PaymentTelemetryEvent, 'timestamp'>
+  | Omit<SearchTelemetryEvent, 'timestamp'>;
 
 export const TELEMETRY_EVENT_NAME = 'nostrstack:telemetry';
 
-export function emitTelemetryEvent(event: Omit<ClientTelemetryEvent, 'timestamp'> & { timestamp?: number }) {
+export function emitTelemetryEvent(event: ClientTelemetryEventInput & { timestamp?: number }) {
   if (typeof window === 'undefined') return;
   const timestamp = typeof event.timestamp === 'number' ? event.timestamp : Date.now();
   const detail: ClientTelemetryEvent = {
@@ -33,7 +48,7 @@ export function subscribeTelemetry(listener: (event: ClientTelemetryEvent) => vo
     if (!(raw instanceof CustomEvent)) return;
     const detail = raw.detail as ClientTelemetryEvent | undefined;
     if (!detail || typeof detail !== 'object') return;
-    if (detail.type !== 'payment') return;
+    if (detail.type !== 'payment' && detail.type !== 'search') return;
     listener(detail);
   };
   window.addEventListener(TELEMETRY_EVENT_NAME, handler as EventListener);

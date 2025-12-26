@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
 import { getNip05Cache, type Nip05Record,setNip05Cache, setNip05NegativeCache } from '../services/nip05-cache.js';
+import { nip05ProxyCacheCounter, nip05ProxyErrorCounter, nip05ProxyFetchDuration } from '../telemetry/metrics.js';
 
 type Nip05Query = {
   nip05?: string;
@@ -143,23 +144,28 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
     const query = request.query as Nip05Query;
     const parsed = parseNip05Input(query);
     if (!parsed) {
+      nip05ProxyErrorCounter.labels('invalid_input').inc();
       return reply.status(400).send({ error: 'invalid_nip05', message: 'Provide nip05 or name+domain.' });
     }
 
     const name = parsed.name.trim().toLowerCase();
     const domain = parsed.domain.trim().toLowerCase();
     if (!isValidName(name) || !isValidDomain(domain)) {
+      nip05ProxyErrorCounter.labels('invalid_input').inc();
       return reply.status(400).send({ error: 'invalid_nip05', message: 'Invalid NIP-05 identifier.' });
     }
 
     const cacheKey = `${name}@${domain}`;
     const cached = getNip05Cache(cacheKey);
     if (cached.hit) {
+      nip05ProxyCacheCounter.labels(cached.value ? 'hit' : 'negative').inc();
       if (!cached.value) {
+        nip05ProxyErrorCounter.labels('not_found').inc();
         return reply.status(404).send({ error: 'nip05_not_found' });
       }
       return reply.send(cached.value);
     }
+    nip05ProxyCacheCounter.labels('miss').inc();
 
     const timeoutMs = env.NIP05_PROXY_TIMEOUT_MS;
     const maxBytes = env.NIP05_PROXY_MAX_RESPONSE_BYTES;
@@ -168,10 +174,13 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const fetchStart = Date.now();
+    let fetchOutcome: 'success' | 'failure' = 'failure';
 
     try {
       const url = buildNip05Url(domain, name);
       if (url.protocol !== 'https:' && !isLocalhost(url.hostname)) {
+        nip05ProxyErrorCounter.labels('invalid_input').inc();
         return reply.status(400).send({ error: 'invalid_nip05', message: 'NIP-05 requires HTTPS.' });
       }
 
@@ -185,15 +194,18 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
 
       if (!res.ok) {
         if (res.status === 404) {
+          nip05ProxyErrorCounter.labels('not_found').inc();
           setNip05NegativeCache(cacheKey, negativeTtlMs);
           return reply.status(404).send({ error: 'nip05_not_found' });
         }
+        nip05ProxyErrorCounter.labels('upstream_error').inc();
         return reply.status(502).send({ error: 'nip05_upstream_error', status: res.status });
       }
 
       const body = await readJsonWithLimit(res, maxBytes);
       const parsedResponse = parseNip05Response(body, name, domain);
       if (!parsedResponse) {
+        nip05ProxyErrorCounter.labels('invalid_response').inc();
         return reply.status(502).send({ error: 'nip05_invalid_response' });
       }
 
@@ -202,19 +214,25 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
         fetchedAt: Date.now()
       };
       setNip05Cache(cacheKey, record, ttlMs);
+      fetchOutcome = 'success';
       return reply.send(record);
     } catch (err: unknown) {
       if (err instanceof Error) {
         if (err.name === 'AbortError') {
+          nip05ProxyErrorCounter.labels('timeout').inc();
           return reply.status(504).send({ error: 'nip05_timeout' });
         }
         if (err.message === 'nip05_response_too_large') {
+          nip05ProxyErrorCounter.labels('response_too_large').inc();
           return reply.status(502).send({ error: 'nip05_response_too_large' });
         }
       }
+      nip05ProxyErrorCounter.labels('proxy_failed').inc();
       request.log.warn({ err }, 'NIP-05 proxy failed');
       return reply.status(502).send({ error: 'nip05_proxy_failed' });
     } finally {
+      const fetchDuration = (Date.now() - fetchStart) / 1000;
+      nip05ProxyFetchDuration.labels(fetchOutcome).observe(fetchDuration);
       clearTimeout(timeout);
     }
   });

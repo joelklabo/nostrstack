@@ -1,4 +1,4 @@
-import { type PaymentFailureReason, type PaymentMethod, type PaymentTelemetryEvent,subscribeTelemetry } from '@nostrstack/blog-kit';
+import { type PaymentFailureReason, type PaymentMethod, type PaymentTelemetryEvent, type SearchTelemetryEvent,subscribeTelemetry } from '@nostrstack/blog-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
@@ -75,6 +75,24 @@ function formatPaymentTelemetry(event: PaymentTelemetryEvent): LogEntry {
       return { ts, level: 'error', message: `${flowLabel}: payment failed${amountLabel}${methodSuffix}${reasonSuffix}` };
     default:
       return { ts, level: 'info', message: `${flowLabel}: event` };
+  }
+}
+
+function formatSearchTelemetry(event: SearchTelemetryEvent): LogEntry {
+  const ts = event.timestamp;
+  const queryLabel = event.query;
+  const sourceLabel = event.source ? ` (${event.source})` : '';
+  const reasonLabel = event.reason ? ` (${event.reason})` : '';
+
+  switch (event.stage) {
+    case 'start':
+      return { ts, level: 'info', message: `Search: started (${queryLabel})` };
+    case 'success':
+      return { ts, level: 'info', message: `Search: resolved (${queryLabel})${sourceLabel}` };
+    case 'failure':
+      return { ts, level: 'error', message: `Search: failed (${queryLabel})${reasonLabel}` };
+    default:
+      return { ts, level: 'info', message: `Search: event (${queryLabel})` };
   }
 }
 
@@ -200,8 +218,13 @@ export function TelemetryBar() {
 
   useEffect(() => {
     return subscribeTelemetry((event) => {
-      if (event.type !== 'payment') return;
-      appendLog(formatPaymentTelemetry(event));
+      if (event.type === 'payment') {
+        appendLog(formatPaymentTelemetry(event));
+        return;
+      }
+      if (event.type === 'search') {
+        appendLog(formatSearchTelemetry(event));
+      }
     });
   }, [appendLog]);
 

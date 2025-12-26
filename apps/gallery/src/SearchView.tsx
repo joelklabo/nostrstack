@@ -1,8 +1,8 @@
 import './styles/search-view.css';
 
-import { useNostrstackConfig } from '@nostrstack/blog-kit';
+import { emitTelemetryEvent, useNostrstackConfig } from '@nostrstack/blog-kit';
 import { nip19 } from 'nostr-tools';
-import { useMemo, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useIdentityResolver } from './hooks/useIdentityResolver';
 import { navigateToProfile } from './utils/navigation';
@@ -12,6 +12,7 @@ export function SearchView() {
   const apiBase = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const [query, setQuery] = useState('');
   const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
+  const pendingSearchRef = useRef<string | null>(null);
 
   const npub = useMemo(() => {
     if (!result) return null;
@@ -30,6 +31,40 @@ export function SearchView() {
     return 'Paste an identifier to begin.';
   }, [status, error]);
 
+  const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    pendingSearchRef.current = trimmed;
+    emitTelemetryEvent({ type: 'search', stage: 'start', query: trimmed });
+    void resolveNow(trimmed);
+  }, [query, resolveNow]);
+
+  useEffect(() => {
+    const pending = pendingSearchRef.current;
+    if (!pending) return;
+    if (status === 'resolved' && result) {
+      emitTelemetryEvent({
+        type: 'search',
+        stage: 'success',
+        query: pending,
+        source: result.source,
+        pubkey: result.pubkey
+      });
+      pendingSearchRef.current = null;
+      return;
+    }
+    if (status === 'error' && error) {
+      emitTelemetryEvent({
+        type: 'search',
+        stage: 'failure',
+        query: pending,
+        reason: error.code
+      });
+      pendingSearchRef.current = null;
+    }
+  }, [status, result, error]);
+
   return (
     <div className="search-view">
       <header className="search-header">
@@ -39,13 +74,7 @@ export function SearchView() {
         </div>
       </header>
 
-      <form
-        className="search-card"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void resolveNow(query);
-        }}
-      >
+      <form className="search-card" onSubmit={handleSubmit}>
         <label className="search-label" htmlFor="friend-search">
           Friend identifier
         </label>

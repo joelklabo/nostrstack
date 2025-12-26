@@ -17,6 +17,9 @@ export {
   type PaymentMethod,
   type PaymentStage,
   type PaymentTelemetryEvent,
+  type SearchSource,
+  type SearchStage,
+  type SearchTelemetryEvent,
   subscribeTelemetry} from './telemetry';
 export { TipActivityFeed, type TipActivityFeedProps } from './tip-activity-feed';
 export { TipButton, type TipButtonProps } from './tip-button';
