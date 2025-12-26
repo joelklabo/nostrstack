@@ -17,8 +17,8 @@ importers:
         specifier: ^0.18.2
         version: 0.18.2
       '@beads/bd':
-        specifier: ^0.27.2
-        version: 0.27.2
+        specifier: ^0.37.0
+        version: 0.37.0
       '@commitlint/cli':
         specifier: ^20.2.0
         version: 20.2.0(@types/node@22.7.5)(typescript@5.6.2)
@@ -545,8 +545,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@beads/bd@0.27.2':
-    resolution: {integrity: sha512-KCtPVb1ZBFjU0AP1tpoKBAh3V26Mz/Ei+pfXL95wS+BffQqamFZyKH7rcRJWljpEwQQmVm4y7rhyc+8kIVPPzQ==}
+  '@beads/bd@0.37.0':
+    resolution: {integrity: sha512-TBNIdKZcRJ5n/s34jvA9tniSJ86ePZnUfeVP5Kq0PFDAFGuYHym1ho8XUzkkFZ6ic+rlXoYxCSzA7UpwMOVQmw==}
     engines: {node: '>=14.0.0'}
     cpu: [x64, arm64]
     os: [darwin, linux, win32]
@@ -6238,7 +6238,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@beads/bd@0.27.2': {}
+  '@beads/bd@0.37.0': {}
 
   '@borewit/text-codec@0.1.1': {}
 
