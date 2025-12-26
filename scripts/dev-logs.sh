@@ -101,6 +101,6 @@ fi
 
 pnpm concurrently -k -p "[{name} {time}]" -n api,gallery \
   "pnpm --filter api dev | tee -a $API_LOG" \
-  "pnpm --filter gallery dev -- --host --port 4173 | tee -a $GALLERY_LOG"
+  "pnpm --filter gallery dev -- --host --port $DEV_SERVER_PORT | tee -a $GALLERY_LOG"
 
 echo "🧭 Reminder: verify UI changes with Chrome DevTools MCP (check console & network) and keep the tails above running while you test."
