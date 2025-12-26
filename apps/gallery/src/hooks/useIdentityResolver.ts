@@ -22,6 +22,11 @@ export function useIdentityResolver(input: string, options: UseIdentityResolverO
   const { debounceMs = 350, ...resolveOptions } = options;
   const [state, setState] = useState<IdentityResolverState>(DEFAULT_STATE);
   const abortRef = useRef<AbortController | null>(null);
+  const resolveOptionsRef = useRef(resolveOptions);
+
+  useEffect(() => {
+    resolveOptionsRef.current = resolveOptions;
+  }, [resolveOptions]);
 
   const resolveNow = useCallback(async (value: string) => {
     const trimmed = value.trim();
@@ -35,7 +40,7 @@ export function useIdentityResolver(input: string, options: UseIdentityResolverO
     abortRef.current = controller;
 
     setState((prev) => ({ ...prev, status: 'resolving', error: null }));
-    const result = await resolveIdentity(trimmed, { ...resolveOptions, signal: controller.signal });
+    const result = await resolveIdentity(trimmed, { ...resolveOptionsRef.current, signal: controller.signal });
     if (controller.signal.aborted) return;
 
     if (result.ok) {
@@ -43,7 +48,7 @@ export function useIdentityResolver(input: string, options: UseIdentityResolverO
     } else {
       setState({ status: 'error', result: null, error: result.error });
     }
-  }, [resolveOptions]);
+  }, []);
 
   useEffect(() => {
     const trimmed = input.trim();

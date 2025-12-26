@@ -1,0 +1,17 @@
+import '../styles/find-friend.css';
+
+export function FindFriendCard({ onClick }: { onClick?: () => void }) {
+  return (
+    <section className="find-friend-card">
+      <div className="find-friend-card__content">
+        <div className="find-friend-card__title">Find a friend to tip</div>
+        <div className="find-friend-card__subtitle">
+          Paste an npub, nprofile, or NIP-05 address to jump to their profile.
+        </div>
+      </div>
+      <button className="action-btn find-friend-card__action" type="button" onClick={onClick}>
+        Find friend
+      </button>
+    </section>
+  );
+}

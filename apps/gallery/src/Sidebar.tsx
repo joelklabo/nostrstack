@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useWallet } from './hooks/useWallet';
 import { useToast } from './ui/toast';
 import { resolveApiBase } from './utils/api-base';
+import { navigateTo } from './utils/navigation';
 import { WalletView } from './WalletView';
 
 interface SidebarProps {
-  currentView: 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
-  setCurrentView: (view: 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings') => void;
+  currentView: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
+  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings') => void;
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
@@ -70,6 +71,18 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
     }
   };
 
+  const handleNavigate = (view: SidebarProps['currentView']) => {
+    if (view === 'search') {
+      navigateTo('/search');
+      setCurrentView('search');
+      return;
+    }
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/search')) {
+      navigateTo('/');
+    }
+    setCurrentView(view);
+  };
+
   return (
     <nav className="sidebar-nav">
       <div className="sidebar-header">
@@ -82,39 +95,45 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
       <div style={{ padding: '0 0.5rem', marginBottom: '1rem' }}>
         <button 
           className={`nav-item ${currentView === 'feed' ? 'active' : ''}`}
-          onClick={() => setCurrentView('feed')}
+          onClick={() => handleNavigate('feed')}
         >
           Feed
         </button>
         <button 
+          className={`nav-item ${currentView === 'search' ? 'active' : ''}`}
+          onClick={() => handleNavigate('search')}
+        >
+          Find friend
+        </button>
+        <button 
           className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
-          onClick={() => setCurrentView('profile')}
+          onClick={() => handleNavigate('profile')}
         >
           Profile
         </button>
         <button 
           className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
-          onClick={() => setCurrentView('notifications')}
+          onClick={() => handleNavigate('notifications')}
         >
           Notifications
         </button>
         <button 
           className={`nav-item ${currentView === 'relays' ? 'active' : ''}`}
-          onClick={() => setCurrentView('relays')}
+          onClick={() => handleNavigate('relays')}
         >
           Relays
         </button>
         {bolt12Enabled && (
           <button
             className={`nav-item ${currentView === 'offers' ? 'active' : ''}`}
-            onClick={() => setCurrentView('offers')}
+            onClick={() => handleNavigate('offers')}
           >
             Offers
           </button>
         )}
         <button 
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
-          onClick={() => setCurrentView('settings')}
+          onClick={() => handleNavigate('settings')}
         >
           Settings
         </button>

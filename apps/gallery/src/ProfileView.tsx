@@ -13,6 +13,9 @@ const DEFAULT_RELAYS = [
   'wss://relay.snort.social',
   'wss://nos.lol',
 ];
+const FALLBACK_AVATAR_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='120' height='120' rx='60' fill='#21292e'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='48' fill='#ffffff'>N</text></svg>";
+const FALLBACK_AVATAR = `data:image/svg+xml;utf8,${encodeURIComponent(FALLBACK_AVATAR_SVG)}`;
 
 interface ProfileMetadata {
   name?: string;
@@ -23,6 +26,25 @@ interface ProfileMetadata {
   lud16?: string;
   lud06?: string;
   website?: string;
+}
+
+function ensureSafeRelay(relay: Relay): Relay {
+  const relayWithSocket = relay as unknown as { connectionPromise?: Promise<void>; ws?: WebSocket };
+  relay.send = async (message: string) => {
+    if (!relayWithSocket.connectionPromise) return;
+    relayWithSocket.connectionPromise
+      .then(() => {
+        const ws = relayWithSocket.ws;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        try {
+          ws.send(message);
+        } catch {
+          // Ignore send errors on closing sockets.
+        }
+      })
+      .catch(() => {});
+  };
+  return relay;
 }
 
 export function ProfileView({ pubkey }: { pubkey: string }) {
@@ -38,7 +60,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     setProfileLoading(true);
     setError(null);
     try {
-      const relay = await Relay.connect(DEFAULT_RELAYS[0]); // Connect to one relay for metadata
+      const relay = ensureSafeRelay(await Relay.connect(DEFAULT_RELAYS[0])); // Connect to one relay for metadata
       let closed = false;
       let closeRelay = () => {};
       const sub = relay.subscribe([{ kinds: [0], authors: [pubkey] }], {
@@ -74,7 +96,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   const fetchEvents = useCallback(async () => {
     setEventsLoading(true);
     try {
-      const relay = await Relay.connect(DEFAULT_RELAYS[0]);
+      const relay = ensureSafeRelay(await Relay.connect(DEFAULT_RELAYS[0]));
       let closed = false;
       let closeRelay = () => {};
       const sub = relay.subscribe([{ kinds: [1], authors: [pubkey], limit: 20 }], {
@@ -163,7 +185,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       {error && <div className="error-msg">{error}</div>}
       {profileLoading ? <p>LOADING PROFILE...</p> : (
         <div className="profile-header">
-          <img src={profile?.picture || 'https://via.placeholder.com/64'} alt="Profile" className="profile-picture" />
+          <img src={profile?.picture || FALLBACK_AVATAR} alt="Profile" className="profile-picture" />
           <div className="profile-info">
             <h2 className="profile-name">{profile?.display_name || profile?.name || 'UNKNOWN_USER'}</h2>
             <code className="profile-pubkey">{npub}</code>

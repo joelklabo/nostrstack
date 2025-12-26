@@ -5,8 +5,10 @@ import type { AbstractRelay } from 'nostr-tools/abstract-relay';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDefaultRelays, markRelayFailure } from './nostr/api';
+import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
 import { ProfileLink } from './ui/ProfileLink';
+import { navigateTo } from './utils/navigation';
 
 interface Post extends Event {
   // Add any extra fields if needed
@@ -210,16 +212,17 @@ export function FeedView() {
     return () => {
       didUnmount = true;
       globalThis.clearTimeout(statusTimer);
-      void Promise.resolve(sub.close('unmount'))
-        .then(() => {
+      void Promise.resolve()
+        .then(() => sub.close('unmount'))
+        .catch(() => {
+          // Ignore close failures during teardown.
+        })
+        .finally(() => {
           try {
             pool.close(relayList);
           } catch {
             // Ignore websocket close errors during teardown.
           }
-        })
-        .catch(() => {
-          // Ignore close failures during teardown.
         });
     };
   }, [incrementEvents, relayList]);
@@ -229,6 +232,8 @@ export function FeedView() {
       <div style={{ marginBottom: '1.5rem' }}>
         <PostEditor />
       </div>
+
+      <FindFriendCard onClick={() => navigateTo('/search')} />
       
       <div style={{ 
         display: 'flex', 

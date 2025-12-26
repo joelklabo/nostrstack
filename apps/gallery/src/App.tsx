@@ -14,13 +14,14 @@ import { NotificationsView } from './NotificationsView';
 import { OffersView } from './OffersView';
 import { ProfileView } from './ProfileView';
 import { RelaysView } from './RelaysView';
+import { SearchView } from './SearchView';
 import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
-type View = 'feed' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
+type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -54,6 +55,7 @@ function AppShell() {
   const [currentView, setCurrentView] = useState<View>('feed');
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
+  const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
@@ -63,6 +65,16 @@ function AppShell() {
       setCurrentView('profile');
     }
   }, [profileRoutePubkey]);
+
+  useEffect(() => {
+    if (isSearchRoute) {
+      setCurrentView('search');
+      return;
+    }
+    if (currentView === 'search') {
+      setCurrentView('feed');
+    }
+  }, [isSearchRoute, currentView]);
 
   useEffect(() => {
     // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
@@ -107,6 +119,7 @@ function AppShell() {
         ) : (
           <>
             {currentView === 'feed' && <FeedView />}
+            {currentView === 'search' && <SearchView />}
             {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
             {currentView === 'notifications' && <NotificationsView />}
             {currentView === 'relays' && <RelaysView />}
