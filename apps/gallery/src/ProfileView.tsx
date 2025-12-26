@@ -102,7 +102,10 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       let closeRelay = () => {};
       const sub = relay.subscribe([{ kinds: [1], authors: [pubkey], limit: 20 }], {
         onevent: (event) => {
-          setEvents(prev => [...prev, event].sort((a, b) => b.created_at - a.created_at));
+          setEvents((prev) => {
+            if (prev.some((existing) => existing.id === event.id)) return prev;
+            return [...prev, event].sort((a, b) => b.created_at - a.created_at);
+          });
         },
         oneose: () => {
           setEventsLoading(false);
