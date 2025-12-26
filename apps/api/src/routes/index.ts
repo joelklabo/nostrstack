@@ -10,6 +10,7 @@ import { registerLnurlWithdrawRoutes } from './lnurl-withdraw.js';
 import { registerLnurlCallback } from './lnurlp-callback.js';
 import { registerLogStreamRoute } from './log-stream.js';
 import { registerNostrEventRoute } from './nostr-event.js';
+import { registerNostrIdentityRoute } from './nostr-identity.js';
 import { registerPayRoutes } from './pay.js';
 import { registerPayWebhook } from './pay-webhook.js';
 import { registerRegtestFundRoute } from './regtest-fund.js';
@@ -29,6 +30,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerTenantRoutes(app);
   await registerAdminTenantRoutes(app);
   await registerAdminUserRoutes(app);
+  await registerNostrIdentityRoute(app);
   await registerNostrEventRoute(app);
   await registerPayWebhook(app);
   await registerPayRoutes(app);
@@ -55,6 +57,11 @@ declare module 'fastify' {
       NOSTR_EVENT_CACHE_MAX_ENTRIES?: number;
       NOSTR_EVENT_MAX_RELAYS?: number;
       NOSTR_EVENT_FETCH_TIMEOUT_MS?: number;
+      NIP05_PROXY_TIMEOUT_MS?: number;
+      NIP05_PROXY_CACHE_TTL_SECONDS?: number;
+      NIP05_PROXY_NEGATIVE_TTL_SECONDS?: number;
+      NIP05_PROXY_MAX_RESPONSE_BYTES?: number;
+      NIP05_PROXY_ALLOW_HTTP_LOCALHOST?: boolean;
     };
   }
 }

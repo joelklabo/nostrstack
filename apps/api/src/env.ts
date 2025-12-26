@@ -21,6 +21,7 @@ const sqliteDefault = `file:${resolve(packageRoot, 'dev.db')}`;
 const postgresDefault = 'postgres://nostrstack:nostrstack@localhost:5432/nostrstack';
 
 const defaultDatabaseUrl = process.env.NODE_ENV === 'production' ? postgresDefault : sqliteDefault;
+const defaultAllowHttpLocalhost = process.env.NODE_ENV !== 'production';
 
 const bool = () =>
   z.preprocess(
@@ -83,6 +84,11 @@ const schema = z.object({
   NOSTR_EVENT_CACHE_MAX_ENTRIES: positiveInt(2000),
   NOSTR_EVENT_MAX_RELAYS: positiveInt(8),
   NOSTR_EVENT_FETCH_TIMEOUT_MS: positiveInt(8000),
+  NIP05_PROXY_TIMEOUT_MS: positiveInt(3000),
+  NIP05_PROXY_CACHE_TTL_SECONDS: positiveInt(600),
+  NIP05_PROXY_NEGATIVE_TTL_SECONDS: positiveInt(120),
+  NIP05_PROXY_MAX_RESPONSE_BYTES: positiveInt(65536),
+  NIP05_PROXY_ALLOW_HTTP_LOCALHOST: bool().default(defaultAllowHttpLocalhost),
   OTEL_ENABLED: bool().default(false),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
