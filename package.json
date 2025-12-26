@@ -39,6 +39,7 @@
     "smoke:regtest-demo": "pnpm --filter api exec tsx scripts/regtest-demo-smoke.ts",
     "smoke:mutinynet-demo": "pnpm --filter api exec tsx scripts/mutinynet-demo-smoke.ts",
     "qa:regtest-demo": "pnpm --filter api exec tsx ../gallery/scripts/qa-regtest-demo.ts",
+    "qa:find-friend-video": "pnpm --filter gallery exec playwright test tests/find-friend-tip.video.spec.ts",
     "dev:api:entr": "./scripts/entr-api.sh",
     "dev:gallery:entr": "./scripts/entr-gallery.sh",
     "dev:logs": "./scripts/dev-logs.sh",
