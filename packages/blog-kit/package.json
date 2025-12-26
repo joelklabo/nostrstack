@@ -16,10 +16,12 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    }
+    },
+    "./styles/payments.css": "./src/styles/payments.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/styles/payments.css"
   ],
   "sideEffects": false,
   "scripts": {

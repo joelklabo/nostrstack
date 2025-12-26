@@ -1,5 +1,4 @@
 import { type Event, type EventTemplate, nip19, SimplePool } from 'nostr-tools';
-import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { resolveApiBase } from './api-base';
@@ -17,6 +16,7 @@ import {
   sanitizeSuccessAction} from './lnurl';
 import { useNwcPayment } from './nwc-pay';
 import { emitTelemetryEvent, type PaymentFailureReason, type PaymentMethod, type PaymentStage } from './telemetry';
+import { PaymentModal, type PaymentStatusItem, type PaymentSuccessAction } from './ui/PaymentModal';
 
 interface WebLN {
   enable: () => Promise<void>;
@@ -94,7 +94,6 @@ export function ZapButton({
   const timerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
   const amountSnapshotRef = useRef(amountSats);
   const telemetryStateRef = useRef({
     invoiceRequested: false,
@@ -323,6 +322,7 @@ export function ZapButton({
         const paidViaNwc = await payInvoiceViaNwc(pr, amountMsat);
         if (paidViaNwc) {
           emitPaymentTelemetry('payment_sent', { method: 'nwc' });
+          setZapState('paid');
           return;
         }
         emitPaymentTelemetry('payment_failed', { method: 'nwc', reason: 'nwc' });
@@ -457,59 +457,6 @@ export function ZapButton({
   }, []);
 
   useEffect(() => {
-    if (zapState === 'idle' || typeof document === 'undefined') return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [zapState]);
-
-  useEffect(() => {
-    if (zapState === 'idle') return;
-    const modal = modalRef.current;
-    if (!modal) return;
-    const focusable = modal.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    (focusable ?? modal).focus();
-  }, [zapState]);
-
-  useEffect(() => {
-    if (zapState === 'idle') return;
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        handleCloseZap();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const modal = modalRef.current;
-      if (!modal) return;
-      const focusable = Array.from(
-        modal.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )
-      ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-      if (event.shiftKey) {
-        if (active === first || active === modal) {
-          event.preventDefault();
-          last.focus();
-        }
-      } else if (active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeydown);
-    return () => document.removeEventListener('keydown', handleKeydown);
-  }, [zapState, handleCloseZap]);
-
-  useEffect(() => {
     if (zapState !== 'waiting-payment' || !statusUrl) return;
     let active = true;
     let timer: number | null = null;
@@ -539,39 +486,60 @@ export function ZapButton({
     };
   }, [zapState, statusUrl]);
 
-  const statusConfig = useMemo(() => {
-    switch (zapState) {
-      case 'pending-lnurl':
-        return { text: `Resolving LNURL for ${authorNpub}...`, tone: 'neutral', spinner: true };
-      case 'pending-invoice':
-        return { text: 'Requesting invoice...', tone: 'neutral', spinner: true };
-      case 'waiting-payment':
-        return {
-          text: invoice ? 'Invoice ready. Scan the QR or pay with your wallet.' : 'Waiting for invoice...',
-          tone: 'neutral',
-          spinner: !invoice
-        };
-      case 'paid':
-        return { text: 'Payment successful!', tone: 'success', spinner: false };
-      case 'error':
-        return { text: errorMessage ?? 'Zap failed.', tone: 'error', spinner: false };
-      default:
-        return { text: '', tone: 'neutral', spinner: false };
-    }
-  }, [zapState, authorNpub, invoice, errorMessage]);
+  const nip57Disclaimer =
+    'NIP-57 receipts show intent and are not proof of payment. Confirm settlement in your wallet.';
 
-  const nwcStatusDisplay = useMemo(() => {
+  const nwcStatusItem = useMemo<PaymentStatusItem | null>(() => {
     if (nwcPayStatus === 'idle') return null;
     if (nwcPayStatus === 'paying') {
-      return { text: nwcPayMessage ?? 'Paying via NWC…', tone: 'neutral', spinner: true };
+      return { text: nwcPayMessage ?? 'Paying via NWC...', tone: 'neutral', spinner: true };
     }
     if (nwcPayStatus === 'paid') {
-      return { text: nwcPayMessage ?? 'NWC payment sent.', tone: 'success', spinner: false };
+      return { text: nwcPayMessage ?? 'NWC payment sent.', tone: 'success' };
     }
-    return { text: nwcPayMessage ?? 'NWC payment failed.', tone: 'error', spinner: false };
+    return { text: nwcPayMessage ?? 'NWC payment failed.', tone: 'error' };
   }, [nwcPayStatus, nwcPayMessage]);
 
-  const successActionDisplay = useMemo(() => {
+  const statusItems = useMemo<PaymentStatusItem[]>(() => {
+    const items: PaymentStatusItem[] = [];
+    const awaitingPayment = zapState === 'waiting-payment' && Boolean(invoice);
+
+    switch (zapState) {
+      case 'pending-lnurl':
+        items.push({ text: `Resolving LNURL for ${authorNpub}...`, spinner: true });
+        break;
+      case 'pending-invoice':
+        items.push({ text: 'Requesting invoice...', spinner: true });
+        break;
+      case 'waiting-payment':
+        if (invoice) {
+          items.push({ text: 'Invoice ready. Scan the QR or open your wallet to pay.' });
+        } else {
+          items.push({ text: 'Awaiting invoice...', spinner: true });
+        }
+        break;
+      case 'paid':
+        items.push({ text: 'Payment sent.', tone: 'success' });
+        break;
+      case 'error':
+        items.push({ text: errorMessage ?? 'Zap failed.', tone: 'error' });
+        break;
+      default:
+        break;
+    }
+
+    if (nwcStatusItem) items.push(nwcStatusItem);
+    if (awaitingPayment) {
+      items.push({ text: 'Awaiting payment confirmation...', spinner: true });
+    }
+    if (effectiveRegtestError) {
+      items.push({ text: effectiveRegtestError, tone: 'error' });
+    }
+
+    return items;
+  }, [zapState, authorNpub, invoice, errorMessage, nwcStatusItem, effectiveRegtestError]);
+
+  const successActionDisplay = useMemo<PaymentSuccessAction | null>(() => {
     if (!successAction) return null;
     const tag = successAction.tag?.toLowerCase();
     if (tag === 'message' && successAction.message) {
@@ -593,7 +561,26 @@ export function ZapButton({
     return null;
   }, [successAction]);
 
-  const showInvoice = zapState === 'waiting-payment' && Boolean(invoice);
+  const invoicePayload = useMemo(() => {
+    if (zapState !== 'waiting-payment' || !invoice) return null;
+    return {
+      value: invoice,
+      copyStatus,
+      regtestAvailable,
+      regtestPaying,
+      onCopy: handleCopyInvoice,
+      onOpenWallet: () => window.open(`lightning:${invoice}`, '_blank'),
+      onRegtestPay: regtestAvailable ? handleRegtestPay : undefined
+    };
+  }, [
+    zapState,
+    invoice,
+    copyStatus,
+    regtestAvailable,
+    regtestPaying,
+    handleCopyInvoice,
+    handleRegtestPay
+  ]);
 
   return (
     <>
@@ -601,139 +588,21 @@ export function ZapButton({
         ⚡ ZAP {amountSats}
       </button>
 
-      {zapState !== 'idle' && (
-        <div className="zap-overlay" onClick={handleCloseZap} role="presentation">
-          <div
-            className="zap-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="zap-title"
-            aria-describedby="zap-status"
-            tabIndex={-1}
-            ref={modalRef}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className="zap-header">
-              <div>
-                <div className="zap-title" id="zap-title">
-                  ZAP ⚡ {amountSats}
-                </div>
-                <div className="zap-subtitle">{authorNpub}</div>
-              </div>
-              <button className="zap-close" type="button" aria-label="Close zap dialog" onClick={handleCloseZap}>
-                ×
-              </button>
-            </header>
-            <div className="zap-body">
-              <div
-                className={`zap-status ${
-                  statusConfig.tone === 'success'
-                    ? 'zap-status--success'
-                    : statusConfig.tone === 'error'
-                      ? 'zap-status--error'
-                      : ''
-                }`}
-                id="zap-status"
-                aria-live="polite"
-              >
-                {statusConfig.spinner && <span className="zap-spinner" aria-hidden="true" />}
-                <span>{statusConfig.text}</span>
-              </div>
-              {nwcStatusDisplay && (
-                <div
-                  className={`zap-status ${
-                    nwcStatusDisplay.tone === 'success'
-                      ? 'zap-status--success'
-                      : nwcStatusDisplay.tone === 'error'
-                        ? 'zap-status--error'
-                        : ''
-                  }`}
-                >
-                  {nwcStatusDisplay.spinner && <span className="zap-spinner" aria-hidden="true" />}
-                  <span>{nwcStatusDisplay.text}</span>
-                </div>
-              )}
-              {effectiveRegtestError && <div className="zap-status zap-status--error">{effectiveRegtestError}</div>}
-
-              {showInvoice && invoice && (
-                <div className="zap-grid">
-                  <div className="zap-qr">
-                    <QRCodeSVG value={invoice} size={240} bgColor="#ffffff" fgColor="#0f172a" level="L" />
-                  </div>
-                  <div className="zap-panel">
-                    <div className="zap-panel-header">
-                      <div className="zap-panel-title">INVOICE</div>
-                      {regtestAvailable && <div className="zap-panel-badge">REGTEST</div>}
-                    </div>
-                    <div className="zap-invoice-box">
-                      <code>{invoice}</code>
-                    </div>
-                    <div className="zap-actions">
-                      <button className="zap-action" type="button" onClick={handleCopyInvoice} disabled={!invoice}>
-                        {copyStatus === 'copied'
-                          ? 'COPIED'
-                          : copyStatus === 'error'
-                            ? 'COPY_FAILED'
-                            : 'COPY_INVOICE'}
-                      </button>
-                      <button
-                        className="zap-action zap-action-primary"
-                        type="button"
-                        onClick={() => window.open(`lightning:${invoice}`, '_blank')}
-                      >
-                        OPEN_WALLET
-                      </button>
-                      {regtestAvailable && (
-                        <button
-                          className="zap-action zap-action-warning"
-                          type="button"
-                          onClick={handleRegtestPay}
-                          disabled={regtestPaying}
-                        >
-                          {regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
-                        </button>
-                      )}
-                      <button className="zap-action" type="button" onClick={handleCloseZap}>
-                        CLOSE
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {zapState === 'paid' && (
-                <div className="zap-success">
-                  <div className="zap-success-icon">✓</div>
-                  <div>Payment confirmed.</div>
-                  {successActionDisplay && (
-                    <div className="zap-success-action">
-                      <div className="zap-success-action-title">{successActionDisplay.title}</div>
-                      {successActionDisplay.url ? (
-                        <a href={successActionDisplay.url} target="_blank" rel="noopener noreferrer">
-                          {successActionDisplay.label}
-                        </a>
-                      ) : (
-                        <div>{successActionDisplay.body}</div>
-                      )}
-                    </div>
-                  )}
-                  <button className="zap-action zap-action-primary" type="button" onClick={handleCloseZap}>
-                    CLOSE
-                  </button>
-                </div>
-              )}
-
-              {zapState === 'error' && (
-                <div className="zap-actions">
-                  <button className="zap-action" type="button" onClick={handleCloseZap}>
-                    CLOSE
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentModal
+        open={zapState !== 'idle'}
+        title={`ZAP ⚡ ${amountSats}`}
+        subtitle={authorNpub}
+        statusItems={statusItems}
+        invoice={invoicePayload}
+        success={zapState === 'paid'}
+        successMessage="Payment sent."
+        successAction={successActionDisplay}
+        error={zapState === 'error'}
+        disclaimer={nip57Disclaimer}
+        onClose={handleCloseZap}
+        titleId="zap-title"
+        statusId="zap-status"
+      />
     </>
   );
 }
