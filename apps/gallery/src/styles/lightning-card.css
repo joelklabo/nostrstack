@@ -1,10 +1,11 @@
 .lightning-card {
-  border: 1px solid var(--color-border-muted);
+  border: 1px solid var(--color-border-default);
   border-radius: 12px;
   padding: 1rem;
-  background: var(--color-canvas-subtle);
+  background: var(--color-canvas-default);
   display: grid;
   gap: 0.75rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .lightning-stack {
@@ -41,7 +42,7 @@
   justify-content: center;
   padding: 0.75rem;
   border-radius: 10px;
-  border: 1px solid var(--color-border-muted);
+  border: 1px solid var(--color-border-default);
   background: #fff;
   min-height: 120px;
 }
@@ -83,6 +84,7 @@
 
 .lightning-card--empty {
   background: var(--color-canvas-inset);
+  box-shadow: none;
 }
 
 .lightning-card-empty {

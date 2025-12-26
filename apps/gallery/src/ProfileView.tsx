@@ -1,4 +1,5 @@
 import './styles/lightning-card.css';
+import './styles/profile-tip.css';
 
 import { SendSats } from '@nostrstack/blog-kit';
 import { type Event, nip19, Relay } from 'nostr-tools';
@@ -179,81 +180,134 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   const showLightningAddress = Boolean(lightningAddress);
   const showSendSats = paymentConfig.enableProfilePay && showLightningAddress;
   const showLightningCallout = !profileLoading && !showLightningAddress;
+  const tipAmount = paymentConfig.defaultSendSats ?? 500;
+  const lightningBadgeLabel = showLightningAddress ? 'Lightning ready' : 'Lightning missing';
 
   return (
     <div className="profile-view">
       {error && <div className="error-msg">{error}</div>}
-      {profileLoading ? <p>LOADING PROFILE...</p> : (
-        <div className="profile-header">
-          <img src={profile?.picture || FALLBACK_AVATAR} alt="Profile" className="profile-picture" />
-          <div className="profile-info">
-            <h2 className="profile-name">{profile?.display_name || profile?.name || 'UNKNOWN_USER'}</h2>
-            <code className="profile-pubkey">{npub}</code>
-            {profile?.nip05 && <p className="profile-nip05">NIP-05: {profile.nip05}</p>}
-            {profile?.about && <p className="profile-about">{profile.about}</p>}
-            {(showLightningAddress || showLightningCallout || showSendSats) && (
-              <div className="lightning-stack">
-                {showLightningAddress && (
-                  <div className="lightning-card">
-                    <div className="lightning-card-header">
-                      <div className="lightning-card-title">{lightningLabel}</div>
-                      {lightningCopyStatus === 'error' && (
-                        <span className="lightning-card-hint">COPY_FAILED</span>
-                      )}
-                    </div>
-                    <div className="lightning-card-body">
-                      <div className="lightning-card-qr">
-                        {lightningQr ? (
-                          <img src={lightningQr} alt="Lightning QR" />
-                        ) : (
-                          <div className="lightning-card-qr-fallback">QR</div>
+      {profileLoading ? (
+        <p>LOADING PROFILE...</p>
+      ) : (
+        <>
+          <div className="profile-header">
+            <img src={profile?.picture || FALLBACK_AVATAR} alt="Profile" className="profile-picture" />
+            <div className="profile-info">
+              <div className="profile-title-row">
+                <h2 className="profile-name">{profile?.display_name || profile?.name || 'UNKNOWN_USER'}</h2>
+                <div className="profile-badges">
+                  {profile?.nip05 && <span className="profile-badge profile-badge--verified">NIP-05 verified</span>}
+                  <span
+                    className={`profile-badge ${
+                      showLightningAddress ? 'profile-badge--success' : 'profile-badge--muted'
+                    }`}
+                  >
+                    {lightningBadgeLabel}
+                  </span>
+                </div>
+              </div>
+              <code className="profile-pubkey">{npub}</code>
+              {profile?.nip05 && <p className="profile-nip05">NIP-05: {profile.nip05}</p>}
+              {profile?.about && <p className="profile-about">{profile.about}</p>}
+              {profile?.website && (
+                <p className="profile-website">
+                  Web:{' '}
+                  <a href={profile.website} target="_blank" rel="noopener noreferrer">
+                    {profile.website}
+                  </a>
+                </p>
+              )}
+              <button
+                className="action-btn"
+                style={{ marginTop: '1rem', borderColor: 'var(--terminal-accent)', color: 'var(--terminal-accent)' }}
+              >
+                [+] FOLLOW_USER
+              </button>
+            </div>
+          </div>
+
+          {(showLightningAddress || showLightningCallout || showSendSats) && (
+            <section className="profile-tip">
+              <div className="profile-tip-header">
+                <div>
+                  <div className="profile-tip-eyebrow">Tip</div>
+                  <h3 className="profile-tip-title">Tip {tipAmount} sats</h3>
+                  <p className="profile-tip-subtitle">Send a quick boost or pick an amount below.</p>
+                </div>
+                {profile?.nip05 && (
+                  <div className="profile-tip-meta">
+                    <span className="profile-tip-meta-label">NIP-05</span>
+                    <span className="profile-tip-meta-value">{profile.nip05}</span>
+                  </div>
+                )}
+              </div>
+
+              {showLightningAddress ? (
+                <div className="profile-tip-grid">
+                  <div className="profile-tip-column">
+                    <div className="lightning-card">
+                      <div className="lightning-card-header">
+                        <div className="lightning-card-title">{lightningLabel}</div>
+                        {lightningCopyStatus === 'error' && (
+                          <span className="lightning-card-hint">COPY_FAILED</span>
                         )}
                       </div>
-                      <div className="lightning-card-details">
-                        <code className="lightning-card-value">{lightningAddress}</code>
-                        <div className="lightning-card-actions">
-                          <button className="action-btn" onClick={handleCopyLightning}>
-                            {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
-                          </button>
-                          <button className="action-btn" onClick={handleOpenWallet} disabled={!lightningUri}>
-                            OPEN_WALLET
-                          </button>
+                      <div className="lightning-card-body">
+                        <div className="lightning-card-qr">
+                          {lightningQr ? (
+                            <img src={lightningQr} alt="Lightning QR" />
+                          ) : (
+                            <div className="lightning-card-qr-fallback">QR</div>
+                          )}
+                        </div>
+                        <div className="lightning-card-details">
+                          <code className="lightning-card-value">{lightningAddress}</code>
+                          <div className="lightning-card-actions">
+                            <button className="action-btn" onClick={handleCopyLightning}>
+                              {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
+                            </button>
+                            <button className="action-btn" onClick={handleOpenWallet} disabled={!lightningUri}>
+                              OPEN_WALLET
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                )}
-                {showLightningCallout && (
-                  <div className="lightning-card lightning-card--empty">
-                    <div className="lightning-card-header">
-                      <div className="lightning-card-title">LIGHTNING</div>
+                  {showSendSats && (
+                    <div className="profile-tip-column">
+                      <SendSats
+                        pubkey={pubkey}
+                        lightningAddress={lightningAddress ?? undefined}
+                        defaultAmountSats={paymentConfig.defaultSendSats}
+                        presetAmountsSats={paymentConfig.presetSendSats}
+                      />
                     </div>
-                    <div className="lightning-card-empty">Lightning address not available.</div>
+                  )}
+                </div>
+              ) : (
+                <div className="profile-tip-empty">
+                  <div className="profile-tip-empty-title">Tipping unavailable</div>
+                  <div className="profile-tip-empty-body">
+                    This profile does not list a Lightning address yet. Ask them to add one in their Nostr client to
+                    receive tips.
                   </div>
-                )}
-                {showSendSats && (
-                  <SendSats
-                    pubkey={pubkey}
-                    lightningAddress={lightningAddress ?? undefined}
-                    defaultAmountSats={paymentConfig.defaultSendSats}
-                    presetAmountsSats={paymentConfig.presetSendSats}
-                  />
-                )}
-              </div>
-            )}
-            {profile?.website && <p className="profile-website">Web: <a href={profile.website} target="_blank" rel="noopener noreferrer">{profile.website}</a></p>}
-            <button className="action-btn" style={{ marginTop: '1rem', borderColor: 'var(--terminal-accent)', color: 'var(--terminal-accent)' }}>
-              [+] FOLLOW_USER
-            </button>
-          </div>
-        </div>
+                </div>
+              )}
+            </section>
+          )}
+        </>
       )}
 
       <h3>USER_ACTIVITY</h3>
-      {eventsLoading ? <p>LOADING EVENTS...</p> : (
+      {eventsLoading ? (
+        <p>LOADING EVENTS...</p>
+      ) : (
         <div className="user-events">
-          {events.length === 0 ? <p>NO EVENTS FOUND.</p> : (
-            events.map(event => (
+          {events.length === 0 ? (
+            <p className="profile-empty">No posts yet. Check back soon.</p>
+          ) : (
+            events.map((event) => (
               <PostItem key={event.id} post={event} authorLightningAddress={profile?.lud16 ?? profile?.lud06} />
             ))
           )}

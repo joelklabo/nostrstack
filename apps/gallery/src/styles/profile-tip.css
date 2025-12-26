@@ -1,0 +1,196 @@
+.profile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  border: 1px solid var(--color-border-muted);
+  background: var(--color-canvas-subtle);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.profile-badge--verified {
+  background: var(--color-accent-subtle);
+  border-color: var(--color-accent-muted);
+  color: var(--color-accent-fg);
+}
+
+.profile-badge--success {
+  background: rgba(26, 127, 55, 0.12);
+  border-color: rgba(26, 127, 55, 0.4);
+  color: var(--color-success-fg);
+}
+
+.profile-badge--muted {
+  background: var(--color-canvas-inset);
+  border-color: var(--color-border-muted);
+  color: var(--color-fg-subtle);
+}
+
+.profile-nip05 {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-fg-muted);
+  word-break: break-all;
+}
+
+.profile-tip {
+  margin-top: 1.5rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(9, 105, 218, 0.08), rgba(255, 255, 255, 0));
+}
+
+.profile-tip-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-tip-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.65rem;
+  color: var(--color-fg-muted);
+}
+
+.profile-tip-title {
+  margin: 0.3rem 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-fg-default);
+}
+
+.profile-tip-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-fg-muted);
+}
+
+.profile-tip-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+  color: var(--color-fg-muted);
+}
+
+.profile-tip-meta-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+}
+
+.profile-tip-meta-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-fg-default);
+  word-break: break-all;
+}
+
+.profile-tip-grid {
+  margin-top: 1.1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.profile-tip-column {
+  min-width: 0;
+}
+
+.profile-tip .send-sats-card {
+  border-color: var(--color-border-default);
+  background: var(--color-canvas-default);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.profile-tip .send-sats-header {
+  display: none;
+}
+
+.profile-tip .send-sats-presets .action-btn {
+  border-color: var(--color-border-muted);
+  background: var(--color-canvas-inset);
+}
+
+.profile-tip .send-sats-presets .action-btn:last-child {
+  border-color: var(--color-accent-emphasis);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-fg);
+}
+
+.profile-tip .send-sats-card > .action-btn {
+  background: var(--color-accent-emphasis);
+  border-color: var(--color-accent-emphasis);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.profile-tip .send-sats-card > .action-btn:disabled {
+  background: var(--color-border-muted);
+  border-color: var(--color-border-muted);
+  color: var(--color-fg-muted);
+}
+
+.profile-tip-empty {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px dashed var(--color-border-muted);
+  background: var(--color-canvas-inset);
+  color: var(--color-fg-muted);
+}
+
+.profile-tip-empty-title {
+  font-weight: 600;
+  color: var(--color-fg-default);
+  margin-bottom: 0.4rem;
+}
+
+.profile-tip-empty-body {
+  font-size: 0.85rem;
+  color: var(--color-fg-muted);
+}
+
+.profile-empty {
+  margin-top: 0.5rem;
+  color: var(--color-fg-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+  .profile-tip {
+    padding: 1rem;
+  }
+
+  .profile-tip-meta {
+    align-items: flex-start;
+  }
+
+  .profile-title-row {
+    align-items: flex-start;
+  }
+}
