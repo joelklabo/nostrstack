@@ -5,7 +5,13 @@ import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), basicSsl()],
+  plugins: [
+    react({
+      // Avoid React Refresh warnings from prebuilt workspace dist files.
+      exclude: [/packages\/blog-kit\/dist\//]
+    }),
+    basicSsl()
+  ],
   server: {
     port: 4173,
     host: true
