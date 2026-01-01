@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipWidget } from './index.js';
+import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipFeed, mountTipWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -242,6 +242,72 @@ describe('mountShareButton', () => {
     await button.onclick?.(new MouseEvent('click'));
 
     expect(share).toHaveBeenCalled();
+  });
+});
+
+describe('mountTipFeed realtime', () => {
+  const OriginalWebSocket = globalThis.WebSocket;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    globalThis.WebSocket = OriginalWebSocket;
+  });
+
+  it('prepends tip events from ws and de-duplicates by paymentId', async () => {
+    const host = document.createElement('div');
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ count: 0, totalAmountSats: 0, tips: [] })
+    } as Response);
+
+    const instances: Array<{
+      url: string;
+      onopen?: () => void;
+      onmessage?: (ev: { data: string }) => void;
+      onclose?: () => void;
+      onerror?: () => void;
+      close?: () => void;
+    }> = [];
+
+    class MockWebSocket {
+      url: string;
+      onopen?: () => void;
+      onmessage?: (ev: { data: string }) => void;
+      onclose?: () => void;
+      onerror?: () => void;
+      constructor(url: string) {
+        this.url = url;
+        instances.push(this);
+      }
+      close() {
+        this.onclose?.();
+      }
+    }
+
+    globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+
+    mountTipFeed(host, { itemId: 'post-123', baseURL: '/api', host: 'localhost', maxItems: 5 });
+
+    const ws = instances[0];
+    ws.onopen?.();
+    const payload = {
+      type: 'tip',
+      itemId: 'post-123',
+      amount: 21,
+      createdAt: new Date().toISOString(),
+      providerRef: 'ref-1',
+      paymentId: 'pay-1',
+      metadata: { note: 'Great' }
+    };
+    ws.onmessage?.({ data: JSON.stringify(payload) });
+    ws.onmessage?.({ data: JSON.stringify(payload) });
+
+    const rows = host.querySelectorAll('.nostrstack-tip-feed__row');
+    expect(rows.length).toBe(1);
+    expect(host.textContent).toContain('21 sats');
   });
 });
 

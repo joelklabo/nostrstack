@@ -232,44 +232,6 @@ function parseMaybeJson(raw: unknown): unknown | undefined {
   }
 }
 
-function extractPayEventItemId(msg: unknown): string | null {
-  if (!msg || typeof msg !== 'object') return null;
-  const rec = msg as Record<string, unknown>;
-  if (typeof rec.itemId === 'string') return rec.itemId;
-  const metadata = rec.metadata;
-  if (metadata && typeof metadata === 'object' && typeof (metadata as Record<string, unknown>).itemId === 'string') {
-    return (metadata as Record<string, unknown>).itemId as string;
-  }
-  const metaRaw = rec.meta;
-  if (metaRaw && typeof metaRaw === 'object' && typeof (metaRaw as Record<string, unknown>).itemId === 'string') {
-    return (metaRaw as Record<string, unknown>).itemId as string;
-  }
-  return null;
-}
-
-function extractPayEventAction(msg: unknown): string | null {
-  if (!msg || typeof msg !== 'object') return null;
-  const rec = msg as Record<string, unknown>;
-  if (typeof rec.action === 'string') return rec.action;
-  const metadata = rec.metadata;
-  if (metadata && typeof metadata === 'object' && typeof (metadata as Record<string, unknown>).action === 'string') {
-    return (metadata as Record<string, unknown>).action as string;
-  }
-  const metaRaw = rec.meta;
-  if (metaRaw && typeof metaRaw === 'object' && typeof (metaRaw as Record<string, unknown>).action === 'string') {
-    return (metaRaw as Record<string, unknown>).action as string;
-  }
-  return null;
-}
-
-function extractPayEventAmount(msg: unknown): number | null {
-  if (!msg || typeof msg !== 'object') return null;
-  const rec = msg as Record<string, unknown>;
-  const raw = rec.amount ?? rec.amountSats;
-  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-  return null;
-}
-
 function extractPayEventProviderRef(msg: unknown): string | null {
   if (!msg || typeof msg !== 'object') return null;
   const rec = msg as Record<string, unknown>;
@@ -328,12 +290,15 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
   container.classList.add('nostrstack-card', 'nostrstack-tip-feed');
   container.replaceChildren();
 
-  const wsUrl = resolvePayWsUrl(opts.baseURL);
+  const payWsUrl = resolvePayWsUrl(opts.baseURL);
   const apiBaseUrl = resolveApiBaseUrl(opts.baseURL);
   const domain = resolveTenantDomain(opts.host);
   const itemId = opts.itemId;
   const maxItems = Math.max(5, Math.min(60, opts.maxItems ?? 25));
-  const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
+  const domainParam = domain ? `&domain=${encodeURIComponent(domain)}` : '';
+  const tipsWsUrl = payWsUrl
+    ? `${payWsUrl.replace(/\/ws\/pay$/, '/ws/tips')}?itemId=${encodeURIComponent(itemId)}${domainParam}`
+    : null;
 
   const header = document.createElement('div');
   header.className = 'nostrstack-tip-feed__header';
@@ -359,17 +324,43 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
 
   container.append(header, list, status);
 
+  const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
+    status.textContent = text;
+    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
+    status.classList.add(`nostrstack-status--${tone}`);
+  };
+
+  const updateLiveStatus = () => {
+    if (wsConnected) {
+      setStatus('Live', 'success');
+      return;
+    }
+    if (tipsWsUrl) {
+      setStatus('Live updates paused', 'muted');
+      return;
+    }
+    setStatus('', 'muted');
+  };
+
   let totalAmountSats = 0;
   let count = 0;
   const seen = new Set<string>();
+  let wsConnected = false;
+  let pollTimer: number | null = null;
+  let reconnectTimer: number | null = null;
+  let reconnectAttempts = 0;
+  let hydratePending = false;
+  let ws: WebSocket | null = null;
+  let destroyed = false;
 
   const setStats = () => {
     stats.textContent = `${count} tips · ${totalAmountSats} sats`;
   };
 
-  const insertTip = (tip: { id: string; amountSats: number; createdAt: Date; note?: string }) => {
-    if (seen.has(tip.id)) return;
-    seen.add(tip.id);
+  const insertTip = (tip: { id?: string; paymentId?: string; amountSats: number; createdAt: Date; note?: string }) => {
+    const key = tip.paymentId ?? tip.id;
+    if (!key || seen.has(key)) return;
+    seen.add(key);
     count += 1;
     totalAmountSats += tip.amountSats;
     setStats();
@@ -379,9 +370,10 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
   };
 
   const hydrate = async () => {
-    status.textContent = 'Loading…';
+    if (hydratePending) return;
+    hydratePending = true;
+    setStatus('Loading…', 'muted');
     try {
-      const domainParam = domain ? `&domain=${encodeURIComponent(domain)}` : '';
       const res = await fetch(
         `${apiBaseUrl}/api/tips?itemId=${encodeURIComponent(itemId)}&limit=${encodeURIComponent(maxItems)}${domainParam}`
       );
@@ -389,7 +381,7 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
       const body = (await res.json()) as {
         count?: number;
         totalAmountSats?: number;
-        tips?: Array<{ id?: string; amountSats?: number; createdAt?: string; metadata?: unknown }>;
+        tips?: Array<{ id?: string; paymentId?: string; amountSats?: number; createdAt?: string; metadata?: unknown }>;
       };
       totalAmountSats = typeof body.totalAmountSats === 'number' ? body.totalAmountSats : 0;
       count = typeof body.count === 'number' ? body.count : 0;
@@ -397,72 +389,122 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
       list.replaceChildren();
       seen.clear();
       for (const tip of body.tips ?? []) {
-        const id = typeof tip.id === 'string' ? tip.id : null;
+        const key = typeof tip.paymentId === 'string' ? tip.paymentId : typeof tip.id === 'string' ? tip.id : null;
         const amountSats = typeof tip.amountSats === 'number' ? tip.amountSats : null;
         const createdAt = typeof tip.createdAt === 'string' ? new Date(tip.createdAt) : null;
-        if (!id || amountSats == null || !createdAt) continue;
+        if (!key || amountSats == null || !createdAt) continue;
         const note =
           tip.metadata && typeof tip.metadata === 'object' && typeof (tip.metadata as Record<string, unknown>).note === 'string'
             ? ((tip.metadata as Record<string, unknown>).note as string)
             : undefined;
-        seen.add(id);
+        seen.add(key);
         list.append(renderTipFeedRow({ amountSats, createdAt, note }));
       }
-      status.textContent = wsUrl ? 'Live' : '';
+      updateLiveStatus();
     } catch (e) {
       console.warn('tip feed hydrate failed', e);
-      status.textContent = 'Failed to load tip activity';
-      status.classList.remove('nostrstack-status--muted');
-      status.classList.add('nostrstack-status--danger');
+      setStatus('Failed to load tip activity', 'danger');
+    } finally {
+      hydratePending = false;
     }
   };
 
-  hydrate();
+  const startPolling = () => {
+    if (pollTimer || typeof window === 'undefined') return;
+    pollTimer = window.setInterval(() => {
+      hydrate();
+    }, 20000);
+  };
 
-  let ws: WebSocket | null = null;
-  if (wsUrl) {
+  const stopPolling = () => {
+    if (!pollTimer || typeof window === 'undefined') return;
+    window.clearInterval(pollTimer);
+    pollTimer = null;
+  };
+
+  const scheduleReconnect = () => {
+    if (reconnectTimer || typeof window === 'undefined' || destroyed) return;
+    const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempts));
+    reconnectAttempts += 1;
+    reconnectTimer = window.setTimeout(() => {
+      reconnectTimer = null;
+      connectWebSocket();
+    }, delay);
+  };
+
+  const handleWsClosed = () => {
+    wsConnected = false;
+    updateLiveStatus();
+    startPolling();
+    scheduleReconnect();
+  };
+
+  const connectWebSocket = () => {
+    if (!tipsWsUrl || typeof window === 'undefined' || destroyed) return;
     try {
-      ws = new WebSocket(wsUrl);
-      ws.onmessage = (ev) => {
-        try {
-          const msg = JSON.parse(ev.data as string) as unknown;
-          if (!msg || typeof msg !== 'object') return;
-          const rec = msg as Record<string, unknown>;
-          const kind = rec.type;
-          const statusStr = typeof rec.status === 'string' ? rec.status.toUpperCase() : '';
-          const paid =
-            kind === 'invoice-paid' || (kind === 'invoice-status' && PAID_STATES.has(statusStr));
-          if (!paid) return;
-          const action = extractPayEventAction(msg);
-          if (action !== 'tip') return;
-          const evItemId = extractPayEventItemId(msg);
-          if (evItemId !== itemId) return;
-          const amountSats = extractPayEventAmount(msg);
-          const providerRef = extractPayEventProviderRef(msg);
-          if (amountSats == null || !providerRef) return;
-          const meta =
-            rec.metadata && typeof rec.metadata === 'object'
-              ? rec.metadata
-              : typeof rec.metadata === 'string'
-                ? parseMaybeJson(rec.metadata)
-                : undefined;
-          const note =
-            meta && typeof meta === 'object' && typeof (meta as Record<string, unknown>).note === 'string'
-              ? ((meta as Record<string, unknown>).note as string)
-              : undefined;
-          insertTip({ id: providerRef, amountSats, createdAt: new Date(), note });
-        } catch {
-          /* ignore */
-        }
-      };
+      ws = new WebSocket(tipsWsUrl);
     } catch {
-      /* ignore ws */
+      handleWsClosed();
+      return;
     }
+    ws.onopen = () => {
+      wsConnected = true;
+      reconnectAttempts = 0;
+      stopPolling();
+      updateLiveStatus();
+    };
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data as string) as unknown;
+        if (!msg || typeof msg !== 'object') return;
+        const rec = msg as Record<string, unknown>;
+        if (rec.type === 'error') {
+          updateLiveStatus();
+          return;
+        }
+        if (rec.type !== 'tip') return;
+        const wsItemId = typeof rec.itemId === 'string' ? rec.itemId : null;
+        if (!wsItemId || wsItemId !== itemId) return;
+        const amountSats = typeof rec.amount === 'number' ? rec.amount : null;
+        const createdAt = typeof rec.createdAt === 'string' ? new Date(rec.createdAt) : new Date();
+        const paymentId = typeof rec.paymentId === 'string' ? rec.paymentId : undefined;
+        const providerRef = typeof rec.providerRef === 'string' ? rec.providerRef : undefined;
+        if (amountSats == null) return;
+        const meta =
+          rec.metadata && typeof rec.metadata === 'object'
+            ? rec.metadata
+            : typeof rec.metadata === 'string'
+              ? parseMaybeJson(rec.metadata)
+              : undefined;
+        const note =
+          meta && typeof meta === 'object' && typeof (meta as Record<string, unknown>).note === 'string'
+            ? ((meta as Record<string, unknown>).note as string)
+            : undefined;
+        insertTip({ id: providerRef, paymentId, amountSats, createdAt, note });
+      } catch {
+        /* ignore */
+      }
+    };
+    ws.onerror = handleWsClosed;
+    ws.onclose = handleWsClosed;
+  };
+
+  hydrate();
+  if (tipsWsUrl) {
+    connectWebSocket();
+  } else {
+    startPolling();
   }
 
   return {
     refresh: hydrate,
     destroy: () => {
+      destroyed = true;
+      stopPolling();
+      if (reconnectTimer && typeof window !== 'undefined') {
+        window.clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
       try {
         ws?.close();
       } catch {
