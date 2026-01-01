@@ -1,6 +1,7 @@
 {
   "name": "@nostrstack/injector",
   "version": "0.0.0",
+  "description": "Inject @nostrstack/embed tags into static HTML/MD output.",
   "private": true,
   "bin": {
     "nostrstack-inject": "bin/nostrstack-inject.js"

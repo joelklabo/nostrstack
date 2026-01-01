@@ -13,13 +13,32 @@ Options:
   -a, --api-base <url>   nostrstack API base URL (optional)
   -H, --host <host>      Host header to send with embed requests (optional)
   -r, --relays <list>    Comma-separated relay URLs for comments (optional)
+  --share               Add share button section (requires --share-url)
+  --share-url <url>     URL to share for the Share button
+  --share-title <title> Optional title for the Share button
+  --profile <id>        Nostr profile identifier (npub or nip05)
+  --blockchain          Add blockchain stats section
+  --blockchain-title <title> Optional title for the blockchain stats section
   -h, --help             Show help
 
 Idempotent: skips files already containing the nostrstack-inject marker.`);
 }
 
 function parseArgs(argv) {
-  const args = { input: 'dist', tenant: null, apiBase: null, host: null, relays: null, help: false };
+  const args = {
+    input: 'dist',
+    tenant: null,
+    apiBase: null,
+    host: null,
+    relays: null,
+    share: false,
+    shareUrl: null,
+    shareTitle: null,
+    profile: null,
+    blockchain: false,
+    blockchainTitle: null,
+    help: false
+  };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -42,6 +61,24 @@ function parseArgs(argv) {
       case '-r':
       case '--relays':
         args.relays = argv[++i];
+        break;
+      case '--share':
+        args.share = true;
+        break;
+      case '--share-url':
+        args.shareUrl = argv[++i];
+        break;
+      case '--share-title':
+        args.shareTitle = argv[++i];
+        break;
+      case '--profile':
+        args.profile = argv[++i];
+        break;
+      case '--blockchain':
+        args.blockchain = true;
+        break;
+      case '--blockchain-title':
+        args.blockchainTitle = argv[++i];
         break;
       case '-h':
       case '--help':
@@ -83,7 +120,20 @@ function deriveThreadId(filePath, root) {
   return `post-${noExt.replace(/\//g, '-')}`;
 }
 
-function buildSnippet({ tenant, apiBase, host, relays, threadId }) {
+function buildSnippet({
+  tenant,
+  apiBase,
+  host,
+  relays,
+  threadId,
+  shareUrl,
+  shareTitle,
+  profileId,
+  blockchainTitle,
+  includeShare,
+  includeProfile,
+  includeBlockchain
+}) {
   const attrsTip = [
     `data-nostrstack-tip="${tenant}"`,
     apiBase ? `data-base-url="${apiBase}"` : null,
@@ -93,8 +143,34 @@ function buildSnippet({ tenant, apiBase, host, relays, threadId }) {
     `data-nostrstack-comments="${threadId}"`,
     relays ? `data-relays="${relays}"` : null,
   ].filter(Boolean).join(' ');
+  const attrsShare = [
+    shareUrl ? `data-nostrstack-share="${shareUrl}"` : null,
+    shareTitle ? `data-title="${shareTitle}"` : null,
+  ].filter(Boolean).join(' ');
+  const attrsProfile = [
+    profileId ? `data-nostrstack-profile="${profileId}"` : null,
+    apiBase ? `data-base-url="${apiBase}"` : null,
+    host ? `data-host="${host}"` : null,
+  ].filter(Boolean).join(' ');
+  const attrsBlockchain = [
+    `data-nostrstack-blockchain="true"`,
+    apiBase ? `data-base-url="${apiBase}"` : null,
+    host ? `data-host="${host}"` : null,
+    blockchainTitle ? `data-title="${blockchainTitle}"` : null,
+  ].filter(Boolean).join(' ');
 
-  return `<!-- nostrstack-inject start -->\n<script src="https://unpkg.com/@nostrstack/embed/dist/index.global.js"></script>\n<div ${attrsTip}></div>\n<div ${attrsComments}></div>\n<!-- nostrstack-inject end -->`;
+  const sections = [
+    '<!-- nostrstack-inject start -->',
+    '<script src="https://unpkg.com/@nostrstack/embed/dist/index.global.js"></script>',
+    `<div ${attrsTip}></div>`,
+    `<div ${attrsComments}></div>`,
+    includeShare ? `<div ${attrsShare}></div>` : null,
+    includeProfile ? `<div ${attrsProfile}></div>` : null,
+    includeBlockchain ? `<div ${attrsBlockchain}></div>` : null,
+    '<!-- nostrstack-inject end -->'
+  ].filter(Boolean);
+
+  return sections.join('\n');
 }
 
 function injectIntoContent(content, snippet) {
@@ -127,6 +203,22 @@ function main() {
     process.exit(1);
   }
 
+  const includeShare = Boolean(args.share || args.shareUrl || args.shareTitle);
+  const includeProfile = Boolean(args.profile);
+  const includeBlockchain = Boolean(args.blockchain || args.blockchainTitle);
+
+  if (includeShare && !args.shareUrl) {
+    console.error('Error: --share-url is required when enabling share section');
+    usage();
+    process.exit(1);
+  }
+
+  if (includeProfile && !args.profile) {
+    console.error('Error: --profile requires a profile identifier');
+    usage();
+    process.exit(1);
+  }
+
   const target = path.resolve(process.cwd(), args.input);
   if (!fs.existsSync(target)) {
     console.error(`Input not found: ${target}`);
@@ -143,6 +235,13 @@ function main() {
       host: args.host,
       relays: args.relays,
       threadId: deriveThreadId(file, target),
+      shareUrl: args.shareUrl,
+      shareTitle: args.shareTitle,
+      profileId: args.profile,
+      blockchainTitle: args.blockchainTitle,
+      includeShare,
+      includeProfile,
+      includeBlockchain
     });
     const updated = injectIntoContent(content, snippet);
     if (updated) {
