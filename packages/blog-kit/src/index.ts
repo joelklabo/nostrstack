@@ -3,6 +3,7 @@ export { AuthProvider, useAuth } from './auth';
 export { BlockchainStats, type BlockchainStatsProps } from './blockchain-stats';
 export { Comments, type CommentsProps } from './comments';
 export { NostrstackProvider, type NostrstackProviderProps, useNostrstackConfig } from './context';
+export { type NostrProfileProps,NostrProfileWidget } from './nostr-profile';
 export { type NwcBalanceResult, NwcClient, type NwcClientOptions, type NwcPayInvoiceResult } from './nwc';
 export { OfferWidget, type OfferWidgetProps } from './offer-widget';
 export { PaywalledContent } from './paywalled-content';

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BlockchainStats, Comments, NostrstackProvider, ShareButton, ShareWidget, TipActivityFeed, TipButton, TipWidget } from './index';
+import { BlockchainStats, Comments, NostrProfileWidget, NostrstackProvider, ShareButton, ShareWidget, TipActivityFeed, TipButton, TipWidget } from './index';
 
 vi.mock('@nostrstack/embed', () => {
   return {
@@ -19,6 +19,7 @@ vi.mock('@nostrstack/embed', () => {
       el.appendChild(div);
     }),
     mountBlockchainStats: vi.fn(() => ({ destroy: vi.fn(), refresh: vi.fn() })),
+    mountNostrProfile: vi.fn(() => ({ destroy: vi.fn(), refresh: vi.fn() })),
     createNostrstackBrandTheme: vi.fn(() => ({})),
     ensureNostrstackEmbedStyles: vi.fn(),
     ensureNostrstackRoot: vi.fn(),
@@ -38,7 +39,7 @@ vi.mock('nostr-tools', () => {
   };
 });
 
-const { mountTipButton, mountTipWidget, mountTipFeed, mountCommentWidget, mountBlockchainStats } = await import('@nostrstack/embed');
+const { mountTipButton, mountTipWidget, mountTipFeed, mountCommentWidget, mountBlockchainStats, mountNostrProfile } = await import('@nostrstack/embed');
 
 describe('blog-kit components', () => {
   beforeEach(() => {
@@ -134,6 +135,21 @@ describe('blog-kit components', () => {
     };
     expect(call.baseURL).toBe('http://localhost:3001');
     expect(call.title).toBe('Chain');
+  });
+
+  it('mounts nostr profile with identifier', async () => {
+    render(
+      <NostrstackProvider>
+        <NostrProfileWidget identifier="alice@example.com" />
+      </NostrstackProvider>,
+    );
+    await waitFor(() => {
+      expect(mountNostrProfile).toHaveBeenCalled();
+    });
+    const call = (mountNostrProfile as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      identifier?: string;
+    };
+    expect(call.identifier).toBe('alice@example.com');
   });
 
   it('share button falls back to copy/share', async () => {

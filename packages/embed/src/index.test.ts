@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountBlockchainStats, mountPayToAction, mountTipButton, mountTipWidget } from './index.js';
+import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountTipButton, mountTipWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -230,6 +230,50 @@ describe('mountBlockchainStats', () => {
     expect(height).toContain('820');
     expect(mempool).toContain('1,200');
     expect(network).toBe('mainnet');
+
+    widget.destroy();
+  });
+});
+
+describe('mountNostrProfile', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('renders a profile card from nip05', async () => {
+    const host = document.createElement('div');
+    const pubkey = 'a'.repeat(64);
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/api/nostr/identity')) {
+        return {
+          ok: true,
+          json: async () => ({
+            pubkey,
+            nip05: 'alice@example.com',
+            name: 'alice',
+            domain: 'example.com',
+            relays: ['wss://relay.test']
+          })
+        } as Response;
+      }
+      if (url.includes('/api/nostr/event/')) {
+        return {
+          ok: true,
+          json: async () => ({
+            author: { pubkey, profile: { name: 'Alice', nip05: 'alice@example.com' } }
+          })
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    const widget = mountNostrProfile(host, { identifier: 'alice@example.com', baseURL: 'http://localhost:3001' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const card = host.querySelector('.nostrstack-user-card');
+    expect(card).toBeTruthy();
 
     widget.destroy();
   });

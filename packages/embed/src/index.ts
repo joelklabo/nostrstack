@@ -4,12 +4,15 @@ import QRCode from 'qrcode';
 import { renderBlockchainStats } from './blockchainStats.js';
 import { copyToClipboard, createCopyButton } from './copyButton.js';
 import { renderInvoicePopover } from './invoicePopover.js';
+import { renderNostrProfile } from './nostrProfile.js';
 import { renderQrCodeInto } from './qr.js';
 import { renderRelayBadge } from './relayBadge.js';
 import { ensureNostrstackRoot } from './styles.js';
+import { isMockBase, resolveApiBaseUrl, resolvePayWsUrl } from './url-utils.js';
 
 export { renderBlockchainStats } from './blockchainStats.js';
 export { invoicePopoverStyles, renderInvoicePopover } from './invoicePopover.js';
+export { renderNostrProfile } from './nostrProfile.js';
 export { nostrUserCardStyles, renderNostrUserCard } from './nostrUserCard.js';
 export {
   type NostrstackQrPreset,
@@ -37,6 +40,7 @@ export {
   nostrstackBrandPresets
 } from './themePresets.js';
 export { designTokens } from './tokens/designTokens.js';
+export { resolvePayWsUrl, resolveTelemetryWs } from './url-utils.js';
 
 type TipWidgetOptions = {
   username: string;
@@ -111,7 +115,6 @@ type NostrEvent = {
 };
 
 type LnurlClient = Pick<NostrstackClient, 'getLnurlpMetadata' | 'getLnurlpInvoice'>;
-const isMockBase = (baseURL?: string) => baseURL === 'mock';
 
 function createClient(opts: { baseURL?: string; host?: string }): LnurlClient {
   if (isMockBase(opts.baseURL)) {
@@ -138,58 +141,7 @@ function createClient(opts: { baseURL?: string; host?: string }): LnurlClient {
   });
 }
 
-export function resolvePayWsUrl(baseURL?: string): string | null {
-  if (isMockBase(baseURL)) return null;
-  if (typeof window === 'undefined') return null;
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = preferSecureBase(raw.replace(/\/$/, ''));
-  // Dev convenience: treat "/api" as a proxy prefix, not a server mountpoint.
-  // This avoids generating "/api/ws/*" and "/api/api/*" footguns in local demos.
-  if (base === '/api') {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
-  }
-  if (!base) {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
-  }
-  if (/^https?:\/\//i.test(base)) {
-    return `${base.replace(/^http/i, 'ws')}/ws/pay`;
-  }
-  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/pay`;
-}
-
-export function resolveTelemetryWs(baseURL?: string): string | null {
-  if (isMockBase(baseURL)) return null;
-  if (typeof window === 'undefined') return null;
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = preferSecureBase(raw.replace(/\/$/, ''));
-  if (base === '/api') {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
-  if (!base) {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
-  if (/^https?:\/\//i.test(base)) {
-    return `${base.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
-  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
-}
-
-function preferSecureBase(base: string) {
-  if (typeof window === 'undefined') return base;
-  if (window.location.protocol !== 'https:') return base;
-  if (!/^http:\/\//i.test(base)) return base;
-  // Browsers block ws/http mixed content on https pages; prefer secure endpoints.
-  return base.replace(/^http:/i, 'https:');
-}
-
-function resolveApiBaseUrl(baseURL?: string) {
-  if (isMockBase(baseURL)) return '';
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = raw.replace(/\/$/, '');
-  if (base && base !== '/api') return base;
-  if (typeof window === 'undefined') return 'http://localhost:3001';
-  return window.location.origin;
-}
+// resolvePayWsUrl, resolveTelemetryWs, and resolveApiBaseUrl are provided by url-utils.
 
 const ATTR_PREFIXES = ['nostrstack'];
 
@@ -1861,6 +1813,22 @@ export function autoMount() {
     });
   });
 
+  const profileNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-profile]'));
+  profileNodes.forEach((el) => {
+    // @ts-ignore
+    if (typeof el.__nostrstackDestroy === 'function') {
+      // @ts-ignore
+      el.__nostrstackDestroy();
+      // @ts-ignore
+      delete el.__nostrstackDestroy;
+    }
+
+    const identifier = el.dataset.nostrstackProfile ?? el.dataset.profile ?? '';
+    const widget = renderNostrProfile(el, { identifier, baseURL: el.dataset.baseUrl, host: el.dataset.host, title: el.dataset.title });
+    // @ts-ignore
+    el.__nostrstackDestroy = widget.destroy;
+  });
+
   const blockchainNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-blockchain]'));
   blockchainNodes.forEach((el) => {
     // @ts-ignore
@@ -2055,6 +2023,26 @@ export function mountBlockchainStats(container: HTMLElement, opts: MountBlockcha
   return renderBlockchainStats(container, {
     baseURL: opts.baseURL,
     host: opts.host,
+    title: opts.title ?? container.dataset.title
+  });
+}
+
+type MountNostrProfileOptions = {
+  identifier?: string;
+  baseURL?: string;
+  host?: string;
+  relays?: string[];
+  title?: string;
+};
+
+export function mountNostrProfile(container: HTMLElement, opts: MountNostrProfileOptions = {}) {
+  const identifier =
+    opts.identifier ?? container.dataset.nostrstackProfile ?? container.dataset.profile ?? container.id ?? '';
+  return renderNostrProfile(container, {
+    identifier,
+    baseURL: opts.baseURL,
+    host: opts.host,
+    relays: opts.relays,
     title: opts.title ?? container.dataset.title
   });
 }

@@ -723,6 +723,16 @@ export const nostrstackComponentsCss = `
 .nostrstack-user-card .user-sub { font-size: 12px; color: var(--nostrstack-color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nostrstack-user-card .user-about { font-size: 12px; color: var(--nostrstack-color-text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
+/* ===== Nostr profile section ===== */
+.nostrstack-profile { padding: var(--nostrstack-space-4); display: grid; gap: var(--nostrstack-space-3); }
+.nostrstack-profile__header { display: flex; align-items: center; justify-content: space-between; gap: var(--nostrstack-space-2); flex-wrap: wrap; }
+.nostrstack-profile__heading { display: inline-flex; align-items: center; gap: var(--nostrstack-space-2); }
+.nostrstack-profile__title { font-weight: 950; font-size: 1.05rem; letter-spacing: 0.01em; }
+.nostrstack-profile__badge { --nostrstack-badge-tone: var(--nostrstack-color-success); }
+.nostrstack-profile__status { display: inline-flex; align-items: center; gap: var(--nostrstack-space-2); flex-wrap: wrap; }
+.nostrstack-profile__body { display: grid; gap: var(--nostrstack-space-2); }
+.nostrstack-profile__callout { margin-top: var(--nostrstack-space-2); }
+
 /* ===== Invoice popover ===== */
 .nostrstack-popover-overlay {
   position: fixed;
