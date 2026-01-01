@@ -18,6 +18,7 @@ import { registerRegtestPayRoute } from './regtest-pay.js';
 import { registerTelemetrySummaryRoute } from './telemetry-summary.js';
 import { registerTenantRoutes } from './tenants.js';
 import { registerTipRoutes } from './tips.js';
+import { registerTipsWs } from './tips-ws.js';
 import { registerWalletRoutes } from './wallet.js';
 
 export async function registerRoutes(app: FastifyInstance) {
@@ -36,6 +37,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerPayWebhook(app);
   await registerPayRoutes(app);
   await registerTipRoutes(app);
+  await registerTipsWs(app);
   await registerTelemetrySummaryRoute(app);
   await registerRegtestFundRoute(app);
   await registerRegtestPayRoute(app);

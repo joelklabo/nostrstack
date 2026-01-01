@@ -44,7 +44,9 @@ export function startPaymentReconciler(app: FastifyInstance) {
               action: p.action ?? undefined,
               itemId: p.itemId ?? undefined,
               metadata,
-              source: 'reconciler'
+              source: 'reconciler',
+              tenantId: p.tenantId,
+              paymentId: p.id
             });
             if (PAID_STATES.has(normalized)) {
               app.payEventHub?.broadcast({
@@ -56,7 +58,9 @@ export function startPaymentReconciler(app: FastifyInstance) {
                 action: p.action ?? undefined,
                 itemId: p.itemId ?? undefined,
                 metadata,
-                source: 'reconciler'
+                source: 'reconciler',
+                tenantId: p.tenantId,
+                paymentId: p.id
               });
             }
           }

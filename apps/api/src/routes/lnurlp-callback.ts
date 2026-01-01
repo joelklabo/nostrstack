@@ -301,7 +301,9 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         action: payment.action ?? undefined,
         itemId: payment.itemId ?? undefined,
         metadata,
-        source: 'lnurl'
+        source: 'lnurl',
+        tenantId: payment.tenantId,
+        paymentId: payment.id
       });
       if (PAID_STATES.has(normalizedStatus) && !PAID_STATES.has(prevStatus)) {
         app.payEventHub?.broadcast({
@@ -313,7 +315,9 @@ export async function registerLnurlCallback(app: FastifyInstance) {
           action: payment.action ?? undefined,
           itemId: payment.itemId ?? undefined,
           metadata,
-          source: 'lnurl'
+          source: 'lnurl',
+          tenantId: payment.tenantId,
+          paymentId: payment.id
         });
       }
     }

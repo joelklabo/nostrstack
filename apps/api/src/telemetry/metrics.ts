@@ -59,6 +59,18 @@ export const telemetrySummaryCounter = new client.Counter({
   labelNames: ['result']
 });
 
+export const tipsWsConnectionsCounter = new client.Counter({
+  name: 'tips_ws_connections_total',
+  help: 'Tips websocket connections',
+  labelNames: ['result']
+});
+
+export const tipsWsErrorsCounter = new client.Counter({
+  name: 'tips_ws_errors_total',
+  help: 'Tips websocket errors',
+  labelNames: ['reason']
+});
+
 client.collectDefaultMetrics();
 
 export const metricsPlugin = fp(async function metricsPlugin(app: FastifyInstance) {

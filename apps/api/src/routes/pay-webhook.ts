@@ -35,7 +35,9 @@ export async function registerPayWebhook(app: FastifyInstance) {
         action: payment.action ?? undefined,
         itemId: payment.itemId ?? undefined,
         metadata,
-        source: 'webhook'
+        source: 'webhook',
+        tenantId: payment.tenantId,
+        paymentId: payment.id
       });
       app.payEventHub?.broadcast({
         type: 'invoice-paid',
@@ -46,7 +48,9 @@ export async function registerPayWebhook(app: FastifyInstance) {
         action: payment.action ?? undefined,
         itemId: payment.itemId ?? undefined,
         metadata,
-        source: 'webhook'
+        source: 'webhook',
+        tenantId: payment.tenantId,
+        paymentId: payment.id
       });
       return reply.send({ ok: true });
     } catch (err) {

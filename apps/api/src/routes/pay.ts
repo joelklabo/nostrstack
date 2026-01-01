@@ -30,7 +30,7 @@ export async function registerPayRoutes(app: FastifyInstance) {
       webhookUrl: `${origin}/api/pay/webhook/lnbits`
     });
 
-    await app.prisma.payment.create({
+    const payment = await app.prisma.payment.create({
       data: {
         tenantId: tenant.id,
         userId: null,
@@ -54,7 +54,9 @@ export async function registerPayRoutes(app: FastifyInstance) {
       status: 'PENDING',
       action: body.action,
       itemId: typeof body.metadata?.itemId === 'string' ? body.metadata.itemId : undefined,
-      metadata: body.metadata
+      metadata: body.metadata,
+      tenantId: payment.tenantId,
+      paymentId: payment.id
     });
 
     const response = {
@@ -127,7 +129,9 @@ export async function registerPayRoutes(app: FastifyInstance) {
           action: payment.action ?? undefined,
           itemId: payment.itemId ?? undefined,
           metadata,
-          source: 'poll'
+          source: 'poll',
+          tenantId: payment.tenantId,
+          paymentId: payment.id
         });
         if (paidStates.includes(normalized)) {
           app.payEventHub?.broadcast({
@@ -139,7 +143,9 @@ export async function registerPayRoutes(app: FastifyInstance) {
             action: payment.action ?? undefined,
             itemId: payment.itemId ?? undefined,
             metadata,
-            source: 'poll'
+            source: 'poll',
+            tenantId: payment.tenantId,
+            paymentId: payment.id
           });
         }
       }

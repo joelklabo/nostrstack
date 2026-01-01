@@ -68,12 +68,16 @@ async function broadcastPayment(app: FastifyInstance, invoice: string, paymentHa
   let action: string | undefined;
   let itemId: string | undefined;
   let amountSats = 0;
+  let tenantId: string | undefined;
+  let paymentId: string | undefined;
   try {
     const payment = await app.prisma.payment.findFirst({ where: { invoice } });
     if (payment) {
       amountSats = payment.amountSats;
       action = payment.action ?? undefined;
       itemId = payment.itemId ?? undefined;
+      tenantId = payment.tenantId;
+      paymentId = payment.id;
       if (payment.metadata) {
         try {
           metadata = JSON.parse(payment.metadata) as unknown;
@@ -99,7 +103,9 @@ async function broadcastPayment(app: FastifyInstance, invoice: string, paymentHa
     action,
     itemId,
     metadata,
-    source: 'regtest'
+    source: 'regtest',
+    tenantId,
+    paymentId
   });
 }
 
