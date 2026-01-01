@@ -77,21 +77,39 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     }
   });
 
+  const RPC_TIMEOUT_MS = 8000;
   const rpcCall = async (method: string, params: unknown[] = []) => {
     const body = JSON.stringify({ jsonrpc: '2.0', id: 'telemetry', method, params });
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (rpcAuthHeader) headers.Authorization = rpcAuthHeader;
-    const res = await fetch(rpcUrl, { method: 'POST', headers, body });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`rpc ${method} http ${res.status} ${txt}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
+    try {
+      const res = await fetch(rpcUrl, { method: 'POST', headers, body, signal: controller.signal });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`rpc ${method} http ${res.status} ${txt}`);
+      }
+      const data = (await res.json()) as { result?: unknown; error?: { code: number; message: string } };
+      if (data.error) throw new Error(`rpc ${method} error ${data.error.code}: ${data.error.message}`);
+      return data.result;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error(`rpc ${method} timeout after ${RPC_TIMEOUT_MS}ms`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
     }
-    const data = (await res.json()) as { result?: unknown; error?: { code: number; message: string } };
-    if (data.error) throw new Error(`rpc ${method} error ${data.error.code}: ${data.error.message}`);
-    return data.result;
   };
 
-  // lightweight poll: getblockcount every 5s
+  // lightweight poll: getblockcount every 5s with backoff on RPC overload
+  const POLL_BASE_MS = 5000;
+  const POLL_MAX_MS = 60000;
+  const BACKPRESSURE_LOG_COOLDOWN_MS = 5 * 60 * 1000;
+  let pollDelayMs = POLL_BASE_MS;
+  let nextPollAt = Date.now();
+  let pollInFlight = false;
   let lastErrorMsg: string | null = null;
   let lastErrorAt = 0;
 
@@ -236,6 +254,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   }
 
   const interval = setInterval(async () => {
+    const now = Date.now();
+    if (pollInFlight || now < nextPollAt) return;
+    pollInFlight = true;
     try {
       const height = Number(await rpcCall('getblockcount'));
       if (Number.isFinite(height) && height !== lastHeight) {
@@ -251,19 +272,31 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       } else if (!Number.isFinite(height)) {
         broadcastError('bitcoind block height unavailable');
       }
+      pollDelayMs = POLL_BASE_MS;
+      nextPollAt = Date.now() + pollDelayMs;
       lastErrorMsg = null;
       lastErrorAt = 0;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      const now = Date.now();
-      if (msg !== lastErrorMsg || now - lastErrorAt > 60000) {
-        app.log.warn({ err }, 'telemetry block poll failed');
+      const errorAt = Date.now();
+      const isBackpressure = msg.includes('http 503') || msg.includes('Work queue depth exceeded');
+      pollDelayMs = Math.min(POLL_MAX_MS, Math.max(POLL_BASE_MS, pollDelayMs * 2));
+      nextPollAt = errorAt + pollDelayMs;
+      const logCooldown = isBackpressure ? BACKPRESSURE_LOG_COOLDOWN_MS : 60000;
+      if (msg !== lastErrorMsg || errorAt - lastErrorAt > logCooldown) {
+        if (isBackpressure) {
+          app.log.info({ err, pollDelayMs }, 'telemetry poll backpressure, backing off');
+        } else {
+          app.log.warn({ err, pollDelayMs }, 'telemetry block poll failed');
+        }
         lastErrorMsg = msg;
-        lastErrorAt = now;
-        broadcastError('telemetry poll failed; see API logs');
+        lastErrorAt = errorAt;
+        broadcastError(isBackpressure ? 'telemetry backpressure; retrying' : 'telemetry poll failed; see API logs');
       }
+    } finally {
+      pollInFlight = false;
     }
-  }, 5000);
+  }, POLL_BASE_MS);
 
   app.addHook('onClose', async () => {
     clearInterval(interval);
