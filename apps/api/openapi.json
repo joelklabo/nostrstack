@@ -219,6 +219,15 @@
         }
       }
     },
+    "/api/telemetry/summary": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/tenants": {
       "post": {
         "requestBody": {

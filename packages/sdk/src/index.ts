@@ -24,6 +24,8 @@ type CreateUserBody =
   paths['/api/admin/users']['post']['requestBody']['content']['application/json'];
 type CreateUserResponse =
   paths['/api/admin/users']['post']['responses'][201]['content']['application/json'];
+type TelemetrySummaryResponse =
+  paths['/api/telemetry/summary']['get']['responses'][200]['content']['application/json'];
 
 type HealthResponse = { status: string; env?: string; uptime?: number };
 
@@ -117,5 +119,9 @@ export class NostrstackClient {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body)
     });
+  }
+
+  async getTelemetrySummary(): Promise<TelemetrySummaryResponse> {
+    return this.request('/api/telemetry/summary');
   }
 }

@@ -109,6 +109,33 @@ export type paths = {
     };
   };
 
+  "/api/telemetry/summary": {
+    get: {
+      responses: {
+        200: {
+          content: {
+            "application/json": {
+              type: 'block';
+              height: number;
+              hash: string;
+              time: number;
+              txs?: number;
+              size?: number;
+              weight?: number;
+              interval?: number;
+              mempoolTxs?: number;
+              mempoolBytes?: number;
+              network?: string;
+              version?: number;
+              subversion?: string;
+              connections?: number;
+            };
+          };
+        };
+      };
+    };
+  };
+
   "/.well-known/nostr.json": {
     get: {
       parameters: {

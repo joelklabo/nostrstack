@@ -3,6 +3,8 @@
 import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
+import { createBitcoindRpcCall, fetchTelemetrySummary } from '../telemetry/bitcoind.js';
+
 type TelemetryEvent =
   | {
     type: 'block';
@@ -29,16 +31,7 @@ type TelemetryBlockEvent = Extract<TelemetryEvent, { type: 'block' }>;
 export async function registerTelemetryWs(app: FastifyInstance) {
   const server = app.server;
   const wss = new WebSocketServer({ noServer: true });
-  const rpcUrlRaw = process.env.BITCOIND_RPC_URL || 'http://bitcoin:bitcoin@localhost:18443';
-  const rpcUrlParsed = new URL(rpcUrlRaw);
-  const rpcAuthHeader =
-    rpcUrlParsed.username || rpcUrlParsed.password
-      ? 'Basic ' + Buffer.from(`${decodeURIComponent(rpcUrlParsed.username)}:${decodeURIComponent(rpcUrlParsed.password)}`).toString('base64')
-      : undefined;
-  // Drop creds from URL because undici/fetch rejects credentialed URLs
-  rpcUrlParsed.username = '';
-  rpcUrlParsed.password = '';
-  const rpcUrl = rpcUrlParsed.toString();
+  const { rpcCall } = createBitcoindRpcCall();
 
   server.on('upgrade', (req, socket, head) => {
     const path = (req.url ?? '').split('?')[0] ?? '';
@@ -77,32 +70,6 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     }
   });
 
-  const RPC_TIMEOUT_MS = 8000;
-  const rpcCall = async (method: string, params: unknown[] = []) => {
-    const body = JSON.stringify({ jsonrpc: '2.0', id: 'telemetry', method, params });
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (rpcAuthHeader) headers.Authorization = rpcAuthHeader;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
-    try {
-      const res = await fetch(rpcUrl, { method: 'POST', headers, body, signal: controller.signal });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`rpc ${method} http ${res.status} ${txt}`);
-      }
-      const data = (await res.json()) as { result?: unknown; error?: { code: number; message: string } };
-      if (data.error) throw new Error(`rpc ${method} error ${data.error.code}: ${data.error.message}`);
-      return data.result;
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        throw new Error(`rpc ${method} timeout after ${RPC_TIMEOUT_MS}ms`);
-      }
-      throw err;
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
-
   // lightweight poll: getblockcount every 5s with backoff on RPC overload
   const POLL_BASE_MS = 5000;
   const POLL_MAX_MS = 60000;
@@ -119,42 +86,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
 
   const fetchBlock = async (height: number): Promise<TelemetryBlockEvent | null> => {
     try {
-      const hash = (await rpcCall('getblockhash', [height])) as string;
-      if (!hash) return null;
-
-      const block = (await rpcCall('getblock', [hash, 1])) as {
-        time?: number;
-        tx?: string[];
-        nTx?: number;
-        size?: number;
-        weight?: number;
-      };
-      const time = Number(block.time) || Date.now() / 1000;
-      const txs = Array.isArray(block.tx) ? block.tx.length : Number(block.nTx) || 0;
-      const size = Number(block.size) || 0;
-      const weight = Number(block.weight) || 0;
-      const mempool = (await rpcCall('getmempoolinfo').catch(() => null)) as { size?: number; bytes?: number } | null;
-      const networkInfo = (await rpcCall('getnetworkinfo').catch(() => null)) as { version?: number; subversion?: string; connections?: number } | null;
-      const blockchainInfo = (await rpcCall('getblockchaininfo').catch(() => null)) as { chain?: string } | null;
-
-      const interval = lastBlockTime ? Math.max(0, time - lastBlockTime) : null;
-
-      return {
-        type: 'block',
-        height,
-        hash,
-        time,
-        txs,
-        size,
-        weight,
-        interval: interval ?? undefined,
-        mempoolTxs: mempool?.size,
-        mempoolBytes: mempool?.bytes,
-        network: blockchainInfo?.chain,
-        version: networkInfo?.version,
-        subversion: networkInfo?.subversion,
-        connections: networkInfo?.connections
-      };
+      const summary = await fetchTelemetrySummary(rpcCall, height, lastBlockTime);
+      if (!summary) return null;
+      return { type: 'block', ...summary };
     } catch (err) {
       app.log.warn({ err }, 'telemetry fetchBlock failed');
       broadcastError('bitcoind RPC call failed; check node status');

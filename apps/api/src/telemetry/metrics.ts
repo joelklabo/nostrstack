@@ -53,6 +53,12 @@ export const nip05ProxyFetchDuration = new client.Histogram({
   buckets: [0.1, 0.25, 0.5, 1, 2, 5]
 });
 
+export const telemetrySummaryCounter = new client.Counter({
+  name: 'telemetry_summary_requests_total',
+  help: 'Telemetry summary requests by result',
+  labelNames: ['result']
+});
+
 client.collectDefaultMetrics();
 
 export const metricsPlugin = fp(async function metricsPlugin(app: FastifyInstance) {
