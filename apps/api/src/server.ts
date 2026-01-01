@@ -31,6 +31,48 @@ import { metricsPlugin } from './telemetry/metrics.js';
 import { requestIdHook } from './telemetry/request-id.js';
 import { startTracing } from './telemetry/tracing.js';
 
+const LOCALHOST_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
+
+const parseCsv = (raw?: string) =>
+  (raw ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+const matchesOriginPattern = (origin: string, pattern: string) => {
+  const trimmed = pattern.trim();
+  if (!trimmed) return false;
+  if (trimmed === '*') return true;
+  let originUrl: URL;
+  try {
+    originUrl = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return origin === trimmed;
+  }
+  if (trimmed.startsWith('*.')) {
+    const host = trimmed.slice(2).toLowerCase();
+    const hostname = originUrl.hostname.toLowerCase();
+    return hostname === host || hostname.endsWith(`.${host}`);
+  }
+  if (trimmed.includes(':')) {
+    const [host, port] = trimmed.split(':');
+    return originUrl.hostname.toLowerCase() === host.toLowerCase() && originUrl.port === port;
+  }
+  return originUrl.hostname.toLowerCase() === trimmed.toLowerCase();
+};
+
+const isLocalhostOrigin = (origin: string) => {
+  try {
+    const url = new URL(origin);
+    return LOCALHOST_HOSTS.has(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 export async function buildServer() {
   const httpsOpts = (() => {
     const useHttps = env.USE_HTTPS;
@@ -102,7 +144,20 @@ export async function buildServer() {
   server.decorate('logHub', logHub);
 
   await server.register(sensible);
-  await server.register(cors, { origin: true });
+  const corsAllowlistRaw = parseCsv(env.CORS_ALLOWED_ORIGINS);
+  const corsAllowAll = corsAllowlistRaw.includes('*') && env.NODE_ENV !== 'production';
+  const corsAllowlist = corsAllowlistRaw.filter((entry) => entry !== '*');
+
+  await server.register(cors, {
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (corsAllowAll) return cb(null, true);
+      if (env.NODE_ENV !== 'production' && isLocalhostOrigin(origin)) return cb(null, true);
+      const allowlist = corsAllowlist.length ? corsAllowlist : [env.PUBLIC_ORIGIN];
+      const allowed = allowlist.some((pattern) => matchesOriginPattern(origin, pattern));
+      return cb(null, allowed);
+    }
+  });
   await server.register(helmet, { global: true });
   await server.register(formbody);
   await server.register(rateLimit, {
@@ -151,6 +206,8 @@ export async function buildServer() {
     NOSTR_EVENT_CACHE_MAX_ENTRIES: env.NOSTR_EVENT_CACHE_MAX_ENTRIES,
     NOSTR_EVENT_MAX_RELAYS: env.NOSTR_EVENT_MAX_RELAYS,
     NOSTR_EVENT_FETCH_TIMEOUT_MS: env.NOSTR_EVENT_FETCH_TIMEOUT_MS,
+    NOSTR_RELAY_ALLOWLIST: env.NOSTR_RELAY_ALLOWLIST,
+    NOSTR_RELAY_DENYLIST: env.NOSTR_RELAY_DENYLIST,
     NIP05_PROXY_TIMEOUT_MS: env.NIP05_PROXY_TIMEOUT_MS,
     NIP05_PROXY_CACHE_TTL_SECONDS: env.NIP05_PROXY_CACHE_TTL_SECONDS,
     NIP05_PROXY_NEGATIVE_TTL_SECONDS: env.NIP05_PROXY_NEGATIVE_TTL_SECONDS,

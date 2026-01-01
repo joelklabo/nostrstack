@@ -6,14 +6,28 @@ import { isAllowedRelayUrl } from '../nostr/relay-utils.js';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 
+const parseCsv = (raw?: string) =>
+  (raw ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+function relayFilters() {
+  return {
+    allowlist: parseCsv(env.NOSTR_RELAY_ALLOWLIST),
+    denylist: parseCsv(env.NOSTR_RELAY_DENYLIST)
+  };
+}
+
 function parseRelays(raw?: string) {
+  const filters = relayFilters();
   if (!raw) return { relays: [], invalid: [] as string[] };
   const entries = raw
     .split(',')
     .map((relay) => relay.trim())
     .filter(Boolean);
-  const relays = entries.filter((relay) => isAllowedRelayUrl(relay));
-  const invalid = entries.filter((relay) => !isAllowedRelayUrl(relay));
+  const relays = entries.filter((relay) => isAllowedRelayUrl(relay, filters));
+  const invalid = entries.filter((relay) => !isAllowedRelayUrl(relay, filters));
   return { relays, invalid };
 }
 
@@ -78,6 +92,8 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         relays: relayOverride.relays.length ? relayOverride.relays : undefined,
         defaultRelays: relays,
         maxRelays: app.config?.NOSTR_EVENT_MAX_RELAYS,
+        relayAllowlist: relayFilters().allowlist,
+        relayDenylist: relayFilters().denylist,
         timeoutMs: timeoutMs ?? app.config?.NOSTR_EVENT_FETCH_TIMEOUT_MS,
         referenceLimit: limitRefs ?? undefined,
         cacheTtlSeconds: app.config?.NOSTR_EVENT_CACHE_TTL_SECONDS,

@@ -45,6 +45,8 @@ export type ResolveOptions = {
   relays?: string[];
   defaultRelays?: string[];
   maxRelays?: number;
+  relayAllowlist?: string[];
+  relayDenylist?: string[];
   timeoutMs?: number;
   referenceLimit?: number;
   cacheTtlSeconds?: number;
@@ -195,7 +197,9 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
       targetRelays: target.relays,
       overrideRelays: options.relays,
       defaultRelays: options.defaultRelays,
-      maxRelays: options.maxRelays
+      maxRelays: options.maxRelays,
+      allowlist: options.relayAllowlist,
+      denylist: options.relayDenylist
     });
 
     if (relays.length === 0) {

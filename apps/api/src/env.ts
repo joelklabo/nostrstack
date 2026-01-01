@@ -71,10 +71,13 @@ const schema = z.object({
   ENABLE_BOLT12: bool().default(false),
   DATABASE_URL: z.string().default(defaultDatabaseUrl),
   PUBLIC_ORIGIN: z.string().url().default('http://localhost:3001'),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
   ADMIN_API_KEY: z.string().optional(),
   ADMIN_JWT_SECRET: z.string().optional(),
   NOSTR_SECRET_KEY: z.string().optional(),
   NOSTR_RELAYS: z.string().optional(), // comma-separated
+  NOSTR_RELAY_ALLOWLIST: z.string().optional(),
+  NOSTR_RELAY_DENYLIST: z.string().optional(),
   NOSTR_EMBED_CDN: z.string().url().default('https://unpkg.com/@nostrstack/embed/dist/index.global.js'),
   NOSTR_THEME_ACCENT: z.string().optional(),
   NOSTR_THEME_TEXT: z.string().optional(),
@@ -145,6 +148,16 @@ const schema = z.object({
       code: z.ZodIssueCode.custom,
       path: ['BOLT12_REST_URL'],
       message: 'BOLT12_REST_URL must use https in production'
+    });
+  }
+  if (
+    data.NODE_ENV === 'production' &&
+    data.CORS_ALLOWED_ORIGINS?.split(',').some((entry) => entry.trim() === '*')
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['CORS_ALLOWED_ORIGINS'],
+      message: 'CORS_ALLOWED_ORIGINS cannot include "*" in production'
     });
   }
 });
