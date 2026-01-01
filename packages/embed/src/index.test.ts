@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountTipButton, mountTipWidget } from './index.js';
+import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -194,6 +194,54 @@ describe('mountTipWidget', () => {
     const firstUrl = String(fetchSpy.mock.calls[0]?.[0] ?? '');
     expect(firstUrl).toContain('/api/pay');
     expect(firstUrl).not.toContain('/api/api/');
+  });
+});
+
+describe('mountShareButton', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    delete (globalThis as unknown as { nostr?: unknown }).nostr;
+    delete (globalThis as unknown as { NostrTools?: unknown }).NostrTools;
+    delete (globalThis.navigator as unknown as { share?: unknown }).share;
+  });
+
+  it('publishes to relays when signer is available', async () => {
+    const host = document.createElement('div');
+    const publish = vi.fn().mockResolvedValue(undefined);
+    const connect = vi.fn().mockResolvedValue(undefined);
+    const close = vi.fn();
+    (globalThis as unknown as { NostrTools: { relayInit: (url: string) => unknown } }).NostrTools = {
+      relayInit: () => ({ connect, publish, close })
+    };
+    (globalThis as unknown as { nostr: { getPublicKey: () => Promise<string>; signEvent: (ev: unknown) => Promise<unknown> } }).nostr =
+      {
+        getPublicKey: vi.fn().mockResolvedValue('pubkey'),
+        signEvent: vi.fn(async (ev) => ({ ...(ev as object), id: 'id', sig: 'sig' }))
+      };
+
+    mountShareButton(host, {
+      url: 'https://example.com/post',
+      title: 'Post',
+      relays: ['wss://relay.example']
+    });
+    const button = host.querySelector('button') as HTMLButtonElement;
+    await button.onclick?.(new MouseEvent('click'));
+
+    expect(connect).toHaveBeenCalled();
+    expect(publish).toHaveBeenCalled();
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('falls back to navigator.share when signer is unavailable', async () => {
+    const host = document.createElement('div');
+    const share = vi.fn().mockResolvedValue(undefined);
+    (globalThis.navigator as unknown as { share: (data: unknown) => Promise<void> | void }).share = share;
+
+    mountShareButton(host, { url: 'https://example.com/post', title: 'Post' });
+    const button = host.querySelector('button') as HTMLButtonElement;
+    await button.onclick?.(new MouseEvent('click'));
+
+    expect(share).toHaveBeenCalled();
   });
 });
 

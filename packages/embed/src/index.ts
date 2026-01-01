@@ -7,6 +7,7 @@ import { renderInvoicePopover } from './invoicePopover.js';
 import { renderNostrProfile } from './nostrProfile.js';
 import { renderQrCodeInto } from './qr.js';
 import { renderRelayBadge } from './relayBadge.js';
+import { renderShareButton } from './share.js';
 import { ensureNostrstackRoot } from './styles.js';
 import { isMockBase, resolveApiBaseUrl, resolvePayWsUrl } from './url-utils.js';
 
@@ -23,6 +24,7 @@ export {
   type NostrstackQrVerifyMode,
   renderQrCodeInto} from './qr.js';
 export { relayBadgeStyles, renderRelayBadge, updateRelayBadge } from './relayBadge.js';
+export { renderShareButton } from './share.js';
 export type { NostrstackTheme, NostrstackThemeMode } from './styles.js';
 export {
   applyNostrstackTheme,
@@ -1813,6 +1815,31 @@ export function autoMount() {
     });
   });
 
+  const shareNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-share]'));
+  shareNodes.forEach((el) => {
+    // @ts-ignore
+    if (typeof el.__nostrstackDestroy === 'function') {
+      // @ts-ignore
+      el.__nostrstackDestroy();
+      // @ts-ignore
+      delete el.__nostrstackDestroy;
+    }
+
+    const relays = el.dataset.relays ? el.dataset.relays.split(',').map((r) => r.trim()).filter(Boolean) : undefined;
+    const url = el.dataset.nostrstackShare ?? el.dataset.url ?? (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
+    const title = el.dataset.title ?? (typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share');
+    const widget = renderShareButton(el, {
+      url,
+      title,
+      lnAddress: el.dataset.lnAddress ?? el.dataset.ln,
+      tag: el.dataset.tag,
+      relays,
+      label: el.dataset.label
+    });
+    // @ts-ignore
+    el.__nostrstackDestroy = widget.destroy;
+  });
+
   const profileNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-profile]'));
   profileNodes.forEach((el) => {
     // @ts-ignore
@@ -2011,6 +2038,39 @@ export function mountCommentWidget(container: HTMLElement, opts: MountCommentOpt
     onRelayInfo: opts.onRelayInfo,
     onEvent: opts.onEvent
   });
+}
+
+type MountShareOptions = {
+  url?: string;
+  title?: string;
+  lnAddress?: string;
+  relays?: string[];
+  tag?: string;
+  label?: string;
+};
+
+export function mountShareButton(container: HTMLElement, opts: MountShareOptions = {}) {
+  const url =
+    opts.url ??
+    container.dataset.url ??
+    container.dataset.nostrstackShare ??
+    (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
+  const title =
+    opts.title ?? container.dataset.title ?? (typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share');
+  const relays =
+    opts.relays ??
+    (container.dataset.relays ? container.dataset.relays.split(',').map((r) => r.trim()).filter(Boolean) : undefined);
+  const widget = renderShareButton(container, {
+    url,
+    title,
+    lnAddress: opts.lnAddress ?? container.dataset.lnAddress ?? container.dataset.ln,
+    relays,
+    tag: opts.tag ?? container.dataset.tag,
+    label: opts.label ?? container.dataset.label
+  });
+  const el = widget.el as HTMLElement & { destroy?: () => void };
+  el.destroy = widget.destroy;
+  return el;
 }
 
 type MountBlockchainStatsOptions = {

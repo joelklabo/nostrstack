@@ -733,6 +733,10 @@ export const nostrstackComponentsCss = `
 .nostrstack-profile__body { display: grid; gap: var(--nostrstack-space-2); }
 .nostrstack-profile__callout { margin-top: var(--nostrstack-space-2); }
 
+/* ===== Share button ===== */
+.nostrstack-share { padding: var(--nostrstack-space-4); display: grid; gap: var(--nostrstack-space-2); }
+.nostrstack-share__status { font-size: 0.92rem; }
+
 /* ===== Invoice popover ===== */
 .nostrstack-popover-overlay {
   position: fixed;
