@@ -71,3 +71,14 @@ Provided by `@nostrstack/embed` CSS (no JS required):
 - Surfaces: `.nostrstack-card`
 - Primitives: `.nostrstack-badge`, `.nostrstack-callout`
 
+## Personal Site Kit components (planned)
+
+Suggested class names for new widgets:
+- Support section: `.nostrstack-support-section`, `.nostrstack-support-header`, `.nostrstack-support-grid`, `.nostrstack-support-sidebar`
+- Tip activity feed: `.nostrstack-tip-feed`, `.nostrstack-tip-feed-item`, `.nostrstack-tip-feed-amount`, `.nostrstack-tip-feed-time`
+- Share button: `.nostrstack-share`, `.nostrstack-share-button`, `.nostrstack-share-status`
+- Nostr profile: `.nostrstack-profile-card`, `.nostrstack-profile-avatar`, `.nostrstack-profile-meta`, `.nostrstack-profile-actions`
+- Blockchain stats: `.nostrstack-blockchain-stats`, `.nostrstack-blockchain-stat`, `.nostrstack-blockchain-value`, `.nostrstack-blockchain-label`
+
+Status helpers (already available):
+- `.nostrstack-status` with `--muted|--success|--danger`
