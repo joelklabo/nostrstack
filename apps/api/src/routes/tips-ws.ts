@@ -16,6 +16,12 @@ type TipEvent = {
   metadata?: unknown;
 };
 
+type TipReadyEvent = {
+  type: 'ready';
+  itemId: string;
+  time: number;
+};
+
 type TipErrorEvent = {
   type: 'error';
   message: string;
@@ -142,6 +148,10 @@ export async function registerTipsWs(app: FastifyInstance) {
     tipsWsConnectionsCounter.labels('accepted').inc();
     app.log.info({ itemId, tenantId, clientCount: wss.clients.size }, 'tips ws connection');
     ensureSubscription();
+    if (ws.readyState === WebSocket.OPEN) {
+      const payload: TipReadyEvent = { type: 'ready', itemId, time: Math.floor(Date.now() / 1000) };
+      ws.send(JSON.stringify(payload));
+    }
 
     ws.on('error', (err) => {
       tipsWsErrorsCounter.labels('socket_error').inc();

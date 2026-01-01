@@ -42,6 +42,18 @@ const waitForClose = (ws: WebSocket) =>
     });
   });
 
+const waitFor = async (
+  predicate: () => boolean,
+  { timeoutMs = 2000, intervalMs = 50, label = 'condition' } = {}
+) => {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(`timeout waiting for ${label}`);
+};
+
 type Server = Awaited<ReturnType<typeof import('../server.js')['buildServer']>>;
 let server: Server;
 let baseUrl: string;
@@ -92,39 +104,58 @@ describe('/ws/tips', () => {
   });
 
   it('filters tip events by itemId and tenant', async () => {
-    const wsA = new WebSocket(`${baseUrl}/ws/tips?itemId=post-1`, {
+    const receivedA: Array<{ itemId: string; amount: number }> = [];
+    const receivedB: Array<{ itemId: string; amount: number }> = [];
+    const receivedC: Array<{ itemId: string; amount: number }> = [];
+    let readyA = false;
+    let readyB = false;
+    let readyC = false;
+
+    const handleMessage = (
+      data: WebSocket.RawData,
+      markReady: () => void,
+      received: Array<{ itemId: string; amount: number }>
+    ) => {
+      const msg = JSON.parse(data.toString()) as Record<string, unknown>;
+      if (msg.type === 'ready') {
+        markReady();
+        return;
+      }
+      if (msg.type !== 'tip') return;
+      const itemId = typeof msg.itemId === 'string' ? msg.itemId : '';
+      const amount = typeof msg.amount === 'number' ? msg.amount : Number.NaN;
+      if (!itemId || !Number.isFinite(amount)) return;
+      received.push({ itemId, amount });
+    };
+
+    const wsA = new WebSocket(`${baseUrl}/ws/tips?itemId=post-1&domain=tenant-a.test`, {
       ...wsOptions,
       headers: { host: 'tenant-a.test' }
     });
-    const wsB = new WebSocket(`${baseUrl}/ws/tips?itemId=post-1`, {
+    const wsB = new WebSocket(`${baseUrl}/ws/tips?itemId=post-1&domain=tenant-b.test`, {
       ...wsOptions,
       headers: { host: 'tenant-b.test' }
     });
-    const wsC = new WebSocket(`${baseUrl}/ws/tips?itemId=post-2`, {
+    const wsC = new WebSocket(`${baseUrl}/ws/tips?itemId=post-2&domain=tenant-a.test`, {
       ...wsOptions,
       headers: { host: 'tenant-a.test' }
     });
     wsA.on('error', () => {});
     wsB.on('error', () => {});
     wsC.on('error', () => {});
+    wsA.on('message', (data) => handleMessage(data, () => { readyA = true; }, receivedA));
+    wsB.on('message', (data) => handleMessage(data, () => { readyB = true; }, receivedB));
+    wsC.on('message', (data) => handleMessage(data, () => { readyC = true; }, receivedC));
 
     await Promise.all([waitForOpen(wsA), waitForOpen(wsB), waitForOpen(wsC)]);
 
-    const receivedA: Array<{ itemId: string; amount: number }> = [];
-    const receivedB: Array<{ itemId: string; amount: number }> = [];
-    const receivedC: Array<{ itemId: string; amount: number }> = [];
+    await waitFor(() => readyA && readyB && readyC, { label: 'ws ready', timeoutMs: 3000 });
 
-    wsA.on('message', (data) => {
-      receivedA.push(JSON.parse(data.toString()) as { itemId: string; amount: number });
-    });
-    wsB.on('message', (data) => {
-      receivedB.push(JSON.parse(data.toString()) as { itemId: string; amount: number });
-    });
-    wsC.on('message', (data) => {
-      receivedC.push(JSON.parse(data.toString()) as { itemId: string; amount: number });
-    });
+    if (!server.payEventHub) {
+      throw new Error('payEventHub not initialized');
+    }
 
-    server.payEventHub?.broadcast({
+    server.payEventHub.broadcast({
       type: 'invoice-paid',
       ts: Date.now(),
       pr: 'invoice',
@@ -137,7 +168,7 @@ describe('/ws/tips', () => {
       paymentId: 'pay-1'
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await waitFor(() => receivedA.length === 1, { label: 'tip event' });
 
     expect(receivedA).toHaveLength(1);
     expect(receivedA[0].itemId).toBe('post-1');
