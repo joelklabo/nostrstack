@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 process.env.OP_NODE_API_KEY = 'test-key';
+process.env.USE_HTTPS = 'false';
 process.env.PUBLIC_ORIGIN = 'http://localhost:3001';
 
 import { execSync } from 'node:child_process';
