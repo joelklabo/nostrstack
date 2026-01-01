@@ -59,6 +59,12 @@ export const telemetrySummaryCounter = new client.Counter({
   labelNames: ['result']
 });
 
+export const telemetryPollFailuresCounter = new client.Counter({
+  name: 'telemetry_poll_failures_total',
+  help: 'Telemetry poll failures by reason',
+  labelNames: ['reason']
+});
+
 export const tipsWsConnectionsCounter = new client.Counter({
   name: 'tips_ws_connections_total',
   help: 'Tips websocket connections',

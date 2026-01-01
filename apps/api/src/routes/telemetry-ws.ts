@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
 import { createBitcoindRpcCall, fetchTelemetrySummary } from '../telemetry/bitcoind.js';
+import { telemetryPollFailuresCounter } from '../telemetry/metrics.js';
 
 type TelemetryEvent =
   | {
@@ -84,12 +85,26 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   let lastHash: string | null = null;
   let lastBlockTime: number | null = null;
 
+  const recordPollFailure = (message: string) => {
+    const lower = message.toLowerCase();
+    const reason =
+      lower.includes('http 503') || lower.includes('work queue depth exceeded')
+        ? 'backpressure'
+        : lower.includes('timeout')
+          ? 'timeout'
+          : 'rpc_error';
+    telemetryPollFailuresCounter.labels(reason).inc();
+    return reason;
+  };
+
   const fetchBlock = async (height: number): Promise<TelemetryBlockEvent | null> => {
     try {
       const summary = await fetchTelemetrySummary(rpcCall, height, lastBlockTime);
       if (!summary) return null;
       return { type: 'block', ...summary };
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      recordPollFailure(msg);
       app.log.warn({ err }, 'telemetry fetchBlock failed');
       broadcastError('bitcoind RPC call failed; check node status');
       return null;
@@ -213,7 +228,8 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const errorAt = Date.now();
-      const isBackpressure = msg.includes('http 503') || msg.includes('Work queue depth exceeded');
+      const reason = recordPollFailure(msg);
+      const isBackpressure = reason === 'backpressure';
       pollDelayMs = Math.min(POLL_MAX_MS, Math.max(POLL_BASE_MS, pollDelayMs * 2));
       nextPollAt = errorAt + pollDelayMs;
       const logCooldown = isBackpressure ? BACKPRESSURE_LOG_COOLDOWN_MS : 60000;
