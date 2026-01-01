@@ -11,6 +11,13 @@ type RelayPattern = {
   matchAll: boolean;
 };
 
+function normalizeHostname(hostname: string) {
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    return hostname.slice(1, -1);
+  }
+  return hostname;
+}
+
 function parsePattern(raw: string): RelayPattern | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -54,9 +61,10 @@ export function isAllowedRelayUrl(relay: string, filters: RelayFilters = {}) {
   if (!relay) return false;
   try {
     const url = new URL(relay);
-    if (url.protocol === 'wss:') return passesFilters(url.hostname, filters);
-    if (url.protocol === 'ws:' && LOCALHOST_HOSTS.has(url.hostname)) {
-      return passesFilters(url.hostname, filters);
+    const hostname = normalizeHostname(url.hostname);
+    if (url.protocol === 'wss:') return passesFilters(hostname, filters);
+    if (url.protocol === 'ws:' && LOCALHOST_HOSTS.has(hostname)) {
+      return passesFilters(hostname, filters);
     }
   } catch {
     return false;

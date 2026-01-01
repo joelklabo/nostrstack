@@ -1,6 +1,8 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { isAllowedRelayUrl, normalizeRelays } from './relay-utils.js';
+
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';
 process.env.LOG_LEVEL = 'error';
@@ -64,5 +66,44 @@ describe('NIP-65 relay list', () => {
   it('publishes kind 10002 with r tags', async () => {
     const res = await instance.publishRelayList(['wss://relay.test', 'wss://relay.two']);
     expect(res.successes).toBeGreaterThan(0);
+  });
+});
+
+describe('relay allowlist/denylist filters', () => {
+  it('denies relays when denylist matches even with wildcard allowlist', () => {
+    const relays = normalizeRelays(['wss://blocked.example.com', 'wss://ok.example.com'], {
+      allowlist: ['*.example.com'],
+      denylist: ['blocked.example.com']
+    });
+
+    expect(relays).toEqual(['wss://ok.example.com']);
+  });
+
+  it('matches wildcard allowlist for subdomains and exact hosts', () => {
+    const filters = { allowlist: ['*.example.com'] };
+
+    expect(isAllowedRelayUrl('wss://example.com', filters)).toBe(true);
+    expect(isAllowedRelayUrl('wss://sub.example.com', filters)).toBe(true);
+  });
+
+  it('allows relays when allowlist is empty unless denylisted', () => {
+    const filters = { denylist: ['deny.example.com'] };
+
+    expect(isAllowedRelayUrl('wss://allow.example.com', filters)).toBe(true);
+    expect(isAllowedRelayUrl('wss://deny.example.com', filters)).toBe(false);
+  });
+
+  it('ignores invalid patterns and respects localhost ws allowances', () => {
+    const relays = normalizeRelays(['ws://localhost:8080', 'ws://relay.example.com', 'wss://relay.test'], {
+      allowlist: ['://bad'],
+      denylist: []
+    });
+
+    expect(relays).toEqual(['ws://localhost:8080', 'wss://relay.test']);
+  });
+
+  it('accepts IPv6 localhost ws relays and rejects non-local ws', () => {
+    expect(isAllowedRelayUrl('ws://[::1]:3000')).toBe(true);
+    expect(isAllowedRelayUrl('ws://relay.example.com')).toBe(false);
   });
 });
