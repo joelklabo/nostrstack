@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Comments, NostrstackProvider, ShareButton, ShareWidget, TipActivityFeed, TipButton, TipWidget } from './index';
+import { BlockchainStats, Comments, NostrstackProvider, ShareButton, ShareWidget, TipActivityFeed, TipButton, TipWidget } from './index';
 
 vi.mock('@nostrstack/embed', () => {
   return {
@@ -18,6 +18,7 @@ vi.mock('@nostrstack/embed', () => {
       div.textContent = 'Comments';
       el.appendChild(div);
     }),
+    mountBlockchainStats: vi.fn(() => ({ destroy: vi.fn(), refresh: vi.fn() })),
     createNostrstackBrandTheme: vi.fn(() => ({})),
     ensureNostrstackEmbedStyles: vi.fn(),
     ensureNostrstackRoot: vi.fn(),
@@ -37,7 +38,7 @@ vi.mock('nostr-tools', () => {
   };
 });
 
-const { mountTipButton, mountTipWidget, mountTipFeed, mountCommentWidget } = await import('@nostrstack/embed');
+const { mountTipButton, mountTipWidget, mountTipFeed, mountCommentWidget, mountBlockchainStats } = await import('@nostrstack/embed');
 
 describe('blog-kit components', () => {
   beforeEach(() => {
@@ -116,6 +117,23 @@ describe('blog-kit components', () => {
     };
     expect(call.threadId).toBe('post-123');
     expect(call.relays).toEqual(['wss://relay.test']);
+  });
+
+  it('mounts blockchain stats with base URL', async () => {
+    render(
+      <NostrstackProvider baseUrl="http://localhost:3001">
+        <BlockchainStats title="Chain" />
+      </NostrstackProvider>,
+    );
+    await waitFor(() => {
+      expect(mountBlockchainStats).toHaveBeenCalled();
+    });
+    const call = (mountBlockchainStats as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      baseURL?: string;
+      title?: string;
+    };
+    expect(call.baseURL).toBe('http://localhost:3001');
+    expect(call.title).toBe('Chain');
   });
 
   it('share button falls back to copy/share', async () => {

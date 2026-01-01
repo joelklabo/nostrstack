@@ -1,12 +1,14 @@
 import { NostrstackClient } from '@nostrstack/sdk';
 import QRCode from 'qrcode';
 
+import { renderBlockchainStats } from './blockchainStats.js';
 import { copyToClipboard, createCopyButton } from './copyButton.js';
 import { renderInvoicePopover } from './invoicePopover.js';
 import { renderQrCodeInto } from './qr.js';
 import { renderRelayBadge } from './relayBadge.js';
 import { ensureNostrstackRoot } from './styles.js';
 
+export { renderBlockchainStats } from './blockchainStats.js';
 export { invoicePopoverStyles, renderInvoicePopover } from './invoicePopover.js';
 export { nostrUserCardStyles, renderNostrUserCard } from './nostrUserCard.js';
 export {
@@ -1858,6 +1860,21 @@ export function autoMount() {
       el.__nostrstackDestroy = widget.destroy;
     });
   });
+
+  const blockchainNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-blockchain]'));
+  blockchainNodes.forEach((el) => {
+    // @ts-ignore
+    if (typeof el.__nostrstackDestroy === 'function') {
+      // @ts-ignore
+      el.__nostrstackDestroy();
+      // @ts-ignore
+      delete el.__nostrstackDestroy;
+    }
+
+    const widget = renderBlockchainStats(el, { baseURL: el.dataset.baseUrl, host: el.dataset.host, title: el.dataset.title });
+    // @ts-ignore
+    el.__nostrstackDestroy = widget.destroy;
+  });
 }
 
 // Auto-run if window is available
@@ -2025,5 +2042,19 @@ export function mountCommentWidget(container: HTMLElement, opts: MountCommentOpt
     headerText: opts.headerText ?? container.dataset.header,
     onRelayInfo: opts.onRelayInfo,
     onEvent: opts.onEvent
+  });
+}
+
+type MountBlockchainStatsOptions = {
+  baseURL?: string;
+  host?: string;
+  title?: string;
+};
+
+export function mountBlockchainStats(container: HTMLElement, opts: MountBlockchainStatsOptions = {}) {
+  return renderBlockchainStats(container, {
+    baseURL: opts.baseURL,
+    host: opts.host,
+    title: opts.title ?? container.dataset.title
   });
 }

@@ -1,5 +1,6 @@
 export { type ApiBaseResolution,resolveApiBase } from './api-base';
 export { AuthProvider, useAuth } from './auth';
+export { BlockchainStats, type BlockchainStatsProps } from './blockchain-stats';
 export { Comments, type CommentsProps } from './comments';
 export { NostrstackProvider, type NostrstackProviderProps, useNostrstackConfig } from './context';
 export { type NwcBalanceResult, NwcClient, type NwcClientOptions, type NwcPayInvoiceResult } from './nwc';

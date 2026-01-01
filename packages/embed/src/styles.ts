@@ -1515,6 +1515,27 @@ export const nostrstackComponentsCss = `
   .nostrstack-tip__panel { grid-template-columns: 1fr; grid-template-areas: "status" "realtime" "timer" "qr" "actions" "invoice"; }
 }
 
+/* ===== Blockchain stats ===== */
+.nostrstack-blockchain-stats { padding: var(--nostrstack-space-4); display: grid; gap: var(--nostrstack-space-3); }
+.nostrstack-blockchain-stats__header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--nostrstack-space-2); flex-wrap: wrap; }
+.nostrstack-blockchain-stats__title { font-weight: 950; font-size: 1.05rem; letter-spacing: 0.01em; }
+.nostrstack-blockchain-stats__status { font-size: 0.88rem; }
+.nostrstack-blockchain-stats__grid {
+  display: grid;
+  gap: var(--nostrstack-space-2);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.nostrstack-blockchain-stat {
+  padding: var(--nostrstack-space-3);
+  border: 1px solid var(--nostrstack-color-border);
+  border-radius: var(--nostrstack-radius-md);
+  background: color-mix(in oklab, var(--nostrstack-color-surface) 92%, var(--nostrstack-color-primary-soft));
+  box-shadow: var(--nostrstack-shadow-sm);
+}
+.nostrstack-blockchain-value { font-weight: 950; font-size: 1.1rem; }
+.nostrstack-blockchain-label { color: var(--nostrstack-color-text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+.nostrstack-blockchain-actions { display: flex; justify-content: flex-end; }
+
 /* ===== Pay-to-action widget ===== */
 .nostrstack-pay {
   padding: var(--nostrstack-space-4);

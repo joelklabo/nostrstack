@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountPayToAction, mountTipButton, mountTipWidget } from './index.js';
+import { mountBlockchainStats, mountPayToAction, mountTipButton, mountTipWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -194,5 +194,43 @@ describe('mountTipWidget', () => {
     const firstUrl = String(fetchSpy.mock.calls[0]?.[0] ?? '');
     expect(firstUrl).toContain('/api/pay');
     expect(firstUrl).not.toContain('/api/api/');
+  });
+});
+
+describe('mountBlockchainStats', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('hydrates from telemetry summary', async () => {
+    const host = document.createElement('div');
+    const summary = {
+      type: 'block',
+      height: 820000,
+      mempoolTxs: 1200,
+      mempoolBytes: 5_000_000,
+      network: 'mainnet',
+      time: 1_700_000_000
+    };
+
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => summary
+    } as Response);
+
+    const widget = mountBlockchainStats(host, { baseURL: 'http://localhost:3001' });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const height = host.querySelector('[data-stat="height"]')?.textContent ?? '';
+    const mempool = host.querySelector('[data-stat="mempoolTxs"]')?.textContent ?? '';
+    const network = host.querySelector('[data-stat="network"]')?.textContent ?? '';
+
+    expect(height).toContain('820');
+    expect(mempool).toContain('1,200');
+    expect(network).toBe('mainnet');
+
+    widget.destroy();
   });
 });
