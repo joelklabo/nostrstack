@@ -11,6 +11,10 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 - `packages/config` – Shared lint/tsconfig
 - `deploy/azure` – Bicep + GH Actions pipeline for Azure Container Apps
 
+## Speckit
+
+- Specs live in `specs/speckit/` (constitution + embeddable comment/tip widget plan).
+
 ## Getting started
 
 ```sh
@@ -72,3 +76,18 @@ Find friend + tip flow:
   ```
 
 See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.
+
+### Embeddable comments + tips
+
+- Add a script/bundle for `@nostrstack/embed`, then drop:
+
+  ```html
+  <div
+    data-nostrstack-comment-tip="thread-or-slug"
+    data-tip-username="alice"
+    data-tip-item-id="post-123"
+    data-tip-show-feed="false">
+  </div>
+  ```
+
+Use `data-relays` to override relays, `data-tip-preset-amounts-sats` for presets, and `data-base-url`/`data-host` to point at your API/tenant.

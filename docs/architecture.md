@@ -8,6 +8,9 @@
 - **SDK (@nostrstack/sdk)**: Typed client for API.
 - **Injector/CLI**: Static-site injector for adding embed script to static outputs.
 
+## Personal Site Kit
+- See `docs/architecture/personal-site-kit.md` for component map, config schema, privacy stance, and CSP/CORS guidance.
+
 ## Data flow (happy path tip)
 Browser widget → API `/api/pay` (tenant lookup) → LightningProvider.createCharge(LNbits) → invoice to browser → payer pays → LNbits webhook → API updates Payment → widgets poll/verify.
 
