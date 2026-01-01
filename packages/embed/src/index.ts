@@ -6,7 +6,7 @@ import { copyToClipboard, createCopyButton } from './copyButton.js';
 import { renderInvoicePopover } from './invoicePopover.js';
 import { renderNostrProfile } from './nostrProfile.js';
 import { renderQrCodeInto } from './qr.js';
-import { renderRelayBadge } from './relayBadge.js';
+import { renderRelayBadge, updateRelayBadge } from './relayBadge.js';
 import { renderShareButton } from './share.js';
 import { ensureNostrstackRoot } from './styles.js';
 import { isMockBase, resolveApiBaseUrl, resolvePayWsUrl } from './url-utils.js';
@@ -92,6 +92,10 @@ type CommentWidgetOptions = {
   relays?: string[];
   placeholder?: string;
   headerText?: string;
+  maxItems?: number;
+  maxAgeDays?: number;
+  lazyConnect?: boolean;
+  validateEvents?: boolean;
   onEvent?: (event: NostrEvent, relay?: string) => void;
   onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
 };
@@ -102,7 +106,11 @@ declare global {
       getPublicKey: () => Promise<string>;
       signEvent: (event: NostrEvent) => Promise<NostrEvent>;
     };
-    NostrTools?: { relayInit?: (url: string) => unknown };
+    NostrTools?: {
+      relayInit?: (url: string) => unknown;
+      verifySignature?: (event: NostrEvent) => boolean;
+      validateEvent?: (event: NostrEvent) => boolean;
+    };
   }
 }
 
@@ -1614,6 +1622,26 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
 }
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
+const LOCAL_RELAY_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+const isAllowedRelayUrl = (url: string) => {
+  if (/^wss:\/\//i.test(url)) return true;
+  if (!/^ws:\/\//i.test(url)) return false;
+  const host = url.replace(/^ws:\/\//i, '').split(/[/?#]/)[0] ?? '';
+  return LOCAL_RELAY_HOSTS.has(host);
+};
+
+const normalizeRelayUrls = (relays?: string[]) => {
+  const raw = relays ?? DEFAULT_RELAYS;
+  const cleaned = raw.map((r) => r.trim()).filter(Boolean);
+  const valid: string[] = [];
+  const invalid: string[] = [];
+  cleaned.forEach((url) => {
+    if (isAllowedRelayUrl(url)) valid.push(url);
+    else invalid.push(url);
+  });
+  return { valid, invalid };
+};
 
 function getRelayInit() {
   return window.NostrTools?.relayInit;
@@ -1649,22 +1677,13 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   container.classList.add('nostrstack-card', 'nostrstack-comments');
   container.replaceChildren();
 
-  let relays = await connectRelays(opts.relays ?? DEFAULT_RELAYS);
-  if (!relays.length) {
-    // If caller explicitly asked for relays and none reachable, show note.
-    if (opts.relays && opts.relays.length) {
-      const note = document.createElement('div');
-      note.textContent = 'No relays reachable.';
-      note.className = 'nostrstack-muted';
-      container.appendChild(note);
-    }
-    relays = [];
-  }
+  const maxItems = Math.max(1, Math.min(200, opts.maxItems ?? 50));
+  const maxAgeDays = typeof opts.maxAgeDays === 'number' && opts.maxAgeDays > 0 ? opts.maxAgeDays : null;
+  const since = maxAgeDays ? Math.floor(Date.now() / 1000) - Math.round(maxAgeDays * 86400) : undefined;
+  const lazyConnect = opts.lazyConnect ?? false;
+  const validateEvents = opts.validateEvents ?? false;
+
   const threadId = opts.threadId ?? (location?.href ?? 'thread');
-  opts.onRelayInfo?.({
-    relays: relays.map((r) => r.url ?? '').filter(Boolean),
-    mode: 'real'
-  });
 
   const header = document.createElement('div');
   header.className = 'nostrstack-comments-header';
@@ -1673,13 +1692,27 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   headerText.className = 'nostrstack-comments-title';
   headerText.textContent = opts.headerText ?? 'Comments';
 
-  const relayBadge = renderRelayBadge(
-    relays.map((r) => r.url ?? '').filter(Boolean)
-  );
+  const relayBadge = renderRelayBadge([]);
   relayBadge.classList.add('nostrstack-comments-relays');
+
+  const notice = document.createElement('div');
+  notice.className = 'nostrstack-status nostrstack-status--muted nostrstack-comments__notice';
+  notice.setAttribute('role', 'status');
+  notice.setAttribute('aria-live', 'polite');
+  notice.hidden = true;
 
   const list = document.createElement('div');
   list.className = 'nostrstack-comments-list';
+
+  const actions = document.createElement('div');
+  actions.className = 'nostrstack-comments-actions';
+
+  const loadMoreBtn = document.createElement('button');
+  loadMoreBtn.type = 'button';
+  loadMoreBtn.className = 'nostrstack-btn nostrstack-btn--ghost nostrstack-comments-more';
+  loadMoreBtn.textContent = lazyConnect ? 'Load comments' : 'Load more';
+
+  actions.append(loadMoreBtn);
 
   const status = document.createElement('div');
   status.className = 'nostrstack-status nostrstack-status--muted';
@@ -1701,38 +1734,207 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   form.appendChild(textarea);
   form.appendChild(submit);
 
-  const appendEvent = (ev: NostrEvent) => {
+  const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
+    status.textContent = text;
+    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
+    status.classList.add(`nostrstack-status--${tone}`);
+  };
+
+  const setNotice = (text: string, tone: 'muted' | 'danger') => {
+    notice.textContent = text;
+    notice.hidden = !text;
+    notice.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
+    notice.classList.add(`nostrstack-status--${tone}`);
+  };
+
+  const setFormEnabled = (enabled: boolean) => {
+    textarea.disabled = !enabled;
+    submit.disabled = !enabled;
+  };
+
+  const verifySignature = typeof window !== 'undefined' ? window.NostrTools?.verifySignature : undefined;
+  const validateEvent = typeof window !== 'undefined' ? window.NostrTools?.validateEvent : undefined;
+  if (validateEvents && !verifySignature && !validateEvent) {
+    setNotice('Signature validation unavailable in this environment.', 'muted');
+  }
+
+  let relays: RelayConnection[] = [];
+  const subs: Array<{ un: () => void }> = [];
+  const seen = new Set<string>();
+  let oldestTimestamp: number | null = null;
+  let hasMore = false;
+  let loading = false;
+  let connected = false;
+  let destroyed = false;
+
+  const updateActions = () => {
+    if (lazyConnect && !connected) {
+      loadMoreBtn.hidden = false;
+      loadMoreBtn.textContent = loading ? 'Loading…' : 'Load comments';
+      loadMoreBtn.disabled = loading;
+      return;
+    }
+    if (!hasMore) {
+      loadMoreBtn.hidden = true;
+      return;
+    }
+    loadMoreBtn.hidden = false;
+    loadMoreBtn.textContent = loading ? 'Loading…' : 'Load more';
+    loadMoreBtn.disabled = loading;
+  };
+
+  const isValidEvent = (ev: NostrEvent) => {
+    if (!ev || !ev.id) return false;
+    if (validateEvents) {
+      if (!ev.sig) return false;
+      if (verifySignature && !verifySignature(ev)) return false;
+      if (validateEvent && !validateEvent(ev)) return false;
+    }
+    return true;
+  };
+
+  const appendEvent = (ev: NostrEvent, relayUrl?: string) => {
+    if (!isValidEvent(ev)) return;
+    if (seen.has(ev.id)) return;
+    seen.add(ev.id);
+    if (typeof ev.created_at === 'number') {
+      oldestTimestamp = oldestTimestamp === null ? ev.created_at : Math.min(oldestTimestamp, ev.created_at);
+    }
     const row = document.createElement('div');
     row.className = 'nostrstack-comment';
     row.textContent = ev.content;
     list.appendChild(row);
+    opts.onEvent?.(ev, relayUrl ?? undefined);
   };
 
-  const subs: Array<{ un: () => void }> = [];
-  const filters = [{ kinds: [1], '#t': [threadId] }];
-  relays.forEach((relay) => {
-    const sub = relay.sub(filters);
-    sub.on('event', (ev: NostrEvent) => {
-      appendEvent(ev);
-      opts.onEvent?.(ev, relay.url ?? undefined);
+  const startLiveSubscriptions = () => {
+    if (!relays.length) return;
+    loading = true;
+    updateActions();
+    setStatus('Loading…', 'muted');
+    const filters = [{
+      kinds: [1],
+      '#t': [threadId],
+      limit: maxItems,
+      ...(since ? { since } : {})
+    }];
+    let pending = relays.length;
+    let received = 0;
+    relays.forEach((relay) => {
+      const sub = relay.sub(filters);
+      subs.push(sub);
+      sub.on('event', (ev: NostrEvent) => {
+        const before = seen.size;
+        appendEvent(ev, relay.url ?? undefined);
+        if (seen.size > before) received += 1;
+      });
+      let eoseHandled = false;
+      const handleEose = () => {
+        if (eoseHandled) return;
+        eoseHandled = true;
+        pending -= 1;
+        if (pending <= 0) {
+          hasMore = received >= maxItems;
+          loading = false;
+          updateActions();
+          setStatus('', 'muted');
+        }
+      };
+      sub.on('eose', handleEose);
+      if (typeof window !== 'undefined') {
+        window.setTimeout(handleEose, 1500);
+      } else {
+        handleEose();
+      }
     });
-    subs.push(sub);
-  });
+  };
+
+  const loadMore = async () => {
+    if (!relays.length || loading) return;
+    if (since && oldestTimestamp !== null && oldestTimestamp <= since) {
+      hasMore = false;
+      updateActions();
+      return;
+    }
+    loading = true;
+    updateActions();
+    const until = oldestTimestamp ? oldestTimestamp - 1 : Math.floor(Date.now() / 1000);
+    const filters = [{
+      kinds: [1],
+      '#t': [threadId],
+      limit: maxItems,
+      ...(since ? { since } : {}),
+      until
+    }];
+    let received = 0;
+    await Promise.all(relays.map((relay) => new Promise<void>((resolve) => {
+      const sub = relay.sub(filters);
+      const handleEvent = (ev: NostrEvent) => {
+        const before = seen.size;
+        appendEvent(ev, relay.url ?? undefined);
+        if (seen.size > before) received += 1;
+      };
+      sub.on('event', handleEvent);
+      let eoseHandled = false;
+      const handleEose = () => {
+        if (eoseHandled) return;
+        eoseHandled = true;
+        sub.un();
+        resolve();
+      };
+      sub.on('eose', handleEose);
+      if (typeof window !== 'undefined') {
+        window.setTimeout(handleEose, 1500);
+      } else {
+        handleEose();
+      }
+    })));
+    hasMore = received >= maxItems;
+    loading = false;
+    updateActions();
+  };
+
+  const connectAndLoad = async () => {
+    if (connected || destroyed) return;
+    const { valid, invalid } = normalizeRelayUrls(opts.relays);
+    if (invalid.length) {
+      setNotice(`Ignored ${invalid.length} invalid relay${invalid.length === 1 ? '' : 's'}.`, 'muted');
+    }
+    if (!valid.length) {
+      setNotice('No relays configured.', 'danger');
+      updateActions();
+      return;
+    }
+    relays = await connectRelays(valid);
+    if (!relays.length) {
+      setNotice('No relays reachable.', 'danger');
+      updateActions();
+      return;
+    }
+    connected = true;
+    updateRelayBadge(relayBadge, relays.map((r) => r.url ?? '').filter(Boolean));
+    opts.onRelayInfo?.({
+      relays: relays.map((r) => r.url ?? '').filter(Boolean),
+      mode: 'real'
+    });
+    setFormEnabled(true);
+    startLiveSubscriptions();
+  };
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!window.nostr) {
-      status.textContent = 'Nostr signer (NIP-07) required to post';
-      status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
-      status.classList.add('nostrstack-status--danger');
+      setStatus('Nostr signer (NIP-07) required to post', 'danger');
+      return;
+    }
+    if (!relays.length) {
+      setStatus('Connect to a relay to post', 'danger');
       return;
     }
     const content = textarea.value.trim();
     if (!content) return;
     submit.disabled = true;
-    status.textContent = '';
-    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
-    status.classList.add('nostrstack-status--muted');
+    setStatus('', 'muted');
     try {
       const nostr = window.nostr;
       if (!nostr?.getPublicKey || !nostr.signEvent) {
@@ -1754,26 +1956,47 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
       textarea.value = '';
     } catch (err) {
       console.error('nostr post failed', err);
-      status.textContent = 'Failed to post comment';
-      status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
-      status.classList.add('nostrstack-status--danger');
+      setStatus('Failed to post comment', 'danger');
     } finally {
       submit.disabled = false;
     }
   };
 
+  const handleLoadMoreClick = () => {
+    if (lazyConnect && !connected) {
+      void connectAndLoad();
+      return;
+    }
+    void loadMore();
+  };
+
+  loadMoreBtn.addEventListener('click', handleLoadMoreClick);
+
   form.addEventListener('submit', handleSubmit);
+
+  if (lazyConnect) {
+    setFormEnabled(false);
+    setStatus('Click "Load comments" to connect', 'muted');
+  } else {
+    await connectAndLoad();
+  }
+
+  updateActions();
 
   header.append(headerText, relayBadge);
   container.appendChild(header);
+  container.appendChild(notice);
   container.appendChild(list);
+  container.appendChild(actions);
   container.appendChild(status);
   container.appendChild(form);
 
   return {
     el: container,
     destroy: () => {
+      destroyed = true;
       form.removeEventListener('submit', handleSubmit);
+      loadMoreBtn.removeEventListener('click', handleLoadMoreClick);
       subs.forEach((s) => s.un());
       relays.forEach((r) => r.close());
     }
@@ -2067,6 +2290,10 @@ type MountCommentOptions = {
   relays?: string[];
   placeholder?: string;
   headerText?: string;
+  maxItems?: number;
+  maxAgeDays?: number;
+  lazyConnect?: boolean;
+  validateEvents?: boolean;
   onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
   onEvent?: (event: NostrEvent, relay?: string) => void;
 };
@@ -2077,6 +2304,10 @@ export function mountCommentWidget(container: HTMLElement, opts: MountCommentOpt
     relays: opts.relays,
     placeholder: opts.placeholder ?? container.dataset.placeholder,
     headerText: opts.headerText ?? container.dataset.header,
+    maxItems: opts.maxItems,
+    maxAgeDays: opts.maxAgeDays,
+    lazyConnect: opts.lazyConnect,
+    validateEvents: opts.validateEvents,
     onRelayInfo: opts.onRelayInfo,
     onEvent: opts.onEvent
   });

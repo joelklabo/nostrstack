@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipFeed, mountTipWidget } from './index.js';
+import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipFeed, mountTipWidget, renderCommentWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -308,6 +308,126 @@ describe('mountTipFeed realtime', () => {
     const rows = host.querySelectorAll('.nostrstack-tip-feed__row');
     expect(rows.length).toBe(1);
     expect(host.textContent).toContain('21 sats');
+  });
+});
+
+describe('renderCommentWidget', () => {
+  const OriginalNostrTools = (globalThis as unknown as { NostrTools?: unknown }).NostrTools;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    (globalThis as unknown as { NostrTools?: unknown }).NostrTools = OriginalNostrTools;
+  });
+
+  it('caps initial load and loads more comments', async () => {
+    const host = document.createElement('div');
+
+    class MockSub {
+      private eventHandlers: Array<(ev: unknown) => void> = [];
+      private eoseHandlers: Array<() => void> = [];
+      on(type: string, cb: (ev: unknown) => void) {
+        if (type === 'event') this.eventHandlers.push(cb);
+        if (type === 'eose') this.eoseHandlers.push(cb as () => void);
+      }
+      emitEvent(ev: unknown) {
+        this.eventHandlers.forEach((cb) => cb(ev));
+      }
+      emitEose() {
+        this.eoseHandlers.forEach((cb) => cb());
+      }
+      un() {
+        // no-op
+      }
+    }
+
+    const subs: MockSub[] = [];
+    const relay = {
+      connect: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn(),
+      sub: vi.fn(() => {
+        const sub = new MockSub();
+        subs.push(sub);
+        return sub;
+      }),
+      publish: vi.fn()
+    };
+
+    (globalThis as unknown as { NostrTools?: { relayInit: (url: string) => unknown } }).NostrTools = {
+      relayInit: () => relay
+    };
+
+    await renderCommentWidget(host, { threadId: 'thread-1', relays: ['wss://relay.example'], maxItems: 2 });
+
+    const sub = subs[0];
+    sub.emitEvent({ id: 'id-1', content: 'First', created_at: 100, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk', sig: 'sig' });
+    sub.emitEvent({ id: 'id-2', content: 'Second', created_at: 101, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk', sig: 'sig' });
+    sub.emitEose();
+
+    expect(host.querySelectorAll('.nostrstack-comment').length).toBe(2);
+
+    const loadMoreBtn = host.querySelector('.nostrstack-comments-more') as HTMLButtonElement;
+    expect(loadMoreBtn.hidden).toBe(false);
+
+    loadMoreBtn.click();
+    const sub2 = subs[1];
+    sub2.emitEvent({ id: 'id-3', content: 'Third', created_at: 90, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk', sig: 'sig' });
+    sub2.emitEose();
+
+    expect(host.querySelectorAll('.nostrstack-comment').length).toBe(3);
+  });
+
+  it('skips unsigned events when validation is enabled', async () => {
+    const host = document.createElement('div');
+
+    class MockSub {
+      private eventHandlers: Array<(ev: unknown) => void> = [];
+      private eoseHandlers: Array<() => void> = [];
+      on(type: string, cb: (ev: unknown) => void) {
+        if (type === 'event') this.eventHandlers.push(cb);
+        if (type === 'eose') this.eoseHandlers.push(cb as () => void);
+      }
+      emitEvent(ev: unknown) {
+        this.eventHandlers.forEach((cb) => cb(ev));
+      }
+      emitEose() {
+        this.eoseHandlers.forEach((cb) => cb());
+      }
+      un() {
+        // no-op
+      }
+    }
+
+    const subs: MockSub[] = [];
+    const relay = {
+      connect: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn(),
+      sub: vi.fn(() => {
+        const sub = new MockSub();
+        subs.push(sub);
+        return sub;
+      }),
+      publish: vi.fn()
+    };
+
+    (globalThis as unknown as { NostrTools?: { relayInit: (url: string) => unknown } }).NostrTools = {
+      relayInit: () => relay
+    };
+
+    await renderCommentWidget(host, {
+      threadId: 'thread-1',
+      relays: ['wss://relay.example'],
+      maxItems: 1,
+      validateEvents: true
+    });
+
+    const sub = subs[0];
+    sub.emitEvent({ id: 'id-1', content: 'Unsigned', created_at: 100, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk' });
+    sub.emitEose();
+
+    expect(host.querySelectorAll('.nostrstack-comment').length).toBe(0);
   });
 });
 

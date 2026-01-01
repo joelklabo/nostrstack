@@ -1637,7 +1637,10 @@ export const nostrstackComponentsCss = `
 .nostrstack-comments-header { display: flex; align-items: center; justify-content: space-between; gap: var(--nostrstack-space-2); }
 .nostrstack-comments-title { font-weight: 900; font-size: 1.05rem; letter-spacing: 0.01em; }
 .nostrstack-comments-relays { flex: 0 0 auto; }
+.nostrstack-comments__notice { font-size: 0.92rem; }
 .nostrstack-comments-list { display: flex; flex-direction: column; gap: var(--nostrstack-space-2); }
+.nostrstack-comments-actions { display: flex; align-items: center; }
+.nostrstack-comments-more { align-self: flex-start; }
 .nostrstack-comment {
   padding: var(--nostrstack-space-3);
   border: 1px solid var(--nostrstack-color-border);

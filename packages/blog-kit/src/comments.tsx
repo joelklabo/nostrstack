@@ -10,10 +10,14 @@ export type CommentsProps = {
   relays?: string[];
   headerText?: string;
   placeholder?: string;
+  maxItems?: number;
+  maxAgeDays?: number;
+  lazyConnect?: boolean;
+  validateEvents?: boolean;
   className?: string;
 };
 
-export function Comments({ threadId, relays, headerText, placeholder, className }: CommentsProps) {
+export function Comments({ threadId, relays, headerText, placeholder, maxItems, maxAgeDays, lazyConnect, validateEvents, className }: CommentsProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -30,12 +34,16 @@ export function Comments({ threadId, relays, headerText, placeholder, className 
       relays: mergedRelays,
       headerText,
       placeholder,
+      maxItems,
+      maxAgeDays,
+      lazyConnect,
+      validateEvents,
     });
 
     return () => {
       node.innerHTML = '';
     };
-  }, [threadId, relays, headerText, placeholder, cfg.relays]);
+  }, [threadId, relays, headerText, placeholder, maxItems, maxAgeDays, lazyConnect, validateEvents, cfg.relays]);
 
   return <div ref={ref} className={className} data-nostrstack-comments />;
 }
