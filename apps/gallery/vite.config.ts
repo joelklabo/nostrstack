@@ -10,7 +10,10 @@ export default defineConfig(({ command }) => {
     plugins: [
       react({
         // Avoid React Refresh warnings from prebuilt workspace dist files.
-        exclude: [/packages\/blog-kit\/dist\//]
+        exclude: [/packages\/blog-kit\/dist\//],
+        babel: {
+          compact: true
+        }
       }),
       basicSsl()
     ],
