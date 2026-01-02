@@ -46,7 +46,7 @@ class MockRelayWebSocket {
   }
 
   private dispatch(type: string, event: MockEvent) {
-    const handler = (this as Record<string, ((event: MockEvent) => void) | null>)[`on${type}`];
+    const handler = (this as unknown as Record<string, ((event: MockEvent) => void) | null>)[`on${type}`];
     if (typeof handler === 'function') handler(event);
     for (const listener of this.listeners[type] ?? []) {
       listener(event);
@@ -73,10 +73,11 @@ export function installMockRelayWebSocket() {
     return new OriginalWebSocket(resolved, protocols as string | string[] | undefined);
   } as unknown as typeof WebSocket;
 
-  RelayWebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
-  RelayWebSocket.OPEN = OriginalWebSocket.OPEN;
-  RelayWebSocket.CLOSING = OriginalWebSocket.CLOSING;
-  RelayWebSocket.CLOSED = OriginalWebSocket.CLOSED;
+  const relayStatics = RelayWebSocket as unknown as Record<string, number>;
+  relayStatics.CONNECTING = OriginalWebSocket.CONNECTING;
+  relayStatics.OPEN = OriginalWebSocket.OPEN;
+  relayStatics.CLOSING = OriginalWebSocket.CLOSING;
+  relayStatics.CLOSED = OriginalWebSocket.CLOSED;
   RelayWebSocket.prototype = OriginalWebSocket.prototype;
 
   target.WebSocket = RelayWebSocket;
