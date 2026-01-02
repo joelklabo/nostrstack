@@ -252,7 +252,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
                }
              }
           }
-        } catch (e) {
+        } catch {
           // ignore parse error
         }
 

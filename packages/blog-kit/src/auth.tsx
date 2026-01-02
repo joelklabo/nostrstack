@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               const pubkey = await window.nostr.getPublicKey();
               setState({ pubkey, mode: 'nip07', isLoading: false, error: null });
-            } catch (err) {
+            } catch {
               setState({ pubkey: null, mode: 'guest', isLoading: false, error: 'NIP-07 auth failed' });
             }
           } else if (attempts++ > 10) {
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const pubkey = getPublicKey(data as Uint8Array);
               setState({ pubkey, mode: 'nsec', isLoading: false, error: null });
             }
-          } catch (e) {
+          } catch {
              localStorage.removeItem(STORAGE_KEY_MODE);
              localStorage.removeItem(STORAGE_KEY_NSEC);
              setState({ pubkey: null, mode: 'guest', isLoading: false, error: 'Invalid saved nsec' });

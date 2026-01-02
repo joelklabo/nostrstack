@@ -63,7 +63,7 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
             urlTried: url
           };
         }
-      } catch (err) {
+      } catch {
         // try next candidate
       }
     }

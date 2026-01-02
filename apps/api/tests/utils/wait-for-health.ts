@@ -8,7 +8,7 @@ export async function waitForHealth(url = 'http://localhost:3301/health', timeou
         await res.json();
       }
       return;
-    } catch (e) {
+    } catch {
       // ignore
     }
     await new Promise((r) => setTimeout(r, 500));
