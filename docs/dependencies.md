@@ -8,6 +8,8 @@ upstream packages are upgraded, these warnings are expected.
 - `@humanwhocodes/config-array@0.11.14` + `@humanwhocodes/object-schema@2.0.3`: pulled by `eslint@8.57.0`
   via `@typescript-eslint/*` and eslint plugins (dev tooling). Upgrading to ESLint v9+ should remove
   these but requires config migration.
+- `@nostrstack/config` (packages/config) pins eslint and `@typescript-eslint/*` versions for the
+  workspace. Upgrade those in tandem with the root `package.json` to avoid version skew.
 - `rimraf@3.0.2`, `glob@7.2.3`, `inflight@1.0.6`: pulled by `eslint@8.57.0` → `file-entry-cache@6.0.1`
   → `flat-cache@3.2.0`. These should clear with future ESLint/flat-cache upgrades.
 - `glob@8.1.0`: pulled by `@fastify/static@6.12.0` (via `@fastify/swagger-ui`). Upgrading Fastify static
