@@ -1,5 +1,5 @@
 import { useAuth, useNostrstackConfig, useStats } from '@nostrstack/blog-kit';
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
 import { useToast } from './ui/toast';
@@ -28,6 +28,8 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
     String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
   const bolt12Enabled =
     String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  const configuredNetwork = String(import.meta.env.VITE_NETWORK ?? 'regtest').trim() || 'regtest';
+  const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
   const showRegtestActions = regtestFundEnabled;
   const withdrawEnabled =
     String(import.meta.env.VITE_ENABLE_LNURL_WITHDRAW ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
@@ -193,8 +195,23 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         <div style={{ marginBottom: '1rem' }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Network</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-default)' }}>
+            Bitcoin: {configuredNetwork.toUpperCase()}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-default)' }}>
             Events: {eventCount}
           </div>
+          {isMainnet && (
+            <div
+              className="nostrstack-callout"
+              style={{
+                marginTop: '0.5rem',
+                '--nostrstack-callout-tone': 'var(--nostrstack-color-danger)'
+              } as CSSProperties}
+            >
+              <div className="nostrstack-callout__title">Mainnet enabled</div>
+              <div className="nostrstack-callout__content">Real sats and payments are live.</div>
+            </div>
+          )}
         </div>
 
         <button className="nav-item" onClick={logout} style={{ color: 'var(--color-danger-fg)', paddingLeft: 0 }}>

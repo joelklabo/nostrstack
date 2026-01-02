@@ -1,5 +1,5 @@
-import { type PaymentFailureReason, type PaymentMethod, type PaymentTelemetryEvent, type SearchTelemetryEvent,subscribeTelemetry } from '@nostrstack/blog-kit';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type PaymentFailureReason, type PaymentMethod, type PaymentTelemetryEvent, type SearchTelemetryEvent, subscribeTelemetry } from '@nostrstack/blog-kit';
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
 
@@ -19,10 +19,61 @@ type TelemetryEvent =
       version?: number;
       subversion?: string;
       connections?: number;
+      headers?: number;
+      blocks?: number;
+      verificationProgress?: number;
+      initialBlockDownload?: boolean;
     }
   | { type: 'tx'; txid: string; time: number }
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
   | { type: 'error'; message: string; time: number };
+
+type TelemetrySnapshot = {
+  network?: string;
+  height?: number;
+  hash?: string;
+  time?: number;
+  interval?: number;
+  mempoolTxs?: number;
+  mempoolBytes?: number;
+  version?: string | number;
+  subversion?: string;
+  connections?: number;
+  headers?: number;
+  blocks?: number;
+  verificationProgress?: number;
+  initialBlockDownload?: boolean;
+};
+
+type LnbitsHealth = {
+  status?: string;
+  reason?: string;
+  error?: string;
+  httpStatus?: number;
+  elapsedMs?: number;
+};
+
+type BitcoinStatus = {
+  network?: string;
+  configuredNetwork?: string;
+  source?: 'bitcoind' | 'mock';
+  telemetry?: TelemetrySnapshot;
+  telemetryError?: string;
+  lightning?: {
+    provider?: string;
+    lnbits?: LnbitsHealth;
+  };
+};
+
+type NodeState = TelemetrySnapshot & {
+  configuredNetwork?: string;
+  source?: string;
+  telemetryError?: string;
+  lightning?: {
+    provider?: string;
+    lnbits?: LnbitsHealth;
+  };
+};
 
 interface LogEntry {
   ts: number;
@@ -112,6 +163,22 @@ function resolveTelemetryWs(baseURL?: string): string | null {
   return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
 }
 
+function resolveTelemetryHttp(baseURL?: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
+  const base = preferSecureBase(raw.replace(/\/$/, ''));
+  if (base === '/api') {
+    return window.location.origin;
+  }
+  if (!base) {
+    return window.location.origin;
+  }
+  if (/^https?:\/\//i.test(base)) {
+    return base;
+  }
+  return `${window.location.origin}${base}`;
+}
+
 function preferSecureBase(base: string) {
   if (typeof window === 'undefined') return base;
   if (window.location.protocol !== 'https:') return base;
@@ -132,13 +199,8 @@ function safeClose(socket: WebSocket | null) {
 
 export function TelemetryBar() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [nodeState, setNodeState] = useState<{
-    network?: string;
-    height?: number;
-    version?: string;
-    connections?: number;
-    hash?: string;
-  } | null>(null);
+  const [nodeState, setNodeState] = useState<NodeState | null>(null);
+  const [status, setStatus] = useState<BitcoinStatus | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
   const appendLog = useCallback((entry: LogEntry, limit = 50) => {
@@ -147,6 +209,46 @@ export function TelemetryBar() {
       return next.slice(-limit);
     });
   }, []);
+  const mergeNodeState = useCallback((next: Partial<NodeState>) => {
+    setNodeState(prev => ({ ...prev, ...next }));
+  }, []);
+
+  useEffect(() => {
+    const telemetryBase = resolveTelemetryHttp(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001');
+    if (!telemetryBase) return;
+    let cancelled = false;
+    const url = `${telemetryBase.replace(/\/$/, '')}/api/bitcoin/status`;
+    fetch(url)
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`bitcoin status http ${res.status}`);
+        }
+        return res.json() as Promise<BitcoinStatus>;
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        setStatus(payload);
+        if (payload.telemetry) {
+          mergeNodeState({
+            ...payload.telemetry,
+            network: payload.telemetry.network ?? payload.network,
+            configuredNetwork: payload.configuredNetwork,
+            source: payload.source,
+            telemetryError: payload.telemetryError,
+            lightning: payload.lightning,
+            version: payload.telemetry.subversion ?? payload.telemetry.version
+          });
+        }
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : 'Bitcoin status unavailable.';
+        appendLog({ ts: Date.now(), level: 'warn', message });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appendLog, mergeNodeState]);
 
   useEffect(() => {
     const telemetryWsUrl = resolveTelemetryWs(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001');
@@ -169,13 +271,22 @@ export function TelemetryBar() {
           const msg = JSON.parse(event.data) as TelemetryEvent;
           
           if (msg.type === 'block') {
-            setNodeState({
-              network: msg.network,
-              height: msg.height,
-              version: msg.subversion || (msg.version ? String(msg.version) : undefined),
-              connections: msg.connections,
-              hash: msg.hash
-            });
+            setNodeState(prev => ({
+              ...prev,
+              network: msg.network ?? prev?.network,
+              height: msg.height ?? prev?.height,
+              hash: msg.hash ?? prev?.hash,
+              time: msg.time ?? prev?.time,
+              interval: msg.interval ?? prev?.interval,
+              mempoolTxs: msg.mempoolTxs ?? prev?.mempoolTxs,
+              mempoolBytes: msg.mempoolBytes ?? prev?.mempoolBytes,
+              version: msg.subversion || msg.version || prev?.version,
+              connections: msg.connections ?? prev?.connections,
+              headers: msg.headers ?? prev?.headers,
+              blocks: msg.blocks ?? prev?.blocks,
+              verificationProgress: msg.verificationProgress ?? prev?.verificationProgress,
+              initialBlockDownload: msg.initialBlockDownload ?? prev?.initialBlockDownload
+            }));
             appendLog(
               {
                 ts: msg.time * 1000,
@@ -228,11 +339,38 @@ export function TelemetryBar() {
     });
   }, [appendLog]);
 
+  const nodeInfo = status || nodeState
+    ? {
+        ...status?.telemetry,
+        ...nodeState,
+        network: nodeState?.network ?? status?.network ?? status?.telemetry?.network,
+        configuredNetwork: status?.configuredNetwork ?? nodeState?.configuredNetwork,
+        source: status?.source ?? nodeState?.source,
+        telemetryError: status?.telemetryError ?? nodeState?.telemetryError,
+        lightning: status?.lightning ?? nodeState?.lightning
+      }
+    : null;
+  const configuredNetwork =
+    nodeInfo?.configuredNetwork ?? nodeInfo?.network ?? String(import.meta.env.VITE_NETWORK ?? '').trim();
+  const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
+
   return (
     <div className="telemetry-sidebar">
-      {nodeState && (
+      {isMainnet && (
+        <div
+          className="nostrstack-callout"
+          style={{
+            marginBottom: '1rem',
+            '--nostrstack-callout-tone': 'var(--nostrstack-color-danger)'
+          } as CSSProperties}
+        >
+          <div className="nostrstack-callout__title">Mainnet active</div>
+          <div className="nostrstack-callout__content">Real sats and payments are live.</div>
+        </div>
+      )}
+      {nodeInfo && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <BitcoinNodeCard info={nodeState} />
+          <BitcoinNodeCard info={nodeInfo} />
         </div>
       )}
 
