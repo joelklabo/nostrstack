@@ -107,6 +107,6 @@ test.describe('/nostr/:id landing', () => {
 
     await page.goto(`/nostr/${npub}`);
     await expect(page.locator('.nostr-event-title')).toHaveText('Profile');
-    await expect(page.getByText('Satoshi')).toBeVisible();
+    await expect(page.locator('.nostr-profile-name')).toHaveText('Satoshi');
   });
 });

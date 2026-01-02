@@ -178,6 +178,7 @@ test('find friend and tip flow', async ({ page }) => {
   }
 
   const sendButton = page.getByRole('button', { name: /SEND 500/i });
+  await sendButton.waitFor({ state: 'visible', timeout: 15000 });
   await sendButton.scrollIntoViewIfNeeded();
   await sendButton.click();
   const sendModal = page.locator('.payment-modal');

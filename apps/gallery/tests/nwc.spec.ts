@@ -63,7 +63,7 @@ test('connects NWC and pays zap via mock', async ({ page }) => {
   await page.getByLabel('NWC_URI').fill(nwcUri);
   await page.getByLabel(/RELAYS/i).fill(relayUrl);
   await page.getByLabel(/MAX_SATS_PER_PAYMENT/i).fill('5000');
-  await page.getByRole('button', { name: 'CONNECT' }).click();
+  await page.getByRole('button', { name: 'CONNECT', exact: true }).click();
   await expect(page.locator('.nwc-status-pill')).toHaveText(/CONNECTED/);
   await expect(page.getByText(/Balance:/)).toBeVisible();
 

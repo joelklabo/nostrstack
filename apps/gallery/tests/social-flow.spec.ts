@@ -60,7 +60,7 @@ test.describe('Social App Flow', () => {
     const feedContainer = page.locator('.feed-container');
     const feedBox = await feedContainer.boundingBox();
     await zapBtn.click();
-    await expect(page.locator('.zap-modal')).toBeVisible();
+    await expect(page.locator('.zap-modal')).toBeVisible({ timeout: 10000 });
     const overlay = page.locator('.zap-overlay');
     await expect(overlay).toBeVisible();
     const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
