@@ -11,9 +11,17 @@ pnpm add @nostrstack/blog-kit
 ## Usage
 
 ```tsx
-import { Comments, NostrstackProvider, ShareButton, TipButton } from '@nostrstack/blog-kit';
+import { 
+  Comments, 
+  NostrstackProvider, 
+  ShareButton, 
+  TipButton,
+  SupportSection,
+  BlockchainStats,
+  NostrProfileWidget
+} from '@nostrstack/blog-kit';
 
-export function PostWidgets({ url, title, lnAddress, threadId }: { url: string; title: string; lnAddress: string; threadId: string }) {
+export function PostWidgets({ url, title, lnAddress, itemId }: { url: string; title: string; lnAddress: string; itemId: string }) {
   return (
     <NostrstackProvider
       lnAddress={lnAddress}
@@ -21,13 +29,38 @@ export function PostWidgets({ url, title, lnAddress, threadId }: { url: string; 
       baseUrl="https://your-nostrstack-api.example"
       host="your-nostrstack-api.example"
     >
-      <TipButton label="Send sats" />
-      <ShareButton url={url} title={title} lnAddress={lnAddress} />
-      <Comments threadId={threadId} />
+      {/* High-level composed section */}
+      <SupportSection 
+        itemId={itemId}
+        shareUrl={url}
+        shareTitle={title}
+      />
+
+      {/* Individual widgets */}
+      <div className="grid">
+        <BlockchainStats title="Network Status" />
+        <NostrProfileWidget identifier={lnAddress} />
+      </div>
     </NostrstackProvider>
   );
 }
 ```
+
+## Components
+
+### Composed
+
+- **`SupportSection`**: Combines tips, sharing, and comments into a responsive grid. Handles layout modes (`full` or `compact`).
+
+### Individual
+
+- **`Comments`**: Nostr-powered comment thread.
+- **`TipWidget`**: Tip interface with presets and activity feed.
+- **`CommentTipWidget`**: React wrapper for the `@nostrstack/embed` support grid.
+- **`BlockchainStats`**: Live Bitcoin network statistics.
+- **`NostrProfileWidget`**: Profile card for any pubkey or NIP-05.
+- **`ShareButton`**: One-click sharing to Nostr.
+- **`TipButton`**: Simplified tip button.
 
 ## Theming
 

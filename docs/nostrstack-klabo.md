@@ -45,12 +45,13 @@ Posts now support nostrstack frontmatter fields (Contentlayer):
 Admin compose/edit forms expose these fields; per-post disable is respected even if the flag is on.
 
 ## Runtime wiring (klabo.world)
-- Post page (`app/src/app/posts/[slug]/page.tsx`) renders `NostrstackActionBar` (tip/share) and `NostrstackComments` when flag `nostrstack-post-widgets` is true and post not disabled.
+- Post page (`app/src/app/posts/[slug]/page.tsx`) renders `SupportSection` (tips/share/comments) when flag `nostrstack-post-widgets` is true and post not disabled.
+- Sidebar or footer can render `BlockchainStats` and `NostrProfile` for global status and identity.
 - Widgets read env fallbacks when frontmatter is missing and build canonical URL for Nostr share.
 - Client component `app/src/components/nostrstack-widgets.tsx` handles mock mode (stub invoices, local comments) and dynamic nostr-tools import.
 
 ## React blog kit
-- `@nostrstack/blog-kit` exposes `NostrstackProvider`, `TipButton`, `Comments`, `ShareButton`, plus helpers for LN address/relays.
+- `@nostrstack/blog-kit` exposes `NostrstackProvider`, `SupportSection`, `BlockchainStats`, `NostrProfileWidget`, plus individual widgets (`TipWidget`, `Comments`, `ShareButton`).
 - Use when embedding widgets into other React blogs: wrap layout with `NostrstackProvider` and drop components where needed.
 
 ### Theming (blog-kit)
@@ -67,6 +68,10 @@ Full control:
 
 ## Static-site injector
 - CLI `pnpm nostrstack inject -i dist -t alice@your.host -a https://api.host -r wss://relay1,wss://relay2` adds embed script + tip/comments placeholders to static HTML/MDX outputs (Hugo/Jekyll/etc.). Idempotent via markers.
+- New flags:
+  - `--with-blockchain`: Add blockchain stats to the footer.
+  - `--with-profile`: Add your Nostr profile section.
+  - `--layout [full|compact]`: Set the default SupportSection layout.
 
 ## Embed config endpoint (nostrstack API)
 - `GET /embed-config?tenant=<name>` returns lnAddress, relays, embedScript URL, apiBase, theme. Honors `DEV_MOCKS=true` by returning `mock` base/relays for offline dev.

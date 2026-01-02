@@ -17,9 +17,20 @@ pnpm add @nostrstack/embed
 <div data-nostrstack-tip="alice" data-label="Send sats"></div>
 <div data-nostrstack-pay="alice" data-label="Unlock"></div>
 <div data-nostrstack-comments="post-123"></div>
+<div data-nostrstack-comment-tip="post-123" data-tip-username="alice"></div>
+<div data-nostrstack-blockchain data-title="Bitcoin"></div>
+<div data-nostrstack-profile="alice@example.com"></div>
+<div data-nostrstack-share-button data-url="https://example.com" data-title="Post Title"></div>
 ```
 
 Widgets auto-mount on elements with `data-nostrstack-*` attributes.
+
+### Personal Site Kit Widgets
+
+- **Support Grid (`data-nostrstack-comment-tip`)**: Combines tips and comments into a single responsive layout.
+- **Blockchain Stats (`data-nostrstack-blockchain`)**: Live height and fee rates.
+- **Nostr Profile (`data-nostrstack-profile`)**: Display profile metadata for any pubkey or lightning address.
+- **Share to Nostr (`data-nostrstack-share-button`)**: One-click sharing with Web Share API fallback.
 
 To opt into the newer tip widget (3 presets + custom + live activity), add an `itemId`:
 
@@ -36,7 +47,17 @@ To opt into the newer tip widget (3 presets + custom + live activity), add an `i
 ## Module usage
 
 ```ts
-import { mountTipButton, mountTipWidget, mountTipFeed, mountPayToAction, mountCommentWidget } from '@nostrstack/embed';
+import { 
+  mountTipButton, 
+  mountTipWidget, 
+  mountTipFeed, 
+  mountPayToAction, 
+  mountCommentWidget,
+  mountCommentTipWidget,
+  mountBlockchainStats,
+  mountNostrProfile,
+  mountShareButton
+} from '@nostrstack/embed';
 
 const tipBtn = mountTipButton(container, { username: 'alice', amountSats: 5 });
 // Tip widget (includes built-in activity feed by default).
@@ -45,6 +66,12 @@ const tipWidget = mountTipWidget(container, { username: 'alice', itemId: 'post-1
 mountTipFeed(feedContainer, { itemId: 'post-123' });
 const payBtn = mountPayToAction(container, { username: 'alice', amountSats: 10, onUnlock: () => console.log('paid') });
 mountCommentWidget(container, { threadId: 'post-123' });
+
+// Personal Site Kit
+mountCommentTipWidget(container, { itemId: 'post-123', username: 'alice' });
+mountBlockchainStats(container, { title: 'Network' });
+mountNostrProfile(container, { identifier: 'alice@example.com' });
+mountShareButton(container, { url: 'https://example.com', title: 'Post' });
 ```
 
 ## `baseURL` (important)
