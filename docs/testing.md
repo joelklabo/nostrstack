@@ -11,6 +11,10 @@
 - Playwright: `pnpm --filter gallery e2e tests/bitcoin-network-status.spec.ts` (or full suite with `pnpm --filter gallery e2e`).
 - Fallback if MCP unavailable: `pnpm qa:regtest-demo`.
 
+## Dev logs troubleshooting
+- If `pnpm dev:logs` fails with port conflicts (3001/4173), rerun with `FORCE_KILL_PORTS=1 pnpm dev:logs`.
+- `FORCE_KILL_PORTS=1` will terminate any existing process bound to those ports.
+
 ## Mutinynet (staging LNbits)
 - Env needed:
   - `LNBITS_URL=https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io`
