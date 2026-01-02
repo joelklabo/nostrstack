@@ -173,19 +173,34 @@ export function SupportSection({
     </div>
   );
 
-  const shareNode = canShare ? (
-    <ShareButton
-      url={shareDefaults.url}
-      title={shareDefaults.title}
-      lnAddress={resolvedLn ?? undefined}
-      relays={effectiveRelays}
-      tag={shareTag}
-      className={shareClassName}
-    />
-  ) : (
-    <div className={`nostrstack-callout${shareClassName ? ` ${shareClassName}` : ''}`} role="status">
-      <div className="nostrstack-callout__title">Share unavailable</div>
-      <div className="nostrstack-callout__content">Provide a share URL + title to enable sharing.</div>
+  const shareWrapStyle: React.CSSProperties = {
+    padding: 'var(--nostrstack-space-3)',
+    borderRadius: 'var(--nostrstack-radius-lg)',
+    border: '1px solid var(--nostrstack-color-border)',
+    background: 'var(--nostrstack-color-surface)',
+    boxShadow: 'var(--nostrstack-shadow-md)',
+  };
+
+  const shareNode = (
+    <div
+      className={['nostrstack-support-share', shareClassName].filter(Boolean).join(' ')}
+      style={shareWrapStyle}
+    >
+      {canShare ? (
+        <ShareButton
+          url={shareDefaults.url}
+          title={shareDefaults.title}
+          lnAddress={resolvedLn ?? undefined}
+          relays={effectiveRelays}
+          tag={shareTag}
+          className={shareClassName}
+        />
+      ) : (
+        <div className="nostrstack-callout" role="status">
+          <div className="nostrstack-callout__title">Share unavailable</div>
+          <div className="nostrstack-callout__content">Provide a share URL + title to enable sharing.</div>
+        </div>
+      )}
     </div>
   );
 

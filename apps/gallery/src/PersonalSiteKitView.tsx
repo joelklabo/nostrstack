@@ -4,7 +4,7 @@ import React from 'react';
 export function PersonalSiteKitView() {
   const demoItem = 'demo-post-123';
   const demoLnAddress = 'alice@nostrstack.test';
-  const demoNostrId = 'npub1alice...'; // Just for demo
+  const demoBaseUrl = 'mock';
   
   return (
     <div className="personal-site-kit-demo" style={{ padding: 'var(--nostrstack-space-6)', display: 'grid', gap: 'var(--nostrstack-space-8)' }}>
@@ -18,12 +18,12 @@ export function PersonalSiteKitView() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         <section>
           <h2 style={{ marginBottom: 'var(--nostrstack-space-4)', fontSize: '1.1rem' }}>Blockchain Stats</h2>
-          <BlockchainStats title="Network Status" />
+          <BlockchainStats title="Network Status" baseUrl={demoBaseUrl} />
         </section>
 
         <section>
           <h2 style={{ marginBottom: 'var(--nostrstack-space-4)', fontSize: '1.1rem' }}>Nostr Profile</h2>
-          <NostrProfileWidget identifier="alice@nostrstack.test" />
+          <NostrProfileWidget identifier="alice@nostrstack.test" baseUrl={demoBaseUrl} />
         </section>
       </div>
 
@@ -35,6 +35,8 @@ export function PersonalSiteKitView() {
           title="Support this post"
           shareUrl="https://nostrstack.test/demo"
           shareTitle="NostrStack Demo"
+          baseUrl={demoBaseUrl}
+          tipShowFeed={false}
           layout="full"
         />
       </section>
@@ -49,6 +51,8 @@ export function PersonalSiteKitView() {
           title="Enjoying this?"
           shareUrl="https://nostrstack.test/demo"
           shareTitle="NostrStack Demo"
+          baseUrl={demoBaseUrl}
+          tipShowFeed={false}
           layout="compact"
         />
       </section>
@@ -60,6 +64,8 @@ export function PersonalSiteKitView() {
         <CommentTipWidget 
           itemId={demoItem}
           lnAddress={demoLnAddress}
+          baseUrl={demoBaseUrl}
+          showFeed={false}
           layout="full"
         />
       </section>

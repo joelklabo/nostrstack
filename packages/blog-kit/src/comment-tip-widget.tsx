@@ -1,72 +1,57 @@
 "use client";
 
 import { mountCommentTipWidget } from '@nostrstack/embed';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 import { parseLnAddress } from './utils';
 
+type CommentTipLayout = 'full' | 'compact';
+
 export type CommentTipWidgetProps = {
-  /** Item id shared between tips + comments. */
   itemId?: string;
-  /** Thread id for comments; falls back to itemId when omitted. */
   threadId?: string;
-  /** Lightning address (lud16) for tips. */
   lnAddress?: string;
-  /** Default relay list for comments. */
   relays?: string[];
-  /** Layout mode; compact stacks sidebar above comments. */
-  layout?: 'full' | 'compact';
-  /** Tip widget label text. */
   tipLabel?: string;
-  /** Tip presets in sats. */
-  tipPresetAmountsSats?: number[];
-  /** Default tip amount in sats. */
-  tipDefaultAmountSats?: number;
-  /** Allow custom tip amount entry. */
-  tipAllowCustomAmount?: boolean;
-  /** Show tip activity feed inside TipWidget. */
-  tipShowFeed?: boolean;
-  /** Tip metadata sent with payments. */
-  tipMetadata?: Record<string, unknown>;
-  /** Override API base URL. */
+  presetAmountsSats?: number[];
+  defaultAmountSats?: number;
+  allowCustomAmount?: boolean;
+  showFeed?: boolean;
+  metadata?: Record<string, unknown>;
   baseUrl?: string;
-  /** Override tenant host. */
   host?: string;
-  /** Comments header text. */
+  layout?: CommentTipLayout;
+  tipSize?: 'full' | 'compact';
   commentsHeader?: string;
-  /** Comments composer placeholder text. */
   commentsPlaceholder?: string;
-  /** Max comments to load per batch. */
   commentsMaxItems?: number;
-  /** Max comment age in days. */
   commentsMaxAgeDays?: number;
-  /** Lazy connect to relays for comments. */
   commentsLazyConnect?: boolean;
-  /** Validate Nostr comment events when possible. */
   commentsValidateEvents?: boolean;
-  /** Root class name override. */
   className?: string;
+  onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void | Promise<void>;
+  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
 };
 
 /**
- * CommentTipWidget combines the tip widget and comments into a single grid.
- * Useful for blog post footers or dedicated support sections.
+ * CommentTipWidget wraps the embed Support Grid (tips + comments) in React.
  */
 export function CommentTipWidget({
   itemId,
   threadId,
   lnAddress,
   relays,
-  layout = 'full',
   tipLabel,
-  tipPresetAmountsSats,
-  tipDefaultAmountSats,
-  tipAllowCustomAmount,
-  tipShowFeed,
-  tipMetadata,
+  presetAmountsSats,
+  defaultAmountSats,
+  allowCustomAmount,
+  showFeed,
+  metadata,
   baseUrl,
   host,
+  layout = 'full',
+  tipSize,
   commentsHeader,
   commentsPlaceholder,
   commentsMaxItems,
@@ -74,75 +59,96 @@ export function CommentTipWidget({
   commentsLazyConnect,
   commentsValidateEvents,
   className,
+  onInvoice,
+  onPaid,
 }: CommentTipWidgetProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
   const resolved = useMemo(() => {
-    const resolvedLn = lnAddress ?? cfg.lnAddress;
-    const parsedLn = parseLnAddress(resolvedLn ?? null);
+    const parsed = parseLnAddress(lnAddress ?? cfg.lnAddress);
     return {
-      username: parsedLn?.username ?? 'anonymous',
-      host: host ?? parsedLn?.domain ?? cfg.host,
+      username: parsed?.username ?? 'anonymous',
+      host: host ?? parsed?.domain ?? cfg.host,
       baseUrl: baseUrl ?? cfg.baseUrl,
-      relays: relays ?? cfg.relays,
     };
-  }, [lnAddress, cfg.lnAddress, host, cfg.host, baseUrl, cfg.baseUrl, relays, cfg.relays]);
+  }, [lnAddress, baseUrl, host, cfg.lnAddress, cfg.baseUrl, cfg.host]);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     node.innerHTML = '';
+    let cancelled = false;
+    let cleanup: { destroy?: () => void } | null = null;
 
-    const promise = mountCommentTipWidget(node, {
+    void mountCommentTipWidget(node, {
       username: resolved.username,
       itemId,
       threadId,
+      presetAmountsSats,
+      defaultAmountSats,
+      allowCustomAmount,
+      showFeed,
       text: tipLabel,
-      presetAmountsSats: tipPresetAmountsSats,
-      defaultAmountSats: tipDefaultAmountSats,
-      allowCustomAmount: tipAllowCustomAmount,
-      showFeed: tipShowFeed,
-      metadata: tipMetadata,
       baseURL: resolved.baseUrl,
       host: resolved.host,
-      relays: resolved.relays,
+      metadata,
+      layout,
+      size: tipSize,
+      relays: relays ?? cfg.relays,
       headerText: commentsHeader,
       placeholder: commentsPlaceholder,
       maxItems: commentsMaxItems,
       maxAgeDays: commentsMaxAgeDays,
       lazyConnect: commentsLazyConnect,
       validateEvents: commentsValidateEvents,
-      layout,
+      onInvoice,
+      onPaid,
+    }).then((handle) => {
+      if (cancelled) {
+        handle?.destroy?.();
+        return;
+      }
+      cleanup = handle as { destroy?: () => void };
+    }).catch(() => {
+      // ignore mount errors
     });
 
     return () => {
-      promise.then((handle: { destroy?: () => void } | null | undefined) => {
+      cancelled = true;
+      if (cleanup?.destroy) {
         try {
-          handle?.destroy?.();
+          cleanup.destroy();
         } catch {
           // ignore
         }
-      });
+      }
       node.innerHTML = '';
     };
   }, [
-    resolved,
+    resolved.username,
+    resolved.host,
+    resolved.baseUrl,
     itemId,
     threadId,
+    presetAmountsSats,
+    defaultAmountSats,
+    allowCustomAmount,
+    showFeed,
     tipLabel,
-    tipPresetAmountsSats,
-    tipDefaultAmountSats,
-    tipAllowCustomAmount,
-    tipShowFeed,
-    tipMetadata,
+    metadata,
+    layout,
+    tipSize,
+    relays,
     commentsHeader,
     commentsPlaceholder,
     commentsMaxItems,
     commentsMaxAgeDays,
     commentsLazyConnect,
     commentsValidateEvents,
-    layout,
+    onInvoice,
+    onPaid,
+    cfg.relays,
   ]);
 
   return <div ref={ref} className={className} data-nostrstack-comment-tip-widget />;

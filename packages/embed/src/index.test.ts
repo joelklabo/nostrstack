@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipFeed, mountTipWidget, renderCommentWidget, renderCommentTipWidget } from './index.js';
+import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipFeed, mountTipWidget, renderCommentWidget } from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
