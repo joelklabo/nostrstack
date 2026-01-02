@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
-import { createTelemetryFetcher } from '../telemetry/providers.js';
 import { telemetrySummaryCounter } from '../telemetry/metrics.js';
+import { createTelemetryFetcher } from '../telemetry/providers.js';
 
 const CACHE_TTL_MS = 10_000;
 
