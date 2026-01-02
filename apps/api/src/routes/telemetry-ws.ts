@@ -4,8 +4,9 @@ import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
 import { env } from '../env.js';
-import { createBitcoindRpcCall, fetchTelemetrySummary } from '../telemetry/bitcoind.js';
+import { type TelemetrySource } from '../telemetry/bitcoind.js';
 import { telemetryPollFailuresCounter } from '../telemetry/metrics.js';
+import { getTelemetryProvider } from '../telemetry/providers.js';
 
 type TelemetryEvent =
   | {
@@ -23,6 +24,7 @@ type TelemetryEvent =
     version?: number;
     subversion?: string;
     connections?: number;
+    source?: TelemetrySource;
   }
   | { type: 'tx'; txid: string; time: number }
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
@@ -33,7 +35,7 @@ type TelemetryBlockEvent = Extract<TelemetryEvent, { type: 'block' }>;
 export async function registerTelemetryWs(app: FastifyInstance) {
   const server = app.server;
   const wss = new WebSocketServer({ noServer: true });
-  const { rpcCall } = createBitcoindRpcCall({ rpcUrl: env.BITCOIND_RPC_URL });
+  const provider = getTelemetryProvider();
 
   server.on('upgrade', (req, socket, head) => {
     const path = (req.url ?? '').split('?')[0] ?? '';
@@ -100,37 +102,38 @@ export async function registerTelemetryWs(app: FastifyInstance) {
 
   const fetchBlock = async (height: number): Promise<TelemetryBlockEvent | null> => {
     try {
-      const summary = await fetchTelemetrySummary(rpcCall, height, lastBlockTime);
-      if (!summary) return null;
-      return { type: 'block', ...summary };
+      const summary = await provider.fetchSummaryForHeight(height, lastBlockTime);
+      return { type: 'block', source: provider.source, ...summary };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       recordPollFailure(msg);
       app.log.warn({ err }, 'telemetry fetchBlock failed');
-      broadcastError('bitcoind RPC call failed; check node status');
+      broadcastError(`telemetry ${provider.source} fetch failed; check node status`);
       return null;
     }
   };
 
   // Prime with current tip so new clients see data immediately
-  let useMock = false;
-  try {
-    const tip = Number(await rpcCall('getblockcount'));
-    if (Number.isFinite(tip)) {
-      const ev = await fetchBlock(tip);
-      if (ev) {
-        lastHeight = ev.height;
-        lastHash = ev.hash || lastHash;
-        lastBlockTime = ev.time;
-        lastEvent = ev;
+  let useMock = provider.source === 'mock';
+  if (!useMock) {
+    try {
+      const tip = await provider.fetchTipHeight();
+      if (Number.isFinite(tip)) {
+        const ev = await fetchBlock(tip);
+        if (ev) {
+          lastHeight = ev.height;
+          lastHash = ev.hash || lastHash;
+          lastBlockTime = ev.time;
+          lastEvent = ev;
+        }
+      } else {
+        useMock = true;
+        app.log.warn('telemetry provider returned non-numeric block height, switching to mock telemetry');
       }
-    } else {
+    } catch (err) {
+      app.log.warn({ err }, 'telemetry initial tip fetch failed, switching to mock telemetry');
       useMock = true;
-      app.log.warn('bitcoind returned non-numeric block height, switching to mock telemetry');
     }
-  } catch (err) {
-    app.log.warn({ err }, 'telemetry initial tip fetch failed, switching to mock telemetry');
-    useMock = true;
   }
 
   if (useMock) {
@@ -153,7 +156,8 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       network: mockNetwork,
       version: 70016,
       subversion: '/Satoshi:26.0.0/',
-      connections: 8
+      connections: 8,
+      source: 'mock'
     };
 
     const mockInterval = setInterval(() => {
@@ -179,7 +183,8 @@ export async function registerTelemetryWs(app: FastifyInstance) {
           network: mockNetwork,
           version: 70016,
           subversion: '/Satoshi:26.0.0/',
-          connections: 8 + Math.floor(Math.random() * 5)
+          connections: 8 + Math.floor(Math.random() * 5),
+          source: 'mock'
         };
         lastEvent = blockEvent;
         broadcast(blockEvent);
@@ -209,7 +214,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     if (pollInFlight || now < nextPollAt) return;
     pollInFlight = true;
     try {
-      const height = Number(await rpcCall('getblockcount'));
+      const height = await provider.fetchTipHeight();
       if (Number.isFinite(height) && height !== lastHeight) {
         const event = await fetchBlock(height);
         if (event) {
@@ -221,7 +226,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
           broadcast(event);
         }
       } else if (!Number.isFinite(height)) {
-        broadcastError('bitcoind block height unavailable');
+        broadcastError('telemetry provider block height unavailable');
       }
       pollDelayMs = POLL_BASE_MS;
       nextPollAt = Date.now() + pollDelayMs;

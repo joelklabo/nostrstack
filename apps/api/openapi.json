@@ -5,7 +5,146 @@
     "version": "0.0.0"
   },
   "components": {
-    "schemas": {}
+    "schemas": {
+      "TelemetrySummary": {
+        "type": "object",
+        "properties": {
+          "height": {
+            "type": "integer"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "time": {
+            "type": "integer"
+          },
+          "txs": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "weight": {
+            "type": "integer"
+          },
+          "interval": {
+            "type": "integer"
+          },
+          "mempoolTxs": {
+            "type": "integer"
+          },
+          "mempoolBytes": {
+            "type": "integer"
+          },
+          "network": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "subversion": {
+            "type": "string"
+          },
+          "connections": {
+            "type": "integer"
+          },
+          "headers": {
+            "type": "integer"
+          },
+          "blocks": {
+            "type": "integer"
+          },
+          "verificationProgress": {
+            "type": "number"
+          },
+          "initialBlockDownload": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "height",
+          "hash",
+          "time"
+        ],
+        "additionalProperties": false
+      },
+      "BitcoinStatus": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "string"
+          },
+          "configuredNetwork": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "bitcoind",
+              "esplora",
+              "mock"
+            ]
+          },
+          "telemetry": {
+            "$ref": "#/components/schemas/TelemetrySummary"
+          },
+          "telemetryError": {
+            "type": "string"
+          },
+          "lightning": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string"
+              },
+              "lnbits": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "error": {
+                    "type": "string"
+                  },
+                  "httpStatus": {
+                    "type": "integer"
+                  },
+                  "elapsedMs": {
+                    "type": "integer"
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "urlTried": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider",
+              "lnbits"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "network",
+          "configuredNetwork",
+          "source",
+          "telemetry",
+          "lightning"
+        ],
+        "additionalProperties": false
+      }
+    }
   },
   "paths": {
     "/health": {
@@ -224,6 +363,25 @@
         "responses": {
           "200": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/bitcoin/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Bitcoin status response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitcoinStatus"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bitcoin status unavailable"
           }
         }
       }

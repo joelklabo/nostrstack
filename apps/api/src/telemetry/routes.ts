@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
-import { createBitcoindRpcCall, fetchTelemetrySummary, type TelemetrySummary } from './bitcoind.js';
-import { buildMockSummary } from './mock-summary.js';
+import { type TelemetrySource, type TelemetrySummary } from './bitcoind.js';
+import { createTelemetryFetcher } from './providers.js';
 
 type LnbitsHealth =
   | { status: 'skipped'; reason: 'provider_not_lnbits' }
@@ -13,7 +13,7 @@ type LnbitsHealth =
 type BitcoinStatus = {
   network: string;
   configuredNetwork: string;
-  source: 'bitcoind' | 'mock';
+  source: TelemetrySource;
   telemetry: TelemetrySummary;
   telemetryError?: string;
   lightning: {
@@ -23,7 +23,7 @@ type BitcoinStatus = {
 };
 
 type TelemetryFetchResult = {
-  source: 'bitcoind' | 'mock';
+  source: TelemetrySource;
   summary: TelemetrySummary;
   error?: string;
 };
@@ -73,31 +73,8 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
     };
   };
 
-  const fetchTelemetry = async (): Promise<TelemetryFetchResult> => {
-    if (env.TELEMETRY_PROVIDER === 'mock') {
-      return { source: 'mock', summary: buildMockSummary({ network: env.BITCOIN_NETWORK }) };
-    }
-    const { rpcCall } = createBitcoindRpcCall({ rpcUrl: env.BITCOIND_RPC_URL });
-    try {
-      const heightRaw = await rpcCall('getblockcount');
-      const height = Number(heightRaw);
-      if (!Number.isFinite(height)) {
-        throw new Error('bitcoind returned non-numeric block height');
-      }
-      const summary = await fetchTelemetrySummary(rpcCall, height, null);
-      if (!summary) {
-        throw new Error('bitcoind block data unavailable');
-      }
-      return { source: 'bitcoind', summary };
-    } catch (err) {
-      if (env.NODE_ENV !== 'production') {
-        const summary = buildMockSummary({ network: env.BITCOIN_NETWORK });
-        const msg = err instanceof Error ? err.message : String(err);
-        return { source: 'mock', summary, error: msg };
-      }
-      throw err;
-    }
-  };
+  const telemetryFetcher = createTelemetryFetcher();
+  const fetchTelemetry = async (): Promise<TelemetryFetchResult> => telemetryFetcher.fetchSummaryWithFallback();
 
   // Expose under both roots: some clients treat "/api" as their base.
   app.get('/health/lnbits', lnbitsHealthHandler);

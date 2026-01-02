@@ -1,5 +1,7 @@
 export type BitcoindRpcCall = (method: string, params?: unknown[]) => Promise<unknown>;
 
+export type TelemetrySource = 'bitcoind' | 'esplora' | 'mock';
+
 export type TelemetrySummary = {
   height: number;
   hash: string;
