@@ -14,6 +14,10 @@ export type TelemetrySummary = {
   version?: number;
   subversion?: string;
   connections?: number;
+  headers?: number;
+  blocks?: number;
+  verificationProgress?: number;
+  initialBlockDownload?: boolean;
 };
 
 const DEFAULT_RPC_URL = 'http://bitcoin:bitcoin@localhost:18443';
@@ -86,7 +90,13 @@ export async function fetchTelemetrySummary(
     subversion?: string;
     connections?: number;
   } | null;
-  const blockchainInfo = (await rpcCall('getblockchaininfo').catch(() => null)) as { chain?: string } | null;
+  const blockchainInfo = (await rpcCall('getblockchaininfo').catch(() => null)) as {
+    chain?: string;
+    headers?: number;
+    blocks?: number;
+    verificationprogress?: number;
+    initialblockdownload?: boolean;
+  } | null;
 
   const interval = lastBlockTime ? Math.max(0, time - lastBlockTime) : undefined;
 
@@ -103,6 +113,10 @@ export async function fetchTelemetrySummary(
     network: blockchainInfo?.chain,
     version: networkInfo?.version,
     subversion: networkInfo?.subversion,
-    connections: networkInfo?.connections
+    connections: networkInfo?.connections,
+    headers: blockchainInfo?.headers,
+    blocks: blockchainInfo?.blocks,
+    verificationProgress: blockchainInfo?.verificationprogress,
+    initialBlockDownload: blockchainInfo?.initialblockdownload
   };
 }

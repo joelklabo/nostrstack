@@ -3,6 +3,7 @@
 import type { FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
+import { env } from '../env.js';
 import { createBitcoindRpcCall, fetchTelemetrySummary } from '../telemetry/bitcoind.js';
 import { telemetryPollFailuresCounter } from '../telemetry/metrics.js';
 
@@ -32,7 +33,7 @@ type TelemetryBlockEvent = Extract<TelemetryEvent, { type: 'block' }>;
 export async function registerTelemetryWs(app: FastifyInstance) {
   const server = app.server;
   const wss = new WebSocketServer({ noServer: true });
-  const { rpcCall } = createBitcoindRpcCall();
+  const { rpcCall } = createBitcoindRpcCall({ rpcUrl: env.BITCOIND_RPC_URL });
 
   server.on('upgrade', (req, socket, head) => {
     const path = (req.url ?? '').split('?')[0] ?? '';
@@ -134,6 +135,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
 
   if (useMock) {
     // Mock simulation
+    const mockNetwork = env.BITCOIN_NETWORK || 'mocknet';
     let mockHeight = 820000;
     let mockHash = '000000000000000000035c1ec826f03027878434757045197825310657158739';
     
@@ -148,7 +150,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       weight: 3990000,
       mempoolTxs: 15000,
       mempoolBytes: 35000000,
-      network: 'mocknet',
+      network: mockNetwork,
       version: 70016,
       subversion: '/Satoshi:26.0.0/',
       connections: 8
@@ -174,7 +176,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
           interval,
           mempoolTxs: 5000 + Math.floor(Math.random() * 20000),
           mempoolBytes: 10000000 + Math.floor(Math.random() * 50000000),
-          network: 'mocknet',
+          network: mockNetwork,
           version: 70016,
           subversion: '/Satoshi:26.0.0/',
           connections: 8 + Math.floor(Math.random() * 5)

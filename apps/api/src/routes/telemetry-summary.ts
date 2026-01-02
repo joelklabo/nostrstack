@@ -3,27 +3,12 @@ import type { FastifyInstance } from 'fastify';
 import { env } from '../env.js';
 import { createBitcoindRpcCall, fetchTelemetrySummary, type TelemetrySummary } from '../telemetry/bitcoind.js';
 import { telemetrySummaryCounter } from '../telemetry/metrics.js';
+import { buildMockSummary } from '../telemetry/mock-summary.js';
 
 const CACHE_TTL_MS = 10_000;
 
-const buildMockSummary = (): TelemetrySummary => ({
-  height: 820000,
-  hash: '000000000000000000035c1ec826f03027878434757045197825310657158739',
-  time: Math.floor(Date.now() / 1000),
-  txs: 2500,
-  size: 1500000,
-  weight: 3990000,
-  interval: 600,
-  mempoolTxs: 15000,
-  mempoolBytes: 35000000,
-  network: 'mocknet',
-  version: 70016,
-  subversion: '/Satoshi:26.0.0/',
-  connections: 8
-});
-
 export async function registerTelemetrySummaryRoute(app: FastifyInstance) {
-  const { rpcCall } = createBitcoindRpcCall();
+  const { rpcCall } = createBitcoindRpcCall({ rpcUrl: env.BITCOIND_RPC_URL });
   let cachedSummary: TelemetrySummary | null = null;
   let cachedAt = 0;
   let inFlight: Promise<TelemetrySummary> | null = null;
@@ -58,7 +43,7 @@ export async function registerTelemetrySummaryRoute(app: FastifyInstance) {
       return reply.send({ type: 'block', ...summary });
     } catch (err) {
       if (env.NODE_ENV !== 'production') {
-        const mockSummary = buildMockSummary();
+        const mockSummary = buildMockSummary({ network: env.BITCOIN_NETWORK });
         cachedSummary = mockSummary;
         cachedAt = Date.now();
         telemetrySummaryCounter.labels('mock').inc();

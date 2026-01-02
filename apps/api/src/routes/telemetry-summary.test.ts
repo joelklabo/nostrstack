@@ -70,7 +70,7 @@ describe('/api/telemetry/summary', () => {
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.type).toBe('block');
-    expect(body.network).toBe('mocknet');
+    expect(body.network).toBe('regtest');
     expect(body.height).toBe(820000);
   });
 });
