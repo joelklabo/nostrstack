@@ -3,6 +3,10 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 LOG_DIR="$ROOT/.logs/dev"
+
+# Suppress "NO_COLOR env is ignored due to FORCE_COLOR" warnings
+unset NO_COLOR
+
 mkdir -p "$LOG_DIR"
 API_LOG="$LOG_DIR/api.log"
 GALLERY_LOG="$LOG_DIR/gallery.log"
