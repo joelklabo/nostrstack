@@ -10,9 +10,7 @@ import { JsonView } from './ui/JsonView';
 import { ProfileLink } from './ui/ProfileLink';
 import { navigateTo } from './utils/navigation';
 
-interface Post extends Event {
-  // Add any extra fields if needed
-}
+type Post = Event;
 
 type RelayStatus = {
   status: 'connecting' | 'online' | 'error';

@@ -18,8 +18,7 @@ module.exports = {
     'import/no-unresolved': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    '@typescript-eslint/ban-ts-comment': 'off',
-    '@typescript-eslint/ban-types': 'warn'
+    '@typescript-eslint/ban-ts-comment': 'off'
   },
   ignorePatterns: ['dist', 'build', 'node_modules']
 };
