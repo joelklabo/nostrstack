@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyBaseLogger,FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
 type WalletSnapshot = {
@@ -8,6 +8,52 @@ type WalletSnapshot = {
   balance?: number;
   time: number;
 };
+
+export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, apiKey: string) {
+  let successiveFailures = 0;
+  let lastFailureMsg = '';
+
+  return async (): Promise<WalletSnapshot | null> => {
+    if (process.env.LIGHTNING_PROVIDER === 'mock') {
+      return {
+        type: 'wallet',
+        id: 'mock-wallet',
+        name: 'Mock Wallet',
+        balance: 50000,
+        time: Math.floor(Date.now() / 1000)
+      };
+    }
+    try {
+      const res = await fetch(`${baseUrl}/api/v1/wallet`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Api-Key': apiKey
+        }
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`lnbits http ${res.status}: ${text.slice(0, 200)}`);
+      const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
+      successiveFailures = 0;
+      lastFailureMsg = '';
+      return { type: 'wallet', id: json.id, name: json.name, balance: json.balance, time: Math.floor(Date.now() / 1000) };
+    } catch (err) {
+      successiveFailures++;
+      const msg = err instanceof Error ? err.message : String(err);
+      
+      // Warn on first failure, every 12th failure (~1 minute), or if error changed
+      const shouldWarn = successiveFailures === 1 || successiveFailures % 12 === 0 || msg !== lastFailureMsg;
+      
+      if (shouldWarn) {
+        log.warn({ err, successiveFailures }, 'wallet-ws fetch failed');
+      } else {
+        log.debug({ err, successiveFailures }, 'wallet-ws fetch failed (suppressed)');
+      }
+      
+      lastFailureMsg = msg;
+      return null;
+    }
+  };
+}
 
 export async function registerWalletWs(app: FastifyInstance) {
   const server = app.server;
@@ -38,32 +84,7 @@ export async function registerWalletWs(app: FastifyInstance) {
     });
   };
 
-  const fetchWallet = async (): Promise<WalletSnapshot | null> => {
-    if (process.env.LIGHTNING_PROVIDER === 'mock') {
-      return {
-        type: 'wallet',
-        id: 'mock-wallet',
-        name: 'Mock Wallet',
-        balance: 50000,
-        time: Math.floor(Date.now() / 1000)
-      };
-    }
-    try {
-      const res = await fetch(`${baseUrl}/api/v1/wallet`, {
-        headers: {
-          Accept: 'application/json',
-          'X-Api-Key': apiKey
-        }
-      });
-      const text = await res.text();
-      if (!res.ok) throw new Error(`lnbits http ${res.status}: ${text.slice(0, 200)}`);
-      const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
-      return { type: 'wallet', id: json.id, name: json.name, balance: json.balance, time: Math.floor(Date.now() / 1000) };
-    } catch (err) {
-      app.log.warn({ err }, 'wallet-ws fetch failed');
-      return null;
-    }
-  };
+  const fetchWallet = createWalletFetcher(app.log, baseUrl, apiKey);
 
   const interval = setInterval(async () => {
     const snap = await fetchWallet();
