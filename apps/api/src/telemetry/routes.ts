@@ -1,7 +1,8 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import { env } from '../env.js';
 import { type TelemetrySource, type TelemetrySummary } from './bitcoind.js';
+import { bitcoinStatusFailureCounter, bitcoinStatusFetchDuration, bitcoinStatusRequestCounter } from './metrics.js';
 import { createTelemetryFetcher } from './providers.js';
 
 type LnbitsHealth =
@@ -97,26 +98,37 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
     };
   };
 
-  app.get('/bitcoin/status', async (_req, reply) => {
+  const handleBitcoinStatusRequest = async (reply: FastifyReply) => {
+    const started = Date.now();
+    let source: TelemetrySource | 'unknown' = 'unknown';
     try {
-      return reply.send(await bitcoinStatusHandler());
+      const status = await bitcoinStatusHandler();
+      source = status.source;
+      const elapsedSeconds = (Date.now() - started) / 1000;
+      bitcoinStatusRequestCounter.labels('ok', source).inc();
+      bitcoinStatusFetchDuration.labels('ok', source).observe(elapsedSeconds);
+      if (status.telemetryError) {
+        bitcoinStatusFailureCounter.labels('telemetry_error').inc();
+      }
+      if (status.lightning.lnbits.status === 'error') {
+        bitcoinStatusFailureCounter.labels('lnbits_config').inc();
+      } else if (status.lightning.lnbits.status === 'fail') {
+        bitcoinStatusFailureCounter.labels('lnbits_unreachable').inc();
+      }
+      return reply.send(status);
     } catch (err) {
+      const elapsedSeconds = (Date.now() - started) / 1000;
+      bitcoinStatusRequestCounter.labels('error', source).inc();
+      bitcoinStatusFetchDuration.labels('error', source).observe(elapsedSeconds);
+      bitcoinStatusFailureCounter.labels('handler_exception').inc();
       app.log.warn({ err }, 'bitcoin status failed');
       return reply.status(502).send({
         error: 'bitcoin_status_unavailable',
         message: 'Bitcoin status unavailable.'
       });
     }
-  });
-  app.get('/api/bitcoin/status', async (_req, reply) => {
-    try {
-      return reply.send(await bitcoinStatusHandler());
-    } catch (err) {
-      app.log.warn({ err }, 'bitcoin status failed');
-      return reply.status(502).send({
-        error: 'bitcoin_status_unavailable',
-        message: 'Bitcoin status unavailable.'
-      });
-    }
-  });
+  };
+
+  app.get('/bitcoin/status', async (_req, reply) => handleBitcoinStatusRequest(reply));
+  app.get('/api/bitcoin/status', async (_req, reply) => handleBitcoinStatusRequest(reply));
 }

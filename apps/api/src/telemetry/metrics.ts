@@ -65,6 +65,25 @@ export const telemetryPollFailuresCounter = new client.Counter({
   labelNames: ['reason']
 });
 
+export const bitcoinStatusRequestCounter = new client.Counter({
+  name: 'bitcoin_status_requests_total',
+  help: 'Bitcoin status requests by result and telemetry source',
+  labelNames: ['result', 'source']
+});
+
+export const bitcoinStatusFailureCounter = new client.Counter({
+  name: 'bitcoin_status_failures_total',
+  help: 'Bitcoin status failures by reason',
+  labelNames: ['reason']
+});
+
+export const bitcoinStatusFetchDuration = new client.Histogram({
+  name: 'bitcoin_status_fetch_duration_seconds',
+  help: 'Latency for building bitcoin status responses',
+  labelNames: ['result', 'source'],
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10]
+});
+
 export const tipsWsConnectionsCounter = new client.Counter({
   name: 'tips_ws_connections_total',
   help: 'Tips websocket connections',

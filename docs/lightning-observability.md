@@ -6,6 +6,11 @@ Sources already flowing
 - ACA managed environment (`nostrstack-env-stg-west`): `ContainerAppConsoleLogs`, `ContainerAppSystemLogs`, `AllMetrics`.
 - Postgres `nostrstack-pg-west`: metrics + logs (existing diagnostic setting `pg-all`).
 
+API metrics (Prometheus)
+- `bitcoin_status_requests_total{result,source}`: count of `/api/bitcoin/status` responses by result (`ok`/`error`) and telemetry source (`bitcoind`/`esplora`/`mock`).
+- `bitcoin_status_failures_total{reason}`: failure reasons for bitcoin status (`telemetry_error`, `lnbits_config`, `lnbits_unreachable`, `handler_exception`).
+- `bitcoin_status_fetch_duration_seconds{result,source}`: histogram for status handler latency by result and source.
+
 Useful KQL snippets
 - LNbits prod app logs (latest errors):
   ```
