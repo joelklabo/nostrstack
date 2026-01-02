@@ -1787,3 +1787,36 @@ h3 {
     grid-template-columns: 1fr;
   }
 }
+
+/* Personal Site Kit Demo */
+.personal-site-kit-demo {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.personal-site-kit-demo h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-fg-default);
+}
+
+.personal-site-kit-demo h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-fg-default);
+  margin-top: 2rem;
+  border-bottom: 1px solid var(--color-border-muted);
+  padding-bottom: 0.5rem;
+}
+
+.personal-site-kit-demo section {
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.personal-site-kit-demo hr {
+  margin: 2rem 0;
+}
