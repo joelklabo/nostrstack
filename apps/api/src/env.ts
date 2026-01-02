@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 import { z } from 'zod';
 
+import { parseHostAllowlist, validateTelemetryUrl } from './telemetry/url-guard.js';
+
 // Resolve paths relative to the package root so DB defaults work whether run from src or dist.
 const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const envLocal = resolve(packageRoot, '.env.local');
@@ -51,6 +53,7 @@ const schema = z.object({
   TELEMETRY_PROVIDER: z.enum(['bitcoind', 'esplora', 'mock']).default('bitcoind'),
   BITCOIND_RPC_URL: z.string().url().optional(),
   TELEMETRY_ESPLORA_URL: z.string().url().optional(),
+  TELEMETRY_HOST_ALLOWLIST: z.string().optional(),
   BOLT12_PROVIDER: z.enum(['cln-rest', 'mock']).optional(),
   BOLT12_REST_URL: z.string().url().optional(),
   BOLT12_REST_API_KEY: z.string().optional(),
@@ -101,6 +104,46 @@ const schema = z.object({
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
   OTEL_SERVICE_NAME: z.string().default('nostrstack-api')
 }).superRefine((data, ctx) => {
+  const telemetryAllowlist = parseHostAllowlist(data.TELEMETRY_HOST_ALLOWLIST);
+  const requireHttps = data.NODE_ENV === 'production';
+  const allowPrivateHosts = data.NODE_ENV !== 'production';
+
+  if (data.TELEMETRY_PROVIDER === 'esplora' && !data.TELEMETRY_ESPLORA_URL) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['TELEMETRY_ESPLORA_URL'],
+      message: 'TELEMETRY_ESPLORA_URL is required when TELEMETRY_PROVIDER=esplora'
+    });
+  }
+
+  const telemetryUrlError = validateTelemetryUrl(data.TELEMETRY_ESPLORA_URL, {
+    label: 'TELEMETRY_ESPLORA_URL',
+    requireHttps,
+    allowPrivateHosts,
+    allowlist: telemetryAllowlist
+  });
+  if (telemetryUrlError) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['TELEMETRY_ESPLORA_URL'],
+      message: telemetryUrlError
+    });
+  }
+
+  const bitcoindUrlError = validateTelemetryUrl(data.BITCOIND_RPC_URL, {
+    label: 'BITCOIND_RPC_URL',
+    requireHttps,
+    allowPrivateHosts,
+    allowlist: telemetryAllowlist
+  });
+  if (bitcoindUrlError) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BITCOIND_RPC_URL'],
+      message: bitcoindUrlError
+    });
+  }
+
   if (!data.ENABLE_BOLT12) return;
   if (!data.BOLT12_PROVIDER) {
     ctx.addIssue({

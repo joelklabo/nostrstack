@@ -2,6 +2,7 @@ import { env } from '../env.js';
 import { createBitcoindRpcCall, fetchTelemetrySummary, type TelemetrySource, type TelemetrySummary } from './bitcoind.js';
 import { fetchEsploraSummary, fetchEsploraSummaryForHeight, fetchEsploraTipHeight } from './esplora.js';
 import { buildMockSummary } from './mock-summary.js';
+import { parseHostAllowlist, validateTelemetryUrl } from './url-guard.js';
 
 export type TelemetryProvider = {
   source: TelemetrySource;
@@ -17,7 +18,19 @@ export type TelemetryFetchResult = {
   cached?: boolean;
 };
 
+const telemetryAllowlist = parseHostAllowlist(env.TELEMETRY_HOST_ALLOWLIST);
+const requireHttps = env.NODE_ENV === 'production';
+const allowPrivateHosts = env.NODE_ENV !== 'production';
+
+const enforceTelemetryUrl = (label: string, rawUrl?: string) => {
+  const error = validateTelemetryUrl(rawUrl, { label, requireHttps, allowPrivateHosts, allowlist: telemetryAllowlist });
+  if (error) {
+    throw new Error(error);
+  }
+};
+
 const createBitcoindProvider = (): TelemetryProvider => {
+  enforceTelemetryUrl('BITCOIND_RPC_URL', env.BITCOIND_RPC_URL);
   const { rpcCall } = createBitcoindRpcCall({ rpcUrl: env.BITCOIND_RPC_URL });
 
   const fetchTipHeight = async () => {
@@ -52,6 +65,7 @@ const createEsploraProvider = (): TelemetryProvider => {
   if (!baseUrl) {
     throw new Error('TELEMETRY_ESPLORA_URL is required when TELEMETRY_PROVIDER=esplora');
   }
+  enforceTelemetryUrl('TELEMETRY_ESPLORA_URL', baseUrl);
   const fetchTipHeight = () => fetchEsploraTipHeight(baseUrl);
   const fetchSummaryForHeight = (height: number, lastBlockTime?: number | null) =>
     fetchEsploraSummaryForHeight({
