@@ -35,6 +35,8 @@ echo "  Gallery:             http://localhost:${GALLERY_PORT}"
 echo "  Relays:              ${VITE_NOSTRSTACK_RELAYS}"
 
 env \
+  BITCOIN_NETWORK=mainnet \
+  VITE_NETWORK=mainnet \
   PORT="${API_PORT}" \
   DATABASE_URL="$PG_URL" \
   LIGHTNING_PROVIDER=lnbits \

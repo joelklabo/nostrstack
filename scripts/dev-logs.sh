@@ -31,8 +31,16 @@ export HTTPS_KEY="${HTTPS_KEY:-$ROOT/certs/dev-key.pem}"
 export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:3001}"
 export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
 export LIGHTNING_PROVIDER="${LIGHTNING_PROVIDER:-lnbits}"
-export ENABLE_REGTEST_PAY="${ENABLE_REGTEST_PAY:-true}"
-export ENABLE_REGTEST_FUND="${ENABLE_REGTEST_FUND:-true}"
+export BITCOIN_NETWORK="${BITCOIN_NETWORK:-regtest}"
+export VITE_NETWORK="${VITE_NETWORK:-$BITCOIN_NETWORK}"
+REGTEST_DEFAULT=false
+if [[ "$BITCOIN_NETWORK" == "regtest" ]]; then
+  REGTEST_DEFAULT=true
+fi
+export ENABLE_REGTEST_PAY="${ENABLE_REGTEST_PAY:-$REGTEST_DEFAULT}"
+export ENABLE_REGTEST_FUND="${ENABLE_REGTEST_FUND:-$REGTEST_DEFAULT}"
+export VITE_ENABLE_REGTEST_PAY="${VITE_ENABLE_REGTEST_PAY:-$REGTEST_DEFAULT}"
+export VITE_ENABLE_REGTEST_FUND="${VITE_ENABLE_REGTEST_FUND:-$REGTEST_DEFAULT}"
 export ENABLE_LNURL_WITHDRAW="${ENABLE_LNURL_WITHDRAW:-true}"
 export ENABLE_BOLT12="${ENABLE_BOLT12:-true}"
 export BOLT12_PROVIDER="${BOLT12_PROVIDER:-mock}"
@@ -71,36 +79,40 @@ echo "🧬 applying Prisma migrations"
 pnpm --filter api exec prisma migrate deploy --schema "$ROOT/apps/api/prisma/schema.prisma"
 
 # Start regtest stack (bitcoind + LND + LNbits) and export LNbits admin key for dev
-if command -v docker >/dev/null 2>&1; then
-  echo "🚀 starting regtest stack (docker compose)"
-  ./scripts/regtest-lndbits.sh up >/tmp/lnbits-up.log 2>&1 || true
+if [[ "$BITCOIN_NETWORK" == "regtest" ]]; then
+  if command -v docker >/dev/null 2>&1; then
+    echo "🚀 starting regtest stack (docker compose)"
+    ./scripts/regtest-lndbits.sh up >/tmp/lnbits-up.log 2>&1 || true
 
-  echo "🔑 ensuring LNbits superuser (admin/changeme)"
-  curl -s -o /dev/null -X PUT http://localhost:15001/api/v1/auth/first_install \
-    -H 'Content-Type: application/json' \
-    -d '{"username":"admin","password":"changeme","password_repeat":"changeme"}' || true
+    echo "🔑 ensuring LNbits superuser (admin/changeme)"
+    curl -s -o /dev/null -X PUT http://localhost:15001/api/v1/auth/first_install \
+      -H 'Content-Type: application/json' \
+      -d '{"username":"admin","password":"changeme","password_repeat":"changeme"}' || true
 
-  ADMIN_COOKIE=$(mktemp)
-  curl -s -c "$ADMIN_COOKIE" -X POST http://localhost:15001/api/v1/auth \
-    -H 'Content-Type: application/json' \
-    -d '{"username":"admin","password":"changeme"}' >/dev/null || true
-  ADMIN_JSON=$(curl -s -b "$ADMIN_COOKIE" http://localhost:15001/api/v1/wallets)
-  ADMIN_KEY=$(printf '%s' "$ADMIN_JSON" | jq -r '.[0].adminkey // empty')
-  WALLET_ID=$(printf '%s' "$ADMIN_JSON" | jq -r '.[0].id // empty')
-  rm -f "$ADMIN_COOKIE"
+    ADMIN_COOKIE=$(mktemp)
+    curl -s -c "$ADMIN_COOKIE" -X POST http://localhost:15001/api/v1/auth \
+      -H 'Content-Type: application/json' \
+      -d '{"username":"admin","password":"changeme"}' >/dev/null || true
+    ADMIN_JSON=$(curl -s -b "$ADMIN_COOKIE" http://localhost:15001/api/v1/wallets)
+    ADMIN_KEY=$(printf '%s' "$ADMIN_JSON" | jq -r '.[0].adminkey // empty')
+    WALLET_ID=$(printf '%s' "$ADMIN_JSON" | jq -r '.[0].id // empty')
+    rm -f "$ADMIN_COOKIE"
 
-  if [[ -n "$ADMIN_KEY" ]]; then
-    export LN_BITS_URL=${LN_BITS_URL:-http://localhost:15001}
-    export LN_BITS_API_KEY=${LN_BITS_API_KEY:-$ADMIN_KEY}
-    export VITE_LNBITS_URL=${VITE_LNBITS_URL:-http://localhost:15001}
-    export VITE_LNBITS_ADMIN_KEY=${VITE_LNBITS_ADMIN_KEY:-$ADMIN_KEY}
-    [[ -n "$WALLET_ID" ]] && export VITE_LNBITS_WALLET_ID=${VITE_LNBITS_WALLET_ID:-$WALLET_ID}
-    echo "✅ LNbits admin key exported"
+    if [[ -n "$ADMIN_KEY" ]]; then
+      export LN_BITS_URL=${LN_BITS_URL:-http://localhost:15001}
+      export LN_BITS_API_KEY=${LN_BITS_API_KEY:-$ADMIN_KEY}
+      export VITE_LNBITS_URL=${VITE_LNBITS_URL:-http://localhost:15001}
+      export VITE_LNBITS_ADMIN_KEY=${VITE_LNBITS_ADMIN_KEY:-$ADMIN_KEY}
+      [[ -n "$WALLET_ID" ]] && export VITE_LNBITS_WALLET_ID=${VITE_LNBITS_WALLET_ID:-$WALLET_ID}
+      echo "✅ LNbits admin key exported"
+    else
+      echo "⚠️ could not fetch LNbits admin key; check http://localhost:15001" >&2
+    fi
   else
-    echo "⚠️ could not fetch LNbits admin key; check http://localhost:15001" >&2
+    echo "⚠️ docker not found; skipping regtest stack startup" >&2
   fi
 else
-  echo "⚠️ docker not found; skipping regtest stack startup" >&2
+  echo "🌐 BITCOIN_NETWORK=$BITCOIN_NETWORK; skipping regtest stack startup"
 fi
 
 pnpm concurrently -k -p "[{name} {time}]" -n api,gallery \

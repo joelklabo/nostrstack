@@ -63,6 +63,8 @@ echo "  Relays:                 ${RELAYS}"
 
 log "Launching API and Gallery (Ctrl+C to stop)..."
 env \
+  BITCOIN_NETWORK=regtest \
+  VITE_NETWORK=regtest \
   PORT="${API_PORT}" \
   DATABASE_URL="$PG_URL" \
   LIGHTNING_PROVIDER=lnbits \

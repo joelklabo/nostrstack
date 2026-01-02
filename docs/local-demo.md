@@ -4,6 +4,13 @@ Two ways to run the demo locally:
 - **Regtest (real settlement)** – bitcoind + two LND nodes + LNbits wired to the merchant node.
 - **Dummy (no settlement)** – LNbits mock backend that only issues invoices.
 
+## Network switch shortcut (dev)
+Use the network-aware dev entrypoint:
+```sh
+pnpm dev:network -- --network regtest|mutinynet|mainnet
+```
+Profiles live in `.env.network.<name>`. For mutinynet/mainnet, set `LN_BITS_URL` and `LN_BITS_API_KEY` first (and `MAINNET_DEMO_OK=true` for mainnet).
+
 ## A) Regtest (real payments)
 
 Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
