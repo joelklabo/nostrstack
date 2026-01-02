@@ -144,7 +144,7 @@ test('zap two posts and send sats from profile', async ({ page }) => {
 
   for (const index of [0, 1]) {
     await zapButtons.nth(index).click();
-    const modal = page.locator('.zap-modal');
+    const modal = page.locator('.payment-modal');
     await expect(modal).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/Invoice ready/i)).toBeVisible({ timeout: 10000 });
     await modal.getByRole('button', { name: 'CLOSE' }).click();
@@ -154,7 +154,7 @@ test('zap two posts and send sats from profile', async ({ page }) => {
   await page.goto(`/p/${friendNpub}`);
   await expect(page.getByText('SEND_SATS')).toBeVisible({ timeout: 15000 });
   await page.getByRole('button', { name: /send 500/i }).click();
-  await expect(page.locator('.zap-modal')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/Invoice ready/i)).toBeVisible({ timeout: 10000 });
 
   expect(consoleErrors).toEqual([]);

@@ -75,13 +75,13 @@ test('connects NWC and pays zap via mock', async ({ page }) => {
     return;
   }
   await zapButtons.first().click();
-  await expect(page.locator('.zap-modal')).toBeVisible();
+  await expect(page.locator('.payment-modal')).toBeVisible();
   await expect(page.getByText('NWC payment sent.')).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('Payment successful!')).toBeVisible();
 });
 
 test('invalid NWC URI shows error', async ({ page }) => {
-  await page.goto('/');
+  await loginWithNsec(page);
   await page.getByRole('button', { name: /Settings/i }).click();
   await page.getByLabel('NWC_URI').fill('not-a-uri');
   await expect(page.getByText('NWC URI must start with nostr+walletconnect://')).toBeVisible();

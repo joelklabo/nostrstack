@@ -92,8 +92,8 @@ test('tip flow generates invoice', async ({ page }) => {
     return;
   }
   await zapButtons.first().click();
-  await expect(page.locator('.zap-modal')).toBeVisible({ timeout: 10000 });
-  const invoiceBox = page.locator('.zap-invoice-box');
+  await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
+  const invoiceBox = page.locator('.payment-invoice-box');
   const invoiceReady = await invoiceBox.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
   if (!invoiceReady) {
     test.skip(true, 'Zap invoice not available');
@@ -165,14 +165,17 @@ test('theme toggle flips background', async ({ page }) => {
   if ((await settingsButton.count()) > 0) {
     await settingsButton.click();
   }
-  const themeSelect = page.locator('select').first();
-  if ((await themeSelect.count()) === 0) {
-    test.skip(true, 'Theme selector not available');
+  const hasThemeButtons =
+    (await page.getByRole('button', { name: /DARK_MODE/i }).count()) > 0 &&
+    (await page.getByRole('button', { name: /LIGHT_MODE/i }).count()) > 0;
+  const hasThemeSelect =
+    (await page.locator('select', { has: page.locator('option[value="dark"]') }).count()) > 0;
+  if (!hasThemeButtons && !hasThemeSelect) {
+    test.skip(true, 'Theme controls not available');
     return;
   }
-  const main = page.locator('main');
-  const lightBg = await main.evaluate((el) => getComputedStyle(el).backgroundColor);
+  const body = page.locator('body');
+  await expect(body).toHaveAttribute('data-theme', 'light');
   await toggleTheme(page, 'dark');
-  const darkBg = await main.evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(darkBg).not.toBe(lightBg);
+  await expect(body).toHaveAttribute('data-theme', 'dark');
 });

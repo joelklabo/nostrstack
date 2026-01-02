@@ -60,8 +60,8 @@ test.describe('Social App Flow', () => {
     const feedContainer = page.locator('.feed-container');
     const feedBox = await feedContainer.boundingBox();
     await zapBtn.click();
-    await expect(page.locator('.zap-modal')).toBeVisible({ timeout: 10000 });
-    const overlay = page.locator('.zap-overlay');
+    await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
+    const overlay = page.locator('.payment-overlay');
     await expect(overlay).toBeVisible();
     const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
     expect(overlayPosition).toBe('fixed');
@@ -70,17 +70,17 @@ test.describe('Social App Flow', () => {
       expect(Math.abs(feedBoxAfter.x - feedBox.x)).toBeLessThan(1);
       expect(Math.abs(feedBoxAfter.width - feedBox.width)).toBeLessThan(1);
     }
-    await expect(page.locator('.zap-status')).toBeVisible();
+    await expect(page.locator('.payment-status')).toBeVisible();
     const invoiceReady = await page
-      .locator('.zap-grid')
+      .locator('.payment-grid')
       .waitFor({ state: 'visible', timeout: 8000 })
       .then(() => true)
       .catch(() => false);
     if (invoiceReady) {
-      await expect(page.locator('.zap-qr')).toBeVisible();
-      await expect(page.locator('.zap-panel')).toBeVisible();
-      await expect(page.locator('.zap-panel-title')).toHaveText('INVOICE');
-      await expect(page.locator('.zap-invoice-box')).toBeVisible();
+      await expect(page.locator('.payment-qr')).toBeVisible();
+      await expect(page.locator('.payment-panel')).toBeVisible();
+      await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
+      await expect(page.locator('.payment-invoice-box')).toBeVisible();
     }
     await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
     // Close modal (might be CANCEL or CLOSE if error)

@@ -40,8 +40,20 @@ export async function postComment(page: Page, text: string) {
 }
 
 export async function toggleTheme(page: Page, theme: 'light' | 'dark') {
-  const select = page.locator('select').first();
-  await select.selectOption(theme);
+  const label = theme === 'dark' ? /DARK_MODE/i : /LIGHT_MODE/i;
+  const button = page.getByRole('button', { name: label });
+  if ((await button.count()) > 0) {
+    await button.first().click();
+    return;
+  }
+
+  const select = page.locator('select', { has: page.locator('option[value="dark"]') }).first();
+  if ((await select.count()) > 0) {
+    await select.selectOption(theme);
+    return;
+  }
+
+  throw new Error(`Theme control not found for ${theme}`);
 }
 
 export type ApiNostrTarget = {

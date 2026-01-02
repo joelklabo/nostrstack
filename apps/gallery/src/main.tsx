@@ -1,3 +1,4 @@
+import './utils/mock-relay-init';
 import './gallery.css';
 import '@nostrstack/blog-kit/styles/payments.css';
 
