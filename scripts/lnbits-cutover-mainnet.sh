@@ -8,22 +8,22 @@ set -euo pipefail
 #       lnd-mainnet-endpoint       (host:port)
 #       lnd-mainnet-macaroon-hex   (admin macaroon hex)
 #       lnd-mainnet-tls            (PEM cert content)
-#   - Container App name: lnbits-prod-west in RG: nostrstack-stg-west-rg
+#   - Container App name: lnbits-prod-west in RG: satoshis-stg-west-rg
 #
 # Usage:
 #   ./scripts/lnbits-cutover-mainnet.sh --rev 20251202a
 # Options:
 #   --rev|-r <tag>     Revision stamp to set on LNBITS_REV (required)
-#   --kv <name>        Key Vault name (default: nostrstack-kv-west)
-#   --rg <name>        Resource group (default: nostrstack-stg-west-rg)
+#   --kv <name>        Key Vault name (default: satoshis-kv-west)
+#   --rg <name>        Resource group (default: satoshis-stg-west-rg)
 #   --app <name>       Container App name (default: lnbits-prod-west)
 #   --network <net>    LND network to apply (mainnet|signet, default: mainnet)
 #   --url <url>        LNbits base URL for post-update health hint
 #   --dry-run          Skip the update, just run preflight
 
 REV=""
-KV="nostrstack-kv-west"
-RG="nostrstack-stg-west-rg"
+KV="satoshis-kv-west"
+RG="satoshis-stg-west-rg"
 APP="lnbits-prod-west"
 NETWORK="mainnet"
 URL="${LNBITS_URL:-https://lnbits-prod-west.thankfulwater-904823f2.westus3.azurecontainerapps.io}"

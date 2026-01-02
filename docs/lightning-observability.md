@@ -78,4 +78,4 @@ Automation helpers
 
 Notes
 - Current funding backend is Voltage mutinynet (signet). When switching to mainnet, keep the same workspace/queries; watch for new error patterns (macaroon/cert issues).
-- All diagnostic settings are in RG `nostrstack-stg-west-rg`; adjust if a prod RG is added later.
+- All diagnostic settings are in RG `satoshis-stg-west-rg`; adjust if a prod RG is added later.

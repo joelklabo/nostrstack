@@ -6,7 +6,7 @@
 - **Database**: Azure Postgres `nostrstack-pg-west`, DB name `lnbitsapp`
 - **Storage**: AzureFile volume `lnbitsfs`
 
-## Secrets & config (all in Key Vault `nostrstack-kv-west`)
+## Secrets & config (all in Key Vault `satoshis-kv-west`)
 - `lnbits-database-url` — postgres URL for LNbits
 - `database-url` — prisma/database fallback URL
 - `lnd-grpc-endpoint` — e.g. `satoshis.u.voltageapp.io:10009`
@@ -44,5 +44,5 @@ Returns funding backend name/error/balance; useful for probes/CI.
 
 ## Admin/ops commands
 - Deploy image: `az acr build -r nostrstackwestacr -t lnbits:stg -f deploy/lnbits/Dockerfile.azure .`
-- Redeploy app: `az containerapp update -n lnbits-stg-west -g nostrstack-stg-west-rg --image nostrstackwestacr.azurecr.io/lnbits:stg --set-env-vars LNBITS_REV=<stamp>`
-- Logs: `az containerapp logs show -n lnbits-stg-west -g nostrstack-stg-west-rg --tail 100`
+- Redeploy app: `az containerapp update -n lnbits-stg-west -g satoshis-stg-west-rg --image nostrstackwestacr.azurecr.io/lnbits:stg --set-env-vars LNBITS_REV=<stamp>`
+- Logs: `az containerapp logs show -n lnbits-stg-west -g satoshis-stg-west-rg --tail 100`
