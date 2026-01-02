@@ -24,10 +24,30 @@ param logAnalyticsWorkspaceId string = ''
 @secure()
 param logAnalyticsSharedKey string = ''
 param deployerObjectId string = ''
+param workloadProfiles array = [
+  {
+    name: 'Consumption'
+    workloadProfileType: 'Consumption'
+  }
+]
 
 var useRegistry = !empty(registryServer)
 var useOtel = otelEnabled && !empty(otelEndpoint)
 var useLogAnalytics = !empty(logAnalyticsWorkspaceId) && !empty(logAnalyticsSharedKey)
+var envProps = union(
+  {
+    workloadProfiles: workloadProfiles
+  },
+  useLogAnalytics ? {
+    appLogsConfiguration: {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: logAnalyticsWorkspaceId
+        sharedKey: logAnalyticsSharedKey
+      }
+    }
+  } : {}
+)
 
 resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: kvName
@@ -74,43 +94,36 @@ resource pgDb 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-pr
 var dbUrl = 'postgresql://nostrstack:${adminApiKey}@${pg.name}.postgres.database.azure.com:5432/nostrstack'
 
 resource secretDb 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/DATABASE_URL'
+  name: '${kv.name}/database-url'
   properties: { value: dbUrl }
 }
 resource secretAdmin 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/ADMIN_API_KEY'
+  name: '${kv.name}/admin-api-key'
   properties: { value: adminApiKey }
 }
 resource secretOp 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/OP_NODE_API_KEY'
+  name: '${kv.name}/op-node-api-key'
   properties: { value: opNodeApiKey }
 }
 resource secretWebhook 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/OP_NODE_WEBHOOK_SECRET'
+  name: '${kv.name}/op-node-webhook-secret'
   properties: { value: opNodeWebhookSecret }
 }
 
 resource secretRegistry 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (useRegistry) {
-  name: '${kv.name}/REGISTRY_PASSWORD'
+  name: '${kv.name}/registry-password'
   properties: { value: registryPassword }
 }
 
 resource secretOtelHeaders 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (useOtel && !empty(otelHeaders)) {
-  name: '${kv.name}/OTEL_EXPORTER_OTLP_HEADERS'
+  name: '${kv.name}/otel-exporter-otlp-headers'
   properties: { value: otelHeaders }
 }
 
 resource env 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: envName
   location: location
-  properties: useLogAnalytics ? {
-    appLogsConfiguration: {
-      logAnalyticsConfiguration: {
-        customerId: logAnalyticsWorkspaceId
-        sharedKey: logAnalyticsSharedKey
-      }
-    }
-  } : {}
+  properties: envProps
 }
 
 resource app 'Microsoft.App/containerApps@2024-03-01' = {
