@@ -1,5 +1,5 @@
-import { useAuth, useNostrstackConfig, useStats } from '@nostrstack/blog-kit';
-import { type CSSProperties, useState } from 'react';
+import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/blog-kit';
+import { type CSSProperties, useEffect, useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
 import { useToast } from './ui/toast';
@@ -12,14 +12,18 @@ interface SidebarProps {
   setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit') => void;
 }
 
+const DEV_NETWORK_KEY = 'nostrstack.dev.network';
+
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout } = useAuth();
   const cfg = useNostrstackConfig();
+  const { status } = useBitcoinStatus();
   const wallet = useWallet();
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
 
   const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
@@ -28,8 +32,29 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
     String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
   const bolt12Enabled =
     String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
-  const configuredNetwork = String(import.meta.env.VITE_NETWORK ?? 'regtest').trim() || 'regtest';
+  const statusNetwork = status?.configuredNetwork ?? status?.network;
+  const configuredNetworkRaw =
+    devNetworkOverride ?? statusNetwork ?? String(import.meta.env.VITE_NETWORK ?? 'regtest').trim();
+  const configuredNetwork = (configuredNetworkRaw || 'regtest').trim();
   const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
+  const sourceLabel = status?.source ? status.source.toUpperCase() : '—';
+  const provider = status?.lightning?.provider;
+  const lnbitsStatus = status?.lightning?.lnbits?.status;
+  let lightningLabel = provider ? `Provider: ${provider}` : 'Provider: —';
+  let lightningTone: 'neutral' | 'success' | 'danger' = 'neutral';
+  if (provider === 'lnbits') {
+    if (lnbitsStatus === 'ok') {
+      lightningLabel = 'LNbits: OK';
+      lightningTone = 'success';
+    } else if (lnbitsStatus === 'fail' || lnbitsStatus === 'error') {
+      lightningLabel = `LNbits: ${String(lnbitsStatus).toUpperCase()}`;
+      lightningTone = 'danger';
+    } else if (lnbitsStatus === 'skipped') {
+      lightningLabel = 'LNbits: Skipped';
+    } else {
+      lightningLabel = 'LNbits: Unknown';
+    }
+  }
   const showRegtestActions = regtestFundEnabled;
   const withdrawEnabled =
     String(import.meta.env.VITE_ENABLE_LNURL_WITHDRAW ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
@@ -43,6 +68,29 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
     regtestFundEnabled && !apiBaseConfig.isConfigured
       ? 'Regtest funding unavailable (API base not configured).'
       : null;
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === 'undefined') return;
+    const readOverride = () => {
+      const raw = window.localStorage.getItem(DEV_NETWORK_KEY);
+      const value = raw ? raw.trim() : '';
+      setDevNetworkOverride(value || null);
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === DEV_NETWORK_KEY) readOverride();
+    };
+    const handleCustom = (event: Event) => {
+      const detail = (event as CustomEvent<string | null>).detail;
+      setDevNetworkOverride(detail && detail.trim() ? detail.trim() : null);
+    };
+    readOverride();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('nostrstack:dev-network', handleCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('nostrstack:dev-network', handleCustom as EventListener);
+    };
+  }, []);
 
   const handleRegtestFund = async () => {
     if (isFunding) return;
@@ -193,13 +241,22 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         )}
         
         <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Network</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-default)' }}>
-            Bitcoin: {configuredNetwork.toUpperCase()}
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            Network
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-default)' }}>
-            Events: {eventCount}
+          <div className="sidebar-network-badges">
+            <span className={`sidebar-network-badge is-${configuredNetwork.toLowerCase()}`}>
+              {configuredNetwork.toUpperCase()}
+            </span>
+            {status?.source && <span className="sidebar-network-badge is-muted">SOURCE: {sourceLabel}</span>}
           </div>
+          <div className="sidebar-network-meta">
+            <span className={`sidebar-network-status is-${lightningTone}`}>{lightningLabel}</span>
+          </div>
+          {status?.telemetryError && (
+            <div className="sidebar-network-meta sidebar-network-warning">Telemetry: {status.telemetryError}</div>
+          )}
+          <div className="sidebar-network-meta">Events: {eventCount}</div>
           {isMainnet && (
             <div
               className="nostrstack-callout"

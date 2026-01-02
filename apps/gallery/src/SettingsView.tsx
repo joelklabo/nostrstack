@@ -2,10 +2,11 @@ import './styles/nwc.css';
 
 import { NwcClient } from '@nostrstack/blog-kit';
 import { type NostrstackBrandPreset } from '@nostrstack/embed';
-import { useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
 const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
+const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 
 type NwcLastPayment = {
   status: 'success' | 'error';
@@ -44,6 +45,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   const [nwcCheckMessage, setNwcCheckMessage] = useState<string | null>(null);
   const [nwcBalanceMsat, setNwcBalanceMsat] = useState<number | null>(null);
   const [nwcLastPayment, setNwcLastPayment] = useState<NwcLastPayment | null>(null);
+  const [devNetworkOverride, setDevNetworkOverride] = useState('');
   const nwcUriTrimmed = nwcUri.trim();
 
   useEffect(() => {
@@ -78,6 +80,25 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('nostrstack:nwc-payment', handleCustom as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === 'undefined') return;
+    const readOverride = () => {
+      const raw = window.localStorage.getItem(DEV_NETWORK_KEY);
+      setDevNetworkOverride(raw ?? '');
+    };
+    readOverride();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === DEV_NETWORK_KEY) readOverride();
+    };
+    const handleCustom = () => readOverride();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('nostrstack:dev-network', handleCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('nostrstack:dev-network', handleCustom as EventListener);
     };
   }, []);
 
@@ -223,6 +244,18 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     await handleCheckNwc();
   };
 
+  const handleDevNetworkChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setDevNetworkOverride(value);
+    if (typeof window === 'undefined') return;
+    if (value) {
+      window.localStorage.setItem(DEV_NETWORK_KEY, value);
+    } else {
+      window.localStorage.removeItem(DEV_NETWORK_KEY);
+    }
+    window.dispatchEvent(new CustomEvent('nostrstack:dev-network', { detail: value || null }));
+  };
+
   return (
     <div className="profile-view">
       <h3>SYSTEM_SETTINGS</h3>
@@ -262,6 +295,29 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           ))}
         </div>
       </div>
+
+      {import.meta.env.DEV && (
+        <div className="paywall-container">
+          <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>DEV_NETWORK_OVERRIDE</h4>
+          <label className="nwc-label">
+            NETWORK
+            <select
+              className="nostrstack-input"
+              value={devNetworkOverride}
+              onChange={handleDevNetworkChange}
+              name="dev-network"
+            >
+              <option value="">AUTO (ENV)</option>
+              <option value="regtest">REGTEST</option>
+              <option value="mutinynet">MUTINYNET</option>
+              <option value="mainnet">MAINNET</option>
+            </select>
+          </label>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>
+            Updates UI labels only. Does not change backend network.
+          </div>
+        </div>
+      )}
 
       <div className="paywall-container nwc-card">
         <div className="nwc-header">

@@ -105,6 +105,71 @@ body {
   gap: 0.35rem;
 }
 
+.sidebar-network-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.sidebar-network-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-muted);
+  color: var(--color-fg-muted);
+  background: var(--color-canvas-default);
+  text-transform: uppercase;
+}
+
+.sidebar-network-badge.is-mainnet {
+  color: var(--color-danger-fg);
+  border-color: rgba(207, 34, 46, 0.4);
+  background: rgba(207, 34, 46, 0.08);
+}
+
+.sidebar-network-badge.is-mutinynet,
+.sidebar-network-badge.is-signet,
+.sidebar-network-badge.is-testnet {
+  color: var(--color-attention-fg);
+  border-color: rgba(154, 103, 0, 0.4);
+  background: rgba(154, 103, 0, 0.08);
+}
+
+.sidebar-network-badge.is-regtest {
+  color: var(--color-accent-fg);
+  border-color: rgba(9, 105, 218, 0.4);
+  background: rgba(9, 105, 218, 0.08);
+}
+
+.sidebar-network-badge.is-muted {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-network-meta {
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+}
+
+.sidebar-network-status {
+  font-weight: 600;
+}
+
+.sidebar-network-status.is-success {
+  color: var(--color-success-fg);
+}
+
+.sidebar-network-status.is-danger {
+  color: var(--color-danger-fg);
+}
+
+.sidebar-network-warning {
+  color: var(--color-attention-fg);
+}
+
 .wallet-action-btn {
   width: 100%;
   text-align: left;
@@ -873,6 +938,11 @@ body {
   margin-top: 0.5rem;
   font-size: 0.75rem;
   color: var(--color-fg-muted);
+}
+
+.nostrstack-node-callout {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
 }
 
 /* Login */

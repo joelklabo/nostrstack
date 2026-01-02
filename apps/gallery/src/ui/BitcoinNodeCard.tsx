@@ -1,4 +1,4 @@
-import { type HTMLAttributes } from 'react';
+import { type CSSProperties, type HTMLAttributes } from 'react';
 
 type LnbitsHealth = {
   status?: string;
@@ -81,7 +81,10 @@ export function BitcoinNodeCard({ info, className, ...props }: { info: NodeInfo 
       ? `${info.blocks.toLocaleString()}/${info.headers.toLocaleString()}`
       : null;
   const syncValue = blockHeaderLabel ? `${syncProgress} (${blockHeaderLabel})` : syncProgress;
-  const syncState = info.initialBlockDownload ? 'IBD' : 'Synced';
+  const isSyncing =
+    Boolean(info.initialBlockDownload) ||
+    (typeof info.verificationProgress === 'number' && info.verificationProgress < 0.999);
+  const syncState = isSyncing ? 'Syncing' : 'Synced';
 
   const provider = info.lightning?.provider;
   const lnbitsStatus = info.lightning?.lnbits?.status;
@@ -177,7 +180,13 @@ export function BitcoinNodeCard({ info, className, ...props }: { info: NodeInfo 
       </div>
 
       {info.telemetryError && (
-        <div className="nostrstack-node-note">Telemetry: {info.telemetryError}</div>
+        <div
+          className="nostrstack-callout nostrstack-node-callout"
+          style={{ '--nostrstack-callout-tone': 'var(--nostrstack-color-warning)' } as CSSProperties}
+        >
+          <div className="nostrstack-callout__title">Telemetry degraded</div>
+          <div className="nostrstack-callout__content">{info.telemetryError}</div>
+        </div>
       )}
 
       {info.hash && (
