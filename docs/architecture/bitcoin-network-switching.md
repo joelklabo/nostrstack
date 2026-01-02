@@ -5,6 +5,8 @@
 - Provide a developer-friendly, repeatable way to select the active network and its presets.
 - Surface network and node state in the UI with clear mainnet warnings.
 
+See [Bitcoin telemetry provider contract](bitcoin-telemetry-provider.md) for provider interfaces, field mapping, and error semantics.
+
 ## Current hooks
 - Demo scripts exist for regtest/mutinynet/mainnet in `scripts/demo-*.sh`.
 - Telemetry uses bitcoind RPC and includes chain info from `getblockchaininfo`.
