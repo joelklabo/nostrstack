@@ -159,7 +159,7 @@ export function TelemetryBar() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [nodeState, setNodeState] = useState<NodeState | null>(null);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
-  const { status, error: statusError, isLoading: statusLoading } = useBitcoinStatus();
+  const { status, error: statusError, isLoading: statusLoading, refresh } = useBitcoinStatus();
 
   const lastStatusErrorRef = useRef<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -190,11 +190,23 @@ export function TelemetryBar() {
     readOverride();
     window.addEventListener('storage', handleStorage);
     window.addEventListener('nostrstack:dev-network', handleCustom as EventListener);
+    
+    const handleManualUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ height: number }>).detail;
+      if (detail && detail.height) {
+        setNodeState(prev => ({ ...prev, height: detail.height }));
+        appendLog({ ts: Date.now(), level: 'info', message: `Manual update: Block ${detail.height}` }, 50);
+        refresh();
+      }
+    };
+    window.addEventListener('nostrstack:manual-block-update', handleManualUpdate as EventListener);
+
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('nostrstack:dev-network', handleCustom as EventListener);
+      window.removeEventListener('nostrstack:manual-block-update', handleManualUpdate as EventListener);
     };
-  }, []);
+  }, [refresh, appendLog]);
 
   useEffect(() => {
     if (!status?.telemetry) return;
@@ -225,13 +237,21 @@ export function TelemetryBar() {
       appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' });
       return;
     }
+
+    let ws: WebSocket | null = null;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
-    const timer = globalThis.setTimeout(() => {
+
+    const connect = () => {
       if (cancelled) return;
-      const ws = new WebSocket(telemetryWsUrl);
+      ws = new WebSocket(telemetryWsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
+        if (cancelled) {
+          safeClose(ws);
+          return;
+        }
         appendLog({ ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' });
       };
 
@@ -284,13 +304,18 @@ export function TelemetryBar() {
       };
 
       ws.onclose = () => {
-        appendLog({ ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry' });
+        if (cancelled) return;
+        appendLog({ ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry. Reconnecting...' });
+        wsRef.current = null;
+        retryTimeout = setTimeout(connect, 3000);
       };
-    }, 0);
+    };
+
+    connect();
 
     return () => {
       cancelled = true;
-      globalThis.clearTimeout(timer);
+      if (retryTimeout) clearTimeout(retryTimeout);
       safeClose(wsRef.current);
       wsRef.current = null;
     };

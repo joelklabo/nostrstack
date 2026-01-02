@@ -33,6 +33,7 @@ export type FundResult = {
   channelOpened: boolean;
   output: string;
   lnbitsTopup?: number;
+  currentBlockHeight?: number;
 };
 
 export async function regtestFund(): Promise<FundResult> {
@@ -69,12 +70,16 @@ export async function regtestFund(): Promise<FundResult> {
     }
   }
 
+  const currentBlockHeightRaw = await runCompose(['exec', '-T', 'bitcoind', 'sh', '-lc', 'bitcoin-cli -regtest -rpcuser=bitcoin -rpcpassword=bitcoin getblockcount']);
+  const currentBlockHeight = Number(currentBlockHeightRaw.trim());
+
   return {
     minedBlocks: mined + 6,
     sentToMerchant: 1_00000000,
     channelOpened: !chan.includes('already'),
     output: chan,
-    lnbitsTopup
+    lnbitsTopup,
+    currentBlockHeight
   };
 }
 

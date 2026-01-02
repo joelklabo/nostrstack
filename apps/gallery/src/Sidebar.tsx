@@ -18,7 +18,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout } = useAuth();
   const cfg = useNostrstackConfig();
-  const { status } = useBitcoinStatus();
+  const { status, refresh } = useBitcoinStatus();
   const wallet = useWallet();
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
@@ -106,9 +106,15 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
       if (!res.ok) {
         throw new Error(bodyText || `HTTP ${res.status}`);
       }
-      const data = JSON.parse(bodyText) as { minedBlocks?: number; lnbitsTopup?: number };
+      const data = JSON.parse(bodyText) as { minedBlocks?: number; lnbitsTopup?: number; currentBlockHeight?: number };
       const mined = data.minedBlocks ?? 0;
       const topup = data.lnbitsTopup;
+
+      if (data.currentBlockHeight) {
+        window.dispatchEvent(new CustomEvent('nostrstack:manual-block-update', { detail: { height: data.currentBlockHeight } }));
+        refresh();
+      }
+
       const msg = topup
         ? `Funded & mined ${mined} blocks (+${topup.toLocaleString()} sats).`
         : `Funded & mined ${mined} blocks.`;
