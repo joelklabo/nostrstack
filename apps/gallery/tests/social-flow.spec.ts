@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { resolveDocScreenshotPath } from './helpers.ts';
+
 test.describe('Social App Flow', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
@@ -11,7 +13,7 @@ test.describe('Social App Flow', () => {
     await expect(page.getByText('Sign in to NostrStack')).toBeVisible();
     await expect(page.getByText('Sign in with Extension (NIP-07)')).toBeVisible();
     await expect(page.getByText('Enter nsec manually')).toBeVisible();
-    await page.screenshot({ path: '../../docs/screenshots/login.png' });
+    await page.screenshot({ path: resolveDocScreenshotPath('login.png') });
   });
 
   test('User can login with nsec and see feed', async ({ page }) => {
@@ -32,19 +34,19 @@ test.describe('Social App Flow', () => {
 
     // 2. Verify Feed View & Screenshot
     await expect(page.getByText('NostrStack')).toBeVisible(); // Sidebar
-    await page.screenshot({ path: '../../docs/screenshots/feed.png' });
+    await page.screenshot({ path: resolveDocScreenshotPath('feed.png') });
 
     await expect(page.getByText('Live Feed')).toBeVisible(); // Feed
     await expect(page.getByPlaceholder('WHAT ARE YOU HACKING ON?...')).toBeVisible(); // Post Editor
 
     // 3. Post a note
     await page.getByPlaceholder('WHAT ARE YOU HACKING ON?...').fill('Hello from Playwright E2E!');
-    await page.screenshot({ path: '../../docs/screenshots/posting.png' });
+    await page.screenshot({ path: resolveDocScreenshotPath('posting.png') });
     await page.getByText('PUBLISH_EVENT').click();
 
     // 4. Check for success status
     await expect(page.getByText(/STATUS: Signing event|SUCCESS:|ERROR:/)).toBeVisible({ timeout: 10000 });
-    await page.screenshot({ path: '../../docs/screenshots/post-result.png' });
+    await page.screenshot({ path: resolveDocScreenshotPath('post-result.png') });
 
     // 5. Interact: Click Zap (opens modal)
     // Wait for at least one post to load (PostItem)
@@ -82,7 +84,7 @@ test.describe('Social App Flow', () => {
       await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
       await expect(page.locator('.payment-invoice-box')).toBeVisible();
     }
-    await page.screenshot({ path: '../../docs/screenshots/zap-modal.png' });
+    await page.screenshot({ path: resolveDocScreenshotPath('zap-modal.png') });
     // Close modal (might be CANCEL or CLOSE if error)
     await page.getByRole('button', { name: /CLOSE/ }).first().click();
   });
@@ -102,7 +104,7 @@ test.describe('Social App Flow', () => {
     
     // Interact: Follow
     await page.getByText('[+] FOLLOW_USER').click();
-    await page.screenshot({ path: '../../docs/screenshots/profile.png' });
+    await page.screenshot({ path: resolveDocScreenshotPath('profile.png') });
   });
 
   test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {

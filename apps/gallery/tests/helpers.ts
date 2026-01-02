@@ -1,5 +1,14 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { expect, type Page } from '@playwright/test';
 import type { Event } from 'nostr-tools';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+
+export function resolveDocScreenshotPath(relativePath: string) {
+  return path.join(REPO_ROOT, 'docs', 'screenshots', relativePath);
+}
 
 export async function setRelays(page: Page, relaysCsv: string) {
   const relayInput = page.locator('input[placeholder="mock or wss://relay1,wss://relay2"]').first();
