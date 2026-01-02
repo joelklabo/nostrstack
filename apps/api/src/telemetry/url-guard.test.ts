@@ -69,4 +69,13 @@ describe('validateTelemetryUrl', () => {
     const error = validateTelemetryUrl('https://[::1]', baseOptions);
     expect(error).toContain('localhost');
   });
+
+  it('rejects when allowlist entries are invalid', () => {
+    const allowlist = parseHostAllowlist('://bad');
+    const error = validateTelemetryUrl('https://mempool.space', {
+      ...baseOptions,
+      allowlist
+    });
+    expect(error).toContain('invalid entries');
+  });
 });
