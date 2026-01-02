@@ -75,6 +75,11 @@ Find friend + tip flow:
   pnpm demo:regtest   # colima+docker required; API :3001, gallery :4173
   ```
 
+### Network switching (dev)
+
+- Use `pnpm dev:network -- --network regtest|mutinynet|mainnet` to load `.env.network.*` profiles (sets BITCOIN_NETWORK/VITE_NETWORK + telemetry provider defaults).
+- For mutinynet/mainnet, set `LN_BITS_URL` + `LN_BITS_API_KEY` and a matching `TELEMETRY_ESPLORA_URL` (`MAINNET_DEMO_OK=true` required for mainnet).
+
 See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.
 
 ### Embeddable comments + tips

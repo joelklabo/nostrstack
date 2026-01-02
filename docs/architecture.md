@@ -14,6 +14,10 @@
 ## Data flow (happy path tip)
 Browser widget → API `/api/pay` (tenant lookup) → LightningProvider.createCharge(LNbits) → invoice to browser → payer pays → LNbits webhook → API updates Payment → widgets poll/verify.
 
+## Bitcoin telemetry
+- API exposes `/api/bitcoin/status` for configured network, source (`bitcoind`/`esplora`/`mock`), sync/IBD, mempool stats, and Lightning provider health.
+- Provider selection via `TELEMETRY_PROVIDER`; use `TELEMETRY_ESPLORA_URL` for Esplora-backed networks (mutinynet/mainnet).
+
 ## Tenancy
 Tenant resolved from host header or `domain` param. User entries store lightningAddress; LNURLp uses tenant domain + username.
 

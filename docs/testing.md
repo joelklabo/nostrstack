@@ -5,6 +5,12 @@
 - Pay-to-act suite (SQLite): `NODE_OPTIONS=--no-experimental-strip-types DATABASE_URL=file:./test-e2e.db pnpm --filter api test:e2e:pay`.
 - Regtest zap UI: start API with `ENABLE_REGTEST_PAY=true` and gallery with `VITE_ENABLE_REGTEST_PAY=true`, then run `pnpm qa:regtest-demo`.
 
+## Gallery UI QA (network switching)
+- Start logs: `pnpm dev:logs` (or `tail -f .logs/dev/api.log .logs/dev/gallery.log`).
+- DevTools MCP: `./scripts/mcp-devtools-server.sh` + `./scripts/mcp-chrome.sh`, open `/personal-site-kit`, verify console + network clean.
+- Playwright: `pnpm --filter gallery e2e tests/bitcoin-network-status.spec.ts` (or full suite with `pnpm --filter gallery e2e`).
+- Fallback if MCP unavailable: `pnpm qa:regtest-demo`.
+
 ## Mutinynet (staging LNbits)
 - Env needed:
   - `LNBITS_URL=https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io`

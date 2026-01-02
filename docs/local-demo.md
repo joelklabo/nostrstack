@@ -9,7 +9,7 @@ Use the network-aware dev entrypoint:
 ```sh
 pnpm dev:network -- --network regtest|mutinynet|mainnet
 ```
-Profiles live in `.env.network.<name>`. For mutinynet/mainnet, set `LN_BITS_URL` and `LN_BITS_API_KEY` first (and `MAINNET_DEMO_OK=true` for mainnet).
+Profiles live in `.env.network.<name>` and set `BITCOIN_NETWORK`, `VITE_NETWORK`, and telemetry defaults. For mutinynet/mainnet, set `LN_BITS_URL` and `LN_BITS_API_KEY` first (and `MAINNET_DEMO_OK=true` for mainnet). If you override telemetry, set `TELEMETRY_PROVIDER=esplora` with a matching `TELEMETRY_ESPLORA_URL` (optionally restrict with `TELEMETRY_HOST_ALLOWLIST`).
 
 ## A) Regtest (real payments)
 
@@ -96,7 +96,7 @@ Notes:
    docker compose -f deploy/lnbits/docker-compose.yml down -v
    ```
 
-Mutinynet/mainnet: swap `LN_BITS_URL/API_KEY` to your staging/prod LNbits and keep `LIGHTNING_PROVIDER=lnbits`.
+Mutinynet/mainnet: swap `LN_BITS_URL/API_KEY` to your staging/prod LNbits and keep `LIGHTNING_PROVIDER=lnbits`. Use `TELEMETRY_PROVIDER=esplora` with `TELEMETRY_ESPLORA_URL` to pull chain data when bitcoind RPC isn't available.
 
 ### Mutinynet (staging) quickstart
 If you have Azure Key Vault access, grab the staging admin key:
@@ -109,6 +109,8 @@ cd apps/api
 LN_BITS_URL=https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io \
 LN_BITS_API_KEY=$ADMIN_KEY \
 LIGHTNING_PROVIDER=lnbits \
+TELEMETRY_PROVIDER=esplora \
+TELEMETRY_ESPLORA_URL=https://mutinynet.com/api \
 PUBLIC_ORIGIN=http://localhost:3001 \
 DATABASE_URL=file:./dev.db \
 pnpm dev
