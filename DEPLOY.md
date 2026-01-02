@@ -25,11 +25,16 @@ The API is a Node.js application.
    - `DATABASE_URL`: Connection string to your Postgres DB (or file path for SQLite).
    - `LN_BITS_URL`: URL to your LNbits instance.
    - `LN_BITS_API_KEY`: Admin key for LNbits.
+   - `BITCOIN_NETWORK`: `regtest`, `mutinynet`, or `mainnet`.
+   - `TELEMETRY_PROVIDER`: `bitcoind`, `esplora`, or `mock` (use `esplora` for mutinynet/mainnet).
+   - `TELEMETRY_ESPLORA_URL`: Base URL for Esplora when provider is `esplora` (e.g., `https://blockstream.info/api`).
+   - `BITCOIND_RPC_URL`: Required when provider is `bitcoind`.
    - `PUBLIC_ORIGIN`: The public URL of this API (e.g., `https://api.nostrstack.com`).
    - `NOSTR_SECRET_KEY`: (Optional) nsec for the system bot.
    - `PORT`: Port to listen on (default 3001).
    - `ENABLE_REGTEST_PAY`: **Dev-only** toggle for `/api/regtest/pay` (default false; keep unset in staging/prod).
    - `ENABLE_REGTEST_FUND`: **Dev-only** toggle for `/api/regtest/fund` (default false; keep unset in staging/prod).
+   - `MAINNET_DEMO_OK`: Required by local demo scripts when using mainnet (`true` to proceed).
 
 ## Deploying the Gallery (Frontend)
 

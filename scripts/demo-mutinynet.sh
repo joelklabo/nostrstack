@@ -16,6 +16,8 @@ GALLERY_PORT="${GALLERY_PORT:-4173}"
 require() { [[ -n "${!1:-}" ]] || { echo "Missing env $1" >&2; exit 1; }; }
 require LN_BITS_URL
 require LN_BITS_API_KEY
+require TELEMETRY_ESPLORA_URL
+export TELEMETRY_PROVIDER="${TELEMETRY_PROVIDER:-esplora}"
 export VITE_NOSTRSTACK_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
 export VITE_ENABLE_TEST_SIGNER="${VITE_ENABLE_TEST_SIGNER:-false}"
 
@@ -36,6 +38,8 @@ DATABASE_URL="$PG_URL" pnpm --filter api exec prisma migrate deploy --schema pri
 echo "[mutinynet] Config:"
 echo "  LNbits:              $LN_BITS_URL"
 echo "  LNbits admin key:    $LN_BITS_API_KEY"
+echo "  Telemetry provider:  ${TELEMETRY_PROVIDER}"
+echo "  Esplora URL:         ${TELEMETRY_ESPLORA_URL}"
 echo "  API base:            http://localhost:${API_PORT}"
 echo "  Gallery:             http://localhost:${GALLERY_PORT}"
 echo "  Relays:              ${VITE_NOSTRSTACK_RELAYS}"
@@ -45,6 +49,8 @@ env \
   VITE_NETWORK=mutinynet \
   PORT="${API_PORT}" \
   DATABASE_URL="$PG_URL" \
+  TELEMETRY_PROVIDER="$TELEMETRY_PROVIDER" \
+  TELEMETRY_ESPLORA_URL="$TELEMETRY_ESPLORA_URL" \
   LIGHTNING_PROVIDER=lnbits \
   LN_BITS_URL="$LN_BITS_URL" \
   LN_BITS_API_KEY="$LN_BITS_API_KEY" \
