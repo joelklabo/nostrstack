@@ -100,6 +100,10 @@ type CommentWidgetOptions = {
   onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
 };
 
+type CommentTipWidgetOptions = TipWidgetV2Options & CommentWidgetOptions & {
+  layout?: 'full' | 'compact';
+};
+
 declare global {
   interface Window {
     nostr?: {
@@ -1795,8 +1799,8 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 
   const appendEvent = (ev: NostrEvent, relayUrl?: string) => {
     if (!isValidEvent(ev)) return;
-    if (seen.has(ev.id)) return;
-    seen.add(ev.id);
+    if (seen.has(ev.id!)) return;
+    seen.add(ev.id!);
     if (typeof ev.created_at === 'number') {
       oldestTimestamp = oldestTimestamp === null ? ev.created_at : Math.min(oldestTimestamp, ev.created_at);
     }
@@ -1999,6 +2003,41 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
       loadMoreBtn.removeEventListener('click', handleLoadMoreClick);
       subs.forEach((s) => s.un());
       relays.forEach((r) => r.close());
+    }
+  };
+}
+
+export async function renderCommentTipWidget(container: HTMLElement, opts: CommentTipWidgetOptions) {
+  ensureNostrstackRoot(container);
+  container.replaceChildren();
+
+  const grid = document.createElement('div');
+  grid.className = 'nostrstack-support-grid nostrstack-comment-tip__grid';
+  grid.style.display = 'grid';
+  grid.style.gap = 'var(--nostrstack-space-4)';
+  grid.style.alignItems = 'start';
+  grid.style.gridTemplateColumns = opts.layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)';
+
+  const left = document.createElement('div');
+  const right = document.createElement('div');
+  right.className = 'nostrstack-support-sidebar';
+  right.style.display = 'grid';
+  right.style.gap = 'var(--nostrstack-space-3)';
+
+  if (opts.layout === 'compact') {
+    grid.append(right, left);
+  } else {
+    grid.append(left, right);
+  }
+  container.appendChild(grid);
+
+  const tip = renderTipWidget(right, opts);
+  const comments = await renderCommentWidget(left, opts);
+
+  return {
+    destroy: () => {
+      tip.destroy();
+      comments.destroy();
     }
   };
 }
@@ -2377,5 +2416,26 @@ export function mountNostrProfile(container: HTMLElement, opts: MountNostrProfil
     host: opts.host,
     relays: opts.relays,
     title: opts.title ?? container.dataset.title
+  });
+}
+
+type MountCommentTipOptions = MountTipWidgetOptions & MountCommentOptions & {
+  layout?: 'full' | 'compact';
+};
+
+export function mountCommentTipWidget(container: HTMLElement, opts: MountCommentTipOptions = {}) {
+  const username = opts.username ?? getBrandAttr(container, 'Tip') ?? 'anonymous';
+  const itemId =
+    opts.itemId ??
+    container.dataset.itemId ??
+    container.id ??
+    (typeof window !== 'undefined' && window.location?.href ? window.location.href : 'item');
+  const threadId = opts.threadId ?? getBrandAttr(container, 'Comments') ?? itemId;
+
+  return renderCommentTipWidget(container, {
+    ...opts,
+    username,
+    itemId,
+    threadId
   });
 }

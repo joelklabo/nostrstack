@@ -29,7 +29,7 @@ export function Comments({ threadId, relays, headerText, placeholder, maxItems, 
     const mergedRelays = relays ?? cfg.relays ?? [];
     const thread = threadId ?? 'nostrstack-thread';
 
-    mountCommentWidget(node, {
+    const promise = mountCommentWidget(node, {
       threadId: thread,
       relays: mergedRelays,
       headerText,
@@ -41,6 +41,13 @@ export function Comments({ threadId, relays, headerText, placeholder, maxItems, 
     });
 
     return () => {
+      promise.then((handle) => {
+        try {
+          handle?.destroy?.();
+        } catch {
+          // ignore
+        }
+      });
       node.innerHTML = '';
     };
   }, [threadId, relays, headerText, placeholder, maxItems, maxAgeDays, lazyConnect, validateEvents, cfg.relays]);

@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BlockchainStats, Comments, NostrProfileWidget, NostrstackProvider, ShareButton, ShareWidget, TipActivityFeed, TipButton, TipWidget } from './index';
+import { BlockchainStats, Comments, CommentTipWidget, NostrProfileWidget, NostrstackProvider, ShareButton, ShareWidget, SupportSection, TipActivityFeed, TipButton, TipWidget } from './index';
 
 vi.mock('@nostrstack/embed', () => {
   return {
@@ -17,9 +17,17 @@ vi.mock('@nostrstack/embed', () => {
       const div = document.createElement('div');
       div.textContent = 'Comments';
       el.appendChild(div);
+      return Promise.resolve({ destroy: vi.fn() });
     }),
     mountBlockchainStats: vi.fn(() => ({ destroy: vi.fn(), refresh: vi.fn() })),
     mountNostrProfile: vi.fn(() => ({ destroy: vi.fn(), refresh: vi.fn() })),
+    mountCommentTipWidget: vi.fn(() => Promise.resolve({ destroy: vi.fn() })),
+    mountShareButton: vi.fn((el: HTMLElement) => {
+      const btn = document.createElement('button');
+      btn.textContent = 'Share';
+      el.appendChild(btn);
+      return { destroy: vi.fn() };
+    }),
     createNostrstackBrandTheme: vi.fn(() => ({})),
     ensureNostrstackEmbedStyles: vi.fn(),
     ensureNostrstackRoot: vi.fn(),
@@ -39,7 +47,16 @@ vi.mock('nostr-tools', () => {
   };
 });
 
-const { mountTipButton, mountTipWidget, mountTipFeed, mountCommentWidget, mountBlockchainStats, mountNostrProfile } = await import('@nostrstack/embed');
+const {
+  mountTipButton,
+  mountTipWidget,
+  mountTipFeed,
+  mountCommentWidget,
+  mountBlockchainStats,
+  mountNostrProfile,
+  mountCommentTipWidget,
+  mountShareButton,
+} = await import('@nostrstack/embed');
 
 describe('blog-kit components', () => {
   beforeEach(() => {
@@ -152,19 +169,80 @@ describe('blog-kit components', () => {
     expect(call.identifier).toBe('alice@example.com');
   });
 
-  it('share button falls back to copy/share', async () => {
-    const share = vi.fn().mockResolvedValue(undefined);
-    // @ts-ignore
-    global.navigator.share = share;
+  it('mounts share button with url and title', async () => {
     render(<ShareButton url="https://example.com/post" title="Post" />);
-    const btn = await screen.findByRole('button');
-    fireEvent.click(btn);
-    await waitFor(() => expect(share).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(mountShareButton).toHaveBeenCalled();
+    });
+    const call = (mountShareButton as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as { url: string; title: string };
+    expect(call.url).toBe('https://example.com/post');
+    expect(call.title).toBe('Post');
   });
 
   it('renders share widget without relays', async () => {
     render(<ShareWidget itemId="post-123" url="https://example.com/post" title="Post" relays={[]} />);
     await screen.findByText('Shares');
     await screen.findByText(/No relays configured/i);
+  });
+
+  it('mounts comment tip widget with all options', async () => {
+    render(
+      <NostrstackProvider lnAddress="alice@example.com" relays={['wss://relay.test']}>
+        <CommentTipWidget itemId="post-123" layout="compact" />
+      </NostrstackProvider>,
+    );
+    await waitFor(() => {
+      expect(mountCommentTipWidget).toHaveBeenCalled();
+    });
+    const call = (mountCommentTipWidget as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+      username: string;
+      itemId: string;
+      layout: string;
+      relays: string[];
+    };
+    expect(call.username).toBe('alice');
+    expect(call.itemId).toBe('post-123');
+    expect(call.layout).toBe('compact');
+    expect(call.relays).toEqual(['wss://relay.test']);
+  });
+
+  it('renders support section with sub-components', async () => {
+    render(
+      <NostrstackProvider lnAddress="alice@example.com">
+        <SupportSection title="Support Me" itemId="post-123" shareUrl="https://example.com" shareTitle="Post" />
+      </NostrstackProvider>,
+    );
+    expect(screen.getByText('Support Me')).toBeTruthy();
+    // SupportSection uses sub-components TipWidget, ShareButton, Comments
+    await waitFor(() => {
+      expect(mountTipWidget).toHaveBeenCalled();
+      expect(mountCommentWidget).toHaveBeenCalled();
+      expect(mountShareButton).toHaveBeenCalled();
+    });
+  });
+
+  it('renders support section in compact layout', async () => {
+    render(
+      <NostrstackProvider lnAddress="alice@example.com">
+        <SupportSection title="Support Me" itemId="post-123" layout="compact" shareUrl="https://example.com" shareTitle="Post" />
+      </NostrstackProvider>,
+    );
+    expect(screen.getByText('Support Me')).toBeTruthy();
+    await waitFor(() => {
+      expect(mountTipWidget).toHaveBeenCalled();
+      expect(mountCommentWidget).toHaveBeenCalled();
+    });
+  });
+
+  it('renders support section with unavailable tips/share when missing data', async () => {
+    render(
+      <NostrstackProvider>
+        <SupportSection itemId="post-123" shareUrl="" />
+      </NostrstackProvider>,
+    );
+    // Missing lnAddress
+    expect(screen.getByText('Tips unavailable')).toBeTruthy();
+    // Missing share title/url
+    expect(screen.getByText('Share unavailable')).toBeTruthy();
   });
 });

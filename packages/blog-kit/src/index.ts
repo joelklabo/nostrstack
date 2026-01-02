@@ -1,6 +1,7 @@
 export { type ApiBaseResolution,resolveApiBase } from './api-base';
 export { AuthProvider, useAuth } from './auth';
 export { BlockchainStats, type BlockchainStatsProps } from './blockchain-stats';
+export { CommentTipWidget, type CommentTipWidgetProps } from './comment-tip-widget';
 export { Comments, type CommentsProps } from './comments';
 export { NostrstackProvider, type NostrstackProviderProps, useNostrstackConfig } from './context';
 export { type NostrProfileProps,NostrProfileWidget } from './nostr-profile';
@@ -12,6 +13,7 @@ export { SendSats } from './send-sats';
 export { ShareButton, type ShareButtonProps } from './share-button';
 export { type NostrProfile, ShareWidget, type ShareWidgetProps } from './share-widget';
 export { StatsProvider, useStats } from './stats';
+export { SupportSection, type SupportSectionProps } from './support-section';
 export {
   emitTelemetryEvent,
   type PaymentFailureReason,

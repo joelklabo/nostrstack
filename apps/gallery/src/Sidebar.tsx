@@ -8,8 +8,8 @@ import { navigateTo } from './utils/navigation';
 import { WalletView } from './WalletView';
 
 interface SidebarProps {
-  currentView: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
-  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings') => void;
+  currentView: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit';
+  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit') => void;
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
@@ -77,6 +77,11 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
       setCurrentView('search');
       return;
     }
+    if (view === 'personal-site-kit') {
+      navigateTo('/personal-site-kit');
+      setCurrentView('personal-site-kit');
+      return;
+    }
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/search')) {
       navigateTo('/');
     }
@@ -116,6 +121,12 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           onClick={() => handleNavigate('notifications')}
         >
           Notifications
+        </button>
+        <button 
+          className={`nav-item ${currentView === 'personal-site-kit' ? 'active' : ''}`}
+          onClick={() => handleNavigate('personal-site-kit')}
+        >
+          Site Kit
         </button>
         <button 
           className={`nav-item ${currentView === 'relays' ? 'active' : ''}`}

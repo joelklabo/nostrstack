@@ -12,6 +12,7 @@ import { LoginView } from './LoginView';
 import { NostrEventView } from './NostrEventView';
 import { NotificationsView } from './NotificationsView';
 import { OffersView } from './OffersView';
+import { PersonalSiteKitView } from './PersonalSiteKitView';
 import { ProfileView } from './ProfileView';
 import { RelaysView } from './RelaysView';
 import { SearchView } from './SearchView';
@@ -21,7 +22,7 @@ import { TelemetryBar } from './TelemetryBar';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
-type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings';
+type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit';
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -56,9 +57,16 @@ function AppShell() {
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
+  const isPersonalSiteKitRoute = pathname === '/personal-site-kit';
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
+
+  useEffect(() => {
+    if (isPersonalSiteKitRoute) {
+      setCurrentView('personal-site-kit');
+    }
+  }, [isPersonalSiteKitRoute]);
 
   useEffect(() => {
     if (profileRoutePubkey) {
@@ -101,7 +109,7 @@ function AppShell() {
     );
   }
 
-  if (!pubkey) {
+  if (!pubkey && !isPersonalSiteKitRoute) {
     return <LoginView />;
   }
 
@@ -124,6 +132,7 @@ function AppShell() {
             {currentView === 'notifications' && <NotificationsView />}
             {currentView === 'relays' && <RelaysView />}
             {currentView === 'offers' && <OffersView />}
+            {currentView === 'personal-site-kit' && <PersonalSiteKitView />}
             {currentView === 'settings' && (
               <SettingsView
                 theme={theme}
