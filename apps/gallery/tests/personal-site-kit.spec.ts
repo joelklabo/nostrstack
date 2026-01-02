@@ -11,28 +11,46 @@ test.describe('Personal Site Kit', () => {
   test('renders all personal site kit components', async ({ page }) => {
     await expect(page.getByText('Personal Site Kit Demo')).toBeVisible();
     
+    // Blockchain Stats
+    const stats = page.locator('[data-nostrstack-blockchain]');
+    await expect(stats).toBeVisible();
+    await stats.screenshot({ path: 'docs/screenshots/personal-site-kit/blockchain-stats.png' });
+
+    // Nostr Profile
+    const profile = page.locator('[data-nostrstack-profile]');
+    await expect(profile).toBeVisible();
+    await profile.screenshot({ path: 'docs/screenshots/personal-site-kit/nostr-profile.png' });
+
     // Check SupportSection
     await expect(page.getByText('SupportSection (Full Layout)')).toBeVisible();
-    await expect(page.getByText('Support this post')).toBeVisible();
+    const supportFull = page.locator('section').filter({ hasText: 'SupportSection (Full Layout)' });
+    await supportFull.screenshot({ path: 'docs/screenshots/personal-site-kit/support-section.png' });
     
     // Check TipWidget inside SupportSection
-    // Since it's an iframe or mounted via embed, we check for its presence
-    await expect(page.locator('[data-nostrstack-tip-widget]').first()).toBeVisible();
+    const tipWidget = page.locator('[data-nostrstack-tip-widget]').first();
+    await expect(tipWidget).toBeVisible();
+    await tipWidget.screenshot({ path: 'docs/screenshots/personal-site-kit/tip-widget.png' });
     
     // Check ShareButton inside SupportSection
-    await expect(page.locator('[data-nostrstack-share-button]').first()).toBeVisible();
+    const shareBtn = page.locator('[data-nostrstack-share-button]').first();
+    await expect(shareBtn).toBeVisible();
+    await shareBtn.screenshot({ path: 'docs/screenshots/personal-site-kit/share-button.png' });
     
     // Check Comments inside SupportSection
-    await expect(page.locator('[data-nostrstack-comments]').first()).toBeVisible();
+    const comments = page.locator('[data-nostrstack-comments]').first();
+    await expect(comments).toBeVisible();
+    await comments.screenshot({ path: 'docs/screenshots/personal-site-kit/comments.png' });
     
     // Check Compact layout
     await expect(page.getByText('SupportSection (Compact Layout)')).toBeVisible();
     
     // Check CommentTipWidget (Embed wrapper)
     await expect(page.getByText('CommentTipWidget (Embed Wrapper)')).toBeVisible();
-    await expect(page.locator('[data-nostrstack-comment-tip-widget]')).toBeVisible();
+    const commentTipWrapper = page.locator('[data-nostrstack-comment-tip-widget]');
+    await expect(commentTipWrapper).toBeVisible();
+    await commentTipWrapper.screenshot({ path: 'docs/screenshots/personal-site-kit/comment-tip-widget-wrapper.png' });
     
-    // Take screenshot
-    await page.screenshot({ path: 'docs/screenshots/personal-site-kit/demo-view.png', fullPage: true });
+    // Take full page screenshot
+    await page.screenshot({ path: 'docs/screenshots/personal-site-kit/personal-site-kit-view.png', fullPage: true });
   });
 });

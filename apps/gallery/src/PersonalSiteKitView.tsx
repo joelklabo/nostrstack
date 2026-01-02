@@ -1,9 +1,10 @@
-import { CommentTipWidget, SupportSection } from '@nostrstack/blog-kit';
+import { BlockchainStats, CommentTipWidget, NostrProfileWidget, SupportSection } from '@nostrstack/blog-kit';
 import React from 'react';
 
 export function PersonalSiteKitView() {
   const demoItem = 'demo-post-123';
   const demoLnAddress = 'alice@nostrstack.test';
+  const demoNostrId = 'npub1alice...'; // Just for demo
   
   return (
     <div className="personal-site-kit-demo" style={{ padding: 'var(--nostrstack-space-6)', display: 'grid', gap: 'var(--nostrstack-space-8)' }}>
@@ -13,6 +14,18 @@ export function PersonalSiteKitView() {
           Showing the high-level components for personal sites.
         </p>
       </section>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <section>
+          <h2 style={{ marginBottom: 'var(--nostrstack-space-4)', fontSize: '1.1rem' }}>Blockchain Stats</h2>
+          <BlockchainStats title="Network Status" />
+        </section>
+
+        <section>
+          <h2 style={{ marginBottom: 'var(--nostrstack-space-4)', fontSize: '1.1rem' }}>Nostr Profile</h2>
+          <NostrProfileWidget identifier="alice@nostrstack.test" />
+        </section>
+      </div>
 
       <section>
         <h2 style={{ marginBottom: 'var(--nostrstack-space-4)', fontSize: '1.2rem' }}>SupportSection (Full Layout)</h2>
