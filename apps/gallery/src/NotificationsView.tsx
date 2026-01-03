@@ -1,13 +1,15 @@
 import { useAuth, useStats } from '@nostrstack/blog-kit';
-import { type Event, type Filter, SimplePool } from 'nostr-tools';
+import { type Event, type Filter } from 'nostr-tools';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { PostItem } from './FeedView';
 import { useRelays } from './hooks/useRelays';
+import { useSimplePool } from './hooks/useSimplePool';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
 
 export function NotificationsView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
+  const pool = useSimplePool();
   const { pubkey } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const seenIds = useRef(new Set<string>());
@@ -15,82 +17,79 @@ export function NotificationsView() {
 
   useEffect(() => {
     if (!pubkey || relaysLoading) return;
-    const pool = new SimplePool();
-    let closeTimer: ReturnType<typeof setTimeout> | null = null;
     const filter: Filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
-    const sub = pool.subscribeMany(relayList, filter, {
-      onevent(event) {
-        incrementEvents();
-        if (!seenIds.current.has(event.id)) {
-          seenIds.current.add(event.id);
-          setEvents((prev) => {
-            const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
-            return next.slice(0, 100);
-          });
+    let sub: { close: () => void } | undefined;
+    try {
+      sub = pool.subscribeMany(relayList, filter, {
+        onevent(event) {
+          incrementEvents();
+          if (!seenIds.current.has(event.id)) {
+            seenIds.current.add(event.id);
+            setEvents((prev) => {
+              const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
+              return next.slice(0, 100);
+            });
+          }
         }
-      }
-    });
+      });
+    } catch {
+      // ignore
+    }
     return () => {
       try {
-        sub.close();
+        sub?.close();
       } catch {
         // Ignore websocket close errors during teardown.
       }
-      if (closeTimer == null) {
-        closeTimer = globalThis.setTimeout(() => {
-          closeTimer = null;
-          try {
-            pool.close(relayList);
-          } catch {
-            // Ignore websocket close errors during teardown.
-          }
-        }, 0);
-      }
     };
-  }, [pubkey, relayList, relaysLoading, incrementEvents]);
+  }, [pubkey, relayList, relaysLoading, incrementEvents, pool]);
 
   const displayGroups = useMemo(() => {
     const groups: (NotificationGroup | Event)[] = [];
     const interactionGroups = new Map<string, NotificationGroup>();
 
     events.forEach(event => {
-      if (event.kind === 1) {
-        groups.push(event);
-        return;
-      }
+      // Grouping logic
+      let type: 'reaction' | 'zap' | 'mention' | null = null;
+      if (event.kind === 7) type = 'reaction';
+      if (event.kind === 9735) type = 'zap';
+      if (event.kind === 1) type = 'mention';
 
-      if (event.kind === 7 || event.kind === 9735) {
-        const type = event.kind === 7 ? 'reaction' : 'zap';
+      if (type) {
         const targetEventId = event.tags.find(t => t[0] === 'e')?.[1];
         
-        if (!targetEventId) {
-          // If no target e-tag, just show as raw if it's kind 1, otherwise maybe ignore?
-          // Task says Kind 1 is full PostItem.
+        if (targetEventId) {
+          const groupId = `${type}-${targetEventId}`;
+          let group = interactionGroups.get(groupId);
+          if (!group) {
+            group = {
+              id: groupId,
+              type,
+              events: [],
+              targetEventId,
+              timestamp: event.created_at
+            };
+            interactionGroups.set(groupId, group);
+            groups.push(group);
+          }
+          group.events.push(event);
+          if (event.created_at > group.timestamp) {
+            group.timestamp = event.created_at;
+          }
           return;
         }
-
-        const groupId = `${type}-${targetEventId}`;
-        let group = interactionGroups.get(groupId);
-        if (!group) {
-          group = {
-            id: groupId,
-            type,
-            events: [],
-            targetEventId,
-            timestamp: event.created_at
-          };
-          interactionGroups.set(groupId, group);
-          groups.push(group);
-        }
-        group.events.push(event);
-        // Keep the latest timestamp for the group
-        if (event.created_at > group.timestamp) {
-          group.timestamp = event.created_at;
-        }
       }
+      
+      // Fallback: not grouped or no target
+      groups.push(event);
     });
 
-    return groups;
+    // Sort groups/events by timestamp descending
+    return groups.sort((a, b) => {
+      const tsA = 'created_at' in a ? a.created_at : a.timestamp;
+      const tsB = 'created_at' in b ? b.created_at : b.timestamp;
+      return tsB - tsA;
+    });
   }, [events]);
 
   if (relaysLoading) {
