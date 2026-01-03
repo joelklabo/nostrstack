@@ -153,6 +153,9 @@ function toNpub(pubkey: string) {
   }
 }
 
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp)$/i;
+const VIDEO_EXTENSIONS = /\.(mp4|mov|webm)$/i;
+
 function renderContentWithLinks(content: string) {
   if (!content) return <span>No content for this event.</span>;
   const parts = content.split(LINK_RE);
@@ -177,6 +180,25 @@ function renderContentWithLinks(content: string) {
           );
         }
         if (part.startsWith('http://') || part.startsWith('https://')) {
+          try {
+            const url = new URL(part);
+            if (IMAGE_EXTENSIONS.test(url.pathname)) {
+              return (
+                <div key={`media-${idx}`} className="nostr-media-container">
+                  <img src={part} alt="Embedded content" loading="lazy" className="nostr-media-img" />
+                </div>
+              );
+            }
+            if (VIDEO_EXTENSIONS.test(url.pathname)) {
+              return (
+                <div key={`media-${idx}`} className="nostr-media-container">
+                  <video src={part} controls className="nostr-media-video" />
+                </div>
+              );
+            }
+          } catch {
+            // ignore invalid URL
+          }
           return (
             <a
               key={`http-${idx}`}

@@ -2066,3 +2066,21 @@ h3 {
   background: rgba(247, 147, 26, 0.1);
   font-weight: 700;
 }
+
+/* Media Embedding */
+.nostr-media-container {
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-muted);
+  background: var(--color-canvas-subtle);
+}
+
+.nostr-media-img,
+.nostr-media-video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
+}
