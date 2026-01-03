@@ -1,11 +1,12 @@
 import './styles/search-view.css';
 
 import { emitTelemetryEvent, useNostrstackConfig } from '@nostrstack/blog-kit';
-import { nip19 } from 'nostr-tools';
+import { type Event, nip19, SimplePool } from 'nostr-tools';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { PostItem } from './FeedView';
 import { useIdentityResolver } from './hooks/useIdentityResolver';
-import { fetchNostrEventFromApi } from './nostr/api';
+import { fetchNostrEventFromApi, getDefaultRelays, searchNotes } from './nostr/api';
 import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
 import { Alert } from './ui/Alert';
 import { navigateToProfile } from './utils/navigation';
@@ -18,6 +19,9 @@ export function SearchView() {
   const pendingSearchRef = useRef<string | null>(null);
 
   const [fetchedProfile, setFetchedProfile] = useState<ProfileMeta | null>(null);
+  const [notes, setNotes] = useState<Event[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesError, setNotesError] = useState<string | null>(null);
 
   const npub = useMemo(() => {
     if (!result) return null;
@@ -36,9 +40,29 @@ export function SearchView() {
     if (status === 'validating') return 'Checking format…';
     if (status === 'resolving') return 'Resolving identity…';
     if (status === 'resolved') return 'Identity ready.';
-    if (status === 'error') return error?.message ?? 'Lookup failed.';
-    return 'Paste an identifier to begin.';
+    if (status === 'error' && error?.code !== 'invalid_format') return error?.message ?? 'Lookup failed.';
+    return 'Paste an identifier or search keywords.';
   }, [status, error]);
+
+  const handleNotesSearch = useCallback(async (q: string) => {
+    setNotesLoading(true);
+    setNotesError(null);
+    const pool = new SimplePool();
+    const relays = getDefaultRelays();
+    try {
+      const results = await searchNotes(pool, relays, q);
+      setNotes(results);
+      if (results.length === 0) {
+        setNotesError('No notes found for this query.');
+      }
+    } catch (err) {
+      console.error('Notes search failed', err);
+      setNotesError('Search failed. Relays might not support NIP-50.');
+    } finally {
+      setNotesLoading(false);
+      try { pool.close(relays); } catch { /* ignore */ }
+    }
+  }, []);
 
   const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -46,8 +70,13 @@ export function SearchView() {
     if (!trimmed) return;
     pendingSearchRef.current = trimmed;
     emitTelemetryEvent({ type: 'search', stage: 'start', query: trimmed });
+    
+    // Always try identity resolution
     void resolveNow(trimmed);
-  }, [query, resolveNow]);
+    
+    // Also try content search
+    void handleNotesSearch(trimmed);
+  }, [query, resolveNow, handleNotesSearch]);
 
   useEffect(() => {
     const pending = pendingSearchRef.current;
@@ -105,14 +134,14 @@ export function SearchView() {
     <div className="search-view">
       <header className="search-header">
         <div>
-          <h2 className="search-title">Find friend</h2>
-          <p className="search-subtitle">Search by npub, nprofile, hex pubkey, or NIP-05.</p>
+          <h2 className="search-title">Discovery</h2>
+          <p className="search-subtitle">Search for profiles or keywords across Nostr.</p>
         </div>
       </header>
 
       <form className="search-card" onSubmit={handleSubmit}>
         <label className="search-label" htmlFor="friend-search">
-          Friend identifier
+          Search query
         </label>
         <div className="search-input-row">
           <input
@@ -120,7 +149,7 @@ export function SearchView() {
             className="nostrstack-input search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="npub1... or name@domain"
+            placeholder="Keywords, npub, or name@domain"
             autoComplete="off"
           />
           <button className="action-btn" type="submit">
@@ -128,10 +157,10 @@ export function SearchView() {
           </button>
         </div>
         <div className="search-helper">
-          Examples: npub1…, nprofile1…, or alice@nostr.example
+          Try "bitcoin", "nostr", or an npub1...
         </div>
         <div className={`search-status search-status--${status}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} role="status">
-          {(status === 'validating' || status === 'resolving') && <span className="nostrstack-spinner" style={{ width: '14px', height: '14px' }} aria-hidden="true" />}
+          {(status === 'validating' || status === 'resolving' || notesLoading) && <span className="nostrstack-spinner" style={{ width: '14px', height: '14px' }} aria-hidden="true" />}
           {statusLabel}
         </div>
       </form>
@@ -186,11 +215,32 @@ export function SearchView() {
         </div>
       )}
 
-      {status === 'error' && error && error.code !== 'lightning_only' && (
-        <Alert tone="danger" title="Search failed">
+      {status === 'error' && error && error.code !== 'lightning_only' && error.code !== 'invalid_format' && (
+        <Alert tone="danger" title="Identity resolution failed">
           {error.message}
         </Alert>
       )}
+
+      <div className="search-notes-results">
+        {notes.length > 0 && (
+          <>
+            <h3 style={{ margin: '2rem 0 1rem', fontSize: '1.2rem' }}>Matching Notes</h3>
+            {notes.map((note) => (
+              <PostItem key={note.id} post={note} />
+            ))}
+          </>
+        )}
+        {notesLoading && notes.length === 0 && (
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }}>
+            Searching for notes...
+          </div>
+        )}
+        {notesError && !notesLoading && query && (
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-subtle)', fontSize: '0.9rem' }}>
+            {notesError}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

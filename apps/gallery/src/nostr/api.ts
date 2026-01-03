@@ -1,5 +1,5 @@
 import { parseRelays } from '@nostrstack/blog-kit';
-import type { Event } from 'nostr-tools';
+import type { Event, SimplePool } from 'nostr-tools';
 import { normalizeURL } from 'nostr-tools/utils';
 
 import type { ProfileMeta } from './eventRenderers';
@@ -187,3 +187,13 @@ export async function fetchNostrEventFromApi(options: FetchOptions): Promise<Api
   }
   return data;
 }
+
+export async function searchNotes(pool: SimplePool, relays: string[], query: string, limit = 20): Promise<Event[]> {
+  try {
+    return await pool.querySync(relays, { kinds: [1], search: query, limit });
+  } catch (err) {
+    console.error('[nostr] search failed', err);
+    return [];
+  }
+}
+
