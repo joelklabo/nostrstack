@@ -6,7 +6,8 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { PostItem } from './FeedView';
 import { useIdentityResolver } from './hooks/useIdentityResolver';
-import { fetchNostrEventFromApi, getDefaultRelays, searchNotes } from './nostr/api';
+import { useRelays } from './hooks/useRelays';
+import { fetchNostrEventFromApi, searchNotes } from './nostr/api';
 import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
 import { Alert } from './ui/Alert';
 import { navigateToProfile } from './utils/navigation';
@@ -14,6 +15,7 @@ import { navigateToProfile } from './utils/navigation';
 export function SearchView() {
   const cfg = useNostrstackConfig();
   const apiBase = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const { relays: relayList } = useRelays();
   const [query, setQuery] = useState('');
   const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
   const pendingSearchRef = useRef<string | null>(null);
@@ -48,9 +50,9 @@ export function SearchView() {
     setNotesLoading(true);
     setNotesError(null);
     const pool = new SimplePool();
-    const relays = getDefaultRelays();
+    // relayList comes from hook
     try {
-      const results = await searchNotes(pool, relays, q);
+      const results = await searchNotes(pool, relayList, q);
       setNotes(results);
       if (results.length === 0) {
         setNotesError('No notes found for this query.');
@@ -60,9 +62,9 @@ export function SearchView() {
       setNotesError('Search failed. Relays might not support NIP-50.');
     } finally {
       setNotesLoading(false);
-      try { pool.close(relays); } catch { /* ignore */ }
+      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, []);
+  }, [relayList]);
 
   const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
