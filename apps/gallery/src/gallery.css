@@ -2113,3 +2113,13 @@ h3 {
   animation: zap-pop-in 0.2s ease-out;
 }
 
+
+/* Notifications */
+.notification-item:hover {
+  background: var(--color-canvas-subtle);
+}
+
+.notification-authors a:hover {
+  text-decoration: underline !important;
+}
+
