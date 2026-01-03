@@ -1,28 +1,24 @@
 import { useAuth, useStats } from '@nostrstack/blog-kit';
-import { type Event, SimplePool } from 'nostr-tools';
+import { type Event, type Filter, SimplePool } from 'nostr-tools';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { PostItem } from './FeedView';
+import { useRelays } from './hooks/useRelays';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
 
-const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
-
 export function NotificationsView() {
+  const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const { pubkey } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
 
   useEffect(() => {
-    if (!pubkey) return;
+    if (!pubkey || relaysLoading) return;
     const pool = new SimplePool();
     let closeTimer: ReturnType<typeof setTimeout> | null = null;
-    const filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
-    const sub = pool.subscribeMany(RELAYS, filter, {
+    const filter: Filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
+    const sub = pool.subscribeMany(relayList, filter, {
       onevent(event) {
         incrementEvents();
         if (!seenIds.current.has(event.id)) {
@@ -44,14 +40,14 @@ export function NotificationsView() {
         closeTimer = globalThis.setTimeout(() => {
           closeTimer = null;
           try {
-            pool.close(RELAYS);
+            pool.close(relayList);
           } catch {
             // Ignore websocket close errors during teardown.
           }
         }, 0);
       }
     };
-  }, [pubkey]);
+  }, [pubkey, relayList, relaysLoading, incrementEvents]);
 
   const displayGroups = useMemo(() => {
     const groups: (NotificationGroup | Event)[] = [];
@@ -96,6 +92,15 @@ export function NotificationsView() {
 
     return groups;
   }, [events]);
+
+  if (relaysLoading) {
+    return (
+      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+        <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
+        <div style={{ fontSize: '0.9rem' }}>CONNECTING...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="feed-stream">
