@@ -33,6 +33,7 @@ export type ApiNostrEventResponse = {
   references: ApiNostrReferences;
 };
 
+export const SEARCH_RELAYS = ['wss://relay.nostr.band', 'wss://search.nos.lol'];
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 const RELAY_FAILURE_KEY = 'nostrstack.relayFailures.v1';
 const RELAY_FAILURE_TTL_MS = 10 * 60 * 1000;

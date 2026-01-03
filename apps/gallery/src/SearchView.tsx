@@ -1,13 +1,14 @@
 import './styles/search-view.css';
 
 import { emitTelemetryEvent, useNostrstackConfig } from '@nostrstack/blog-kit';
-import { type Event, nip19, SimplePool } from 'nostr-tools';
+import { type Event, nip19 } from 'nostr-tools';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PostItem } from './FeedView';
 import { useIdentityResolver } from './hooks/useIdentityResolver';
 import { useRelays } from './hooks/useRelays';
-import { fetchNostrEventFromApi, searchNotes } from './nostr/api';
+import { useSimplePool } from './hooks/useSimplePool';
+import { fetchNostrEventFromApi, SEARCH_RELAYS, searchNotes } from './nostr/api';
 import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
 import { Alert } from './ui/Alert';
 import { navigateToProfile } from './utils/navigation';
@@ -16,6 +17,7 @@ export function SearchView() {
   const cfg = useNostrstackConfig();
   const apiBase = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const { relays: relayList } = useRelays();
+  const pool = useSimplePool();
   const [query, setQuery] = useState('');
   const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
   const pendingSearchRef = useRef<string | null>(null);
@@ -49,10 +51,10 @@ export function SearchView() {
   const handleNotesSearch = useCallback(async (q: string) => {
     setNotesLoading(true);
     setNotesError(null);
-    const pool = new SimplePool();
-    // relayList comes from hook
     try {
-      const results = await searchNotes(pool, relayList, q);
+      // Merge user relays with dedicated search relays
+      const searchRelays = [...new Set([...relayList, ...SEARCH_RELAYS])];
+      const results = await searchNotes(pool, searchRelays, q);
       setNotes(results);
       if (results.length === 0) {
         setNotesError('No notes found for this query.');
@@ -62,9 +64,8 @@ export function SearchView() {
       setNotesError('Search failed. Relays might not support NIP-50.');
     } finally {
       setNotesLoading(false);
-      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [relayList]);
+  }, [relayList, pool]);
 
   const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
