@@ -50,7 +50,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     setError(null);
     const filter: Filter = { kinds: [0, 3], authors: [pubkey] };
     try {
-      const sub = pool.subscribeMany(relayList, [filter], {
+      const sub = pool.subscribeMany(relayList, filter, {
         onevent: (event) => {
           if (event.kind === 0) {
             try {
@@ -84,7 +84,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     setEventsLoading(true);
     const filter: Filter = { kinds: [1], authors: [pubkey], limit: 20 };
     try {
-      const sub = pool.subscribeMany(relayList, [filter], {
+      const sub = pool.subscribeMany(relayList, filter, {
         onevent: (event) => {
           setEvents((prev) => {
             if (prev.some((existing) => existing.id === event.id)) return prev;
@@ -113,7 +113,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     const filter: Filter = { kinds: [1], authors: [pubkey], until, limit: 20 };
     
     try {
-      const olderEvents = await pool.querySync(relayList, [filter]);
+      const olderEvents = await pool.querySync(relayList, filter);
       const uniqueOlder = olderEvents.filter(p => !events.some(e => e.id === p.id));
       
       setEvents(prev => {
