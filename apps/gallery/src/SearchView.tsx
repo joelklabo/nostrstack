@@ -5,6 +5,8 @@ import { nip19 } from 'nostr-tools';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useIdentityResolver } from './hooks/useIdentityResolver';
+import { fetchNostrEventFromApi } from './nostr/api';
+import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
 import { navigateToProfile } from './utils/navigation';
 
 export function SearchView() {
@@ -14,6 +16,8 @@ export function SearchView() {
   const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
   const pendingSearchRef = useRef<string | null>(null);
 
+  const [fetchedProfile, setFetchedProfile] = useState<ProfileMeta | null>(null);
+
   const npub = useMemo(() => {
     if (!result) return null;
     try {
@@ -22,6 +26,10 @@ export function SearchView() {
       return null;
     }
   }, [result]);
+
+  const profilePicture = useMemo(() => {
+    return safeExternalUrl(fetchedProfile?.picture);
+  }, [fetchedProfile]);
 
   const statusLabel = useMemo(() => {
     if (status === 'validating') return 'Checking format…';
@@ -64,6 +72,33 @@ export function SearchView() {
       pendingSearchRef.current = null;
     }
   }, [status, result, error]);
+
+  useEffect(() => {
+    if (status !== 'resolved' || !result || !npub) {
+      setFetchedProfile(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setFetchedProfile(null);
+
+    fetchNostrEventFromApi({
+      baseUrl: apiBase,
+      id: npub,
+      timeoutMs: 3000,
+      signal: controller.signal
+    })
+      .then((res) => {
+        if (res.author.profile) {
+          setFetchedProfile(res.author.profile);
+        }
+      })
+      .catch(() => {
+        // Silent failure
+      });
+
+    return () => controller.abort();
+  }, [status, result, npub, apiBase]);
 
   return (
     <div className="search-view">
@@ -111,15 +146,33 @@ export function SearchView() {
 
       {status === 'resolved' && result && (
         <div className="search-result-card">
-          <div>
-            <div className="search-result-title">
-              {result.nip05 ?? npub ?? result.pubkey}
-              {result.verified && <span className="search-result-badge">Verified</span>}
-            </div>
-            <div className="search-result-meta">
-              {npub && <code>{npub}</code>}
-              {result.nip05 && <span>NIP-05: {result.nip05}</span>}
-              <span className="search-result-source">Source: {result.source}</span>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
+            {profilePicture && (
+              <img
+                src={profilePicture}
+                alt=""
+                style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', background: 'var(--color-canvas-subtle)' }}
+              />
+            )}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="search-result-title">
+                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  {fetchedProfile?.display_name || fetchedProfile?.name || result.nip05 || npub || result.pubkey}
+                </span>
+                {result.verified && <span className="search-result-badge">Verified</span>}
+              </div>
+              <div className="search-result-meta">
+                {fetchedProfile?.about && (
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-fg-default)', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {fetchedProfile.about}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '0.5em', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {npub && <code>{npub.slice(0, 12)}…</code>}
+                  {result.nip05 && <span>NIP-05: {result.nip05}</span>}
+                  <span className="search-result-source">Source: {result.source}</span>
+                </div>
+              </div>
             </div>
           </div>
           <button

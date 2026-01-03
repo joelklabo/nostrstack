@@ -195,7 +195,7 @@ function renderContentWithLinks(content: string) {
   );
 }
 
-function safeExternalUrl(value?: string) {
+export function safeExternalUrl(value?: string) {
   if (!value) return null;
   try {
     const url = new URL(value);
