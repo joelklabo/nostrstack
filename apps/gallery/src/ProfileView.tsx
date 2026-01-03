@@ -52,6 +52,7 @@ function ensureSafeRelay(relay: Relay): Relay {
 export function ProfileView({ pubkey }: { pubkey: string }) {
   const [profile, setProfile] = useState<ProfileMetadata | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [followingCount, setFollowingCount] = useState<number | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,13 +66,18 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       const relay = ensureSafeRelay(await Relay.connect(DEFAULT_RELAYS[0])); // Connect to one relay for metadata
       let closed = false;
       let closeRelay = () => {};
-      const sub = relay.subscribe([{ kinds: [0], authors: [pubkey] }], {
+      const sub = relay.subscribe([{ kinds: [0, 3], authors: [pubkey] }], {
         onevent: (event) => {
-          try {
-            const metadata = JSON.parse(event.content) as ProfileMetadata;
-            setProfile(metadata);
-          } catch (e) {
-            console.error('Failed to parse profile metadata', e);
+          if (event.kind === 0) {
+            try {
+              const metadata = JSON.parse(event.content) as ProfileMetadata;
+              setProfile(metadata);
+            } catch (e) {
+              console.error('Failed to parse profile metadata', e);
+            }
+          } else if (event.kind === 3) {
+            const count = event.tags.filter(t => t[0] === 'p').length;
+            setFollowingCount(count);
           }
         },
         oneose: () => {
@@ -215,6 +221,11 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
                   >
                     {lightningBadgeLabel}
                   </span>
+                  {followingCount != null && (
+                    <span className="profile-badge profile-badge--muted">
+                      Following: {followingCount}
+                    </span>
+                  )}
                 </div>
               </div>
               <code className="profile-pubkey">{npub}</code>
