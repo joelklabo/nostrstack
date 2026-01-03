@@ -1166,6 +1166,38 @@ body {
   margin-top: 0.35rem;
 }
 
+/* View Transitions */
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feed-stream,
+.search-view,
+.profile-view,
+.relay-view,
+.offers-view,
+.personal-site-kit-demo {
+  animation: view-fade-in 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-stream,
+  .search-view,
+  .profile-view,
+  .relay-view,
+  .offers-view,
+  .personal-site-kit-demo {
+    animation: none;
+  }
+}
+
 /* Profile */
 .profile-view {
   padding: 0;
