@@ -218,6 +218,11 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
                 <div className="withdraw-amount">
                   {balanceSats?.toLocaleString() ?? 0} sats available
                 </div>
+                {(balanceSats ?? 0) === 0 && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-accent-fg)', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                    Stack some sats first to withdraw them!
+                  </div>
+                )}
                 <code className="withdraw-lnurl">{request.lnurl}</code>
                 <div className="withdraw-actions">
                   <button className="action-btn" onClick={handleCopy} disabled={!canWithdraw}>

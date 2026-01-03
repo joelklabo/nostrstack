@@ -298,10 +298,9 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
                 </div>
               ) : (
                 <div className="profile-tip-empty">
-                  <div className="profile-tip-empty-title">Tipping unavailable</div>
+                  <div className="profile-tip-empty-title">Tipping is currently unavailable</div>
                   <div className="profile-tip-empty-body">
-                    This profile does not list a Lightning address yet. Ask them to add one in their Nostr client to
-                    receive tips.
+                    This user hasn't linked a Lightning address to their profile yet. Once they do, you'll be able to send them sats and zaps directly!
                   </div>
                 </div>
               )}

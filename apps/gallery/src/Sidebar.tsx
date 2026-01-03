@@ -1,7 +1,8 @@
 import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/blog-kit';
-import { type CSSProperties, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
+import { Alert } from './ui/Alert';
 import { useToast } from './ui/toast';
 import { resolveApiBase } from './utils/api-base';
 import { navigateTo } from './utils/navigation';
@@ -213,7 +214,12 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
             <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
               {wallet.balance?.toLocaleString() ?? 0} <span style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>sats</span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>{wallet.name || 'LNbits'}</div>
+            {(wallet.balance ?? 0) === 0 && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-accent-fg)', marginTop: '0.25rem', fontStyle: 'italic' }}>
+                Your wallet is empty. Ready to stack some sats?
+              </div>
+            )}
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', marginTop: '0.25rem' }}>{wallet.name || 'LNbits'}</div>
             {showRegtestActions && (
               <div className="wallet-actions">
                 <button
@@ -271,16 +277,9 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           )}
           <div className="sidebar-network-meta">Events: {eventCount}</div>
           {isMainnet && (
-            <div
-              className="nostrstack-callout"
-              style={{
-                marginTop: '0.5rem',
-                '--nostrstack-callout-tone': 'var(--nostrstack-color-danger)'
-              } as CSSProperties}
-            >
-              <div className="nostrstack-callout__title">Mainnet enabled</div>
-              <div className="nostrstack-callout__content">Real sats and payments are live.</div>
-            </div>
+            <Alert tone="danger" title="Mainnet enabled" style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}>
+              Real sats and payments are live.
+            </Alert>
           )}
         </div>
 
