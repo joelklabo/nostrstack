@@ -6,6 +6,7 @@ import {
 } from '@nostrstack/embed';
 import { useEffect, useState } from 'react';
 
+import { RelayProvider } from './context/RelayProvider';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FeedView } from './FeedView';
 import { LoginView } from './LoginView';
@@ -178,9 +179,11 @@ export default function App() {
       lnAddress={lnurlAddress}
     >
       <AuthProvider>
-        <StatsProvider>
-          <AppShell />
-        </StatsProvider>
+        <RelayProvider>
+          <StatsProvider>
+            <AppShell />
+          </StatsProvider>
+        </RelayProvider>
       </AuthProvider>
     </NostrstackProvider>
   );
