@@ -11,6 +11,7 @@ export { OfferWidget, type OfferWidgetProps } from './offer-widget';
 export { PaywalledContent } from './paywalled-content';
 export { PostEditor } from './post-editor';
 export { ReactionButton } from './reaction-button';
+export { ReplyModal } from './reply-modal';
 export { SendSats } from './send-sats';
 export { ShareButton, type ShareButtonProps } from './share-button';
 export { type NostrProfile, ShareWidget, type ShareWidgetProps } from './share-widget';

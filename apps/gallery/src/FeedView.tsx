@@ -1,4 +1,4 @@
-import { PaywalledContent, PostEditor, ReactionButton, useStats, ZapButton } from '@nostrstack/blog-kit';
+import { PaywalledContent, PostEditor, ReactionButton, ReplyModal, useStats, ZapButton } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
@@ -39,6 +39,7 @@ export function PostItem({
 }) {
   const [showJson, setShowJson] = useState(false);
   const [isZapped, setIsZapped] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
   const isPaywalled = post.tags.some(tag => tag[0] === 'paywall');
   const paywallAmount = isPaywalled ? Number(post.tags.find(tag => tag[0] === 'paywall')?.[1] || '0') : 0;
   const paywallItemId = post.id; // Use event ID as item ID for paywall
@@ -116,7 +117,7 @@ export function PostItem({
           onZapSuccess={() => setIsZapped(true)}
           className={isZapped ? 'zapped' : ''}
         />
-        <button className="action-btn">Reply</button>
+        <button className="action-btn" onClick={() => setIsReplying(true)}>Reply</button>
         <button 
           className="action-btn" 
           onClick={() => setShowJson(!showJson)}
@@ -133,6 +134,12 @@ export function PostItem({
           style={{ marginTop: '1rem' }} 
         />
       )}
+
+      <ReplyModal 
+        isOpen={isReplying} 
+        onClose={() => setIsReplying(false)} 
+        parentEvent={post} 
+      />
     </article>
   );
 }

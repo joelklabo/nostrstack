@@ -1,10 +1,18 @@
-import { type EventTemplate, SimplePool } from 'nostr-tools';
+import { type Event, type EventTemplate, SimplePool } from 'nostr-tools';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useAuth } from './auth';
 import { useNostrstackConfig } from './context';
 
-export function PostEditor() {
+export interface PostEditorProps {
+  parentEvent?: Event;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+}
+
+export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, autoFocus }: PostEditorProps) {
   const { pubkey, signEvent, mode, error } = useAuth();
   const cfg = useNostrstackConfig();
   const [content, setContent] = useState('');
@@ -38,10 +46,35 @@ export function PostEditor() {
     setPublishStatus('STATUS: Signing event...');
 
     try {
+      const tags: string[][] = [];
+      if (parentEvent) {
+        // NIP-10: Reply tags
+        // Find existing root (e marker with root, or first e tag if no markers)
+        const rootTag = parentEvent.tags.find(t => t[0] === 'e' && t[3] === 'root');
+        
+        // If there's a root, preserve it. If not, the parent IS the root.
+        const rootId = rootTag ? rootTag[1] : parentEvent.id;
+        
+        if (rootId !== parentEvent.id) {
+            tags.push(['e', rootId, '', 'root']);
+        }
+        tags.push(['e', parentEvent.id, '', 'reply']);
+
+        // p tags: author of parent + anyone mentioned in parent
+        const mentions = new Set<string>();
+        mentions.add(parentEvent.pubkey);
+        parentEvent.tags.forEach(t => {
+            if (t[0] === 'p' && t[1]) mentions.add(t[1]);
+        });
+        mentions.forEach(p => {
+             if (p !== pubkey) tags.push(['p', p]);
+        });
+      }
+
       const template: EventTemplate = {
         kind: 1, // Text note
         created_at: Math.floor(Date.now() / 1000),
-        tags: [],
+        tags,
         content: content.trim(),
       };
 
@@ -58,12 +91,13 @@ export function PostEditor() {
       
       setPublishStatus(`SUCCESS: Event published to relays.`);
       setContent('');
+      onSuccess?.();
     } catch (err: unknown) {
       setPublishStatus(`ERROR: Failed to publish: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setIsPublishing(false);
     }
-  }, [pubkey, content, signEvent, cfg.relays, isOverLimit]);
+  }, [pubkey, content, signEvent, cfg.relays, isOverLimit, parentEvent, onSuccess]);
 
   if (!pubkey) {
     return (
@@ -77,17 +111,18 @@ export function PostEditor() {
   return (
     <div className="post-editor-container">
       <div className="editor-header">
-        <span className="editor-prompt">[{mode.toUpperCase()}] {'>'}</span> Post a new note:
+        <span className="editor-prompt">[{mode.toUpperCase()}] {'>'}</span> {parentEvent ? 'Reply to note:' : 'Post a new note:'}
       </div>
       <textarea
         className="terminal-input editor-input"
         id="post-editor"
         name="post"
-        placeholder="WHAT ARE YOU HACKING ON?..."
+        placeholder={placeholder ?? "WHAT ARE YOU HACKING ON?..."}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={isPublishing}
         rows={4}
+        autoFocus={autoFocus}
       />
       {hasMedia && (
         <div className="editor-media-hint">
@@ -99,6 +134,11 @@ export function PostEditor() {
           {currentLength} / {maxLength}
         </div>
         <div className="editor-actions">
+          {onCancel && (
+            <button className="action-btn" onClick={onCancel} disabled={isPublishing} style={{marginRight: '0.5rem'}}>
+              CANCEL
+            </button>
+          )}
           <button className="auth-btn" onClick={handlePublish} disabled={isPublishing || isOverLimit}>
             {isPublishing ? 'PUBLISHING...' : 'PUBLISH_EVENT'}
           </button>
