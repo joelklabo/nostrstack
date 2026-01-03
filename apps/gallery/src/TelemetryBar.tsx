@@ -157,6 +157,11 @@ function safeClose(socket: WebSocket | null) {
 }
 
 export function TelemetryBar() {
+  const [logLimit, setLogLimit] = useState(() => {
+    if (typeof window === 'undefined') return 50;
+    const saved = window.localStorage.getItem('nostrstack.telemetry.logLimit');
+    return saved ? parseInt(saved, 10) : 50;
+  });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [nodeState, setNodeState] = useState<NodeState | null>(null);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
@@ -164,15 +169,24 @@ export function TelemetryBar() {
 
   const lastStatusErrorRef = useRef<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const appendLog = useCallback((entry: LogEntry, limit = 50) => {
+  
+  const appendLog = useCallback((entry: LogEntry) => {
     setLogs(prev => {
       const next = [...prev, entry];
-      return next.slice(-limit);
+      return next.slice(-logLimit);
     });
-  }, []);
+  }, [logLimit]);
+
   const mergeNodeState = useCallback((next: Partial<NodeState>) => {
     setNodeState(prev => ({ ...prev, ...next }));
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('nostrstack.telemetry.logLimit', String(logLimit));
+    }
+    setLogs(prev => prev.slice(-logLimit));
+  }, [logLimit]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') return;
@@ -196,7 +210,7 @@ export function TelemetryBar() {
       const detail = (event as CustomEvent<{ height: number }>).detail;
       if (detail && detail.height) {
         setNodeState(prev => ({ ...prev, height: detail.height }));
-        appendLog({ ts: Date.now(), level: 'info', message: `Manual update: Block ${detail.height}` }, 50);
+        appendLog({ ts: Date.now(), level: 'info', message: `Manual update: Block ${detail.height}` });
         refresh();
       }
     };
@@ -282,8 +296,7 @@ export function TelemetryBar() {
                 ts: msg.time * 1000,
                 level: 'info',
                 message: `New Block: ${msg.height} (${msg.txs} txs)`
-              },
-              50
+              }
             );
           } else if (msg.type === 'error') {
             appendLog(
@@ -291,8 +304,7 @@ export function TelemetryBar() {
                 ts: msg.time * 1000,
                 level: 'error',
                 message: msg.message
-              },
-              50
+              }
             );
           }
         } catch (e) {
@@ -408,7 +420,21 @@ export function TelemetryBar() {
         </div>
       </div>
       
-      <div className="telemetry-header">Activity Log</div>
+      <div className="telemetry-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        Activity Log
+        <select 
+          className="nostrstack-select" 
+          style={{ width: 'auto', fontSize: '0.7rem', padding: '2px 1.5rem 2px 6px', height: 'auto' }}
+          value={logLimit}
+          onChange={(e) => setLogLimit(parseInt(e.target.value, 10))}
+          title="Max log entries"
+        >
+          <option value="20">20 lines</option>
+          <option value="50">50 lines</option>
+          <option value="100">100 lines</option>
+          <option value="500">500 lines</option>
+        </select>
+      </div>
       <div className="telemetry-log">
         {logs.length === 0 && (
           <div style={{ padding: '0.5rem', fontStyle: 'italic', color: 'var(--color-fg-muted)' }}>
