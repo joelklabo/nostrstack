@@ -193,3 +193,24 @@ export async function mockNostrEventApi(
     });
   });
 }
+
+export async function loginWithNsec(page: Page, nsec: string) {
+  await page.goto('/');
+  // If we are already logged in (reused state), we might see Live Feed
+  if (await page.getByText('Live Feed').isVisible()) return;
+
+  const manual = page.getByText('Enter nsec manually');
+  if (await manual.isVisible()) {
+    await manual.click();
+  } else {
+    // Try to click it if hidden or assume on login page
+    const btn = page.getByRole('button', { name: /Enter nsec manually/i });
+    if (await btn.count() > 0 && await btn.isVisible()) {
+      await btn.click();
+    }
+  }
+  
+  await page.getByPlaceholder('nsec1...').fill(nsec);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+}
