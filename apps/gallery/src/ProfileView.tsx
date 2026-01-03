@@ -2,7 +2,7 @@ import './styles/lightning-card.css';
 import './styles/profile-tip.css';
 
 import { SendSats } from '@nostrstack/blog-kit';
-import { type Event, nip19, Relay } from 'nostr-tools';
+import { type Event, nip19, SimplePool } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -30,43 +30,28 @@ interface ProfileMetadata {
   website?: string;
 }
 
-function ensureSafeRelay(relay: Relay): Relay {
-  const relayWithSocket = relay as unknown as { connectionPromise?: Promise<void>; ws?: WebSocket };
-  relay.send = async (message: string) => {
-    if (!relayWithSocket.connectionPromise) return;
-    relayWithSocket.connectionPromise
-      .then(() => {
-        const ws = relayWithSocket.ws;
-        if (!ws || ws.readyState !== WebSocket.OPEN) return;
-        try {
-          ws.send(message);
-        } catch {
-          // Ignore send errors on closing sockets.
-        }
-      })
-      .catch(() => {});
-  };
-  return relay;
-}
-
 export function ProfileView({ pubkey }: { pubkey: string }) {
   const [profile, setProfile] = useState<ProfileMetadata | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lightningQr, setLightningQr] = useState<string | null>(null);
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
+  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const enableRegtestPay =
+    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+
   const fetchProfile = useCallback(async () => {
     setProfileLoading(true);
     setError(null);
+    const pool = new SimplePool();
+    const filter = { kinds: [0, 3], authors: [pubkey] };
     try {
-      const relay = ensureSafeRelay(await Relay.connect(DEFAULT_RELAYS[0])); // Connect to one relay for metadata
-      let closed = false;
-      let closeRelay = () => {};
-      const sub = relay.subscribe([{ kinds: [0, 3], authors: [pubkey] }], {
+      const sub = pool.subscribeMany(DEFAULT_RELAYS, filter, {
         onevent: (event) => {
           if (event.kind === 0) {
             try {
@@ -84,30 +69,25 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
           setProfileLoading(false);
         }
       });
-      closeRelay = () => {
-        if (closed) return;
-        closed = true;
-        try { sub.close(); } catch { /* ignore */ }
-        try { relay.close(); } catch { /* ignore */ }
-      };
-      // Cleanup subscription on unmount
+      
       return () => {
-        closeRelay();
+        try { sub.close(); } catch { /* ignore */ }
+        try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch profile', e);
       setError('Failed to fetch profile data.');
       setProfileLoading(false);
+      try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
     }
   }, [pubkey]);
 
   const fetchEvents = useCallback(async () => {
     setEventsLoading(true);
+    const pool = new SimplePool();
+    const filter = { kinds: [1], authors: [pubkey], limit: 20 };
     try {
-      const relay = ensureSafeRelay(await Relay.connect(DEFAULT_RELAYS[0]));
-      let closed = false;
-      let closeRelay = () => {};
-      const sub = relay.subscribe([{ kinds: [1], authors: [pubkey], limit: 20 }], {
+      const sub = pool.subscribeMany(DEFAULT_RELAYS, filter, {
         onevent: (event) => {
           setEvents((prev) => {
             if (prev.some((existing) => existing.id === event.id)) return prev;
@@ -118,28 +98,52 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
           setEventsLoading(false);
         }
       });
-      closeRelay = () => {
-        if (closed) return;
-        closed = true;
-        try { sub.close(); } catch { /* ignore */ }
-        try { relay.close(); } catch { /* ignore */ }
-      };
       return () => {
-        closeRelay();
+        try { sub.close(); } catch { /* ignore */ }
+        try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch events', e);
       setError('Failed to fetch user events.');
       setEventsLoading(false);
+      try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
     }
   }, [pubkey]);
 
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || events.length === 0) return;
+    setIsLoadingMore(true);
+    const lastEvent = events[events.length - 1];
+    const until = lastEvent.created_at - 1;
+    const pool = new SimplePool();
+    const filter = { kinds: [1], authors: [pubkey], until, limit: 20 };
+    
+    try {
+      const olderEvents = await pool.querySync(DEFAULT_RELAYS, filter);
+      const uniqueOlder = olderEvents.filter(p => !events.some(e => e.id === p.id));
+      
+      setEvents(prev => {
+        const next = [...prev, ...uniqueOlder].sort((a, b) => b.created_at - a.created_at);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to load more profile events', err);
+    } finally {
+      setIsLoadingMore(false);
+      try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
+    }
+  }, [isLoadingMore, events, pubkey]);
+
   useEffect(() => {
-    const cleanupProfile = fetchProfile();
-    const cleanupEvents = fetchEvents();
+    let cleanupProfile: (() => void) | undefined;
+    let cleanupEvents: (() => void) | undefined;
+
+    fetchProfile().then(cleanup => { cleanupProfile = cleanup; });
+    fetchEvents().then(cleanup => { cleanupEvents = cleanup; });
+
     return () => {
-      cleanupProfile.then(cleanup => cleanup?.());
-      cleanupEvents.then(cleanup => cleanup?.());
+      cleanupProfile?.();
+      cleanupEvents?.();
     };
   }, [fetchProfile, fetchEvents]);
 
@@ -321,22 +325,46 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       )}
 
       <h3>USER_ACTIVITY</h3>
-      {eventsLoading ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-          <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
-          LOADING EVENTS...
-        </div>
-      ) : (
-        <div className="user-events">
-          {events.length === 0 ? (
-            <p className="profile-empty">No posts yet. Check back soon.</p>
-          ) : (
-            events.map((event) => (
-              <PostItem key={event.id} post={event} authorLightningAddress={profile?.lud16 ?? profile?.lud06} />
-            ))
-          )}
-        </div>
-      )}
+      <div className="user-events">
+        {eventsLoading ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+            <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
+            LOADING EVENTS...
+          </div>
+        ) : events.length === 0 ? (
+          <p className="profile-empty">No posts yet. Check back soon.</p>
+        ) : (
+          <>
+            {events.map((event) => (
+              <PostItem 
+                key={event.id} 
+                post={event} 
+                authorLightningAddress={profile?.lud16 ?? profile?.lud06} 
+                apiBase={apiBase}
+                enableRegtestPay={enableRegtestPay}
+              />
+            ))}
+            
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <button 
+                className="auth-btn" 
+                onClick={loadMore} 
+                disabled={isLoadingMore}
+                style={{ width: 'auto', minWidth: '200px' }}
+              >
+                {isLoadingMore ? (
+                  <>
+                    <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
+                    LOADING...
+                  </>
+                ) : (
+                  'LOAD MORE'
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
