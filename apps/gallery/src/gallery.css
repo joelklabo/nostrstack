@@ -2123,3 +2123,30 @@ h3 {
   text-decoration: underline !important;
 }
 
+
+/* Relay Editor */
+.relay-editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.relay-add-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.relay-add-form input {
+  flex: 1;
+}
+
+.relay-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: 1rem;
+}
+

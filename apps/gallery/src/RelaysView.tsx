@@ -1,6 +1,6 @@
-import { parseRelays } from '@nostrstack/blog-kit';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useRelays } from './hooks/useRelays';
 import { Alert } from './ui/Alert';
 
 type RelayStatus = 'idle' | 'connecting' | 'online' | 'error';
@@ -46,22 +46,12 @@ type RelayState = {
   info?: RelayInfo;
   infoError?: string;
   error?: string;
+  isUserRelay?: boolean;
 };
-
-const FALLBACK_RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const RELAY_INFO_TTL_MS = 15000;
 const relayInfoCache = new Map<string, { ts: number; promise: Promise<RelayInfo> }>();
-
-function normalizeRelayUrls(raw?: string | null) {
-  const parsed = parseRelays(raw);
-  return parsed.length ? parsed : FALLBACK_RELAYS;
-}
 
 function relayHost(url: string) {
   try {
@@ -166,17 +156,41 @@ function fetchRelayInfoCached(url: string, signal: AbortSignal) {
 }
 
 export function RelaysView() {
-  const relayUrls = useMemo(
-    () => normalizeRelayUrls(import.meta.env.VITE_NOSTRSTACK_RELAYS),
-    []
-  );
-  const [relays, setRelays] = useState<RelayState[]>(
-    relayUrls.map((url) => ({
+  const { relays: activeRelays, userRelays, addRelay, removeRelay, saveRelays, error: contextError } = useRelays();
+  const [newRelayInput, setNewRelayInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // We want to show detailed stats for ALL active relays
+  const [relays, setRelays] = useState<RelayState[]>(() =>
+    activeRelays.map((url) => ({
       url,
       host: relayHost(url),
-      status: 'idle'
+      status: 'idle',
+      isUserRelay: userRelays.some(r => r.url === url)
     }))
   );
+
+  // Sync state when activeRelays changes (e.g. user adds/removes)
+  useEffect(() => {
+    setRelays(current => {
+      const next: RelayState[] = [];
+      // Keep existing state for known relays, add new ones
+      activeRelays.forEach(url => {
+        const existing = current.find(r => r.url === url);
+        if (existing) {
+          next.push({ ...existing, isUserRelay: userRelays.some(ur => ur.url === url) });
+        } else {
+          next.push({
+            url,
+            host: relayHost(url),
+            status: 'idle',
+            isUserRelay: userRelays.some(ur => ur.url === url)
+          });
+        }
+      });
+      return next;
+    });
+  }, [activeRelays, userRelays]);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,15 +202,17 @@ export function RelaysView() {
       );
     };
 
-    relayUrls.forEach(async (url) => {
-      updateRelay(url, { status: 'connecting', error: undefined });
+    relays.forEach(async (relay) => {
+      if (relay.status !== 'idle' && relay.status !== 'error') return; // Don't re-check if already working/connecting
+      
+      updateRelay(relay.url, { status: 'connecting', error: undefined });
       const start = performance.now();
       const controller = new AbortController();
-      controllers.set(url, controller);
+      controllers.set(relay.url, controller);
       try {
-        const info = await withTimeout(fetchRelayInfoCached(url, controller.signal), 5000, 'NIP-11');
+        const info = await withTimeout(fetchRelayInfoCached(relay.url, controller.signal), 5000, 'NIP-11');
         if (cancelled) return;
-        updateRelay(url, {
+        updateRelay(relay.url, {
           status: 'online',
           latencyMs: Math.round(performance.now() - start),
           info,
@@ -205,7 +221,7 @@ export function RelaysView() {
         });
       } catch (err) {
         if (cancelled) return;
-        updateRelay(url, {
+        updateRelay(relay.url, {
           status: 'error',
           error: err instanceof Error ? err.message : String(err),
           infoError: err instanceof Error ? err.message : String(err),
@@ -220,7 +236,20 @@ export function RelaysView() {
         controllers.forEach((controller) => controller.abort());
       }
     };
-  }, [relayUrls]);
+  }, [relays.length]); // Re-run only if list length changes (add/remove)
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRelayInput.trim()) return;
+    addRelay(newRelayInput.trim());
+    setNewRelayInput('');
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await saveRelays();
+    setIsSaving(false);
+  };
 
   const summary = useMemo(() => {
     const total = relays.length;
@@ -232,10 +261,16 @@ export function RelaysView() {
 
   return (
     <div className="relay-view">
+      {contextError && (
+        <Alert tone="danger" title="Relay Error" style={{ marginBottom: '1rem' }}>
+          {contextError}
+        </Alert>
+      )}
+
       <div className="relay-view-header">
         <div>
-          <div className="relay-view-title">Relay Matrix</div>
-          <div className="relay-view-subtitle">Realtime status + NIP-11 metadata snapshot</div>
+          <div className="relay-view-title">Relay Manager</div>
+          <div className="relay-view-subtitle">Manage your NIP-65 relay list and check health.</div>
         </div>
         <div className="relay-view-summary" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} role="status">
           {summary.connecting > 0 && <span className="nostrstack-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />}
@@ -243,6 +278,35 @@ export function RelaysView() {
           <span>{summary.errors} offline</span>
           <span>{summary.total} total</span>
         </div>
+      </div>
+
+      <div className="relay-editor-section">
+        <form onSubmit={handleAdd} className="relay-add-form">
+          <input 
+            type="url" 
+            placeholder="wss://relay.example.com" 
+            value={newRelayInput}
+            onChange={(e) => setNewRelayInput(e.target.value)}
+            className="nostrstack-input"
+            pattern="^wss?://.*"
+            title="Must start with wss:// or ws://"
+            required
+          />
+          <button type="submit" className="action-btn">Add Relay</button>
+        </form>
+        
+        {userRelays.length > 0 && (
+          <div className="relay-actions-bar">
+            <button 
+              className="auth-btn" 
+              onClick={handleSave} 
+              disabled={isSaving}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+            >
+              {isSaving ? 'Publishing...' : 'Save to Nostr (Kind 10002)'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relay-grid">
@@ -266,8 +330,20 @@ export function RelaysView() {
                     <div className="relay-url">{relay.url}</div>
                   </div>
                 </div>
-                <div className="relay-latency">
-                  {relay.status === 'online' ? `${relay.latencyMs ?? 0} ms` : '—'}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {relay.isUserRelay && (
+                    <button 
+                      className="action-btn" 
+                      style={{ padding: '2px 6px', fontSize: '0.7rem', height: 'auto' }}
+                      onClick={() => removeRelay(relay.url)}
+                      title="Remove from my list"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <div className="relay-latency">
+                    {relay.status === 'online' ? `${relay.latencyMs ?? 0} ms` : '—'}
+                  </div>
                 </div>
               </div>
 
