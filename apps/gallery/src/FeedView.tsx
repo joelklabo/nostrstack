@@ -5,7 +5,8 @@ import { SimplePool } from 'nostr-tools';
 import type { AbstractRelay } from 'nostr-tools/abstract-relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getDefaultRelays, markRelayFailure } from './nostr/api';
+import { useRelays } from './hooks/useRelays';
+import { markRelayFailure } from './nostr/api';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
@@ -145,6 +146,7 @@ export function PostItem({
 }
 
 export function FeedView() {
+  const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const seenIds = useRef(new Set<string>());
@@ -152,17 +154,17 @@ export function FeedView() {
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
-  const relayList = useMemo(
-    () => getDefaultRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS),
-    []
-  );
-  const [relayStatus, setRelayStatus] = useState<Record<string, RelayStatus>>(() => {
+  
+  const [relayStatus, setRelayStatus] = useState<Record<string, RelayStatus>>({});
+
+  // Reset status when relay list changes
+  useEffect(() => {
     const initial: Record<string, RelayStatus> = {};
     relayList.forEach((relay) => {
       initial[relay] = { status: 'connecting' };
     });
-    return initial;
-  });
+    setRelayStatus(initial);
+  }, [relayList]);
 
   const relaySummary = useMemo(() => {
     const entries = Object.values(relayStatus);
@@ -173,6 +175,8 @@ export function FeedView() {
   }, [relayStatus]);
 
   useEffect(() => {
+    if (relaysLoading || relayList.length === 0) return;
+
     const pool = new SimplePool();
     let didUnmount = false;
 
@@ -245,7 +249,7 @@ export function FeedView() {
           }
         });
     };
-  }, [incrementEvents, relayList]);
+  }, [incrementEvents, relayList, relaysLoading]);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore || posts.length === 0) return;
@@ -270,6 +274,15 @@ export function FeedView() {
       try { pool.close(relayList); } catch { /* ignore */ }
     }
   }, [isLoadingMore, posts, relayList]);
+
+  if (relaysLoading) {
+    return (
+      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+        <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
+        <div style={{ fontSize: '0.9rem' }}>CONNECTING_TO_RELAYS...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="feed-stream">

@@ -2,19 +2,15 @@ import './styles/lightning-card.css';
 import './styles/profile-tip.css';
 
 import { SendSats } from '@nostrstack/blog-kit';
-import { type Event, nip19, SimplePool } from 'nostr-tools';
+import { type Event, type Filter, nip19, SimplePool } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { paymentConfig } from './config/payments';
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
+import { useRelays } from './hooks/useRelays';
 import { Alert } from './ui/Alert';
 
-const DEFAULT_RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol',
-];
 const FALLBACK_AVATAR_SVG =
   "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='120' height='120' rx='60' fill='#21292e'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='48' fill='#ffffff'>N</text></svg>";
 const FALLBACK_AVATAR = `data:image/svg+xml;utf8,${encodeURIComponent(FALLBACK_AVATAR_SVG)}`;
@@ -31,6 +27,7 @@ interface ProfileMetadata {
 }
 
 export function ProfileView({ pubkey }: { pubkey: string }) {
+  const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const [profile, setProfile] = useState<ProfileMetadata | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
@@ -46,12 +43,13 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
 
   const fetchProfile = useCallback(async () => {
+    if (relaysLoading) return;
     setProfileLoading(true);
     setError(null);
     const pool = new SimplePool();
-    const filter = { kinds: [0, 3], authors: [pubkey] };
+    const filter: Filter = { kinds: [0, 3], authors: [pubkey] };
     try {
-      const sub = pool.subscribeMany(DEFAULT_RELAYS, filter, {
+      const sub = pool.subscribeMany(relayList, filter, {
         onevent: (event) => {
           if (event.kind === 0) {
             try {
@@ -72,22 +70,23 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       
       return () => {
         try { sub.close(); } catch { /* ignore */ }
-        try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
+        try { pool.close(relayList); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch profile', e);
       setError('Failed to fetch profile data.');
       setProfileLoading(false);
-      try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
+      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [pubkey]);
+  }, [pubkey, relayList, relaysLoading]);
 
   const fetchEvents = useCallback(async () => {
+    if (relaysLoading) return;
     setEventsLoading(true);
     const pool = new SimplePool();
-    const filter = { kinds: [1], authors: [pubkey], limit: 20 };
+    const filter: Filter = { kinds: [1], authors: [pubkey], limit: 20 };
     try {
-      const sub = pool.subscribeMany(DEFAULT_RELAYS, filter, {
+      const sub = pool.subscribeMany(relayList, filter, {
         onevent: (event) => {
           setEvents((prev) => {
             if (prev.some((existing) => existing.id === event.id)) return prev;
@@ -100,26 +99,26 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       });
       return () => {
         try { sub.close(); } catch { /* ignore */ }
-        try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
+        try { pool.close(relayList); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch events', e);
       setError('Failed to fetch user events.');
       setEventsLoading(false);
-      try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
+      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [pubkey]);
+  }, [pubkey, relayList, relaysLoading]);
 
   const loadMore = useCallback(async () => {
-    if (isLoadingMore || events.length === 0) return;
+    if (isLoadingMore || events.length === 0 || relaysLoading) return;
     setIsLoadingMore(true);
     const lastEvent = events[events.length - 1];
     const until = lastEvent.created_at - 1;
     const pool = new SimplePool();
-    const filter = { kinds: [1], authors: [pubkey], until, limit: 20 };
+    const filter: Filter = { kinds: [1], authors: [pubkey], until, limit: 20 };
     
     try {
-      const olderEvents = await pool.querySync(DEFAULT_RELAYS, filter);
+      const olderEvents = await pool.querySync(relayList, filter);
       const uniqueOlder = olderEvents.filter(p => !events.some(e => e.id === p.id));
       
       setEvents(prev => {
@@ -130,11 +129,13 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       console.error('Failed to load more profile events', err);
     } finally {
       setIsLoadingMore(false);
-      try { pool.close(DEFAULT_RELAYS); } catch { /* ignore */ }
+      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [isLoadingMore, events, pubkey]);
+  }, [isLoadingMore, events, pubkey, relayList, relaysLoading]);
 
   useEffect(() => {
+    if (relaysLoading) return;
+    
     let cleanupProfile: (() => void) | undefined;
     let cleanupEvents: (() => void) | undefined;
 
@@ -145,7 +146,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       cleanupProfile?.();
       cleanupEvents?.();
     };
-  }, [fetchProfile, fetchEvents]);
+  }, [fetchProfile, fetchEvents, relaysLoading]);
 
   const npub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
   const lightningAddress = profile?.lud16 ?? profile?.lud06;
