@@ -1,6 +1,8 @@
 import { parseRelays } from '@nostrstack/blog-kit';
 import { useEffect, useMemo, useState } from 'react';
 
+import { Alert } from './ui/Alert';
+
 type RelayStatus = 'idle' | 'connecting' | 'online' | 'error';
 
 type RelayLimitations = {
@@ -332,10 +334,12 @@ export function RelaysView() {
                 <p className="relay-description">{info.description}</p>
               )}
 
-              {!hasInfo && relay.infoError && (
-                <div className="relay-error">NIP-11: {relay.infoError}</div>
-              )}
-              {relay.error && <div className="relay-error">WS: {relay.error}</div>}
+              {(!hasInfo && relay.infoError) || relay.error ? (
+                <Alert tone="danger" style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', marginTop: 'auto' }}>
+                  {relay.infoError && <div>NIP-11: {relay.infoError}</div>}
+                  {relay.error && <div>WS: {relay.error}</div>}
+                </Alert>
+              ) : null}
             </article>
           );
         })}

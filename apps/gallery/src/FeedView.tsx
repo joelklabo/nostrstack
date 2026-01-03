@@ -6,6 +6,7 @@ import type { AbstractRelay } from 'nostr-tools/abstract-relay';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDefaultRelays, markRelayFailure } from './nostr/api';
+import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
 import { ProfileLink } from './ui/ProfileLink';
@@ -268,20 +269,10 @@ export function FeedView() {
       </div>
 
       {relaySummary.errors > 0 && (
-        <div
-          style={{
-            marginBottom: '1rem',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            border: '1px solid var(--color-attention-muted)',
-            background: 'var(--color-attention-subtle)',
-            color: 'var(--color-fg-muted)',
-            fontSize: '0.85rem'
-          }}
-        >
+        <Alert tone="warning">
           Some relays are temporarily unavailable. Streaming continues from {relaySummary.online} active relay
           {relaySummary.online === 1 ? '' : 's'}.
-        </div>
+        </Alert>
       )}
 
       {posts.length === 0 && relaySummary.online === 0 && (

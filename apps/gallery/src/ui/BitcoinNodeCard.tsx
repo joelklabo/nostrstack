@@ -1,4 +1,6 @@
-import { type CSSProperties, type HTMLAttributes } from 'react';
+import { type HTMLAttributes } from 'react';
+
+import { Alert } from './Alert';
 
 type LnbitsHealth = {
   status?: string;
@@ -180,13 +182,9 @@ export function BitcoinNodeCard({ info, className, ...props }: { info: NodeInfo 
       </div>
 
       {info.telemetryError && (
-        <div
-          className="nostrstack-callout nostrstack-node-callout"
-          style={{ '--nostrstack-callout-tone': 'var(--nostrstack-color-warning)' } as CSSProperties}
-        >
-          <div className="nostrstack-callout__title">Telemetry degraded</div>
-          <div className="nostrstack-callout__content">{info.telemetryError}</div>
-        </div>
+        <Alert tone="warning" title="Telemetry degraded" style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+          {info.telemetryError}
+        </Alert>
       )}
 
       {info.hash && (

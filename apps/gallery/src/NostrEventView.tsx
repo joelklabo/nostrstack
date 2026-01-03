@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchNostrEventFromApi } from './nostr/api';
 import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
 import { ReferencePreview } from './nostr/ReferencePreview';
+import { Alert } from './ui/Alert';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
 import { resolveGalleryApiBase } from './utils/api-base';
@@ -386,7 +387,9 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           </div>
         )}
         {state.status === 'error' && (
-          <div className="nostr-event-error">ERROR: {state.error}</div>
+          <Alert tone="danger" title="Event Error">
+            {state.error}
+          </Alert>
         )}
 
         {event && (

@@ -3,6 +3,7 @@ import './styles/withdraw.css';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { Alert } from './ui/Alert';
 import { useToast } from './ui/toast';
 
 type WithdrawRequest = {
@@ -189,19 +190,24 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
         </div>
 
         <div className="withdraw-body">
-          <div className={`withdraw-status ${status === 'error' ? 'is-error' : status === 'paid' ? 'is-success' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }} role="status">
-            {status === 'loading' && (
-              <>
-                <span className="nostrstack-spinner" aria-hidden="true" />
-                Preparing withdraw request...
-              </>
-            )}
-            {status === 'ready' && 'Scan QR or open your wallet to claim.'}
-            {status === 'paid' && 'Withdrawal confirmed.'}
-            {status === 'expired' && 'Withdraw request expired.'}
-            {status === 'disabled' && 'Withdrawals are disabled.'}
-            {status === 'error' && (error ?? 'Unable to start withdrawal.')}
-          </div>
+          {status !== 'idle' && (
+            <Alert 
+              tone={status === 'error' || status === 'expired' ? 'danger' : status === 'paid' ? 'success' : 'info'}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+            >
+              {status === 'loading' && (
+                <>
+                  <span className="nostrstack-spinner" aria-hidden="true" />
+                  Preparing withdraw request...
+                </>
+              )}
+              {status === 'ready' && 'Scan QR or open your wallet to claim.'}
+              {status === 'paid' && 'Withdrawal confirmed.'}
+              {status === 'expired' && 'Withdraw request expired.'}
+              {status === 'disabled' && 'Withdrawals are disabled.'}
+              {status === 'error' && (error ?? 'Unable to start withdrawal.')}
+            </Alert>
+          )}
 
           {request && status !== 'loading' && (
             <div className="withdraw-grid">

@@ -54,27 +54,6 @@
   gap: 1.25rem;
 }
 
-.withdraw-status {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: var(--color-canvas-subtle);
-  color: var(--color-fg-muted);
-  font-size: 0.9rem;
-  border: 1px dashed var(--color-border-default);
-}
-
-.withdraw-status.is-error {
-  color: var(--color-danger-fg);
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.08);
-}
-
-.withdraw-status.is-success {
-  color: var(--color-success-fg);
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.08);
-}
-
 .withdraw-grid {
   display: grid;
   grid-template-columns: minmax(180px, 240px) 1fr;

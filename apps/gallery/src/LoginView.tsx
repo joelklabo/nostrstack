@@ -4,6 +4,8 @@ import { resolveApiBase, useAuth, useNostrstackConfig } from '@nostrstack/blog-k
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { Alert } from './ui/Alert';
+
 type LnurlAuthRequest = {
   k1: string;
   callback: string;
@@ -209,16 +211,9 @@ export function LoginView() {
           </div>
           
           {error && (
-            <div style={{ 
-              backgroundColor: 'var(--color-danger-fg)', 
-              color: 'white', 
-              padding: '0.75rem', 
-              borderRadius: '6px', 
-              marginBottom: '1.5rem',
-              fontSize: '0.9rem' 
-            }}>
+            <Alert tone="danger">
               {error}
-            </div>
+            </Alert>
           )}
 
           {mode === 'menu' && (
@@ -290,10 +285,13 @@ export function LoginView() {
             </div>
             <div className="lnurl-auth-body">
               {statusMessage && (
-                <div className={`lnurl-auth-status ${lnurlStatus === 'error' ? 'is-error' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }} role="status">
+                <Alert 
+                  tone={lnurlStatus === 'error' || lnurlStatus === 'expired' || lnurlStatus === 'timeout' ? 'danger' : lnurlStatus === 'verified' ? 'success' : 'info'}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+                >
                   {(lnurlStatus === 'loading' || lnurlStatus === 'verified') && <span className="nostrstack-spinner" aria-hidden="true" />}
                   {statusMessage}
-                </div>
+                </Alert>
               )}
 
               {lnurlRequest && (

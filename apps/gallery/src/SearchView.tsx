@@ -7,6 +7,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useIdentityResolver } from './hooks/useIdentityResolver';
 import { fetchNostrEventFromApi } from './nostr/api';
 import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
+import { Alert } from './ui/Alert';
 import { navigateToProfile } from './utils/navigation';
 
 export function SearchView() {
@@ -136,13 +137,12 @@ export function SearchView() {
       </form>
 
       {error?.code === 'lightning_only' && error.lightning && (
-        <div className="search-card search-alert">
-          <div className="search-alert-title">Lightning address detected</div>
-          <div className="search-alert-body">
-            We found a Lightning address but no Nostr profile mapping. You can still send sats if you have their pubkey.
+        <Alert tone="info" title="Lightning address detected">
+          We found a Lightning address but no Nostr profile mapping. You can still send sats if you have their pubkey.
+          <div style={{ marginTop: '0.5rem' }}>
+            <code className="search-alert-code">{error.lightning}</code>
           </div>
-          <code className="search-alert-code">{error.lightning}</code>
-        </div>
+        </Alert>
       )}
 
       {status === 'resolved' && result && (
@@ -187,10 +187,9 @@ export function SearchView() {
       )}
 
       {status === 'error' && error && error.code !== 'lightning_only' && (
-        <div className="search-card search-alert search-alert--error">
-          <div className="search-alert-title">Search failed</div>
-          <div className="search-alert-body">{error.message}</div>
-        </div>
+        <Alert tone="danger" title="Search failed">
+          {error.message}
+        </Alert>
       )}
     </div>
   );

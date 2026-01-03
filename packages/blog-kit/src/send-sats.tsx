@@ -571,7 +571,7 @@ export function SendSats({
           Limits: {minSats ?? '—'} - {maxSats ?? '—'} sats
         </div>
       )}
-      {hasError && <div className="send-sats-status send-sats-status--error">{errorMessage}</div>}
+      {hasError && <div className="system-msg error-msg">{errorMessage}</div>}
       <button
         ref={triggerRef}
         className="action-btn"

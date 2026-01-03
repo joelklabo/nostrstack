@@ -19,6 +19,7 @@ import { SearchView } from './SearchView';
 import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
+import { Alert } from './ui/Alert';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
@@ -118,9 +119,9 @@ function AppShell() {
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <main className="feed-container">
         {profileRouteError && (
-          <div className="error-msg" style={{ marginBottom: '1rem' }}>
+          <Alert tone="danger" title="Routing Error">
             Invalid profile id. Showing your current view instead.
-          </div>
+          </Alert>
         )}
         {profileRoutePubkey ? (
           <ProfileView pubkey={profileRoutePubkey} />

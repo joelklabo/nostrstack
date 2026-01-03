@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { paymentConfig } from './config/payments';
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
+import { Alert } from './ui/Alert';
 
 const DEFAULT_RELAYS = [
   'wss://relay.damus.io',
@@ -188,7 +189,11 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
 
   return (
     <div className="profile-view">
-      {error && <div className="error-msg">{error}</div>}
+      {error && (
+        <Alert tone="danger" title="Profile Error">
+          {error}
+        </Alert>
+      )}
       {profileLoading ? (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
           <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />

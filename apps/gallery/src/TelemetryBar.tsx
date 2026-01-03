@@ -7,8 +7,9 @@ import {
   subscribeTelemetry,
   useBitcoinStatus
 } from '@nostrstack/blog-kit';
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { Alert } from './ui/Alert';
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
 
 type TelemetryEvent =
@@ -352,40 +353,19 @@ export function TelemetryBar() {
   return (
     <div className="telemetry-sidebar">
       {statusError && (
-        <div
-          className="nostrstack-callout"
-          style={{
-            marginBottom: '1rem',
-            '--nostrstack-callout-tone': 'var(--nostrstack-color-danger)'
-          } as CSSProperties}
-        >
-          <div className="nostrstack-callout__title">Bitcoin status unavailable</div>
-          <div className="nostrstack-callout__content">{statusError}</div>
-        </div>
+        <Alert tone="danger" title="Bitcoin status unavailable">
+          {statusError}
+        </Alert>
       )}
       {!nodeInfoWithConfig && statusLoading && (
-        <div
-          className="nostrstack-callout"
-          style={{
-            marginBottom: '1rem',
-            '--nostrstack-callout-tone': 'var(--nostrstack-color-accent)'
-          } as CSSProperties}
-        >
-          <div className="nostrstack-callout__title">Loading network status</div>
-          <div className="nostrstack-callout__content">Fetching Bitcoin node telemetry…</div>
-        </div>
+        <Alert tone="info" title="Loading network status">
+          Fetching Bitcoin node telemetry…
+        </Alert>
       )}
       {isMainnet && (
-        <div
-          className="nostrstack-callout"
-          style={{
-            marginBottom: '1rem',
-            '--nostrstack-callout-tone': 'var(--nostrstack-color-danger)'
-          } as CSSProperties}
-        >
-          <div className="nostrstack-callout__title">Mainnet active</div>
-          <div className="nostrstack-callout__content">Real sats and payments are live.</div>
-        </div>
+        <Alert tone="danger" title="Mainnet active">
+          Real sats and payments are live.
+        </Alert>
       )}
       {nodeInfoWithConfig && (
         <div style={{ marginBottom: '1.5rem' }}>

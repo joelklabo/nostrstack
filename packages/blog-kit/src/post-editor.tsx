@@ -2,9 +2,11 @@ import { type EventTemplate, SimplePool } from 'nostr-tools';
 import { useCallback, useState } from 'react';
 
 import { useAuth } from './auth';
+import { useNostrstackConfig } from './context';
 
 export function PostEditor() {
   const { pubkey, signEvent, mode, error } = useAuth();
+  const cfg = useNostrstackConfig();
   const [content, setContent] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<string | null>(null);
@@ -33,8 +35,9 @@ export function PostEditor() {
       const signedEvent = await signEvent(template);
       setPublishStatus(`STATUS: Event signed. ID: ${signedEvent.id.slice(0, 8)}... Publishing...`);
 
-      // For now, hardcode relays. Later, use user's configured relays.
-      const relays = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
+      const relays = cfg.relays?.length 
+        ? cfg.relays 
+        : ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
       
       const pool = new SimplePool();
       await Promise.any(pool.publish(relays, signedEvent));
@@ -47,13 +50,13 @@ export function PostEditor() {
     } finally {
       setIsPublishing(false);
     }
-  }, [pubkey, content, signEvent]);
+  }, [pubkey, content, signEvent, cfg.relays]);
 
   if (!pubkey) {
     return (
       <div className="post-editor-container">
-        <div className="system-msg">ACCESS_DENIED: User not authenticated.</div>
-        {error && <div className="error-msg">{`[ERROR]: ${error}`}</div>}
+        <div className="system-msg error-msg">ACCESS_DENIED: User not authenticated.</div>
+        {error && <div className="system-msg error-msg">{`[ERROR]: ${error}`}</div>}
       </div>
     );
   }
@@ -79,7 +82,7 @@ export function PostEditor() {
         </button>
       </div>
       {publishStatus && (
-        <div className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : ''}`}>
+        <div className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : publishStatus.startsWith('SUCCESS') ? 'success-msg' : ''}`}>
           {publishStatus}
         </div>
       )}
