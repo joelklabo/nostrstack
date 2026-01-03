@@ -129,7 +129,8 @@ export function SearchView() {
         <div className="search-helper">
           Examples: npub1…, nprofile1…, or alice@nostr.example
         </div>
-        <div className={`search-status search-status--${status}`}>
+        <div className={`search-status search-status--${status}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} role="status">
+          {(status === 'validating' || status === 'resolving') && <span className="nostrstack-spinner" style={{ width: '14px', height: '14px' }} aria-hidden="true" />}
           {statusLabel}
         </div>
       </form>

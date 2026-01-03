@@ -380,7 +380,10 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         </div>
 
         {state.status === 'loading' && (
-          <div className="nostr-event-loading">Fetching event data...</div>
+          <div className="nostr-event-loading" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} role="status">
+            <span className="nostrstack-spinner" aria-hidden="true" />
+            Fetching event data...
+          </div>
         )}
         {state.status === 'error' && (
           <div className="nostr-event-error">ERROR: {state.error}</div>

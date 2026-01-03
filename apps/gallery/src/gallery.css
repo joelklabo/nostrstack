@@ -407,6 +407,30 @@ body {
   animation: zap-spin 0.8s linear infinite;
 }
 
+.nostrstack-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-muted);
+  border-top-color: var(--color-accent-emphasis);
+  animation: nostrstack-spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nostrstack-spinner {
+    animation-duration: 10s; /* Very slow or static */
+    opacity: 0.5;
+  }
+}
+
+@keyframes nostrstack-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .zap-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

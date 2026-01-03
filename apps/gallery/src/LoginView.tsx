@@ -290,7 +290,8 @@ export function LoginView() {
             </div>
             <div className="lnurl-auth-body">
               {statusMessage && (
-                <div className={`lnurl-auth-status ${lnurlStatus === 'error' ? 'is-error' : ''}`}>
+                <div className={`lnurl-auth-status ${lnurlStatus === 'error' ? 'is-error' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }} role="status">
+                  {(lnurlStatus === 'loading' || lnurlStatus === 'verified') && <span className="nostrstack-spinner" aria-hidden="true" />}
                   {statusMessage}
                 </div>
               )}
@@ -305,6 +306,12 @@ export function LoginView() {
                     )}
                   </div>
                   <div className="lnurl-auth-meta">
+                    {lnurlStatus === 'polling' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', color: 'var(--color-fg-muted)' }} role="status">
+                        <span className="nostrstack-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />
+                        POLLING_STATUS...
+                      </div>
+                    )}
                     <div className="lnurl-auth-chip">k1: {lnurlRequest.k1.slice(0, 8)}…</div>
                     <div className="lnurl-auth-instructions">
                       Scan with a Lightning wallet that supports LNURL-auth and approve the request.
@@ -328,7 +335,10 @@ export function LoginView() {
               )}
 
               {!lnurlRequest && lnurlStatus === 'loading' && (
-                <div className="lnurl-auth-loading">Preparing LNURL-auth request…</div>
+                <div className="lnurl-auth-loading" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }} role="status">
+                  <span className="nostrstack-spinner" aria-hidden="true" />
+                  Preparing LNURL-auth request…
+                </div>
               )}
             </div>
           </div>

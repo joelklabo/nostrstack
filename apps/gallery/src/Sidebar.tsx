@@ -221,11 +221,18 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                   className="wallet-action-btn"
                   onClick={handleRegtestFund}
                   disabled={isFunding || !apiBaseConfig.isConfigured}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  aria-busy={isFunding}
                 >
                   {!apiBaseConfig.isConfigured
                     ? 'REGTEST_CONFIG_REQUIRED'
                     : isFunding
-                      ? 'Mining regtest blocks…'
+                      ? (
+                        <>
+                          <span className="nostrstack-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />
+                          Mining regtest blocks…
+                        </>
+                      )
                       : 'Add funds (regtest)'}
                 </button>
                 <button

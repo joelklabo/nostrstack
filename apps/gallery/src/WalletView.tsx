@@ -189,8 +189,13 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
         </div>
 
         <div className="withdraw-body">
-          <div className={`withdraw-status ${status === 'error' ? 'is-error' : status === 'paid' ? 'is-success' : ''}`}>
-            {status === 'loading' && 'Preparing withdraw request...'}
+          <div className={`withdraw-status ${status === 'error' ? 'is-error' : status === 'paid' ? 'is-success' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }} role="status">
+            {status === 'loading' && (
+              <>
+                <span className="nostrstack-spinner" aria-hidden="true" />
+                Preparing withdraw request...
+              </>
+            )}
             {status === 'ready' && 'Scan QR or open your wallet to claim.'}
             {status === 'paid' && 'Withdrawal confirmed.'}
             {status === 'expired' && 'Withdraw request expired.'}

@@ -224,7 +224,8 @@ export function RelaysView() {
     const total = relays.length;
     const online = relays.filter((r) => r.status === 'online').length;
     const errors = relays.filter((r) => r.status === 'error').length;
-    return { total, online, errors };
+    const connecting = relays.filter((r) => r.status === 'connecting').length;
+    return { total, online, errors, connecting };
   }, [relays]);
 
   return (
@@ -234,7 +235,8 @@ export function RelaysView() {
           <div className="relay-view-title">Relay Matrix</div>
           <div className="relay-view-subtitle">Realtime status + NIP-11 metadata snapshot</div>
         </div>
-        <div className="relay-view-summary">
+        <div className="relay-view-summary" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} role="status">
+          {summary.connecting > 0 && <span className="nostrstack-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />}
           <span>{summary.online} online</span>
           <span>{summary.errors} offline</span>
           <span>{summary.total} total</span>

@@ -190,7 +190,10 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     <div className="profile-view">
       {error && <div className="error-msg">{error}</div>}
       {profileLoading ? (
-        <p>LOADING PROFILE...</p>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+          <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
+          LOADING PROFILE...
+        </div>
       ) : (
         <>
           <div className="profile-header">
@@ -304,7 +307,10 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
 
       <h3>USER_ACTIVITY</h3>
       {eventsLoading ? (
-        <p>LOADING EVENTS...</p>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+          <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
+          LOADING EVENTS...
+        </div>
       ) : (
         <div className="user-events">
           {events.length === 0 ? (

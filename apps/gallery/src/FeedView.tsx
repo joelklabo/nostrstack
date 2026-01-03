@@ -284,6 +284,20 @@ export function FeedView() {
         </div>
       )}
 
+      {posts.length === 0 && relaySummary.online === 0 && (
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+          <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
+          <div style={{ fontSize: '0.9rem' }}>CONNECTING_TO_RELAYS...</div>
+        </div>
+      )}
+
+      {posts.length === 0 && relaySummary.online > 0 && (
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
+          <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
+          <div style={{ fontSize: '0.9rem' }}>WAITING_FOR_POSTS...</div>
+        </div>
+      )}
+
       {posts.map(post => (
         <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
       ))}
