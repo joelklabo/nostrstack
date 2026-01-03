@@ -1,4 +1,4 @@
-import { PaywalledContent, PostEditor, useStats, ZapButton } from '@nostrstack/blog-kit';
+import { PaywalledContent, PostEditor, ReactionButton, useStats, ZapButton } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
@@ -107,6 +107,7 @@ export function PostItem({
       )}
       
       <div className="post-actions">
+        <ReactionButton event={post} />
         <ZapButton
           event={post}
           authorLightningAddress={authorLightningAddress}
