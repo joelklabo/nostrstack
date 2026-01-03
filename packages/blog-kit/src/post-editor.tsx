@@ -1,5 +1,5 @@
 import { type EventTemplate, SimplePool } from 'nostr-tools';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useAuth } from './auth';
 import { useNostrstackConfig } from './context';
@@ -11,6 +11,15 @@ export function PostEditor() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<string | null>(null);
 
+  const maxLength = 1000;
+  const currentLength = content.length;
+  const isOverLimit = currentLength > maxLength;
+  const isNearLimit = currentLength > maxLength * 0.9;
+
+  const hasMedia = useMemo(() => {
+    return /\.(jpg|jpeg|png|gif|webp|mp4|mov|webm)$/i.test(content);
+  }, [content]);
+
   const handlePublish = useCallback(async () => {
     if (!pubkey) {
       setPublishStatus('ERROR: Not authenticated. Please login.');
@@ -18,6 +27,10 @@ export function PostEditor() {
     }
     if (!content.trim()) {
       setPublishStatus('ERROR: Content cannot be empty.');
+      return;
+    }
+    if (isOverLimit) {
+      setPublishStatus('ERROR: Content is too long.');
       return;
     }
 
@@ -50,7 +63,7 @@ export function PostEditor() {
     } finally {
       setIsPublishing(false);
     }
-  }, [pubkey, content, signEvent, cfg.relays]);
+  }, [pubkey, content, signEvent, cfg.relays, isOverLimit]);
 
   if (!pubkey) {
     return (
@@ -76,10 +89,20 @@ export function PostEditor() {
         disabled={isPublishing}
         rows={4}
       />
-      <div className="editor-actions">
-        <button className="auth-btn" onClick={handlePublish} disabled={isPublishing}>
-          {isPublishing ? 'PUBLISHING...' : 'PUBLISH_EVENT'}
-        </button>
+      {hasMedia && (
+        <div className="editor-media-hint">
+          <span>📷</span> Media URL detected. It will be embedded by clients.
+        </div>
+      )}
+      <div className="editor-footer">
+        <div className={`editor-counter ${isOverLimit ? 'is-over-limit' : isNearLimit ? 'is-near-limit' : ''}`}>
+          {currentLength} / {maxLength}
+        </div>
+        <div className="editor-actions">
+          <button className="auth-btn" onClick={handlePublish} disabled={isPublishing || isOverLimit}>
+            {isPublishing ? 'PUBLISHING...' : 'PUBLISH_EVENT'}
+          </button>
+        </div>
       </div>
       {publishStatus && (
         <div className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : publishStatus.startsWith('SUCCESS') ? 'success-msg' : ''}`}>

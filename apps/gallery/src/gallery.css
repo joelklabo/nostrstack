@@ -1137,6 +1137,35 @@ body {
   border-color: var(--color-accent-emphasis);
 }
 
+.editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.editor-counter {
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+}
+
+.editor-counter.is-near-limit {
+  color: var(--color-attention-fg);
+}
+
+.editor-counter.is-over-limit {
+  color: var(--color-danger-fg);
+}
+
+.editor-media-hint {
+  font-size: 0.7rem;
+  color: var(--color-success-fg);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
 /* Profile */
 .profile-view {
   padding: 0;
