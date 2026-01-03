@@ -94,29 +94,35 @@ resource pgDb 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-pr
 var dbUrl = 'postgresql://nostrstack:${adminApiKey}@${pg.name}.postgres.database.azure.com:5432/nostrstack'
 
 resource secretDb 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/database-url'
+  parent: kv
+  name: 'database-url'
   properties: { value: dbUrl }
 }
 resource secretAdmin 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/admin-api-key'
+  parent: kv
+  name: 'admin-api-key'
   properties: { value: adminApiKey }
 }
 resource secretOp 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/op-node-api-key'
+  parent: kv
+  name: 'op-node-api-key'
   properties: { value: opNodeApiKey }
 }
 resource secretWebhook 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${kv.name}/op-node-webhook-secret'
+  parent: kv
+  name: 'op-node-webhook-secret'
   properties: { value: opNodeWebhookSecret }
 }
 
 resource secretRegistry 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (useRegistry) {
-  name: '${kv.name}/registry-password'
+  parent: kv
+  name: 'registry-password'
   properties: { value: registryPassword }
 }
 
 resource secretOtelHeaders 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (useOtel && !empty(otelHeaders)) {
-  name: '${kv.name}/otel-exporter-otlp-headers'
+  parent: kv
+  name: 'otel-exporter-otlp-headers'
   properties: { value: otelHeaders }
 }
 
