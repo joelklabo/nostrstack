@@ -1,4 +1,5 @@
 import { PaywalledContent, PostEditor, useStats, ZapButton } from '@nostrstack/blog-kit';
+import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
 import type { AbstractRelay } from 'nostr-tools/abstract-relay';
@@ -9,6 +10,13 @@ import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
 import { ProfileLink } from './ui/ProfileLink';
 import { navigateTo } from './utils/navigation';
+
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+  typographer: true
+});
 
 type Post = Event;
 
@@ -29,14 +37,16 @@ export function PostItem({
   enableRegtestPay?: boolean;
 }) {
   const [showJson, setShowJson] = useState(false);
+  const [isZapped, setIsZapped] = useState(false);
   const isPaywalled = post.tags.some(tag => tag[0] === 'paywall');
   const paywallAmount = isPaywalled ? Number(post.tags.find(tag => tag[0] === 'paywall')?.[1] || '0') : 0;
   const paywallItemId = post.id; // Use event ID as item ID for paywall
 
   const renderContent = () => (
-    <div className="post-content">
-      {post.content}
-    </div>
+    <div 
+      className="post-content" 
+      dangerouslySetInnerHTML={{ __html: md.render(post.content) }} 
+    />
   );
 
   return (
@@ -101,6 +111,8 @@ export function PostItem({
           authorLightningAddress={authorLightningAddress}
           apiBase={apiBase}
           enableRegtestPay={enableRegtestPay}
+          onZapSuccess={() => setIsZapped(true)}
+          className={isZapped ? 'zapped' : ''}
         />
         <button className="action-btn">Reply</button>
         <button 

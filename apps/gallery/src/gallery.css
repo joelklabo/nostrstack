@@ -228,6 +228,31 @@ body {
   font-size: 0.95rem;
 }
 
+.post-content p {
+  margin: 0 0 0.75rem 0;
+}
+
+.post-content p:last-child {
+  margin-bottom: 0;
+}
+
+.post-content a {
+  color: var(--color-accent-fg);
+  text-decoration: none;
+}
+
+.post-content a:hover {
+  text-decoration: underline;
+}
+
+.post-content code {
+  font-family: var(--font-mono);
+  background: var(--color-canvas-subtle);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
 .post-actions {
   display: flex;
   gap: 0.5rem;
@@ -1901,4 +1926,11 @@ h3 {
 
 .personal-site-kit-demo hr {
   margin: 2rem 0;
+}
+
+.zap-btn.zapped {
+  color: #f7931a; /* Bitcoin orange */
+  border-color: #f7931a;
+  background: rgba(247, 147, 26, 0.1);
+  font-weight: 700;
 }

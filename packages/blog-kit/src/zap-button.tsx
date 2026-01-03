@@ -38,6 +38,9 @@ interface ZapButtonProps {
   authorLightningAddress?: string;
   relays?: string[];
   enableRegtestPay?: boolean;
+  onZapSuccess?: () => void;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const RELAYS = [
@@ -79,7 +82,10 @@ export function ZapButton({
   apiBase,
   authorLightningAddress,
   relays,
-  enableRegtestPay
+  enableRegtestPay,
+  onZapSuccess,
+  className,
+  style
 }: ZapButtonProps) {
   const { pubkey, signEvent } = useAuth();
   const cfg = useNostrstackConfig();
@@ -101,6 +107,12 @@ export function ZapButton({
     paymentSuccess: false,
     paymentFailures: new Set<string>()
   });
+
+  useEffect(() => {
+    if (zapState === 'paid') {
+      onZapSuccess?.();
+    }
+  }, [zapState, onZapSuccess]);
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
@@ -584,7 +596,13 @@ export function ZapButton({
 
   return (
     <>
-      <button ref={triggerRef} className="action-btn zap-btn" onClick={handleZap} disabled={zapState !== 'idle'}>
+      <button 
+        ref={triggerRef} 
+        className={`action-btn zap-btn ${className ?? ''}`} 
+        style={style}
+        onClick={handleZap} 
+        disabled={zapState !== 'idle'}
+      >
         ⚡ ZAP {amountSats}
       </button>
 
