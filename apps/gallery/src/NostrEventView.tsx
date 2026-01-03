@@ -2,6 +2,7 @@ import { parseRelays, useNostrstackConfig } from '@nostrstack/blog-kit';
 import { type Event, nip19, SimplePool } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
 
+import { PostItem } from './FeedView';
 import { fetchNostrEventFromApi } from './nostr/api';
 import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
 import { ReferencePreview } from './nostr/ReferencePreview';
@@ -24,6 +25,7 @@ type LoadState = {
   references?: EventReferences;
   authorProfile?: ProfileMeta | null;
   authorPubkey?: string;
+  replies?: Event[];
 };
 
 const FALLBACK_RELAYS = [
@@ -159,6 +161,9 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     [cfg.apiBase, cfg.apiBaseConfig, cfg.baseUrl]
   );
   const apiBase = apiBaseConfig.baseUrl;
+  const enableRegtestPay =
+    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  
   const relayList = useMemo(() => {
     const envRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
     const targetRelays = target?.relays ?? [];
@@ -191,8 +196,13 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
       try {
         let event: Event | null = null;
+        let replies: Event[] = [];
+
         if (target.type === 'event') {
           event = await withTimeout(pool.get(relayList, { ids: [target.id] }), REQUEST_TIMEOUT_MS);
+          if (event) {
+             replies = await withTimeout(pool.querySync(relayList, { kinds: [1], '#e': [event.id], limit: 50 }), REQUEST_TIMEOUT_MS);
+          }
         } else if (target.type === 'profile') {
           event = await withTimeout(
             pool.get(relayList, { kinds: [0], authors: [target.pubkey] }),
@@ -220,8 +230,11 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         } else {
           authorProfile = parseProfileContent(event.content);
         }
+        
+        // Sort replies
+        replies.sort((a, b) => a.created_at - b.created_at);
 
-        return { event, authorProfile, authorPubkey: event.pubkey };
+        return { event, authorProfile, authorPubkey: event.pubkey, replies };
       } finally {
         closePool();
       }
@@ -236,7 +249,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         references: undefined,
         authorProfile: undefined,
         authorPubkey: undefined,
-        targetLabel: rawId
+        targetLabel: rawId,
+        replies: []
       });
 
       let apiError: string | null = null;
@@ -254,6 +268,26 @@ export function NostrEventView({ rawId }: { rawId: string }) {
             );
             if (cancelled) return;
             const relays = apiResult.target?.relays?.length ? apiResult.target.relays : relayList;
+            
+            // TODO: API doesn't return replies yet, so we still might need to fetch them if relying on API
+            // For now, let's just use relay fetch for consistency or implement API support later. 
+            // Actually, let's fallback to relay load for consistency in this iteration as API update is out of scope.
+            // Or mix them? We'll just stick to relay loading for replies if event found via API.
+            
+            let replies: Event[] = [];
+             // If we have the event, try to fetch replies from relays
+             if (apiResult.event) {
+                const pool = new SimplePool();
+                try {
+                    replies = await pool.querySync(relayList, { kinds: [1], '#e': [apiResult.event.id], limit: 50 });
+                    replies.sort((a, b) => a.created_at - b.created_at);
+                } catch {
+                    // ignore reply fetch errors
+                } finally {
+                    pool.close(relayList);
+                }
+             }
+
             setState({
               status: 'ready',
               relays,
@@ -261,7 +295,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               references: apiResult.references,
               authorProfile: apiResult.author?.profile ?? null,
               authorPubkey: apiResult.author?.pubkey ?? apiResult.event.pubkey,
-              targetLabel: apiResult.target?.input ?? rawId
+              targetLabel: apiResult.target?.input ?? rawId,
+              replies
             });
             return;
           } catch (err) {
@@ -279,7 +314,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           references: extractEventReferences(relayResult.event),
           authorProfile: relayResult.authorProfile,
           authorPubkey: relayResult.authorPubkey,
-          targetLabel: rawId
+          targetLabel: rawId,
+          replies: relayResult.replies
         });
       } catch (err) {
         if (cancelled) return;
@@ -506,6 +542,22 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           </>
         )}
       </section>
+
+      {state.replies && state.replies.length > 0 && (
+        <section style={{ marginTop: '2rem' }}>
+          <h3>Replies ({state.replies.length})</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {state.replies.map(reply => (
+              <PostItem 
+                key={reply.id} 
+                post={reply} 
+                apiBase={apiBase} 
+                enableRegtestPay={enableRegtestPay} 
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {event && (
         <section className="nostr-event-raw">
