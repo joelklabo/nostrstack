@@ -2,13 +2,14 @@ import './styles/lightning-card.css';
 import './styles/profile-tip.css';
 
 import { SendSats } from '@nostrstack/blog-kit';
-import { type Event, type Filter, nip19, SimplePool } from 'nostr-tools';
+import { type Event, type Filter, nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { paymentConfig } from './config/payments';
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
 import { useRelays } from './hooks/useRelays';
+import { useSimplePool } from './hooks/useSimplePool';
 import { Alert } from './ui/Alert';
 
 const FALLBACK_AVATAR_SVG =
@@ -28,6 +29,7 @@ interface ProfileMetadata {
 
 export function ProfileView({ pubkey }: { pubkey: string }) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
+  const pool = useSimplePool();
   const [profile, setProfile] = useState<ProfileMetadata | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
@@ -46,10 +48,9 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     if (relaysLoading) return;
     setProfileLoading(true);
     setError(null);
-    const pool = new SimplePool();
     const filter: Filter = { kinds: [0, 3], authors: [pubkey] };
     try {
-      const sub = pool.subscribeMany(relayList, filter, {
+      const sub = pool.subscribeMany(relayList, [filter], {
         onevent: (event) => {
           if (event.kind === 0) {
             try {
@@ -70,23 +71,20 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       
       return () => {
         try { sub.close(); } catch { /* ignore */ }
-        try { pool.close(relayList); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch profile', e);
       setError('Failed to fetch profile data.');
       setProfileLoading(false);
-      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [pubkey, relayList, relaysLoading]);
+  }, [pubkey, relayList, relaysLoading, pool]);
 
   const fetchEvents = useCallback(async () => {
     if (relaysLoading) return;
     setEventsLoading(true);
-    const pool = new SimplePool();
     const filter: Filter = { kinds: [1], authors: [pubkey], limit: 20 };
     try {
-      const sub = pool.subscribeMany(relayList, filter, {
+      const sub = pool.subscribeMany(relayList, [filter], {
         onevent: (event) => {
           setEvents((prev) => {
             if (prev.some((existing) => existing.id === event.id)) return prev;
@@ -99,26 +97,23 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       });
       return () => {
         try { sub.close(); } catch { /* ignore */ }
-        try { pool.close(relayList); } catch { /* ignore */ }
       };
     } catch (e) {
       console.error('Failed to fetch events', e);
       setError('Failed to fetch user events.');
       setEventsLoading(false);
-      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [pubkey, relayList, relaysLoading]);
+  }, [pubkey, relayList, relaysLoading, pool]);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore || events.length === 0 || relaysLoading) return;
     setIsLoadingMore(true);
     const lastEvent = events[events.length - 1];
     const until = lastEvent.created_at - 1;
-    const pool = new SimplePool();
     const filter: Filter = { kinds: [1], authors: [pubkey], until, limit: 20 };
     
     try {
-      const olderEvents = await pool.querySync(relayList, filter);
+      const olderEvents = await pool.querySync(relayList, [filter]);
       const uniqueOlder = olderEvents.filter(p => !events.some(e => e.id === p.id));
       
       setEvents(prev => {
@@ -129,9 +124,8 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       console.error('Failed to load more profile events', err);
     } finally {
       setIsLoadingMore(false);
-      try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [isLoadingMore, events, pubkey, relayList, relaysLoading]);
+  }, [isLoadingMore, events, pubkey, relayList, relaysLoading, pool]);
 
   useEffect(() => {
     if (relaysLoading) return;
