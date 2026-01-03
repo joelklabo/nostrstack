@@ -3,7 +3,7 @@ import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
 import type { AbstractRelay } from 'nostr-tools/abstract-relay';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDefaultRelays, markRelayFailure } from './nostr/api';
 import { Alert } from './ui/Alert';
@@ -138,6 +138,7 @@ export function PostItem({
 
 export function FeedView() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -191,7 +192,7 @@ export function FeedView() {
             seenIds.current.add(event.id);
             setPosts(prev => {
               const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
-              return next.slice(0, 50);
+              return next.slice(0, 100); // Increased buffer
             });
           }
         },
@@ -237,6 +238,30 @@ export function FeedView() {
         });
     };
   }, [incrementEvents, relayList]);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || posts.length === 0) return;
+    setIsLoadingMore(true);
+    const lastPost = posts[posts.length - 1];
+    const until = lastPost.created_at - 1;
+    const pool = new SimplePool();
+    
+    try {
+      const olderPosts = await pool.querySync(relayList, { kinds: [1], until, limit: 20 });
+      const uniqueOlder = olderPosts.filter(p => !seenIds.current.has(p.id));
+      uniqueOlder.forEach(p => seenIds.current.add(p.id));
+      
+      setPosts(prev => {
+        const next = [...prev, ...uniqueOlder].sort((a, b) => b.created_at - a.created_at);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to load more posts', err);
+    } finally {
+      setIsLoadingMore(false);
+      try { pool.close(relayList); } catch { /* ignore */ }
+    }
+  }, [isLoadingMore, posts, relayList]);
 
   return (
     <div className="feed-stream">
@@ -292,6 +317,26 @@ export function FeedView() {
       {posts.map(post => (
         <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
       ))}
+
+      {posts.length > 0 && (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <button 
+            className="auth-btn" 
+            onClick={loadMore} 
+            disabled={isLoadingMore}
+            style={{ width: 'auto', minWidth: '200px' }}
+          >
+            {isLoadingMore ? (
+              <>
+                <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
+                LOADING...
+              </>
+            ) : (
+              'LOAD MORE'
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
