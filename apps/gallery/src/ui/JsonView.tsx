@@ -25,6 +25,7 @@ export function JsonView({
 }: JsonViewProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const formatted = useMemo(() => formatValue(value), [value]);
+  const highlighted = useMemo(() => highlightJson(formatted.text), [formatted.text]);
   const canCopy = formatted.canCopy;
   const isCollapsed = collapsible && collapsed;
   const maxHeightVar = isCollapsed ? `${maxHeight}px` : 'none';
@@ -53,8 +54,40 @@ export function JsonView({
           </div>
         </div>
       ) : null}
-      <pre className="nostrstack-json__pre">{formatted.text}</pre>
+      <pre className="nostrstack-json__pre" dangerouslySetInnerHTML={{ __html: highlighted }} />
     </div>
+  );
+}
+
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function highlightJson(json: string) {
+  if (!json || json === '—') return json;
+  const escaped = escapeHtml(json);
+  return escaped.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
+    (match) => {
+      let cls = 'json-number';
+      if (/^&quot;/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'json-key';
+        } else {
+          cls = 'json-string';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
   );
 }
 

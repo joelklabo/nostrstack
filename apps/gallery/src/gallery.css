@@ -1284,6 +1284,13 @@ h3 {
   color: var(--color-fg-default);
 }
 
+/* JSON Syntax Highlighting */
+.json-key { color: var(--color-danger-fg); }
+.json-string { color: var(--color-success-fg); }
+.json-number { color: var(--color-accent-fg); }
+.json-boolean { color: var(--color-accent-fg); }
+.json-null { color: var(--color-fg-muted); }
+
 .nostrstack-btn--sm {
   font-size: 0.75rem;
   padding: 2px 6px;
