@@ -40,7 +40,13 @@ function parseIntParam(value?: string) {
 
 type NostrEventRoute = {
   Params: { id: string };
-  Querystring: { relays?: string; limitRefs?: string; timeoutMs?: string };
+  Querystring: {
+    relays?: string;
+    limitRefs?: string;
+    timeoutMs?: string;
+    replyLimit?: string;
+    replyCursor?: string;
+  };
 };
 
 export async function registerNostrEventRoute(app: FastifyInstance) {
@@ -67,6 +73,24 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
       });
     }
 
+    const replyLimit = parseIntParam(request.query.replyLimit);
+    if (request.query.replyLimit && replyLimit == null) {
+      return reply.code(400).send({
+        error: 'invalid_reply_limit',
+        message: 'replyLimit must be a positive integer.',
+        requestId: request.id
+      });
+    }
+
+    const replyCursor = request.query.replyCursor?.trim();
+    if (request.query.replyCursor !== undefined && !replyCursor) {
+      return reply.code(400).send({
+        error: 'invalid_reply_cursor',
+        message: 'replyCursor must be a non-empty string.',
+        requestId: request.id
+      });
+    }
+
     const relayOverride = parseRelays(request.query.relays);
     if (request.query.relays && relayOverride.invalid.length > 0) {
       return reply.code(400).send({
@@ -86,6 +110,12 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
 
     const defaultRelays = parseRelays(env.NOSTR_RELAYS);
     const relays = defaultRelays.relays.length ? defaultRelays.relays : DEFAULT_RELAYS;
+    const replyMaxLimit = env.NOSTR_EVENT_REPLY_MAX_LIMIT;
+    const resolvedReplyLimit = Math.min(
+      replyLimit ?? env.NOSTR_EVENT_REPLY_LIMIT,
+      replyMaxLimit
+    );
+    const replyTimeoutMs = timeoutMs ?? env.NOSTR_EVENT_REPLY_TIMEOUT_MS;
 
     try {
       const resolved = await resolveNostrEvent(id, {
@@ -97,6 +127,10 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         timeoutMs: timeoutMs ?? app.config?.NOSTR_EVENT_FETCH_TIMEOUT_MS,
         referenceLimit: limitRefs ?? undefined,
         cacheTtlSeconds: app.config?.NOSTR_EVENT_CACHE_TTL_SECONDS,
+        replyLimit: resolvedReplyLimit,
+        replyMaxLimit,
+        replyCursor: replyCursor ?? undefined,
+        replyTimeoutMs,
         prisma: app.prisma
       });
 
@@ -113,7 +147,7 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         targetPayload.identifier = resolved.target.identifier;
       }
 
-      return reply.code(200).send({
+      const payload: Record<string, unknown> = {
         target: targetPayload,
         event: resolved.event,
         author: {
@@ -121,7 +155,13 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
           profile: resolved.author.profile
         },
         references: resolved.references
-      });
+      };
+
+      if (resolved.replyThreadId) payload.replyThreadId = resolved.replyThreadId;
+      if (resolved.replies) payload.replies = resolved.replies;
+      if (resolved.replyPage) payload.replyPage = resolved.replyPage;
+
+      return reply.code(200).send(payload);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'internal_error';
       if (message === 'unsupported_id') {
@@ -159,6 +199,20 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
           requestId: request.id
         });
       }
+      if (message === 'invalid_reply_limit') {
+        return reply.code(400).send({
+          error: 'invalid_reply_limit',
+          message: 'replyLimit must be a positive integer.',
+          requestId: request.id
+        });
+      }
+      if (message === 'invalid_reply_cursor') {
+        return reply.code(400).send({
+          error: 'invalid_reply_cursor',
+          message: 'replyCursor must be a non-empty string.',
+          requestId: request.id
+        });
+      }
       if (message === 'Request timed out') {
         return reply.code(504).send({
           error: 'timeout',
@@ -190,7 +244,9 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
       properties: {
         relays: { type: 'string' },
         limitRefs: { type: 'string' },
-        timeoutMs: { type: 'string' }
+        timeoutMs: { type: 'string' },
+        replyLimit: { type: 'string' },
+        replyCursor: { type: 'string' }
       }
     }
   };

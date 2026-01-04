@@ -34,6 +34,19 @@ export const nostrEventRelayFetchDuration = new client.Histogram({
   buckets: [0.1, 0.25, 0.5, 1, 2, 5, 10]
 });
 
+export const nostrReplyFetchCounter = new client.Counter({
+  name: 'nostr_reply_fetch_total',
+  help: 'Nostr reply fetch results',
+  labelNames: ['result']
+});
+
+export const nostrReplyFetchDuration = new client.Histogram({
+  name: 'nostr_reply_fetch_duration_seconds',
+  help: 'Latency for fetching Nostr replies from relays',
+  labelNames: ['outcome'],
+  buckets: [0.1, 0.25, 0.5, 1, 2, 5, 10]
+});
+
 export const nip05ProxyCacheCounter = new client.Counter({
   name: 'nip05_proxy_cache_total',
   help: 'NIP-05 proxy cache hits and misses',

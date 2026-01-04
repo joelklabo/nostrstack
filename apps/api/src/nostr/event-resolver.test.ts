@@ -109,6 +109,27 @@ describe('resolveNostrEvent', () => {
     expect(resolved.references.profiles).toContain(inlineProfileId);
   });
 
+  it('rejects invalid reply cursors', async () => {
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      resolveNostrEvent(baseEvent.id, {
+        defaultRelays: ['wss://relay.default'],
+        prisma: {} as PrismaClient,
+        replyLimit: 10,
+        replyCursor: 'not-a-valid-cursor'
+      })
+    ).rejects.toThrow('invalid_reply_cursor');
+  });
+
   it('rejects when no relays are configured', async () => {
     await expect(resolveNostrEvent(baseEvent.id, { defaultRelays: [] })).rejects.toThrow('no_relays');
   });

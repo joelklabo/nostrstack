@@ -13,6 +13,9 @@ process.env.LOG_LEVEL = 'error';
 process.env.DATABASE_URL = 'file:./tmp-nostr-event.db';
 process.env.NOSTR_RELAYS = 'wss://relay.one,wss://relay.two';
 process.env.NOSTR_EVENT_CACHE_TTL_SECONDS = '600';
+process.env.NOSTR_EVENT_REPLY_LIMIT = '20';
+process.env.NOSTR_EVENT_REPLY_MAX_LIMIT = '50';
+process.env.NOSTR_EVENT_REPLY_TIMEOUT_MS = '6000';
 
 vi.mock('../nostr/event-resolver.js', () => {
   return {
@@ -27,6 +30,7 @@ const resolveMock = vi.mocked(resolveNostrEvent);
 
 const baseEventId = 'a'.repeat(64);
 const basePubkey = 'b'.repeat(64);
+const baseReplyId = 'd'.repeat(64);
 
 const baseReferences = {
   root: [],
@@ -37,7 +41,26 @@ const baseReferences = {
   profiles: []
 };
 
-function buildResolvedEvent(id: string, relays: string[]) {
+const baseReply: Event = {
+  id: baseReplyId,
+  pubkey: basePubkey,
+  created_at: 1710000001,
+  kind: 1,
+  tags: [],
+  content: 'first reply',
+  sig: 'd'.repeat(128)
+};
+
+function buildResolvedEvent(
+  id: string,
+  relays: string[],
+  options: {
+    includeReplies?: boolean;
+    replyThreadId?: string;
+    replies?: Event[];
+    replyPage?: { hasMore: boolean; nextCursor: string | null };
+  } = {}
+) {
   const event: Event = {
     id,
     pubkey: basePubkey,
@@ -57,7 +80,14 @@ function buildResolvedEvent(id: string, relays: string[]) {
       profileEvent: null
     },
     relays,
-    references: baseReferences
+    references: baseReferences,
+    ...(options.includeReplies
+      ? {
+        replyThreadId: options.replyThreadId ?? id,
+        replies: options.replies ?? [baseReply],
+        replyPage: options.replyPage ?? { hasMore: false, nextCursor: null }
+      }
+      : {})
   };
 }
 
@@ -114,7 +144,73 @@ describe('/api/nostr/event', () => {
     const call = resolveMock.mock.calls[0];
     expect(call?.[1]).toEqual(expect.objectContaining({ relays: ['wss://relay.override'] }));
     expect(call?.[1]?.cacheTtlSeconds).toBe(600);
+    expect(call?.[1]?.replyLimit).toBe(20);
+    expect(call?.[1]?.replyMaxLimit).toBe(50);
+    expect(call?.[1]?.replyTimeoutMs).toBe(6000);
     expect(call?.[1]?.prisma).toBeTruthy();
+  });
+
+  it('passes reply options to the resolver', async () => {
+    const res = await server.inject({
+      url: `/api/nostr/event/${baseEventId}?replyLimit=12&replyCursor=cursor&timeoutMs=5000`
+    });
+    expect(res.statusCode).toBe(200);
+    const call = resolveMock.mock.calls[0];
+    expect(call?.[1]).toEqual(
+      expect.objectContaining({
+        replyLimit: 12,
+        replyMaxLimit: 50,
+        replyCursor: 'cursor',
+        replyTimeoutMs: 5000
+      })
+    );
+  });
+
+  it('clamps reply limit to the configured max', async () => {
+    const res = await server.inject({
+      url: `/api/nostr/event/${baseEventId}?replyLimit=500`
+    });
+    expect(res.statusCode).toBe(200);
+    const call = resolveMock.mock.calls[0];
+    expect(call?.[1]?.replyLimit).toBe(50);
+  });
+
+  it('rejects invalid reply limits', async () => {
+    const res = await server.inject({
+      url: `/api/nostr/event/${baseEventId}?replyLimit=0`
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({
+      error: 'invalid_reply_limit',
+      message: 'replyLimit must be a positive integer.',
+      requestId: expect.any(String)
+    });
+    expect(resolveMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid reply cursors', async () => {
+    const res = await server.inject({
+      url: `/api/nostr/event/${baseEventId}?replyCursor=`
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({
+      error: 'invalid_reply_cursor',
+      message: 'replyCursor must be a non-empty string.',
+      requestId: expect.any(String)
+    });
+    expect(resolveMock).not.toHaveBeenCalled();
+  });
+
+  it('returns replies when resolver includes reply data', async () => {
+    resolveMock.mockResolvedValueOnce(buildResolvedEvent(baseEventId, ['wss://relay.one'], { includeReplies: true }));
+    const res = await server.inject({
+      url: `/api/nostr/event/${baseEventId}?replyLimit=5`
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.replyThreadId).toBe(baseEventId);
+    expect(body.replies).toEqual([baseReply]);
+    expect(body.replyPage).toEqual({ hasMore: false, nextCursor: null });
   });
 
   it('returns cached responses (cache hit) and fetched responses (cache miss)', async () => {

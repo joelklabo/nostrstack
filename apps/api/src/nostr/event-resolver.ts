@@ -1,10 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
-import { type Event, SimplePool, validateEvent, verifyEvent } from 'nostr-tools';
+import { type Event, type Filter, SimplePool, validateEvent, verifyEvent } from 'nostr-tools';
 
 import {
   nostrEventCacheCounter,
   nostrEventRelayFetchDuration,
-  nostrEventResolveFailureCounter
+  nostrEventResolveFailureCounter,
+  nostrReplyFetchCounter,
+  nostrReplyFetchDuration
 } from '../telemetry/metrics.js';
 import { getCachedEvent, storeCachedEvent } from './event-cache.js';
 import {
@@ -35,12 +37,20 @@ export type ResolvedReferences = {
   profiles: string[];
 };
 
+export type ReplyPage = {
+  hasMore: boolean;
+  nextCursor?: string | null;
+};
+
 export type ResolvedEvent = {
   target: NostrTarget;
   event: Event;
   author: ResolvedAuthor;
   relays: string[];
   references: ResolvedReferences;
+  replyThreadId?: string;
+  replies?: Event[];
+  replyPage?: ReplyPage;
 };
 
 export type ResolveOptions = {
@@ -52,6 +62,10 @@ export type ResolveOptions = {
   timeoutMs?: number;
   referenceLimit?: number;
   cacheTtlSeconds?: number;
+  replyLimit?: number;
+  replyMaxLimit?: number;
+  replyCursor?: string;
+  replyTimeoutMs?: number;
   prisma?: PrismaClient;
 };
 
@@ -73,6 +87,31 @@ function isVerifiedEvent(event: Event) {
   return validateEvent(event) && verifyEvent(event);
 }
 
+type ReplyCursor = {
+  createdAt: number;
+  id: string;
+};
+
+function encodeReplyCursor(cursor: ReplyCursor) {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64url');
+}
+
+function decodeReplyCursor(raw: string): ReplyCursor | null {
+  try {
+    const decoded = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8')) as {
+      createdAt?: number;
+      id?: string;
+    };
+    const createdAt = Number(decoded?.createdAt);
+    if (!Number.isFinite(createdAt) || createdAt <= 0) return null;
+    const id = typeof decoded?.id === 'string' ? decoded.id.trim().toLowerCase() : '';
+    if (!isHex64(id)) return null;
+    return { createdAt: Math.floor(createdAt), id };
+  } catch {
+    return null;
+  }
+}
+
 function getFailureReason(err: unknown) {
   if (err instanceof Error) {
     switch (err.message) {
@@ -81,6 +120,8 @@ function getFailureReason(err: unknown) {
       case 'no_relays':
       case 'not_found':
       case 'invalid_event':
+      case 'invalid_reply_limit':
+      case 'invalid_reply_cursor':
         return err.message;
       case 'Request timed out':
         return 'timeout';
@@ -136,6 +177,100 @@ function extractReferences(event: Event, limit?: number): ResolvedReferences {
   };
 }
 
+function resolveReplyThreadId(event: Event) {
+  const threadRefs = extractThreadReferences(event, { selfId: event.id });
+  return threadRefs.root[0] ?? event.id;
+}
+
+function compareEventsAsc(a: Event, b: Event) {
+  if (a.created_at !== b.created_at) return a.created_at - b.created_at;
+  return a.id.localeCompare(b.id);
+}
+
+function isBeforeCursor(event: Event, cursor: ReplyCursor) {
+  if (event.created_at < cursor.createdAt) return true;
+  if (event.created_at > cursor.createdAt) return false;
+  return event.id < cursor.id;
+}
+
+async function fetchReplies({
+  pool,
+  relays,
+  threadId,
+  replyLimit,
+  replyCursor,
+  timeoutMs,
+  targetEventId
+}: {
+  pool: SimplePool;
+  relays: string[];
+  threadId: string;
+  replyLimit: number;
+  replyCursor: ReplyCursor | null;
+  timeoutMs: number;
+  targetEventId: string;
+}): Promise<{ replies: Event[]; replyPage: ReplyPage }> {
+  const filter: Filter = {
+    kinds: [1],
+    '#e': [threadId],
+    limit: replyLimit + 1
+  };
+  if (replyCursor) {
+    filter.until = replyCursor.createdAt;
+  }
+
+  const fetchStart = Date.now();
+  try {
+    const events = await withTimeout(pool.querySync(relays, filter, { maxWait: timeoutMs }), timeoutMs);
+    const duration = (Date.now() - fetchStart) / 1000;
+    const deduped = new Map<string, Event>();
+
+    for (const event of events) {
+      if (!event?.id || event.id === targetEventId) continue;
+      if (!isVerifiedEvent(event)) continue;
+      if (deduped.has(event.id)) continue;
+      deduped.set(event.id, event);
+    }
+
+    let filtered = Array.from(deduped.values());
+    if (replyCursor) {
+      filtered = filtered.filter((event) => isBeforeCursor(event, replyCursor));
+    }
+    filtered.sort(compareEventsAsc);
+
+    const hasMore = filtered.length > replyLimit;
+    const pageReplies = hasMore ? filtered.slice(-replyLimit) : filtered;
+    const nextCursor = hasMore && pageReplies.length > 0
+      ? encodeReplyCursor({
+        createdAt: pageReplies[0].created_at,
+        id: pageReplies[0].id
+      })
+      : null;
+
+    nostrReplyFetchDuration.labels('success').observe(duration);
+    nostrReplyFetchCounter.labels(pageReplies.length > 0 ? 'success' : 'empty').inc();
+
+    return {
+      replies: pageReplies,
+      replyPage: {
+        hasMore,
+        nextCursor
+      }
+    };
+  } catch {
+    const duration = (Date.now() - fetchStart) / 1000;
+    nostrReplyFetchDuration.labels('failure').observe(duration);
+    nostrReplyFetchCounter.labels('failure').inc();
+    return {
+      replies: [],
+      replyPage: {
+        hasMore: false,
+        nextCursor: null
+      }
+    };
+  }
+}
+
 async function fetchEventByTarget(
   pool: SimplePool,
   target: NostrTarget,
@@ -162,6 +297,7 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
   const prisma = options.prisma;
   let relays: string[] = [];
   let pool: SimplePool | null = null;
+  let resolved: ResolvedEvent | null = null;
 
   try {
     const cleanedInput = rawId.trim();
@@ -215,7 +351,7 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
           }
         }
 
-        return {
+        resolved = {
           target,
           event: cached.event,
           author: {
@@ -226,53 +362,98 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
           relays: cached.relays.length ? cached.relays : relays,
           references: extractReferences(cached.event, options.referenceLimit)
         };
+      } else {
+        nostrEventCacheCounter.labels('miss').inc();
       }
-      nostrEventCacheCounter.labels('miss').inc();
     }
 
-    const fetchStart = Date.now();
-    let event: Event | null = null;
-    try {
-      event = await fetchEventByTarget(activePool, target, relays, timeoutMs);
-    } catch (err) {
+    if (!resolved) {
+      const fetchStart = Date.now();
+      let event: Event | null = null;
+      try {
+        event = await fetchEventByTarget(activePool, target, relays, timeoutMs);
+      } catch (err) {
+        const fetchDuration = (Date.now() - fetchStart) / 1000;
+        nostrEventRelayFetchDuration.labels('failure').observe(fetchDuration);
+        throw err;
+      }
       const fetchDuration = (Date.now() - fetchStart) / 1000;
-      nostrEventRelayFetchDuration.labels('failure').observe(fetchDuration);
-      throw err;
-    }
-    const fetchDuration = (Date.now() - fetchStart) / 1000;
-    nostrEventRelayFetchDuration.labels(event ? 'success' : 'failure').observe(fetchDuration);
-    if (!event) throw new Error('not_found');
-    if (!isVerifiedEvent(event)) {
-      throw new Error('invalid_event');
-    }
-
-    const profileEvent = event.kind === 0
-      ? event
-      : await fetchAuthorProfile(activePool, event.pubkey, relays, timeoutMs);
-    const verifiedProfileEvent = profileEvent && isVerifiedEvent(profileEvent) ? profileEvent : null;
-    const authorProfile = parseProfileContent(verifiedProfileEvent?.content);
-    const references = extractReferences(event, options.referenceLimit);
-    const ttlSeconds = options.cacheTtlSeconds ?? 0;
-
-    if (prisma && ttlSeconds > 0) {
-      const fetchedAt = new Date();
-      await storeCachedEvent(prisma, { event, relays, fetchedAt, ttlSeconds, target });
-      if (verifiedProfileEvent && verifiedProfileEvent.id !== event.id) {
-        await storeCachedEvent(prisma, { event: verifiedProfileEvent, relays, fetchedAt, ttlSeconds });
+      nostrEventRelayFetchDuration.labels(event ? 'success' : 'failure').observe(fetchDuration);
+      if (!event) throw new Error('not_found');
+      if (!isVerifiedEvent(event)) {
+        throw new Error('invalid_event');
       }
+
+      const profileEvent = event.kind === 0
+        ? event
+        : await fetchAuthorProfile(activePool, event.pubkey, relays, timeoutMs);
+      const verifiedProfileEvent = profileEvent && isVerifiedEvent(profileEvent) ? profileEvent : null;
+      const authorProfile = parseProfileContent(verifiedProfileEvent?.content);
+      const references = extractReferences(event, options.referenceLimit);
+      const ttlSeconds = options.cacheTtlSeconds ?? 0;
+
+      if (prisma && ttlSeconds > 0) {
+        const fetchedAt = new Date();
+        await storeCachedEvent(prisma, { event, relays, fetchedAt, ttlSeconds, target });
+        if (verifiedProfileEvent && verifiedProfileEvent.id !== event.id) {
+          await storeCachedEvent(prisma, { event: verifiedProfileEvent, relays, fetchedAt, ttlSeconds });
+        }
+      }
+
+      resolved = {
+        target,
+        event,
+        author: {
+          pubkey: event.pubkey,
+          profile: authorProfile,
+          profileEvent: verifiedProfileEvent ?? null
+        },
+        relays,
+        references
+      };
     }
 
-    return {
-      target,
-      event,
-      author: {
-        pubkey: event.pubkey,
-        profile: authorProfile,
-        profileEvent: verifiedProfileEvent ?? null
-      },
-      relays,
-      references
-    };
+    const shouldFetchReplies = options.replyLimit != null || options.replyCursor != null;
+    if (shouldFetchReplies) {
+      const requestedLimit = options.replyLimit ?? options.replyMaxLimit;
+      if (requestedLimit == null || !Number.isFinite(requestedLimit) || requestedLimit <= 0) {
+        throw new Error('invalid_reply_limit');
+      }
+      const maxLimit = options.replyMaxLimit ?? requestedLimit;
+      const replyLimit = Math.min(requestedLimit, maxLimit);
+      const replyTimeoutMs = options.replyTimeoutMs ?? options.timeoutMs ?? 8000;
+      const rawCursor = options.replyCursor?.trim();
+      if (options.replyCursor && !rawCursor) {
+        throw new Error('invalid_reply_cursor');
+      }
+      const parsedCursor = rawCursor ? decodeReplyCursor(rawCursor) : null;
+      if (rawCursor && !parsedCursor) {
+        throw new Error('invalid_reply_cursor');
+      }
+
+      const replyThreadId = resolveReplyThreadId(resolved.event);
+      const replyResult = await fetchReplies({
+        pool: activePool,
+        relays: resolved.relays,
+        threadId: replyThreadId,
+        replyLimit,
+        replyCursor: parsedCursor,
+        timeoutMs: replyTimeoutMs,
+        targetEventId: resolved.event.id
+      });
+
+      resolved = {
+        ...resolved,
+        replyThreadId,
+        replies: replyResult.replies,
+        replyPage: replyResult.replyPage
+      };
+    }
+
+    if (!resolved) {
+      throw new Error('not_found');
+    }
+    return resolved;
   } catch (err) {
     nostrEventResolveFailureCounter.labels(getFailureReason(err)).inc();
     throw err;
