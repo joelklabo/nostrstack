@@ -23,6 +23,11 @@ export type ApiNostrReferences = {
   profiles: string[];
 };
 
+export type ApiReplyPage = {
+  hasMore: boolean;
+  nextCursor?: string | null;
+};
+
 export type ApiNostrEventResponse = {
   target: ApiNostrTarget;
   event: Event;
@@ -31,6 +36,9 @@ export type ApiNostrEventResponse = {
     profile: ProfileMeta | null;
   };
   references: ApiNostrReferences;
+  replyThreadId?: string;
+  replies?: Event[];
+  replyPage?: ApiReplyPage;
 };
 
 export const SEARCH_RELAYS = ['wss://relay.nostr.band', 'wss://search.nos.lol'];
@@ -135,19 +143,32 @@ type FetchOptions = {
   relays?: string[];
   limitRefs?: number;
   timeoutMs?: number;
+  replyLimit?: number;
+  replyCursor?: string;
+  replyTimeoutMs?: number;
   signal?: AbortSignal;
 };
 
 function buildNostrEventUrl(
   baseUrl: string,
   id: string,
-  params: { relays?: string[]; limitRefs?: number; timeoutMs?: number } = {}
+  params: {
+    relays?: string[];
+    limitRefs?: number;
+    timeoutMs?: number;
+    replyLimit?: number;
+    replyCursor?: string;
+    replyTimeoutMs?: number;
+  } = {}
 ) {
   const base = baseUrl ? baseUrl.replace(/\/$/, '') : '';
   const query = new URLSearchParams();
   if (params.relays?.length) query.set('relays', params.relays.join(','));
   if (params.limitRefs != null) query.set('limitRefs', String(params.limitRefs));
   if (params.timeoutMs != null) query.set('timeoutMs', String(params.timeoutMs));
+  if (params.replyLimit != null) query.set('replyLimit', String(params.replyLimit));
+  if (params.replyCursor) query.set('replyCursor', params.replyCursor);
+  if (params.replyTimeoutMs != null) query.set('replyTimeoutMs', String(params.replyTimeoutMs));
   const suffix = query.toString();
   return `${base}/api/nostr/event/${encodeURIComponent(id)}${suffix ? `?${suffix}` : ''}`;
 }
@@ -169,7 +190,10 @@ export async function fetchNostrEventFromApi(options: FetchOptions): Promise<Api
   const url = buildNostrEventUrl(options.baseUrl, options.id, {
     relays: options.relays,
     limitRefs: options.limitRefs,
-    timeoutMs: options.timeoutMs
+    timeoutMs: options.timeoutMs,
+    replyLimit: options.replyLimit,
+    replyCursor: options.replyCursor,
+    replyTimeoutMs: options.replyTimeoutMs
   });
   const res = await fetch(url, {
     signal: options.signal,
@@ -197,4 +221,3 @@ export async function searchNotes(pool: SimplePool, relays: string[], query: str
     return [];
   }
 }
-

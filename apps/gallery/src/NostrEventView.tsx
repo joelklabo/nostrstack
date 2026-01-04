@@ -25,7 +25,18 @@ type LoadState = {
   references?: EventReferences;
   authorProfile?: ProfileMeta | null;
   authorPubkey?: string;
-  replies?: Event[];
+  replies: RepliesState;
+};
+
+type RepliesState = {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  items: Event[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  error?: string;
+  loadMoreError?: string;
+  isLoadingMore: boolean;
+  source?: 'api' | 'relay';
 };
 
 const FALLBACK_RELAYS = [
@@ -34,6 +45,14 @@ const FALLBACK_RELAYS = [
   'wss://nos.lol'
 ];
 const REQUEST_TIMEOUT_MS = 8000;
+const REPLY_PAGE_LIMIT = 50;
+const EMPTY_REPLIES_STATE: RepliesState = {
+  status: 'idle',
+  items: [],
+  hasMore: false,
+  nextCursor: null,
+  isLoadingMore: false
+};
 
 function normalizeId(raw: string) {
   return raw.trim().replace(/^nostr:/i, '');
@@ -143,11 +162,34 @@ function withTimeout<T>(promise: Promise<T>, ms: number) {
   ]);
 }
 
+function sortReplies(items: Event[]) {
+  return [...items].sort((a, b) => {
+    if (a.created_at !== b.created_at) return a.created_at - b.created_at;
+    return a.id.localeCompare(b.id);
+  });
+}
+
+function normalizeReplies(items: Event[]) {
+  const deduped = new Map<string, Event>();
+  items.forEach((item) => {
+    if (!item?.id) return;
+    if (deduped.has(item.id)) return;
+    deduped.set(item.id, item);
+  });
+  return sortReplies(Array.from(deduped.values()));
+}
+
+function mergeReplies(existing: Event[], incoming: Event[]) {
+  return normalizeReplies([...existing, ...incoming]);
+}
+
 export function NostrEventView({ rawId }: { rawId: string }) {
   const [state, setState] = useState<LoadState>({
     status: 'idle',
-    relays: []
+    relays: [],
+    replies: EMPTY_REPLIES_STATE
   });
+  const [reloadToken, setReloadToken] = useState(0);
 
   const cfg = useNostrstackConfig();
   const target = useMemo(() => resolveTarget(rawId), [rawId]);
@@ -163,6 +205,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
   const apiBase = apiBaseConfig.baseUrl;
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+  const repliesEnabled = target?.type === 'event';
   
   const relayList = useMemo(() => {
     const envRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
@@ -175,12 +218,56 @@ export function NostrEventView({ rawId }: { rawId: string }) {
       setState({
         status: 'error',
         relays: [],
-        error: 'Unsupported or invalid nostr identifier.'
+        error: 'Unsupported or invalid nostr identifier.',
+        replies: EMPTY_REPLIES_STATE
       });
       return;
     }
 
     let cancelled = false;
+
+    const fetchRepliesFromRelays = async (
+      eventId: string,
+      relays: string[],
+      pool?: SimplePool
+    ): Promise<RepliesState> => {
+      const activePool = pool ?? new SimplePool();
+      const shouldClose = !pool;
+      const closePool = () => {
+        if (!shouldClose) return;
+        globalThis.setTimeout(() => {
+          try {
+            activePool.close(relays);
+          } catch {
+            // ignore close errors
+          }
+        }, 0);
+      };
+
+      try {
+        const replyEvents = await withTimeout(
+          activePool.querySync(relays, { kinds: [1], '#e': [eventId], limit: REPLY_PAGE_LIMIT }),
+          REQUEST_TIMEOUT_MS
+        );
+        return {
+          status: 'ready',
+          items: normalizeReplies(replyEvents),
+          hasMore: false,
+          nextCursor: null,
+          isLoadingMore: false,
+          source: 'relay'
+        };
+      } catch (err) {
+        return {
+          ...EMPTY_REPLIES_STATE,
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Unable to load replies from relays.',
+          source: 'relay'
+        };
+      } finally {
+        closePool();
+      }
+    };
 
     const loadFromRelays = async () => {
       const pool = new SimplePool();
@@ -196,12 +283,12 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
       try {
         let event: Event | null = null;
-        let replies: Event[] = [];
+        let repliesState: RepliesState = EMPTY_REPLIES_STATE;
 
         if (target.type === 'event') {
           event = await withTimeout(pool.get(relayList, { ids: [target.id] }), REQUEST_TIMEOUT_MS);
           if (event) {
-             replies = await withTimeout(pool.querySync(relayList, { kinds: [1], '#e': [event.id], limit: 50 }), REQUEST_TIMEOUT_MS);
+            repliesState = await fetchRepliesFromRelays(event.id, relayList, pool);
           }
         } else if (target.type === 'profile') {
           event = await withTimeout(
@@ -231,10 +318,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           authorProfile = parseProfileContent(event.content);
         }
         
-        // Sort replies
-        replies.sort((a, b) => a.created_at - b.created_at);
-
-        return { event, authorProfile, authorPubkey: event.pubkey, replies };
+        return { event, authorProfile, authorPubkey: event.pubkey, repliesState };
       } finally {
         closePool();
       }
@@ -250,7 +334,9 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         authorProfile: undefined,
         authorPubkey: undefined,
         targetLabel: rawId,
-        replies: []
+        replies: repliesEnabled
+          ? { ...EMPTY_REPLIES_STATE, status: 'loading' }
+          : EMPTY_REPLIES_STATE
       });
 
       let apiError: string | null = null;
@@ -262,31 +348,29 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               fetchNostrEventFromApi({
                 baseUrl: apiBase,
                 id: rawId,
-                relays: relayList
+                relays: relayList,
+                replyLimit: repliesEnabled ? REPLY_PAGE_LIMIT : undefined,
+                replyTimeoutMs: repliesEnabled ? REQUEST_TIMEOUT_MS : undefined
               }),
               REQUEST_TIMEOUT_MS
             );
             if (cancelled) return;
             const relays = apiResult.target?.relays?.length ? apiResult.target.relays : relayList;
-            
-            // TODO: API doesn't return replies yet, so we still might need to fetch them if relying on API
-            // For now, let's just use relay fetch for consistency or implement API support later. 
-            // Actually, let's fallback to relay load for consistency in this iteration as API update is out of scope.
-            // Or mix them? We'll just stick to relay loading for replies if event found via API.
-            
-            let replies: Event[] = [];
-             // If we have the event, try to fetch replies from relays
-             if (apiResult.event) {
-                const pool = new SimplePool();
-                try {
-                    replies = await pool.querySync(relayList, { kinds: [1], '#e': [apiResult.event.id], limit: 50 });
-                    replies.sort((a, b) => a.created_at - b.created_at);
-                } catch {
-                    // ignore reply fetch errors
-                } finally {
-                    pool.close(relayList);
-                }
-             }
+
+            let repliesState = repliesEnabled
+              ? {
+                status: 'ready' as const,
+                items: normalizeReplies(apiResult.replies ?? []),
+                hasMore: apiResult.replyPage?.hasMore ?? false,
+                nextCursor: apiResult.replyPage?.nextCursor ?? null,
+                isLoadingMore: false,
+                source: 'api' as const
+              }
+              : EMPTY_REPLIES_STATE;
+
+            if (repliesEnabled && apiResult.replies === undefined) {
+              repliesState = await fetchRepliesFromRelays(apiResult.event.id, relays);
+            }
 
             setState({
               status: 'ready',
@@ -296,7 +380,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               authorProfile: apiResult.author?.profile ?? null,
               authorPubkey: apiResult.author?.pubkey ?? apiResult.event.pubkey,
               targetLabel: apiResult.target?.input ?? rawId,
-              replies
+              replies: repliesState
             });
             return;
           } catch (err) {
@@ -315,7 +399,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           authorProfile: relayResult.authorProfile,
           authorPubkey: relayResult.authorPubkey,
           targetLabel: rawId,
-          replies: relayResult.replies
+          replies: relayResult.repliesState
         });
       } catch (err) {
         if (cancelled) return;
@@ -323,7 +407,14 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         setState({
           status: 'error',
           relays: relayList,
-          error: apiError ? `${relayMessage} (API: ${apiError})` : relayMessage
+          error: apiError ? `${relayMessage} (API: ${apiError})` : relayMessage,
+          replies: repliesEnabled
+            ? {
+              ...EMPTY_REPLIES_STATE,
+              status: 'error',
+              error: 'Replies unavailable while event failed to load.'
+            }
+            : EMPTY_REPLIES_STATE
         });
       }
     };
@@ -332,7 +423,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [apiBase, apiBaseConfig.isConfigured, rawId, relayList, target]);
+  }, [apiBase, apiBaseConfig.isConfigured, rawId, relayList, target, repliesEnabled, reloadToken]);
 
   const event = state.event;
   const authorProfile = state.authorProfile;
@@ -348,6 +439,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
       references.address.length > 0 ||
       references.profiles.length > 0);
   const previewsEnabled = apiBaseConfig.isConfigured;
+  const handleRetry = () => setReloadToken((prev) => prev + 1);
 
   const referencePreviewSections = useMemo(() => {
     if (!references || !previewsEnabled) return [];
@@ -382,6 +474,63 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     const deduped = Array.from(new Set(references.address.filter(Boolean).map(toNaddr)));
     return sliceWithOverflow(deduped, 8);
   }, [references]);
+
+  const repliesState = state.replies;
+  const replyCountLabel =
+    repliesState.status === 'ready'
+      ? `${repliesState.items.length}${repliesState.hasMore ? '+' : ''}`
+      : '—';
+  const canLoadMore =
+    apiBaseConfig.isConfigured &&
+    repliesState.status === 'ready' &&
+    repliesState.hasMore &&
+    Boolean(repliesState.nextCursor) &&
+    !repliesState.isLoadingMore;
+
+  const loadMoreReplies = async () => {
+    if (!canLoadMore || !repliesState.nextCursor) return;
+    const cursor = repliesState.nextCursor;
+    setState((prev) => ({
+      ...prev,
+      replies: { ...prev.replies, isLoadingMore: true, loadMoreError: undefined }
+    }));
+
+    try {
+      const result = await fetchNostrEventFromApi({
+        baseUrl: apiBase,
+        id: rawId,
+        relays: state.relays,
+        replyCursor: cursor,
+        replyLimit: REPLY_PAGE_LIMIT,
+        replyTimeoutMs: REQUEST_TIMEOUT_MS
+      });
+      if (result.replies === undefined) {
+        throw new Error('Replies missing from API response.');
+      }
+      setState((prev) => {
+        const merged = mergeReplies(prev.replies.items, result.replies ?? []);
+        return {
+          ...prev,
+          replies: {
+            ...prev.replies,
+            status: 'ready',
+            items: merged,
+            hasMore: result.replyPage?.hasMore ?? false,
+            nextCursor: result.replyPage?.nextCursor ?? null,
+            isLoadingMore: false,
+            loadMoreError: undefined,
+            source: 'api'
+          }
+        };
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setState((prev) => ({
+        ...prev,
+        replies: { ...prev.replies, isLoadingMore: false, loadMoreError: message }
+      }));
+    }
+  };
 
   return (
     <div className="nostr-event-page">
@@ -424,7 +573,12 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         )}
         {state.status === 'error' && (
           <Alert tone="danger" title="Event Error">
-            {state.error}
+            <div className="nostr-event-error">
+              <span>{state.error}</span>
+              <button className="action-btn" type="button" onClick={handleRetry}>
+                Retry
+              </button>
+            </div>
           </Alert>
         )}
 
@@ -460,6 +614,71 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               {rendered?.body}
               {rendered?.footer}
             </div>
+
+            {repliesEnabled && (
+              <div className="nostr-event-replies">
+                <div className="nostr-event-replies-header">
+                  <div>
+                    <div className="nostr-event-section-title">Replies</div>
+                    <div className="nostr-event-section-subtitle">{replyCountLabel} replies</div>
+                  </div>
+                </div>
+
+                {repliesState.status === 'loading' && (
+                  <div className="nostr-event-replies-loading" role="status">
+                    <span className="nostrstack-spinner" aria-hidden="true" />
+                    Loading replies...
+                  </div>
+                )}
+
+                {repliesState.status === 'error' && (
+                  <Alert tone="danger" title="Replies unavailable">
+                    <div className="nostr-event-replies-error">
+                      <span>{repliesState.error ?? 'Unable to load replies.'}</span>
+                      <button className="action-btn" type="button" onClick={handleRetry}>
+                        Retry
+                      </button>
+                    </div>
+                  </Alert>
+                )}
+
+                {repliesState.status === 'ready' && repliesState.items.length === 0 && (
+                  <div className="nostr-event-replies-empty">
+                    No replies yet. Check your relays or try again later.
+                  </div>
+                )}
+
+                {repliesState.status === 'ready' && repliesState.items.length > 0 && (
+                  <div className="nostr-event-replies-list">
+                    {repliesState.items.map((reply) => (
+                      <PostItem
+                        key={reply.id}
+                        post={reply}
+                        apiBase={apiBase}
+                        enableRegtestPay={enableRegtestPay}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {repliesState.loadMoreError && (
+                  <Alert tone="warning" title="Some replies are unavailable">
+                    {repliesState.loadMoreError}
+                  </Alert>
+                )}
+
+                {repliesState.status === 'ready' && repliesState.hasMore && (
+                  <button
+                    className="action-btn nostr-event-replies-load"
+                    type="button"
+                    onClick={loadMoreReplies}
+                    disabled={repliesState.isLoadingMore}
+                  >
+                    {repliesState.isLoadingMore ? 'Loading more…' : 'Load more replies'}
+                  </button>
+                )}
+              </div>
+            )}
 
             {hasReferences && (
               <div className="nostr-event-reference-sections">
@@ -542,22 +761,6 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           </>
         )}
       </section>
-
-      {state.replies && state.replies.length > 0 && (
-        <section style={{ marginTop: '2rem' }}>
-          <h3>Replies ({state.replies.length})</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {state.replies.map(reply => (
-              <PostItem 
-                key={reply.id} 
-                post={reply} 
-                apiBase={apiBase} 
-                enableRegtestPay={enableRegtestPay} 
-              />
-            ))}
-          </div>
-        </section>
-      )}
 
       {event && (
         <section className="nostr-event-raw">
