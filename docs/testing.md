@@ -12,6 +12,14 @@
 - Playwright: `pnpm --filter gallery e2e tests/bitcoin-network-status.spec.ts` (or full suite with `pnpm --filter gallery e2e`).
 - Fallback if MCP unavailable: `pnpm qa:regtest-demo`.
 
+### qa:regtest-demo preflight controls
+The QA script performs a preflight check to ensure the gallery is reachable.
+- `GALLERY_URL`: Base URL to check (default: `https://localhost:4173`).
+- `SKIP_PREFLIGHT=1`: Bypass the reachability check.
+- `PREFLIGHT_RETRIES`: Number of attempts (default: 3).
+- `PREFLIGHT_DELAY_MS`: Delay between retries (default: 2000).
+- `PREFLIGHT_TIMEOUT_MS`: Timeout for each fetch attempt (default: 5000).
+
 ## Dev logs troubleshooting
 - If `pnpm dev:logs` fails with port conflicts (3001/4173), rerun with `FORCE_KILL_PORTS=1 pnpm dev:logs`.
 - `FORCE_KILL_PORTS=1` will terminate any existing process bound to those ports.

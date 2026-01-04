@@ -19,22 +19,42 @@ function isLocalUrl(url: string) {
 }
 
 async function ensureGalleryAvailable(baseUrl: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  try {
-    console.log(`ℹ️ preflight: checking ${baseUrl}`);
-    await fetch(baseUrl, { method: 'GET', signal: controller.signal });
-  } catch (err) {
-    const localHint = `Gallery server not reachable at ${baseUrl}. Start dev servers with "pnpm dev:logs" and try again, or set GALLERY_URL to a running instance.`;
-    const remoteHint = `Gallery server not reachable at ${baseUrl}. Check the URL or set GALLERY_URL to a running instance.`;
-    console.error('❌ QA preflight failed');
-    console.error(isLocalUrl(baseUrl) ? localHint : remoteHint);
-    if (err instanceof Error) {
-      console.error(`Details: ${err.message}`);
+  if (envFlag('SKIP_PREFLIGHT', false)) {
+    console.log('ℹ️ preflight: skipping per SKIP_PREFLIGHT=1');
+    return;
+  }
+
+  const maxAttempts = Number(process.env.PREFLIGHT_RETRIES ?? 3) || 1;
+  const attemptDelay = Number(process.env.PREFLIGHT_DELAY_MS ?? 2000) || 2000;
+  const timeoutMs = Number(process.env.PREFLIGHT_TIMEOUT_MS ?? 5000) || 5000;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      console.log(`ℹ️ preflight: checking ${baseUrl} (attempt ${attempt}/${maxAttempts})`);
+      const res = await fetch(baseUrl, { method: 'GET', signal: controller.signal });
+      // 404 is acceptable for preflight (page exists but sub-path might be missing)
+      if (res.ok || res.status === 404) {
+        clearTimeout(timeout);
+        return;
+      }
+      throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      clearTimeout(timeout);
+      if (attempt === maxAttempts) {
+        const localHint = `Gallery server not reachable at ${baseUrl}. Start dev servers with "pnpm dev:logs" and try again, or set GALLERY_URL to a running instance.`;
+        const remoteHint = `Gallery server not reachable at ${baseUrl}. Check the URL or set GALLERY_URL to a running instance.`;
+        console.error('❌ QA preflight failed');
+        console.error(isLocalUrl(baseUrl) ? localHint : remoteHint);
+        if (err instanceof Error) {
+          console.error(`Details: ${err.message}`);
+        }
+        process.exit(1);
+      }
+      console.log(`⚠️ preflight: attempt ${attempt} failed, retrying in ${attemptDelay}ms...`);
+      await new Promise((r) => setTimeout(r, attemptDelay));
     }
-    process.exit(1);
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
