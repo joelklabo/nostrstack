@@ -9,6 +9,7 @@
 
 ## UI changes must be confirmed in MCP Chrome
 - Launch Chrome DevTools MCP bridge: `./scripts/mcp-devtools-server.sh` (server) and `./scripts/mcp-chrome.sh` (client) while the gallery is running.
+- The MCP server waits for remote debugging to come up and logs to `.logs/dev/mcp-devtools.log`.
 - After UI changes, open the modified view in Chrome via MCP and capture a screenshot / verify console is clean.
 - If errors appear in console/network panels, record them in the issue before closing.
 

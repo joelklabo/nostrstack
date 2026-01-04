@@ -8,6 +8,7 @@
 ## Gallery UI QA (network switching)
 - Start logs: `pnpm dev:logs` (or `tail -f .logs/dev/api.log .logs/dev/gallery.log`).
 - DevTools MCP: `./scripts/mcp-devtools-server.sh` + `./scripts/mcp-chrome.sh`, open `/personal-site-kit`, verify console + network clean.
+- MCP logs: `.logs/dev/mcp-devtools.log` (set `MCP_DEVTOOLS_LOG_FILE` to override).
 - Playwright: `pnpm --filter gallery e2e tests/bitcoin-network-status.spec.ts` (or full suite with `pnpm --filter gallery e2e`).
 - Fallback if MCP unavailable: `pnpm qa:regtest-demo`.
 

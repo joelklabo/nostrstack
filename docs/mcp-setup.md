@@ -3,6 +3,8 @@
 ## Install / run
 - Start Chrome with remote debugging: `./scripts/mcp-chrome.sh` (defaults port 9222).
 - Start the MCP server: `./scripts/mcp-devtools-server.sh` (wraps `chrome-devtools-mcp@latest`).
+- The server writes logs to `.logs/dev/mcp-devtools.log` by default (override with `MCP_DEVTOOLS_LOG_FILE`).
+- If a server is already running, the script reuses it (set `MCP_DEVTOOLS_REUSE_EXISTING=0` to restart).
 
 ## Codex CLI (global MCP config)
 Codex uses a global MCP server list. If your MCP tools fail, re-add the server entry and restart Codex:
@@ -25,7 +27,17 @@ Then restart Codex CLI.
 - Start Chrome: `./scripts/mcp-chrome.sh`
 - Verify the port: `lsof -nP -iTCP:9222 -sTCP:LISTEN`
 
-3) Re-add the server entry (above) and restart Codex again.
+3) Check the MCP server log: `.logs/dev/mcp-devtools.log`
+
+4) Restart Codex after MCP config changes (add/remove) so the client reloads the server entry.
+
+5) Ensure only one MCP server is running:
+```bash
+pgrep -fl chrome-devtools-mcp
+```
+If needed, restart the server with `MCP_DEVTOOLS_REUSE_EXISTING=0 ./scripts/mcp-devtools-server.sh`.
+
+6) Re-add the server entry (above) and restart Codex again.
 
 ## Client config (example)
 ```json
