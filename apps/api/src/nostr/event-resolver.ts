@@ -10,6 +10,7 @@ import { getCachedEvent, storeCachedEvent } from './event-cache.js';
 import {
   decodeNostrTarget,
   getTagValues,
+  isHex64,
   type NostrTarget,
   parseInlineMentions,
   parseProfileContent,
@@ -17,6 +18,7 @@ import {
   uniq
 } from './nostr-utils.js';
 import { selectRelays } from './relay-utils.js';
+import { extractThreadReferences } from './threading.js';
 
 export type ResolvedAuthor = {
   pubkey: string;
@@ -103,32 +105,10 @@ function normalizeCoordinate(coord: string) {
 }
 
 function extractReferences(event: Event, limit?: number): ResolvedReferences {
-  const root: string[] = [];
-  const reply: string[] = [];
-  const mention: string[] = [];
+  const { root, reply, mention } = extractThreadReferences(event, { selfId: event.id });
   const quote: string[] = [];
   const address: string[] = [];
   const profiles: string[] = [];
-
-  const unmarked: string[] = [];
-  for (const tag of event.tags) {
-    if (tag[0] !== 'e') continue;
-    const id = tag[1];
-    if (!id) continue;
-    const marker = tag[3];
-    if (marker === 'root') root.push(id);
-    else if (marker === 'reply') reply.push(id);
-    else if (marker === 'mention') mention.push(id);
-    else unmarked.push(id);
-  }
-
-  if (root.length === 0 && unmarked.length > 0) root.push(unmarked[0]);
-  if (reply.length === 0 && unmarked.length > 1) reply.push(unmarked[unmarked.length - 1]);
-
-  const used = new Set([...root, ...reply]);
-  for (const id of unmarked) {
-    if (!used.has(id)) mention.push(id);
-  }
 
   quote.push(...getTagValues(event, 'q'));
   address.push(...getTagValues(event, 'a'));
@@ -141,7 +121,7 @@ function extractReferences(event: Event, limit?: number): ResolvedReferences {
 
   const normalizedRoot = uniq(root.map(normalizeEventId));
   const normalizedReply = uniq(reply.map(normalizeEventId));
-  const normalizedMention = uniq(mention.map(normalizeEventId));
+  const normalizedMention = uniq(mention.map(normalizeEventId).filter(isHex64));
   const normalizedQuote = uniq(quote.map(normalizeEventId));
   const normalizedAddress = uniq(address.map(normalizeCoordinate));
   const normalizedProfiles = uniq(profiles.map(normalizeEventId));
