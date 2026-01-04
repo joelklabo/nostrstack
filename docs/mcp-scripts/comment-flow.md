@@ -1,7 +1,7 @@
 # MCP script: real relay comment
 
 1) Launch Chrome debug: `./scripts/mcp-chrome.sh`
-2) Start MCP server: `npx -y chrome-devtools-mcp@latest --browser-url=http://127.0.0.1:9222`
+2) Start MCP server: `npx -y chrome-devtools-mcp@0.12.1 --browser-url=http://127.0.0.1:9222` (pinned to match repo dependency)
 3) MCP actions:
    - Open http://localhost:4173
    - Set relays field to `wss://relay.damus.io`

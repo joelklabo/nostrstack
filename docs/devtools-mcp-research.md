@@ -9,11 +9,12 @@ Install/run (per README):
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "args": ["-y", "chrome-devtools-mcp@0.12.1"]
     }
   }
 }
 ```
+Pinned to 0.12.1 to match the repo dependency and avoid @latest drift.
 Requires Chrome stable and Node ≥20.19. Connects to a browser (default 9222) and uses Puppeteer.
 
 Usefulness for nostrstack:

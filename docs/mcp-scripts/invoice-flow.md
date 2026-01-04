@@ -6,7 +6,7 @@
    ```
 2) Start MCP server:
    ```sh
-   npx -y chrome-devtools-mcp@latest --browser-url=http://127.0.0.1:9222
+   npx -y chrome-devtools-mcp@0.12.1 --browser-url=http://127.0.0.1:9222 (pinned to match repo dependency)
    ```
 3) In your MCP client, run DevTools actions:
    - Open http://localhost:4173
