@@ -169,7 +169,17 @@ function preferSecureBase(base: string) {
 
 function safeClose(socket: WebSocket | null) {
   if (!socket) return;
-  if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+  if (socket.readyState === WebSocket.CONNECTING) {
+    socket.addEventListener('open', () => {
+      try {
+        socket.close();
+      } catch {
+        // Ignore close errors from already-closed sockets.
+      }
+    }, { once: true });
+    return;
+  }
+  if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CLOSING) {
     try {
       socket.close();
     } catch {

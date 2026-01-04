@@ -9,15 +9,6 @@ function envFlag(name: string, fallback: boolean) {
   return raw === '1' || raw.toLowerCase() === 'true' || raw.toLowerCase() === 'yes';
 }
 
-function isIgnorableConsoleWarning(message: string) {
-  const base = "WebSocket connection to '";
-  const suffix = "://localhost:3001/ws/telemetry' failed: WebSocket is closed before the connection is established.";
-  return (
-    message.includes(`${base}wss${suffix}`) ||
-    message.includes(`${base}ws${suffix}`)
-  );
-}
-
 function isLocalUrl(url: string) {
   try {
     const u = new URL(url);
@@ -165,7 +156,6 @@ async function main() {
     const text = msg.text();
     if (type === 'error') consoleErrors.push(text);
     if (type === 'warning' || type === 'warn') {
-      if (isIgnorableConsoleWarning(text)) return;
       consoleWarnings.push(text);
     }
   });
