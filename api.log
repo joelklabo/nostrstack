@@ -1,0 +1,29 @@
+
+> api@0.0.0 dev /Users/honk/code/nostrstack/apps/api
+> pnpm run seed:dev && tsx watch src/server.ts
+
+
+> api@0.0.0 seed:dev /Users/honk/code/nostrstack/apps/api
+> DATABASE_URL=${DATABASE_URL:-file:./dev.db} tsx prisma/seed-dev.ts
+
+Seeded demo tenant/user: {
+  domain: 'localhost',
+  username: 'alice',
+  lightningAddress: 'alice@localhost'
+}
+[15:41:56.472] INFO (92544): Initializing Lightning Provider
+    provider: "lnbits"
+API listening on https://0.0.0.0:3001
+[15:41:56.621] INFO (92544): Server listening at https://0.0.0.0:3001
+[15:42:01.599] WARN (92544): wallet-ws fetch failed
+    successiveFailures: 1
+    err: {
+      "type": "Error",
+      "message": "lnbits http 404: {\"detail\":\"Wallet not found.\"}",
+      "stack":
+          Error: lnbits http 404: {"detail":"Wallet not found."}
+              at <anonymous> (/Users/honk/code/nostrstack/apps/api/src/routes/wallet-ws.ts:34:26)
+              at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+              at async Timeout._onTimeout (/Users/honk/code/nostrstack/apps/api/src/routes/wallet-ws.ts:90:18)
+    }
+ ELIFECYCLE  Command failed.

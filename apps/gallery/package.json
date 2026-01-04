@@ -16,6 +16,8 @@
     "@nostrstack/blog-kit": "workspace:*",
     "@nostrstack/embed": "workspace:*",
     "buffer": "^6.0.3",
+    "linkify-it": "^5.0.0",
+    "markdown-it": "^14.1.0",
     "nostr-tools": "^2.18.2",
     "qrcode": "^1.5.4",
     "react": "^19.0.0-rc.1",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@playwright/test": "1.57.0",
     "@testing-library/react": "16.1.0",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "22.7.5",
     "@types/qrcode": "^1.5.6",
     "@types/react": "19.0.1",

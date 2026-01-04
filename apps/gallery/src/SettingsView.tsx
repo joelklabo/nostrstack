@@ -326,8 +326,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             {nwcStatusLabel}
           </span>
         </div>
-        <div className="nwc-status-row">
-          {nwcCheckStatus === 'checking' && <span className="nwc-spinner" aria-hidden="true" />}
+        <div className="nwc-status-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {nwcCheckStatus === 'checking' && <span className="nostrstack-spinner" style={{ width: '14px', height: '14px' }} />}
           <span className="nwc-status-text">
             {nwcCheckMessage ?? (hasNwcConfig ? 'Wallet configured. Connect to verify.' : 'Add a wallet URI to connect.')}
           </span>

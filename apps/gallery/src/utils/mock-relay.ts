@@ -27,8 +27,39 @@ class MockRelayWebSocket {
     }, 0);
   }
 
-  send() {
-    // no-op for mock relay connections
+  send(data: string) {
+    try {
+      const msg = JSON.parse(data);
+      if (Array.isArray(msg) && msg[0] === 'EVENT') {
+        const event = msg[1];
+        // Simulate OK message
+        setTimeout(() => {
+          this.dispatch('message', {
+            type: 'message',
+            data: JSON.stringify(['OK', event.id, true, ''])
+          });
+          
+          // Also broadcast this event back to anyone subscribed
+          // We can use a simple global registry for mock events
+          window.dispatchEvent(new CustomEvent('nostrstack:mock-event', { detail: event }));
+        }, 10);
+      } else if (Array.isArray(msg) && msg[0] === 'REQ') {
+        const subId = msg[1];
+        // For REQ, we might want to send back any stored events or just acknowledge
+        // For now, we'll just listen for the custom event to push new ones
+        const handler = (e: Event) => {
+          const event = (e as CustomEvent).detail;
+          this.dispatch('message', {
+            type: 'message',
+            data: JSON.stringify(['EVENT', subId, event])
+          });
+        };
+        window.addEventListener('nostrstack:mock-event', handler as EventListener);
+        // Note: we should remove this listener on close, but this is a simple mock
+      }
+    } catch (e) {
+      console.error('MockRelay error', e);
+    }
   }
 
   close() {

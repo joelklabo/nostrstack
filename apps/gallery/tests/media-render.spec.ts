@@ -1,40 +1,71 @@
-import { expect,test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Rich Media Rendering', () => {
-  test('renders images inline', async ({ page }) => {
-    // Navigate to a page that will render events (using mock data would be ideal, 
-    // but for now we'll check if the styles are applied if we inject a mock event)
-    
-    // Inject a mock event with an image into the DOM manually to test the CSS/renderer
-    // simpler to just unit test the renderer, but E2E confirms visual structure
-    
+  test('media CSS classes are available', async ({ page }) => {
+    // Navigate to the app
     await page.goto('/');
     
-    // We can't easily force a specific event without mocking the relay response,
-    // so we'll assert that the CSS classes exist in the stylesheet
+    // Verify that the media container styles are loaded in the browser
     const mediaStyle = await page.evaluate(() => {
-      const _style = window.getComputedStyle(document.body);
-      // Create a dummy element to check styles
       const div = document.createElement('div');
       div.className = 'nostr-media-container';
       document.body.appendChild(div);
       const computed = window.getComputedStyle(div);
-      const display = computed.display;
+      const result = {
+        borderRadius: computed.borderRadius,
+        overflow: computed.overflow
+      };
       document.body.removeChild(div);
-      return display;
+      return result;
     });
 
-    // Check if the class is recognized (browser default is block, but we ensure it didn't crash)
-    expect(mediaStyle).toBe('block');
+    expect(mediaStyle.borderRadius).not.toBe('0px'); // Should be 8px from CSS
+    expect(mediaStyle.overflow).toBe('hidden');
   });
-  
-  test('detects image URLs in text', async ({ page }) => {
-    // This is a unit test disguised as an E2E to verify the renderer logic in browser context
-    const result = await page.evaluate(() => {
-        // @ts-ignore
-        // We'd need to expose the function or test via component mounting
-        return true; 
+
+  test('media image styles are correct', async ({ page }) => {
+    await page.goto('/');
+    const imgStyle = await page.evaluate(() => {
+        const img = document.createElement('img');
+        img.className = 'nostr-media-img';
+        document.body.appendChild(img);
+        const computed = window.getComputedStyle(img);
+        const result = {
+            maxWidth: computed.maxWidth,
+            display: computed.display
+        };
+        document.body.removeChild(img);
+        return result;
     });
-    expect(result).toBe(true);
+    
+    expect(imgStyle.maxWidth).toBe('100%');
+    expect(imgStyle.display).toBe('block');
+  });
+
+  test('visual regression check', async ({ page }) => {
+    await page.goto('/');
+    
+    // Inject a mock post with media to take a screenshot
+    await page.evaluate(() => {
+        const container = document.createElement('div');
+        container.className = 'post-card';
+        container.innerHTML = `
+            <div class="post-content">
+                <p>Check out this image:</p>
+                <div class="nostr-media-container">
+                    <img src="https://picsum.photos/400/300" class="nostr-media-img" alt="Test Image" />
+                </div>
+            </div>
+        `;
+        // Insert at top of feed
+        const feed = document.querySelector('.feed-container');
+        if (feed) feed.prepend(container);
+        else document.body.prepend(container);
+    });
+
+    // Wait for image to load
+    await page.waitForTimeout(1000); 
+
+    await page.screenshot({ path: 'docs/screenshots/social/media-embed.png', fullPage: false });
   });
 });

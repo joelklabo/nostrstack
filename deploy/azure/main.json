@@ -1,0 +1,266 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "16556034642039693610"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "containerImage": {
+      "type": "string"
+    },
+    "adminApiKey": {
+      "type": "securestring"
+    },
+    "opNodeApiKey": {
+      "type": "securestring"
+    },
+    "opNodeWebhookSecret": {
+      "type": "securestring"
+    },
+    "postgresSku": {
+      "type": "string",
+      "defaultValue": "Standard_B1ms"
+    },
+    "postgresStorageGb": {
+      "type": "int",
+      "defaultValue": 32
+    },
+    "appName": {
+      "type": "string",
+      "defaultValue": "nostrstack-api"
+    },
+    "envName": {
+      "type": "string",
+      "defaultValue": "nostrstack-env"
+    },
+    "kvName": {
+      "type": "string",
+      "defaultValue": "nostrstack-kv"
+    },
+    "pgName": {
+      "type": "string",
+      "defaultValue": "nostrstack-pg"
+    },
+    "registryServer": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "registryUsername": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "registryPassword": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "otelEnabled": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "otelEndpoint": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "otelHeaders": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "logAnalyticsSharedKey": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "deployerObjectId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "workloadProfiles": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "name": "Consumption",
+          "workloadProfileType": "Consumption"
+        }
+      ]
+    }
+  },
+  "variables": {
+    "useRegistry": "[not(empty(parameters('registryServer')))]",
+    "useOtel": "[and(parameters('otelEnabled'), not(empty(parameters('otelEndpoint'))))]",
+    "useLogAnalytics": "[and(not(empty(parameters('logAnalyticsWorkspaceId'))), not(empty(parameters('logAnalyticsSharedKey'))))]",
+    "envProps": "[union(createObject('workloadProfiles', parameters('workloadProfiles')), if(variables('useLogAnalytics'), createObject('appLogsConfiguration', createObject('destination', 'log-analytics', 'logAnalyticsConfiguration', createObject('customerId', parameters('logAnalyticsWorkspaceId'), 'sharedKey', parameters('logAnalyticsSharedKey')))), createObject()))]",
+    "dbUrl": "[format('postgresql://nostrstack:{0}@{1}.postgres.database.azure.com:5432/nostrstack', parameters('adminApiKey'), parameters('pgName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[parameters('kvName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "accessPolicies": "[if(not(empty(parameters('deployerObjectId'))), createArray(createObject('objectId', parameters('deployerObjectId'), 'tenantId', subscription().tenantId, 'permissions', createObject('secrets', createArray('get', 'list', 'set', 'delete')))), createArray())]",
+        "enableSoftDelete": true,
+        "enabledForDeployment": true
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[parameters('pgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "nostrstack",
+        "administratorLoginPassword": "[parameters('adminApiKey')]",
+        "version": "15",
+        "storage": {
+          "storageSizeGB": "[parameters('postgresStorageGb')]"
+        },
+        "network": {
+          "delegatedSubnetResourceId": null,
+          "publicNetworkAccess": "Enabled"
+        }
+      },
+      "sku": {
+        "name": "[parameters('postgresSku')]",
+        "tier": "Burstable"
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[format('{0}/{1}', parameters('pgName'), 'nostrstack')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('kvName'), 'database-url')]",
+      "properties": {
+        "value": "[variables('dbUrl')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('kvName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('kvName'), 'admin-api-key')]",
+      "properties": {
+        "value": "[parameters('adminApiKey')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('kvName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('kvName'), 'op-node-api-key')]",
+      "properties": {
+        "value": "[parameters('opNodeApiKey')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('kvName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('kvName'), 'op-node-webhook-secret')]",
+      "properties": {
+        "value": "[parameters('opNodeWebhookSecret')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('kvName'))]"
+      ]
+    },
+    {
+      "condition": "[variables('useRegistry')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('kvName'), 'registry-password')]",
+      "properties": {
+        "value": "[parameters('registryPassword')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('kvName'))]"
+      ]
+    },
+    {
+      "condition": "[and(variables('useOtel'), not(empty(parameters('otelHeaders'))))]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('kvName'), 'otel-exporter-otlp-headers')]",
+      "properties": {
+        "value": "[parameters('otelHeaders')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('kvName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('envName')]",
+      "location": "[parameters('location')]",
+      "properties": "[variables('envProps')]"
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('envName'))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": 3001
+          },
+          "secrets": "[concat(createArray(createObject('name', 'database-url', 'value', variables('dbUrl')), createObject('name', 'admin-api-key', 'value', parameters('adminApiKey')), createObject('name', 'op-node-api-key', 'value', parameters('opNodeApiKey')), createObject('name', 'op-node-webhook-secret', 'value', parameters('opNodeWebhookSecret'))), if(variables('useRegistry'), createArray(createObject('name', 'registry-password', 'value', parameters('registryPassword'))), createArray()), if(and(variables('useOtel'), not(empty(parameters('otelHeaders')))), createArray(createObject('name', 'otel-headers', 'value', parameters('otelHeaders'))), createArray()))]",
+          "registries": "[if(variables('useRegistry'), createArray(createObject('server', parameters('registryServer'), 'username', parameters('registryUsername'), 'passwordSecretRef', 'registry-password')), createArray())]"
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "api",
+              "image": "[parameters('containerImage')]",
+              "env": "[concat(createArray(createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'ADMIN_API_KEY', 'secretRef', 'admin-api-key'), createObject('name', 'OP_NODE_API_KEY', 'secretRef', 'op-node-api-key'), createObject('name', 'OP_NODE_WEBHOOK_SECRET', 'secretRef', 'op-node-webhook-secret'), createObject('name', 'PUBLIC_ORIGIN', 'value', format('https://{0}.azurecontainerapps.io', parameters('appName'))), createObject('name', 'NODE_ENV', 'value', 'production'), createObject('name', 'LOG_LEVEL', 'value', 'info'), createObject('name', 'OTEL_ENABLED', 'value', string(parameters('otelEnabled')))), if(variables('useOtel'), createArray(createObject('name', 'OTEL_EXPORTER_OTLP_ENDPOINT', 'value', parameters('otelEndpoint'))), createArray()), if(and(variables('useOtel'), not(empty(parameters('otelHeaders')))), createArray(createObject('name', 'OTEL_EXPORTER_OTLP_HEADERS', 'secretRef', 'otel-headers')), createArray()))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('envName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('pgName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "containerAppFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('appName')), '2024-03-01').configuration.ingress.fqdn]"
+    }
+  }
+}
