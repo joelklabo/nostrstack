@@ -65,8 +65,14 @@ export async function regtestFund(): Promise<FundResult> {
       await payInvoiceWithPayer(invoice);
       lnbitsTopup = amount;
     } catch (err) {
-      // swallow LNbits topup failures so faucet still succeeds
-      console.info(`LNbits topup skipped (non-fatal): ${formatLnbitsError(err)}`);
+      const errorMsg = formatLnbitsError(err);
+      // Distinguish between optional skips and configured-but-failing errors.
+      // ECONNREFUSED, 401 Unauthorized, and 403 Forbidden indicate misconfiguration when a key is provided.
+      if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('401') || errorMsg.includes('403')) {
+        console.warn(`LNbits topup failed (misconfigured): ${errorMsg}`);
+      } else {
+        console.info(`LNbits topup skipped (non-fatal): ${errorMsg}`);
+      }
     }
   }
 

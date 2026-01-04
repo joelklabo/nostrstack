@@ -69,6 +69,9 @@ curl -X POST http://localhost:3001/regtest/fund
 ```
 This mines coins to `lnd-merchant` and opens a 500k sat channel to the payer, leaving ~0.5M sats local on the merchant side for spending.
 
+### LNbits topup (optional)
+If `LN_BITS_API_KEY` is provided when running the API, the faucet will also attempt to top up the LNbits wallet by 100k sats (via a payer-node payment). This is optional; if the key is missing or LNbits is unreachable, the faucet will still succeed in funding the LND nodes and opening the channel.
+
 Notes:
 - Ports: LNbits `15001`, merchant LND REST `18080`, payer LND REST `19080`.
 - The script is idempotent; rerun `up` to recreate wallets/channel if volumes were removed.
