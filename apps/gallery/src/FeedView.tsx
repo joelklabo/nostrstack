@@ -178,6 +178,11 @@ export function FeedView() {
     if (relaysLoading || relayList.length === 0) return;
 
     const pool = new SimplePool();
+    // Trust mock relays to bypass signature verification in dev/test
+    if (relayList.includes('mock')) {
+      const poolWithTrust = pool as SimplePool & { trustedRelayURLs?: Set<string> };
+      poolWithTrust.trustedRelayURLs?.add('mock');
+    }
     let didUnmount = false;
 
     const updateRelayStatus = (relay: string, next: RelayStatus) => {

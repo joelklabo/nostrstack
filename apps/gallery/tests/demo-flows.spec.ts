@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { expectRelayMode, toggleTheme } from './helpers.ts';
+import { expectRelayMode, loginWithNsec, toggleTheme } from './helpers.ts';
 
 async function measureCardOverflow(page: Page) {
   return page.evaluate(() => {
@@ -25,16 +25,6 @@ async function measureCardOverflow(page: Page) {
     }
     return { maxDelta, offender };
   });
-}
-
-const testNsec = process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-
-async function loginWithNsec(page: Page) {
-  await page.goto('/');
-  await page.getByText('Enter nsec manually').click();
-  await page.getByPlaceholder('nsec1...').fill(testNsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
 }
 
 test('tip button renders', async ({ page }) => {

@@ -1,37 +1,64 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('Reaction (Like)', () => {
-  test('visual check for reaction button state', async ({ page }) => {
-    await page.goto('/');
-    
-    // Inject a post with active like button to capture styles
-    // We simulate the React component's output
-    await page.evaluate(() => {
-        const container = document.createElement('div');
-        container.className = 'post-card';
-        container.innerHTML = `
-            <div class="post-header">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                   <span style="font-weight: 600;">Test User</span>
-                </div>
-            </div>
-            <div class="post-content"><p>This post has been liked!</p></div>
-            <div class="post-actions">
-                <button class="action-btn reaction-btn active" style="color: rgb(207, 34, 46); border-color: rgba(207, 34, 46, 0.4); background: rgba(207, 34, 46, 0.08);" title="Liked" aria-label="Like">♥</button>
-                <button class="action-btn">Reply</button>
-            </div>
-        `;
-        const feed = document.querySelector('.feed-container');
-        if (feed) feed.prepend(container);
-        else document.body.prepend(container);
-    });
+import { loginWithNsec } from './helpers.ts';
 
-    await page.waitForTimeout(1000);
-    await page.screenshot({ path: 'docs/screenshots/social/reaction-active.png' });
+const VALID_NSEC = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+
+test.describe('Reaction (Like)', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
     
-    // Verify styles applied
-    const btn = page.locator('.reaction-btn.active');
-    await expect(btn).toBeVisible();
-    await expect(btn).toHaveCSS('color', 'rgb(207, 34, 46)');
+    // Mock Bitcoin status API
+    await page.route('**/api/bitcoin/status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          network: 'regtest',
+          blocks: 100,
+          headers: 100,
+          bestblockhash: '0000',
+          difficulty: 1,
+          mediantime: Math.floor(Date.now() / 1000),
+          verificationprogress: 1,
+          chainwork: '0000',
+          size_on_disk: 1000,
+          pruned: false,
+          mempool: {
+            size: 10,
+            bytes: 1000,
+            usage: 2000,
+            total_fee: 0.001,
+            maxmempool: 300000000,
+            mempoolminfee: 0.00001,
+            minrelaytxfee: 0.00001
+          },
+          lightning: {
+            status: 'ok',
+            provider: 'mock'
+          }
+        })
+      });
+    });
+  });
+
+  test('user can like a post', async ({ page }) => {
+    await loginWithNsec(page, VALID_NSEC);
+    
+    // Wait for posts to load
+    await expect(page.locator('.post-card').first()).toBeVisible({ timeout: 15000 });
+    
+    const firstPost = page.locator('.post-card').first();
+    const likeBtn = firstPost.locator('.reaction-btn').first();
+    
+    // Click like
+    await likeBtn.click();
+    
+    // Verify optimistic UI (active class)
+    await expect(likeBtn).toHaveClass(/active/, { timeout: 10000 });
+    
+    // Verify it changed from default color (optional, or just check it's not the initial color)
+    const color = await likeBtn.evaluate(el => getComputedStyle(el).color);
+    expect(color).not.toBe('rgb(36, 41, 47)'); // Should not be default text color anymore
   });
 });

@@ -18,6 +18,24 @@ Browser widget -> API /api/pay -> Lightning provider invoice -> user pays -> pro
 ### Comments
 Browser widget -> direct relay subscriptions for thread tag -> NIP-07 signer posts event -> relays publish -> widget renders new event.
 
+### Event landing (/nostr/:id)
+Gallery -> /api/nostr/event/:id (resolve target + references + replies page) -> render event + replies -> optional relay fallback for missing replies.
+
+Mermaid sketch:
+```mermaid
+sequenceDiagram
+  participant Gallery
+  participant API
+  participant Relay
+  Gallery->>API: GET /api/nostr/event/:id
+  API->>Relay: Fetch event + refs + replies
+  Relay-->>API: Events + references
+  API-->>Gallery: Event + replyPage
+  alt Missing replies
+    Gallery->>Relay: Optional relay fetch
+  end
+```
+
 ### Share to Nostr
 Browser widget -> NIP-07 signer signs kind 1 note -> relay publish -> widget updates status. Fallback to navigator.share/clipboard if signer unavailable.
 

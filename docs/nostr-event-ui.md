@@ -27,6 +27,12 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 │  - Rendered content (kind-aware)                               │
 │  - Reference chips/links (inline or footer)                    │
 ├─────────────────────────────────────────────────────────────────┤
+│ Replies                                                        │
+│  - Reply summary + count                                       │
+│  - Reply list (chronological)                                  │
+│  - Load more / pagination controls                             │
+│  - Empty/error states                                          │
+├─────────────────────────────────────────────────────────────────┤
 │ Reference Previews                                             │
 │  - Root / Reply / Mention / Quote / Addressable sections       │
 │  - Preview cards (limited list)                                │
@@ -44,6 +50,7 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
   - Header stacks vertically; Back to App becomes full-width button.
   - Metadata card becomes a single column with labels above values.
   - Event details stack in a single column.
+  - Replies section stacks with a full-width "Load more" button.
   - Reference previews become a vertical list with simplified cards.
   - Tags wrap into a scrollable chip list; long tags truncate.
   - Raw JSON collapsed by default to reduce scroll length.
@@ -51,7 +58,9 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 - **≤ 480px**:
   - Reduce title size; keep subtitle muted.
   - Copy buttons move below values or become icon-only.
+  - Reply cards collapse to author + snippet + time.
   - Reference preview cards show only: kind, author, short snippet.
+  - Reply indentation caps at depth 2 with a compact depth badge (e.g., “↳ 3”).
 
 ## UI States
 - **Loading**
@@ -71,6 +80,13 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 - **Partial Data**
   - Event renders even if references or author profile missing.
   - Show placeholders for missing previews (e.g., “Reference unavailable”).
+
+### Replies States
+- **Loading**: Show skeleton or spinner for reply list; keep count placeholder.
+- **Empty**: Show “No replies yet” with guidance to check relays.
+- **Error**: Show error banner in replies section with retry affordance.
+- **Partial**: Render replies that load; show muted banner for missing pages.
+- **Orphaned**: Render reply with “Parent unavailable” subtitle and optional jump-to-id link.
 
 ## Reference Previews Guidance
 - Group by type: Root, Reply, Mention, Quote, Addressable, Profiles.
@@ -95,6 +111,10 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 - **No tags**: show “No tags” placeholder.
 - **Missing author profile**: render event without profile card.
 - **Excess references**: cap list and show overflow indicator.
+- **No replies**: show empty state instead of hiding the section.
+- **Large threads**: paginate replies; avoid rendering unbounded lists.
+- **Deep nesting**: cap indentation at 3 levels; flatten deeper replies with a depth badge.
+- **Mixed reply kinds**: render non-text replies (reactions/zaps) as compact chips or skip with a note.
 
 ## Standing Note
 While working on this UI, **always** look for refactoring opportunities, bugs, or improvements and create new bd tasks as they surface.

@@ -1,94 +1,77 @@
-type MockEvent = { data?: string; type?: string };
+type MockRelayEvent = {
+  id: string;
+  pubkey: string;
+  created_at: number;
+  kind: number;
+  tags: string[][];
+  content: string;
+  sig: string;
+};
 
-class MockRelayWebSocket {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
+type RelayFilter = {
+  kinds?: number[];
+  authors?: string[];
+  ids?: string[];
+  '#e'?: string[];
+  limit?: number;
+};
 
-  url: string;
-  readyState = MockRelayWebSocket.CONNECTING;
-  onopen: ((event: MockEvent) => void) | null = null;
-  onmessage: ((event: MockEvent) => void) | null = null;
-  onerror: ((event: MockEvent) => void) | null = null;
-  onclose: ((event: MockEvent) => void) | null = null;
-  private listeners: Record<string, Set<(event: MockEvent) => void>> = {
-    open: new Set(),
-    message: new Set(),
-    error: new Set(),
-    close: new Set()
-  };
-
-  constructor(url: string) {
-    this.url = url;
-    setTimeout(() => {
-      this.readyState = MockRelayWebSocket.OPEN;
-      this.dispatch('open', { type: 'open' });
-    }, 0);
+const INITIAL_EVENTS: MockRelayEvent[] = [
+  {
+    id: 'e1',
+    pubkey: '0000000000000000000000000000000000000000000000000000000000000001',
+    created_at: Math.floor(Date.now() / 1000) - 3600,
+    kind: 1,
+    tags: [],
+    content: 'Hello Nostr! This is a mock post from Alice.',
+    sig: 'sig1'
+  },
+  {
+    id: 'e2',
+    pubkey: '0000000000000000000000000000000000000000000000000000000000000002',
+    created_at: Math.floor(Date.now() / 1000) - 1800,
+    kind: 1,
+    tags: [],
+    content: 'Nostr is amazing. This is Bob reporting in.',
+    sig: 'sig2'
+  },
+  {
+    id: 'e3',
+    pubkey: '0000000000000000000000000000000000000000000000000000000000000001',
+    created_at: Math.floor(Date.now() / 1000) - 900,
+    kind: 1,
+    tags: [['e', 'e2', '', 'reply']],
+    content: 'I agree, Bob!',
+    sig: 'sig3'
+  },
+  {
+    id: 'p1',
+    pubkey: '0000000000000000000000000000000000000000000000000000000000000001',
+    created_at: Math.floor(Date.now() / 1000) - 7200,
+    kind: 0,
+    tags: [],
+    content: JSON.stringify({ name: 'Alice', about: 'Mock Alice', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice', lud16: 'alice@nostr.com' }),
+    sig: 'sigp1'
+  },
+  {
+    id: 'p2',
+    pubkey: '0000000000000000000000000000000000000000000000000000000000000002',
+    created_at: Math.floor(Date.now() / 1000) - 7200,
+    kind: 0,
+    tags: [],
+    content: JSON.stringify({ name: 'Bob', about: 'Mock Bob', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob', lud16: 'bob@nostr.com' }),
+    sig: 'sigp2'
   }
-
-  send(data: string) {
-    try {
-      const msg = JSON.parse(data);
-      if (Array.isArray(msg) && msg[0] === 'EVENT') {
-        const event = msg[1];
-        // Simulate OK message
-        setTimeout(() => {
-          this.dispatch('message', {
-            type: 'message',
-            data: JSON.stringify(['OK', event.id, true, ''])
-          });
-          
-          // Also broadcast this event back to anyone subscribed
-          // We can use a simple global registry for mock events
-          window.dispatchEvent(new CustomEvent('nostrstack:mock-event', { detail: event }));
-        }, 10);
-      } else if (Array.isArray(msg) && msg[0] === 'REQ') {
-        const subId = msg[1];
-        // For REQ, we might want to send back any stored events or just acknowledge
-        // For now, we'll just listen for the custom event to push new ones
-        const handler = (e: Event) => {
-          const event = (e as CustomEvent).detail;
-          this.dispatch('message', {
-            type: 'message',
-            data: JSON.stringify(['EVENT', subId, event])
-          });
-        };
-        window.addEventListener('nostrstack:mock-event', handler as EventListener);
-        // Note: we should remove this listener on close, but this is a simple mock
-      }
-    } catch (e) {
-      console.error('MockRelay error', e);
-    }
-  }
-
-  close() {
-    if (this.readyState === MockRelayWebSocket.CLOSED) return;
-    this.readyState = MockRelayWebSocket.CLOSED;
-    this.dispatch('close', { type: 'close' });
-  }
-
-  addEventListener(type: string, handler: (event: MockEvent) => void) {
-    this.listeners[type]?.add(handler);
-  }
-
-  removeEventListener(type: string, handler: (event: MockEvent) => void) {
-    this.listeners[type]?.delete(handler);
-  }
-
-  private dispatch(type: string, event: MockEvent) {
-    const handler = (this as unknown as Record<string, ((event: MockEvent) => void) | null>)[`on${type}`];
-    if (typeof handler === 'function') handler(event);
-    for (const listener of this.listeners[type] ?? []) {
-      listener(event);
-    }
-  }
-}
+];
 
 type WebSocketWindow = Window &
   typeof globalThis & {
     __NOSTRSTACK_MOCK_RELAY_WS__?: boolean;
   };
+
+type MockRelayWindow = WebSocketWindow & {
+  __NOSTRSTACK_MOCK_EVENTS__?: MockRelayEvent[];
+};
 
 export function installMockRelayWebSocket() {
   if (typeof window === 'undefined') return;
@@ -96,21 +79,175 @@ export function installMockRelayWebSocket() {
   if (target.__NOSTRSTACK_MOCK_RELAY_WS__) return;
 
   const OriginalWebSocket = target.WebSocket;
-  const RelayWebSocket = function (url: string | URL, protocols?: string | string[]) {
+
+  // @ts-ignore
+  class MockRelayWebSocket extends EventTarget {
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSING = 2;
+    static CLOSED = 3;
+
+    url: string;
+    readyState = MockRelayWebSocket.CONNECTING;
+    onopen: ((event: Event) => void) | null = null;
+    onmessage: ((event: MessageEvent<string>) => void) | null = null;
+    onerror: ((event: Event) => void) | null = null;
+    onclose: ((event: Event) => void) | null = null;
+
+    constructor(url: string) {
+      super();
+      this.url = url;
+      setTimeout(() => {
+        this.readyState = MockRelayWebSocket.OPEN;
+        const openEvent = new Event('open');
+        if (this.onopen) this.onopen(openEvent);
+        this.dispatchEvent(openEvent);
+      }, 20);
+    }
+
+    send(data: string) {
+      try {
+        if (this.url.includes('/ws/telemetry')) {
+          setTimeout(() => {
+            this.dispatchMessage({
+              type: 'block',
+              height: 100000,
+              hash: '0000000000000000000000000000000000000000000000000000000000000000',
+              time: Math.floor(Date.now() / 1000),
+              tx_count: 50,
+              size: 1000000,
+              weight: 4000000
+            });
+          }, 100);
+          return;
+        }
+
+        if (this.url.includes('/ws/wallet')) {
+          setTimeout(() => {
+            this.dispatchMessage({
+              id: 'mock-wallet',
+              name: 'Mock Wallet',
+              balance: 1000000
+            });
+          }, 100);
+          return;
+        }
+
+        const msg = JSON.parse(data) as unknown;
+        if (Array.isArray(msg) && msg[0] === 'EVENT') {
+          const event = msg[1] as MockRelayEvent;
+          setTimeout(() => {
+            this.dispatchMessage(['OK', event.id, true, '']);
+            const target = window as MockRelayWindow;
+            if (!target.__NOSTRSTACK_MOCK_EVENTS__) target.__NOSTRSTACK_MOCK_EVENTS__ = [...INITIAL_EVENTS];
+            if (!target.__NOSTRSTACK_MOCK_EVENTS__.some((entry) => entry.id === event.id)) {
+              target.__NOSTRSTACK_MOCK_EVENTS__.push(event);
+            }
+            window.dispatchEvent(new CustomEvent('nostrstack:mock-event', { detail: event }));
+          }, 10);
+        } else if (Array.isArray(msg) && msg[0] === 'REQ') {
+          const subId = msg[1];
+          const filters = msg.slice(2) as RelayFilter[];
+          console.log(`[MockRelay] REQ received: ${subId}`, filters);
+
+          const target = window as MockRelayWindow;
+          const allEvents = target.__NOSTRSTACK_MOCK_EVENTS__ ?? [...INITIAL_EVENTS];
+          target.__NOSTRSTACK_MOCK_EVENTS__ = allEvents;
+          
+          const matches: MockRelayEvent[] = [];
+          for (const filter of filters) {
+            const filterMatches = allEvents.filter((event) => {
+              if (filter.kinds && !filter.kinds.includes(event.kind)) return false;
+              if (filter.authors && !filter.authors.includes(event.pubkey)) return false;
+              if (filter.ids && !filter.ids.includes(event.id)) return false;
+              const tagFilter = filter['#e'];
+              if (tagFilter && !event.tags.some((t) => t[0] === 'e' && tagFilter.includes(t[1]))) {
+                return false;
+              }
+              return true;
+            });
+            matches.push(...filterMatches);
+          }
+
+          const uniqueMatches = Array.from(new Map(matches.map(m => [m.id, m])).values());
+          uniqueMatches.sort((a, b) => b.created_at - a.created_at);
+          
+          const limit = filters.reduce((min, filter) => Math.min(min, filter.limit || 1000), 1000);
+          const limitedMatches = uniqueMatches.slice(0, limit);
+
+          setTimeout(() => {
+            for (const event of limitedMatches) {
+              this.dispatchMessage(['EVENT', subId, event]);
+            }
+            this.dispatchMessage(['EOSE', subId]);
+          }, 50);
+
+          const handler = (e: Event) => {
+            if (this.readyState !== MockRelayWebSocket.OPEN) {
+              window.removeEventListener('nostrstack:mock-event', handler as EventListener);
+              return;
+            }
+            const event = (e as CustomEvent<MockRelayEvent>).detail;
+            const matchesFilter = filters.some((filter) => {
+              if (filter.kinds && !filter.kinds.includes(event.kind)) return false;
+              if (filter.authors && !filter.authors.includes(event.pubkey)) return false;
+              if (filter.ids && !filter.ids.includes(event.id)) return false;
+              return true;
+            });
+
+            if (matchesFilter) {
+              this.dispatchMessage(['EVENT', subId, event]);
+            }
+          };
+          window.addEventListener('nostrstack:mock-event', handler as EventListener);
+          this.addEventListener('close', () => {
+            window.removeEventListener('nostrstack:mock-event', handler as EventListener);
+          });
+        }
+      } catch (e) {
+        console.error('MockRelay error', e);
+      }
+    }
+
+    close() {
+      if (this.readyState === MockRelayWebSocket.CLOSED) return;
+      this.readyState = MockRelayWebSocket.CLOSED;
+      const closeEvent = new Event('close');
+      if (this.onclose) this.onclose(closeEvent);
+      this.dispatchEvent(closeEvent);
+    }
+
+    private dispatchMessage(data: unknown) {
+      const label = Array.isArray(data) ? data[0] : 'data';
+      console.log(`[MockRelay] Sending message to ${this.url}:`, label);
+      const event = new MessageEvent<string>('message', {
+        data: JSON.stringify(data),
+        origin: this.url
+      });
+      if (this.onmessage) this.onmessage(event);
+      this.dispatchEvent(event);
+    }
+  }
+
+  const RelayWebSocketProxy = function (url: string | URL, protocols?: string | string[]) {
     const resolved = typeof url === 'string' ? url : url.toString();
-    if (resolved.includes('mock')) {
-      return new MockRelayWebSocket(resolved) as unknown as WebSocket;
+    if (resolved.includes('mock') || resolved.includes('/ws/telemetry') || resolved.includes('/ws/wallet')) {
+      return new MockRelayWebSocket(resolved);
     }
     return new OriginalWebSocket(resolved, protocols as string | string[] | undefined);
-  } as unknown as typeof WebSocket;
+  };
 
-  const relayStatics = RelayWebSocket as unknown as Record<string, number>;
-  relayStatics.CONNECTING = OriginalWebSocket.CONNECTING;
-  relayStatics.OPEN = OriginalWebSocket.OPEN;
-  relayStatics.CLOSING = OriginalWebSocket.CLOSING;
-  relayStatics.CLOSED = OriginalWebSocket.CLOSED;
-  RelayWebSocket.prototype = OriginalWebSocket.prototype;
+  RelayWebSocketProxy.prototype = OriginalWebSocket.prototype;
+  // @ts-ignore
+  RelayWebSocketProxy.CONNECTING = OriginalWebSocket.CONNECTING;
+  // @ts-ignore
+  RelayWebSocketProxy.OPEN = OriginalWebSocket.OPEN;
+  // @ts-ignore
+  RelayWebSocketProxy.CLOSING = OriginalWebSocket.CLOSING;
+  // @ts-ignore
+  RelayWebSocketProxy.CLOSED = OriginalWebSocket.CLOSED;
 
-  target.WebSocket = RelayWebSocket;
+  // @ts-ignore
+  target.WebSocket = RelayWebSocketProxy;
   target.__NOSTRSTACK_MOCK_RELAY_WS__ = true;
 }

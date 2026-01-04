@@ -1,10 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
 import { finalizeEvent, generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 
+import { loginWithNsec } from './helpers';
 import { mockLnurlPay } from './helpers/lnurl-mocks';
-
-const testNsec =
-  process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
 
 const secretKey = generateSecretKey();
 const friendPubkey = getPublicKey(secretKey);
@@ -46,19 +44,13 @@ const postEvents = [
   )
 ];
 
-async function loginWithNsec(page: Page) {
-  await page.goto('/');
-  await page.getByText('Enter nsec manually').click();
-  await page.getByPlaceholder('nsec1...').fill(testNsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
-}
-
 async function installMockRelay(page: Page) {
   const events = [profileEvent, ...postEvents];
 
   await page.addInitScript(({ events }) => {
     type MockEvent = { data?: string; type?: string };
+    type ListenerType = 'open' | 'message' | 'error' | 'close';
+    type HandlerKey = `on${ListenerType}`;
 
     class MockWebSocket {
       static CONNECTING = 0;
@@ -71,7 +63,7 @@ async function installMockRelay(page: Page) {
       onmessage: ((ev: MockEvent) => void) | null = null;
       onerror: ((ev: MockEvent) => void) | null = null;
       onclose: ((ev: MockEvent) => void) | null = null;
-      private listeners: Record<string, Set<(ev: MockEvent) => void>> = {
+      private listeners: Record<ListenerType, Set<(ev: MockEvent) => void>> = {
         open: new Set(),
         message: new Set(),
         error: new Set(),
@@ -86,8 +78,9 @@ async function installMockRelay(page: Page) {
         }, 0);
       }
 
-      private dispatch(type: string, event: MockEvent) {
-        const handler = (this as Record<string, ((ev: MockEvent) => void) | null>)[`on${type}`];
+      private dispatch(type: ListenerType, event: MockEvent) {
+        const handlerKey = `on${type}` as HandlerKey;
+        const handler = this[handlerKey];
         if (typeof handler === 'function') handler(event);
         for (const listener of this.listeners[type] ?? []) {
           listener(event);
@@ -148,10 +141,11 @@ test('find friend and tip flow', async ({ page }) => {
   await mockLnurlPay(page);
   await loginWithNsec(page);
 
-  await page.getByRole('navigation').getByRole('button', { name: 'Find friend' }).click();
-  await expect(page.getByRole('heading', { name: 'Find friend' })).toBeVisible();
+  await page.click('text=Find friend');
+  await page.screenshot({ path: 'test-results/debug-search-nav.png' });
+  await expect(page.getByRole('heading', { name: 'Find friend' })).toBeVisible({ timeout: 10000 });
 
-  await page.getByLabel('Friend identifier').fill(friendNpub);
+  await page.getByLabel('Search query').fill(friendNpub);
   await page.getByRole('button', { name: 'Search' }).click();
   const openProfile = page.getByRole('button', { name: 'Open profile' });
   await expect(openProfile).toBeVisible({ timeout: 10000 });

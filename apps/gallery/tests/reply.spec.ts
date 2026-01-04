@@ -1,52 +1,41 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('Reply Flow', () => {
-  test('visual check for reply modal', async ({ page }) => {
-    await page.goto('/');
+import { loginWithNsec } from './helpers.ts';
 
-    // Inject modal HTML to verify styles
-    await page.evaluate(() => {
-        const dialog = document.createElement('dialog');
-        dialog.className = 'reply-modal';
-        dialog.open = true;
-        dialog.style.padding = '0';
-        dialog.style.border = 'none';
-        dialog.style.background = 'transparent';
-        dialog.style.maxWidth = '100%';
-        dialog.style.maxHeight = '100%';
-        dialog.style.margin = 'auto';
+const VALID_NSEC = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
 
-        dialog.innerHTML = `
-            <div class="reply-modal-content" style="background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 12px; width: min(600px, 90vw); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-                <div class="reply-modal-header" style="padding: 1rem; border-bottom: 1px solid var(--color-border-muted); display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="margin: 0; fontSize: 1rem;">Reply to note</h3>
-                    <button class="action-btn">×</button>
-                </div>
-                <div style="padding: 1rem;">
-                    <div class="post-editor-container">
-                        <div class="editor-header">
-                            <span class="editor-prompt">[REPLY] &gt;</span> Reply to note:
-                        </div>
-                        <textarea class="terminal-input editor-input" rows="4" placeholder="Write your reply..."></textarea>
-                        <div class="editor-footer">
-                            <div class="editor-counter">0 / 1000</div>
-                            <div class="editor-actions">
-                                <button class="action-btn" style="margin-right: 0.5rem;">CANCEL</button>
-                                <button class="auth-btn">PUBLISH_EVENT</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(dialog);
-    });
+test.describe('Reply Composer', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
+  });
 
-    await page.waitForTimeout(500);
-    const modal = page.locator('.reply-modal');
-    await expect(modal).toBeVisible();
+  test('user can open reply modal and post a reply', async ({ page }) => {
+    await loginWithNsec(page, VALID_NSEC);
     
-    // Screenshot
-    await page.screenshot({ path: 'docs/screenshots/social/reply-modal.png' });
+    // Wait for posts to load
+    await expect(page.locator('.post-card').first()).toBeVisible({ timeout: 15000 });
+    
+    const firstPost = page.locator('.post-card').first();
+    const replyBtn = firstPost.getByRole('button', { name: 'Reply' });
+    
+    // Click reply
+    await replyBtn.click();
+    
+    // Verify modal open
+    const modal = page.locator('dialog.reply-modal[open]');
+    await expect(modal).toBeVisible();
+    await expect(modal.getByRole('heading', { name: 'Reply to note' })).toBeVisible();
+    
+    // Fill reply
+    await modal.getByPlaceholder(/YOUR_REPLY|Write your reply/i).fill('This is a test reply from Playwright!');
+    
+    // Click publish in modal
+    await modal.getByRole('button', { name: 'PUBLISH_EVENT' }).click();
+    
+    // Verify modal closes
+    await expect(modal).not.toBeVisible({ timeout: 10000 });
+    
+    // Success toast check (optional, depending on toast implementation)
+    // await expect(page.getByText('Reply published!')).toBeVisible();
   });
 });

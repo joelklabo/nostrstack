@@ -194,23 +194,53 @@ export async function mockNostrEventApi(
   });
 }
 
-export async function loginWithNsec(page: Page, nsec: string) {
-  await page.goto('/');
-  // If we are already logged in (reused state), we might see Live Feed
-  if (await page.getByText('Live Feed').isVisible()) return;
-
-  const manual = page.getByText('Enter nsec manually');
-  if (await manual.isVisible()) {
-    await manual.click();
-  } else {
-    // Try to click it if hidden or assume on login page
-    const btn = page.getByRole('button', { name: /Enter nsec manually/i });
-    if (await btn.count() > 0 && await btn.isVisible()) {
-      await btn.click();
+export async function seedMockEvent(page: Page, event: Partial<Event>) {
+  await page.evaluate((evt) => {
+    const fullEvent: Event = {
+      id: Math.random().toString(36).substring(7),
+      pubkey: '0'.repeat(64),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 1,
+      tags: [],
+      content: 'default content',
+      sig: '0'.repeat(128),
+      ...evt
+    };
+    window.dispatchEvent(new CustomEvent('nostrstack:mock-event', { detail: fullEvent }));
+    // Also add to global mock events if they exist
+    const target = window as Window & { __NOSTRSTACK_MOCK_EVENTS__?: Event[] };
+    if (target.__NOSTRSTACK_MOCK_EVENTS__) {
+      target.__NOSTRSTACK_MOCK_EVENTS__.push(fullEvent);
     }
-  }
+  }, event);
+}
+
+export const TEST_NSEC = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+
+export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  // If we are already logged in (reused state), we might see Live Feed
+  const liveFeed = page.getByText('Live Feed');
+  const alreadyIn = await liveFeed.isVisible().catch(() => false);
+  if (alreadyIn) return;
+
+  // Wait for login screen elements to be available
+  await expect(page.locator('.terminal-title').first()).toBeVisible({ timeout: 15000 });
+
+  // Sometimes the button is not immediately clickable if content is shifting
+  const manual = page.getByText('Enter nsec manually');
+  // Use .first() in case of duplicates (e.g. mobile vs desktop layouts)
+  await manual.first().waitFor({ state: 'visible', timeout: 10000 });
+  await manual.first().click();
   
-  await page.getByPlaceholder('nsec1...').fill(nsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+  const input = page.getByPlaceholder('nsec1...');
+  await input.waitFor({ state: 'visible', timeout: 5000 });
+  await input.fill(nsec);
+  
+  const signInBtn = page.getByRole('button', { name: 'Sign in' });
+  await signInBtn.click();
+  
+  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20000 });
 }
