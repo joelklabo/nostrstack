@@ -1,5 +1,6 @@
 import { parseRelays, useNostrstackConfig } from '@nostrstack/blog-kit';
-import { type Event, nip19, SimplePool } from 'nostr-tools';
+import { type Event, nip19 } from 'nostr-tools';
+import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
 import { PostItem } from './FeedView';
@@ -19,6 +20,7 @@ type Target =
 type LoadState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   error?: string;
+  apiError?: string;
   targetLabel?: string;
   relays: string[];
   event?: Event;
@@ -64,6 +66,23 @@ function isHex64(value: string) {
 
 function uniqRelays(relays: string[]) {
   return Array.from(new Set(relays.filter(Boolean)));
+}
+
+function isMockRelay(relay: string) {
+  const trimmed = relay.trim().toLowerCase();
+  return trimmed === 'mock' || trimmed === 'ws://mock' || trimmed === 'wss://mock';
+}
+
+function normalizeMockRelay(relay: string) {
+  return isMockRelay(relay) ? 'ws://mock' : relay;
+}
+
+function trustMockRelays(pool: SimplePool, relays: string[]) {
+  relays.forEach((relay) => {
+    if (isMockRelay(relay)) {
+      pool.trustedRelayURLs.add(normalizeMockRelay(relay));
+    }
+  });
 }
 
 function resolveTarget(rawId: string): Target | null {
@@ -208,9 +227,15 @@ export function NostrEventView({ rawId }: { rawId: string }) {
   const repliesEnabled = target?.type === 'event';
   
   const relayList = useMemo(() => {
-    const envRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
-    const targetRelays = target?.relays ?? [];
-    return uniqRelays([...targetRelays, ...envRelays, ...FALLBACK_RELAYS]);
+    const rawEnvRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+    const rawTargetRelays = target?.relays ?? [];
+    const usesMockRelays = [...rawEnvRelays, ...rawTargetRelays].some((relay) => isMockRelay(relay));
+    const envRelays = rawEnvRelays.map(normalizeMockRelay);
+    const targetRelays = rawTargetRelays.map(normalizeMockRelay);
+    const relays = usesMockRelays
+      ? [...targetRelays, ...envRelays]
+      : [...targetRelays, ...envRelays, ...FALLBACK_RELAYS];
+    return uniqRelays(relays);
   }, [cfg.relays, target]);
 
   useEffect(() => {
@@ -219,6 +244,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         status: 'error',
         relays: [],
         error: 'Unsupported or invalid nostr identifier.',
+        apiError: undefined,
         replies: EMPTY_REPLIES_STATE
       });
       return;
@@ -232,6 +258,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
       pool?: SimplePool
     ): Promise<RepliesState> => {
       const activePool = pool ?? new SimplePool();
+      trustMockRelays(activePool, relays);
       const shouldClose = !pool;
       const closePool = () => {
         if (!shouldClose) return;
@@ -271,6 +298,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
     const loadFromRelays = async () => {
       const pool = new SimplePool();
+      trustMockRelays(pool, relayList);
       const closePool = () => {
         globalThis.setTimeout(() => {
           try {
@@ -329,6 +357,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         status: 'loading',
         relays: relayList,
         error: undefined,
+        apiError: undefined,
         event: undefined,
         references: undefined,
         authorProfile: undefined,
@@ -380,7 +409,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
               authorProfile: apiResult.author?.profile ?? null,
               authorPubkey: apiResult.author?.pubkey ?? apiResult.event.pubkey,
               targetLabel: apiResult.target?.input ?? rawId,
-              replies: repliesState
+              replies: repliesState,
+              apiError: undefined
             });
             return;
           } catch (err) {
@@ -399,7 +429,8 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           authorProfile: relayResult.authorProfile,
           authorPubkey: relayResult.authorPubkey,
           targetLabel: rawId,
-          replies: relayResult.repliesState
+          replies: relayResult.repliesState,
+          apiError: apiError ?? undefined
         });
       } catch (err) {
         if (cancelled) return;
@@ -623,6 +654,11 @@ export function NostrEventView({ rawId }: { rawId: string }) {
                     <div className="nostr-event-section-subtitle">{replyCountLabel} replies</div>
                   </div>
                 </div>
+                {state.apiError && repliesState.status === 'ready' && (
+                  <Alert tone="warning" title="API unavailable" className="nostr-event-replies-fallback">
+                    Showing relay results while the API is unavailable. {state.apiError}
+                  </Alert>
+                )}
 
                 {repliesState.status === 'loading' && (
                   <div className="nostr-event-replies-loading" role="status">
