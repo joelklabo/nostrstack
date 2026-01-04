@@ -2,7 +2,7 @@
 
 ## Install / run
 - Start Chrome with remote debugging: `./scripts/mcp-chrome.sh` (defaults port 9222).
-- Start the MCP server: `./scripts/mcp-devtools-server.sh` (wraps `chrome-devtools-mcp@latest`).
+- Start the MCP server: `./scripts/mcp-devtools-server.sh` (wraps `chrome-devtools-mcp@0.12.1`).
 - The server writes logs to `.logs/dev/mcp-devtools.log` by default (override with `MCP_DEVTOOLS_LOG_FILE`).
 - If a server is already running, the script reuses it (set `MCP_DEVTOOLS_REUSE_EXISTING=0` to restart).
 
@@ -10,7 +10,7 @@
 Codex uses a global MCP server list. If your MCP tools fail, re-add the server entry and restart Codex:
 ```bash
 codex mcp remove chrome-devtools
-codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 --acceptInsecureCerts
+codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@0.12.1 --browserUrl=http://127.0.0.1:9222 --acceptInsecureCerts
 ```
 
 ### Troubleshooting: `Transport closed`
@@ -37,7 +37,9 @@ pgrep -fl chrome-devtools-mcp
 ```
 If needed, restart the server with `MCP_DEVTOOLS_REUSE_EXISTING=0 ./scripts/mcp-devtools-server.sh`.
 
-6) Re-add the server entry (above) and restart Codex again.
+6) If the MCP command is configured with a relative path (e.g., `./node_modules/.bin/chrome-devtools-mcp`), Codex tool calls launched from a non-repo CWD can exit immediately with `Transport closed`. Prefer the `npx -y chrome-devtools-mcp@0.12.1` config (or an absolute path) so the server can spawn from any working directory.
+
+7) Re-add the server entry (above) and restart Codex again.
 
 ## Client config (example)
 ```json
@@ -45,7 +47,7 @@ If needed, restart the server with `MCP_DEVTOOLS_REUSE_EXISTING=0 ./scripts/mcp-
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest", "--browserUrl=http://127.0.0.1:9222", "--acceptInsecureCerts"]
+      "args": ["-y", "chrome-devtools-mcp@0.12.1", "--browserUrl=http://127.0.0.1:9222", "--acceptInsecureCerts"]
     }
   }
 }

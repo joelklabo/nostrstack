@@ -85,7 +85,7 @@ if command -v pnpm >/dev/null 2>&1; then
     "$@"
 fi
 
-exec npx -y chrome-devtools-mcp@latest \
+exec npx -y chrome-devtools-mcp@0.12.1 \
   --browserUrl="${BROWSER_URL}" \
   --acceptInsecureCerts \
   "${LOG_ARGS[@]}" \
