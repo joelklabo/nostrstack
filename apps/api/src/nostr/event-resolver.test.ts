@@ -314,6 +314,118 @@ describe('resolveNostrEvent', () => {
     expect(resolved.replies).toEqual([replyD]);
   });
 
+  it('stops cycle detection after max-hop limit', async () => {
+    const replyAId = '11'.repeat(32);
+    const replyBId = '12'.repeat(32);
+    const replyCId = '13'.repeat(32);
+
+    const replyA: Event = {
+      ...baseEvent,
+      id: replyAId,
+      created_at: 1710000001,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyBId, '', 'reply']
+      ],
+      content: 'reply A'
+    };
+    const replyB: Event = {
+      ...baseEvent,
+      id: replyBId,
+      created_at: 1710000002,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyCId, '', 'reply']
+      ],
+      content: 'reply B'
+    };
+    const replyC: Event = {
+      ...baseEvent,
+      id: replyCId,
+      created_at: 1710000003,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyAId, '', 'reply']
+      ],
+      content: 'reply C'
+    };
+
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    querySyncMock.mockResolvedValueOnce([replyA, replyB, replyC]);
+
+    // With limit 2, the 3-hop cycle A->B->C->A is not detected
+    const resolved = await resolveNostrEvent(baseEvent.id, {
+      defaultRelays: ['wss://relay.default'],
+      prisma: {} as PrismaClient,
+      replyLimit: 10,
+      replyMaxCycleHops: 2
+    });
+
+    // All events returned because cycle was not detected within 2 hops
+    expect(resolved.replies).toHaveLength(3);
+    expect(resolved.replies).toContainEqual(replyA);
+    expect(resolved.replies).toContainEqual(replyB);
+    expect(resolved.replies).toContainEqual(replyC);
+  });
+
+  it('handles 0 or negative hop limit safely', async () => {
+    const replyAId = '21'.repeat(32);
+    const replyBId = '22'.repeat(32);
+    const replyA: Event = {
+      ...baseEvent,
+      id: replyAId,
+      created_at: 1710000001,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyBId, '', 'reply']
+      ],
+      content: 'reply A'
+    };
+    const replyB: Event = {
+      ...baseEvent,
+      id: replyBId,
+      created_at: 1710000002,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyAId, '', 'reply']
+      ],
+      content: 'reply B'
+    };
+
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    querySyncMock.mockResolvedValueOnce([replyA, replyB]);
+
+    const resolved = await resolveNostrEvent(baseEvent.id, {
+      defaultRelays: ['wss://relay.default'],
+      prisma: {} as PrismaClient,
+      replyLimit: 10,
+      replyMaxCycleHops: 0
+    });
+
+    // With 0 hops, even 2-hop cycle is not detected
+    expect(resolved.replies).toHaveLength(2);
+    expect(resolved.replies).toContainEqual(replyA);
+    expect(resolved.replies).toContainEqual(replyB);
+  });
+
   it('rejects when no relays are configured', async () => {
     await expect(resolveNostrEvent(baseEvent.id, { defaultRelays: [] })).rejects.toThrow('no_relays');
   });

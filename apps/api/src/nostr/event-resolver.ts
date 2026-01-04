@@ -66,6 +66,7 @@ export type ResolveOptions = {
   replyMaxLimit?: number;
   replyCursor?: string;
   replyTimeoutMs?: number;
+  replyMaxCycleHops?: number;
   prisma?: PrismaClient;
 };
 
@@ -82,6 +83,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number) {
 }
 
 const MAX_INPUT_LENGTH = 512;
+const MAX_REPLY_CYCLE_HOPS = 100;
 
 function isVerifiedEvent(event: Event) {
   return validateEvent(event) && verifyEvent(event);
@@ -198,7 +200,7 @@ function compareEventsAsc(a: Event, b: Event) {
   return a.id.localeCompare(b.id);
 }
 
-function findReplyCycles(events: Event[]) {
+function findReplyCycles(events: Event[], maxHops: number = MAX_REPLY_CYCLE_HOPS) {
   const replyParentById = new Map<string, string>();
 
   for (const event of events) {
@@ -216,8 +218,9 @@ function findReplyCycles(events: Event[]) {
     let current: string | undefined = id;
     const path: string[] = [];
     const pathIndex = new Map<string, number>();
+    let hops = 0;
 
-    while (current && replyParentById.has(current)) {
+    while (current && replyParentById.has(current) && hops < maxHops) {
       if (visitState.has(current)) break;
       const existingIndex = pathIndex.get(current);
       if (existingIndex !== undefined) {
@@ -229,6 +232,7 @@ function findReplyCycles(events: Event[]) {
       pathIndex.set(current, path.length);
       path.push(current);
       current = replyParentById.get(current);
+      hops += 1;
     }
 
     for (const node of path) {
@@ -252,7 +256,8 @@ async function fetchReplies({
   replyLimit,
   replyCursor,
   timeoutMs,
-  targetEventId
+  targetEventId,
+  replyMaxCycleHops
 }: {
   pool: SimplePool;
   relays: string[];
@@ -261,6 +266,7 @@ async function fetchReplies({
   replyCursor: ReplyCursor | null;
   timeoutMs: number;
   targetEventId: string;
+  replyMaxCycleHops?: number;
 }): Promise<{ replies: Event[]; replyPage: ReplyPage }> {
   const filter: Filter = {
     kinds: [1],
@@ -286,7 +292,7 @@ async function fetchReplies({
     }
 
     let filtered = Array.from(deduped.values());
-    const cycleIds = findReplyCycles(filtered);
+    const cycleIds = findReplyCycles(filtered, replyMaxCycleHops);
     if (cycleIds.size > 0) {
       filtered = filtered.filter((event) => !cycleIds.has(normalizeEventId(event.id)));
     }
@@ -496,7 +502,8 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
         replyLimit,
         replyCursor: parsedCursor,
         timeoutMs: replyTimeoutMs,
-        targetEventId: resolved.event.id
+        targetEventId: resolved.event.id,
+        replyMaxCycleHops: options.replyMaxCycleHops
       });
 
       resolved = {
