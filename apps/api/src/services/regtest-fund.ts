@@ -66,7 +66,7 @@ export async function regtestFund(): Promise<FundResult> {
       lnbitsTopup = amount;
     } catch (err) {
       // swallow LNbits topup failures so faucet still succeeds
-      console.warn('LNbits topup failed', err);
+      console.info(`LNbits topup skipped (non-fatal): ${formatLnbitsError(err)}`);
     }
   }
 
@@ -112,4 +112,14 @@ async function payInvoiceWithPayer(invoice: string) {
     'exec', '-T', 'lnd-payer', 'sh', '-lc',
     `lncli --network=regtest --lnddir=/data --rpcserver=lnd-payer:10010 --macaroonpath=/data/data/chain/bitcoin/regtest/admin.macaroon --tlscertpath=/data/tls.cert payinvoice --force --json ${invoice}`
   ]);
+}
+
+function formatLnbitsError(err: unknown) {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
 }
