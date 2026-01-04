@@ -6,6 +6,8 @@ import { getCachedEvent } from './event-cache.js';
 import { resolveNostrEvent } from './event-resolver.js';
 import { selectRelays } from './relay-utils.js';
 
+const querySyncMock = vi.fn(async (): Promise<Event[]> => []);
+
 vi.mock('nostr-tools', async () => {
   const actual = await vi.importActual<typeof import('nostr-tools')>('nostr-tools');
   return {
@@ -14,6 +16,7 @@ vi.mock('nostr-tools', async () => {
     verifyEvent: () => true,
     SimplePool: class {
       get = vi.fn(async () => null);
+      querySync = querySyncMock;
       close = vi.fn();
     }
   };
@@ -56,6 +59,8 @@ describe('relay selection', () => {
 describe('resolveNostrEvent', () => {
   beforeEach(() => {
     getCachedEventMock.mockReset();
+    querySyncMock.mockReset();
+    querySyncMock.mockResolvedValue([]);
   });
 
   it('extracts references from cached events and handles missing profiles', async () => {
@@ -128,6 +133,52 @@ describe('resolveNostrEvent', () => {
         replyCursor: 'not-a-valid-cursor'
       })
     ).rejects.toThrow('invalid_reply_cursor');
+  });
+
+  it('filters self-referential replies', async () => {
+    const loopReplyId = 'c'.repeat(64);
+    const goodReplyId = 'd'.repeat(64);
+    const loopReply: Event = {
+      id: loopReplyId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000001,
+      kind: 1,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', loopReplyId, '', 'reply']
+      ],
+      content: 'loop reply',
+      sig: 'e'.repeat(128)
+    };
+    const goodReply: Event = {
+      id: goodReplyId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000002,
+      kind: 1,
+      tags: [['e', baseEvent.id, '', 'root']],
+      content: 'good reply',
+      sig: 'f'.repeat(128)
+    };
+
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    querySyncMock.mockResolvedValueOnce([loopReply, goodReply]);
+
+    const resolved = await resolveNostrEvent(baseEvent.id, {
+      defaultRelays: ['wss://relay.default'],
+      prisma: {} as PrismaClient,
+      replyLimit: 10
+    });
+
+    expect(resolved.replies).toEqual([goodReply]);
   });
 
   it('rejects when no relays are configured', async () => {

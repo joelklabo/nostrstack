@@ -87,6 +87,17 @@ function isVerifiedEvent(event: Event) {
   return validateEvent(event) && verifyEvent(event);
 }
 
+function hasSelfReference(event: Event) {
+  const selfId = event.id?.trim().toLowerCase();
+  if (!selfId) return false;
+  return event.tags.some((tag) => {
+    if (tag[0] !== 'e') return false;
+    const ref = tag[1];
+    if (!ref) return false;
+    return ref.trim().toLowerCase() === selfId;
+  });
+}
+
 type ReplyCursor = {
   createdAt: number;
   id: string;
@@ -228,6 +239,7 @@ async function fetchReplies({
     for (const event of events) {
       if (!event?.id || event.id === targetEventId) continue;
       if (!isVerifiedEvent(event)) continue;
+      if (hasSelfReference(event)) continue;
       if (deduped.has(event.id)) continue;
       deduped.set(event.id, event);
     }
