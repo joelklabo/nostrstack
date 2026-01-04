@@ -137,4 +137,47 @@ describe('extractThreadReferences', () => {
     expect(refs.reply).toEqual([]);
     expect(refs.mention).toEqual([]);
   });
+
+  it('ignores address tags for threading', () => {
+    const address = `30023:${'d'.repeat(64)}:my-note`;
+    const refs = extractThreadReferences({
+      ...baseEvent,
+      tags: [['a', address, '', 'root']]
+    });
+
+    expect(refs).toEqual({ root: [], reply: [], mention: [] });
+  });
+
+  it('uses only event tags when address tags are present', () => {
+    const rootId = 'e'.repeat(64);
+    const replyId = 'f'.repeat(64);
+    const address = `30023:${'1'.repeat(64)}:post`;
+    const refs = extractThreadReferences({
+      ...baseEvent,
+      tags: [
+        ['e', rootId, '', 'root'],
+        ['a', address, '', 'root'],
+        ['e', replyId, '', 'reply']
+      ]
+    });
+
+    expect(refs.root).toEqual([rootId]);
+    expect(refs.reply).toEqual([replyId]);
+    expect(refs.mention).toEqual([]);
+  });
+
+  it('ignores invalid address tag formats', () => {
+    const rootId = '2'.repeat(64);
+    const refs = extractThreadReferences({
+      ...baseEvent,
+      tags: [
+        ['a', 'not-a-coordinate', '', 'root'],
+        ['e', rootId, '', 'root']
+      ]
+    });
+
+    expect(refs.root).toEqual([rootId]);
+    expect(refs.reply).toEqual([]);
+    expect(refs.mention).toEqual([]);
+  });
 });

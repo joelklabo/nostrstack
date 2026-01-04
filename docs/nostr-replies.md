@@ -5,6 +5,7 @@
 
 ## NIP alignment
 - Threading follows **NIP-10** `e` tags with `root`/`reply` markers when present.
+- **NIP-33** `a` tags are returned in `references.address` but are not used to compute `replyThreadId` yet; replies must include `e` tags to participate in threads. This keeps address references informational while reply fetching still queries `#e` ids.
 - Mentions/quotes align with **NIP-27** conventions where tag data is available.
 - Legacy `e` tags without markers are treated as reply-thread hints:
   - First `e` tag is treated as `root` when determinable.
