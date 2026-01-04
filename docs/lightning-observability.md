@@ -7,9 +7,11 @@ Sources already flowing
 - Postgres `nostrstack-pg-west`: metrics + logs (existing diagnostic setting `pg-all`).
 
 API metrics (Prometheus)
-- `bitcoin_status_requests_total{result,source}`: count of `/api/bitcoin/status` responses by result (`ok`/`error`) and telemetry source (`bitcoind`/`esplora`/`mock`).
-- `bitcoin_status_failures_total{reason}`: failure reasons for bitcoin status (`telemetry_error`, `lnbits_config`, `lnbits_unreachable`, `handler_exception`).
-- `bitcoin_status_fetch_duration_seconds{result,source}`: histogram for status handler latency by result and source.
+- `bitcoin_status_requests_total{result,source}` (counter): count of `/api/bitcoin/status` responses by result (`ok`/`error`) and telemetry source (`bitcoind`/`esplora`/`mock`).
+- `bitcoin_status_failures_total{reason}` (counter): failure reasons for bitcoin status (`telemetry_error`, `lnbits_config`, `lnbits_unreachable`, `handler_exception`).
+- `bitcoin_status_fetch_duration_seconds{result,source}` (histogram): status handler latency by result and source.
+- `nostr_reply_fetch_total{result}` (counter): reply fetch results (`success`, `empty`, `failure`).
+- `nostr_reply_fetch_duration_seconds{outcome}` (histogram): reply fetch latency (`success`, `failure`), buckets `[0.1, 0.25, 0.5, 1, 2, 5, 10]`.
 
 Useful KQL snippets
 - LNbits prod app logs (latest errors):
@@ -84,3 +86,9 @@ Automation helpers
 Notes
 - Current funding backend is Voltage mutinynet (signet). When switching to mainnet, keep the same workspace/queries; watch for new error patterns (macaroon/cert issues).
 - All diagnostic settings are in RG `satoshis-stg-west-rg`; adjust if a prod RG is added later.
+
+Runbook notes: replies + telemetry WS
+- Reply fetch failures: `nostr_reply_fetch_total{result=\"failure\"}` increments with `nostr_reply_fetch_duration_seconds{outcome=\"failure\"}`. Internal errors log `nostr event resolve failed` with a `requestId` (returned in API error responses).
+- Reply validation errors: expect API errors `invalid_reply_limit`, `invalid_reply_cursor`, or `timeout` (HTTP 400/504) with `requestId` in the payload.
+- Telemetry WS backoff: client log entries include `Disconnected from telemetry. Reconnecting in Ns.`, `Telemetry offline: <reason>`, `Telemetry WebSocket Error`, and `Telemetry WS URL not resolved.` in the telemetry sidebar log (levels: info/warn/error).
+- Telemetry WS tuning (defaults): base delay 1s, max delay 30s, jitter 0.2, max attempts 8; offline polling uses 30-60s with jitter 0.2.
