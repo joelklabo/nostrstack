@@ -88,7 +88,9 @@ Notes
 - All diagnostic settings are in RG `satoshis-stg-west-rg`; adjust if a prod RG is added later.
 
 Runbook notes: replies + telemetry WS
-- Reply fetch failures: `nostr_reply_fetch_total{result=\"failure\"}` increments with `nostr_reply_fetch_duration_seconds{outcome=\"failure\"}`. Internal errors log `nostr event resolve failed` with a `requestId` (returned in API error responses).
+- Reply cycle drops: API logs a `warn` entry `detected and dropped reply cycles` with `cycleCount`, `sampleIds`, and `threadId`. This indicates pathological reply chains that were filtered to prevent processing overhead.
+- Reply fetch failures: `nostr_reply_fetch_total{result="failure"}` increments with `nostr_reply_fetch_duration_seconds{outcome="failure"}`. Internal errors log `nostr event resolve failed` with a `requestId` (returned in API error responses).
+
 - Reply validation errors: expect API errors `invalid_reply_limit`, `invalid_reply_cursor`, or `timeout` (HTTP 400/504) with `requestId` in the payload.
 - Telemetry WS backoff: client log entries include `Disconnected from telemetry. Reconnecting in Ns.`, `Telemetry offline: <reason>`, `Telemetry WebSocket Error`, and `Telemetry WS URL not resolved.` in the telemetry sidebar log (levels: info/warn/error).
 - Telemetry WS tuning (defaults): base delay 1s, max delay 30s, jitter 0.2, max attempts 8; offline polling uses 30-60s with jitter 0.2.

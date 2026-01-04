@@ -60,6 +60,13 @@
 - Replies are sorted oldest -> newest (`created_at` ascending), and deduped by event id.
 - Ignore circular/malformed references (self-referential `e` tags or missing ids).
 
+## Reply cycle protection
+To prevent excessive work or deadlocks on pathological chains, the API employs a defensive cycle detection algorithm during reply resolution.
+- **Short cycles:** (e.g., A -> B -> A) and **self-replies** (A -> A) are automatically filtered from the `replies` list.
+- **Multi-hop cycles:** (e.g., A -> B -> C -> A) are detected and filtered.
+- **Hop limit:** Traversal depth is capped at `100` hops by default (configurable via `replyMaxCycleHops`). Chains exceeding this limit are treated as acyclic but traversal stops to protect the server.
+- **Observability:** When a cycle is detected and dropped, a `warn` log is emitted: `detected and dropped reply cycles`. It includes the `cycleCount`, a sample of event IDs, and the `threadId`.
+
 ## Pagination semantics
 - `replyCursor` is an opaque token returned by the API.
 - When `hasMore` is true, call again with `replyCursor=nextCursor` to fetch the next page.
