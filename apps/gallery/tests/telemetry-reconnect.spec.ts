@@ -48,7 +48,8 @@ test.beforeEach(async ({ page }) => {
       wsJitter: 0,
       offlinePollBaseMs: 20,
       offlinePollMaxMs: 20,
-      offlinePollJitter: 0
+      offlinePollJitter: 0,
+      statusDwellMs: 300
     };
   });
 });
@@ -85,7 +86,10 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
   await expect(statusBadge).toContainText('Connected');
   await expect(page.locator('.telemetry-status-time')).not.toContainText('No updates yet');
   await dispatchTelemetryWsState(page, { status: 'reconnecting', attempt: 1, offlineReason: null });
-  await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting');
+  await page.waitForTimeout(150);
+  await expect(statusBadge).toHaveAttribute('data-status', 'connected');
+  await expect(statusBadge).toContainText('Connected');
+  await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting', { timeout: 1500 });
   await expect(statusBadge).toContainText('Reconnecting');
 
   await page.screenshot({ path: resolveDocScreenshotPath('telemetry-reconnect/telemetry-reconnect.png') });
@@ -94,7 +98,9 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
 
   await setBrowserOffline(page);
 
-  await expect(statusBadge).toHaveAttribute('data-status', 'offline');
+  await page.waitForTimeout(150);
+  await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting');
+  await expect(statusBadge).toHaveAttribute('data-status', 'offline', { timeout: 2000 });
   await expect(page.locator('.telemetry-status-note')).toContainText('Offline reason');
   await expect(page.locator('.telemetry-status-note')).toContainText('Browser offline');
   await expect(page.locator('.telemetry-status-stale')).toBeVisible({ timeout: 5000 });

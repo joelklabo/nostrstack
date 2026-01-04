@@ -58,6 +58,7 @@ type TelemetryTiming = {
   offlinePollBaseMs: number;
   offlinePollMaxMs: number;
   offlinePollJitter: number;
+  statusDwellMs: number;
 };
 
 interface LogEntry {
@@ -74,7 +75,8 @@ const DEFAULT_TELEMETRY_TIMING: TelemetryTiming = {
   wsJitter: 0.2,
   offlinePollBaseMs: 30_000,
   offlinePollMaxMs: 60_000,
-  offlinePollJitter: 0.2
+  offlinePollJitter: 0.2,
+  statusDwellMs: 400
 };
 const AUTH_CLOSE_CODES = new Set([4001, 4003, 4401, 4403]);
 
@@ -209,7 +211,8 @@ function resolveTelemetryTiming(): TelemetryTiming {
     wsJitter: readNumber(overrides.wsJitter, DEFAULT_TELEMETRY_TIMING.wsJitter),
     offlinePollBaseMs: readNumber(overrides.offlinePollBaseMs, DEFAULT_TELEMETRY_TIMING.offlinePollBaseMs),
     offlinePollMaxMs: readNumber(overrides.offlinePollMaxMs, DEFAULT_TELEMETRY_TIMING.offlinePollMaxMs),
-    offlinePollJitter: readNumber(overrides.offlinePollJitter, DEFAULT_TELEMETRY_TIMING.offlinePollJitter)
+    offlinePollJitter: readNumber(overrides.offlinePollJitter, DEFAULT_TELEMETRY_TIMING.offlinePollJitter),
+    statusDwellMs: readNumber(overrides.statusDwellMs, DEFAULT_TELEMETRY_TIMING.statusDwellMs)
   };
 }
 
@@ -229,6 +232,7 @@ export function TelemetryBar() {
   const [nodeState, setNodeState] = useState<NodeState | null>(null);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
   const [wsStatus, setWsStatus] = useState<WsStatus>('connecting');
+  const [displayStatus, setDisplayStatus] = useState<WsStatus>('connecting');
   const [wsAttempt, setWsAttempt] = useState(0);
   const [lastUpdateAt, setLastUpdateAt] = useState<number | null>(null);
   const [offlineReason, setOfflineReason] = useState<string | null>(null);
@@ -239,6 +243,7 @@ export function TelemetryBar() {
   const pollFailuresRef = useRef(0);
   const statusErrorRef = useRef<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const statusDwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const telemetryTiming = useMemo(resolveTelemetryTiming, []);
   
   const appendLog = useCallback((entry: LogEntry) => {
@@ -346,6 +351,32 @@ export function TelemetryBar() {
   useEffect(() => {
     statusErrorRef.current = statusError;
   }, [statusError]);
+
+  useEffect(() => {
+    const dwellMs = telemetryTiming.statusDwellMs;
+    if (wsStatus === 'connected' || wsStatus === 'connecting') {
+      if (statusDwellRef.current) {
+        clearTimeout(statusDwellRef.current);
+        statusDwellRef.current = null;
+      }
+      setDisplayStatus(wsStatus);
+      return;
+    }
+    if (displayStatus === wsStatus) return;
+    if (statusDwellRef.current) {
+      clearTimeout(statusDwellRef.current);
+    }
+    statusDwellRef.current = setTimeout(() => {
+      statusDwellRef.current = null;
+      setDisplayStatus(wsStatus);
+    }, dwellMs);
+    return () => {
+      if (statusDwellRef.current) {
+        clearTimeout(statusDwellRef.current);
+        statusDwellRef.current = null;
+      }
+    };
+  }, [displayStatus, telemetryTiming.statusDwellMs, wsStatus]);
 
   useEffect(() => {
     const telemetryWsUrl = resolveTelemetryWs(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001');
@@ -556,17 +587,17 @@ export function TelemetryBar() {
   const nodeInfoWithConfig = nodeInfo ? { ...nodeInfo, configuredNetwork } : null;
   const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
   const reconnectAttempt = Math.min(Math.max(wsAttempt, 0), telemetryTiming.wsMaxAttempts);
-  const wsStatusLabel = wsStatus === 'connected'
+  const wsStatusLabel = displayStatus === 'connected'
     ? 'Connected'
-    : wsStatus === 'connecting'
+    : displayStatus === 'connecting'
       ? 'Connecting'
-      : wsStatus === 'reconnecting'
+      : displayStatus === 'reconnecting'
         ? `Reconnecting (${Math.max(1, reconnectAttempt)}/${telemetryTiming.wsMaxAttempts})`
         : 'Offline';
   const lastUpdateLabel = lastUpdateAt
     ? `Updated ${new Date(lastUpdateAt).toLocaleTimeString([], { hour12: false })}`
     : 'No updates yet';
-  const showStale = wsStatus === 'offline' && pollFailures >= 3;
+  const showStale = displayStatus === 'offline' && pollFailures >= 3;
 
   return (
     <div className="telemetry-sidebar">
@@ -586,7 +617,7 @@ export function TelemetryBar() {
         </Alert>
       )}
       <div className="telemetry-status-row" role="status" aria-live="polite">
-        <span className="telemetry-status" data-status={wsStatus}>
+        <span className="telemetry-status" data-status={displayStatus}>
           <span className="telemetry-status-dot" />
           {wsStatusLabel}
         </span>
@@ -595,7 +626,7 @@ export function TelemetryBar() {
           {showStale && <span className="telemetry-status-stale">Stale</span>}
         </span>
       </div>
-      {wsStatus === 'offline' && offlineReason && (
+      {displayStatus === 'offline' && offlineReason && (
         <div className="telemetry-status-note">
           Offline reason: {offlineReason}
         </div>
