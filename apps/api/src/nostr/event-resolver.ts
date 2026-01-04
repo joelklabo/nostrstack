@@ -205,14 +205,34 @@ function findReplyCycles(events: Event[]) {
     if (!event?.id) continue;
     const refs = extractThreadReferences(event, { selfId: event.id });
     const parent = refs.reply[0];
-    if (parent) replyParentById.set(normalizeEventId(event.id), parent);
+    if (parent) replyParentById.set(normalizeEventId(event.id), normalizeEventId(parent));
   }
 
   const cycleIds = new Set<string>();
-  for (const [id, parent] of replyParentById) {
-    if (replyParentById.get(parent) === id) {
-      cycleIds.add(id);
-      cycleIds.add(parent);
+  const visitState = new Map<string, 'done'>();
+
+  for (const id of replyParentById.keys()) {
+    if (visitState.has(id)) continue;
+    let current: string | undefined = id;
+    const path: string[] = [];
+    const pathIndex = new Map<string, number>();
+
+    while (current && replyParentById.has(current)) {
+      if (visitState.has(current)) break;
+      const existingIndex = pathIndex.get(current);
+      if (existingIndex !== undefined) {
+        for (let idx = existingIndex; idx < path.length; idx += 1) {
+          cycleIds.add(path[idx]);
+        }
+        break;
+      }
+      pathIndex.set(current, path.length);
+      path.push(current);
+      current = replyParentById.get(current);
+    }
+
+    for (const node of path) {
+      visitState.set(node, 'done');
     }
   }
 

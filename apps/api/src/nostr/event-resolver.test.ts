@@ -241,6 +241,79 @@ describe('resolveNostrEvent', () => {
     expect(resolved.replies).toEqual([replyC]);
   });
 
+  it('filters multi-hop reply cycles', async () => {
+    const replyAId = '2'.repeat(64);
+    const replyBId = '3'.repeat(64);
+    const replyCId = '4'.repeat(64);
+    const replyDId = '5'.repeat(64);
+
+    const replyA: Event = {
+      id: replyAId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000011,
+      kind: 1,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyBId, '', 'reply']
+      ],
+      content: 'reply A',
+      sig: 'a'.repeat(128)
+    };
+    const replyB: Event = {
+      id: replyBId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000012,
+      kind: 1,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyCId, '', 'reply']
+      ],
+      content: 'reply B',
+      sig: 'b'.repeat(128)
+    };
+    const replyC: Event = {
+      id: replyCId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000013,
+      kind: 1,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyAId, '', 'reply']
+      ],
+      content: 'reply C',
+      sig: 'c'.repeat(128)
+    };
+    const replyD: Event = {
+      id: replyDId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000014,
+      kind: 1,
+      tags: [['e', baseEvent.id, '', 'root']],
+      content: 'reply D',
+      sig: 'd'.repeat(128)
+    };
+
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    querySyncMock.mockResolvedValueOnce([replyB, replyD, replyC, replyA]);
+
+    const resolved = await resolveNostrEvent(baseEvent.id, {
+      defaultRelays: ['wss://relay.default'],
+      prisma: {} as PrismaClient,
+      replyLimit: 10
+    });
+
+    expect(resolved.replies).toEqual([replyD]);
+  });
+
   it('rejects when no relays are configured', async () => {
     await expect(resolveNostrEvent(baseEvent.id, { defaultRelays: [] })).rejects.toThrow('no_relays');
   });
