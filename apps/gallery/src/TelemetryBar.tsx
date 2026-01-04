@@ -7,7 +7,7 @@ import {
   subscribeTelemetry,
   useBitcoinStatus
 } from '@nostrstack/blog-kit';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Alert } from './ui/Alert';
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
@@ -48,6 +48,18 @@ type NodeState = TelemetrySnapshot & {
   lightning?: BitcoinStatus['lightning'];
 };
 
+type WsStatus = 'connecting' | 'connected' | 'reconnecting' | 'offline';
+
+type TelemetryTiming = {
+  wsBaseDelayMs: number;
+  wsMaxDelayMs: number;
+  wsMaxAttempts: number;
+  wsJitter: number;
+  offlinePollBaseMs: number;
+  offlinePollMaxMs: number;
+  offlinePollJitter: number;
+};
+
 interface LogEntry {
   ts: number;
   message: string;
@@ -55,6 +67,16 @@ interface LogEntry {
 }
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
+const DEFAULT_TELEMETRY_TIMING: TelemetryTiming = {
+  wsBaseDelayMs: 1000,
+  wsMaxDelayMs: 30_000,
+  wsMaxAttempts: 8,
+  wsJitter: 0.2,
+  offlinePollBaseMs: 30_000,
+  offlinePollMaxMs: 60_000,
+  offlinePollJitter: 0.2
+};
+const AUTH_CLOSE_CODES = new Set([4001, 4003, 4401, 4403]);
 
 function formatTelemetryMethod(method?: PaymentMethod): string {
   if (!method) return '';
@@ -156,6 +178,37 @@ function safeClose(socket: WebSocket | null) {
   }
 }
 
+function applyJitter(baseMs: number, jitter: number) {
+  const spread = baseMs * jitter;
+  const offset = (Math.random() * 2 - 1) * spread;
+  return Math.max(0, Math.round(baseMs + offset));
+}
+
+function resolveTelemetryTiming(): TelemetryTiming {
+  if (typeof window === 'undefined') return DEFAULT_TELEMETRY_TIMING;
+  if (!import.meta.env.DEV) return DEFAULT_TELEMETRY_TIMING;
+  const overrides = (window as Window & { __NOSTRSTACK_TELEMETRY_TIMING__?: Partial<TelemetryTiming> })
+    .__NOSTRSTACK_TELEMETRY_TIMING__;
+  if (!overrides) return DEFAULT_TELEMETRY_TIMING;
+  const readNumber = (value: unknown, fallback: number) =>
+    typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return {
+    wsBaseDelayMs: readNumber(overrides.wsBaseDelayMs, DEFAULT_TELEMETRY_TIMING.wsBaseDelayMs),
+    wsMaxDelayMs: readNumber(overrides.wsMaxDelayMs, DEFAULT_TELEMETRY_TIMING.wsMaxDelayMs),
+    wsMaxAttempts: readNumber(overrides.wsMaxAttempts, DEFAULT_TELEMETRY_TIMING.wsMaxAttempts),
+    wsJitter: readNumber(overrides.wsJitter, DEFAULT_TELEMETRY_TIMING.wsJitter),
+    offlinePollBaseMs: readNumber(overrides.offlinePollBaseMs, DEFAULT_TELEMETRY_TIMING.offlinePollBaseMs),
+    offlinePollMaxMs: readNumber(overrides.offlinePollMaxMs, DEFAULT_TELEMETRY_TIMING.offlinePollMaxMs),
+    offlinePollJitter: readNumber(overrides.offlinePollJitter, DEFAULT_TELEMETRY_TIMING.offlinePollJitter)
+  };
+}
+
+function computeBackoffMs(attempt: number, timing: TelemetryTiming) {
+  const base = timing.wsBaseDelayMs * Math.pow(2, attempt);
+  const capped = Math.min(timing.wsMaxDelayMs, base);
+  return applyJitter(capped, timing.wsJitter);
+}
+
 export function TelemetryBar() {
   const [logLimit, setLogLimit] = useState(() => {
     if (typeof window === 'undefined') return 50;
@@ -165,10 +218,18 @@ export function TelemetryBar() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [nodeState, setNodeState] = useState<NodeState | null>(null);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
+  const [wsStatus, setWsStatus] = useState<WsStatus>('connecting');
+  const [wsAttempt, setWsAttempt] = useState(0);
+  const [lastUpdateAt, setLastUpdateAt] = useState<number | null>(null);
+  const [offlineReason, setOfflineReason] = useState<string | null>(null);
+  const [pollFailures, setPollFailures] = useState(0);
   const { status, error: statusError, isLoading: statusLoading, refresh } = useBitcoinStatus();
 
   const lastStatusErrorRef = useRef<string | null>(null);
+  const pollFailuresRef = useRef(0);
+  const statusErrorRef = useRef<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const telemetryTiming = useMemo(resolveTelemetryTiming, []);
   
   const appendLog = useCallback((entry: LogEntry) => {
     setLogs(prev => {
@@ -187,6 +248,23 @@ export function TelemetryBar() {
     }
     setLogs(prev => prev.slice(-logLimit));
   }, [logLimit]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === 'undefined') return;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        status?: WsStatus;
+        offlineReason?: string | null;
+        attempt?: number;
+      }>).detail;
+      if (!detail) return;
+      if (detail.status) setWsStatus(detail.status);
+      if ('offlineReason' in detail) setOfflineReason(detail.offlineReason ?? null);
+      if (typeof detail.attempt === 'number') setWsAttempt(detail.attempt);
+    };
+    window.addEventListener('nostrstack:telemetry-ws-state', handler as EventListener);
+    return () => window.removeEventListener('nostrstack:telemetry-ws-state', handler as EventListener);
+  }, []);
 
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') return;
@@ -237,6 +315,15 @@ export function TelemetryBar() {
   }, [mergeNodeState, status]);
 
   useEffect(() => {
+    pollFailuresRef.current = pollFailures;
+  }, [pollFailures]);
+
+  useEffect(() => {
+    if (!status?.telemetry?.time) return;
+    setLastUpdateAt(status.telemetry.time * 1000);
+  }, [status?.telemetry?.time]);
+
+  useEffect(() => {
     if (!statusError) {
       lastStatusErrorRef.current = null;
       return;
@@ -247,18 +334,73 @@ export function TelemetryBar() {
   }, [appendLog, statusError]);
 
   useEffect(() => {
+    statusErrorRef.current = statusError;
+  }, [statusError]);
+
+  useEffect(() => {
     const telemetryWsUrl = resolveTelemetryWs(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001');
     if (!telemetryWsUrl) {
       appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' });
+      setWsStatus('offline');
+      setOfflineReason('Telemetry WS URL not resolved.');
       return;
     }
 
     let ws: WebSocket | null = null;
     let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    let pollTimeout: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
+    let attempt = 0;
+    let offlineLogged = false;
+
+    const clearRetry = () => {
+      if (retryTimeout) clearTimeout(retryTimeout);
+      retryTimeout = null;
+    };
+
+    const clearPoll = () => {
+      if (pollTimeout) clearTimeout(pollTimeout);
+      pollTimeout = null;
+    };
+
+    const schedulePoll = () => {
+      const base = pollFailuresRef.current >= 3
+        ? telemetryTiming.offlinePollMaxMs
+        : telemetryTiming.offlinePollBaseMs;
+      const delay = applyJitter(base, telemetryTiming.offlinePollJitter);
+      pollTimeout = setTimeout(() => {
+        if (cancelled) return;
+        if (statusErrorRef.current) {
+          setPollFailures(prev => Math.min(prev + 1, 3));
+        } else {
+          setPollFailures(0);
+        }
+        refresh();
+        schedulePoll();
+      }, delay);
+    };
+
+    const markOffline = (reason: string) => {
+      clearRetry();
+      setWsStatus('offline');
+      setOfflineReason(reason);
+      setWsAttempt(Math.min(attempt, telemetryTiming.wsMaxAttempts));
+      if (!offlineLogged) {
+        appendLog({ ts: Date.now(), level: 'warn', message: `Telemetry offline: ${reason}` });
+        offlineLogged = true;
+      }
+      if (!pollTimeout) schedulePoll();
+    };
 
     const connect = () => {
       if (cancelled) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        markOffline('Browser offline');
+        return;
+      }
+
+      setWsStatus(attempt === 0 ? 'connecting' : 'reconnecting');
+      setWsAttempt(attempt);
       ws = new WebSocket(telemetryWsUrl);
       wsRef.current = ws;
 
@@ -267,13 +409,21 @@ export function TelemetryBar() {
           safeClose(ws);
           return;
         }
+        attempt = 0;
+        offlineLogged = false;
+        setWsAttempt(0);
+        setWsStatus('connected');
+        setOfflineReason(null);
+        clearRetry();
+        clearPoll();
+        setPollFailures(0);
         appendLog({ ts: Date.now(), level: 'info', message: 'Connected to Telemetry Service' });
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data) as TelemetryEvent;
-          
+
           if (msg.type === 'block') {
             setNodeState(prev => ({
               ...prev,
@@ -291,21 +441,18 @@ export function TelemetryBar() {
               verificationProgress: msg.verificationProgress ?? prev?.verificationProgress,
               initialBlockDownload: msg.initialBlockDownload ?? prev?.initialBlockDownload
             }));
-            appendLog(
-              {
-                ts: msg.time * 1000,
-                level: 'info',
-                message: `New Block: ${msg.height} (${msg.txs} txs)`
-              }
-            );
+            setLastUpdateAt(msg.time * 1000);
+            appendLog({
+              ts: msg.time * 1000,
+              level: 'info',
+              message: `New Block: ${msg.height} (${msg.txs} txs)`
+            });
           } else if (msg.type === 'error') {
-            appendLog(
-              {
-                ts: msg.time * 1000,
-                level: 'error',
-                message: msg.message
-              }
-            );
+            appendLog({
+              ts: msg.time * 1000,
+              level: 'error',
+              message: msg.message
+            });
           }
         } catch (e) {
           console.error('Failed to parse telemetry message', e);
@@ -316,23 +463,60 @@ export function TelemetryBar() {
         appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' });
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         if (cancelled) return;
-        appendLog({ ts: Date.now(), level: 'warn', message: 'Disconnected from Telemetry. Reconnecting...' });
         wsRef.current = null;
-        retryTimeout = setTimeout(connect, 3000);
+        if (AUTH_CLOSE_CODES.has(event.code)) {
+          markOffline('Authentication required');
+          return;
+        }
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          markOffline('Browser offline');
+          return;
+        }
+        if (attempt >= telemetryTiming.wsMaxAttempts) {
+          markOffline('Max retries reached');
+          return;
+        }
+        const delay = computeBackoffMs(attempt, telemetryTiming);
+        const nextAttempt = attempt + 1;
+        attempt = nextAttempt;
+        setWsAttempt(nextAttempt);
+        setWsStatus('reconnecting');
+        appendLog({ ts: Date.now(), level: 'warn', message: `Disconnected from telemetry. Reconnecting in ${Math.round(delay / 1000)}s.` });
+        retryTimeout = setTimeout(connect, delay);
       };
     };
+
+    const handleOnline = () => {
+      if (cancelled) return;
+      offlineLogged = false;
+      clearPoll();
+      attempt = 0;
+      connect();
+    };
+
+    const handleOffline = () => {
+      if (cancelled) return;
+      safeClose(wsRef.current);
+      markOffline('Browser offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     connect();
 
     return () => {
       cancelled = true;
-      if (retryTimeout) clearTimeout(retryTimeout);
+      clearRetry();
+      clearPoll();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       safeClose(wsRef.current);
       wsRef.current = null;
     };
-  }, [appendLog]);
+  }, [appendLog, refresh, telemetryTiming]);
 
   useEffect(() => {
     return subscribeTelemetry((event) => {
@@ -361,6 +545,18 @@ export function TelemetryBar() {
   const configuredNetwork = (devNetworkOverride ?? nodeInfo?.configuredNetwork ?? nodeInfo?.network ?? defaultNetwork).trim();
   const nodeInfoWithConfig = nodeInfo ? { ...nodeInfo, configuredNetwork } : null;
   const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
+  const reconnectAttempt = Math.min(Math.max(wsAttempt, 0), telemetryTiming.wsMaxAttempts);
+  const wsStatusLabel = wsStatus === 'connected'
+    ? 'Connected'
+    : wsStatus === 'connecting'
+      ? 'Connecting'
+      : wsStatus === 'reconnecting'
+        ? `Reconnecting (${Math.max(1, reconnectAttempt)}/${telemetryTiming.wsMaxAttempts})`
+        : 'Offline';
+  const lastUpdateLabel = lastUpdateAt
+    ? `Updated ${new Date(lastUpdateAt).toLocaleTimeString([], { hour12: false })}`
+    : 'No updates yet';
+  const showStale = wsStatus === 'offline' && pollFailures >= 3;
 
   return (
     <div className="telemetry-sidebar">
@@ -378,6 +574,21 @@ export function TelemetryBar() {
         <Alert tone="danger" title="Mainnet active">
           Real sats and payments are live.
         </Alert>
+      )}
+      <div className="telemetry-status-row">
+        <span className="telemetry-status" data-status={wsStatus}>
+          <span className="telemetry-status-dot" />
+          {wsStatusLabel}
+        </span>
+        <span className="telemetry-status-time">
+          {lastUpdateLabel}
+          {showStale && <span className="telemetry-status-stale">Stale</span>}
+        </span>
+      </div>
+      {wsStatus === 'offline' && offlineReason && (
+        <div className="telemetry-status-note">
+          {offlineReason}
+        </div>
       )}
       {nodeInfoWithConfig && (
         <div style={{ marginBottom: '1.5rem' }}>

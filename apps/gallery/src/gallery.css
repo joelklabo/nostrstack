@@ -935,6 +935,70 @@ body {
   border-bottom: 1px solid var(--color-border-default);
 }
 
+.telemetry-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.telemetry-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-canvas-default);
+  color: var(--color-fg-muted);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.telemetry-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.telemetry-status[data-status='connected'] {
+  color: var(--color-success-fg);
+}
+
+.telemetry-status[data-status='reconnecting'],
+.telemetry-status[data-status='connecting'] {
+  color: var(--color-attention-fg);
+}
+
+.telemetry-status[data-status='offline'] {
+  color: var(--color-danger-fg);
+}
+
+.telemetry-status-time {
+  font-size: 0.72rem;
+  color: var(--color-fg-muted);
+}
+
+.telemetry-status-stale {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-attention-fg);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.telemetry-status-note {
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--color-fg-muted);
+}
+
 .telemetry-log {
   flex: 1;
   overflow-y: auto;
@@ -2149,4 +2213,3 @@ h3 {
   border-top: 1px solid var(--color-border-muted);
   padding-top: 1rem;
 }
-
