@@ -181,6 +181,66 @@ describe('resolveNostrEvent', () => {
     expect(resolved.replies).toEqual([goodReply]);
   });
 
+  it('filters short reply cycles', async () => {
+    const replyAId = 'e'.repeat(64);
+    const replyBId = 'f'.repeat(64);
+    const replyCId = '1'.repeat(64);
+
+    const replyA: Event = {
+      id: replyAId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000001,
+      kind: 1,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyBId, '', 'reply']
+      ],
+      content: 'reply A',
+      sig: 'd'.repeat(128)
+    };
+    const replyB: Event = {
+      id: replyBId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000002,
+      kind: 1,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyAId, '', 'reply']
+      ],
+      content: 'reply B',
+      sig: 'e'.repeat(128)
+    };
+    const replyC: Event = {
+      id: replyCId,
+      pubkey: baseEvent.pubkey,
+      created_at: 1710000003,
+      kind: 1,
+      tags: [['e', baseEvent.id, '', 'root']],
+      content: 'reply C',
+      sig: 'f'.repeat(128)
+    };
+
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    querySyncMock.mockResolvedValueOnce([replyA, replyB, replyC]);
+
+    const resolved = await resolveNostrEvent(baseEvent.id, {
+      defaultRelays: ['wss://relay.default'],
+      prisma: {} as PrismaClient,
+      replyLimit: 10
+    });
+
+    expect(resolved.replies).toEqual([replyC]);
+  });
+
   it('rejects when no relays are configured', async () => {
     await expect(resolveNostrEvent(baseEvent.id, { defaultRelays: [] })).rejects.toThrow('no_relays');
   });

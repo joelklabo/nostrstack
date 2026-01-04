@@ -198,6 +198,27 @@ function compareEventsAsc(a: Event, b: Event) {
   return a.id.localeCompare(b.id);
 }
 
+function findReplyCycles(events: Event[]) {
+  const replyParentById = new Map<string, string>();
+
+  for (const event of events) {
+    if (!event?.id) continue;
+    const refs = extractThreadReferences(event, { selfId: event.id });
+    const parent = refs.reply[0];
+    if (parent) replyParentById.set(normalizeEventId(event.id), parent);
+  }
+
+  const cycleIds = new Set<string>();
+  for (const [id, parent] of replyParentById) {
+    if (replyParentById.get(parent) === id) {
+      cycleIds.add(id);
+      cycleIds.add(parent);
+    }
+  }
+
+  return cycleIds;
+}
+
 function isBeforeCursor(event: Event, cursor: ReplyCursor) {
   if (event.created_at < cursor.createdAt) return true;
   if (event.created_at > cursor.createdAt) return false;
@@ -245,6 +266,10 @@ async function fetchReplies({
     }
 
     let filtered = Array.from(deduped.values());
+    const cycleIds = findReplyCycles(filtered);
+    if (cycleIds.size > 0) {
+      filtered = filtered.filter((event) => !cycleIds.has(normalizeEventId(event.id)));
+    }
     if (replyCursor) {
       filtered = filtered.filter((event) => isBeforeCursor(event, replyCursor));
     }
