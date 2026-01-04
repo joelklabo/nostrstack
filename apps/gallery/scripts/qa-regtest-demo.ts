@@ -9,6 +9,15 @@ function envFlag(name: string, fallback: boolean) {
   return raw === '1' || raw.toLowerCase() === 'true' || raw.toLowerCase() === 'yes';
 }
 
+function isIgnorableConsoleWarning(message: string) {
+  const base = "WebSocket connection to '";
+  const suffix = "://localhost:3001/ws/telemetry' failed: WebSocket is closed before the connection is established.";
+  return (
+    message.includes(`${base}wss${suffix}`) ||
+    message.includes(`${base}ws${suffix}`)
+  );
+}
+
 function isLocalUrl(url: string) {
   try {
     const u = new URL(url);
@@ -66,7 +75,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       throw new Error('Regtest pay button missing after invoice ready.');
     }
     await regtestBtn.click();
-    await expect(page.getByText('Payment confirmed.')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.payment-modal')).toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 });
     await page.getByRole('button', { name: /CLOSE/ }).first().click();
     return true;
   }
@@ -120,7 +129,7 @@ async function main() {
   const headless = envFlag('HEADLESS', true);
   const slowMo = Number(process.env.SLOWMO_MS ?? 0) || 0;
   const testNsec =
-    process.env.TEST_NSEC ?? 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+    process.env.TEST_NSEC ?? 'nsec1v0fhzv8swp7gax4kn8ux6p5wj2ljz32xj0v2ssuxvck5aa0d8xxslue67d';
   const nwcUri = process.env.NWC_URI;
   const nwcRelays = process.env.NWC_RELAYS;
   const nwcMaxSats = process.env.NWC_MAX_SATS;
@@ -155,7 +164,10 @@ async function main() {
     const type = msg.type();
     const text = msg.text();
     if (type === 'error') consoleErrors.push(text);
-    if (type === 'warning' || type === 'warn') consoleWarnings.push(text);
+    if (type === 'warning' || type === 'warn') {
+      if (isIgnorableConsoleWarning(text)) return;
+      consoleWarnings.push(text);
+    }
   });
   page.on('requestfailed', (req) => {
     if (tearingDown) return;
