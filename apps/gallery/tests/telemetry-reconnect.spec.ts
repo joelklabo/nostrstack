@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { resolveDocScreenshotPath } from './helpers';
+import { dispatchTelemetryWsState, resolveDocScreenshotPath, setBrowserOffline } from './helpers';
 
 const TEST_NSEC = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
 const now = Math.floor(Date.now() / 1000);
@@ -59,6 +59,8 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
     if (msg.type() !== 'error') return;
     const text = msg.text();
     if (/status of 500/i.test(text)) return;
+    // Offline simulation closes wallet WS; ignore the expected disconnect error.
+    if (/ws\/wallet/i.test(text) && /ERR_INTERNET_DISCONNECTED/i.test(text)) return;
     consoleErrors.push(text);
   });
   page.on('pageerror', (err) => consoleErrors.push(err.message));
@@ -78,11 +80,7 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
   await expect(statusBadge).toHaveAttribute('data-status', 'connected', { timeout: 10000 });
   await expect(statusBadge).toContainText('Connected');
   await expect(page.locator('.telemetry-status-time')).not.toContainText('No updates yet');
-  await page.evaluate(() => {
-    window.dispatchEvent(new CustomEvent('nostrstack:telemetry-ws-state', {
-      detail: { status: 'reconnecting', attempt: 1, offlineReason: null }
-    }));
-  });
+  await dispatchTelemetryWsState(page, { status: 'reconnecting', attempt: 1, offlineReason: null });
   await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting');
   await expect(statusBadge).toContainText('Reconnecting');
 
@@ -90,9 +88,7 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
 
   failStatus = true;
 
-  await page.evaluate(() => {
-    window.dispatchEvent(new Event('offline'));
-  });
+  await setBrowserOffline(page);
 
   await expect(statusBadge).toHaveAttribute('data-status', 'offline');
   await expect(page.locator('.telemetry-status-note')).toContainText('Browser offline');

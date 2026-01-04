@@ -74,7 +74,9 @@ test.describe('/nostr/:id replies', () => {
 
     const loadMore = page.getByRole('button', { name: /Load more replies/i });
     await expect(loadMore).toBeVisible();
-    await loadMore.click();
+    await loadMore.focus();
+    await expect(loadMore).toBeFocused();
+    await page.keyboard.press('Enter');
     await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(4);
 
     const contents = await page.locator('.nostr-event-replies-list .post-content').allTextContents();

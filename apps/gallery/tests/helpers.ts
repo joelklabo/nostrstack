@@ -65,6 +65,34 @@ export async function toggleTheme(page: Page, theme: 'light' | 'dark') {
   throw new Error(`Theme control not found for ${theme}`);
 }
 
+export type TelemetryWsDetail = {
+  status?: 'connecting' | 'connected' | 'reconnecting' | 'offline';
+  offlineReason?: string | null;
+  attempt?: number;
+};
+
+// Dev-only hook for telemetry WS state changes (used in Playwright tests).
+export async function dispatchTelemetryWsState(page: Page, detail: TelemetryWsDetail) {
+  await page.evaluate((payload) => {
+    window.dispatchEvent(new CustomEvent('nostrstack:telemetry-ws-state', { detail: payload }));
+  }, detail);
+}
+
+// Simulate browser offline/online for telemetry reconnect tests.
+export async function setBrowserOffline(page: Page) {
+  await page.context().setOffline(true);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('offline'));
+  });
+}
+
+export async function setBrowserOnline(page: Page) {
+  await page.context().setOffline(false);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('online'));
+  });
+}
+
 export type ApiNostrTarget = {
   input: string;
   type: 'event' | 'profile' | 'address';
