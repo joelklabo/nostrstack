@@ -39,6 +39,12 @@ withJitter = nextDelay * (1 - 0.2 + rand() * 0.4)
 - Show last update timestamp from either WS or HTTP.
 - If browser is offline (`navigator.onLine === false`), show Offline immediately.
 
+## Status dwell timing
+- The UI waits `statusDwellMs` (default: 400ms) before showing **reconnecting**/**offline** to avoid flicker during brief disconnects.
+- Set `statusDwellMs` to `0` (or any value <= 0) to disable the dwell and show status changes immediately.
+- In dev builds only, override via:
+  - `window.__NOSTRSTACK_TELEMETRY_TIMING__ = { statusDwellMs: 0 }`
+
 ## Logging + metrics (client-side)
 - Log state transitions at `info`, errors at `warn`.
 - Avoid repeated identical logs; debounce identical error messages.
