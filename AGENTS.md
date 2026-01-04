@@ -13,6 +13,13 @@
 8. Push
 9. GO BACK TO 1!
 
+## Safety & Maintenance
+
+- **Beads Cleanup:** `bd admin cleanup` (and the deprecated `bd cleanup`) defaults to deleting **ALL** closed issues.
+  - **NEVER** run `bd admin cleanup` or `bd cleanup` without flags.
+  - **ALWAYS** use `--older-than 30` (or similar duration) to preserve recent history/context.
+  - Example: `bd admin cleanup --older-than 30`
+
 ## IMPORTANT
 
 - NEVER ask which issue to prioritize, use your best judgement and pick one.
