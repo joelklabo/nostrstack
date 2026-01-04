@@ -18,6 +18,26 @@ function isLocalUrl(url: string) {
   }
 }
 
+async function ensureGalleryAvailable(baseUrl: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    console.log(`ℹ️ preflight: checking ${baseUrl}`);
+    await fetch(baseUrl, { method: 'GET', signal: controller.signal });
+  } catch (err) {
+    const localHint = `Gallery server not reachable at ${baseUrl}. Start dev servers with "pnpm dev:logs" and try again, or set GALLERY_URL to a running instance.`;
+    const remoteHint = `Gallery server not reachable at ${baseUrl}. Check the URL or set GALLERY_URL to a running instance.`;
+    console.error('❌ QA preflight failed');
+    console.error(isLocalUrl(baseUrl) ? localHint : remoteHint);
+    if (err instanceof Error) {
+      console.error(`Details: ${err.message}`);
+    }
+    process.exit(1);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function loginWithNsec(page: Page, nsec: string) {
   await expect(page.getByText('Sign in to NostrStack')).toBeVisible({ timeout: 30_000 });
   await page.getByText('Enter nsec manually').click();
@@ -125,6 +145,8 @@ async function main() {
   const nwcRelays = process.env.NWC_RELAYS;
   const nwcMaxSats = process.env.NWC_MAX_SATS;
   const enableBolt12 = envFlag('ENABLE_BOLT12', false) || envFlag('VITE_ENABLE_BOLT12', false);
+
+  await ensureGalleryAvailable(baseUrl);
 
   const failures: Failure[] = [];
   const consoleErrors: string[] = [];
