@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { type Event, type Filter, SimplePool, validateEvent, verifyEvent } from 'nostr-tools';
 
 import {
@@ -68,6 +69,7 @@ export type ResolveOptions = {
   replyTimeoutMs?: number;
   replyMaxCycleHops?: number;
   prisma?: PrismaClient;
+  logger?: FastifyBaseLogger;
 };
 
 function withTimeout<T>(promise: Promise<T>, ms: number) {
@@ -257,7 +259,8 @@ async function fetchReplies({
   replyCursor,
   timeoutMs,
   targetEventId,
-  replyMaxCycleHops
+  replyMaxCycleHops,
+  logger
 }: {
   pool: SimplePool;
   relays: string[];
@@ -267,6 +270,7 @@ async function fetchReplies({
   timeoutMs: number;
   targetEventId: string;
   replyMaxCycleHops?: number;
+  logger?: FastifyBaseLogger;
 }): Promise<{ replies: Event[]; replyPage: ReplyPage }> {
   const filter: Filter = {
     kinds: [1],
@@ -294,6 +298,13 @@ async function fetchReplies({
     let filtered = Array.from(deduped.values());
     const cycleIds = findReplyCycles(filtered, replyMaxCycleHops);
     if (cycleIds.size > 0) {
+      if (logger) {
+        const sampleIds = Array.from(cycleIds).slice(0, 5);
+        logger.warn(
+          { cycleCount: cycleIds.size, sampleIds, threadId },
+          'detected and dropped reply cycles'
+        );
+      }
       filtered = filtered.filter((event) => !cycleIds.has(normalizeEventId(event.id)));
     }
     if (replyCursor) {
@@ -503,7 +514,8 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
         replyCursor: parsedCursor,
         timeoutMs: replyTimeoutMs,
         targetEventId: resolved.event.id,
-        replyMaxCycleHops: options.replyMaxCycleHops
+        replyMaxCycleHops: options.replyMaxCycleHops,
+        logger: options.logger
       });
 
       resolved = {

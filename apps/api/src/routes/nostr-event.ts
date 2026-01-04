@@ -131,7 +131,8 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         replyMaxLimit,
         replyCursor: replyCursor ?? undefined,
         replyTimeoutMs,
-        prisma: app.prisma
+        prisma: app.prisma,
+        logger: request.log
       });
 
       const targetPayload: Record<string, unknown> = {

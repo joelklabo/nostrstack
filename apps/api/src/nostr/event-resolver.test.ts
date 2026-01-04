@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { type Event,nip19 } from 'nostr-tools';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -424,6 +425,72 @@ describe('resolveNostrEvent', () => {
     expect(resolved.replies).toHaveLength(2);
     expect(resolved.replies).toContainEqual(replyA);
     expect(resolved.replies).toContainEqual(replyB);
+  });
+
+  it('logs when reply cycles are detected', async () => {
+    const replyAId = '31'.repeat(32);
+    const replyBId = '32'.repeat(32);
+
+    const replyA: Event = {
+      ...baseEvent,
+      id: replyAId,
+      created_at: 1710000001,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyBId, '', 'reply']
+      ],
+      content: 'reply A'
+    };
+    const replyB: Event = {
+      ...baseEvent,
+      id: replyBId,
+      created_at: 1710000002,
+      tags: [
+        ['e', baseEvent.id, '', 'root'],
+        ['e', replyAId, '', 'reply']
+      ],
+      content: 'reply B'
+    };
+
+    getCachedEventMock
+      .mockResolvedValueOnce({
+        event: baseEvent,
+        relays: ['wss://relay.cached'],
+        fetchedAt: now,
+        expiresAt: new Date(now.getTime() + 10_000),
+        source: 'event'
+      })
+      .mockResolvedValueOnce(null);
+
+    querySyncMock.mockResolvedValueOnce([replyA, replyB]);
+
+    const warnMock = vi.fn();
+    const loggerMock = {
+      warn: warnMock,
+      info: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      fatal: vi.fn(),
+      trace: vi.fn(),
+      silent: vi.fn(),
+      child: vi.fn(() => loggerMock),
+      level: 'warn'
+    } as unknown as FastifyBaseLogger;
+
+    await resolveNostrEvent(baseEvent.id, {
+      defaultRelays: ['wss://relay.default'],
+      prisma: {} as PrismaClient,
+      replyLimit: 10,
+      logger: loggerMock
+    });
+
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cycleCount: 2,
+        threadId: baseEvent.id
+      }),
+      'detected and dropped reply cycles'
+    );
   });
 
   it('rejects when no relays are configured', async () => {
