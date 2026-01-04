@@ -585,7 +585,7 @@ export function TelemetryBar() {
           Real sats and payments are live.
         </Alert>
       )}
-      <div className="telemetry-status-row">
+      <div className="telemetry-status-row" role="status" aria-live="polite">
         <span className="telemetry-status" data-status={wsStatus}>
           <span className="telemetry-status-dot" />
           {wsStatusLabel}
@@ -597,7 +597,7 @@ export function TelemetryBar() {
       </div>
       {wsStatus === 'offline' && offlineReason && (
         <div className="telemetry-status-note">
-          {offlineReason}
+          Offline reason: {offlineReason}
         </div>
       )}
       {nodeInfoWithConfig && (

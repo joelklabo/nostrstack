@@ -76,6 +76,10 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
 
   await page.goto('/');
 
+  const statusRow = page.locator('.telemetry-status-row');
+  await expect(statusRow).toHaveAttribute('role', 'status');
+  await expect(statusRow).toHaveAttribute('aria-live', 'polite');
+
   const statusBadge = page.locator('.telemetry-status');
   await expect(statusBadge).toHaveAttribute('data-status', 'connected', { timeout: 10000 });
   await expect(statusBadge).toContainText('Connected');
@@ -91,6 +95,7 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
   await setBrowserOffline(page);
 
   await expect(statusBadge).toHaveAttribute('data-status', 'offline');
+  await expect(page.locator('.telemetry-status-note')).toContainText('Offline reason');
   await expect(page.locator('.telemetry-status-note')).toContainText('Browser offline');
   await expect(page.locator('.telemetry-status-stale')).toBeVisible({ timeout: 5000 });
 
