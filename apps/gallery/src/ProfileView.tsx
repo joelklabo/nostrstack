@@ -42,6 +42,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [lightningQr, setLightningQr] = useState<string | null>(null);
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
@@ -141,6 +142,10 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     }
   }, [pubkey, relayList, relaysLoading, pool]);
 
+  const handleRetry = useCallback(() => {
+    setRetryCount(c => c + 1);
+  }, []);
+
   const loadMore = useCallback(async () => {
     if (isLoadingMore || events.length === 0 || relaysLoading) return;
     setIsLoadingMore(true);
@@ -176,7 +181,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       cleanupProfile?.();
       cleanupEvents?.();
     };
-  }, [fetchProfile, fetchEvents, relaysLoading]);
+  }, [fetchProfile, fetchEvents, relaysLoading, retryCount]);
 
   const npub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
   const lightningAddress = profile?.lud16 ?? profile?.lud06;
@@ -231,7 +236,7 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   return (
     <div className="profile-view">
       {error && (
-        <Alert tone="danger" title="Profile Error">
+        <Alert tone="danger" title="Profile Error" onRetry={handleRetry} retryLabel="Retry">
           {error}
         </Alert>
       )}

@@ -181,6 +181,7 @@ export function FeedView() {
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
   
   const [relayStatus, setRelayStatus] = useState<Record<string, RelayStatus>>({});
+  const [retryCount, setRetryCount] = useState(0);
 
   // Reset status when relay list changes
   useEffect(() => {
@@ -189,7 +190,7 @@ export function FeedView() {
       initial[relay] = { status: 'connecting' };
     });
     setRelayStatus(initial);
-  }, [relayList]);
+  }, [relayList, retryCount]);
 
   const relaySummary = useMemo(() => {
     const entries = Object.values(relayStatus);
@@ -279,7 +280,7 @@ export function FeedView() {
           }
         });
     };
-  }, [incrementEvents, relayList, relaysLoading]);
+  }, [incrementEvents, relayList, relaysLoading, retryCount]);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore || posts.length === 0) return;
@@ -354,7 +355,11 @@ export function FeedView() {
       </div>
 
       {relaySummary.errors > 0 && (
-        <Alert tone="warning">
+        <Alert 
+          tone="warning"
+          onRetry={() => setRetryCount(c => c + 1)}
+          retryLabel="Reconnect"
+        >
           Some relays are temporarily unavailable. Streaming continues from {relaySummary.online} active relay
           {relaySummary.online === 1 ? '' : 's'}.
         </Alert>
