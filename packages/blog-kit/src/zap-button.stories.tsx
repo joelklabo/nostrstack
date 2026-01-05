@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import type { Event } from 'nostr-tools';
-import { ZapButton } from './zap-button';
+
 import { AuthProvider } from './auth';
 import { NostrstackConfigProvider } from './context';
+import { ZapButton } from './zap-button';
 
 // Mock event to zap
 const mockEvent: Event = {
@@ -29,14 +30,14 @@ const mockAuthContextLoggedIn = {
     id: 'signed-event-id',
     sig: 'signed-event-sig',
     pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
-  }))
+  })
 };
 
 const mockAuthContextLoggedOut = {
   pubkey: null,
   signEvent: async () => {
     throw new Error('Not logged in');
-  })
+  }
 };
 
 const mockConfig = {

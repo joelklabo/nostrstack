@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import type { Event } from 'nostr-tools';
-import { PostEditor } from './post-editor';
+
 import { AuthProvider } from './auth';
 import { NostrstackConfigProvider } from './context';
+import { PostEditor } from './post-editor';
 
 const mockEvent: Event = {
   id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -26,7 +27,7 @@ const mockAuthContextLoggedIn = {
     id: 'signed-event-id-' + Date.now(),
     sig: 'signed-event-sig',
     pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
-  }))
+  })
 };
 
 const mockAuthContextLoggedOut = {
@@ -35,7 +36,7 @@ const mockAuthContextLoggedOut = {
   error: null,
   signEvent: async () => {
     throw new Error('Not authenticated');
-  })
+  }
 };
 
 const mockAuthContextError = {
@@ -44,7 +45,7 @@ const mockAuthContextError = {
   error: 'Extension not found or permission denied.',
   signEvent: async () => {
     throw new Error('Not authenticated');
-  })
+  }
 };
 
 const mockConfig = {

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SendSats } from './send-sats';
+
 import { AuthProvider } from './auth';
 import { NostrstackConfigProvider } from './context';
+import { SendSats } from './send-sats';
 
 const mockPubkey = 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
 const mockLightningAddress = 'satoshi@nostrstack.com';
@@ -13,14 +14,14 @@ const mockAuthContextLoggedIn = {
     id: 'signed-event-id',
     sig: 'signed-event-sig',
     pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
-  }))
+  })
 };
 
 const mockAuthContextLoggedOut = {
   pubkey: null,
   signEvent: async () => {
     throw new Error('Not logged in');
-  })
+  }
 };
 
 const mockConfig = {

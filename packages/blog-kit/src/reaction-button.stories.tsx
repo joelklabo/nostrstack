@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import type { Event } from 'nostr-tools';
-import { ReactionButton } from './reaction-button';
+
 import { AuthProvider } from './auth';
 import { NostrstackConfigProvider } from './context';
+import { ReactionButton } from './reaction-button';
 
 const mockEvent: Event = {
   id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -21,14 +22,14 @@ const mockAuthContextLoggedIn = {
     id: 'reaction-event-id-' + Date.now(),
     sig: 'signed-reaction-sig',
     pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234'
-  }))
+  })
 };
 
 const mockAuthContextLoggedOut = {
   pubkey: null,
   signEvent: async () => {
     throw new Error('Not logged in');
-  })
+  }
 };
 
 const mockConfig = {

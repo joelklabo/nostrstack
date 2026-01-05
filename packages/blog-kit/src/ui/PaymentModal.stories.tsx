@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 
-import { PaymentModal, type PaymentStatusItem } from './PaymentModal';
+import { PaymentModal } from './PaymentModal';
 
 const meta = {
   title: 'Payment/PaymentModal',
