@@ -2,6 +2,8 @@ import { useAuth } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
 import { useCallback, useEffect, useState } from 'react';
 
+import { saveEvent } from '../cache/eventCache';
+import { useCachedEvent } from './useCachedEvent';
 import { useRelays } from './useRelays';
 import { useSimplePool } from './useSimplePool';
 
@@ -9,6 +11,7 @@ export function useContactList() {
   const { pubkey, signEvent } = useAuth();
   const { relays } = useRelays();
   const pool = useSimplePool();
+  const { get: getCached } = useCachedEvent();
   const [contacts, setContacts] = useState<string[]>([]);
   const [contactEvent, setContactEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +20,7 @@ export function useContactList() {
     if (!pubkey) return;
     setLoading(true);
     try {
-      const event = await pool.get(relays, { kinds: [3], authors: [pubkey] });
+      const event = await getCached({ kinds: [3], authors: [pubkey] });
       if (event) {
         setContactEvent(event);
         const pTags = event.tags.filter(t => t[0] === 'p').map(t => t[1]);
@@ -56,6 +59,7 @@ export function useContactList() {
 
     const signed = await signEvent(template);
     await Promise.any(pool.publish(relays, signed));
+    saveEvent(signed).catch(console.warn);
     setContactEvent(signed);
     setContacts(newTags.filter(t => t[0] === 'p').map(t => t[1]));
   }, [pubkey, contacts, contactEvent, signEvent, relays, pool]);
@@ -74,6 +78,7 @@ export function useContactList() {
 
     const signed = await signEvent(template);
     await Promise.any(pool.publish(relays, signed));
+    saveEvent(signed).catch(console.warn);
     setContactEvent(signed);
     setContacts(newTags.filter(t => t[0] === 'p').map(t => t[1]));
   }, [pubkey, contactEvent, signEvent, relays, pool]);

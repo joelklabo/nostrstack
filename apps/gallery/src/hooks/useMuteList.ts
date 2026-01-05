@@ -2,6 +2,8 @@ import { useAuth } from '@nostrstack/blog-kit';
 import type { Event } from 'nostr-tools';
 import { useCallback, useEffect, useState } from 'react';
 
+import { saveEvent } from '../cache/eventCache';
+import { useCachedEvent } from './useCachedEvent';
 import { useRelays } from './useRelays';
 import { useSimplePool } from './useSimplePool';
 
@@ -9,6 +11,7 @@ export function useMuteList() {
   const { pubkey, signEvent } = useAuth();
   const { relays } = useRelays();
   const pool = useSimplePool();
+  const { get: getCached } = useCachedEvent();
   const [muted, setMuted] = useState<string[]>([]);
   const [muteEvent, setMuteEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +24,7 @@ export function useMuteList() {
     }
     setLoading(true);
     try {
-      const event = await pool.get(relays, { kinds: [10000], authors: [pubkey] });
+      const event = await getCached({ kinds: [10000], authors: [pubkey] });
       if (event) {
         setMuteEvent(event);
         const pTags = event.tags.filter(t => t[0] === 'p').map(t => t[1]);
@@ -59,6 +62,7 @@ export function useMuteList() {
 
     const signed = await signEvent(template);
     await Promise.any(pool.publish(relays, signed));
+    saveEvent(signed).catch(console.warn);
     setMuteEvent(signed);
     setMuted(newTags.filter(t => t[0] === 'p').map(t => t[1]));
   }, [pubkey, muted, muteEvent, signEvent, relays, pool]);
@@ -77,6 +81,7 @@ export function useMuteList() {
 
     const signed = await signEvent(template);
     await Promise.any(pool.publish(relays, signed));
+    saveEvent(signed).catch(console.warn);
     setMuteEvent(signed);
     setMuted(newTags.filter(t => t[0] === 'p').map(t => t[1]));
   }, [pubkey, muteEvent, signEvent, relays, pool]);
