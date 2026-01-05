@@ -79,6 +79,7 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
           <button 
             onClick={handleClose}
             className="action-btn"
+            aria-label="Close reply modal"
             style={{ padding: '0.25rem 0.5rem', fontSize: '1.2rem', lineHeight: 1 }}
           >
             ×

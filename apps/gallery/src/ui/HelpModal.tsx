@@ -36,7 +36,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
       <div className="shortcuts-modal" onClick={e => e.stopPropagation()}>
         <div className="shortcuts-header">
           <div className="shortcuts-title">Keyboard Shortcuts</div>
-          <button className="shortcuts-close" onClick={onClose}>&times;</button>
+          <button className="shortcuts-close" onClick={onClose} aria-label="Close keyboard shortcuts">&times;</button>
         </div>
         <div className="shortcuts-body">
           <div className="shortcuts-list">

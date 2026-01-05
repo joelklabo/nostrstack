@@ -324,7 +324,11 @@ export function RelaysView() {
             <article key={relay.url} className={`relay-card relay-${relay.status}`}>
               <div className="relay-card-header">
                 <div className="relay-title">
-                  <span className={`relay-status-dot ${relay.status}`}></span>
+                  <span 
+                    className={`relay-status-dot ${relay.status}`}
+                    role="status"
+                    aria-label={`Relay status: ${relay.status}`}
+                  ></span>
                   <div>
                     <div className="relay-host">{relay.host}</div>
                     <div className="relay-url">{relay.url}</div>
