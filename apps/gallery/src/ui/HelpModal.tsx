@@ -1,5 +1,7 @@
 import '../styles/shortcuts.css';
 
+import { useEffect } from 'react';
+
 interface HelpModalProps {
   open: boolean;
   onClose: () => void;
@@ -7,6 +9,19 @@ interface HelpModalProps {
 
 export function HelpModal({ open, onClose }: HelpModalProps) {
   if (!open) return null;
+
+  // Handle Escape key
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   const shortcuts = [
     { keys: ['j', 'k'], desc: 'Navigate posts' },

@@ -23,6 +23,19 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
     }
   }, [isOpen]);
 
+  // Handle Escape key (explicit handling as backup to native dialog behavior)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleClose = () => {
     onClose();
   };
