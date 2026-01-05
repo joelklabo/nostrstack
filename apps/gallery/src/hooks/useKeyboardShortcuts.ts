@@ -1,100 +1,87 @@
 import { useEffect, useState } from 'react';
 
-import { navigateTo } from '../utils/navigation';
+export type View = 'feed' | 'search' | 'profile' | 'notifications' | 'messages' | 'relays' | 'offers' | 'personal-site-kit' | 'settings';
 
-export type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages';
-
-interface UseKeyboardShortcutsProps {
-  currentView: View | string;
+interface KeyboardShortcutsOptions {
+  currentView: View;
   setCurrentView: (view: View) => void;
 }
 
-export function useKeyboardShortcuts({ currentView, setCurrentView }: UseKeyboardShortcutsProps) {
+export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
   const [helpOpen, setHelpOpen] = useState(false);
+  const { currentView, setCurrentView } = options;
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if input/textarea is focused, except for Escape
-      const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) {
-        if (e.key === 'Escape') {
-          target.blur();
-          setHelpOpen(false);
-        }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Skip if typing in input/textarea
+      const target = event.target as HTMLElement;
+      const isInputField =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+
+      if (isInputField && event.key !== 'Escape') {
+        // Allow escape to work even in input fields
         return;
       }
 
-      switch (e.key) {
-        case '?':
-          if (e.shiftKey) { // ? is Shift+/
-             setHelpOpen(prev => !prev);
+      switch (event.key) {
+        case 'j':
+          // Navigate to next post (TODO: implement post navigation)
+          event.preventDefault();
+          break;
+
+        case 'k':
+          // Navigate to previous post (TODO: implement post navigation)
+          if (event.metaKey || event.ctrlKey) {
+            // Cmd+K or Ctrl+K for search
+            event.preventDefault();
+            setCurrentView('search');
+          } else {
+            event.preventDefault();
           }
           break;
+
+        case '/':
+          // Focus search
+          event.preventDefault();
+          setCurrentView('search');
+          break;
+
+        case '?':
+          // Show keyboard shortcuts help
+          event.preventDefault();
+          setHelpOpen(true);
+          break;
+
         case 'Escape':
+          // Close modals
+          event.preventDefault();
           setHelpOpen(false);
           break;
-        case '/':
-          e.preventDefault();
-          if (currentView !== 'search') {
-            navigateTo('/search');
-            setCurrentView('search');
-            // Allow time for render
-            setTimeout(() => {
-                const searchInput = document.querySelector('input[type="search"]') || document.querySelector('input[placeholder*="Search"]');
-                if (searchInput instanceof HTMLElement) searchInput.focus();
-            }, 100);
-          } else {
-            const searchInput = document.querySelector('input[type="search"]') || document.querySelector('input[placeholder*="Search"]');
-            if (searchInput instanceof HTMLElement) searchInput.focus();
+
+        case 'n':
+          // Go to feed to focus new post composer
+          event.preventDefault();
+          setCurrentView('feed');
+          break;
+
+        case 'g':
+          // g+h: home (feed)
+          if (event.shiftKey) {
+            event.preventDefault();
+            setCurrentView('feed');
           }
           break;
-        case 'n':
-           e.preventDefault();
-           if (currentView !== 'feed') {
-             navigateTo('/');
-             setCurrentView('feed');
-             setTimeout(() => {
-               const editor = document.querySelector('textarea.editor-input');
-               if (editor instanceof HTMLElement) editor.focus();
-             }, 100);
-           } else {
-             const editor = document.querySelector('textarea.editor-input');
-             if (editor instanceof HTMLElement) editor.focus();
-           }
-           break;
-        case 'j':
-          handleNavigatePosts('next');
-          break;
-        case 'k':
-          handleNavigatePosts('prev');
+
+        default:
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentView, setCurrentView]);
+  }, [setCurrentView, currentView]);
 
   return { helpOpen, setHelpOpen };
-}
-
-function handleNavigatePosts(direction: 'next' | 'prev') {
-  const posts = Array.from(document.querySelectorAll('article.post-card'));
-  if (posts.length === 0) return;
-
-  const currentFocus = document.activeElement;
-  let index = posts.findIndex(p => p === currentFocus || p.contains(currentFocus));
-
-  if (index === -1) {
-    // If nothing focused, j -> 0, k -> nothing (or last?)
-    if (direction === 'next') index = 0;
-    else return; // or index = posts.length - 1;
-  } else {
-    if (direction === 'next') index = Math.min(index + 1, posts.length - 1);
-    else index = Math.max(index - 1, 0);
-  }
-
-  const target = posts[index] as HTMLElement;
-  target.focus();
-  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }

@@ -1,0 +1,31 @@
+{
+  "name": "create-nostrstack-site",
+  "version": "0.1.0",
+  "description": "Scaffold a new NostrStack site with one command",
+  "type": "module",
+  "bin": {
+    "create-nostrstack-site": "./bin/create.js"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "nostr",
+    "lightning",
+    "scaffold",
+    "cli",
+    "create-app"
+  ],
+  "author": "NostrStack",
+  "license": "MIT",
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
+}

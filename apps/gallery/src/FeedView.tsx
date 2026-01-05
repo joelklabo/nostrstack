@@ -9,6 +9,7 @@ import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { markRelayFailure } from './nostr/api';
 import { relayMonitor } from './nostr/relayHealth';
+import { filterSpam, getSpamStats } from './nostr/spamFilter';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
@@ -181,9 +182,10 @@ export function FeedView() {
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
-  
+
   const [relayStatus, setRelayStatus] = useState<Record<string, RelayStatus>>({});
   const [retryCount, setRetryCount] = useState(0);
+  const [spamFilterEnabled, setSpamFilterEnabled] = useState(false);
 
   // Reset status when relay list changes
   useEffect(() => {
@@ -348,25 +350,39 @@ export function FeedView() {
 
       <FindFriendCard onClick={() => navigateTo('/search')} />
       
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        marginBottom: '1rem', 
-        paddingBottom: '0.5rem', 
-        borderBottom: '1px solid var(--color-border-default)' 
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '1rem',
+        paddingBottom: '0.5rem',
+        borderBottom: '1px solid var(--color-border-default)'
       }}>
         <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>Live Feed</h2>
-        <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>
-          <span style={{ 
-            display: 'inline-block', 
-            width: '8px', 
-            height: '8px', 
-            borderRadius: '50%', 
-            background: relaySummary.errors > 0 ? 'var(--color-attention-fg)' : 'var(--color-success-fg)', 
-            marginRight: '6px' 
-          }} />
-          {relaySummary.online}/{relaySummary.total} relays
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            className="action-btn"
+            onClick={() => setSpamFilterEnabled(!spamFilterEnabled)}
+            style={{
+              fontSize: '0.75rem',
+              padding: '4px 8px',
+              borderColor: spamFilterEnabled ? 'var(--color-success-fg)' : 'var(--color-border-default)',
+              color: spamFilterEnabled ? 'var(--color-success-fg)' : 'var(--color-fg-muted)'
+            }}
+          >
+            {spamFilterEnabled ? '🛡️ Spam Filter: ON' : 'Spam Filter: OFF'}
+          </button>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>
+            <span style={{
+              display: 'inline-block',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: relaySummary.errors > 0 ? 'var(--color-attention-fg)' : 'var(--color-success-fg)',
+              marginRight: '6px'
+            }} />
+            {relaySummary.online}/{relaySummary.total} relays
+          </div>
         </div>
       </div>
 
@@ -387,9 +403,13 @@ export function FeedView() {
         </div>
       )}
 
-      {posts.filter(p => !isMuted(p.pubkey)).map(post => (
-        <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
-      ))}
+      {(() => {
+        const filtered = posts.filter(p => !isMuted(p.pubkey));
+        const final = spamFilterEnabled ? filterSpam(filtered) : filtered;
+        return final.map(post => (
+          <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
+        ));
+      })()}
 
       {posts.length > 0 && (
         <div style={{ padding: '2rem', textAlign: 'center' }}>

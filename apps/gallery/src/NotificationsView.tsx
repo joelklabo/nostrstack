@@ -7,6 +7,7 @@ import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
+import { NotificationSkeleton } from './ui/Skeleton';
 
 export function NotificationsView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
@@ -97,9 +98,13 @@ export function NotificationsView() {
 
   if (relaysLoading) {
     return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-        <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
-        <div style={{ fontSize: '0.9rem' }}>CONNECTING...</div>
+      <div className="feed-stream">
+        <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)' }}>
+          {' >'} INCOMING_TRANSMISSIONS...
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          {[1, 2, 3, 4, 5].map(i => <NotificationSkeleton key={i} />)}
+        </div>
       </div>
     );
   }

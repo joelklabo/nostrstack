@@ -30,3 +30,6 @@ report/
 .gemini/
 gha-creds-*.json
 .vercel
+
+*storybook.log
+storybook-static

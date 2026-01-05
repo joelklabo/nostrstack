@@ -2549,3 +2549,27 @@ button, a, input, select, textarea {
   }
 }
 
+
+/* Skeleton Loading States */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-canvas-subtle) 25%, var(--color-canvas-inset) 50%, var(--color-canvas-subtle) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--color-canvas-subtle);
+  }
+}
+
+.skeleton-text { height: 1em; }
+.skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
+.skeleton-button { width: 80px; height: 32px; }
