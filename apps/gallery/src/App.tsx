@@ -103,7 +103,7 @@ function AppShell() {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '100vh', 
+        height: '100dvh', 
         color: 'var(--color-fg-muted)',
         fontFamily: 'var(--font-body)'
       }}>
