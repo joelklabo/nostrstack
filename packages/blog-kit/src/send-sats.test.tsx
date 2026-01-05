@@ -71,10 +71,10 @@ describe('SendSats', () => {
 
   it('updates amount from preset buttons', () => {
     renderSendSats();
-    const input = screen.getByLabelText('AMOUNT_SATS') as HTMLInputElement;
+    const input = screen.getByLabelText('Amount in satoshis') as HTMLInputElement;
     expect(input.value).toBe('500');
 
-    fireEvent.click(screen.getByRole('button', { name: '21' }));
+    fireEvent.click(screen.getByRole('button', { name: /Set amount to 21 sats/i }));
     expect(input.value).toBe('21');
   });
 

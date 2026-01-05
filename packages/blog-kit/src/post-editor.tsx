@@ -109,9 +109,9 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
   }
 
   return (
-    <div className="post-editor-container">
+    <div className="post-editor-container" role="form" aria-label={parentEvent ? 'Reply to note' : 'Create new note'}>
       <div className="editor-header">
-        <span className="editor-prompt">[{mode.toUpperCase()}] {'>'}</span> {parentEvent ? 'Reply to note:' : 'Post a new note:'}
+        <span className="editor-prompt" aria-hidden="true">[{mode.toUpperCase()}] {'>'}</span> {parentEvent ? 'Reply to note:' : 'Post a new note:'}
       </div>
       <textarea
         className="terminal-input editor-input"
@@ -123,29 +123,55 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
         disabled={isPublishing}
         rows={4}
         autoFocus={autoFocus}
+        aria-label={parentEvent ? 'Reply content' : 'Note content'}
+        aria-describedby="editor-counter"
+        aria-invalid={isOverLimit}
       />
       {hasMedia && (
-        <div className="editor-media-hint">
-          <span>📷</span> Media URL detected. It will be embedded by clients.
+        <div className="editor-media-hint" role="status" aria-live="polite">
+          <span aria-hidden="true">📷</span> Media URL detected. It will be embedded by clients.
         </div>
       )}
       <div className="editor-footer">
-        <div className={`editor-counter ${isOverLimit ? 'is-over-limit' : isNearLimit ? 'is-near-limit' : ''}`}>
+        <div 
+          id="editor-counter"
+          className={`editor-counter ${isOverLimit ? 'is-over-limit' : isNearLimit ? 'is-near-limit' : ''}`}
+          role="status"
+          aria-live="polite"
+          aria-label={`Character count: ${currentLength} of ${maxLength}${isOverLimit ? ', exceeds limit' : ''}`}
+        >
           {currentLength} / {maxLength}
         </div>
-        <div className="editor-actions">
+        <div className="editor-actions" role="group" aria-label="Editor actions">
           {onCancel && (
-            <button className="action-btn" onClick={onCancel} disabled={isPublishing} style={{marginRight: '0.5rem'}}>
+            <button 
+              className="action-btn" 
+              onClick={onCancel} 
+              disabled={isPublishing} 
+              style={{marginRight: '0.5rem'}}
+              aria-label="Cancel editing"
+            >
               CANCEL
             </button>
           )}
-          <button className="auth-btn" onClick={handlePublish} disabled={isPublishing || isOverLimit}>
+          <button 
+            className="auth-btn" 
+            onClick={handlePublish} 
+            disabled={isPublishing || isOverLimit}
+            aria-label={isPublishing ? 'Publishing note' : 'Publish note'}
+            aria-busy={isPublishing}
+            aria-disabled={isOverLimit}
+          >
             {isPublishing ? 'PUBLISHING...' : 'PUBLISH_EVENT'}
           </button>
         </div>
       </div>
       {publishStatus && (
-        <div className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : publishStatus.startsWith('SUCCESS') ? 'success-msg' : ''}`}>
+        <div 
+          className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : publishStatus.startsWith('SUCCESS') ? 'success-msg' : ''}`}
+          role="status"
+          aria-live="assertive"
+        >
           {publishStatus}
         </div>
       )}

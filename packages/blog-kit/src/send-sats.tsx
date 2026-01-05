@@ -528,7 +528,7 @@ export function SendSats({
   const commentAllowed = limits?.commentAllowed;
 
   return (
-    <div className="send-sats-card">
+    <div className="send-sats-card" role="region" aria-label="Send sats payment form">
       <div className="send-sats-header">SEND_SATS</div>
       <div className="send-sats-amount">
         <label htmlFor="send-sats-amount-input">AMOUNT_SATS</label>
@@ -540,15 +540,18 @@ export function SendSats({
           max={maxSats}
           value={amountSats}
           onChange={(event) => setAmountSats(Number(event.target.value))}
+          aria-label="Amount in satoshis"
+          aria-describedby="send-sats-limits"
         />
       </div>
-      <div className="send-sats-presets">
+      <div className="send-sats-presets" role="group" aria-label="Preset amounts">
         {presetAmountsSats.map((preset) => (
           <button
             key={preset}
             type="button"
             className="action-btn"
             onClick={() => setAmountSats(preset)}
+            aria-label={`Set amount to ${preset} sats`}
           >
             {preset}
           </button>
@@ -564,20 +567,27 @@ export function SendSats({
           maxLength={typeof commentAllowed === 'number' ? commentAllowed : undefined}
           onChange={(event) => setNote(event.target.value)}
           disabled={commentAllowed === 0}
+          aria-label="Optional note to include with payment"
+          aria-describedby={commentAllowed === 0 ? 'send-sats-note-disabled' : undefined}
         />
+        {commentAllowed === 0 && (
+          <span id="send-sats-note-disabled" className="sr-only">Note field is disabled for this recipient</span>
+        )}
       </div>
       {(minSats || maxSats) && (
-        <div className="send-sats-status">
+        <div id="send-sats-limits" className="send-sats-status" role="status">
           Limits: {minSats ?? '—'} - {maxSats ?? '—'} sats
         </div>
       )}
-      {hasError && <div className="system-msg error-msg">{errorMessage}</div>}
+      {hasError && <div className="system-msg error-msg" role="alert">{errorMessage}</div>}
       <button
         ref={triggerRef}
         className="action-btn"
         type="button"
         onClick={handleSend}
         disabled={sendState !== 'idle' || !normalizedAddress}
+        aria-label={sendState === 'idle' ? `Send ${amountSats} sats` : sendState === 'paid' ? 'Payment sent' : 'Sending payment'}
+        aria-busy={sendState !== 'idle' && sendState !== 'paid' && sendState !== 'error'}
       >
         SEND {amountSats}
       </button>

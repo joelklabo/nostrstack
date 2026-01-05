@@ -174,22 +174,33 @@ export function PaymentModal({
 
           {showInvoice && invoice && (
             <div className="payment-grid">
-              <div className="payment-qr">
+              <div className="payment-qr" role="img" aria-label="Payment invoice QR code">
                 <QRCodeSVG value={invoice.value} size={240} bgColor="#ffffff" fgColor="#0f172a" level="L" />
               </div>
               <div className="payment-panel">
                 <div className="payment-panel-header">
                   <div className="payment-panel-title">INVOICE</div>
-                  {invoice.regtestAvailable && <div className="payment-panel-badge">REGTEST</div>}
+                  {invoice.regtestAvailable && <div className="payment-panel-badge" role="status">REGTEST</div>}
                 </div>
-                <div className="payment-invoice-box">
+                <div className="payment-invoice-box" role="region" aria-label="Lightning invoice">
                   <code>{invoice.value}</code>
                 </div>
-                <div className="payment-actions">
-                  <button className="payment-action" type="button" onClick={invoice.onCopy} disabled={!invoice.value}>
+                <div className="payment-actions" role="group" aria-label="Payment actions">
+                  <button 
+                    className="payment-action" 
+                    type="button" 
+                    onClick={invoice.onCopy} 
+                    disabled={!invoice.value}
+                    aria-label={invoice.copyStatus === 'copied' ? 'Invoice copied to clipboard' : invoice.copyStatus === 'error' ? 'Failed to copy invoice' : 'Copy invoice to clipboard'}
+                  >
                     {copyLabel}
                   </button>
-                  <button className="payment-action payment-action-primary" type="button" onClick={invoice.onOpenWallet}>
+                  <button 
+                    className="payment-action payment-action-primary" 
+                    type="button" 
+                    onClick={invoice.onOpenWallet}
+                    aria-label="Open Lightning wallet to pay invoice"
+                  >
                     OPEN_WALLET
                   </button>
                   {invoice.regtestAvailable && invoice.onRegtestPay && (
@@ -198,11 +209,13 @@ export function PaymentModal({
                       type="button"
                       onClick={invoice.onRegtestPay}
                       disabled={invoice.regtestPaying}
+                      aria-label={invoice.regtestPaying ? 'Paying invoice with regtest funds' : 'Pay invoice with regtest funds'}
+                      aria-busy={invoice.regtestPaying}
                     >
                       {invoice.regtestPaying ? 'PAYING_REGTEST...' : 'PAY_REGTEST'}
                     </button>
                   )}
-                  <button className="payment-action" type="button" onClick={onClose}>
+                  <button className="payment-action" type="button" onClick={onClose} aria-label="Close payment dialog">
                     CLOSE
                   </button>
                 </div>
@@ -211,14 +224,19 @@ export function PaymentModal({
           )}
 
           {showSuccess && (
-            <div className="payment-success">
-              <div className="payment-success-icon">✓</div>
+            <div className="payment-success" role="status" aria-live="polite">
+              <div className="payment-success-icon" aria-hidden="true">✓</div>
               <div>{successMessage ?? 'Payment sent.'}</div>
               {successAction && (
                 <div className="payment-success-action">
                   <div className="payment-success-action-title">{successAction.title}</div>
                   {successAction.url ? (
-                    <a href={successAction.url} target="_blank" rel="noopener noreferrer">
+                    <a 
+                      href={successAction.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label={`Open link: ${successAction.label}`}
+                    >
                       {successAction.label}
                     </a>
                   ) : (
@@ -226,15 +244,25 @@ export function PaymentModal({
                   )}
                 </div>
               )}
-              <button className="payment-action payment-action-primary" type="button" onClick={onClose}>
+              <button 
+                className="payment-action payment-action-primary" 
+                type="button" 
+                onClick={onClose}
+                aria-label="Close payment dialog"
+              >
                 CLOSE
               </button>
             </div>
           )}
 
           {showErrorActions && (
-            <div className="payment-actions">
-              <button className="payment-action" type="button" onClick={onClose}>
+            <div className="payment-actions" role="group" aria-label="Error actions">
+              <button 
+                className="payment-action" 
+                type="button" 
+                onClick={onClose}
+                aria-label="Close payment dialog"
+              >
                 CLOSE
               </button>
             </div>

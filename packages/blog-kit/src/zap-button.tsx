@@ -602,6 +602,9 @@ export function ZapButton({
         style={style}
         onClick={handleZap} 
         disabled={zapState !== 'idle'}
+        aria-label={zapState === 'idle' ? `Send ${amountSats} sats as zap` : zapState === 'paid' ? 'Zap sent successfully' : 'Sending zap'}
+        aria-busy={zapState !== 'idle' && zapState !== 'paid' && zapState !== 'error'}
+        aria-disabled={zapState !== 'idle'}
       >
         ⚡ ZAP {amountSats}
       </button>

@@ -83,7 +83,9 @@ export function ReactionButton({
       }}
       onClick={handleReaction} 
       disabled={isPublishing || hasReacted}
-      aria-label="Like"
+      aria-label={hasReacted ? 'Liked' : 'Like this note'}
+      aria-pressed={hasReacted}
+      aria-busy={isPublishing}
       title={hasReacted ? 'Liked' : 'Like'}
     >
       {hasReacted ? '♥' : '♡'}
