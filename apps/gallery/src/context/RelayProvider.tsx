@@ -1,7 +1,7 @@
 import { parseRelays, useAuth } from '@nostrstack/blog-kit';
 import { type Filter, SimplePool } from 'nostr-tools';
 import { normalizeURL } from 'nostr-tools/utils';
-import { createContext, type ReactNode, useCallback, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { relayMonitor } from '../nostr/relayHealth';
 
@@ -36,7 +36,7 @@ export function RelayProvider({ children }: { children: ReactNode }) {
 
   // Parse environment default relays once
   const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
-  const bootstrapRelays = envRelays.length ? envRelays : DEFAULT_RELAYS;
+  const bootstrapRelays = useMemo(() => envRelays.length ? envRelays : DEFAULT_RELAYS, [envRelays]);
 
   // Listen for relay health changes
   useEffect(() => {
