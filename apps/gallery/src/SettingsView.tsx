@@ -4,6 +4,8 @@ import { NwcClient } from '@nostrstack/blog-kit';
 import { type NostrstackBrandPreset } from '@nostrstack/embed';
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 
+import { usePushNotifications } from './hooks/usePushNotifications';
+
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
 const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
@@ -47,6 +49,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   const [nwcLastPayment, setNwcLastPayment] = useState<NwcLastPayment | null>(null);
   const [devNetworkOverride, setDevNetworkOverride] = useState('');
   const nwcUriTrimmed = nwcUri.trim();
+
+  const { permission, requestPermission, sendLocalNotification } = usePushNotifications();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -293,6 +297,33 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               {preset.toUpperCase()}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="paywall-container">
+        <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>NOTIFICATIONS</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ fontSize: '0.9rem' }}>Status: <strong>{permission.toUpperCase()}</strong></div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            {permission === 'default' && (
+              <button className="action-btn" onClick={requestPermission}>
+                ENABLE_NOTIFICATIONS
+              </button>
+            )}
+            {permission === 'granted' && (
+              <button 
+                className="action-btn" 
+                onClick={() => sendLocalNotification('Test Notification', { body: 'This is a test notification from NostrStack.' })}
+              >
+                TEST_NOTIFICATION
+              </button>
+            )}
+            {permission === 'denied' && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-danger-fg)' }}>
+                Notifications are blocked. Please enable them in your browser settings.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

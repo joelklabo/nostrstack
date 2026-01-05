@@ -9,6 +9,19 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ToastProvider } from './ui/toast';
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(
+      (registration) => {
+        console.log('SW registered: ', registration);
+      },
+      (registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      }
+    );
+  });
+}
+
 ensureNostrstackEmbedStyles();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

@@ -1,5 +1,5 @@
 import { useAuth } from '@nostrstack/blog-kit';
-import { type Event, type Filter } from 'nostr-tools';
+import { type Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRelays } from './useRelays';

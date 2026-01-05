@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { type DMMessage, useDMs } from './hooks/useDMs';
+import { useDMs } from './hooks/useDMs';
 import { ProfileLink } from './ui/ProfileLink';
 import { Skeleton } from './ui/Skeleton';
 
