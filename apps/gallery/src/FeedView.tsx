@@ -5,6 +5,7 @@ import { SimplePool } from 'nostr-tools';
 import type { AbstractRelay } from 'nostr-tools/abstract-relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { markRelayFailure } from './nostr/api';
 import { Alert } from './ui/Alert';
@@ -149,6 +150,7 @@ export function PostItem({
 
 export function FeedView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
+  const { isMuted } = useMuteList();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const seenIds = useRef(new Set<string>());
@@ -343,7 +345,7 @@ export function FeedView() {
         </div>
       )}
 
-      {posts.map(post => (
+      {posts.filter(p => !isMuted(p.pubkey)).map(post => (
         <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
       ))}
 

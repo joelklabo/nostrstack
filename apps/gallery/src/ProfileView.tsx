@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { paymentConfig } from './config/payments';
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
 import { useContactList } from './hooks/useContactList';
+import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { Alert } from './ui/Alert';
@@ -44,9 +45,11 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
   const { isFollowing, follow, unfollow, loading: contactsLoading } = useContactList();
+  const { isMuted, mute, unmute, loading: muteLoading } = useMuteList();
   const { pubkey: myPubkey } = useAuth();
   const isMe = myPubkey === pubkey;
   const following = isFollowing(pubkey);
+  const muted = isMuted(pubkey);
 
   const handleFollowToggle = async () => {
     try {
@@ -57,6 +60,18 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       }
     } catch (err) {
       console.error('Failed to toggle follow', err);
+    }
+  };
+
+  const handleMuteToggle = async () => {
+    try {
+      if (muted) {
+        await unmute(pubkey);
+      } else {
+        await mute(pubkey);
+      }
+    } catch (err) {
+      console.error('Failed to toggle mute', err);
     }
   };
 
@@ -271,18 +286,31 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
                 </p>
               )}
               {!isMe && myPubkey && (
-                <button
-                  className="action-btn"
-                  style={{ 
-                    marginTop: '1rem', 
-                    borderColor: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)', 
-                    color: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)' 
-                  }}
-                  onClick={handleFollowToggle}
-                  disabled={contactsLoading}
-                >
-                  {contactsLoading ? 'UPDATING...' : following ? '[-] UNFOLLOW' : '[+] FOLLOW'}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', marginTop: '1rem' }}>
+                  <button
+                    className="action-btn"
+                    style={{ 
+                      borderColor: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)', 
+                      color: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)' 
+                    }}
+                    onClick={handleFollowToggle}
+                    disabled={contactsLoading}
+                  >
+                    {contactsLoading ? 'UPDATING...' : following ? '[-] UNFOLLOW' : '[+] FOLLOW'}
+                  </button>
+                  <button
+                    className="action-btn"
+                    style={{ 
+                      borderColor: muted ? 'var(--color-border-default)' : 'var(--color-border-default)', 
+                      color: muted ? 'var(--color-fg-muted)' : 'var(--color-danger-fg)',
+                      fontSize: '0.75rem' 
+                    }}
+                    onClick={handleMuteToggle}
+                    disabled={muteLoading}
+                  >
+                    {muteLoading ? '...' : muted ? 'UNMUTE' : 'MUTE USER'}
+                  </button>
+                </div>
               )}
             </div>
           </div>

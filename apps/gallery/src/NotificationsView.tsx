@@ -3,6 +3,7 @@ import { type Event, type Filter } from 'nostr-tools';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { PostItem } from './FeedView';
+import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
@@ -11,6 +12,7 @@ export function NotificationsView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const pool = useSimplePool();
   const { pubkey } = useAuth();
+  const { isMuted } = useMuteList();
   const [events, setEvents] = useState<Event[]>([]);
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
@@ -45,10 +47,11 @@ export function NotificationsView() {
   }, [pubkey, relayList, relaysLoading, incrementEvents, pool]);
 
   const displayGroups = useMemo(() => {
+    const filteredEvents = events.filter(e => !isMuted(e.pubkey));
     const groups: (NotificationGroup | Event)[] = [];
     const interactionGroups = new Map<string, NotificationGroup>();
 
-    events.forEach(event => {
+    filteredEvents.forEach(event => {
       // Grouping logic
       let type: 'reaction' | 'zap' | 'mention' | null = null;
       if (event.kind === 7) type = 'reaction';
@@ -90,7 +93,7 @@ export function NotificationsView() {
       const tsB = 'created_at' in b ? b.created_at : b.timestamp;
       return tsB - tsA;
     });
-  }, [events]);
+  }, [events, isMuted]);
 
   if (relaysLoading) {
     return (
