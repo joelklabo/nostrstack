@@ -32,18 +32,39 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   const [userRelays, setUserRelays] = useState<RelayConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [_monitorVersion, setMonitorVersion] = useState(0);
+  
+  // Track stable active relays to prevent cascading re-renders
+  const [stableActiveRelays, setStableActiveRelays] = useState<string[]>([]);
+  const lastActiveRelaysRef = useRef<string>('');
 
   // Parse environment default relays once
   const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
-  const bootstrapRelays = useMemo(() => envRelays.length ? envRelays : DEFAULT_RELAYS, [envRelays]);
+  const bootstrapRelays = useMemo(
+    () => envRelays.length ? envRelays : DEFAULT_RELAYS,
+    [envRelays]
+  );
 
-  // Listen for relay health changes
+  // Listen for relay health changes - only update if activeRelays actually changes
   useEffect(() => {
-    return relayMonitor.subscribe(() => {
-      setMonitorVersion((v) => v + 1);
-    });
-  }, []);
+    const updateActiveRelays = () => {
+      const newActive = [...new Set([
+        ...bootstrapRelays,
+        ...userRelays.map((r) => r.url)
+      ])].filter(url => relayMonitor.isHealthy(url)).sort();
+      
+      const newActiveKey = newActive.join(',');
+      if (newActiveKey !== lastActiveRelaysRef.current) {
+        lastActiveRelaysRef.current = newActiveKey;
+        setStableActiveRelays(newActive);
+      }
+    };
+    
+    // Initial calculation
+    updateActiveRelays();
+    
+    // Subscribe to monitor changes
+    return relayMonitor.subscribe(updateActiveRelays);
+  }, [bootstrapRelays, userRelays]);
 
   // Fetch Kind 10002 on mount or auth change
   useEffect(() => {
@@ -136,21 +157,16 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     }
   }, [pubkey, signEvent, userRelays, bootstrapRelays]);
 
-  // Merge user relays with bootstrap/defaults for the active list
-  const activeRelays = [...new Set([
-    ...bootstrapRelays,
-    ...userRelays.map((r) => r.url)
-  ])].filter(url => relayMonitor.isHealthy(url));
-
-  const value: RelayContextValue = {
-    relays: activeRelays,
+  // Memoize the context value to prevent unnecessary re-renders of consumers
+  const value: RelayContextValue = useMemo(() => ({
+    relays: stableActiveRelays,
     userRelays,
     addRelay,
     removeRelay,
     saveRelays,
     isLoading,
     error
-  };
+  }), [stableActiveRelays, userRelays, addRelay, removeRelay, saveRelays, isLoading, error]);
 
   return (
     <RelayContext.Provider value={value}>
