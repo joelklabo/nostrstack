@@ -84,6 +84,12 @@ body {
   transition: all 0.1s ease-in-out;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .nav-item {
+    transition: none;
+  }
+}
+
 .nav-item:hover {
   background: var(--color-canvas-inset);
 }
@@ -185,6 +191,12 @@ body {
   transition: background 0.1s ease-in-out, border-color 0.1s ease-in-out, color 0.1s ease-in-out;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .wallet-action-btn {
+    transition: none;
+  }
+}
+
 .wallet-action-btn:hover {
   background: var(--color-canvas-inset);
   border-color: var(--color-border-muted);
@@ -212,6 +224,12 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   outline: none;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card {
+    transition: none;
+  }
 }
 
 .post-card:focus-visible {
@@ -278,6 +296,12 @@ body {
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-btn {
+    transition: none;
+  }
 }
 
 .action-btn:hover {
@@ -363,6 +387,12 @@ body {
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .zap-close {
+    transition: none;
+  }
+}
+
 .zap-close:hover {
   border-color: var(--color-border-muted);
   color: var(--color-fg-default);
@@ -430,6 +460,11 @@ body {
   .nostrstack-spinner {
     animation-duration: 10s; /* Very slow or static */
     opacity: 0.5;
+  }
+  
+  .zap-spinner,
+  .nostrstack-spinner {
+    animation: none;
   }
 }
 
@@ -568,6 +603,12 @@ body {
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .zap-action {
+    transition: none;
+  }
+}
+
 .zap-action:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -702,7 +743,7 @@ body {
   }
 
   .zap-spinner {
-    animation-duration: 0.01ms;
+    animation: none;
   }
 }
 
@@ -1156,6 +1197,12 @@ body {
   margin-bottom: 1rem;
   text-align: center;
   transition: all 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-btn {
+    transition: none;
+  }
 }
 
 .auth-btn:hover {
@@ -2234,6 +2281,12 @@ h3 {
   100% { transform: scale(1); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .reaction-btn.active {
+    animation: none;
+  }
+}
+
 
 /* Reply Modal */
 .reply-modal::backdrop {
@@ -2243,6 +2296,13 @@ h3 {
 
 .reply-modal[open] {
   animation: zap-pop-in 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reply-modal::backdrop,
+  .reply-modal[open] {
+    animation: none;
+  }
 }
 
 
@@ -2462,6 +2522,12 @@ button, a, input, select, textarea {
   transition: background 0.1s;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dm-list-item {
+    transition: none;
+  }
+}
+
 .dm-list-item:hover {
   background: var(--color-canvas-inset);
 }
@@ -2573,3 +2639,212 @@ button, a, input, select, textarea {
 .skeleton-text { height: 1em; }
 .skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
 .skeleton-button { width: 80px; height: 32px; }
+
+/* ============================================
+   Accessibility: Focus Visible Styles
+   ============================================ */
+
+/* Global focus ring style */
+:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+}
+
+/* Remove default outline for mouse clicks, keep for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Buttons - action and auth */
+.action-btn:focus-visible,
+.auth-btn:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-accent-muted);
+}
+
+/* Navigation items */
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: -2px;
+  background: var(--color-canvas-inset);
+}
+
+/* Form inputs */
+.terminal-input:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 0;
+  border-color: var(--color-accent-fg);
+}
+
+/* Links */
+a:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Post cards - make focusable for keyboard navigation */
+.post-card:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-accent-muted);
+}
+
+/* Modal close buttons */
+.shortcuts-close:focus-visible,
+.modal-close:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--color-accent-fg);
+  color: white;
+  padding: 0.5rem 1rem;
+  z-index: 10000;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ============================================
+   Mobile Responsive Sidebar
+   ============================================ */
+
+/* Hamburger menu button - hidden on desktop */
+.hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001;
+  width: 44px;
+  height: 44px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hamburger-btn:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+}
+
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+}
+
+.hamburger-icon span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--color-fg-default);
+  border-radius: 1px;
+  transition: all 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hamburger-icon span {
+    transition: none;
+  }
+}
+
+.hamburger-btn.is-open .hamburger-icon span:nth-child(1) {
+  transform: rotate(45deg) translate(4px, 4px);
+}
+
+.hamburger-btn.is-open .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-btn.is-open .hamburger-icon span:nth-child(3) {
+  transform: rotate(-45deg) translate(4px, -4px);
+}
+
+/* Mobile overlay when sidebar is open */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.sidebar-overlay.is-visible {
+  display: block;
+}
+
+/* Mobile breakpoint styles */
+@media (max-width: 768px) {
+  .social-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar-nav.is-open {
+    transform: translateX(0);
+  }
+
+  /* Hide telemetry sidebar on mobile */
+  .telemetry-sidebar {
+    display: none;
+  }
+
+  /* Adjust feed container for mobile */
+  .feed-container {
+    padding-top: 4rem; /* Space for hamburger button */
+  }
+}
+
+/* Tablet breakpoint - hide telemetry but keep sidebar */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .social-layout {
+    grid-template-columns: 240px 1fr;
+  }
+
+  .telemetry-sidebar {
+    display: none;
+  }
+}
+
+/* prefers-reduced-motion for sidebar transitions */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-nav {
+    transition: none;
+  }
+}

@@ -74,3 +74,11 @@
 .onboarding-btn-next:hover {
   background: var(--color-accent-fg);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-overlay,
+  .onboarding-spotlight,
+  .onboarding-card {
+    transition: none;
+  }
+}

@@ -46,7 +46,7 @@ export function Image({ src, alt, className, style, onLoad, onError, ...props }:
           height: '100%', 
           objectFit: 'cover',
           opacity: loaded ? 1 : 0, 
-          transition: 'opacity 0.2s ease-in-out' 
+          transition: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'none' : 'opacity 0.2s ease-in-out' 
         }}
         {...props}
       />
