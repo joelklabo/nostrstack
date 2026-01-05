@@ -81,6 +81,20 @@ Key configuration:
 - Workflow: `.github/workflows/chromatic.yml`
 - Chromatic project: Set `CHROMATIC_PROJECT_TOKEN` in repository secrets
 
+## Accessibility Guidelines
+
+We follow **WCAG 2.1 Level AA** standards for all user interfaces. When submitting PRs that affect UI:
+
+1. **Run accessibility tests**: `pnpm --filter gallery exec playwright test accessibility.spec.ts`
+2. **Test with keyboard only**: Navigate your changes using Tab, Enter, and Escape
+3. **Check color contrast**: Use browser DevTools or [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
+4. **Add ARIA attributes**: Labels, roles, live regions, states (see `docs/accessibility.md`)
+5. **Review Storybook a11y**: Check the "Accessibility" tab in Storybook for violations
+
+For detailed guidelines, patterns, and checklists, see:
+- **[docs/accessibility.md](docs/accessibility.md)** - Complete accessibility documentation
+- **[apps/gallery/tests/README.md](apps/gallery/tests/README.md)** - Testing guide
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
