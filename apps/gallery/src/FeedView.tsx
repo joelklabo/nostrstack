@@ -10,7 +10,9 @@ import { markRelayFailure } from './nostr/api';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
+import { PostSkeleton } from './ui/PostSkeleton';
 import { ProfileLink } from './ui/ProfileLink';
+import { Skeleton } from './ui/Skeleton';
 import { navigateTo } from './utils/navigation';
 
 const md = new MarkdownIt({
@@ -282,9 +284,18 @@ export function FeedView() {
 
   if (relaysLoading) {
     return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-        <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
-        <div style={{ fontSize: '0.9rem' }}>CONNECTING_TO_RELAYS...</div>
+      <div className="feed-stream">
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div className="post-editor-container" style={{ minHeight: '160px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+             <Skeleton variant="rectangular" height={100} width="100%" style={{ borderRadius: '6px' }} />
+             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+               <Skeleton variant="rectangular" width={100} height={36} style={{ borderRadius: '6px' }} />
+             </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '0', flexDirection: 'column' }}>
+           {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
+        </div>
       </div>
     );
   }
@@ -326,17 +337,9 @@ export function FeedView() {
         </Alert>
       )}
 
-      {posts.length === 0 && relaySummary.online === 0 && (
-        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-          <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
-          <div style={{ fontSize: '0.9rem' }}>CONNECTING_TO_RELAYS...</div>
-        </div>
-      )}
-
-      {posts.length === 0 && relaySummary.online > 0 && (
-        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-          <span className="nostrstack-spinner" style={{ width: '24px', height: '24px', marginBottom: '1rem' }} aria-hidden="true" />
-          <div style={{ fontSize: '0.9rem' }}>WAITING_FOR_POSTS...</div>
+      {posts.length === 0 && (
+         <div style={{ display: 'flex', gap: '0', flexDirection: 'column' }}>
+           {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
         </div>
       )}
 

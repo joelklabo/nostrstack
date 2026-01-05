@@ -11,6 +11,8 @@ import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { Alert } from './ui/Alert';
+import { PostSkeleton } from './ui/PostSkeleton';
+import { Skeleton } from './ui/Skeleton';
 
 const FALLBACK_AVATAR_SVG =
   "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='120' height='120' rx='60' fill='#21292e'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='48' fill='#ffffff'>N</text></svg>";
@@ -200,9 +202,21 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
         </Alert>
       )}
       {profileLoading ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-          <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
-          LOADING PROFILE...
+        <div style={{ padding: '0' }}>
+          <div className="profile-header">
+            <Skeleton variant="circular" width={120} height={120} className="profile-picture" style={{ border: 'none' }} />
+            <div className="profile-info" style={{ width: '100%', maxWidth: '600px' }}>
+              <div className="profile-title-row">
+                 <Skeleton variant="text" width={200} height={32} />
+              </div>
+              <Skeleton variant="text" width={300} height={20} style={{ marginTop: '0.5rem' }} />
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <Skeleton variant="text" width="80%" />
+                <Skeleton variant="text" width="90%" />
+                <Skeleton variant="text" width="60%" />
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -322,9 +336,8 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       <h3>USER_ACTIVITY</h3>
       <div className="user-events">
         {eventsLoading ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }} role="status">
-            <span className="nostrstack-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
-            LOADING EVENTS...
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+             {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
           </div>
         ) : events.length === 0 ? (
           <p className="profile-empty">No posts yet. Check back soon.</p>

@@ -2278,3 +2278,35 @@ h3 {
   border-top: 1px solid var(--color-border-muted);
   padding-top: 1rem;
 }
+
+/* Skeleton Loading */
+.skeleton {
+  background-color: var(--color-canvas-inset);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+
+.skeleton--text {
+  margin-top: 0;
+  margin-bottom: 0;
+  height: auto;
+  min-height: 1rem;
+  width: 100%;
+  transform-origin: 0 55%;
+  transform: scale(1, 0.60);
+}
+
+
+.skeleton--circular {
+  border-radius: 50%;
+}
+.skeleton--rectangular {
+  /* no special styles */
+}
+@keyframes skeleton-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
