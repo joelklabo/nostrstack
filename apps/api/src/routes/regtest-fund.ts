@@ -6,6 +6,29 @@ export async function registerRegtestFundRoute(app: FastifyInstance) {
   if (!app.config?.REGTEST_FUND_ENABLED) {
     app.log.warn('regtest fund disabled; /api/regtest/fund will return 404');
   }
+  
+  const schema = {
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          ok: { type: 'boolean' },
+          minedBlocks: { type: 'integer' },
+          lnbitsTopup: { type: 'integer' },
+          currentBlockHeight: { type: 'integer' }
+        }
+      },
+      404: {
+        type: 'object',
+        properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+      },
+      500: {
+        type: 'object',
+        properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+      }
+    }
+  };
+
   const handler = async (request: FastifyRequest, reply: FastifyReply) => {
     if (!app.config?.REGTEST_FUND_ENABLED) {
       return reply.code(404).send({ ok: false, error: 'regtest_fund_disabled' });
@@ -22,6 +45,6 @@ export async function registerRegtestFundRoute(app: FastifyInstance) {
     }
   };
 
-  app.post('/regtest/fund', handler);
-  app.post('/api/regtest/fund', handler);
+  app.post('/regtest/fund', { schema }, handler);
+  app.post('/api/regtest/fund', { schema }, handler);
 }

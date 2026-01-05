@@ -11,7 +11,27 @@ import {
 import { originFromRequest } from '../tenant-resolver.js';
 
 export async function registerLnurlAuthRoutes(app: FastifyInstance) {
-  app.get('/api/lnurl-auth/request', async (request, reply) => {
+  app.get('/api/lnurl-auth/request', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            k1: { type: 'string' },
+            callback: { type: 'string' },
+            lnurl: { type: 'string' },
+            expiresAt: { type: 'string' }
+          }
+        },
+        404: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
     if (!env.ENABLE_LNURL_AUTH) {
       return reply.code(404).send({ status: 'disabled' });
     }
@@ -28,7 +48,33 @@ export async function registerLnurlAuthRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get('/api/lnurl-auth/callback', async (request, reply) => {
+  app.get('/api/lnurl-auth/callback', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          k1: { type: 'string' },
+          sig: { type: 'string' },
+          key: { type: 'string' }
+        },
+        required: ['k1', 'sig', 'key']
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        },
+        400: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        }
+      }
+    }
+  }, async (request, reply) => {
     if (!env.ENABLE_LNURL_AUTH) {
       return reply.code(404).send({ status: 'ERROR', reason: 'disabled' });
     }
@@ -54,7 +100,31 @@ export async function registerLnurlAuthRoutes(app: FastifyInstance) {
     return reply.send({ status: 'OK' });
   });
 
-  app.get('/api/lnurl-auth/status/:k1', async (request, reply) => {
+  app.get('/api/lnurl-auth/status/:k1', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          k1: { type: 'string' }
+        },
+        required: ['k1']
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            linkingKey: { type: 'string', nullable: true },
+            expiresAt: { type: 'string' }
+          }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        }
+      }
+    }
+  }, async (request, reply) => {
     if (!env.ENABLE_LNURL_AUTH) {
       return reply.code(404).send({ status: 'disabled' });
     }

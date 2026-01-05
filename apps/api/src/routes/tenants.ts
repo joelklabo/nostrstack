@@ -13,6 +13,23 @@ export async function registerTenantRoutes(app: FastifyInstance) {
         },
         required: ['domain', 'displayName'],
         additionalProperties: false
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            tenant: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                domain: { type: 'string' },
+                displayName: { type: 'string' }
+              },
+              additionalProperties: true
+            },
+            publicOrigin: { type: 'string' }
+          }
+        }
       }
     }
   }, async (request, reply) => {

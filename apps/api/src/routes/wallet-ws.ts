@@ -118,5 +118,17 @@ export async function registerWalletWs(app: FastifyInstance) {
     wss.close();
   });
 
-  app.get('/debug/ws-wallet', async () => ({ enabled: true, url: '/ws/wallet' }));
+  app.get('/debug/ws-wallet', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            url: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async () => ({ enabled: true, url: '/ws/wallet' }));
 }

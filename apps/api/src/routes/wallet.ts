@@ -46,6 +46,41 @@ export async function registerWalletRoutes(app: FastifyInstance) {
     }
   };
 
-  app.post('/api/wallet/info', handler);
-  app.post('/wallet/info', handler);
+  const schema = {
+    body: {
+      type: 'object',
+      properties: {
+        baseUrl: { type: 'string' },
+        apiKey: { type: 'string' },
+        walletId: { type: 'string' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          ok: { type: 'boolean' },
+          wallet: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              balance: { type: 'number' }
+            }
+          }
+        }
+      },
+      400: {
+        type: 'object',
+        properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+      },
+      502: {
+        type: 'object',
+        properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+      }
+    }
+  };
+
+  app.post('/api/wallet/info', { schema }, handler);
+  app.post('/wallet/info', { schema }, handler);
 }

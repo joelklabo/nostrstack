@@ -95,6 +95,18 @@ export async function registerBolt12Routes(app: FastifyInstance) {
         },
         required: ['description'],
         additionalProperties: false
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            offer: { type: 'string' },
+            offerId: { type: 'string' },
+            label: { type: 'string' },
+            issuer: { type: 'string' }
+          },
+          additionalProperties: true
+        }
       }
     }
   }, async (request, reply) => {
@@ -141,6 +153,17 @@ export async function registerBolt12Routes(app: FastifyInstance) {
         },
         required: ['offer'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            invoice: { type: 'string' },
+            paymentHash: { type: 'string' },
+            amountMsat: { type: 'integer' }
+          },
+          additionalProperties: true
+        }
       }
     }
   }, async (request, reply) => {

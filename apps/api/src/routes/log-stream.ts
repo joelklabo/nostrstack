@@ -3,7 +3,16 @@ import type { FastifyInstance } from 'fastify';
 import type { LogEvent } from '../services/log-hub.js';
 
 export async function registerLogStreamRoute(app: FastifyInstance) {
-  app.get('/logs/stream', { logLevel: 'info' }, async (req, reply) => {
+  app.get('/logs/stream', {
+    logLevel: 'info',
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: { level: { type: 'string' } },
+        additionalProperties: false
+      }
+    }
+  }, async (req, reply) => {
     const filterRaw = (req.query as { level?: string }).level;
     const allowed = filterRaw ? new Set(filterRaw.split(',').map((l) => l.trim()).filter(Boolean)) : null;
 

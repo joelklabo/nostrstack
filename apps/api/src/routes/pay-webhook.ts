@@ -3,7 +3,32 @@ import type { FastifyInstance } from 'fastify';
 const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
 
 export async function registerPayWebhook(app: FastifyInstance) {
-  app.post('/api/pay/webhook/lnbits', async (request, reply) => {
+  app.post('/api/pay/webhook/lnbits', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          payment_hash: { type: 'string' },
+          id: { type: 'string' }
+        },
+        additionalProperties: true
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, ignored: { type: 'boolean' } }
+        },
+        400: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+        },
+        500: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' } }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const body = (request.body || {}) as Record<string, unknown>;
     const paymentHash = (body.payment_hash as string | undefined) || (body.id as string | undefined);
     if (!paymentHash) return reply.code(400).send({ ok: false, error: 'missing_payment_hash' });

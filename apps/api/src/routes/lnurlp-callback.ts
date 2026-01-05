@@ -27,6 +27,19 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         },
         required: ['min', 'max'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            tag: { type: 'string' },
+            callback: { type: 'string' },
+            k1: { type: 'string' },
+            minWithdrawable: { type: 'integer' },
+            maxWithdrawable: { type: 'integer' },
+            defaultDescription: { type: 'string' }
+          }
+        }
       }
     }
   }, async (request, reply) => {
@@ -51,6 +64,15 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         },
         required: ['pr', 'k1'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            pr: { type: 'string' }
+          }
+        }
       }
     }
   }, async (request, reply) => {
@@ -77,6 +99,26 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         },
         required: ['amount'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            pr: { type: 'string' },
+            routes: { type: 'array', items: { type: 'string' } },
+            provider_ref: { type: 'string' },
+            commentAllowed: { type: 'integer' },
+            successAction: { type: 'object', additionalProperties: true }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        }
       }
     }
   }, async (request, reply) => {
@@ -172,6 +214,20 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         },
         required: ['id', 'status'],
         additionalProperties: true
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' } }
+        },
+        202: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, reason: { type: 'string' } }
+        },
+        401: {
+          type: 'object',
+          properties: { error: { type: 'string' } }
+        }
       }
     },
     config: { rawBody: true }
@@ -336,6 +392,23 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         },
         required: ['username', 'id'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            amountSats: { type: 'integer' }
+          }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        },
+        502: {
+          type: 'object',
+          properties: { status: { type: 'string' }, error: { type: 'string' } }
+        }
       }
     }
   }, async (request, reply) => {
@@ -364,7 +437,29 @@ export async function registerLnurlCallback(app: FastifyInstance) {
   });
 
   // Optional LNbits webhook endpoint (paid notification). LNbits does not HMAC by default; can be fronted by proxy.
-  app.post('/api/lnbits/webhook', async (request, reply) => {
+  app.post('/api/lnbits/webhook', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: { payment_hash: { type: 'string' } },
+        additionalProperties: true
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' } }
+        },
+        202: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, reason: { type: 'string' } }
+        },
+        400: {
+          type: 'object',
+          properties: { error: { type: 'string' } }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const body = request.body as { payment_hash?: string };
     const hash = body?.payment_hash;
     if (!hash) return reply.code(400).send({ error: 'missing payment_hash' });

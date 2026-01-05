@@ -15,6 +15,18 @@ export async function registerAdminUserRoutes(app: FastifyInstance) {
         },
         required: ['domain', 'lightningAddress', 'pubkey'],
         additionalProperties: false
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            pubkey: { type: 'string' },
+            lightningAddress: { type: 'string' },
+            tenantId: { type: 'string' }
+          },
+          additionalProperties: true
+        }
       }
     },
     preHandler: requireAdminKey
@@ -42,7 +54,25 @@ export async function registerAdminUserRoutes(app: FastifyInstance) {
   });
 
   // Convenience to list users for the current host (dev use)
-  app.get('/api/admin/users', async (request, reply) => {
+  app.get('/api/admin/users', {
+    schema: {
+      response: {
+        200: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              pubkey: { type: 'string' },
+              lightningAddress: { type: 'string' },
+              tenantId: { type: 'string' }
+            },
+            additionalProperties: true
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const tenant = await getTenantForRequest(app, request);
     const users = await app.prisma.user.findMany({ where: { tenantId: tenant.id } });
     return reply.send(users);

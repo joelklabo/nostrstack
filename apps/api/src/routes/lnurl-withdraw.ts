@@ -33,6 +33,21 @@ export async function registerLnurlWithdrawRoutes(app: FastifyInstance) {
         },
         required: ['minWithdrawable', 'maxWithdrawable'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            k1: { type: 'string' },
+            lnurl: { type: 'string' },
+            requestUrl: { type: 'string' },
+            expiresAt: { type: 'string' }
+          }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        }
       }
     }
   }, async (request, reply) => {
@@ -64,7 +79,36 @@ export async function registerLnurlWithdrawRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get('/api/lnurl-withdraw/:k1', async (request, reply) => {
+  app.get('/api/lnurl-withdraw/:k1', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { k1: { type: 'string' } },
+        required: ['k1']
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            tag: { type: 'string' },
+            callback: { type: 'string' },
+            k1: { type: 'string' },
+            defaultDescription: { type: 'string' },
+            minWithdrawable: { type: 'integer' },
+            maxWithdrawable: { type: 'integer' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        }
+      }
+    }
+  }, async (request, reply) => {
     if (!env.ENABLE_LNURL_WITHDRAW) {
       return reply.code(404).send({ status: 'disabled' });
     }
@@ -90,6 +134,24 @@ export async function registerLnurlWithdrawRoutes(app: FastifyInstance) {
         },
         required: ['k1', 'pr'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        },
+        400: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        },
+        409: {
+          type: 'object',
+          properties: { status: { type: 'string' }, reason: { type: 'string' } }
+        }
       }
     }
   }, async (request, reply) => {
@@ -159,7 +221,25 @@ export async function registerLnurlWithdrawRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/api/lnurl-withdraw/status/:k1', async (request, reply) => {
+  app.get('/api/lnurl-withdraw/status/:k1', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { k1: { type: 'string' } },
+        required: ['k1']
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { status: { type: 'string' }, expiresAt: { type: 'string' } }
+        },
+        404: {
+          type: 'object',
+          properties: { status: { type: 'string' } }
+        }
+      }
+    }
+  }, async (request, reply) => {
     if (!env.ENABLE_LNURL_WITHDRAW) {
       return reply.code(404).send({ status: 'disabled' });
     }

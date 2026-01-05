@@ -14,6 +14,17 @@ export async function registerAdminTenantRoutes(app: FastifyInstance) {
         },
         required: ['domain', 'displayName'],
         additionalProperties: false
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            domain: { type: 'string' },
+            displayName: { type: 'string' }
+          },
+          additionalProperties: true
+        }
       }
     },
     preHandler: requireAdminKey

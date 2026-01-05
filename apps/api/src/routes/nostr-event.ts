@@ -249,6 +249,67 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         replyLimit: { type: 'string' },
         replyCursor: { type: 'string' }
       }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          target: {
+            type: 'object',
+            properties: {
+              input: { type: 'string' },
+              type: { type: 'string' },
+              relays: { type: 'array', items: { type: 'string' } },
+              id: { type: 'string' },
+              pubkey: { type: 'string' },
+              kind: { type: 'integer' },
+              identifier: { type: 'string' }
+            }
+          },
+          event: {
+            type: 'object',
+            additionalProperties: true
+          },
+          author: {
+            type: 'object',
+            properties: {
+              pubkey: { type: 'string' },
+              profile: { type: 'object', additionalProperties: true }
+            }
+          },
+          references: {
+            type: 'object',
+            additionalProperties: true
+          },
+          replyThreadId: { type: 'string' },
+          replies: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          replyPage: { type: 'string' }
+        }
+      },
+      400: {
+        type: 'object',
+        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' }, invalidRelays: { type: 'array', items: { type: 'string' } } }
+      },
+      404: {
+        type: 'object',
+        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+      },
+      422: {
+        type: 'object',
+        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+      },
+      500: {
+        type: 'object',
+        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+      },
+      503: {
+        type: 'object',
+        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+      },
+      504: {
+        type: 'object',
+        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+      }
     }
   };
 

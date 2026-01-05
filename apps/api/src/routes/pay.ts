@@ -94,6 +94,28 @@ export async function registerPayRoutes(app: FastifyInstance) {
           domain: { type: 'string' }
         },
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            amountSats: { type: 'integer' }
+          }
+        },
+        202: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            error: { type: 'string' }
+          }
+        },
+        404: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' }
+          }
+        }
       }
     }
   }, async (request, reply) => {
@@ -167,7 +189,16 @@ export async function registerPayRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/api/pay/ws-placeholder', async (_req, reply) => {
+  app.get('/api/pay/ws-placeholder', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' } }
+        }
+      }
+    }
+  }, async (_req, reply) => {
     // Placeholder: front-end can switch to /ws/telemetry for now
     return reply.send({ ok: true });
   });

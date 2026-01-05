@@ -120,6 +120,29 @@ export async function registerRegtestPayRoute(app: FastifyInstance) {
         properties: { invoice: { type: 'string' } },
         required: ['invoice'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            ok: { type: 'boolean' },
+            payment_hash: { type: 'string' },
+            payment_preimage: { type: 'string' },
+            fees_sat: { type: 'integer' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+        },
+        404: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, error: { type: 'string' } }
+        },
+        500: {
+          type: 'object',
+          properties: { ok: { type: 'boolean' }, error: { type: 'string' }, detail: { type: 'string' } }
+        }
       }
     }
   } as const;
