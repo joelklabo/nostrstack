@@ -44,16 +44,37 @@ export function PostItem({
   const [showJson, setShowJson] = useState(false);
   const [isZapped, setIsZapped] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
+
+  const contentWarningTag = post.tags.find(t => t[0] === 'content-warning' || t[0] === 'sensitive');
+  const hasContentWarning = Boolean(contentWarningTag);
+  const contentWarningReason = contentWarningTag?.[1] || 'Sensitive content';
+  const [showContent, setShowContent] = useState(!hasContentWarning);
+
   const isPaywalled = post.tags.some(tag => tag[0] === 'paywall');
   const paywallAmount = isPaywalled ? Number(post.tags.find(tag => tag[0] === 'paywall')?.[1] || '0') : 0;
   const paywallItemId = post.id; // Use event ID as item ID for paywall
 
-  const renderContent = () => (
-    <div 
-      className="post-content" 
-      dangerouslySetInnerHTML={{ __html: md.render(post.content) }} 
-    />
-  );
+  const renderContent = () => {
+    if (hasContentWarning && !showContent) {
+      return (
+        <div className="content-warning-placeholder">
+          <div className="content-warning-icon">⚠️</div>
+          <div className="content-warning-text">
+            <strong>Content Warning</strong>
+            <span>{contentWarningReason}</span>
+          </div>
+          <button className="action-btn" onClick={() => setShowContent(true)}>Show Content</button>
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className="post-content" 
+        dangerouslySetInnerHTML={{ __html: md.render(post.content) }} 
+      />
+    );
+  };
 
   return (
     <article className="post-card" tabIndex={0}>
