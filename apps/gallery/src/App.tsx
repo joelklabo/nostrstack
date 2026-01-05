@@ -24,6 +24,7 @@ import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 import { Alert } from './ui/Alert';
 import { HelpModal } from './ui/HelpModal';
+import { OnboardingTour } from './ui/OnboardingTour';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
@@ -119,6 +120,7 @@ function AppShell() {
 
   return (
     <div className="social-layout">
+      <OnboardingTour />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <main className="feed-container">

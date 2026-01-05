@@ -1,0 +1,76 @@
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.onboarding-spotlight {
+  position: fixed;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 9998;
+  transition: all 0.3s ease;
+}
+
+.onboarding-card {
+  position: fixed;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  transition: all 0.3s ease;
+}
+
+.onboarding-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-fg-default);
+}
+
+.onboarding-content {
+  font-size: 0.9rem;
+  color: var(--color-fg-muted);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.onboarding-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.onboarding-btn-skip {
+  background: transparent;
+  color: var(--color-fg-muted);
+}
+
+.onboarding-btn-skip:hover {
+  background: var(--color-canvas-subtle);
+}
+
+.onboarding-btn-next {
+  background: var(--color-accent-emphasis);
+  color: #fff;
+}
+
+.onboarding-btn-next:hover {
+  background: var(--color-accent-fg);
+}

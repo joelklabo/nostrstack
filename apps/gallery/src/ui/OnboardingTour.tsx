@@ -1,0 +1,145 @@
+import '../styles/tour.css';
+
+import { useEffect, useRef,useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import { useOnboarding } from '../hooks/useOnboarding';
+
+export function OnboardingTour() {
+  const { isActive, step, isLastStep, hasPreviousStep, next, back, skip } = useOnboarding();
+  const [position, setPosition] = useState<React.CSSProperties>({
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)'
+  });
+  const [spotlightStyle, setSpotlightStyle] = useState<React.CSSProperties | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isActive) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') skip();
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft') back();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isActive, next, back, skip]);
+
+  // Scroll into view
+  useEffect(() => {
+    if (isActive && step.target) {
+      const el = document.querySelector(step.target);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [isActive, step]);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    if (!step.target) {
+      setPosition({
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
+      });
+      setSpotlightStyle(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      const el = document.querySelector(step.target!);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setSpotlightStyle({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height
+        });
+
+        // Calculate card position
+        let top = rect.bottom + 12;
+        let left = rect.left + rect.width / 2 - 160; // Center horizontally (width 320)
+        let transform: string | undefined;
+
+        if (step.placement === 'right') {
+          top = rect.top;
+          left = rect.right + 12;
+        } else if (step.placement === 'left') {
+          top = rect.top;
+          left = rect.left - 332; // 320 + 12
+        } else if (step.placement === 'top') {
+          top = rect.top - 12;
+          // Ideally we subtract height, but let's just shift up a bit and hope
+          transform = 'translateY(-100%)';
+        }
+
+        // Boundary checks (simple)
+        if (left < 10) left = 10;
+        if (left + 320 > window.innerWidth - 10) left = window.innerWidth - 330;
+        if (top < 10) top = 10;
+        if (top + 150 > window.innerHeight - 10) {
+            top = window.innerHeight - 160;
+            if (transform) transform = undefined; // Reset transform if we clamp
+        }
+
+        setPosition({ top, left, transform });
+      } else {
+        // Fallback
+        setPosition({
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        });
+        setSpotlightStyle(null);
+      }
+    };
+
+    // Delay update to allow layout to settle
+    const raf = requestAnimationFrame(updatePosition);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+        window.removeEventListener('resize', updatePosition);
+        cancelAnimationFrame(raf);
+    };
+  }, [isActive, step]);
+
+  if (!isActive) return null;
+
+  return createPortal(
+    <>
+      {!spotlightStyle && <div className="onboarding-overlay" />}
+      {spotlightStyle && <div className="onboarding-spotlight" style={spotlightStyle} />}
+      <div 
+        className="onboarding-card" 
+        style={position}
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tour-title"
+        aria-describedby="tour-desc"
+      >
+        <div id="tour-title" className="onboarding-title">{step.title}</div>
+        <div id="tour-desc" className="onboarding-content">{step.content}</div>
+        <div className="onboarding-actions">
+          <button className="onboarding-btn onboarding-btn-skip" onClick={skip}>
+            Skip
+          </button>
+          {hasPreviousStep && (
+            <button className="onboarding-btn" onClick={back}>
+              Back
+            </button>
+          )}
+          <button className="onboarding-btn onboarding-btn-next" onClick={next}>
+            {isLastStep ? 'Finish' : 'Next'}
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
