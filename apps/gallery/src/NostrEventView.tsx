@@ -3,13 +3,13 @@ import { type Event, nip19 } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
-import { PostItem } from './FeedView';
 import { fetchNostrEventFromApi } from './nostr/api';
 import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
 import { ReferencePreview } from './nostr/ReferencePreview';
 import { Alert } from './ui/Alert';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
+import { ThreadedReplies } from './ui/ThreadedReplies';
 import { resolveGalleryApiBase } from './utils/api-base';
 
 type Target =
@@ -686,14 +686,12 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
                 {repliesState.status === 'ready' && repliesState.items.length > 0 && (
                   <div className="nostr-event-replies-list">
-                    {repliesState.items.map((reply) => (
-                      <PostItem
-                        key={reply.id}
-                        post={reply}
-                        apiBase={apiBase}
-                        enableRegtestPay={enableRegtestPay}
-                      />
-                    ))}
+                    <ThreadedReplies
+                      events={repliesState.items}
+                      rootId={event.id}
+                      apiBase={apiBase}
+                      enableRegtestPay={enableRegtestPay}
+                    />
                   </div>
                 )}
 
