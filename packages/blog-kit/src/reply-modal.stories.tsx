@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import type { Event } from 'nostr-tools';
 import { useState } from 'react';
 import { ReplyModal } from './reply-modal';
@@ -22,7 +21,7 @@ const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
   mode: 'extension',
   error: null,
-  signEvent: fn(async (template) => ({
+  signEvent: async (template) => ({
     ...template,
     id: 'signed-event-id-' + Date.now(),
     sig: 'signed-event-sig',
@@ -89,7 +88,7 @@ export const Default: Story = {
   args: {
     isOpen: true,
     parentEvent: mockEvent,
-    onClose: fn()
+    onClose: () => {}
   }
 };
 
@@ -97,7 +96,7 @@ export const Closed: Story = {
   args: {
     isOpen: false,
     parentEvent: mockEvent,
-    onClose: fn()
+    onClose: () => {}
   }
 };
 
@@ -105,7 +104,7 @@ export const Interactive: Story = {
   render: (args) => <InteractiveReplyModal {...args} />,
   args: {
     parentEvent: mockEvent,
-    onClose: fn()
+    onClose: () => {}
   }
 };
 
@@ -121,7 +120,7 @@ export const ReplyToThread: Story = {
       ],
       content: 'Reply in a threaded conversation with multiple mentions.'
     },
-    onClose: fn()
+    onClose: () => {}
   }
 };
 
@@ -132,6 +131,6 @@ export const LongContent: Story = {
       ...mockEvent,
       content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(10)
     },
-    onClose: fn()
+    onClose: () => {}
   }
 };

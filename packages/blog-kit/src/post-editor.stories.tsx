@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import type { Event } from 'nostr-tools';
 import { PostEditor } from './post-editor';
 import { AuthProvider } from './auth';
@@ -22,7 +21,7 @@ const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
   mode: 'extension',
   error: null,
-  signEvent: fn(async (template) => ({
+  signEvent: async (template) => ({
     ...template,
     id: 'signed-event-id-' + Date.now(),
     sig: 'signed-event-sig',
@@ -34,7 +33,7 @@ const mockAuthContextLoggedOut = {
   pubkey: null,
   mode: 'none',
   error: null,
-  signEvent: fn(async () => {
+  signEvent: async () => {
     throw new Error('Not authenticated');
   })
 };
@@ -43,7 +42,7 @@ const mockAuthContextError = {
   pubkey: null,
   mode: 'extension',
   error: 'Extension not found or permission denied.',
-  signEvent: fn(async () => {
+  signEvent: async () => {
     throw new Error('Not authenticated');
   })
 };
@@ -96,8 +95,8 @@ type Story = StoryObj<typeof meta>;
 export const NewPost: Story = {
   args: {
     placeholder: 'WHAT ARE YOU HACKING ON?...',
-    onSuccess: fn(),
-    onCancel: fn(),
+    onSuccess: () => {},
+    onCancel: () => {},
     autoFocus: false,
     loggedIn: true
   }
@@ -107,8 +106,8 @@ export const ReplyToNote: Story = {
   args: {
     parentEvent: mockEvent,
     placeholder: 'Write your reply...',
-    onSuccess: fn(),
-    onCancel: fn(),
+    onSuccess: () => {},
+    onCancel: () => {},
     autoFocus: true,
     loggedIn: true
   }
@@ -117,7 +116,7 @@ export const ReplyToNote: Story = {
 export const CustomPlaceholder: Story = {
   args: {
     placeholder: 'Share your thoughts...',
-    onSuccess: fn(),
+    onSuccess: () => {},
     loggedIn: true
   }
 };
@@ -126,7 +125,7 @@ export const WithAutoFocus: Story = {
   args: {
     placeholder: 'WHAT ARE YOU HACKING ON?...',
     autoFocus: true,
-    onSuccess: fn(),
+    onSuccess: () => {},
     loggedIn: true
   }
 };
@@ -134,7 +133,7 @@ export const WithAutoFocus: Story = {
 export const NotAuthenticated: Story = {
   args: {
     placeholder: 'WHAT ARE YOU HACKING ON?...',
-    onSuccess: fn(),
+    onSuccess: () => {},
     loggedIn: false
   }
 };
@@ -142,7 +141,7 @@ export const NotAuthenticated: Story = {
 export const AuthenticationError: Story = {
   args: {
     placeholder: 'WHAT ARE YOU HACKING ON?...',
-    onSuccess: fn(),
+    onSuccess: () => {},
     loggedIn: false,
     authError: true
   }
@@ -151,8 +150,8 @@ export const AuthenticationError: Story = {
 export const WithCancelButton: Story = {
   args: {
     placeholder: 'Write your reply...',
-    onSuccess: fn(),
-    onCancel: fn(),
+    onSuccess: () => {},
+    onCancel: () => {},
     loggedIn: true
   }
 };
@@ -160,7 +159,7 @@ export const WithCancelButton: Story = {
 export const NoCancelButton: Story = {
   args: {
     placeholder: 'WHAT ARE YOU HACKING ON?...',
-    onSuccess: fn(),
+    onSuccess: () => {},
     onCancel: undefined,
     loggedIn: true
   }
@@ -177,8 +176,8 @@ export const ReplyWithMentions: Story = {
       ]
     },
     placeholder: 'Reply with mentions...',
-    onSuccess: fn(),
-    onCancel: fn(),
+    onSuccess: () => {},
+    onCancel: () => {},
     loggedIn: true
   }
 };

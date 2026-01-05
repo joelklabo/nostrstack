@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import type { Event } from 'nostr-tools';
 import { ReactionButton } from './reaction-button';
 import { AuthProvider } from './auth';
@@ -17,7 +16,7 @@ const mockEvent: Event = {
 
 const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
-  signEvent: fn(async (template) => ({
+  signEvent: async (template) => ({
     ...template,
     id: 'reaction-event-id-' + Date.now(),
     sig: 'signed-reaction-sig',
@@ -27,7 +26,7 @@ const mockAuthContextLoggedIn = {
 
 const mockAuthContextLoggedOut = {
   pubkey: null,
-  signEvent: fn(async () => {
+  signEvent: async () => {
     throw new Error('Not logged in');
   })
 };

@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import type { Event } from 'nostr-tools';
 import { ZapButton } from './zap-button';
 import { AuthProvider } from './auth';
@@ -25,7 +24,7 @@ const mockEventNoLightningAddress: Event = {
 
 const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
-  signEvent: fn(async (template) => ({
+  signEvent: async (template) => ({
     ...template,
     id: 'signed-event-id',
     sig: 'signed-event-sig',
@@ -35,7 +34,7 @@ const mockAuthContextLoggedIn = {
 
 const mockAuthContextLoggedOut = {
   pubkey: null,
-  signEvent: fn(async () => {
+  signEvent: async () => {
     throw new Error('Not logged in');
   })
 };
@@ -90,7 +89,7 @@ export const Default: Story = {
     event: mockEvent,
     amountSats: 21,
     message: 'Zap!',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -100,7 +99,7 @@ export const CustomAmount: Story = {
     event: mockEvent,
     amountSats: 1000,
     message: 'Great post! 🔥',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -110,7 +109,7 @@ export const LargeAmount: Story = {
     event: mockEvent,
     amountSats: 100000,
     message: 'Amazing work!',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -120,7 +119,7 @@ export const CustomMessage: Story = {
     event: mockEvent,
     amountSats: 21,
     message: '⚡ Love this! Keep it up! 🚀',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -130,7 +129,7 @@ export const NoLightningAddress: Story = {
     event: mockEventNoLightningAddress,
     amountSats: 21,
     message: 'Zap!',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -140,7 +139,7 @@ export const NotLoggedIn: Story = {
     event: mockEvent,
     amountSats: 21,
     message: 'Zap!',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: false
   }
 };
@@ -150,7 +149,7 @@ export const WithRegtestPay: Story = {
     event: mockEvent,
     amountSats: 21,
     message: 'Zap!',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true,
     enableRegtestPay: true
   }
@@ -162,7 +161,7 @@ export const WithCustomRelays: Story = {
     amountSats: 21,
     message: 'Zap!',
     relays: ['wss://relay.nostr.band', 'wss://relay.snort.social'],
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -173,7 +172,7 @@ export const WithCustomClass: Story = {
     amountSats: 21,
     message: 'Zap!',
     className: 'custom-zap-btn',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };
@@ -184,7 +183,7 @@ export const WithAuthorLightningAddressOverride: Story = {
     amountSats: 21,
     message: 'Zap!',
     authorLightningAddress: 'override@lightning.address',
-    onZapSuccess: fn(),
+    onZapSuccess: () => {},
     loggedIn: true
   }
 };

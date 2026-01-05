@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import { SendSats } from './send-sats';
 import { AuthProvider } from './auth';
 import { NostrstackConfigProvider } from './context';
@@ -9,7 +8,7 @@ const mockLightningAddress = 'satoshi@nostrstack.com';
 
 const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
-  signEvent: fn(async (template) => ({
+  signEvent: async (template) => ({
     ...template,
     id: 'signed-event-id',
     sig: 'signed-event-sig',
@@ -19,7 +18,7 @@ const mockAuthContextLoggedIn = {
 
 const mockAuthContextLoggedOut = {
   pubkey: null,
-  signEvent: fn(async () => {
+  signEvent: async () => {
     throw new Error('Not logged in');
   })
 };
