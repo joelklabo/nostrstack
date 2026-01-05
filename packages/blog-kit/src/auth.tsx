@@ -1,4 +1,4 @@
-import { type Event, type EventTemplate, finalizeEvent, getPublicKey,nip19 } from 'nostr-tools';
+import { type Event, type EventTemplate, finalizeEvent, getPublicKey,nip04, nip19 } from 'nostr-tools';
 import { createContext, type ReactNode, useCallback,useContext, useEffect, useState } from 'react';
 
 // NIP-07 Interface
@@ -6,6 +6,10 @@ interface WindowNostr {
   getPublicKey: () => Promise<string>;
   signEvent: (event: EventTemplate) => Promise<Event>;
   getRelays?: () => Promise<Record<string, { read: boolean; write: boolean }>>;
+  nip04?: {
+    encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+    decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
+  };
 }
 
 declare global {
@@ -29,6 +33,8 @@ interface AuthContextType extends AuthState {
   loginWithLnurl: (linkingKey: string) => Promise<void>;
   logout: () => void;
   signEvent: (template: EventTemplate) => Promise<Event>;
+  encrypt: (pubkey: string, plaintext: string) => Promise<string>;
+  decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -163,8 +169,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     throw new Error('No signer available');
   }, [state.mode]);
 
+  const encrypt = useCallback(async (pubkey: string, plaintext: string): Promise<string> => {
+    if (state.mode === 'nip07' && window.nostr?.nip04) {
+      return window.nostr.nip04.encrypt(pubkey, plaintext);
+    } else if (state.mode === 'nsec') {
+      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+      if (!nsec) throw new Error('No nsec found');
+      const { data } = nip19.decode(nsec);
+      return nip04.encrypt(data as Uint8Array, pubkey, plaintext);
+    }
+    throw new Error('Encryption not supported in this mode');
+  }, [state.mode]);
+
+  const decrypt = useCallback(async (pubkey: string, ciphertext: string): Promise<string> => {
+    if (state.mode === 'nip07' && window.nostr?.nip04) {
+      return window.nostr.nip04.decrypt(pubkey, ciphertext);
+    } else if (state.mode === 'nsec') {
+      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+      if (!nsec) throw new Error('No nsec found');
+      const { data } = nip19.decode(nsec);
+      return nip04.decrypt(data as Uint8Array, pubkey, ciphertext);
+    }
+    throw new Error('Decryption not supported in this mode');
+  }, [state.mode]);
+
   return (
-    <AuthContext.Provider value={{ ...state, loginWithNip07, loginWithNsec, loginWithLnurl, logout, signEvent }}>
+    <AuthContext.Provider value={{ ...state, loginWithNip07, loginWithNsec, loginWithLnurl, logout, signEvent, encrypt, decrypt }}>
       {children}
     </AuthContext.Provider>
   );

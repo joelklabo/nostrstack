@@ -9,8 +9,8 @@ import { navigateTo } from './utils/navigation';
 import { WalletView } from './WalletView';
 
 interface SidebarProps {
-  currentView: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit';
-  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit') => void;
+  currentView: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages';
+  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages') => void;
 }
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
@@ -178,6 +178,12 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           onClick={() => handleNavigate('notifications')}
         >
           Notifications
+        </button>
+        <button 
+          className={`nav-item ${currentView === 'messages' ? 'active' : ''}`}
+          onClick={() => handleNavigate('messages')}
+        >
+          Messages
         </button>
         <button 
           className={`nav-item ${currentView === 'personal-site-kit' ? 'active' : ''}`}

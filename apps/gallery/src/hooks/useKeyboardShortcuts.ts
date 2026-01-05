@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { navigateTo } from '../utils/navigation';
 
-export type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit';
+export type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages';
 
 interface UseKeyboardShortcutsProps {
   currentView: View | string;

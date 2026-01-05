@@ -7,6 +7,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
+import { DMView } from './DMView';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FeedView } from './FeedView';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
@@ -134,6 +135,7 @@ function AppShell() {
             {currentView === 'search' && <SearchView />}
             {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
             {currentView === 'notifications' && <NotificationsView />}
+            {currentView === 'messages' && <DMView />}
             {currentView === 'relays' && <RelaysView />}
             {currentView === 'offers' && <OffersView />}
             {currentView === 'personal-site-kit' && <PersonalSiteKitView />}
