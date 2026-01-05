@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { markRelayFailure } from './nostr/api';
+import { relayMonitor } from './nostr/relayHealth';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
@@ -175,6 +176,7 @@ export function FeedView() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const seenIds = useRef(new Set<string>());
+  const startTimes = useRef(new Map<string, number>());
   const { incrementEvents } = useStats();
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
@@ -211,6 +213,12 @@ export function FeedView() {
     }
     let didUnmount = false;
 
+    startTimes.current.clear();
+    relayList.forEach((r) => {
+      relayMonitor.reportAttempt(r);
+      startTimes.current.set(r, Date.now());
+    });
+
     const updateRelayStatus = (relay: string, next: RelayStatus) => {
       setRelayStatus((prev) => {
         const current = prev[relay];
@@ -241,6 +249,14 @@ export function FeedView() {
         },
         receivedEvent(relay: AbstractRelay) {
           updateRelayStatus(relay.url, { status: 'online' });
+          const start = startTimes.current.get(relay.url);
+          if (start) {
+            const latency = Date.now() - start;
+            relayMonitor.reportSuccess(relay.url, latency);
+            startTimes.current.delete(relay.url);
+          } else {
+            relayMonitor.reportSuccess(relay.url);
+          }
         },
         onclose(reasons) {
           if (didUnmount) return;

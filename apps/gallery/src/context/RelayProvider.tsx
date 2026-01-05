@@ -3,6 +3,8 @@ import { type Filter, SimplePool } from 'nostr-tools';
 import { normalizeURL } from 'nostr-tools/utils';
 import { createContext, type ReactNode, useCallback, useEffect, useState } from 'react';
 
+import { relayMonitor } from '../nostr/relayHealth';
+
 // Reusing default relays from API module logic
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
@@ -30,10 +32,18 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   const [userRelays, setUserRelays] = useState<RelayConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [_monitorVersion, setMonitorVersion] = useState(0);
 
   // Parse environment default relays once
   const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
   const bootstrapRelays = envRelays.length ? envRelays : DEFAULT_RELAYS;
+
+  // Listen for relay health changes
+  useEffect(() => {
+    return relayMonitor.subscribe(() => {
+      setMonitorVersion((v) => v + 1);
+    });
+  }, []);
 
   // Fetch Kind 10002 on mount or auth change
   useEffect(() => {
@@ -130,7 +140,7 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   const activeRelays = [...new Set([
     ...bootstrapRelays,
     ...userRelays.map((r) => r.url)
-  ])];
+  ])].filter(url => relayMonitor.isHealthy(url));
 
   const value: RelayContextValue = {
     relays: activeRelays,
