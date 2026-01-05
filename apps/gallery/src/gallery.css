@@ -2848,3 +2848,154 @@ a:focus-visible {
     transition: none;
   }
 }
+
+/* ============================================
+   Real-time Update Animations
+   ============================================ */
+
+/* Log entry highlight animation */
+@keyframes log-entry-highlight {
+  0% {
+    background-color: var(--color-accent-subtle);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.telemetry-log-entry {
+  padding: 2px 4px;
+  margin: 0 -4px;
+  border-radius: 3px;
+  transition: background-color 0.3s ease-out;
+}
+
+.telemetry-log-entry.is-new {
+  animation: log-entry-highlight 2s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-log-entry.is-new {
+    animation: none;
+    background-color: var(--color-accent-subtle);
+  }
+}
+
+/* Block height flash animation */
+@keyframes stat-flash {
+  0% {
+    color: var(--color-accent-fg);
+    text-shadow: 0 0 8px var(--color-accent-muted);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+.nostrstack-stat-value.is-updated {
+  animation: stat-flash 1.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nostrstack-stat-value.is-updated {
+    animation: none;
+    color: var(--color-accent-fg);
+  }
+}
+
+/* Connection status pulse */
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.telemetry-status[data-status='connecting'] .telemetry-status-dot,
+.telemetry-status[data-status='reconnecting'] .telemetry-status-dot {
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-status[data-status='connecting'] .telemetry-status-dot,
+  .telemetry-status[data-status='reconnecting'] .telemetry-status-dot {
+    animation: none;
+  }
+}
+
+/* New post slide-in animation */
+@keyframes post-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.post-card.is-new {
+  animation: post-slide-in 0.3s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card.is-new {
+    animation: none;
+  }
+}
+
+/* Relay status indicator transition */
+.relay-status-indicator {
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.relay-status-indicator.is-online {
+  background-color: var(--color-success-fg);
+  box-shadow: 0 0 6px rgba(26, 127, 55, 0.4);
+}
+
+.relay-status-indicator.is-connecting {
+  background-color: var(--color-attention-fg);
+  animation: status-pulse 1s ease-in-out infinite;
+}
+
+.relay-status-indicator.is-error {
+  background-color: var(--color-danger-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relay-status-indicator {
+    transition: none;
+  }
+  .relay-status-indicator.is-connecting {
+    animation: none;
+  }
+}
+
+/* Wallet balance update flash */
+@keyframes balance-flash {
+  0% {
+    background-color: rgba(26, 127, 55, 0.15);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.wallet-balance.is-updated {
+  animation: balance-flash 1.5s ease-out forwards;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wallet-balance.is-updated {
+    animation: none;
+    background-color: rgba(26, 127, 55, 0.1);
+  }
+}
