@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { FindFriendCard } from './FindFriendCard';
 import '../styles/find-friend.css';
+
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { FindFriendCard } from './FindFriendCard';
 
 const meta = {
   title: 'Complex/FindFriendCard',

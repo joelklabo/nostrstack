@@ -1,20 +1,35 @@
 import type { CSSProperties } from 'react';
 
+type SkeletonVariant = 'text' | 'circular' | 'rectangular';
+
 interface SkeletonProps {
+  variant?: SkeletonVariant;
   width?: string | number;
   height?: string | number;
   borderRadius?: string | number;
   style?: CSSProperties;
+  className?: string;
 }
 
-export function Skeleton({ width, height, borderRadius, style }: SkeletonProps) {
+export function Skeleton({ variant = 'text', width, height, borderRadius, style, className }: SkeletonProps) {
+  const variantStyles: CSSProperties = {};
+
+  if (variant === 'circular') {
+    variantStyles.borderRadius = '50%';
+  } else if (variant === 'rectangular') {
+    variantStyles.borderRadius = borderRadius ?? '4px';
+  } else {
+    // text variant - pill shape
+    variantStyles.borderRadius = borderRadius ?? '4px';
+  }
+
   return (
     <div
-      className="skeleton"
+      className={`skeleton${className ? ` ${className}` : ''}`}
       style={{
         width,
         height,
-        borderRadius,
+        ...variantStyles,
         ...style
       }}
       aria-hidden="true"

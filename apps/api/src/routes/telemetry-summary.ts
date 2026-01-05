@@ -13,24 +13,27 @@ export async function registerTelemetrySummaryRoute(app: FastifyInstance) {
       response: {
         200: {
           type: 'object',
+          additionalProperties: true,
           properties: {
             type: { type: 'string' },
             source: { type: 'string' },
-            blockHeight: { type: 'integer' },
-            blockHash: { type: 'string' },
-            timestamp: { type: 'integer' },
-            difficulty: { type: 'number' },
-            mempoolSize: { type: 'integer' },
-            feeRates: {
-              type: 'object',
-              properties: {
-                fastestFee: { type: 'number' },
-                halfHourFee: { type: 'number' },
-                hourFee: { type: 'number' },
-                economyFee: { type: 'number' },
-                minimumFee: { type: 'number' }
-              }
-            }
+            height: { type: 'integer' },
+            hash: { type: 'string' },
+            time: { type: 'integer' },
+            txs: { type: 'integer' },
+            size: { type: 'integer' },
+            weight: { type: 'integer' },
+            interval: { type: 'integer' },
+            mempoolTxs: { type: 'integer' },
+            mempoolBytes: { type: 'integer' },
+            network: { type: 'string' },
+            version: { type: 'integer' },
+            subversion: { type: 'string' },
+            connections: { type: 'integer' },
+            headers: { type: 'integer' },
+            blocks: { type: 'integer' },
+            verificationProgress: { type: 'number' },
+            initialBlockDownload: { type: 'boolean' }
           }
         },
         502: {

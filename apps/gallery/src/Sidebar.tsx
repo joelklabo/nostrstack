@@ -11,11 +11,13 @@ import { WalletView } from './WalletView';
 interface SidebarProps {
   currentView: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages';
   setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages') => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 
-export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
+export function Sidebar({ currentView, setCurrentView, mobileOpen, onMobileClose }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout } = useAuth();
   const cfg = useNostrstackConfig();
@@ -132,21 +134,24 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
     if (view === 'search') {
       navigateTo('/search');
       setCurrentView('search');
+      onMobileClose?.();
       return;
     }
     if (view === 'personal-site-kit') {
       navigateTo('/personal-site-kit');
       setCurrentView('personal-site-kit');
+      onMobileClose?.();
       return;
     }
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/search')) {
       navigateTo('/');
     }
     setCurrentView(view);
+    onMobileClose?.();
   };
 
   return (
-    <nav className="sidebar-nav">
+    <nav className={`sidebar-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
       <div className="sidebar-header">
         <div className="sidebar-title">
           <span>NostrStack</span>
@@ -158,42 +163,49 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         <button 
           className={`nav-item ${currentView === 'feed' ? 'active' : ''}`}
           onClick={() => handleNavigate('feed')}
+          aria-current={currentView === 'feed' ? 'page' : undefined}
         >
           Feed
         </button>
         <button 
           className={`nav-item ${currentView === 'search' ? 'active' : ''}`}
           onClick={() => handleNavigate('search')}
+          aria-current={currentView === 'search' ? 'page' : undefined}
         >
           Find friend
         </button>
         <button 
           className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
           onClick={() => handleNavigate('profile')}
+          aria-current={currentView === 'profile' ? 'page' : undefined}
         >
           Profile
         </button>
         <button 
           className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
           onClick={() => handleNavigate('notifications')}
+          aria-current={currentView === 'notifications' ? 'page' : undefined}
         >
           Notifications
         </button>
         <button 
           className={`nav-item ${currentView === 'messages' ? 'active' : ''}`}
           onClick={() => handleNavigate('messages')}
+          aria-current={currentView === 'messages' ? 'page' : undefined}
         >
           Messages
         </button>
         <button 
           className={`nav-item ${currentView === 'personal-site-kit' ? 'active' : ''}`}
           onClick={() => handleNavigate('personal-site-kit')}
+          aria-current={currentView === 'personal-site-kit' ? 'page' : undefined}
         >
           Site Kit
         </button>
         <button 
           className={`nav-item ${currentView === 'relays' ? 'active' : ''}`}
           onClick={() => handleNavigate('relays')}
+          aria-current={currentView === 'relays' ? 'page' : undefined}
         >
           Relays
         </button>
@@ -201,6 +213,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           <button
             className={`nav-item ${currentView === 'offers' ? 'active' : ''}`}
             onClick={() => handleNavigate('offers')}
+            aria-current={currentView === 'offers' ? 'page' : undefined}
           >
             Offers
           </button>
@@ -208,16 +221,17 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
         <button 
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
           onClick={() => handleNavigate('settings')}
+          aria-current={currentView === 'settings' ? 'page' : undefined}
         >
           Settings
         </button>
       </div>
 
-      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--color-border-default)' }}>
+      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--color-border-default)' }} role="region" aria-label="Wallet and system status">
         {wallet && (
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Wallet</div>
-            <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: '600' }} role="status" aria-label={`Wallet balance: ${wallet.balance?.toLocaleString() ?? 0} sats`}>
               {wallet.balance?.toLocaleString() ?? 0} <span style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>sats</span>
             </div>
             {(wallet.balance ?? 0) === 0 && (
@@ -227,7 +241,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
             )}
             <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', marginTop: '0.25rem' }}>{wallet.name || 'LNbits'}</div>
             {showRegtestActions && (
-              <div className="wallet-actions">
+              <div className="wallet-actions" role="group" aria-label="Wallet actions">
                 <button
                   type="button"
                   className="wallet-action-btn"
@@ -235,6 +249,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                   disabled={isFunding || !apiBaseConfig.isConfigured}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   aria-busy={isFunding}
+                  aria-label={isFunding ? 'Mining regtest blocks' : 'Add funds to wallet using regtest'}
                 >
                   {!apiBaseConfig.isConfigured
                     ? 'REGTEST_CONFIG_REQUIRED'
@@ -252,6 +267,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
                   className="wallet-action-btn"
                   onClick={() => setWithdrawOpen(true)}
                   disabled={!withdrawAvailable}
+                  aria-label="Withdraw sats via LNURL"
                 >
                   {!withdrawAvailable ? withdrawUnavailableReason : 'Withdraw via LNURL'}
                 </button>
@@ -265,7 +281,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           </div>
         )}
         
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '1rem' }} role="status" aria-label="Network and system status">
           <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
             Network
           </div>
@@ -279,9 +295,9 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
             <span className={`sidebar-network-status is-${lightningTone}`}>{lightningLabel}</span>
           </div>
           {status?.telemetryError && (
-            <div className="sidebar-network-meta sidebar-network-warning">Telemetry: {status.telemetryError}</div>
+            <div className="sidebar-network-meta sidebar-network-warning" role="alert">Telemetry: {status.telemetryError}</div>
           )}
-          <div className="sidebar-network-meta">Events: {eventCount}</div>
+          <div className="sidebar-network-meta" aria-label={`${eventCount} events in feed`}>Events: {eventCount}</div>
           {isMainnet && (
             <Alert tone="danger" title="Mainnet enabled" style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}>
               Real sats and payments are live.
@@ -289,7 +305,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           )}
         </div>
 
-        <button className="nav-item" onClick={logout} style={{ color: 'var(--color-danger-fg)', paddingLeft: 0 }}>
+        <button className="nav-item" onClick={logout} style={{ color: 'var(--color-danger-fg)', paddingLeft: 0 }} aria-label="Log out of NostrStack">
           Log out
         </button>
       </div>

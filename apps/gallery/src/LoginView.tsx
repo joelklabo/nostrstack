@@ -91,6 +91,19 @@ export function LoginView() {
     setCopyStatus('idle');
   }, []);
 
+  // Handle Escape key to close LNURL modal
+  useEffect(() => {
+    if (!lnurlModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeLnurlModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lnurlModalOpen, closeLnurlModal]);
+
   const handleCopyLnurl = useCallback(async () => {
     if (!lnurlRequest?.lnurl) return;
     try {
@@ -211,22 +224,22 @@ export function LoginView() {
           </div>
           
           {error && (
-            <Alert tone="danger">
+            <Alert tone="danger" role="alert">
               {error}
             </Alert>
           )}
 
           {mode === 'menu' && (
-            <div className="auth-options">
-              <button className="auth-btn" onClick={() => loginWithNip07()}>
+            <div className="auth-options" role="group" aria-label="Authentication methods">
+              <button className="auth-btn" onClick={() => loginWithNip07()} aria-label="Sign in with Nostr browser extension">
                 Sign in with Extension (NIP-07)
               </button>
               {enableLnurlAuth && (
-                <button className="auth-btn" onClick={openLnurlModal}>
+                <button className="auth-btn" onClick={openLnurlModal} aria-label="Login using Lightning wallet">
                   Login with Lightning (LNURL-auth)
                 </button>
               )}
-              <button className="auth-btn" style={{ background: 'transparent', borderStyle: 'dashed' }} onClick={() => setMode('nsec')}> 
+              <button className="auth-btn" style={{ background: 'transparent', borderStyle: 'dashed' }} onClick={() => setMode('nsec')} aria-label="Enter private key manually"> 
                 Enter nsec manually
               </button>
             </div>
@@ -242,9 +255,10 @@ export function LoginView() {
                 padding: '0.5rem',
                 borderRadius: '6px',
                 border: '1px solid var(--color-attention-fg)'
-              }}>
+              }} role="alert">
                 <strong>Warning:</strong> Entering your private key directly is risky. Use a burner key or an extension if possible.
               </div>
+              <label htmlFor="nsec-input" className="sr-only">Private key (nsec)</label>
               <input 
                 type="password" 
                 className="terminal-input"
@@ -253,15 +267,17 @@ export function LoginView() {
                 placeholder="nsec1..." 
                 value={nsec}
                 onChange={e => setNsec(e.target.value)}
+                aria-describedby="nsec-warning"
               />
               <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
-                <button className="auth-btn" style={{ backgroundColor: 'var(--color-accent-fg)', color: 'white', border: 'none' }} onClick={() => loginWithNsec(nsec).catch(() => {})}>
+                <button className="auth-btn" style={{ backgroundColor: 'var(--color-accent-fg)', color: 'white', border: 'none' }} onClick={() => loginWithNsec(nsec).catch(() => {})} aria-label="Sign in with private key">
                   Sign in
                 </button>
                 <button 
                   className="auth-btn" 
                   style={{ width: 'auto', border: 'none' }} 
                   onClick={() => setMode('menu')}
+                  aria-label="Cancel and go back"
                 >
                   Cancel
                 </button>
@@ -273,13 +289,13 @@ export function LoginView() {
 
       {lnurlModalOpen && (
         <div className="lnurl-auth-overlay">
-          <div className="lnurl-auth-modal">
+          <div className="lnurl-auth-modal" role="dialog" aria-modal="true" aria-labelledby="lnurl-title" aria-describedby="lnurl-subtitle">
             <div className="lnurl-auth-header">
               <div>
-                <div className="lnurl-auth-title">Lightning Login</div>
-                <div className="lnurl-auth-subtitle">Sign in by approving a LNURL-auth request.</div>
+                <div id="lnurl-title" className="lnurl-auth-title">Lightning Login</div>
+                <div id="lnurl-subtitle" className="lnurl-auth-subtitle">Sign in by approving a LNURL-auth request.</div>
               </div>
-              <button className="lnurl-auth-close" onClick={closeLnurlModal} aria-label="Close">
+              <button className="lnurl-auth-close" onClick={closeLnurlModal} aria-label="Close Lightning login dialog">
                 ×
               </button>
             </div>
@@ -288,6 +304,8 @@ export function LoginView() {
                 <Alert 
                   tone={lnurlStatus === 'error' || lnurlStatus === 'expired' || lnurlStatus === 'timeout' ? 'danger' : lnurlStatus === 'verified' ? 'success' : 'info'}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+                  role="status"
+                  aria-live="polite"
                 >
                   {(lnurlStatus === 'loading' || lnurlStatus === 'verified') && <span className="nostrstack-spinner" aria-hidden="true" />}
                   {statusMessage}
@@ -298,14 +316,14 @@ export function LoginView() {
                 <div className="lnurl-auth-grid">
                   <div className="lnurl-auth-qr">
                     {lnurlQr ? (
-                      <img src={lnurlQr} alt="LNURL-auth QR" />
+                      <img src={lnurlQr} alt="LNURL-auth QR code for Lightning login" role="img" />
                     ) : (
                       <div className="lnurl-auth-qr-fallback">LNURL</div>
                     )}
                   </div>
                   <div className="lnurl-auth-meta">
                     {lnurlStatus === 'polling' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', color: 'var(--color-fg-muted)' }} role="status">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', color: 'var(--color-fg-muted)' }} role="status" aria-live="polite">
                         <span className="nostrstack-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />
                         POLLING_STATUS...
                       </div>
@@ -314,20 +332,20 @@ export function LoginView() {
                     <div className="lnurl-auth-instructions">
                       Scan with a Lightning wallet that supports LNURL-auth and approve the request.
                     </div>
-                    <div className="lnurl-auth-actions">
-                      <button className="action-btn" onClick={handleCopyLnurl}>
+                    <div className="lnurl-auth-actions" role="group" aria-label="LNURL actions">
+                      <button className="action-btn" onClick={handleCopyLnurl} aria-label="Copy LNURL to clipboard">
                         {copyStatus === 'copied' ? 'COPIED' : 'COPY_LNURL'}
                       </button>
-                      <button className="action-btn" onClick={handleOpenWallet}>
+                      <button className="action-btn" onClick={handleOpenWallet} aria-label="Open Lightning wallet">
                         OPEN_WALLET
                       </button>
                       {showRetry && (
-                        <button className="action-btn" onClick={openLnurlModal}>
+                        <button className="action-btn" onClick={openLnurlModal} aria-label="Generate new QR code">
                           NEW_QR
                         </button>
                       )}
                     </div>
-                    {copyStatus === 'error' && <div className="lnurl-auth-hint">Clipboard unavailable.</div>}
+                    {copyStatus === 'error' && <div className="lnurl-auth-hint" role="alert">Clipboard unavailable.</div>}
                   </div>
                 </div>
               )}

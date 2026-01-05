@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import type { Event } from 'nostr-tools';
-import { NotificationItem, type NotificationGroup } from './NotificationItem';
+
+import { type NotificationGroup,NotificationItem } from './NotificationItem';
 
 // Mock events for different notification types
 const mockReactionEvent: Event = {

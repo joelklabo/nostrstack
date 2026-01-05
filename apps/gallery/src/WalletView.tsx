@@ -50,6 +50,19 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
     onClose();
   }, [onClose, reset]);
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleClose]);
+
   const fetchWithdraw = useCallback(async () => {
     if (!open) return;
     if (!withdrawEnabled) {
@@ -180,11 +193,11 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
 
   return (
     <div className="withdraw-overlay" role="presentation" onClick={handleClose}>
-      <div className="withdraw-modal" onClick={(event) => event.stopPropagation()}>
+      <div className="withdraw-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="withdraw-title" aria-describedby="withdraw-subtitle">
         <div className="withdraw-header">
           <div>
-            <div className="withdraw-title">Withdraw Funds</div>
-            <div className="withdraw-subtitle">Send sats to your Lightning wallet via LNURL-withdraw.</div>
+            <div id="withdraw-title" className="withdraw-title">Withdraw Funds</div>
+            <div id="withdraw-subtitle" className="withdraw-subtitle">Send sats to your Lightning wallet via LNURL-withdraw.</div>
           </div>
           <button className="withdraw-close" onClick={handleClose} aria-label="Close withdraw dialog">×</button>
         </div>
@@ -194,6 +207,8 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
             <Alert 
               tone={status === 'error' || status === 'expired' ? 'danger' : status === 'paid' ? 'success' : 'info'}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+              role="status"
+              aria-live="polite"
             >
               {status === 'loading' && (
                 <>
@@ -212,10 +227,10 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
           {request && status !== 'loading' && (
             <div className="withdraw-grid">
               <div className="withdraw-qr">
-                {qr ? <img src={qr} alt="LNURL withdraw QR" /> : <div className="withdraw-qr-fallback">LNURL</div>}
+                {qr ? <img src={qr} alt="LNURL withdraw QR code" role="img" /> : <div className="withdraw-qr-fallback">LNURL</div>}
               </div>
               <div className="withdraw-details">
-                <div className="withdraw-amount">
+                <div className="withdraw-amount" role="status" aria-label={`${balanceSats?.toLocaleString() ?? 0} sats available to withdraw`}>
                   {balanceSats?.toLocaleString() ?? 0} sats available
                 </div>
                 {(balanceSats ?? 0) === 0 && (
@@ -223,16 +238,16 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
                     Stack some sats first to withdraw them!
                   </div>
                 )}
-                <code className="withdraw-lnurl">{request.lnurl}</code>
-                <div className="withdraw-actions">
-                  <button className="action-btn" onClick={handleCopy} disabled={!canWithdraw}>
+                <code className="withdraw-lnurl" aria-label="LNURL withdraw code">{request.lnurl}</code>
+                <div className="withdraw-actions" role="group" aria-label="Withdrawal actions">
+                  <button className="action-btn" onClick={handleCopy} disabled={!canWithdraw} aria-label="Copy LNURL to clipboard">
                     {copyState === 'copied' ? 'COPIED' : 'COPY_LNURL'}
                   </button>
-                  <button className="action-btn" onClick={handleOpenWallet} disabled={!canWithdraw}>
+                  <button className="action-btn" onClick={handleOpenWallet} disabled={!canWithdraw} aria-label="Open Lightning wallet">
                     OPEN_WALLET
                   </button>
                 </div>
-                {copyState === 'error' && <div className="withdraw-hint">Clipboard unavailable.</div>}
+                {copyState === 'error' && <div className="withdraw-hint" role="alert">Clipboard unavailable.</div>}
               </div>
             </div>
           )}

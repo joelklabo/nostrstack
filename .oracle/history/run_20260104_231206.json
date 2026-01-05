@@ -1,0 +1,51 @@
+{
+  "prompt": "Review the prefers-reduced-motion accessibility implementation. Check coverage, edge cases, and ensure all animations/transitions respect user motion preferences. Files changed: apps/gallery/src/gallery.css, apps/gallery/src/styles/shortcuts.css, apps/gallery/src/styles/tour.css, apps/gallery/src/styles/withdraw.css, apps/gallery/src/ui/Image.tsx",
+  "elapsed": 96.69409918785095,
+  "decomposition": {
+    "domains": [
+      {
+        "name": "Motion Failure Modes",
+        "agent_role": "You are The Adversary. Trust nothing; seek residual motion that violates prefers-reduced-motion across CSS and inline styles.",
+        "negative_constraint": "Do NOT propose fixes; only surface concrete violations or missing coverage.",
+        "task": "Enumerate all animations/transitions/keyframes in apps/gallery/src/gallery.css, apps/gallery/src/styles/shortcuts.css, apps/gallery/src/styles/tour.css, apps/gallery/src/styles/withdraw.css, and inline styles in apps/gallery/src/ui/Image.tsx; prove whether each is gated by @media (prefers-reduced-motion: reduce) or an explicit disable path, flag any that are not."
+      },
+      {
+        "name": "CSS Simplification & Consistency",
+        "agent_role": "You are The Minimalist. Reduce complexity and enforce consistent motion handling patterns.",
+        "negative_constraint": "Do NOT add new animations; do not broaden scope beyond the listed files.",
+        "task": "Find duplicated or inconsistent prefers-reduced-motion guards in the four CSS files; propose minimal consolidation (shared rules, removing redundant transitions/keyframes) to ensure all transitions/animations are either removed or consistently disabled under reduce."
+      },
+      {
+        "name": "Implementation Compliance",
+        "agent_role": "You are The Pragmatist. Focus on concrete logic and runtime behavior.",
+        "negative_constraint": "Do NOT redesign components; stay within existing patterns and files.",
+        "task": "Trace how Image.tsx determines animation/transition behavior (Skeleton placeholder, opacity fade, matchMedia usage) and verify it respects prefers-reduced-motion including SSR and re-render edge cases; map any props or style paths that could bypass the reduced-motion intent."
+      },
+      {
+        "name": "UX & Accessibility Validation",
+        "agent_role": "You are The Empath. Optimize for user comfort and accessibility.",
+        "negative_constraint": "Do NOT discuss performance or styling aesthetics unrelated to motion/a11y.",
+        "task": "Evaluate user-facing flows (overlays, modals, onboarding, shortcuts, withdraw) in the CSS files to ensure motion is eliminated or significantly reduced under prefers-reduced-motion; call out edge cases like spinners, opacity fades, scale transforms, and focus/hover transitions that may still animate."
+      }
+    ]
+  },
+  "results_summary": [
+    {
+      "name": "UX & Accessibility Validation",
+      "len": 0
+    },
+    {
+      "name": "CSS Simplification & Consistency",
+      "len": 0
+    },
+    {
+      "name": "Implementation Compliance",
+      "len": 72
+    },
+    {
+      "name": "Motion Failure Modes",
+      "len": 865
+    }
+  ],
+  "synthesis_len": 2730
+}

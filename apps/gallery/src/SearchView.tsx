@@ -142,7 +142,7 @@ export function SearchView() {
         </div>
       </header>
 
-      <form className="search-card" onSubmit={handleSubmit}>
+      <form className="search-card" onSubmit={handleSubmit} role="search" aria-label="Search Nostr">
         <label className="search-label" htmlFor="friend-search">
           Search query
         </label>
@@ -154,15 +154,16 @@ export function SearchView() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Keywords, npub, or name@domain"
             autoComplete="off"
+            aria-describedby="search-helper"
           />
-          <button className="action-btn" type="submit">
+          <button className="action-btn" type="submit" aria-label="Execute search">
             Search
           </button>
         </div>
-        <div className="search-helper">
+        <div id="search-helper" className="search-helper">
           Try "bitcoin", "nostr", or an npub1...
         </div>
-        <div className={`search-status search-status--${status}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} role="status">
+        <div className={`search-status search-status--${status}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} role="status" aria-live="polite">
           {(status === 'validating' || status === 'resolving' || notesLoading) && <span className="nostrstack-spinner" style={{ width: '14px', height: '14px' }} aria-hidden="true" />}
           {statusLabel}
         </div>

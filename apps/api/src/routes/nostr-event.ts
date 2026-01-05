@@ -283,7 +283,13 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
           },
           replyThreadId: { type: 'string' },
           replies: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          replyPage: { type: 'string' }
+          replyPage: {
+            type: 'object',
+            properties: {
+              hasMore: { type: 'boolean' },
+              nextCursor: { type: ['string', 'null'] }
+            }
+          }
         }
       },
       400: {

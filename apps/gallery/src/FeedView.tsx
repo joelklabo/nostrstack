@@ -3,13 +3,13 @@ import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
 import type { AbstractRelay } from 'nostr-tools/abstract-relay';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { markRelayFailure } from './nostr/api';
 import { relayMonitor } from './nostr/relayHealth';
-import { filterSpam, getSpamStats } from './nostr/spamFilter';
+import { filterSpam } from './nostr/spamFilter';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { JsonView } from './ui/JsonView';
@@ -32,7 +32,7 @@ type RelayStatus = {
   reason?: string;
 };
 
-export function PostItem({
+export const PostItem = memo(function PostItem({
   post,
   authorLightningAddress,
   apiBase,
@@ -59,13 +59,19 @@ export function PostItem({
   const renderContent = () => {
     if (hasContentWarning && !showContent) {
       return (
-        <div className="content-warning-placeholder">
-          <div className="content-warning-icon">⚠️</div>
+        <div className="content-warning-placeholder" role="region" aria-label="Content warning">
+          <div className="content-warning-icon" aria-hidden="true">⚠️</div>
           <div className="content-warning-text">
             <strong>Content Warning</strong>
             <span>{contentWarningReason}</span>
           </div>
-          <button className="action-btn" onClick={() => setShowContent(true)}>Show Content</button>
+          <button 
+            className="action-btn" 
+            onClick={() => setShowContent(true)}
+            aria-label={`Show content with warning: ${contentWarningReason}`}
+          >
+            Show Content
+          </button>
         </div>
       );
     }
@@ -73,13 +79,15 @@ export function PostItem({
     return (
       <div 
         className="post-content" 
-        dangerouslySetInnerHTML={{ __html: md.render(post.content) }} 
+        dangerouslySetInnerHTML={{ __html: md.render(post.content) }}
+        role="article"
+        aria-label="Post content"
       />
     );
   };
 
   return (
-    <article className="post-card" tabIndex={0}>
+    <article className="post-card" tabIndex={0} aria-label={`Post by ${post.pubkey.slice(0, 8)}`}>
       <header className="post-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ProfileLink
@@ -92,8 +100,13 @@ export function PostItem({
               textDecoration: 'none'
             }}
           />
-          <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>•</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>{new Date(post.created_at * 1000).toLocaleTimeString()}</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }} aria-hidden="true">•</span>
+          <time 
+            style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}
+            dateTime={new Date(post.created_at * 1000).toISOString()}
+          >
+            {new Date(post.created_at * 1000).toLocaleTimeString()}
+          </time>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span style={{ 
@@ -103,7 +116,10 @@ export function PostItem({
             borderRadius: '10px',
             backgroundColor: 'var(--color-canvas-subtle)',
             color: 'var(--color-fg-muted)'
-          }}>
+          }}
+          role="status"
+          aria-label={`Event kind ${post.kind}`}
+          >
             Kind {post.kind}
           </span>
         </div>
@@ -134,7 +150,7 @@ export function PostItem({
         renderContent()
       )}
       
-      <div className="post-actions">
+      <div className="post-actions" role="group" aria-label="Post actions">
         <ReactionButton event={post} />
         <ZapButton
           event={post}
@@ -144,11 +160,19 @@ export function PostItem({
           onZapSuccess={() => setIsZapped(true)}
           className={isZapped ? 'zapped' : ''}
         />
-        <button className="action-btn" onClick={() => setIsReplying(true)}>Reply</button>
+        <button 
+          className="action-btn" 
+          onClick={() => setIsReplying(true)}
+          aria-label="Reply to this post"
+        >
+          Reply
+        </button>
         <button 
           className="action-btn" 
           onClick={() => setShowJson(!showJson)}
           style={{ marginLeft: 'auto' }}
+          aria-label={showJson ? 'Hide event source JSON' : 'View event source JSON'}
+          aria-expanded={showJson}
         >
           {showJson ? 'Hide Source' : 'View Source'}
         </button>
@@ -162,14 +186,14 @@ export function PostItem({
         />
       )}
 
-      <ReplyModal 
-        isOpen={isReplying} 
-        onClose={() => setIsReplying(false)} 
-        parentEvent={post} 
+      <ReplyModal
+        isOpen={isReplying}
+        onClose={() => setIsReplying(false)}
+        parentEvent={post}
       />
     </article>
   );
-}
+});
 
 export function FeedView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
@@ -343,7 +367,7 @@ export function FeedView() {
   }
 
   return (
-    <div className="feed-stream">
+    <main className="feed-stream" role="main" aria-label="Live feed">
       <div style={{ marginBottom: '1.5rem' }}>
         <PostEditor />
       </div>
@@ -369,10 +393,12 @@ export function FeedView() {
               borderColor: spamFilterEnabled ? 'var(--color-success-fg)' : 'var(--color-border-default)',
               color: spamFilterEnabled ? 'var(--color-success-fg)' : 'var(--color-fg-muted)'
             }}
+            aria-label={spamFilterEnabled ? 'Spam filter enabled, click to disable' : 'Spam filter disabled, click to enable'}
+            aria-pressed={spamFilterEnabled}
           >
             {spamFilterEnabled ? '🛡️ Spam Filter: ON' : 'Spam Filter: OFF'}
           </button>
-          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }} role="status" aria-live="polite">
             <span style={{
               display: 'inline-block',
               width: '8px',
@@ -380,7 +406,9 @@ export function FeedView() {
               borderRadius: '50%',
               background: relaySummary.errors > 0 ? 'var(--color-attention-fg)' : 'var(--color-success-fg)',
               marginRight: '6px'
-            }} />
+            }}
+            aria-hidden="true"
+            />
             {relaySummary.online}/{relaySummary.total} relays
           </div>
         </div>
@@ -418,6 +446,8 @@ export function FeedView() {
             onClick={loadMore} 
             disabled={isLoadingMore}
             style={{ width: 'auto', minWidth: '200px' }}
+            aria-label="Load more posts"
+            aria-busy={isLoadingMore}
           >
             {isLoadingMore ? (
               <>
@@ -430,6 +460,6 @@ export function FeedView() {
           </button>
         </div>
       )}
-    </div>
+    </main>
   );
 }

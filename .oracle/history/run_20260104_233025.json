@@ -1,0 +1,51 @@
+{
+  "prompt": "Review the three new Storybook stories created for Image, BitcoinNodeCard, and ProfileLink components. Check for completeness, accessibility coverage, edge cases, and best practices. Files: apps/gallery/src/ui/Image.stories.tsx, apps/gallery/src/ui/BitcoinNodeCard.stories.tsx, apps/gallery/src/ui/ProfileLink.stories.tsx",
+  "elapsed": 90.39843511581421,
+  "decomposition": {
+    "domains": [
+      {
+        "name": "Failure & Mismatch Hunt",
+        "agent_role": "You are The Adversary. Goal: break these stories by probing error, mismatch, and loading paths in Image, BitcoinNodeCard, ProfileLink.",
+        "negative_constraint": "Do NOT propose fixes or rewrites; only enumerate concrete failures and missing hard cases.",
+        "task": "For each story file, trace args and rendered states to prove whether error/loading/mismatch paths are represented; identify any untested crash, null, or misconfiguration path (e.g., missing alt, network mismatch, telemetry errors) that lacks a story."
+      },
+      {
+        "name": "UX & Accessibility Sweep",
+        "agent_role": "You are The Empath. Goal: verify accessibility and UX coverage across the stories.",
+        "negative_constraint": "Do NOT discuss implementation internals; focus strictly on user-facing a11y/UX signals in stories.",
+        "task": "Check each story\u2019s args and descriptions for alt text, labels/titles, focus/hover states, skeleton/error affordances; flag missing ARIA or insufficient a11y scenarios (e.g., absent alt, tooltip/title consistency, hover-only cues)."
+      },
+      {
+        "name": "Coverage & Edge Completeness",
+        "agent_role": "You are The Pragmatist. Goal: ensure scenario coverage is practical and exhaustive for typical and edge cases.",
+        "negative_constraint": "Do NOT redesign components; only assess whether current stories cover necessary states and suggest missing scenarios by name.",
+        "task": "Evaluate whether stories span core variants (success/load/error/fallback, network states, minimal/inline usage) and call out any gaps like missing control knobs for props, absent interaction cases, or unrealistic data (e.g., heights, timestamps)."
+      },
+      {
+        "name": "Storybook Best Practices Check",
+        "agent_role": "You are The Minimalist. Goal: enforce Storybook hygiene\u2014minimal, typed, DRY stories.",
+        "negative_constraint": "Do NOT add new features; only point out verbosity, missing argTypes/controls, or redundant stories.",
+        "task": "Inspect meta definitions and stories for unnecessary duplication, missing controls/parameters, inconsistent naming/descriptions, and ensure args/types align with component props; highlight where to trim or consolidate while keeping coverage."
+      }
+    ]
+  },
+  "results_summary": [
+    {
+      "name": "Storybook Best Practices Check",
+      "len": 0
+    },
+    {
+      "name": "UX & Accessibility Sweep",
+      "len": 0
+    },
+    {
+      "name": "Coverage & Edge Completeness",
+      "len": 72
+    },
+    {
+      "name": "Failure & Mismatch Hunt",
+      "len": 770
+    }
+  ],
+  "synthesis_len": 3084
+}

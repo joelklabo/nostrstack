@@ -1,8 +1,10 @@
+import '../styles/tour.css';
+
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
-import { OnboardingTour } from './OnboardingTour';
+
 import { type OnboardingStep } from '../hooks/useOnboarding';
-import '../styles/tour.css';
+import { OnboardingTour } from './OnboardingTour';
 
 // Mock the useOnboarding hook for Storybook
 const mockSteps: OnboardingStep[] = [
@@ -73,7 +75,7 @@ function InteractiveTour() {
   };
 
   // Mock the hook
-  const useOnboarding = () => mockUseOnboarding;
+  const _useOnboarding = () => mockUseOnboarding;
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -163,7 +165,7 @@ export const Interactive: Story = {
 
 export const WelcomeStep: Story = {
   render: () => {
-    const mockUseOnboarding = () => ({
+    const _mockUseOnboarding = () => ({
       isActive: true,
       step: mockSteps[0],
       isLastStep: false,
@@ -187,7 +189,7 @@ export const WithTargetElement: Story = {
   render: () => {
     const [currentStep, setCurrentStep] = useState(1);
 
-    const mockUseOnboarding = () => ({
+    const _mockUseOnboarding = () => ({
       isActive: true,
       step: mockSteps[currentStep],
       isLastStep: currentStep === mockSteps.length - 1,

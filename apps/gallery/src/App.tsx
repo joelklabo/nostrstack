@@ -4,7 +4,7 @@ import {
   createNostrstackBrandTheme,
   type NostrstackBrandPreset
 } from '@nostrstack/embed';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
 import { DMView } from './DMView';
@@ -58,7 +58,11 @@ function AppShell() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
   const [currentView, setCurrentView] = useState<View>('feed');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
+
+  const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), []);
+  const handleMobileMenuToggle = useCallback(() => setMobileMenuOpen(prev => !prev), []);
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
@@ -122,7 +126,34 @@ function AppShell() {
     <div className="social-layout">
       <OnboardingTour />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+
+      {/* Mobile hamburger button */}
+      <button
+        className={`hamburger-btn${mobileMenuOpen ? ' is-open' : ''}`}
+        onClick={handleMobileMenuToggle}
+        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={mobileMenuOpen}
+      >
+        <span className="hamburger-icon">
+          <span />
+          <span />
+          <span />
+        </span>
+      </button>
+
+      {/* Mobile overlay */}
+      <div
+        className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
+        onClick={handleMobileMenuClose}
+        aria-hidden="true"
+      />
+
+      <Sidebar
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={handleMobileMenuClose}
+      />
       <main className="feed-container">
         {profileRouteError && (
           <Alert tone="danger" title="Routing Error">
