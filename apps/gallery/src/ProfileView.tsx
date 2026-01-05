@@ -13,6 +13,7 @@ import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { Alert } from './ui/Alert';
+import { Image } from './ui/Image';
 import { PostSkeleton } from './ui/PostSkeleton';
 import { Skeleton } from './ui/Skeleton';
 
@@ -254,7 +255,12 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       ) : (
         <>
           <div className="profile-header">
-            <img src={profile?.picture || FALLBACK_AVATAR} alt="Profile" className="profile-picture" />
+            <Image 
+              src={profile?.picture || FALLBACK_AVATAR} 
+              alt="Profile" 
+              className="profile-picture" 
+              fallback={FALLBACK_AVATAR}
+            />
             <div className="profile-info">
               <div className="profile-title-row">
                 <h2 className="profile-name">{profile?.display_name || profile?.name || 'UNKNOWN_USER'}</h2>
