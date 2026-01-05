@@ -39,6 +39,18 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
   pnpm format
   ```
 
+- **Storybook (Component Development)**:
+
+  ```bash
+  # Run Storybook dev server
+  pnpm --filter gallery storybook
+  
+  # Build Storybook static site
+  pnpm --filter gallery build-storybook
+  ```
+
+  Storybook provides an isolated environment for developing and testing UI components. We use it with Chromatic for visual regression testing.
+
 ## Project Structure
 
 - `apps/gallery`: The main social network frontend (React/Vite).
@@ -54,6 +66,20 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
 3. Commit your changes with descriptive messages (we follow Conventional Commits).
 4. Push your branch to your fork.
 5. Open a Pull Request against the `main` branch of the original repository.
+6. **Visual Regression Testing**: If your PR modifies UI components or adds new stories, Chromatic will automatically run visual regression tests. Review any visual changes in the Chromatic UI linked in the PR checks.
+
+## Visual Regression Testing with Chromatic
+
+We use [Chromatic](https://www.chromatic.com/) to catch unintended visual changes in UI components. The workflow:
+
+1. **Push changes**: When you push UI changes (`.tsx`, `.css`, or `.stories.tsx` files), the Chromatic GitHub Action automatically runs.
+2. **Review diffs**: Chromatic captures screenshots of all stories and compares them to the baseline. Review any visual changes in the Chromatic UI.
+3. **Accept or reject**: If the changes are intentional, accept them in Chromatic to update the baseline. Otherwise, fix the issue and push again.
+
+Key configuration:
+- Stories: `apps/gallery/src/**/*.stories.tsx` and `packages/blog-kit/src/*.stories.tsx`
+- Workflow: `.github/workflows/chromatic.yml`
+- Chromatic project: Set `CHROMATIC_PROJECT_TOKEN` in repository secrets
 
 ## License
 
