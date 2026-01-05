@@ -1,13 +1,14 @@
 import './styles/lightning-card.css';
 import './styles/profile-tip.css';
 
-import { SendSats } from '@nostrstack/blog-kit';
+import { SendSats, useAuth } from '@nostrstack/blog-kit';
 import { type Event, type Filter, nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { paymentConfig } from './config/payments';
 import { PostItem } from './FeedView'; // Re-use PostItem from FeedView
+import { useContactList } from './hooks/useContactList';
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { Alert } from './ui/Alert';
@@ -41,6 +42,23 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
   const [error, setError] = useState<string | null>(null);
   const [lightningQr, setLightningQr] = useState<string | null>(null);
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+
+  const { isFollowing, follow, unfollow, loading: contactsLoading } = useContactList();
+  const { pubkey: myPubkey } = useAuth();
+  const isMe = myPubkey === pubkey;
+  const following = isFollowing(pubkey);
+
+  const handleFollowToggle = async () => {
+    try {
+      if (following) {
+        await unfollow(pubkey);
+      } else {
+        await follow(pubkey);
+      }
+    } catch (err) {
+      console.error('Failed to toggle follow', err);
+    }
+  };
 
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
@@ -252,12 +270,20 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
                   </a>
                 </p>
               )}
-              <button
-                className="action-btn"
-                style={{ marginTop: '1rem', borderColor: 'var(--terminal-accent)', color: 'var(--terminal-accent)' }}
-              >
-                [+] FOLLOW_USER
-              </button>
+              {!isMe && myPubkey && (
+                <button
+                  className="action-btn"
+                  style={{ 
+                    marginTop: '1rem', 
+                    borderColor: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)', 
+                    color: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)' 
+                  }}
+                  onClick={handleFollowToggle}
+                  disabled={contactsLoading}
+                >
+                  {contactsLoading ? 'UPDATING...' : following ? '[-] UNFOLLOW' : '[+] FOLLOW'}
+                </button>
+              )}
             </div>
           </div>
 
