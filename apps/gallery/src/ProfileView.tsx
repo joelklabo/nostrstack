@@ -120,13 +120,17 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
     if (relaysLoading) return;
     setEventsLoading(true);
     const filter: Filter = { kinds: [1], authors: [pubkey], limit: 20 };
+    const seenIds = new Set<string>();
     try {
       const sub = pool.subscribeMany(relayList, filter, {
         onevent: (event) => {
-          setEvents((prev) => {
-            if (prev.some((existing) => existing.id === event.id)) return prev;
-            return [...prev, event].sort((a, b) => b.created_at - a.created_at);
-          });
+          if (!seenIds.has(event.id)) {
+            seenIds.add(event.id);
+            setEvents((prev) => {
+              if (prev.some((existing) => existing.id === event.id)) return prev;
+              return [...prev, event].sort((a, b) => b.created_at - a.created_at);
+            });
+          }
         },
         oneose: () => {
           setEventsLoading(false);
@@ -157,10 +161,9 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
       const olderEvents = await pool.querySync(relayList, filter);
       const uniqueOlder = olderEvents.filter(p => !events.some(e => e.id === p.id));
       
-      setEvents(prev => {
-        const next = [...prev, ...uniqueOlder].sort((a, b) => b.created_at - a.created_at);
-        return next;
-      });
+      if (uniqueOlder.length > 0) {
+        setEvents(prev => [...prev, ...uniqueOlder].sort((a, b) => b.created_at - a.created_at));
+      }
     } catch (err) {
       console.error('Failed to load more profile events', err);
     } finally {

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
-import { loginWithNsec, mockNostrEventApi, seedMockEvent } from './helpers';
-import { buildNostrEventResponse } from './helpers';
+import { expect, test } from '@playwright/test';
 import * as fs from 'fs';
+
+import { buildNostrEventResponse, loginWithNsec, mockNostrEventApi, seedMockEvent } from './helpers';
 
 test('Zap Modal flow', async ({ page }) => {
   // Ensure the mock relay is installed by waiting for window.nostr
@@ -25,9 +25,10 @@ test('Zap Modal flow', async ({ page }) => {
   } catch (e) {
     console.error('Test failed: Post not visible. Dumping page content and logs.');
     await page.screenshot({ path: 'test-results/post-not-visible-failure.png', fullPage: true });
-    await page.content().then(content => require('fs').writeFileSync('test-results/post-not-visible-failure.html', content));
-    const logs = await page.evaluate(() => (window as any).VITE_PLAYWRIGHT_LOGS || []);
-    require('fs').writeFileSync('test-results/post-not-visible-failure-console.log', logs.join('\\n'));
+    const content = await page.content();
+    fs.writeFileSync('test-results/post-not-visible-failure.html', content);
+    const logs = await page.evaluate(() => (window as unknown as { VITE_PLAYWRIGHT_LOGS?: string[] }).VITE_PLAYWRIGHT_LOGS || []);
+    fs.writeFileSync('test-results/post-not-visible-failure-console.log', logs.join('\n'));
     throw e;
   }
   

@@ -1,7 +1,7 @@
 import { parseRelays, useAuth } from '@nostrstack/blog-kit';
 import { type Filter, SimplePool } from 'nostr-tools';
 import { normalizeURL } from 'nostr-tools/utils';
-import { createContext, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { relayMonitor } from '../nostr/relayHealth';
 

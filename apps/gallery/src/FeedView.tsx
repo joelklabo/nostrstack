@@ -239,6 +239,30 @@ export function FeedView() {
     }
     let didUnmount = false;
 
+    // Batch state to avoid excessive re-renders
+    const pendingEvents: Event[] = [];
+    let batchTimer: number | null = null;
+    
+    const flushBatch = () => {
+      if (pendingEvents.length === 0) return;
+      const batch = [...pendingEvents];
+      pendingEvents.length = 0;
+      
+      setPosts(prev => {
+        const combined = [...prev, ...batch];
+        const sorted = combined.sort((a, b) => b.created_at - a.created_at);
+        return sorted.slice(0, 100);
+      });
+    };
+    
+    const scheduleBatch = () => {
+      if (batchTimer !== null) return;
+      batchTimer = window.setTimeout(() => {
+        flushBatch();
+        batchTimer = null;
+      }, 300);
+    };
+
     startTimes.current.clear();
     relayList.forEach((r) => {
       relayMonitor.reportAttempt(r);
@@ -267,10 +291,8 @@ export function FeedView() {
           incrementEvents();
           if (!seenIds.current.has(event.id)) {
             seenIds.current.add(event.id);
-            setPosts(prev => {
-              const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
-              return next.slice(0, 100); // Increased buffer
-            });
+            pendingEvents.push(event);
+            scheduleBatch();
           }
         },
         receivedEvent(relay: AbstractRelay) {
@@ -308,6 +330,10 @@ export function FeedView() {
 
     return () => {
       didUnmount = true;
+      if (batchTimer !== null) {
+        clearTimeout(batchTimer);
+        flushBatch();
+      }
       globalThis.clearTimeout(statusTimer);
       void Promise.resolve()
         .then(() => sub.close('unmount'))
@@ -336,10 +362,9 @@ export function FeedView() {
       const uniqueOlder = olderPosts.filter(p => !seenIds.current.has(p.id));
       uniqueOlder.forEach(p => seenIds.current.add(p.id));
       
-      setPosts(prev => {
-        const next = [...prev, ...uniqueOlder].sort((a, b) => b.created_at - a.created_at);
-        return next;
-      });
+      if (uniqueOlder.length > 0) {
+        setPosts(prev => [...prev, ...uniqueOlder].sort((a, b) => b.created_at - a.created_at));
+      }
     } catch (err) {
       console.error('Failed to load more posts', err);
     } finally {
@@ -431,13 +456,13 @@ export function FeedView() {
         </div>
       )}
 
-      {(() => {
+      {useMemo(() => {
         const filtered = posts.filter(p => !isMuted(p.pubkey));
         const final = spamFilterEnabled ? filterSpam(filtered) : filtered;
         return final.map(post => (
           <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
         ));
-      })()}
+      }, [posts, isMuted, spamFilterEnabled, apiBase, enableRegtestPay])}
 
       {posts.length > 0 && (
         <div style={{ padding: '2rem', textAlign: 'center' }}>

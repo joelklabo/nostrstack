@@ -20,18 +20,42 @@ export function NotificationsView() {
 
   useEffect(() => {
     if (!pubkey || relaysLoading) return;
+    
     const filter: Filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
     let sub: { close: () => void } | undefined;
+    
+    // Batch state to avoid excessive re-renders
+    const pendingEvents: Event[] = [];
+    let batchTimer: number | null = null;
+    
+    const flushBatch = () => {
+      if (pendingEvents.length === 0) return;
+      const batch = [...pendingEvents];
+      pendingEvents.length = 0;
+      
+      setEvents(prev => {
+        const combined = [...prev, ...batch];
+        const sorted = combined.sort((a, b) => b.created_at - a.created_at);
+        return sorted.slice(0, 100);
+      });
+    };
+    
+    const scheduleBatch = () => {
+      if (batchTimer !== null) return;
+      batchTimer = window.setTimeout(() => {
+        flushBatch();
+        batchTimer = null;
+      }, 300);
+    };
+    
     try {
       sub = pool.subscribeMany(relayList, filter, {
         onevent(event) {
           incrementEvents();
           if (!seenIds.current.has(event.id)) {
             seenIds.current.add(event.id);
-            setEvents((prev) => {
-              const next = [...prev, event].sort((a, b) => b.created_at - a.created_at);
-              return next.slice(0, 100);
-            });
+            pendingEvents.push(event);
+            scheduleBatch();
           }
         }
       });
@@ -39,6 +63,10 @@ export function NotificationsView() {
       // ignore
     }
     return () => {
+      if (batchTimer !== null) {
+        clearTimeout(batchTimer);
+        flushBatch();
+      }
       try {
         sub?.close();
       } catch {

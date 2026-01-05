@@ -28,19 +28,44 @@ export function useDMs() {
     if (!pubkey) return;
     setLoading(true);
     
+    const seenIds = new Set<string>();
+    const pendingMessages: DMMessage[] = [];
+    let batchTimer: number | null = null;
+    
+    const flushBatch = () => {
+      if (pendingMessages.length === 0) return;
+      const batch = [...pendingMessages];
+      pendingMessages.length = 0;
+      
+      setMessages(prev => {
+        const combined = [...prev, ...batch];
+        return combined;
+      });
+    };
+    
     // Subscribe to incoming and outgoing DMs
     const onEvent = (event: Event) => {
-        setMessages(prev => {
-          if (prev.some(m => m.id === event.id)) return prev;
-          const isMine = event.pubkey === pubkey;
-          return [...prev, { ...event, isMine }];
-        });
+      if (seenIds.has(event.id)) return;
+      seenIds.add(event.id);
+      
+      const isMine = event.pubkey === pubkey;
+      pendingMessages.push({ ...event, isMine });
+      
+      if (batchTimer !== null) return;
+      batchTimer = window.setTimeout(() => {
+        flushBatch();
+        batchTimer = null;
+      }, 300);
     };
 
     const sub1 = pool.subscribeMany(relays, { kinds: [4], '#p': [pubkey] }, { onevent: onEvent, oneose: () => setLoading(false) });
     const sub2 = pool.subscribeMany(relays, { kinds: [4], authors: [pubkey] }, { onevent: onEvent });
 
     return () => {
+      if (batchTimer !== null) {
+        clearTimeout(batchTimer);
+        flushBatch();
+      }
       try { sub1.close(); } catch { /* ignore */ }
       try { sub2.close(); } catch { /* ignore */ }
     };
