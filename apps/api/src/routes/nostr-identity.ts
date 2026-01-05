@@ -138,6 +138,45 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
           domain: { type: 'string' }
         },
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            pubkey: { type: 'string' },
+            relays: { type: 'array', items: { type: 'string' } },
+            nip05: { type: 'string' },
+            name: { type: 'string' },
+            domain: { type: 'string' },
+            fetchedAt: { type: 'integer' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        404: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        502: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            status: { type: 'integer' }
+          }
+        },
+        504: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        }
       }
     }
   }, async (request, reply) => {

@@ -25,6 +25,30 @@ export async function registerTipRoutes(app: FastifyInstance) {
         },
         required: ['itemId'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            itemId: { type: 'string' },
+            count: { type: 'integer' },
+            totalAmountSats: { type: 'integer' },
+            tips: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', nullable: true },
+                  paymentId: { type: 'string' },
+                  amountSats: { type: 'integer' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  providerRef: { type: 'string', nullable: true },
+                  metadata: { type: 'object', additionalProperties: true, nullable: true }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }, async (request, reply) => {

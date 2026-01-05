@@ -26,6 +26,28 @@ export async function registerEmbedConfigRoute(app: FastifyInstance) {
         },
         required: ['tenant'],
         additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            tenant: { type: 'string' },
+            lnAddress: { type: 'string' },
+            relays: { type: 'array', items: { type: 'string' } },
+            embedScript: { type: 'string' },
+            apiBase: { type: 'string' },
+            theme: {
+              type: 'object',
+              properties: {
+                accent: { type: 'string' },
+                text: { type: 'string' },
+                surface: { type: 'string' },
+                border: { type: 'string' }
+              }
+            },
+            mock: { type: 'boolean' }
+          }
+        }
       }
     }
   }, async (request, reply) => {

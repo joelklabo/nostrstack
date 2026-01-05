@@ -53,7 +53,7 @@ export function PostItem({
   );
 
   return (
-    <article className="post-card">
+    <article className="post-card" tabIndex={0}>
       <header className="post-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ProfileLink

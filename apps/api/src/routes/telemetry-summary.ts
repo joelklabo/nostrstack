@@ -8,7 +8,42 @@ const CACHE_TTL_MS = 10_000;
 export async function registerTelemetrySummaryRoute(app: FastifyInstance) {
   const telemetryFetcher = createTelemetryFetcher({ cacheTtlMs: CACHE_TTL_MS });
 
-  app.get('/api/telemetry/summary', async (request, reply) => {
+  app.get('/api/telemetry/summary', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            type: { type: 'string' },
+            source: { type: 'string' },
+            blockHeight: { type: 'integer' },
+            blockHash: { type: 'string' },
+            timestamp: { type: 'integer' },
+            difficulty: { type: 'number' },
+            mempoolSize: { type: 'integer' },
+            feeRates: {
+              type: 'object',
+              properties: {
+                fastestFee: { type: 'number' },
+                halfHourFee: { type: 'number' },
+                hourFee: { type: 'number' },
+                economyFee: { type: 'number' },
+                minimumFee: { type: 'number' }
+              }
+            }
+          }
+        },
+        502: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' },
+            requestId: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
     try {
       const result = await telemetryFetcher.fetchSummaryWithFallback();
       if (result.cached) {

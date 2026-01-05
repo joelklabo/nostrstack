@@ -16,6 +16,17 @@ export async function registerPayRoutes(app: FastifyInstance) {
         },
         required: ['domain', 'action', 'amount'],
         additionalProperties: false
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            payment_request: { type: 'string' },
+            pr: { type: 'string' },
+            provider_ref: { type: 'string' }
+          }
+        }
       }
     }
   }, async (request, reply) => {

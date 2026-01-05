@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { RelayProvider } from './context/RelayProvider';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FeedView } from './FeedView';
+import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { LoginView } from './LoginView';
 import { NostrEventView } from './NostrEventView';
 import { NotificationsView } from './NotificationsView';
@@ -21,10 +22,9 @@ import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 import { Alert } from './ui/Alert';
+import { HelpModal } from './ui/HelpModal';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
-
-type View = 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit';
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -56,6 +56,7 @@ function AppShell() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
   const [currentView, setCurrentView] = useState<View>('feed');
+  const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
@@ -117,6 +118,7 @@ function AppShell() {
 
   return (
     <div className="social-layout">
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <main className="feed-container">
         {profileRouteError && (
