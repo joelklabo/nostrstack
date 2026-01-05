@@ -7,6 +7,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import App from './App';
+import { startCacheManager } from './cache/cacheManager';
 import { ToastProvider } from './ui/toast';
 
 if ('serviceWorker' in navigator) {
@@ -23,6 +24,9 @@ if ('serviceWorker' in navigator) {
 }
 
 ensureNostrstackEmbedStyles();
+
+// Start cache manager for periodic cleanup and stats
+startCacheManager();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

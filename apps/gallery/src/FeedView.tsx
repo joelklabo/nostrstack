@@ -5,6 +5,7 @@ import { SimplePool } from 'nostr-tools';
 import type { AbstractRelay } from 'nostr-tools/abstract-relay';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { saveEvents } from './cache/eventCache';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { markRelayFailure } from './nostr/api';
@@ -247,6 +248,9 @@ export function FeedView() {
       if (pendingEvents.length === 0) return;
       const batch = [...pendingEvents];
       pendingEvents.length = 0;
+      
+      // Save to cache asynchronously
+      saveEvents(batch).catch(e => console.warn('[Cache] Failed to save events:', e));
       
       setPosts(prev => {
         const combined = [...prev, ...batch];
