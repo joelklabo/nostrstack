@@ -2,7 +2,7 @@ import './styles/lnurl-auth.css';
 
 import { resolveApiBase, useAuth, useNostrstackConfig } from '@nostrstack/blog-kit';
 import QRCode from 'qrcode';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Alert } from './ui/Alert';
 
@@ -30,6 +30,8 @@ export function LoginView() {
   const [lnurlQr, setLnurlQr] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const enableLnurlAuth = String(import.meta.env.VITE_ENABLE_LNURL_AUTH ?? '').toLowerCase() === 'true';
+  const lnurlModalRef = useRef<HTMLDivElement>(null);
+  const lnurlTriggerRef = useRef<HTMLElement | null>(null);
 
   const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? '';
   const apiBaseConfig = useMemo(
@@ -103,6 +105,71 @@ export function LoginView() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lnurlModalOpen, closeLnurlModal]);
+
+  // Focus management for LNURL modal
+  useEffect(() => {
+    if (!lnurlModalOpen) return;
+    
+    // Store trigger element
+    lnurlTriggerRef.current = document.activeElement as HTMLElement;
+    
+    // Focus first button when modal opens
+    const modal = lnurlModalRef.current;
+    if (!modal) return;
+    
+    const focusable = modal.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) {
+      setTimeout(() => focusable.focus(), 100);
+    }
+    
+    // Return focus on close
+    return () => {
+      if (lnurlTriggerRef.current && document.contains(lnurlTriggerRef.current)) {
+        lnurlTriggerRef.current.focus();
+      }
+    };
+  }, [lnurlModalOpen]);
+
+  // Focus trap for LNURL modal
+  useEffect(() => {
+    if (!lnurlModalOpen) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      
+      const modal = lnurlModalRef.current;
+      if (!modal) return;
+      
+      const focusable = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled'));
+      
+      if (!focusable.length) return;
+      
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      
+      if (e.shiftKey) {
+        if (active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [lnurlModalOpen]);
 
   const handleCopyLnurl = useCallback(async () => {
     if (!lnurlRequest?.lnurl) return;
@@ -289,7 +356,14 @@ export function LoginView() {
 
       {lnurlModalOpen && (
         <div className="lnurl-auth-overlay">
-          <div className="lnurl-auth-modal" role="dialog" aria-modal="true" aria-labelledby="lnurl-title" aria-describedby="lnurl-subtitle">
+          <div 
+            ref={lnurlModalRef}
+            className="lnurl-auth-modal" 
+            role="dialog" 
+            aria-modal="true" 
+            aria-labelledby="lnurl-title" 
+            aria-describedby="lnurl-subtitle"
+          >
             <div className="lnurl-auth-header">
               <div>
                 <div id="lnurl-title" className="lnurl-auth-title">Lightning Login</div>

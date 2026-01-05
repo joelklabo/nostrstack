@@ -1,6 +1,6 @@
 import '../styles/shortcuts.css';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface HelpModalProps {
   open: boolean;
@@ -8,7 +8,36 @@ interface HelpModalProps {
 }
 
 export function HelpModal({ open, onClose }: HelpModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
   if (!open) return null;
+
+  // Store trigger element and focus first focusable element
+  useEffect(() => {
+    if (!open) return;
+    
+    // Store the element that had focus before modal opened
+    triggerRef.current = document.activeElement as HTMLElement;
+    
+    // Focus first focusable element in modal
+    const modal = modalRef.current;
+    if (!modal) return;
+    
+    const focusable = modal.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) {
+      focusable.focus();
+    }
+    
+    // Return focus to trigger when modal closes
+    return () => {
+      if (triggerRef.current && document.contains(triggerRef.current)) {
+        triggerRef.current.focus();
+      }
+    };
+  }, [open]);
 
   // Handle Escape key
   useEffect(() => {
@@ -23,6 +52,45 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
+  // Focus trap
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      
+      const modal = modalRef.current;
+      if (!modal) return;
+      
+      const focusable = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled'));
+      
+      if (!focusable.length) return;
+      
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      
+      if (e.shiftKey) {
+        if (active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
+
   const shortcuts = [
     { keys: ['j', 'k'], desc: 'Navigate posts' },
     { keys: ['/'], desc: 'Search' },
@@ -33,9 +101,16 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
 
   return (
     <div className="shortcuts-overlay" onClick={onClose}>
-      <div className="shortcuts-modal" onClick={e => e.stopPropagation()}>
+      <div 
+        ref={modalRef}
+        className="shortcuts-modal" 
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-modal-title"
+      >
         <div className="shortcuts-header">
-          <div className="shortcuts-title">Keyboard Shortcuts</div>
+          <div id="help-modal-title" className="shortcuts-title">Keyboard Shortcuts</div>
           <button className="shortcuts-close" onClick={onClose} aria-label="Close keyboard shortcuts">&times;</button>
         </div>
         <div className="shortcuts-body">

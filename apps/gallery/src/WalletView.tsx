@@ -1,7 +1,7 @@
 import './styles/withdraw.css';
 
 import QRCode from 'qrcode';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Alert } from './ui/Alert';
 import { useToast } from './ui/toast';
@@ -33,6 +33,8 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
   const [error, setError] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const maxWithdrawMsat = useMemo(() => Math.max(0, Math.floor((balanceSats ?? 0) * 1000)), [balanceSats]);
   const canWithdraw = withdrawEnabled && apiConfigured && maxWithdrawMsat >= 1000;
@@ -62,6 +64,71 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, handleClose]);
+
+  // Focus management
+  useEffect(() => {
+    if (!open) return;
+    
+    // Store trigger element
+    triggerRef.current = document.activeElement as HTMLElement;
+    
+    // Focus first button when modal opens
+    const modal = modalRef.current;
+    if (!modal) return;
+    
+    const focusable = modal.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) {
+      setTimeout(() => focusable.focus(), 100);
+    }
+    
+    // Return focus on close
+    return () => {
+      if (triggerRef.current && document.contains(triggerRef.current)) {
+        triggerRef.current.focus();
+      }
+    };
+  }, [open]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      
+      const modal = modalRef.current;
+      if (!modal) return;
+      
+      const focusable = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled'));
+      
+      if (!focusable.length) return;
+      
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      
+      if (e.shiftKey) {
+        if (active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
 
   const fetchWithdraw = useCallback(async () => {
     if (!open) return;
@@ -193,7 +260,15 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
 
   return (
     <div className="withdraw-overlay" role="presentation" onClick={handleClose}>
-      <div className="withdraw-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="withdraw-title" aria-describedby="withdraw-subtitle">
+      <div 
+        ref={modalRef}
+        className="withdraw-modal" 
+        onClick={(event) => event.stopPropagation()} 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="withdraw-title" 
+        aria-describedby="withdraw-subtitle"
+      >
         <div className="withdraw-header">
           <div>
             <div id="withdraw-title" className="withdraw-title">Withdraw Funds</div>

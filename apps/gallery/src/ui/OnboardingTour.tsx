@@ -14,18 +14,57 @@ export function OnboardingTour() {
   });
   const [spotlightStyle, setSpotlightStyle] = useState<React.CSSProperties | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  // Focus management
+  useEffect(() => {
+    if (!isActive) return;
+    
+    // Store trigger element when tour starts
+    if (!triggerRef.current) {
+      triggerRef.current = document.activeElement as HTMLElement;
+    }
+    
+    // Focus first button in tour card
+    const card = cardRef.current;
+    if (!card) return;
+    
+    const focusable = card.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) {
+      setTimeout(() => focusable.focus(), 100);
+    }
+    
+    // Return focus when tour ends
+    return () => {
+      if (!isActive && triggerRef.current && document.contains(triggerRef.current)) {
+        triggerRef.current.focus();
+        triggerRef.current = null;
+      }
+    };
+  }, [isActive]);
 
   // Keyboard navigation
   useEffect(() => {
     if (!isActive) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') skip();
-      if (e.key === 'ArrowRight') next();
-      if (e.key === 'ArrowLeft') back();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        skip();
+      }
+      if (e.key === 'ArrowRight' && !isLastStep) {
+        e.preventDefault();
+        next();
+      }
+      if (e.key === 'ArrowLeft' && hasPreviousStep) {
+        e.preventDefault();
+        back();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, next, back, skip]);
+  }, [isActive, next, back, skip, isLastStep, hasPreviousStep]);
 
   // Scroll into view
   useEffect(() => {
@@ -126,15 +165,15 @@ export function OnboardingTour() {
         <div id="tour-title" className="onboarding-title">{step.title}</div>
         <div id="tour-desc" className="onboarding-content">{step.content}</div>
         <div className="onboarding-actions">
-          <button className="onboarding-btn onboarding-btn-skip" onClick={skip}>
+          <button className="onboarding-btn onboarding-btn-skip" onClick={skip} aria-label="Skip tour">
             Skip
           </button>
           {hasPreviousStep && (
-            <button className="onboarding-btn" onClick={back}>
+            <button className="onboarding-btn" onClick={back} aria-label="Go to previous step">
               Back
             </button>
           )}
-          <button className="onboarding-btn onboarding-btn-next" onClick={next}>
+          <button className="onboarding-btn onboarding-btn-next" onClick={next} aria-label={isLastStep ? 'Finish tour' : 'Go to next step'}>
             {isLastStep ? 'Finish' : 'Next'}
           </button>
         </div>
