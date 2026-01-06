@@ -38,22 +38,25 @@ const normalizeRelays = (relays: string[] | undefined) =>
 const buildNote = (title: string, url: string, lnAddress?: string) =>
   `${title}\n${url}${lnAddress ? `\n⚡ ${lnAddress}` : ''}`.trim();
 
-const getRelayInit = () => (typeof window === 'undefined' ? undefined : window.NostrTools?.relayInit);
+const getRelayInit = () =>
+  typeof window === 'undefined' ? undefined : window.NostrTools?.relayInit;
 
 async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
   const relayInit = getRelayInit();
   if (!relayInit) return [];
-  const relays = await Promise.all(urls.map(async (url) => {
-    const relay = relayInit(url) as RelayConnection;
-    relay.url = relay.url ?? url;
-    try {
-      await relay.connect();
-      return relay;
-    } catch (err) {
-      console.warn('relay connect failed', url, err);
-      return null;
-    }
-  }));
+  const relays = await Promise.all(
+    urls.map(async (url) => {
+      const relay = relayInit(url) as RelayConnection;
+      relay.url = relay.url ?? url;
+      try {
+        await relay.connect();
+        return relay;
+      } catch (err) {
+        console.warn('relay connect failed', url, err);
+        return null;
+      }
+    })
+  );
   return relays.filter((r): r is RelayConnection => Boolean(r));
 }
 
@@ -77,7 +80,11 @@ export function renderShareButton(container: HTMLElement, opts: ShareButtonOptio
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
     status.hidden = !text;
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
+    status.classList.remove(
+      'nostrstack-status--muted',
+      'nostrstack-status--success',
+      'nostrstack-status--danger'
+    );
     status.classList.add(`nostrstack-status--${tone}`);
   };
 
@@ -87,7 +94,8 @@ export function renderShareButton(container: HTMLElement, opts: ShareButtonOptio
     button.disabled = state === 'sharing';
     if (state === 'sharing') button.setAttribute('aria-busy', 'true');
     else button.removeAttribute('aria-busy');
-    button.textContent = state === 'sharing' ? 'Sharing…' : state === 'shared' ? 'Shared' : idleLabel;
+    button.textContent =
+      state === 'sharing' ? 'Sharing…' : state === 'shared' ? 'Shared' : idleLabel;
     if (state === 'idle') setStatus('', 'muted');
   };
 
@@ -103,7 +111,8 @@ export function renderShareButton(container: HTMLElement, opts: ShareButtonOptio
     setStatus('Sharing…', 'muted');
 
     const nostr = typeof window === 'undefined' ? undefined : window.nostr;
-    const relayTargets = opts.relays === undefined ? normalizeRelays(undefined) : normalizeRelays(opts.relays);
+    const relayTargets =
+      opts.relays === undefined ? normalizeRelays(undefined) : normalizeRelays(opts.relays);
     if (nostr?.getPublicKey && nostr.signEvent && relayTargets.length) {
       try {
         const relays = await connectRelays(relayTargets);
@@ -150,6 +159,8 @@ export function renderShareButton(container: HTMLElement, opts: ShareButtonOptio
 
   button.addEventListener('click', handleShare);
   button.onclick = handleShare;
+
+  setState('idle');
 
   container.append(button, status);
 
