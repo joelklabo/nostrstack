@@ -40,11 +40,20 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     return envRelays.length ? envRelays : DEFAULT_RELAYS;
   }, []); // Empty deps - only parse once on mount
 
-  // Listen for relay health changes
+  // Listen for relay health changes (debounced to prevent render storms)
   useEffect(() => {
-    return relayMonitor.subscribe(() => {
-      setMonitorVersion((v) => v + 1);
-    });
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const debouncedUpdate = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setMonitorVersion((v) => v + 1);
+      }, 500);
+    };
+    const unsubscribe = relayMonitor.subscribe(debouncedUpdate);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, []);
 
   // Fetch Kind 10002 on mount or auth change
@@ -139,10 +148,14 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   }, [pubkey, signEvent, userRelays, bootstrapRelays]);
 
   // Merge user relays with bootstrap/defaults for the active list
-  const activeRelays = [...new Set([
-    ...bootstrapRelays,
-    ...userRelays.map((r) => r.url)
-  ])].filter(url => relayMonitor.isHealthy(url));
+  // Include _monitorVersion to re-filter when health changes (debounced)
+  const activeRelays = useMemo(() => {
+    const merged = [...new Set([
+      ...bootstrapRelays,
+      ...userRelays.map((r) => r.url)
+    ])];
+    return merged.filter(url => relayMonitor.isHealthy(url));
+  }, [bootstrapRelays, userRelays, _monitorVersion]);
 
   const value: RelayContextValue = {
     relays: activeRelays,

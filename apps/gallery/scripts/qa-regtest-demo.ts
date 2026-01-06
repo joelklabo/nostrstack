@@ -225,6 +225,11 @@ async function main() {
 
   try {
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    // Skip onboarding tour to prevent overlay from blocking interactions
+    await page.evaluate(() => {
+      localStorage.setItem('nostrstack.onboarding.v1', 'true');
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await loginWithNsec(page, testNsec);
 
     const usingNwc = Boolean(nwcUri);

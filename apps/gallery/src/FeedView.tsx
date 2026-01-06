@@ -377,6 +377,12 @@ export function FeedView() {
     }
   }, [isLoadingMore, posts, relayList]);
 
+  // Memoize filtered posts - must be called unconditionally before return
+  const filteredPosts = useMemo(() => {
+    const filtered = posts.filter(p => !isMuted(p.pubkey));
+    return spamFilterEnabled ? filterSpam(filtered) : filtered;
+  }, [posts, isMuted, spamFilterEnabled]);
+
   return relaysLoading ? (
     <div className="feed-stream">
       <div style={{ marginBottom: '1.5rem' }}>
@@ -456,13 +462,9 @@ export function FeedView() {
         </div>
       )}
 
-      {useMemo(() => {
-        const filtered = posts.filter(p => !isMuted(p.pubkey));
-        const final = spamFilterEnabled ? filterSpam(filtered) : filtered;
-        return final.map(post => (
-          <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
-        ));
-      }, [posts, isMuted, spamFilterEnabled, apiBase, enableRegtestPay])}
+      {filteredPosts.map(post => (
+        <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
+      ))}
 
       {posts.length > 0 && (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
