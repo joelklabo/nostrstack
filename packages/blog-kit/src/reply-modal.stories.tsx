@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import type { Event } from 'nostr-tools';
-import { useState } from 'react';
+import type { Event, EventTemplate } from 'nostr-tools';
+import React, { useState } from 'react';
 
-import { AuthProvider } from './auth';
-import { NostrstackConfigProvider } from './context';
+import { AuthContextType, AuthProvider } from './auth';
+import { NostrstackProvider } from './context';
 import { ReplyModal } from './reply-modal';
 
 const mockEvent: Event = {
@@ -11,9 +11,7 @@ const mockEvent: Event = {
   pubkey: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
   created_at: Math.floor(Date.now() / 1000),
   kind: 1,
-  tags: [
-    ['p', 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef']
-  ],
+  tags: [['p', 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef']],
   content: 'This is a great note about Nostr!',
   sig: '0000000000000000000000000000000000000000000000000000000000000000'
 };
@@ -22,7 +20,7 @@ const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
   mode: 'extension',
   error: null,
-  signEvent: async (template) => ({
+  signEvent: async (template: EventTemplate) => ({
     ...template,
     id: 'signed-event-id-' + Date.now(),
     sig: 'signed-event-sig',
@@ -30,9 +28,20 @@ const mockAuthContextLoggedIn = {
   })
 };
 
+const mockAuthContextLoggedOut = {
+  pubkey: null,
+  mode: 'none',
+  error: null,
+  signEvent: async () => {
+    throw new Error('Not authenticated');
+  }
+};
+
 const mockConfig = {
   relays: ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol']
 };
+
+type StoryArgs = React.ComponentProps<typeof ReplyModal> & { loggedIn?: boolean };
 
 const meta = {
   title: 'Nostr/ReplyModal',
@@ -42,20 +51,26 @@ const meta = {
   },
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <AuthProvider value={mockAuthContextLoggedIn}>
-        <NostrstackConfigProvider value={mockConfig}>
-          <Story />
-        </NostrstackConfigProvider>
-      </AuthProvider>
-    )
+    (Story, context) => {
+      const args = context.args as StoryArgs;
+      const authContext =
+        args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
+      return (
+        <AuthProvider value={authContext as unknown as AuthContextType}>
+          <NostrstackProvider {...mockConfig}>
+            <Story />
+          </NostrstackProvider>
+        </AuthProvider>
+      );
+    }
   ],
   argTypes: {
     isOpen: { control: 'boolean' },
     onClose: { action: 'close' },
-    parentEvent: { control: false }
+    parentEvent: { control: false },
+    loggedIn: { control: 'boolean' }
   }
-} satisfies Meta<typeof ReplyModal>;
+} satisfies Meta<StoryArgs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -76,11 +91,7 @@ function InteractiveReplyModal(args: { parentEvent: Event; onClose: () => void }
       <button className="action-btn" onClick={() => setIsOpen(true)}>
         Open Reply Modal
       </button>
-      <ReplyModal
-        isOpen={isOpen}
-        onClose={handleClose}
-        parentEvent={args.parentEvent}
-      />
+      <ReplyModal isOpen={isOpen} onClose={handleClose} parentEvent={args.parentEvent} />
     </div>
   );
 }
@@ -104,6 +115,7 @@ export const Closed: Story = {
 export const Interactive: Story = {
   render: (args) => <InteractiveReplyModal {...args} />,
   args: {
+    isOpen: true,
     parentEvent: mockEvent,
     onClose: () => {}
   }

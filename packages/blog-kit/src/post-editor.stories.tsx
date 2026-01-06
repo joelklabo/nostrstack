@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import type { Event } from 'nostr-tools';
+import type { Event, EventTemplate } from 'nostr-tools';
+import React from 'react';
 
-import { AuthProvider } from './auth';
-import { NostrstackConfigProvider } from './context';
+import { AuthContextType, AuthProvider } from './auth';
+import { NostrstackProvider } from './context';
 import { PostEditor } from './post-editor';
 
 const mockEvent: Event = {
@@ -22,7 +23,7 @@ const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
   mode: 'extension',
   error: null,
-  signEvent: async (template) => ({
+  signEvent: async (template: EventTemplate) => ({
     ...template,
     id: 'signed-event-id-' + Date.now(),
     sig: 'signed-event-sig',
@@ -52,6 +53,11 @@ const mockConfig = {
   relays: ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol']
 };
 
+type StoryArgs = React.ComponentProps<typeof PostEditor> & {
+  loggedIn?: boolean;
+  authError?: boolean;
+};
+
 const meta = {
   title: 'Nostr/PostEditor',
   component: PostEditor,
@@ -61,20 +67,21 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story, context) => {
-      let authContext = mockAuthContextLoggedIn;
-      if (context.args.loggedIn === false) {
-        authContext = mockAuthContextLoggedOut;
-      } else if (context.args.authError) {
-        authContext = mockAuthContextError;
+      let authContext = mockAuthContextLoggedIn as unknown as AuthContextType;
+      const args = context.args as StoryArgs;
+      if (args.loggedIn === false) {
+        authContext = mockAuthContextLoggedOut as unknown as AuthContextType;
+      } else if (args.authError) {
+        authContext = mockAuthContextError as unknown as AuthContextType;
       }
-      
+
       return (
         <AuthProvider value={authContext}>
-          <NostrstackConfigProvider value={mockConfig}>
+          <NostrstackProvider {...mockConfig}>
             <div style={{ width: '600px', maxWidth: '90vw' }}>
               <Story />
             </div>
-          </NostrstackConfigProvider>
+          </NostrstackProvider>
         </AuthProvider>
       );
     }
@@ -88,7 +95,7 @@ const meta = {
     loggedIn: { control: 'boolean', description: 'Mock auth state' },
     authError: { control: 'boolean', description: 'Mock auth error' }
   }
-} satisfies Meta<typeof PostEditor & { loggedIn?: boolean; authError?: boolean }>;
+} satisfies Meta<StoryArgs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

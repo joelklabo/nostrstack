@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { EventTemplate } from 'nostr-tools';
+import React from 'react';
 
-import { AuthProvider } from './auth';
-import { NostrstackConfigProvider } from './context';
+import { AuthContextType, AuthProvider } from './auth';
+import { NostrstackProvider } from './context';
 import { SendSats } from './send-sats';
 
 const mockPubkey = 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
@@ -9,7 +11,7 @@ const mockLightningAddress = 'satoshi@nostrstack.com';
 
 const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
-  signEvent: async (template) => ({
+  signEvent: async (template: EventTemplate) => ({
     ...template,
     id: 'signed-event-id',
     sig: 'signed-event-sig',
@@ -36,6 +38,11 @@ const mockConfigWithRegtest = {
   enableRegtestPay: true
 };
 
+type StoryArgs = React.ComponentProps<typeof SendSats> & {
+  loggedIn?: boolean;
+  enableRegtestPay?: boolean;
+};
+
 const meta = {
   title: 'Payment/SendSats',
   component: SendSats,
@@ -45,13 +52,15 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story, context) => {
-      const authContext = context.args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
-      const config = context.args.enableRegtestPay ? mockConfigWithRegtest : mockConfig;
+      const args = context.args as StoryArgs;
+      const authContext =
+        args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
+      const config = args.enableRegtestPay ? mockConfigWithRegtest : mockConfig;
       return (
-        <AuthProvider value={authContext}>
-          <NostrstackConfigProvider value={config}>
+        <AuthProvider value={authContext as unknown as AuthContextType}>
+          <NostrstackProvider {...config}>
             <Story />
-          </NostrstackConfigProvider>
+          </NostrstackProvider>
         </AuthProvider>
       );
     }
@@ -65,7 +74,7 @@ const meta = {
     loggedIn: { control: 'boolean', description: 'Mock auth state' },
     enableRegtestPay: { control: 'boolean' }
   }
-} satisfies Meta<typeof SendSats & { loggedIn?: boolean; enableRegtestPay?: boolean }>;
+} satisfies Meta<StoryArgs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

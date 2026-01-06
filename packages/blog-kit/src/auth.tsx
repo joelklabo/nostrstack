@@ -1,5 +1,12 @@
-import { type Event, type EventTemplate, finalizeEvent, getPublicKey,nip04, nip19 } from 'nostr-tools';
-import { createContext, type ReactNode, useCallback,useContext, useEffect, useState } from 'react';
+import {
+  type Event,
+  type EventTemplate,
+  finalizeEvent,
+  getPublicKey,
+  nip04,
+  nip19
+} from 'nostr-tools';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 // NIP-07 Interface
 interface WindowNostr {
@@ -27,7 +34,7 @@ interface AuthState {
   error: string | null;
 }
 
-interface AuthContextType extends AuthState {
+export interface AuthContextType extends AuthState {
   loginWithNip07: () => Promise<void>;
   loginWithNsec: (nsec: string) => Promise<void>;
   loginWithLnurl: (linkingKey: string) => Promise<void>;
@@ -37,25 +44,31 @@ interface AuthContextType extends AuthState {
   decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY_MODE = 'nostrstack.auth.mode';
 const STORAGE_KEY_NSEC = 'nostrstack.auth.nsec'; // In a real app, encrypt this!
 const STORAGE_KEY_LNURL = 'nostrstack.auth.lnurl';
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+  value
+}: {
+  children: ReactNode;
+  value?: AuthContextType;
+}) {
   const [state, setState] = useState<AuthState>({
     pubkey: null,
     mode: 'guest',
     isLoading: true,
-    error: null,
+    error: null
   });
 
   // Load persisted auth on mount
   useEffect(() => {
     const init = async () => {
       const mode = localStorage.getItem(STORAGE_KEY_MODE) as AuthMode | null;
-      
+
       if (mode === 'nip07') {
         // Wait a bit for window.nostr to be injected
         let attempts = 0;
@@ -66,11 +79,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const pubkey = await window.nostr.getPublicKey();
               setState({ pubkey, mode: 'nip07', isLoading: false, error: null });
             } catch {
-              setState({ pubkey: null, mode: 'guest', isLoading: false, error: 'NIP-07 auth failed' });
+              setState({
+                pubkey: null,
+                mode: 'guest',
+                isLoading: false,
+                error: 'NIP-07 auth failed'
+              });
             }
           } else if (attempts++ > 10) {
             clearInterval(check);
-            setState({ pubkey: null, mode: 'guest', isLoading: false, error: 'NIP-07 extension not found' });
+            setState({
+              pubkey: null,
+              mode: 'guest',
+              isLoading: false,
+              error: 'NIP-07 extension not found'
+            });
           }
         }, 100);
       } else if (mode === 'nsec') {
@@ -83,12 +106,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setState({ pubkey, mode: 'nsec', isLoading: false, error: null });
             }
           } catch {
-             localStorage.removeItem(STORAGE_KEY_MODE);
-             localStorage.removeItem(STORAGE_KEY_NSEC);
-             setState({ pubkey: null, mode: 'guest', isLoading: false, error: 'Invalid saved nsec' });
+            localStorage.removeItem(STORAGE_KEY_MODE);
+            localStorage.removeItem(STORAGE_KEY_NSEC);
+            setState({
+              pubkey: null,
+              mode: 'guest',
+              isLoading: false,
+              error: 'Invalid saved nsec'
+            });
           }
         } else {
-           setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
+          setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
         }
       } else if (mode === 'lnurl') {
         const linkingKey = localStorage.getItem(STORAGE_KEY_LNURL);
@@ -110,13 +138,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!window.nostr) {
       throw new Error('NIP-07 extension not found');
     }
-    setState(s => ({ ...s, isLoading: true, error: null }));
+    setState((s) => ({ ...s, isLoading: true, error: null }));
     try {
       const pubkey = await window.nostr.getPublicKey();
       localStorage.setItem(STORAGE_KEY_MODE, 'nip07');
       setState({ pubkey, mode: 'nip07', isLoading: false, error: null });
     } catch (err: unknown) {
-      setState(s => ({ ...s, isLoading: false, error: (err instanceof Error ? err.message : String(err)) }));
+      setState((s) => ({
+        ...s,
+        isLoading: false,
+        error: err instanceof Error ? err.message : String(err)
+      }));
       throw err;
     }
   }, []);
@@ -131,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY_NSEC, cleanNsec);
       setState({ pubkey, mode: 'nsec', isLoading: false, error: null });
     } catch (err: unknown) {
-      setState(s => ({ ...s, error: (err instanceof Error ? err.message : String(err)) }));
+      setState((s) => ({ ...s, error: err instanceof Error ? err.message : String(err) }));
       throw err;
     }
   }, []);
@@ -140,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cleanKey = linkingKey.trim().toLowerCase();
     if (!/^[0-9a-f]{64}$/i.test(cleanKey)) {
       const err = new Error('Invalid LNURL linking key');
-      setState(s => ({ ...s, error: err.message }));
+      setState((s) => ({ ...s, error: err.message }));
       throw err;
     }
     localStorage.setItem(STORAGE_KEY_MODE, 'lnurl');
@@ -155,46 +187,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
   }, []);
 
-  const signEvent = useCallback(async (template: EventTemplate): Promise<Event> => {
-    if (state.mode === 'nip07' && window.nostr) {
-      return window.nostr.signEvent(template);
-    } else if (state.mode === 'nsec') {
-      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
-      if (!nsec) throw new Error('No nsec found');
-      const { data } = nip19.decode(nsec);
-      return finalizeEvent(template, data as Uint8Array);
-    } else if (state.mode === 'lnurl') {
-      throw new Error('LNURL-auth sessions cannot sign events');
-    }
-    throw new Error('No signer available');
-  }, [state.mode]);
+  const signEvent = useCallback(
+    async (template: EventTemplate): Promise<Event> => {
+      if (state.mode === 'nip07' && window.nostr) {
+        return window.nostr.signEvent(template);
+      } else if (state.mode === 'nsec') {
+        const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+        if (!nsec) throw new Error('No nsec found');
+        const { data } = nip19.decode(nsec);
+        return finalizeEvent(template, data as Uint8Array);
+      } else if (state.mode === 'lnurl') {
+        throw new Error('LNURL-auth sessions cannot sign events');
+      }
+      throw new Error('No signer available');
+    },
+    [state.mode]
+  );
 
-  const encrypt = useCallback(async (pubkey: string, plaintext: string): Promise<string> => {
-    if (state.mode === 'nip07' && window.nostr?.nip04) {
-      return window.nostr.nip04.encrypt(pubkey, plaintext);
-    } else if (state.mode === 'nsec') {
-      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
-      if (!nsec) throw new Error('No nsec found');
-      const { data } = nip19.decode(nsec);
-      return nip04.encrypt(data as Uint8Array, pubkey, plaintext);
-    }
-    throw new Error('Encryption not supported in this mode');
-  }, [state.mode]);
+  const encrypt = useCallback(
+    async (pubkey: string, plaintext: string): Promise<string> => {
+      if (state.mode === 'nip07' && window.nostr?.nip04) {
+        return window.nostr.nip04.encrypt(pubkey, plaintext);
+      } else if (state.mode === 'nsec') {
+        const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+        if (!nsec) throw new Error('No nsec found');
+        const { data } = nip19.decode(nsec);
+        return nip04.encrypt(data as Uint8Array, pubkey, plaintext);
+      }
+      throw new Error('Encryption not supported in this mode');
+    },
+    [state.mode]
+  );
 
-  const decrypt = useCallback(async (pubkey: string, ciphertext: string): Promise<string> => {
-    if (state.mode === 'nip07' && window.nostr?.nip04) {
-      return window.nostr.nip04.decrypt(pubkey, ciphertext);
-    } else if (state.mode === 'nsec') {
-      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
-      if (!nsec) throw new Error('No nsec found');
-      const { data } = nip19.decode(nsec);
-      return nip04.decrypt(data as Uint8Array, pubkey, ciphertext);
-    }
-    throw new Error('Decryption not supported in this mode');
-  }, [state.mode]);
+  const decrypt = useCallback(
+    async (pubkey: string, ciphertext: string): Promise<string> => {
+      if (state.mode === 'nip07' && window.nostr?.nip04) {
+        return window.nostr.nip04.decrypt(pubkey, ciphertext);
+      } else if (state.mode === 'nsec') {
+        const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+        if (!nsec) throw new Error('No nsec found');
+        const { data } = nip19.decode(nsec);
+        return nip04.decrypt(data as Uint8Array, pubkey, ciphertext);
+      }
+      throw new Error('Decryption not supported in this mode');
+    },
+    [state.mode]
+  );
 
   return (
-    <AuthContext.Provider value={{ ...state, loginWithNip07, loginWithNsec, loginWithLnurl, logout, signEvent, encrypt, decrypt }}>
+    <AuthContext.Provider
+      value={
+        value || {
+          ...state,
+          loginWithNip07,
+          loginWithNsec,
+          loginWithLnurl,
+          logout,
+          signEvent,
+          encrypt,
+          decrypt
+        }
+      }
+    >
       {children}
     </AuthContext.Provider>
   );

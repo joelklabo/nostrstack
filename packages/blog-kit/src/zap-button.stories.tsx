@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import type { Event } from 'nostr-tools';
+import { fn } from '@storybook/test';
+import type { Event, EventTemplate } from 'nostr-tools';
+import React from 'react';
 
-import { AuthProvider } from './auth';
-import { NostrstackConfigProvider } from './context';
+import { AuthContextType, AuthProvider } from './auth';
+import { NostrstackProvider } from './context';
 import { ZapButton } from './zap-button';
 
 // Mock event to zap
@@ -11,9 +13,7 @@ const mockEvent: Event = {
   pubkey: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
   created_at: Math.floor(Date.now() / 1000),
   kind: 1,
-  tags: [
-    ['lud16', 'satoshi@nostrstack.com']
-  ],
+  tags: [['lud16', 'satoshi@nostrstack.com']],
   content: 'GM! ☕',
   sig: '0000000000000000000000000000000000000000000000000000000000000000'
 };
@@ -25,7 +25,7 @@ const mockEventNoLightningAddress: Event = {
 
 const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
-  signEvent: async (template) => ({
+  signEvent: async (template: EventTemplate) => ({
     ...template,
     id: 'signed-event-id',
     sig: 'signed-event-sig',
@@ -52,6 +52,11 @@ const mockConfigWithRegtest = {
   enableRegtestPay: true
 };
 
+type StoryArgs = React.ComponentProps<typeof ZapButton> & {
+  loggedIn?: boolean;
+  enableRegtestPay?: boolean;
+};
+
 const meta = {
   title: 'Payment/ZapButton',
   component: ZapButton,
@@ -61,13 +66,15 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story, context) => {
-      const authContext = context.args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
-      const config = context.args.enableRegtestPay ? mockConfigWithRegtest : mockConfig;
+      const args = context.args as StoryArgs;
+      const authContext =
+        args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
+      const config = args.enableRegtestPay ? mockConfigWithRegtest : mockConfig;
       return (
-        <AuthProvider value={authContext}>
-          <NostrstackConfigProvider value={config}>
+        <AuthProvider value={authContext as unknown as AuthContextType}>
+          <NostrstackProvider {...config}>
             <Story />
-          </NostrstackConfigProvider>
+          </NostrstackProvider>
         </AuthProvider>
       );
     }
@@ -80,7 +87,7 @@ const meta = {
     loggedIn: { control: 'boolean', description: 'Mock auth state' },
     enableRegtestPay: { control: 'boolean' }
   }
-} satisfies Meta<typeof ZapButton & { loggedIn?: boolean; enableRegtestPay?: boolean }>;
+} satisfies Meta<StoryArgs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

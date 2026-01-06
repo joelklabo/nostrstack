@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import type { Event } from 'nostr-tools';
+import type { Event, EventTemplate } from 'nostr-tools';
+import React from 'react';
 
-import { AuthProvider } from './auth';
-import { NostrstackConfigProvider } from './context';
+import { AuthContextType, AuthProvider } from './auth';
+import { NostrstackProvider } from './context';
 import { ReactionButton } from './reaction-button';
 
 const mockEvent: Event = {
@@ -17,7 +18,7 @@ const mockEvent: Event = {
 
 const mockAuthContextLoggedIn = {
   pubkey: 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234',
-  signEvent: async (template) => ({
+  signEvent: async (template: EventTemplate) => ({
     ...template,
     id: 'reaction-event-id-' + Date.now(),
     sig: 'signed-reaction-sig',
@@ -36,6 +37,8 @@ const mockConfig = {
   relays: ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol']
 };
 
+type StoryArgs = React.ComponentProps<typeof ReactionButton> & { loggedIn?: boolean };
+
 const meta = {
   title: 'Nostr/ReactionButton',
   component: ReactionButton,
@@ -45,12 +48,14 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story, context) => {
-      const authContext = context.args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
+      const args = context.args as StoryArgs;
+      const authContext =
+        args.loggedIn !== false ? mockAuthContextLoggedIn : mockAuthContextLoggedOut;
       return (
-        <AuthProvider value={authContext}>
-          <NostrstackConfigProvider value={mockConfig}>
+        <AuthProvider value={authContext as unknown as AuthContextType}>
+          <NostrstackProvider {...mockConfig}>
             <Story />
-          </NostrstackConfigProvider>
+          </NostrstackProvider>
         </AuthProvider>
       );
     }
@@ -62,7 +67,7 @@ const meta = {
     style: { control: 'object' },
     loggedIn: { control: 'boolean', description: 'Mock auth state' }
   }
-} satisfies Meta<typeof ReactionButton & { loggedIn?: boolean }>;
+} satisfies Meta<StoryArgs>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -107,9 +112,16 @@ export const WithCustomRelays: Story = {
 
 export const DifferentEventTypes: Story = {
   render: () => (
-    <AuthProvider value={mockAuthContextLoggedIn}>
-      <NostrstackConfigProvider value={mockConfig}>
-        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <AuthProvider value={mockAuthContextLoggedIn as unknown as AuthContextType}>
+      <NostrstackProvider {...mockConfig}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            flexDirection: 'column',
+            alignItems: 'flex-start'
+          }}
+        >
           <div>
             <span style={{ marginRight: '0.5rem' }}>Text note:</span>
             <ReactionButton event={{ ...mockEvent, kind: 1 }} />
@@ -120,39 +132,45 @@ export const DifferentEventTypes: Story = {
           </div>
           <div>
             <span style={{ marginRight: '0.5rem' }}>Image:</span>
-            <ReactionButton event={{ ...mockEvent, kind: 1, content: 'https://example.com/image.jpg' }} />
+            <ReactionButton
+              event={{ ...mockEvent, kind: 1, content: 'https://example.com/image.jpg' }}
+            />
           </div>
         </div>
-      </NostrstackConfigProvider>
+      </NostrstackProvider>
     </AuthProvider>
   ),
-  args: {}
+  args: {
+    event: mockEvent
+  }
 };
 
 export const MultipleButtons: Story = {
   render: () => (
-    <AuthProvider value={mockAuthContextLoggedIn}>
-      <NostrstackConfigProvider value={mockConfig}>
+    <AuthProvider value={mockAuthContextLoggedIn as unknown as AuthContextType}>
+      <NostrstackProvider {...mockConfig}>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <ReactionButton event={mockEvent} />
           <ReactionButton event={{ ...mockEvent, id: 'event2' }} />
           <ReactionButton event={{ ...mockEvent, id: 'event3' }} />
         </div>
-      </NostrstackConfigProvider>
+      </NostrstackProvider>
     </AuthProvider>
   ),
-  args: {}
+  args: {
+    event: mockEvent
+  }
 };
 
 /**
  * Accessibility Example: Demonstrates keyboard navigation and screen reader support
- * 
+ *
  * The ReactionButton includes:
  * - aria-label describing the action
  * - aria-pressed to indicate toggle state
  * - Keyboard support (Enter/Space to activate)
  * - Visible focus indicator
- * 
+ *
  * Test with:
  * - Tab to focus button
  * - Enter/Space to activate
@@ -166,16 +184,17 @@ export const AccessibilityDemo: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates accessible interaction patterns. The button includes proper ARIA labels and keyboard support. Check the "Accessibility" tab to verify WCAG compliance.',
-      },
+        story:
+          'Demonstrates accessible interaction patterns. The button includes proper ARIA labels and keyboard support. Check the "Accessibility" tab to verify WCAG compliance.'
+      }
     },
     a11y: {
       config: {
         rules: [
           { id: 'button-name', enabled: true },
-          { id: 'aria-allowed-attr', enabled: true },
-        ],
-      },
-    },
-  },
+          { id: 'aria-allowed-attr', enabled: true }
+        ]
+      }
+    }
+  }
 };
