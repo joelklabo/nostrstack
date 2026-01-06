@@ -1,9 +1,136 @@
 import { nip19 } from 'nostr-tools';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useDMs } from './hooks/useDMs';
+import { useCachedEvent } from './hooks/useCachedEvent';
+import { type Conversation, type DMMessage, useDMs } from './hooks/useDMs';
 import { ProfileLink } from './ui/ProfileLink';
 import { Skeleton } from './ui/Skeleton';
+
+interface ProfileMetadata {
+  name?: string;
+  display_name?: string;
+  picture?: string;
+  nip05?: string;
+}
+
+interface DMListItemProps {
+  conversation: Conversation;
+  isActive: boolean;
+  onClick: () => void;
+  decryptMessage: (message: DMMessage) => Promise<string>;
+}
+
+function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListItemProps) {
+  const { get: getCached } = useCachedEvent();
+  const [profile, setProfile] = useState<ProfileMetadata | null>(null);
+  const [lastMessagePreview, setLastMessagePreview] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Fetch profile metadata
+  useEffect(() => {
+    let cancelled = false;
+    setProfileLoading(true);
+    
+    getCached({ kinds: [0], authors: [conversation.peer] })
+      .then(event => {
+        if (cancelled || !event) {
+          setProfileLoading(false);
+          return;
+        }
+        try {
+          const metadata = JSON.parse(event.content) as ProfileMetadata;
+          setProfile(metadata);
+        } catch {
+          // Invalid JSON
+        }
+        setProfileLoading(false);
+      })
+      .catch(() => setProfileLoading(false));
+    
+    return () => { cancelled = true; };
+  }, [conversation.peer, getCached]);
+
+  // Decrypt last message for preview
+  useEffect(() => {
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    if (!lastMessage) return;
+    
+    decryptMessage(lastMessage)
+      .then(text => setLastMessagePreview(text.slice(0, 50) + (text.length > 50 ? '...' : '')))
+      .catch(() => setLastMessagePreview('[Unable to decrypt]'));
+  }, [conversation.messages, decryptMessage]);
+
+  const displayName = profile?.display_name || profile?.name || conversation.peer.slice(0, 8) + '...';
+  const avatarUrl = profile?.picture || `https://api.dicebear.com/7.x/identicon/svg?seed=${conversation.peer}`;
+
+  // Relative time formatting
+  const getRelativeTime = (timestamp: number) => {
+    const now = Date.now() / 1000;
+    const diff = now - timestamp;
+    if (diff < 60) return 'now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+    return new Date(timestamp * 1000).toLocaleDateString();
+  };
+
+  return (
+    <div 
+      className={`dm-list-item ${isActive ? 'active' : ''}`}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+      aria-label={`Conversation with ${displayName}`}
+    >
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
+        <img 
+          src={avatarUrl} 
+          alt="" 
+          style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '50%', 
+            objectFit: 'cover',
+            flexShrink: 0,
+            background: 'var(--color-canvas-subtle)'
+          }}
+          loading="lazy"
+        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
+            <span style={{ 
+              fontWeight: 600, 
+              fontSize: '0.9rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {profileLoading ? <Skeleton variant="text" width={80} height={16} /> : displayName}
+            </span>
+            <span style={{ 
+              fontSize: '0.75rem', 
+              color: 'var(--color-fg-muted)',
+              flexShrink: 0
+            }}>
+              {getRelativeTime(conversation.lastMessageAt)}
+            </span>
+          </div>
+          <div style={{ 
+            fontSize: '0.8rem', 
+            color: 'var(--color-fg-muted)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            marginTop: '0.15rem'
+          }}>
+            {lastMessagePreview ?? <Skeleton variant="text" width={120} height={14} />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function DMView() {
   const { conversations, loading, sendDM, decryptMessage } = useDMs();
@@ -169,16 +296,13 @@ export function DMView() {
              </div>
           )}
           {conversations.map(conv => (
-            <div 
-              key={conv.peer} 
-              className={`dm-list-item ${selectedPeer === conv.peer ? 'active' : ''}`}
+            <DMListItem
+              key={conv.peer}
+              conversation={conv}
+              isActive={selectedPeer === conv.peer}
               onClick={() => setSelectedPeer(conv.peer)}
-            >
-              <ProfileLink pubkey={conv.peer} label={conv.peer.slice(0, 8)} style={{ pointerEvents: 'none' }} />
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)', marginTop: '0.2rem' }}>
-                {new Date(conv.lastMessageAt * 1000).toLocaleDateString()}
-              </div>
-            </div>
+              decryptMessage={decryptMessage}
+            />
           ))}
           {conversations.length === 0 && !loading && (
             <div style={{ padding: '1rem', color: 'var(--color-fg-muted)', fontStyle: 'italic' }}>
