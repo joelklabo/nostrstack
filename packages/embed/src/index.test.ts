@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mountBlockchainStats, mountNostrProfile, mountPayToAction, mountShareButton, mountTipButton, mountTipFeed, mountTipWidget, renderCommentWidget } from './index.js';
+import {
+  mountBlockchainStats,
+  mountNostrProfile,
+  mountPayToAction,
+  mountShareButton,
+  mountTipButton,
+  mountTipFeed,
+  mountTipWidget,
+  renderCommentWidget
+} from './index.js';
 
 describe('mountTipButton', () => {
   beforeEach(() => {
@@ -16,15 +25,21 @@ describe('mountTipButton', () => {
   it('copies invoice on click', async () => {
     const host = document.createElement('div');
     const pr = 'lnbc1testinvoice';
-    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
-    } as Response).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ pr })
-    } as Response);
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ pr })
+      } as Response);
     const write = vi.fn();
-    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {
+    (
+      globalThis.navigator as unknown as {
+        clipboard: { writeText: (s: string) => Promise<void> | void };
+      }
+    ).clipboard = {
       writeText: write
     };
 
@@ -44,16 +59,22 @@ describe('mountPayToAction', () => {
   it('copies invoice and unlocks when verify succeeds', async () => {
     const host = document.createElement('div');
     const pr = 'lnbc1payinvoice';
-    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
-    } as Response).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ pr })
-    } as Response);
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ pr })
+      } as Response);
 
     const write = vi.fn();
-    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {
+    (
+      globalThis.navigator as unknown as {
+        clipboard: { writeText: (s: string) => Promise<void> | void };
+      }
+    ).clipboard = {
       writeText: write
     };
 
@@ -80,31 +101,37 @@ describe('mountPayToAction', () => {
     const host = document.createElement('div');
     const pr = 'lnbc1payinvoice';
     const providerRef = 'ref123';
-    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.includes('/.well-known/lnurlp/alice')) {
-        return {
-          ok: true,
-          json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
-        } as Response;
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockImplementation(
+      async (input) => {
+        const url = String(input);
+        if (url.includes('/.well-known/lnurlp/alice')) {
+          return {
+            ok: true,
+            json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
+          } as Response;
+        }
+        if (url.includes('/api/lnurlp/alice/invoice')) {
+          return {
+            ok: true,
+            json: async () => ({ pr, provider_ref: providerRef })
+          } as Response;
+        }
+        if (url.includes(`/api/lnurlp/pay/status/${providerRef}`)) {
+          return {
+            ok: true,
+            json: async () => ({ status: 'PAID' })
+          } as Response;
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
       }
-      if (url.includes('/api/lnurlp/alice/invoice')) {
-        return {
-          ok: true,
-          json: async () => ({ pr, provider_ref: providerRef })
-        } as Response;
-      }
-      if (url.includes(`/api/lnurlp/pay/status/${providerRef}`)) {
-        return {
-          ok: true,
-          json: async () => ({ status: 'PAID' })
-        } as Response;
-      }
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
+    );
 
     const write = vi.fn();
-    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard = {
+    (
+      globalThis.navigator as unknown as {
+        clipboard: { writeText: (s: string) => Promise<void> | void };
+      }
+    ).clipboard = {
       writeText: write
     };
 
@@ -131,10 +158,13 @@ describe('mountTipWidget', () => {
   it('generates a mock invoice from a preset', async () => {
     const host = document.createElement('div');
     const write = vi.fn();
-    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard =
-      {
-        writeText: write
-      };
+    (
+      globalThis.navigator as unknown as {
+        clipboard: { writeText: (s: string) => Promise<void> | void };
+      }
+    ).clipboard = {
+      writeText: write
+    };
 
     mountTipWidget(host, {
       username: 'alice',
@@ -157,10 +187,13 @@ describe('mountTipWidget', () => {
   it('treats baseURL=/api as same-origin (no /api/api URLs)', async () => {
     const host = document.createElement('div');
     const write = vi.fn();
-    (globalThis.navigator as unknown as { clipboard: { writeText: (s: string) => Promise<void> | void } }).clipboard =
-      {
-        writeText: write
-      };
+    (
+      globalThis.navigator as unknown as {
+        clipboard: { writeText: (s: string) => Promise<void> | void };
+      }
+    ).clipboard = {
+      writeText: write
+    };
 
     const pr = 'lnbc1testinvoice';
     const providerRef = 'ref123';
@@ -210,14 +243,21 @@ describe('mountShareButton', () => {
     const publish = vi.fn().mockResolvedValue(undefined);
     const connect = vi.fn().mockResolvedValue(undefined);
     const close = vi.fn();
-    (globalThis as unknown as { NostrTools: { relayInit: (url: string) => unknown } }).NostrTools = {
-      relayInit: () => ({ connect, publish, close })
-    };
-    (globalThis as unknown as { nostr: { getPublicKey: () => Promise<string>; signEvent: (ev: unknown) => Promise<unknown> } }).nostr =
+    (globalThis as unknown as { NostrTools: { relayInit: (url: string) => unknown } }).NostrTools =
       {
-        getPublicKey: vi.fn().mockResolvedValue('pubkey'),
-        signEvent: vi.fn(async (ev) => ({ ...(ev as object), id: 'id', sig: 'sig' }))
+        relayInit: () => ({ connect, publish, close })
       };
+    (
+      globalThis as unknown as {
+        nostr: {
+          getPublicKey: () => Promise<string>;
+          signEvent: (ev: unknown) => Promise<unknown>;
+        };
+      }
+    ).nostr = {
+      getPublicKey: vi.fn().mockResolvedValue('pubkey'),
+      signEvent: vi.fn(async (ev) => ({ ...(ev as object), id: 'id', sig: 'sig' }))
+    };
 
     mountShareButton(host, {
       url: 'https://example.com/post',
@@ -235,7 +275,8 @@ describe('mountShareButton', () => {
   it('falls back to navigator.share when signer is unavailable', async () => {
     const host = document.createElement('div');
     const share = vi.fn().mockResolvedValue(undefined);
-    (globalThis.navigator as unknown as { share: (data: unknown) => Promise<void> | void }).share = share;
+    (globalThis.navigator as unknown as { share: (data: unknown) => Promise<void> | void }).share =
+      share;
 
     mountShareButton(host, { url: 'https://example.com/post', title: 'Post' });
     const button = host.querySelector('button') as HTMLButtonElement;
@@ -281,6 +322,10 @@ describe('mountTipFeed realtime', () => {
       constructor(url: string) {
         this.url = url;
         instances.push(this);
+        // Call onopen synchronously for test
+        queueMicrotask(() => {
+          this.onopen?.();
+        });
       }
       close() {
         this.onclose?.();
@@ -291,8 +336,12 @@ describe('mountTipFeed realtime', () => {
 
     mountTipFeed(host, { itemId: 'post-123', baseURL: '/api', host: 'localhost', maxItems: 5 });
 
+    // Wait for hydration promise and WebSocket connection
+    await vi.waitFor(() => {
+      expect(instances.length).toBeGreaterThan(0);
+    });
+
     const ws = instances[0];
-    ws.onopen?.();
     const payload = {
       type: 'tip',
       itemId: 'post-123',
@@ -355,15 +404,36 @@ describe('renderCommentWidget', () => {
       publish: vi.fn()
     };
 
-    (globalThis as unknown as { NostrTools?: { relayInit: (url: string) => unknown } }).NostrTools = {
-      relayInit: () => relay
-    };
+    (globalThis as unknown as { NostrTools?: { relayInit: (url: string) => unknown } }).NostrTools =
+      {
+        relayInit: () => relay
+      };
 
-    await renderCommentWidget(host, { threadId: 'thread-1', relays: ['wss://relay.example'], maxItems: 2 });
+    await renderCommentWidget(host, {
+      threadId: 'thread-1',
+      relays: ['wss://relay.example'],
+      maxItems: 2
+    });
 
     const sub = subs[0];
-    sub.emitEvent({ id: 'id-1', content: 'First', created_at: 100, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk', sig: 'sig' });
-    sub.emitEvent({ id: 'id-2', content: 'Second', created_at: 101, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk', sig: 'sig' });
+    sub.emitEvent({
+      id: 'id-1',
+      content: 'First',
+      created_at: 100,
+      kind: 1,
+      tags: [['t', 'thread-1']],
+      pubkey: 'pk',
+      sig: 'sig'
+    });
+    sub.emitEvent({
+      id: 'id-2',
+      content: 'Second',
+      created_at: 101,
+      kind: 1,
+      tags: [['t', 'thread-1']],
+      pubkey: 'pk',
+      sig: 'sig'
+    });
     sub.emitEose();
 
     expect(host.querySelectorAll('.nostrstack-comment').length).toBe(2);
@@ -373,7 +443,15 @@ describe('renderCommentWidget', () => {
 
     loadMoreBtn.click();
     const sub2 = subs[1];
-    sub2.emitEvent({ id: 'id-3', content: 'Third', created_at: 90, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk', sig: 'sig' });
+    sub2.emitEvent({
+      id: 'id-3',
+      content: 'Third',
+      created_at: 90,
+      kind: 1,
+      tags: [['t', 'thread-1']],
+      pubkey: 'pk',
+      sig: 'sig'
+    });
     sub2.emitEose();
 
     expect(host.querySelectorAll('.nostrstack-comment').length).toBe(3);
@@ -412,9 +490,10 @@ describe('renderCommentWidget', () => {
       publish: vi.fn()
     };
 
-    (globalThis as unknown as { NostrTools?: { relayInit: (url: string) => unknown } }).NostrTools = {
-      relayInit: () => relay
-    };
+    (globalThis as unknown as { NostrTools?: { relayInit: (url: string) => unknown } }).NostrTools =
+      {
+        relayInit: () => relay
+      };
 
     await renderCommentWidget(host, {
       threadId: 'thread-1',
@@ -424,7 +503,14 @@ describe('renderCommentWidget', () => {
     });
 
     const sub = subs[0];
-    sub.emitEvent({ id: 'id-1', content: 'Unsigned', created_at: 100, kind: 1, tags: [['t', 'thread-1']], pubkey: 'pk' });
+    sub.emitEvent({
+      id: 'id-1',
+      content: 'Unsigned',
+      created_at: 100,
+      kind: 1,
+      tags: [['t', 'thread-1']],
+      pubkey: 'pk'
+    });
     sub.emitEose();
 
     expect(host.querySelectorAll('.nostrstack-comment').length).toBe(0);
@@ -478,32 +564,37 @@ describe('mountNostrProfile', () => {
   it('renders a profile card from nip05', async () => {
     const host = document.createElement('div');
     const pubkey = 'a'.repeat(64);
-    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.includes('/api/nostr/identity')) {
-        return {
-          ok: true,
-          json: async () => ({
-            pubkey,
-            nip05: 'alice@example.com',
-            name: 'alice',
-            domain: 'example.com',
-            relays: ['wss://relay.test']
-          })
-        } as Response;
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch').mockImplementation(
+      async (input) => {
+        const url = String(input);
+        if (url.includes('/api/nostr/identity')) {
+          return {
+            ok: true,
+            json: async () => ({
+              pubkey,
+              nip05: 'alice@example.com',
+              name: 'alice',
+              domain: 'example.com',
+              relays: ['wss://relay.test']
+            })
+          } as Response;
+        }
+        if (url.includes('/api/nostr/event/')) {
+          return {
+            ok: true,
+            json: async () => ({
+              author: { pubkey, profile: { name: 'Alice', nip05: 'alice@example.com' } }
+            })
+          } as Response;
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
       }
-      if (url.includes('/api/nostr/event/')) {
-        return {
-          ok: true,
-          json: async () => ({
-            author: { pubkey, profile: { name: 'Alice', nip05: 'alice@example.com' } }
-          })
-        } as Response;
-      }
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
+    );
 
-    const widget = mountNostrProfile(host, { identifier: 'alice@example.com', baseURL: 'http://localhost:3001' });
+    const widget = mountNostrProfile(host, {
+      identifier: 'alice@example.com',
+      baseURL: 'http://localhost:3001'
+    });
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const card = host.querySelector('.nostrstack-user-card');
