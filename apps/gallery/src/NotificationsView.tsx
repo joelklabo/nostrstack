@@ -2,6 +2,7 @@ import { useAuth, useStats } from '@nostrstack/blog-kit';
 import { type Event, type Filter } from 'nostr-tools';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { saveEvents } from './cache/eventCache';
 import { PostItem } from './FeedView';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
@@ -32,6 +33,9 @@ export function NotificationsView() {
       if (pendingEvents.length === 0) return;
       const batch = [...pendingEvents];
       pendingEvents.length = 0;
+      
+      // Save to cache asynchronously
+      saveEvents(batch).catch(e => console.warn('[Cache] Failed to save notifications:', e));
       
       setEvents(prev => {
         const combined = [...prev, ...batch];

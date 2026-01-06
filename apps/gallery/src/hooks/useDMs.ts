@@ -2,6 +2,7 @@ import { useAuth } from '@nostrstack/blog-kit';
 import { type Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { saveEvents } from '../cache/eventCache';
 import { useRelays } from './useRelays';
 import { useSimplePool } from './useSimplePool';
 
@@ -36,6 +37,9 @@ export function useDMs() {
       if (pendingMessages.length === 0) return;
       const batch = [...pendingMessages];
       pendingMessages.length = 0;
+      
+      // Save to cache asynchronously
+      saveEvents(batch).catch(e => console.warn('[Cache] Failed to save DMs:', e));
       
       setMessages(prev => {
         const combined = [...prev, ...batch];
