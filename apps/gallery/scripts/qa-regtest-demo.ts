@@ -101,13 +101,15 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     await expect(page.locator('.payment-panel')).toBeVisible();
     await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
     await expect(page.locator('.payment-invoice-box')).toBeVisible();
-    const regtestBtn = page.getByRole('button', { name: /PAY_REGTEST/ });
+    // Use text-based selector since aria-label is different from button text
+    const regtestBtn = page.locator('button:has-text("PAY_REGTEST")');
     if (!(await regtestBtn.isVisible())) {
       throw new Error('Regtest pay button missing after invoice ready.');
     }
     await regtestBtn.click();
     await expect(page.locator('.payment-modal')).toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 });
-    await page.getByRole('button', { name: /CLOSE/ }).first().click();
+    // Use text-based selector for CLOSE button
+    await page.locator('button:has-text("CLOSE")').first().click();
     return true;
   }
   return false;
