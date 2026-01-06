@@ -41,8 +41,7 @@ describe('TipsFeedConnection', () => {
   beforeEach(() => {
     originalWebSocket = global.WebSocket;
     originalFetch = global.fetch;
-    // @ts-expect-error - mocking WebSocket
-    global.WebSocket = MockWebSocket;
+    (global as unknown as { WebSocket: unknown }).WebSocket = MockWebSocket;
     global.fetch = mockFetch;
     vi.useFakeTimers();
   });
@@ -98,8 +97,7 @@ describe('TipsFeedConnection', () => {
       conn.start();
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'tip',
         itemId: 'item-123',
@@ -125,8 +123,7 @@ describe('TipsFeedConnection', () => {
       conn.start();
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'tip',
         itemId: 'different-item',
@@ -150,8 +147,7 @@ describe('TipsFeedConnection', () => {
       conn.start();
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
 
       // Send same tip twice
       ws.simulateMessage({
@@ -236,8 +232,7 @@ describe('TipsFeedConnection', () => {
       conn.start();
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'tip',
         itemId: 'item-123',
@@ -305,8 +300,7 @@ describe('TipsFeedConnection', () => {
       expect(conn.isConnected()).toBe(true);
 
       // Simulate close
-      // @ts-expect-error - accessing private property for testing
-      const ws1 = conn.ws as MockWebSocket;
+      const ws1 = (conn as unknown as { ws: MockWebSocket }).ws;
       ws1.close();
 
       expect(conn.isConnected()).toBe(false);
@@ -334,8 +328,7 @@ describe('TipsFeedConnection', () => {
       conn.start();
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'tip',
         itemId: 'item-123',
@@ -360,8 +353,7 @@ describe('TipsFeedConnection', () => {
       conn.start();
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'tip',
         itemId: 'item-123',

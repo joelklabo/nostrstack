@@ -13,7 +13,7 @@ vi.mock('@nostrstack/embed', () => ({
 describe('BlockchainStats', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNostrstackConfig as any).mockReturnValue({
+    vi.mocked(useNostrstackConfig).mockReturnValue({
       baseUrl: 'https://api.example.com'
     });
   });

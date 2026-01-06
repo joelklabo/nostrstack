@@ -1,11 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAuth } from './auth';
+import { type AuthContextType, useAuth } from './auth';
 import { useNostrstackConfig } from './context';
 import {
   getLnurlpInvoice,
   getLnurlpMetadata,
+  type LnurlPayMetadata,
   normalizeLightningAddress,
   parseLnurlPayMetadata
 } from './lnurl';
@@ -46,26 +47,26 @@ describe('ZapButton', () => {
     vi.clearAllMocks();
     mockSignEvent.mockResolvedValue({ id: 'zapreq', sig: 'sig' });
 
-    (useAuth as any).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       pubkey: 'mypubkey',
       signEvent: mockSignEvent
-    });
-    (useNostrstackConfig as any).mockReturnValue({
+    } as unknown as AuthContextType);
+    vi.mocked(useNostrstackConfig).mockReturnValue({
       apiBase: 'https://api.example.com',
       relays: ['wss://relay.example.com']
     });
-    (getLnurlpMetadata as any).mockResolvedValue({});
-    (parseLnurlPayMetadata as any).mockReturnValue({
+    vi.mocked(getLnurlpMetadata).mockResolvedValue({});
+    vi.mocked(parseLnurlPayMetadata).mockReturnValue({
       callback: 'https://callback.com/lnurl',
       minSendable: 1000,
       maxSendable: 10000000,
       commentAllowed: 20
-    });
-    (getLnurlpInvoice as any).mockResolvedValue({
+    } as unknown as LnurlPayMetadata);
+    vi.mocked(getLnurlpInvoice).mockResolvedValue({
       pr: 'lnbc1testinvoice',
       successAction: null
     });
-    (normalizeLightningAddress as any).mockImplementation((addr: string) => addr);
+    vi.mocked(normalizeLightningAddress).mockImplementation((addr) => addr || null);
 
     nwcMocks.useNwcPayment.mockReturnValue({
       status: 'idle',
@@ -85,7 +86,7 @@ describe('ZapButton', () => {
   });
 
   it('shows error if not logged in', async () => {
-    (useAuth as any).mockReturnValue({ pubkey: null });
+    vi.mocked(useAuth).mockReturnValue({ pubkey: null } as unknown as AuthContextType);
     render(<ZapButton event={mockEvent} />);
 
     const btn = screen.getByText('⚡ ZAP 21');
@@ -157,6 +158,6 @@ describe('ZapButton', () => {
     });
 
     // Cleanup window.webln
-    delete (window as any).webln;
+    delete (window as Window & { webln?: unknown }).webln;
   });
 });

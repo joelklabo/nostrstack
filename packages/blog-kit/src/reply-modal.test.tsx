@@ -5,7 +5,7 @@ import { ReplyModal } from './reply-modal';
 
 // Mock PostEditor
 vi.mock('./post-editor', () => ({
-  PostEditor: ({ onSuccess }: any) => (
+  PostEditor: ({ onSuccess }: { onSuccess: () => void }) => (
     <div data-testid="post-editor">
       <button onClick={onSuccess}>Post</button>
     </div>

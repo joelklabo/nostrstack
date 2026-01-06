@@ -262,6 +262,9 @@ importers:
       react-dom:
         specifier: ^19.0.0-rc.1
         version: 19.0.0-rc.1(react@19.0.0-rc.1)
+      web-vitals:
+        specifier: ^5.1.0
+        version: 5.1.0
       zod:
         specifier: 3.24.1
         version: 3.24.1
@@ -11059,6 +11062,12 @@ packages:
       }
     engines: { node: '>= 8' }
 
+  web-vitals@5.1.0:
+    resolution:
+      {
+        integrity: sha512-ArI3kx5jI0atlTtmV0fWU3fjpLmq/nD3Zr1iFFlJLaqa5wLBkUSzINwBPySCX/8jRyjlmy1Volw1kz1g9XE4Jg==
+      }
+
   webidl-conversions@3.0.1:
     resolution:
       {
@@ -18416,6 +18425,8 @@ snapshots:
     optional: true
 
   web-streams-polyfill@3.3.3: {}
+
+  web-vitals@5.1.0: {}
 
   webidl-conversions@3.0.1: {}
 

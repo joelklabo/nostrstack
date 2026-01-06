@@ -50,7 +50,12 @@ const INITIAL_EVENTS: MockRelayEvent[] = [
     created_at: Math.floor(Date.now() / 1000) - 7200,
     kind: 0,
     tags: [],
-    content: JSON.stringify({ name: 'Alice', about: 'Mock Alice', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice', lud16: 'alice@nostr.com' }),
+    content: JSON.stringify({
+      name: 'Alice',
+      about: 'Mock Alice',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice',
+      lud16: 'alice@nostr.com'
+    }),
     sig: 'sigp1'
   },
   {
@@ -59,7 +64,12 @@ const INITIAL_EVENTS: MockRelayEvent[] = [
     created_at: Math.floor(Date.now() / 1000) - 7200,
     kind: 0,
     tags: [],
-    content: JSON.stringify({ name: 'Bob', about: 'Mock Bob', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob', lud16: 'bob@nostr.com' }),
+    content: JSON.stringify({
+      name: 'Bob',
+      about: 'Mock Bob',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
+      lud16: 'bob@nostr.com'
+    }),
     sig: 'sigp2'
   }
 ];
@@ -80,8 +90,9 @@ export function installMockRelayWebSocket() {
 
   const OriginalWebSocket = target.WebSocket;
 
-  // @ts-ignore
   class MockRelayWebSocket extends EventTarget {
+    [key: string]: unknown;
+
     static CONNECTING = 0;
     static OPEN = 1;
     static CLOSING = 2;
@@ -139,7 +150,8 @@ export function installMockRelayWebSocket() {
           setTimeout(() => {
             this.dispatchMessage(['OK', event.id, true, '']);
             const target = window as MockRelayWindow;
-            if (!target.__NOSTRSTACK_MOCK_EVENTS__) target.__NOSTRSTACK_MOCK_EVENTS__ = [...INITIAL_EVENTS];
+            if (!target.__NOSTRSTACK_MOCK_EVENTS__)
+              target.__NOSTRSTACK_MOCK_EVENTS__ = [...INITIAL_EVENTS];
             if (!target.__NOSTRSTACK_MOCK_EVENTS__.some((entry) => entry.id === event.id)) {
               target.__NOSTRSTACK_MOCK_EVENTS__.push(event);
             }
@@ -153,7 +165,7 @@ export function installMockRelayWebSocket() {
           const target = window as MockRelayWindow;
           const allEvents = target.__NOSTRSTACK_MOCK_EVENTS__ ?? [...INITIAL_EVENTS];
           target.__NOSTRSTACK_MOCK_EVENTS__ = allEvents;
-          
+
           const matches: MockRelayEvent[] = [];
           for (const filter of filters) {
             const filterMatches = allEvents.filter((event) => {
@@ -169,9 +181,9 @@ export function installMockRelayWebSocket() {
             matches.push(...filterMatches);
           }
 
-          const uniqueMatches = Array.from(new Map(matches.map(m => [m.id, m])).values());
+          const uniqueMatches = Array.from(new Map(matches.map((m) => [m.id, m])).values());
           uniqueMatches.sort((a, b) => b.created_at - a.created_at);
-          
+
           const limit = filters.reduce((min, filter) => Math.min(min, filter.limit || 1000), 1000);
           const limitedMatches = uniqueMatches.slice(0, limit);
 
@@ -231,23 +243,24 @@ export function installMockRelayWebSocket() {
 
   const RelayWebSocketProxy = function (url: string | URL, protocols?: string | string[]) {
     const resolved = typeof url === 'string' ? url : url.toString();
-    if (resolved.includes('mock') || resolved.includes('/ws/telemetry') || resolved.includes('/ws/wallet')) {
+    if (
+      resolved.includes('mock') ||
+      resolved.includes('/ws/telemetry') ||
+      resolved.includes('/ws/wallet')
+    ) {
       return new MockRelayWebSocket(resolved);
     }
     return new OriginalWebSocket(resolved, protocols as string | string[] | undefined);
   };
 
   RelayWebSocketProxy.prototype = OriginalWebSocket.prototype;
-  // @ts-ignore
-  RelayWebSocketProxy.CONNECTING = OriginalWebSocket.CONNECTING;
-  // @ts-ignore
-  RelayWebSocketProxy.OPEN = OriginalWebSocket.OPEN;
-  // @ts-ignore
-  RelayWebSocketProxy.CLOSING = OriginalWebSocket.CLOSING;
-  // @ts-ignore
-  RelayWebSocketProxy.CLOSED = OriginalWebSocket.CLOSED;
+  Object.assign(RelayWebSocketProxy, {
+    CONNECTING: OriginalWebSocket.CONNECTING,
+    OPEN: OriginalWebSocket.OPEN,
+    CLOSING: OriginalWebSocket.CLOSING,
+    CLOSED: OriginalWebSocket.CLOSED
+  });
 
-  // @ts-ignore
-  target.WebSocket = RelayWebSocketProxy;
+  target.WebSocket = RelayWebSocketProxy as unknown as typeof WebSocket;
   target.__NOSTRSTACK_MOCK_RELAY_WS__ = true;
 }

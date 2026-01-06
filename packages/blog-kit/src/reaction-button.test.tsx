@@ -1,14 +1,14 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAuth } from './auth';
+import { type AuthContextType, useAuth } from './auth';
 import { useNostrstackConfig } from './context';
 import { ReactionButton } from './reaction-button';
 
 vi.mock('./auth');
 vi.mock('./context');
 vi.mock('nostr-tools', async (importOriginal) => {
-  const actual: any = await importOriginal();
+  const actual = await importOriginal<typeof import('nostr-tools')>();
   return {
     ...actual,
     SimplePool: vi.fn().mockImplementation(() => ({
@@ -31,11 +31,11 @@ const mockEvent = {
 describe('ReactionButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as any).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       pubkey: 'mypubkey',
       signEvent: vi.fn().mockResolvedValue({ id: 'reaction', sig: 'sig' })
-    });
-    (useNostrstackConfig as any).mockReturnValue({
+    } as unknown as AuthContextType);
+    vi.mocked(useNostrstackConfig).mockReturnValue({
       relays: ['wss://relay.example.com']
     });
   });
@@ -60,7 +60,7 @@ describe('ReactionButton', () => {
   });
 
   it('shows alert if not logged in', async () => {
-    (useAuth as any).mockReturnValue({ pubkey: null });
+    vi.mocked(useAuth).mockReturnValue({ pubkey: null } as unknown as AuthContextType);
     const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
     render(<ReactionButton event={mockEvent} />);

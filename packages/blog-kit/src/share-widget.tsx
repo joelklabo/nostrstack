@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { ensureNostrstackRoot } from '@nostrstack/embed';
 import { Relay, type Subscription } from 'nostr-tools/relay';
@@ -57,7 +57,7 @@ function parseProfile(pubkey: string, raw: unknown): NostrProfile | null {
     display_name: typeof rec.display_name === 'string' ? rec.display_name : undefined,
     picture: typeof rec.picture === 'string' ? rec.picture : undefined,
     nip05: typeof rec.nip05 === 'string' ? rec.nip05 : undefined,
-    about: typeof rec.about === 'string' ? rec.about : undefined,
+    about: typeof rec.about === 'string' ? rec.about : undefined
   };
 }
 
@@ -74,8 +74,7 @@ async function publishToRelays(relays: string[], event: SignedEvent) {
     globalThis.setTimeout(() => {
       toClose.forEach((r) => {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (r as any)._connected = false;
+          (r as unknown as { _connected: boolean })._connected = false;
         } catch {
           // ignore
         }
@@ -122,7 +121,7 @@ export function ShareWidget({
   relays,
   tag,
   maxItems = 100,
-  className,
+  className
 }: ShareWidgetProps) {
   const cfg = useNostrstackConfig();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -135,14 +134,11 @@ export function ShareWidget({
   const profilesRef = useRef<Record<string, NostrProfile>>({});
 
   const relayList = useMemo(() => relays ?? cfg.relays ?? DEFAULT_RELAYS, [relays, cfg.relays]);
-  const relayTargets = useMemo(
-    () => relayList.map((r) => r.trim()).filter(Boolean),
-    [relayList],
-  );
+  const relayTargets = useMemo(() => relayList.map((r) => r.trim()).filter(Boolean), [relayList]);
   const effectiveTag = useMemo(() => tag ?? `nostrstack:${itemId}`, [tag, itemId]);
   const note = useMemo(
     () => `${title}\n${url}${lnAddress ? `\n⚡ ${lnAddress}` : ''}`,
-    [title, url, lnAddress],
+    [title, url, lnAddress]
   );
 
   useEffect(() => {
@@ -216,8 +212,7 @@ export function ShareWidget({
           try {
             // Avoid sending CLOSE frames during teardown/tab switches. `nostr-tools` schedules sends as microtasks,
             // so closing the WebSocket synchronously can lead to `WebSocket is already in CLOSING or CLOSED state.`
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (c as any)._connected = false;
+            (c as unknown as { _connected: boolean })._connected = false;
           } catch {
             // ignore
           }
@@ -242,8 +237,7 @@ export function ShareWidget({
           globalThis.setTimeout(() => {
             ok.forEach((r) => {
               try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (r as any)._connected = false;
+                (r as unknown as { _connected: boolean })._connected = false;
               } catch {
                 // ignore
               }
@@ -267,7 +261,7 @@ export function ShareWidget({
 
         const filters = [
           { kinds: [1], '#r': [url], limit: Math.min(500, Math.max(1, maxItems)) },
-          { kinds: [1], '#t': [effectiveTag], limit: Math.min(500, Math.max(1, maxItems)) },
+          { kinds: [1], '#t': [effectiveTag], limit: Math.min(500, Math.max(1, maxItems)) }
         ];
 
         shareSub = connections.map((relay) =>
@@ -282,7 +276,7 @@ export function ShareWidget({
                 pubkey: ev.pubkey,
                 created_at: ev.created_at,
                 content: ev.content ?? '',
-                tags: Array.isArray(ev.tags) ? ev.tags : [],
+                tags: Array.isArray(ev.tags) ? ev.tags : []
               };
               setEvents((prev) => {
                 if (prev.some((p) => p.id === next.id)) return prev;
@@ -305,13 +299,13 @@ export function ShareWidget({
                       oneose: () => {
                         // allow retries in the future if no metadata found
                         profileFetchInFlight.delete(ev.pubkey);
-                      },
-                    }),
+                      }
+                    })
                   );
                 }
               }
-            },
-          }),
+            }
+          })
         );
       } catch (err) {
         setStatus('error');
@@ -339,7 +333,10 @@ export function ShareWidget({
       }
     ).nostr;
 
-    const tags: string[][] = [['r', url], ['t', effectiveTag]];
+    const tags: string[][] = [
+      ['r', url],
+      ['t', effectiveTag]
+    ];
     const unsigned = async () => {
       if (!nostr?.getPublicKey || !nostr.signEvent) {
         throw new Error('Nostr signer (NIP-07) required');
@@ -351,7 +348,7 @@ export function ShareWidget({
         created_at: now,
         tags,
         content: note,
-        pubkey,
+        pubkey
       };
       return await nostr.signEvent(event);
     };
@@ -368,7 +365,7 @@ export function ShareWidget({
             pubkey: signed.pubkey,
             created_at: signed.created_at,
             content: signed.content,
-            tags: signed.tags,
+            tags: signed.tags
           };
           return [next, ...prev].sort((a, b) => b.created_at - a.created_at).slice(0, maxItems);
         });
@@ -390,7 +387,9 @@ export function ShareWidget({
   }, [effectiveTag, maxItems, note, relayTargets, title, url]);
 
   const header = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+    <div
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
+    >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
         <div style={{ fontWeight: 800 }}>Shares</div>
         <div style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: 13 }}>
@@ -416,7 +415,7 @@ export function ShareWidget({
                 : status === 'error'
                   ? 'var(--nostrstack-color-danger)'
                   : 'var(--nostrstack-color-text-muted)',
-            whiteSpace: 'nowrap',
+            whiteSpace: 'nowrap'
           }}
           aria-live="polite"
         >
@@ -430,7 +429,7 @@ export function ShareWidget({
                   ? 'var(--nostrstack-color-success)'
                   : status === 'error'
                     ? 'var(--nostrstack-color-danger)'
-                    : 'var(--nostrstack-color-border)',
+                    : 'var(--nostrstack-color-border)'
             }}
           />
           {status === 'connected'
@@ -476,14 +475,21 @@ export function ShareWidget({
                 display: 'grid',
                 placeItems: 'center',
                 overflow: 'hidden',
-                boxShadow: '0 0 0 2px color-mix(in oklab, var(--nostrstack-color-surface) 90%, transparent)',
+                boxShadow:
+                  '0 0 0 2px color-mix(in oklab, var(--nostrstack-color-surface) 90%, transparent)'
               }}
               aria-label={label}
             >
               {pic ? (
-                <img src={pic} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img
+                  src={pic}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               ) : (
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--nostrstack-color-text)' }}>
+                <span
+                  style={{ fontSize: 12, fontWeight: 800, color: 'var(--nostrstack-color-text)' }}
+                >
                   {(profile?.display_name || profile?.name || pk).slice(0, 1).toUpperCase()}
                 </span>
               )}
@@ -497,13 +503,14 @@ export function ShareWidget({
               height: 28,
               borderRadius: 999,
               border: '1px solid var(--nostrstack-color-border)',
-              background: 'color-mix(in oklab, var(--nostrstack-color-primary) 12%, var(--nostrstack-color-surface))',
+              background:
+                'color-mix(in oklab, var(--nostrstack-color-primary) 12%, var(--nostrstack-color-surface))',
               marginLeft: avatarPubkeys.length ? -8 : 0,
               display: 'grid',
               placeItems: 'center',
               fontSize: 12,
               fontWeight: 800,
-              color: 'var(--nostrstack-color-text)',
+              color: 'var(--nostrstack-color-text)'
             }}
             title={`${uniqueSharers.length - avatarPubkeys.length} more`}
           >
@@ -531,7 +538,7 @@ export function ShareWidget({
         background:
           'radial-gradient(900px circle at top left, color-mix(in oklab, var(--nostrstack-color-primary) 10%, transparent), transparent 60%), var(--nostrstack-color-surface)',
         padding: 14,
-        boxShadow: 'var(--nostrstack-shadow-md)',
+        boxShadow: 'var(--nostrstack-shadow-md)'
       }}
     >
       {header}
@@ -541,7 +548,8 @@ export function ShareWidget({
         <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
           {recent.map((ev) => {
             const profile = profiles[ev.pubkey];
-            const name = profile?.display_name || profile?.name || profile?.nip05 || shortKey(ev.pubkey);
+            const name =
+              profile?.display_name || profile?.name || profile?.nip05 || shortKey(ev.pubkey);
             const pic = profile?.picture;
             const href = `https://njump.me/${ev.id}`;
             return (
@@ -559,7 +567,7 @@ export function ShareWidget({
                   border: '1px solid var(--nostrstack-color-border)',
                   background: 'color-mix(in oklab, var(--nostrstack-color-surface) 90%, white)',
                   textDecoration: 'none',
-                  color: 'var(--nostrstack-color-text)',
+                  color: 'var(--nostrstack-color-text)'
                 }}
               >
                 <div
@@ -572,27 +580,46 @@ export function ShareWidget({
                     display: 'grid',
                     placeItems: 'center',
                     background: 'var(--nostrstack-color-surface)',
-                    flex: '0 0 auto',
+                    flex: '0 0 auto'
                   }}
                   aria-hidden="true"
                 >
                   {pic ? (
-                    <img src={pic} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={pic}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   ) : (
                     <span style={{ fontSize: 12, fontWeight: 800 }}>
-                      {(profile?.display_name || profile?.name || ev.pubkey).slice(0, 1).toUpperCase()}
+                      {(profile?.display_name || profile?.name || ev.pubkey)
+                        .slice(0, 1)
+                        .toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div style={{ minWidth: 0, display: 'grid' }}>
-                  <div style={{ fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     {name}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--nostrstack-color-text-muted)' }}>
                     {timeAgo(nowMs, ev.created_at)}
                   </div>
                 </div>
-                <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--nostrstack-color-text-muted)' }}>
+                <div
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: 12,
+                    color: 'var(--nostrstack-color-text-muted)'
+                  }}
+                >
                   Open
                 </div>
               </a>
@@ -607,14 +634,15 @@ export function ShareWidget({
           style={{
             marginTop: 10,
             fontSize: 13,
-            color: 'var(--nostrstack-color-danger)',
+            color: 'var(--nostrstack-color-danger)'
           }}
         >
           {error}
         </div>
       )}
       <div style={{ marginTop: 10, fontSize: 12, color: 'var(--nostrstack-color-text-muted)' }}>
-        Tracking shares for <code style={{ fontFamily: 'var(--nostrstack-font-mono)' }}>{effectiveTag}</code>
+        Tracking shares for{' '}
+        <code style={{ fontFamily: 'var(--nostrstack-font-mono)' }}>{effectiveTag}</code>
       </div>
     </div>
   );

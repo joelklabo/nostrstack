@@ -1,7 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { connectRelays } from '../relays.js';
+import { connectRelays, type RelayConnection } from '../relays.js';
 import { renderCommentWidget } from './commentWidget.js';
+
+function createMockRelay(overrides?: Partial<RelayConnection>): RelayConnection {
+  return {
+    url: 'wss://relay.example.com',
+    sub: vi.fn().mockReturnValue({ on: vi.fn(), un: vi.fn() }),
+    publish: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn(),
+    connect: vi.fn().mockResolvedValue(undefined),
+    ...overrides
+  } as unknown as RelayConnection;
+}
 
 // Mock dependencies
 vi.mock('../relayBadge.js', () => ({
@@ -36,8 +47,7 @@ describe('renderCommentWidget', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).nostr;
+    delete (window as Window & { nostr?: unknown }).nostr;
   });
 
   it('renders initial state correctly', async () => {
@@ -48,12 +58,7 @@ describe('renderCommentWidget', () => {
   });
 
   it('connects to relays on mount if lazyConnect is false (default)', async () => {
-    const mockRelay = {
-      url: 'wss://relay.example.com',
-      sub: vi.fn().mockReturnValue({ on: vi.fn(), un: vi.fn() }),
-      publish: vi.fn(),
-      close: vi.fn()
-    };
+    const mockRelay = createMockRelay();
     vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     await renderCommentWidget(host, { relays: ['wss://relay.example.com'] });
@@ -69,12 +74,7 @@ describe('renderCommentWidget', () => {
   });
 
   it('connects when load more is clicked', async () => {
-    const mockRelay = {
-      url: 'wss://relay.example.com',
-      sub: vi.fn().mockReturnValue({ on: vi.fn(), un: vi.fn() }),
-      publish: vi.fn(),
-      close: vi.fn()
-    };
+    const mockRelay = createMockRelay();
     vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     await renderCommentWidget(host, { lazyConnect: true, relays: ['wss://relay.example.com'] });
@@ -90,12 +90,7 @@ describe('renderCommentWidget', () => {
   });
 
   it('handles post submission', async () => {
-    const mockRelay = {
-      url: 'wss://relay.example.com',
-      sub: vi.fn().mockReturnValue({ on: vi.fn(), un: vi.fn() }),
-      publish: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn()
-    };
+    const mockRelay = createMockRelay();
     vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     // Mock window.nostr
@@ -128,12 +123,7 @@ describe('renderCommentWidget', () => {
   });
 
   it('destroys correctly', async () => {
-    const mockRelay = {
-      url: 'wss://relay.example.com',
-      sub: vi.fn().mockReturnValue({ on: vi.fn(), un: vi.fn() }),
-      publish: vi.fn(),
-      close: vi.fn()
-    };
+    const mockRelay = createMockRelay();
     vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     const widget = await renderCommentWidget(host, { relays: ['wss://relay.example.com'] });

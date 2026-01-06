@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 /**
  * Comprehensive Design Review Test Suite
@@ -15,7 +15,7 @@ import { expect, test } from '@playwright/test';
  */
 
 // Test helper to login
-async function loginWithNsec(page: any) {
+async function loginWithNsec(page: Page) {
   await page.goto('/');
   await page.getByText('Enter nsec manually').click();
   const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';

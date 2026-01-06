@@ -2,7 +2,7 @@ import './styles/lightning-card.css';
 import './styles/profile-tip.css';
 
 import { SendSats, useAuth, useFeed, useNostrQuery, useProfile } from '@nostrstack/blog-kit';
-import { type Event, nip19 } from 'nostr-tools';
+import { nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -38,7 +38,7 @@ interface ProfileViewProps {
 
 export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
-  const [retryCount, setRetryCount] = useState(0);
+  // const [retryCount, setRetryCount] = useState(0);
   const [lightningQr, setLightningQr] = useState<string | null>(null);
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>(
     'idle'
@@ -127,16 +127,6 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
     return contactEvents[0].tags.filter((t) => t[0] === 'p').length;
   }, [contactEvents]);
 
-  const handleRetry = useCallback(() => {
-    setRetryCount((c) => c + 1);
-    // Hooks will auto-retry if their inputs change or we could force a remount,
-    // but simplified hook doesn't have explicit retry.
-    // Changing retryCount won't affect hooks unless passed to them or used in deps.
-    // For now, we can pass retryCount to options if we update hooks, but simple re-render might suffice if transient.
-    // Actually, useNostrQuery depends on `enabled`. Toggling it might help?
-    // Let's leave it for now.
-  }, []);
-
   const npub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
   const lightningAddress = profile?.lud16 ?? profile?.lud06;
   const lightningLabel = profile?.lud16 ? 'LIGHTNING_ADDRESS' : 'LNURL';
@@ -191,7 +181,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
   return (
     <div className="profile-view">
       {error && (
-        <Alert tone="danger" title="Profile Error" onRetry={handleRetry} retryLabel="Retry">
+        <Alert tone="danger" title="Profile Error">
           {error}
         </Alert>
       )}

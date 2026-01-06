@@ -10,23 +10,11 @@ import {
   createNostrstackBrandTheme,
   type NostrstackBrandPreset
 } from '@nostrstack/embed';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
-import { DMView } from './DMView';
 import { ErrorBoundary } from './ErrorBoundary';
-import { FeedView } from './FeedView';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
-import { LoginView } from './LoginView';
-import { NostrEventView } from './NostrEventView';
-import { NotFoundView } from './NotFoundView';
-import { NotificationsView } from './NotificationsView';
-import { OffersView } from './OffersView';
-import { PersonalSiteKitView } from './PersonalSiteKitView';
-import { ProfileView } from './ProfileView';
-import { RelaysView } from './RelaysView';
-import { SearchView } from './SearchView';
-import { SettingsView } from './SettingsView';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
 import { Alert } from './ui/Alert';
@@ -34,6 +22,29 @@ import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
+
+const DMView = lazy(() => import('./DMView').then((m) => ({ default: m.DMView })));
+const FeedView = lazy(() => import('./FeedView').then((m) => ({ default: m.FeedView })));
+const LoginView = lazy(() => import('./LoginView').then((m) => ({ default: m.LoginView })));
+const NostrEventView = lazy(() =>
+  import('./NostrEventView').then((m) => ({ default: m.NostrEventView }))
+);
+const NotFoundView = lazy(() =>
+  import('./NotFoundView').then((m) => ({ default: m.NotFoundView }))
+);
+const NotificationsView = lazy(() =>
+  import('./NotificationsView').then((m) => ({ default: m.NotificationsView }))
+);
+const OffersView = lazy(() => import('./OffersView').then((m) => ({ default: m.OffersView })));
+const PersonalSiteKitView = lazy(() =>
+  import('./PersonalSiteKitView').then((m) => ({ default: m.PersonalSiteKitView }))
+);
+const ProfileView = lazy(() => import('./ProfileView').then((m) => ({ default: m.ProfileView })));
+const RelaysView = lazy(() => import('./RelaysView').then((m) => ({ default: m.RelaysView })));
+const SearchView = lazy(() => import('./SearchView').then((m) => ({ default: m.SearchView })));
+const SettingsView = lazy(() =>
+  import('./SettingsView').then((m) => ({ default: m.SettingsView }))
+);
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -124,7 +135,11 @@ function AppShell() {
   }, [brandPreset, theme]);
 
   if (nostrRouteId) {
-    return <NostrEventView rawId={nostrRouteId} />;
+    return (
+      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+        <NostrEventView rawId={nostrRouteId} />
+      </Suspense>
+    );
   }
 
   if (isLoading) {
@@ -145,7 +160,11 @@ function AppShell() {
   }
 
   if (!pubkey && !isPersonalSiteKitRoute) {
-    return <LoginView />;
+    return (
+      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+        <LoginView />
+      </Suspense>
+    );
   }
 
   // Show 404 for invalid routes
@@ -203,41 +222,56 @@ function AppShell() {
         onOpenHelp={() => setHelpOpen(true)}
       />
       <main className="feed-container" role="main" id="main-content">
-        {profileRouteError && (
-          <Alert tone="danger" title="Routing Error">
-            Invalid profile id. Showing your current view instead.
-          </Alert>
-        )}
-        {profileRoutePubkey ? (
-          <ProfileView
-            pubkey={profileRoutePubkey}
-            onNavigateToSettings={() => setCurrentView('settings')}
-          />
-        ) : (
-          <>
-            {currentView === 'feed' && <FeedView />}
-            {currentView === 'search' && <SearchView />}
-            {currentView === 'profile' && pubkey && (
-              <ProfileView
-                pubkey={pubkey}
-                onNavigateToSettings={() => setCurrentView('settings')}
-              />
-            )}
-            {currentView === 'notifications' && <NotificationsView />}
-            {currentView === 'messages' && <DMView />}
-            {currentView === 'relays' && <RelaysView />}
-            {currentView === 'offers' && <OffersView />}
-            {currentView === 'personal-site-kit' && <PersonalSiteKitView />}
-            {currentView === 'settings' && (
-              <SettingsView
-                theme={theme}
-                setTheme={setTheme}
-                brandPreset={brandPreset}
-                setBrandPreset={setBrandPreset}
-              />
-            )}
-          </>
-        )}
+        <Suspense
+          fallback={
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+                color: 'var(--color-fg-muted)'
+              }}
+            >
+              Loading...
+            </div>
+          }
+        >
+          {profileRouteError && (
+            <Alert tone="danger" title="Routing Error">
+              Invalid profile id. Showing your current view instead.
+            </Alert>
+          )}
+          {profileRoutePubkey ? (
+            <ProfileView
+              pubkey={profileRoutePubkey}
+              onNavigateToSettings={() => setCurrentView('settings')}
+            />
+          ) : (
+            <>
+              {currentView === 'feed' && <FeedView />}
+              {currentView === 'search' && <SearchView />}
+              {currentView === 'profile' && pubkey && (
+                <ProfileView
+                  pubkey={pubkey}
+                  onNavigateToSettings={() => setCurrentView('settings')}
+                />
+              )}
+              {currentView === 'notifications' && <NotificationsView />}
+              {currentView === 'messages' && <DMView />}
+              {currentView === 'relays' && <RelaysView />}
+              {currentView === 'offers' && <OffersView />}
+              {currentView === 'personal-site-kit' && <PersonalSiteKitView />}
+              {currentView === 'settings' && (
+                <SettingsView
+                  theme={theme}
+                  setTheme={setTheme}
+                  brandPreset={brandPreset}
+                  setBrandPreset={setBrandPreset}
+                />
+              )}
+            </>
+          )}
+        </Suspense>
       </main>
       <aside className="telemetry-sidebar">
         <ErrorBoundary

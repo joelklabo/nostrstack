@@ -13,7 +13,7 @@ vi.mock('@nostrstack/embed', () => ({
 describe('TipActivityFeed', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNostrstackConfig as any).mockReturnValue({
+    vi.mocked(useNostrstackConfig).mockReturnValue({
       lnAddress: 'user@example.com'
     });
   });

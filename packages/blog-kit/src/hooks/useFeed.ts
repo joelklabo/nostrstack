@@ -1,5 +1,3 @@
-import { type Event } from 'nostr-tools';
-
 import { useNostrQuery, type UseNostrQueryOptions } from './useNostrQuery';
 
 export type UseFeedOptions = UseNostrQueryOptions & {

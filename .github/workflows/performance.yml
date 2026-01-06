@@ -1,0 +1,48 @@
+name: Performance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Gallery
+        run: pnpm --filter gallery build
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          # Use static serve or start preview server
+          # We'll use static serve from dist folder to be faster/simpler if possible,
+          # or run the preview command.
+          # lhci can serve static folders.
+          # apps/gallery/dist
+          urls: |
+            http://localhost:4173/
+            http://localhost:4173/nostr/note1mq29c67332205362536
+          # We need to start the server.
+          # 'startServerCommand' option in lhci action allows this.
+          startServerCommand: pnpm --filter gallery preview
+          startServerReadyPattern: 'Local:'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          runs: 3
+          # Budget configuration
+          budgetPath: .github/lighthouse/budget.json

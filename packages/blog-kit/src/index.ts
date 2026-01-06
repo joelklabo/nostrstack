@@ -17,6 +17,7 @@ export {
 } from './hooks/useNostrQuery';
 export { useProfile, type UseProfileResult } from './hooks/useProfile';
 export { useThread } from './hooks/useThread';
+export { useZaps, type UseZapsResult } from './hooks/useZaps';
 export { type NostrProfileProps, NostrProfileWidget } from './nostr-profile';
 export {
   type NwcBalanceResult,

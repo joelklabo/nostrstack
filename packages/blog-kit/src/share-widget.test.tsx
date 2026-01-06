@@ -18,18 +18,18 @@ vi.mock('nostr-tools/relay', () => ({
 describe('ShareWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNostrstackConfig as any).mockReturnValue({
+    vi.mocked(useNostrstackConfig).mockReturnValue({
       relays: ['wss://relay.example.com']
     });
 
     // Mock Relay connection
-    (Relay.connect as any).mockResolvedValue({
+    vi.mocked(Relay.connect).mockResolvedValue({
       subscribe: vi.fn().mockReturnValue({
         close: vi.fn()
       }),
       close: vi.fn(),
       _connected: true
-    });
+    } as unknown as Relay);
   });
 
   afterEach(() => {

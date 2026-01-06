@@ -5,7 +5,6 @@ import {
   ReplyModal,
   useAuth,
   useFeed,
-  useStats,
   ZapButton
 } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
@@ -238,7 +237,7 @@ export function FeedView() {
   const { isMuted } = useMuteList();
   const { contacts, loading: contactsLoading } = useContactList();
   const { pubkey } = useAuth();
-  const { incrementEvents } = useStats();
+  // const { incrementEvents } = useStats();
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||

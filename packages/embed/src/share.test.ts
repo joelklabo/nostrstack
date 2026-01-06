@@ -17,8 +17,7 @@ describe('renderShareButton', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).nostr;
+    delete (window as Window & { nostr?: unknown }).nostr;
   });
 
   it('renders correctly', () => {

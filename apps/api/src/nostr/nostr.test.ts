@@ -17,10 +17,13 @@ let server: Awaited<ReturnType<typeof buildServerFn>>;
 describe('nostr', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
   });
@@ -75,8 +78,7 @@ describe('nostr', () => {
 
     const publish = vi.fn().mockResolvedValue({ successes: 1, failures: 0 });
     // Override nostr client + relays to avoid network
-    // @ts-expect-error override for test
-    server.nostrClient = { publish };
+    (server as unknown as { nostrClient: unknown }).nostrClient = { publish };
     server.nostrRelays = [];
 
     const res = await server.inject({

@@ -3,18 +3,33 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useNostrstackConfig } from '../context';
 
+/**
+ * Options for the useNostrQuery hook.
+ */
 export type UseNostrQueryOptions = {
+  /** Whether the query should execute automatically. Defaults to true. */
   enabled?: boolean;
+  /** List of relay URLs to query. Defaults to configured relays or fallbacks. */
   relays?: string[];
+  /** Maximum number of events to fetch per page. Defaults to 20. */
   limit?: number;
+  /** Initial events to seed the state with. */
   initialEvents?: Event[];
 };
 
+/**
+ * Result of the useNostrQuery hook.
+ */
 export type UseNostrQueryResult = {
+  /** List of unique events matching the filter, sorted by created_at descending. */
   events: Event[];
+  /** Whether a query is currently in progress. */
   loading: boolean;
+  /** Error message if the query failed. */
   error: string | null;
+  /** Whether there are likely more events to fetch (based on limit). */
   hasMore: boolean;
+  /** Function to load the next page of events. */
   loadMore: () => void;
 };
 
@@ -28,6 +43,13 @@ function getGlobalPool() {
   return globalPool;
 }
 
+/**
+ * A hook to query Nostr events from multiple relays with pagination and deduplication.
+ *
+ * @param filters - List of Nostr filters to apply.
+ * @param options - Configuration options.
+ * @returns Object containing events, loading state, error, and pagination controls.
+ */
 export function useNostrQuery(
   filters: Filter[],
   options: UseNostrQueryOptions = {}
@@ -57,7 +79,7 @@ export function useNostrQuery(
       try {
         const pool = getGlobalPool();
 
-        const queryFilters = filters.map((f) => {
+        const queryFilters = filters.map((f): Filter => {
           const newFilter = { ...f, limit };
           if (isLoadMore && oldestTimestamp.current) {
             newFilter.until = oldestTimestamp.current - 1;
@@ -65,6 +87,7 @@ export function useNostrQuery(
           return newFilter;
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const results = await pool.querySync(relayList, queryFilters as any);
 
         if (results.length === 0) {

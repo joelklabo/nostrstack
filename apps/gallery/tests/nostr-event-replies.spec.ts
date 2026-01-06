@@ -88,7 +88,9 @@ test.describe('/nostr/:id replies', () => {
 
     await page.goto(`/nostr/${eventId}`);
 
-    await expect(page.locator('.nostr-event-replies .nostr-event-section-title')).toHaveText('Replies');
+    await expect(page.locator('.nostr-event-replies .nostr-event-section-title')).toHaveText(
+      'Replies'
+    );
     await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
 
     const loadMore = page.getByRole('button', { name: /Load more replies/i });
@@ -98,7 +100,9 @@ test.describe('/nostr/:id replies', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(4);
 
-    const contents = await page.locator('.nostr-event-replies-list .post-content').allTextContents();
+    const contents = await page
+      .locator('.nostr-event-replies-list .post-content')
+      .allTextContents();
     expect(contents[0]).toContain('Oldest reply');
     expect(contents[1]).toContain('Older reply');
     expect(contents[2]).toContain('Newer reply');
@@ -151,10 +155,13 @@ test.describe('/nostr/:id replies', () => {
       kind: 0
     });
 
-    await page.addInitScript((events) => {
-      // @ts-expect-error seed mock relay events
-      window.__NOSTRSTACK_MOCK_EVENTS__ = events;
-    }, [event, replyOne, replyTwo, profile]);
+    await page.addInitScript(
+      (events) => {
+        (window as unknown as { __NOSTRSTACK_MOCK_EVENTS__: unknown }).__NOSTRSTACK_MOCK_EVENTS__ =
+          events;
+      },
+      [event, replyOne, replyTwo, profile]
+    );
 
     await page.route('**/api/nostr/event/*', async (route) => {
       await route.fulfill({
@@ -174,11 +181,15 @@ test.describe('/nostr/:id replies', () => {
     await expect(fallbackAlert).toContainText('API unavailable');
 
     await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
-    const contents = await page.locator('.nostr-event-replies-list .post-content').allTextContents();
+    const contents = await page
+      .locator('.nostr-event-replies-list .post-content')
+      .allTextContents();
     expect(contents[0]).toContain('Oldest reply');
     expect(contents[1]).toContain('Newest reply');
 
-    const screenshotPath = resolveDocScreenshotPath('nostr-event-replies/nostr-event-replies-fallback.png');
+    const screenshotPath = resolveDocScreenshotPath(
+      'nostr-event-replies/nostr-event-replies-fallback.png'
+    );
     ensureDir(screenshotPath);
     await page.screenshot({ path: screenshotPath, fullPage: true });
   });
@@ -228,11 +239,15 @@ test.describe('/nostr/:id replies', () => {
     await expect(warning).toContainText('replyCursor must be a non-empty string.');
 
     await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
-    const contents = await page.locator('.nostr-event-replies-list .post-content').allTextContents();
+    const contents = await page
+      .locator('.nostr-event-replies-list .post-content')
+      .allTextContents();
     expect(contents[0]).toContain('Oldest reply');
     expect(contents[1]).toContain('Newest reply');
 
-    const screenshotPath = resolveDocScreenshotPath('nostr-event-replies/nostr-event-replies-cursor-error.png');
+    const screenshotPath = resolveDocScreenshotPath(
+      'nostr-event-replies/nostr-event-replies-cursor-error.png'
+    );
     ensureDir(screenshotPath);
     await page.screenshot({ path: screenshotPath, fullPage: true });
   });

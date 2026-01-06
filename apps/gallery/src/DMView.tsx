@@ -1,5 +1,5 @@
 import { nip19 } from 'nostr-tools';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useCachedEvent } from './hooks/useCachedEvent';
 import { type Conversation, type DMMessage, useDMs } from './hooks/useDMs';
@@ -30,9 +30,9 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
   useEffect(() => {
     let cancelled = false;
     setProfileLoading(true);
-    
+
     getCached({ kinds: [0], authors: [conversation.peer] })
-      .then(event => {
+      .then((event) => {
         if (cancelled || !event) {
           setProfileLoading(false);
           return;
@@ -46,22 +46,26 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
         setProfileLoading(false);
       })
       .catch(() => setProfileLoading(false));
-    
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [conversation.peer, getCached]);
 
   // Decrypt last message for preview
   useEffect(() => {
     const lastMessage = conversation.messages[conversation.messages.length - 1];
     if (!lastMessage) return;
-    
+
     decryptMessage(lastMessage)
-      .then(text => setLastMessagePreview(text.slice(0, 50) + (text.length > 50 ? '...' : '')))
+      .then((text) => setLastMessagePreview(text.slice(0, 50) + (text.length > 50 ? '...' : '')))
       .catch(() => setLastMessagePreview('[Unable to decrypt]'));
   }, [conversation.messages, decryptMessage]);
 
-  const displayName = profile?.display_name || profile?.name || conversation.peer.slice(0, 8) + '...';
-  const avatarUrl = profile?.picture || `https://api.dicebear.com/7.x/identicon/svg?seed=${conversation.peer}`;
+  const displayName =
+    profile?.display_name || profile?.name || conversation.peer.slice(0, 8) + '...';
+  const avatarUrl =
+    profile?.picture || `https://api.dicebear.com/7.x/identicon/svg?seed=${conversation.peer}`;
 
   // Relative time formatting
   const getRelativeTime = (timestamp: number) => {
@@ -75,22 +79,24 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
   };
 
   return (
-    <div 
+    <div
       className={`dm-list-item ${isActive ? 'active' : ''}`}
       onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick();
+      }}
       aria-label={`Conversation with ${displayName}`}
     >
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
-        <img 
-          src={avatarUrl} 
-          alt="" 
-          style={{ 
-            width: '40px', 
-            height: '40px', 
-            borderRadius: '50%', 
+        <img
+          src={avatarUrl}
+          alt=""
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
             objectFit: 'cover',
             flexShrink: 0,
             background: 'var(--color-canvas-subtle)'
@@ -98,32 +104,45 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
           loading="lazy"
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
-            <span style={{ 
-              fontWeight: 600, 
-              fontSize: '0.9rem',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: '0.5rem'
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {profileLoading ? <Skeleton variant="text" width={80} height={16} /> : displayName}
             </span>
-            <span style={{ 
-              fontSize: '0.75rem', 
-              color: 'var(--color-fg-muted)',
-              flexShrink: 0
-            }}>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--color-fg-muted)',
+                flexShrink: 0
+              }}
+            >
               {getRelativeTime(conversation.lastMessageAt)}
             </span>
           </div>
-          <div style={{ 
-            fontSize: '0.8rem', 
-            color: 'var(--color-fg-muted)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            marginTop: '0.15rem'
-          }}>
+          <div
+            style={{
+              fontSize: '0.8rem',
+              color: 'var(--color-fg-muted)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              marginTop: '0.15rem'
+            }}
+          >
             {lastMessagePreview ?? <Skeleton variant="text" width={120} height={14} />}
           </div>
         </div>
@@ -143,7 +162,7 @@ export function DMView() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const newRecipientInputRef = useRef<HTMLInputElement>(null);
 
-  const activeConversation = conversations.find(c => c.peer === selectedPeer);
+  const activeConversation = conversations.find((c) => c.peer === selectedPeer);
 
   useEffect(() => {
     if (activeConversation) {
@@ -152,7 +171,7 @@ export function DMView() {
       activeConversation.messages.forEach(async (msg) => {
         if (!decryptedCache[msg.id]) {
           const text = await decryptMessage(msg);
-          setDecryptedCache(prev => ({ ...prev, [msg.id]: text }));
+          setDecryptedCache((prev) => ({ ...prev, [msg.id]: text }));
         }
       });
     }
@@ -168,14 +187,14 @@ export function DMView() {
   const handleStartNewConversation = () => {
     setRecipientError(null);
     const input = newRecipient.trim();
-    
+
     if (!input) {
       setRecipientError('Please enter an npub or hex pubkey');
       return;
     }
 
     let pubkey: string;
-    
+
     // Try to decode npub
     if (input.startsWith('npub1')) {
       try {
@@ -236,9 +255,12 @@ export function DMView() {
   return (
     <div className="dm-layout">
       <div className={`dm-sidebar ${selectedPeer ? 'hidden' : ''}`}>
-        <div className="dm-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          className="dm-header"
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <span>Messages</span>
-          <button 
+          <button
             className="action-btn"
             onClick={() => setShowNewMessage(true)}
             aria-label="Start a new conversation"
@@ -247,9 +269,16 @@ export function DMView() {
             + New
           </button>
         </div>
-        
+
         {showNewMessage && (
-          <div className="dm-new-message" style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border-muted)', background: 'var(--color-canvas-subtle)' }}>
+          <div
+            className="dm-new-message"
+            style={{
+              padding: '0.75rem',
+              borderBottom: '1px solid var(--color-border-muted)',
+              background: 'var(--color-canvas-subtle)'
+            }}
+          >
             <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>
               New Conversation
             </div>
@@ -257,45 +286,62 @@ export function DMView() {
               ref={newRecipientInputRef}
               className="dm-input"
               value={newRecipient}
-              onChange={e => { setNewRecipient(e.target.value); setRecipientError(null); }}
+              onChange={(e) => {
+                setNewRecipient(e.target.value);
+                setRecipientError(null);
+              }}
               onKeyDown={handleNewRecipientKeyDown}
               placeholder="Enter npub or hex pubkey..."
               aria-label="Recipient npub or pubkey"
               style={{ marginBottom: '0.5rem' }}
             />
             {recipientError && (
-              <div style={{ color: 'var(--color-danger-fg)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+              <div
+                style={{
+                  color: 'var(--color-danger-fg)',
+                  fontSize: '0.75rem',
+                  marginBottom: '0.5rem'
+                }}
+              >
                 {recipientError}
               </div>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button 
-                className="action-btn" 
+              <button
+                className="action-btn"
                 onClick={handleStartNewConversation}
                 style={{ flex: 1 }}
               >
                 Start
               </button>
-              <button 
-                className="action-btn" 
-                onClick={() => { setShowNewMessage(false); setNewRecipient(''); setRecipientError(null); }}
-                style={{ flex: 1, borderColor: 'var(--color-border-muted)', color: 'var(--color-fg-muted)' }}
+              <button
+                className="action-btn"
+                onClick={() => {
+                  setShowNewMessage(false);
+                  setNewRecipient('');
+                  setRecipientError(null);
+                }}
+                style={{
+                  flex: 1,
+                  borderColor: 'var(--color-border-muted)',
+                  color: 'var(--color-fg-muted)'
+                }}
               >
                 Cancel
               </button>
             </div>
           </div>
         )}
-        
+
         <div className="dm-list">
           {loading && conversations.length === 0 && (
-             <div style={{ padding: '1rem' }}>
-               <Skeleton variant="text" height={40} style={{ marginBottom: '0.5rem' }} />
-               <Skeleton variant="text" height={40} style={{ marginBottom: '0.5rem' }} />
-               <Skeleton variant="text" height={40} />
-             </div>
+            <div style={{ padding: '1rem' }}>
+              <Skeleton variant="text" height={40} style={{ marginBottom: '0.5rem' }} />
+              <Skeleton variant="text" height={40} style={{ marginBottom: '0.5rem' }} />
+              <Skeleton variant="text" height={40} />
+            </div>
           )}
-          {conversations.map(conv => (
+          {conversations.map((conv) => (
             <DMListItem
               key={conv.peer}
               conversation={conv}
@@ -316,8 +362,8 @@ export function DMView() {
         {selectedPeer ? (
           <>
             <div className="dm-header">
-              <button 
-                className="action-btn" 
+              <button
+                className="action-btn"
                 style={{ marginRight: '0.5rem', display: 'none' }} // Visible on mobile via CSS if needed, but handled by class toggling for now
                 onClick={() => setSelectedPeer(null)}
               >
@@ -326,11 +372,21 @@ export function DMView() {
               <ProfileLink pubkey={selectedPeer} />
             </div>
             <div className="dm-messages">
-              {activeConversation?.messages.map(msg => (
+              {activeConversation?.messages.map((msg) => (
                 <div key={msg.id} className={`dm-message ${msg.isMine ? 'sent' : 'received'}`}>
                   {decryptedCache[msg.id] ?? 'Decrypting...'}
-                  <div style={{ fontSize: '0.65rem', opacity: 0.7, marginTop: '0.2rem', textAlign: 'right' }}>
-                    {new Date(msg.created_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div
+                    style={{
+                      fontSize: '0.65rem',
+                      opacity: 0.7,
+                      marginTop: '0.2rem',
+                      textAlign: 'right'
+                    }}
+                  >
+                    {new Date(msg.created_at * 1000).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </div>
                 </div>
               ))}
@@ -340,15 +396,25 @@ export function DMView() {
               <input
                 className="dm-input"
                 value={inputText}
-                onChange={e => setInputText(e.target.value)}
+                onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
               />
-              <button className="action-btn" onClick={handleSend}>Send</button>
+              <button className="action-btn" onClick={handleSend}>
+                Send
+              </button>
             </div>
           </>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-fg-muted)' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: 'var(--color-fg-muted)'
+            }}
+          >
             Select a conversation
           </div>
         )}

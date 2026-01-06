@@ -6,6 +6,7 @@ import { ensureNostrstackEmbedStyles } from '@nostrstack/embed';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
+import { reportWebVitals } from './analytics/web-vitals';
 import App from './App';
 import { startCacheManager } from './cache/cacheManager';
 import { ToastProvider } from './ui/toast';
@@ -27,6 +28,7 @@ ensureNostrstackEmbedStyles();
 
 // Start cache manager for periodic cleanup and stats
 startCacheManager();
+reportWebVitals();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

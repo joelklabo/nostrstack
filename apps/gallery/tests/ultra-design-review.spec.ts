@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 /**
  * ULTRA-DEEP Design Review Test Suite
@@ -16,7 +16,7 @@ import { expect, test } from '@playwright/test';
  */
 
 // Test helper to login
-async function loginWithNsec(page: any) {
+async function loginWithNsec(page: Page) {
   await page.goto('/');
   await page.getByText('Enter nsec manually').click();
   const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
@@ -738,8 +738,12 @@ test.describe('Ultra Review: Performance & Polish', () => {
         let cls = 0;
         const observer = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            if (!(entry as any).hadRecentInput) {
-              cls += (entry as any).value;
+            const layoutShift = entry as PerformanceEntry & {
+              hadRecentInput: boolean;
+              value: number;
+            };
+            if (!layoutShift.hadRecentInput) {
+              cls += layoutShift.value;
             }
           }
         });

@@ -1,13 +1,17 @@
-// @ts-nocheck
 import { execSync } from 'node:child_process';
 
-import { expect,test } from '@playwright/test';
+import { type APIRequestContext, expect, test } from '@playwright/test';
 
-import { lnbitsBalance,payInvoiceViaLNbits, settleAssert,waitForPaymentStatus } from './utils/pay-and-settle.js';
+import {
+  lnbitsBalance,
+  payInvoiceViaLNbits,
+  settleAssert,
+  waitForPaymentStatus
+} from './utils/pay-and-settle.js';
 import { waitForHealth } from './utils/wait-for-health.js';
 
-let api;
-let stopServer = null;
+let api: APIRequestContext;
+let stopServer: (() => Promise<void>) | null = null;
 
 const DOMAIN = 'demo.nostrstack.lol';
 const USER_PUBKEY = 'f'.repeat(64);
@@ -20,7 +24,8 @@ test.beforeAll(async ({ playwright }) => {
   process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';
   process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';
   process.env.LIGHTNING_PROVIDER = process.env.LIGHTNING_PROVIDER ?? 'mock';
-  const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
+  const dbPath =
+    process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
   process.env.DATABASE_URL = dbPath;
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
   execSync(`pnpm exec prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {

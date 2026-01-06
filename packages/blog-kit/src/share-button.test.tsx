@@ -13,7 +13,7 @@ vi.mock('@nostrstack/embed', () => ({
 describe('ShareButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNostrstackConfig as any).mockReturnValue({
+    vi.mocked(useNostrstackConfig).mockReturnValue({
       relays: ['wss://relay.example.com']
     });
   });

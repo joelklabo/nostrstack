@@ -47,8 +47,7 @@ describe('PaymentConnection', () => {
   beforeEach(() => {
     originalWebSocket = global.WebSocket;
     originalFetch = global.fetch;
-    // @ts-expect-error - mocking WebSocket
-    global.WebSocket = MockWebSocket;
+    (global as unknown as { WebSocket: unknown }).WebSocket = MockWebSocket;
     global.fetch = mockFetch;
     vi.useFakeTimers();
   });
@@ -130,8 +129,7 @@ describe('PaymentConnection', () => {
       await vi.advanceTimersByTimeAsync(20);
 
       // Get the WebSocket instance and simulate a message
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'invoice-paid',
         pr: 'lnbc1test123',
@@ -156,8 +154,7 @@ describe('PaymentConnection', () => {
 
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'invoice-status',
         status: 'PAID',
@@ -181,8 +178,7 @@ describe('PaymentConnection', () => {
 
       await vi.advanceTimersByTimeAsync(20);
 
-      // @ts-expect-error - accessing private property for testing
-      const ws = conn.ws as MockWebSocket;
+      const ws = (conn as unknown as { ws: MockWebSocket }).ws;
       ws.simulateMessage({
         type: 'invoice-paid',
         pr: 'lnbc1test789'
@@ -309,8 +305,7 @@ describe('PaymentConnection', () => {
       await vi.advanceTimersByTimeAsync(20);
 
       // Simulate close
-      // @ts-expect-error - accessing private property for testing
-      const ws1 = conn.ws as MockWebSocket;
+      const ws1 = (conn as unknown as { ws: MockWebSocket }).ws;
       ws1.close();
 
       // First reconnect after 1s (RECONNECT_BASE_MS)
