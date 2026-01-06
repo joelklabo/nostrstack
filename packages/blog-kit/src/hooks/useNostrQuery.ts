@@ -87,8 +87,11 @@ export function useNostrQuery(
           return newFilter;
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const results = await pool.querySync(relayList, queryFilters as any);
+        // Query each filter separately and merge results
+        const resultArrays = await Promise.all(
+          queryFilters.map((filter) => pool.querySync(relayList, filter))
+        );
+        const results = resultArrays.flat();
 
         if (results.length === 0) {
           setHasMore(false);
