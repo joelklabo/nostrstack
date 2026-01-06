@@ -1,6 +1,10 @@
 import { createCopyButton } from './copyButton.js';
 import { renderQrCodeInto } from './qr.js';
-import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles, type NostrstackThemeMode } from './styles.js';
+import {
+  ensureNostrstackEmbedStyles,
+  nostrstackEmbedStyles,
+  type NostrstackThemeMode
+} from './styles.js';
 
 export type InvoicePopoverOptions = {
   mount?: HTMLElement;
@@ -45,7 +49,8 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   subtitle.textContent = opts.subtitle ?? 'Lightning (BOLT11)';
 
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-popover-close';
+  closeBtn.className =
+    'nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-popover-close';
   closeBtn.type = 'button';
   closeBtn.textContent = 'Close';
 
@@ -101,16 +106,50 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   closeBtn.onclick = remove;
 
   const keydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') remove();
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      remove();
+      return;
+    }
+    if (e.key === 'Tab') {
+      const focusable = Array.from(
+        overlay.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+
+      if (!focusable.length) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement; // Works for light DOM
+
+      if (e.shiftKey) {
+        if (active === first || active === overlay) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
   };
   overlay.addEventListener('keydown', keydown);
 
   mount.appendChild(overlay);
   closeBtn.focus();
 
-  renderQrCodeInto(qrWrap, pr, { preset: 'brandLogo', verify: 'strict', size: 320 }).catch((err) => {
-    console.warn('qr render failed', err);
-  });
+  renderQrCodeInto(qrWrap, pr, { preset: 'brandLogo', verify: 'strict', size: 320 }).catch(
+    (err) => {
+      console.warn('qr render failed', err);
+    }
+  );
 
   return overlay;
 }

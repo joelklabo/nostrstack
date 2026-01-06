@@ -6,6 +6,8 @@ export function renderRelayBadge(relays: string[], target?: HTMLElement) {
   ensureNostrstackEmbedStyles(el.ownerDocument);
   if (!el.closest?.('.nostrstack-theme')) el.classList.add('nostrstack-theme');
   el.classList.add('nostrstack');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-label', 'Relay connection status');
   const dot = document.createElement('span');
   dot.className = 'relay-dot';
   const label = document.createElement('span');
