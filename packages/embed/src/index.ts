@@ -2,13 +2,46 @@ import { NostrstackClient } from '@nostrstack/sdk';
 import QRCode from 'qrcode';
 
 import { renderBlockchainStats } from './blockchainStats.js';
+import {
+  DEFAULT_FEED_ITEMS,
+  INVOICE_TTL_SECS,
+  MAX_FEED_ITEMS,
+  MAX_RECONNECT_DELAY_MS,
+  MIN_FEED_ITEMS,
+  MIN_SEND_AMOUNT_MSAT,
+  PAID_STATES,
+  RECONNECT_BASE_MS,
+  RING_CIRCUMFERENCE
+} from './config.js';
 import { copyToClipboard, createCopyButton } from './copyButton.js';
+import {
+  createClient,
+  extractPayEventInvoice,
+  extractPayEventProviderRef,
+  formatCountdown,
+  formatRelativeTime,
+  getBrandAttr,
+  type LnurlClient,
+  parseMaybeJson,
+  resolveTenantDomain,
+  setBrandAttr
+} from './helpers.js';
 import { renderInvoicePopover } from './invoicePopover.js';
 import { renderNostrProfile } from './nostrProfile.js';
 import { renderQrCodeInto } from './qr.js';
 import { renderRelayBadge, updateRelayBadge } from './relayBadge.js';
+import { connectRelays, normalizeRelayUrls, type RelayConnection } from './relays.js';
 import { renderShareButton } from './share.js';
 import { ensureNostrstackRoot } from './styles.js';
+import type {
+  CommentTipWidgetOptions,
+  CommentWidgetOptions,
+  NostrEvent,
+  PayToActionOptions,
+  TipFeedOptions,
+  TipWidgetOptions,
+  TipWidgetV2Options
+} from './types.js';
 import { isMockBase, resolveApiBaseUrl, resolvePayWsUrl } from './url-utils.js';
 
 export { renderBlockchainStats } from './blockchainStats.js';
@@ -47,140 +80,6 @@ export { resolvePayWsUrl, resolveTelemetryWs } from './url-utils.js';
 
 // WeakMap to store widget destroy functions without polluting DOM elements
 const widgetDestroyMap = new WeakMap<HTMLElement, () => void>();
-
-type TipWidgetOptions = {
-  username: string;
-  amountMsat?: number;
-  text?: string;
-  baseURL?: string;
-  host?: string;
-  onInvoice?: (pr: string) => void;
-};
-
-type TipWidgetV2Options = {
-  username: string;
-  itemId: string;
-  presetAmountsSats?: number[];
-  defaultAmountSats?: number;
-  allowCustomAmount?: boolean;
-  showFeed?: boolean;
-  text?: string;
-  baseURL?: string;
-  host?: string;
-  metadata?: Record<string, unknown>;
-  size?: 'full' | 'compact';
-  onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
-  onPaid?: (info: {
-    pr: string;
-    providerRef: string | null;
-    amountSats: number;
-    itemId: string;
-    metadata?: unknown;
-  }) => void;
-};
-
-type TipFeedOptions = {
-  itemId: string;
-  maxItems?: number;
-  baseURL?: string;
-  host?: string;
-};
-
-type PayToActionOptions = {
-  username: string;
-  amountMsat?: number;
-  text?: string;
-  baseURL?: string;
-  host?: string;
-  verifyPayment?: (pr: string) => Promise<boolean>;
-  onUnlock?: () => void;
-  onInvoice?: (pr: string) => void;
-};
-
-type CommentWidgetOptions = {
-  threadId?: string;
-  relays?: string[];
-  placeholder?: string;
-  headerText?: string;
-  maxItems?: number;
-  maxAgeDays?: number;
-  lazyConnect?: boolean;
-  validateEvents?: boolean;
-  onEvent?: (event: NostrEvent, relay?: string) => void;
-  onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
-};
-
-type CommentTipWidgetOptions = TipWidgetV2Options &
-  CommentWidgetOptions & {
-    layout?: 'full' | 'compact';
-  };
-
-declare global {
-  interface Window {
-    nostr?: {
-      getPublicKey: () => Promise<string>;
-      signEvent: (event: NostrEvent) => Promise<NostrEvent>;
-    };
-    NostrTools?: {
-      relayInit?: (url: string) => unknown;
-      verifySignature?: (event: NostrEvent) => boolean;
-      validateEvent?: (event: NostrEvent) => boolean;
-    };
-  }
-}
-
-type NostrEvent = {
-  id?: string;
-  pubkey: string;
-  created_at: number;
-  kind: number;
-  tags: string[][];
-  content: string;
-  sig?: string;
-};
-
-type LnurlClient = Pick<NostrstackClient, 'getLnurlpMetadata' | 'getLnurlpInvoice'>;
-
-function createClient(opts: { baseURL?: string; host?: string }): LnurlClient {
-  if (isMockBase(opts.baseURL)) {
-    return {
-      async getLnurlpMetadata(username: string) {
-        return {
-          callback: 'mock',
-          minSendable: 1000,
-          maxSendable: 1_000_000,
-          metadata: JSON.stringify([['text/plain', `mock lnurlp for ${username}`]]),
-          tag: 'payRequest'
-        };
-      },
-      async getLnurlpInvoice(_username: string, amountMsat: number) {
-        const amount = Math.max(1000, Math.round(amountMsat));
-        return { pr: `lnbc1mock${amount}`, routes: [] };
-      }
-    };
-  }
-
-  return new NostrstackClient({
-    baseURL: opts.baseURL,
-    host: opts.host
-  });
-}
-
-// resolvePayWsUrl, resolveTelemetryWs, and resolveApiBaseUrl are provided by url-utils.
-
-const ATTR_PREFIXES = ['nostrstack'];
-
-function getBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments') {
-  for (const prefix of ATTR_PREFIXES) {
-    const val = (el.dataset as Record<string, string | undefined>)[`${prefix}${key}`];
-    if (val !== undefined) return val;
-  }
-  return undefined;
-}
-
-function setBrandAttr(el: HTMLElement, key: 'Tip' | 'Pay' | 'Comments', value: string) {
-  (el.dataset as Record<string, string>)[`nostrstack${key}`] = value;
-}
 
 export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) {
   ensureNostrstackRoot(container);
@@ -241,38 +140,6 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
       btn.onclick = null;
     }
   };
-}
-
-function resolveTenantDomain(host?: string): string | null {
-  if (host && host.trim()) return host.trim();
-  if (typeof window === 'undefined') return null;
-  const h = window.location.host || window.location.hostname;
-  return h ? h : null;
-}
-
-function parseMaybeJson(raw: unknown): unknown | undefined {
-  if (typeof raw !== 'string' || !raw) return undefined;
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return undefined;
-  }
-}
-
-function extractPayEventProviderRef(msg: unknown): string | null {
-  if (!msg || typeof msg !== 'object') return null;
-  const rec = msg as Record<string, unknown>;
-  if (typeof rec.providerRef === 'string') return rec.providerRef;
-  if (typeof rec.provider_ref === 'string') return rec.provider_ref;
-  return null;
-}
-
-function extractPayEventInvoice(msg: unknown): string | null {
-  if (!msg || typeof msg !== 'object') return null;
-  const rec = msg as Record<string, unknown>;
-  if (typeof rec.pr === 'string') return rec.pr;
-  if (typeof rec.payment_request === 'string') return rec.payment_request;
-  return null;
 }
 
 function renderTipFeedRow(opts: {
@@ -1710,62 +1577,6 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       paidBtn.removeEventListener('click', markPaid);
     }
   };
-}
-
-const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
-const LOCAL_RELAY_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
-
-const isAllowedRelayUrl = (url: string) => {
-  if (/^wss:\/\//i.test(url)) return true;
-  if (!/^ws:\/\//i.test(url)) return false;
-  const host = url.replace(/^ws:\/\//i, '').split(/[/?#]/)[0] ?? '';
-  return LOCAL_RELAY_HOSTS.has(host);
-};
-
-const normalizeRelayUrls = (relays?: string[]) => {
-  const raw = relays ?? DEFAULT_RELAYS;
-  const cleaned = raw.map((r) => r.trim()).filter(Boolean);
-  const valid: string[] = [];
-  const invalid: string[] = [];
-  cleaned.forEach((url) => {
-    if (isAllowedRelayUrl(url)) valid.push(url);
-    else invalid.push(url);
-  });
-  return { valid, invalid };
-};
-
-function getRelayInit() {
-  return window.NostrTools?.relayInit;
-}
-
-type RelayConnection = {
-  url?: string;
-  connect: () => Promise<void>;
-  close: () => void;
-  sub: (filters: unknown) => {
-    on: (type: string, cb: (ev: NostrEvent) => void) => void;
-    un: () => void;
-  };
-  publish: (ev: NostrEvent) => Promise<unknown>;
-};
-
-async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
-  const relayInit = getRelayInit();
-  if (!relayInit) return [];
-  const relays = await Promise.all(
-    urls.map(async (url) => {
-      const relay = relayInit(url) as RelayConnection;
-      relay.url = relay.url ?? url;
-      try {
-        await relay.connect();
-        return relay;
-      } catch (e) {
-        console.warn('relay connect failed', url, e);
-        return null;
-      }
-    })
-  );
-  return relays.filter((r): r is RelayConnection => Boolean(r));
 }
 
 export async function renderCommentWidget(container: HTMLElement, opts: CommentWidgetOptions = {}) {
