@@ -26,6 +26,11 @@ export function SearchView() {
   const [notes, setNotes] = useState<Event[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
+
+  const NOTES_PAGE_SIZE = 20;
 
   const npub = useMemo(() => {
     if (!result) return null;
@@ -51,11 +56,15 @@ export function SearchView() {
   const handleNotesSearch = useCallback(async (q: string) => {
     setNotesLoading(true);
     setNotesError(null);
+    setNotes([]);
+    setHasMore(false);
+    setLastSearchQuery(q);
     try {
       // Merge user relays with dedicated search relays
       const searchRelays = [...new Set([...relayList, ...SEARCH_RELAYS])];
-      const results = await searchNotes(pool, searchRelays, q);
+      const results = await searchNotes(pool, searchRelays, q, NOTES_PAGE_SIZE);
       setNotes(results);
+      setHasMore(results.length >= NOTES_PAGE_SIZE);
       if (results.length === 0) {
         setNotesError('No notes found for this query.');
       }
@@ -66,6 +75,35 @@ export function SearchView() {
       setNotesLoading(false);
     }
   }, [relayList, pool]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || notes.length === 0 || !lastSearchQuery) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const searchRelays = [...new Set([...relayList, ...SEARCH_RELAYS])];
+      // Get the oldest note's timestamp for pagination
+      const oldestNote = notes.reduce((oldest, note) => 
+        note.created_at < oldest.created_at ? note : oldest
+      );
+      const until = oldestNote.created_at;
+      
+      const moreResults = await searchNotes(pool, searchRelays, lastSearchQuery, NOTES_PAGE_SIZE, until);
+      
+      // Filter out duplicates
+      const existingIds = new Set(notes.map(n => n.id));
+      const newNotes = moreResults.filter(n => !existingIds.has(n.id));
+      
+      if (newNotes.length > 0) {
+        setNotes(prev => [...prev, ...newNotes]);
+      }
+      setHasMore(moreResults.length >= NOTES_PAGE_SIZE);
+    } catch (err) {
+      console.error('Load more failed', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, notes, lastSearchQuery, relayList, pool]);
 
   const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -232,6 +270,24 @@ export function SearchView() {
             {notes.map((note) => (
               <PostItem key={note.id} post={note} />
             ))}
+            {hasMore && (
+              <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <button
+                  className="action-btn"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  aria-busy={isLoadingMore}
+                  style={{ padding: '0.5rem 2rem' }}
+                >
+                  {isLoadingMore ? 'Loading...' : 'Load More'}
+                </button>
+              </div>
+            )}
+            {!hasMore && notes.length > 0 && (
+              <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-fg-muted)', fontSize: '0.85rem' }}>
+                End of results
+              </div>
+            )}
           </>
         )}
         {notesLoading && notes.length === 0 && (

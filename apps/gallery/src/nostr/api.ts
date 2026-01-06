@@ -157,9 +157,23 @@ export async function fetchNostrEventFromApi(options: FetchOptions): Promise<Api
   return data;
 }
 
-export async function searchNotes(pool: SimplePool, relays: string[], query: string, limit = 20): Promise<Event[]> {
+export async function searchNotes(
+  pool: SimplePool, 
+  relays: string[], 
+  query: string, 
+  limit = 20,
+  until?: number
+): Promise<Event[]> {
   try {
-    return await pool.querySync(relays, { kinds: [1], search: query, limit });
+    const filter: { kinds: number[]; search: string; limit: number; until?: number } = {
+      kinds: [1],
+      search: query,
+      limit,
+    };
+    if (until) {
+      filter.until = until;
+    }
+    return await pool.querySync(relays, filter);
   } catch (err) {
     console.error('[nostr] search failed', err);
     return [];
