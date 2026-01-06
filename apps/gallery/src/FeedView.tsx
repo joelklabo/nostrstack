@@ -377,25 +377,21 @@ export function FeedView() {
     }
   }, [isLoadingMore, posts, relayList]);
 
-  if (relaysLoading) {
-    return (
-      <div className="feed-stream">
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div className="post-editor-container" style={{ minHeight: '160px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-             <Skeleton variant="rectangular" height={100} width="100%" style={{ borderRadius: '6px' }} />
-             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-               <Skeleton variant="rectangular" width={100} height={36} style={{ borderRadius: '6px' }} />
-             </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0', flexDirection: 'column' }}>
-           {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
+  return relaysLoading ? (
+    <div className="feed-stream">
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div className="post-editor-container" style={{ minHeight: '160px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+           <Skeleton variant="rectangular" height={100} width="100%" style={{ borderRadius: '6px' }} />
+           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+             <Skeleton variant="rectangular" width={100} height={36} style={{ borderRadius: '6px' }} />
+           </div>
         </div>
       </div>
-    );
-  }
-
-  return (
+      <div style={{ display: 'flex', gap: '0', flexDirection: 'column' }}>
+         {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
+      </div>
+    </div>
+  ) : (
     <main className="feed-stream" role="main" aria-label="Live feed">
       <div style={{ marginBottom: '1.5rem' }}>
         <PostEditor />
