@@ -32,8 +32,42 @@ fi
 
 mkdir -p "${PROFILE}"
 
-# Use a new Chrome instance so the remote debugging port is reliably enabled even if the user already has Chrome open.
-open -na "Google Chrome" --args "${ARGS[@]}"
+# Detect platform and launch Chrome accordingly
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+  # macOS: use 'open' command
+  open -na "Google Chrome" --args "${ARGS[@]}"
+elif [[ -z "${DISPLAY:-}" ]] || [[ "${MCP_CHROME_HEADLESS:-0}" != "0" ]]; then
+  # Linux headless or explicit headless mode
+  echo "Launching Chrome in headless mode (no DISPLAY or MCP_CHROME_HEADLESS=1)" >&2
+  CHROME_BIN=""
+  for candidate in chromium chromium-browser google-chrome chrome; do
+    if command -v "${candidate}" >/dev/null 2>&1; then
+      CHROME_BIN="${candidate}"
+      break
+    fi
+  done
+  if [[ -z "${CHROME_BIN}" ]]; then
+    echo "Error: No Chrome/Chromium binary found" >&2
+    exit 1
+  fi
+  # Launch in background with headless mode
+  "${CHROME_BIN}" --headless=new --disable-gpu --no-sandbox "${ARGS[@]}" >/dev/null 2>&1 &
+  echo "Chrome PID: $!" >&2
+else
+  # Linux with GUI
+  CHROME_BIN=""
+  for candidate in google-chrome chromium chromium-browser chrome; do
+    if command -v "${candidate}" >/dev/null 2>&1; then
+      CHROME_BIN="${candidate}"
+      break
+    fi
+  done
+  if [[ -z "${CHROME_BIN}" ]]; then
+    echo "Error: No Chrome/Chromium binary found" >&2
+    exit 1
+  fi
+  "${CHROME_BIN}" "${ARGS[@]}" >/dev/null 2>&1 &
+fi
 
 for ((i=1; i<=WAIT_ATTEMPTS; i++)); do
   if curl -sf "http://127.0.0.1:${PORT}/json/version" >/dev/null 2>&1; then
