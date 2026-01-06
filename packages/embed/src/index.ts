@@ -791,9 +791,6 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     return `${m}:${r}`;
   };
 
-  const RING_CIRCUMFERENCE = 188.5; // 2 * PI * 30
-  const INVOICE_TTL_SECS = 120;
-
   const updateRing = (remainingSecs: number, isPaid: boolean) => {
     if (isPaid) {
       // Show checkmark
@@ -979,7 +976,6 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     }
   };
 
-  const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
   const pollOnce = async () => {
     if (!currentProviderRef || didPay) return false;
     try {
@@ -1420,8 +1416,6 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       setRealtime('error');
     }
   };
-
-  const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
 
   const pollOnce = async () => {
     if (!currentProviderRef || didUnlock) return false;
