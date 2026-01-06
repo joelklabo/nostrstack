@@ -22,7 +22,8 @@ export {
   type NostrstackQrRenderResult,
   type NostrstackQrStyleOptions,
   type NostrstackQrVerifyMode,
-  renderQrCodeInto} from './qr.js';
+  renderQrCodeInto
+} from './qr.js';
 export { relayBadgeStyles, renderRelayBadge, updateRelayBadge } from './relayBadge.js';
 export { renderShareButton } from './share.js';
 export type { NostrstackTheme, NostrstackThemeMode } from './styles.js';
@@ -43,6 +44,9 @@ export {
 } from './themePresets.js';
 export { designTokens } from './tokens/designTokens.js';
 export { resolvePayWsUrl, resolveTelemetryWs } from './url-utils.js';
+
+// WeakMap to store widget destroy functions without polluting DOM elements
+const widgetDestroyMap = new WeakMap<HTMLElement, () => void>();
 
 type TipWidgetOptions = {
   username: string;
@@ -66,7 +70,13 @@ type TipWidgetV2Options = {
   metadata?: Record<string, unknown>;
   size?: 'full' | 'compact';
   onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
-  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
+  onPaid?: (info: {
+    pr: string;
+    providerRef: string | null;
+    amountSats: number;
+    itemId: string;
+    metadata?: unknown;
+  }) => void;
 };
 
 type TipFeedOptions = {
@@ -100,9 +110,10 @@ type CommentWidgetOptions = {
   onRelayInfo?: (info: { relays: string[]; mode: 'real' }) => void;
 };
 
-type CommentTipWidgetOptions = TipWidgetV2Options & CommentWidgetOptions & {
-  layout?: 'full' | 'compact';
-};
+type CommentTipWidgetOptions = TipWidgetV2Options &
+  CommentWidgetOptions & {
+    layout?: 'full' | 'compact';
+  };
 
 declare global {
   interface Window {
@@ -199,7 +210,11 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions) 
         await opts.onInvoice(invoice.pr);
         status.textContent = '';
       } else {
-        renderInvoicePopover(invoice.pr, { mount: container, title: 'Invoice', subtitle: `Pay @${opts.username}` });
+        renderInvoicePopover(invoice.pr, {
+          mount: container,
+          title: 'Invoice',
+          subtitle: `Pay @${opts.username}`
+        });
         status.textContent = '';
       }
     } catch (e) {
@@ -260,7 +275,12 @@ function extractPayEventInvoice(msg: unknown): string | null {
   return null;
 }
 
-function renderTipFeedRow(opts: { amountSats: number; createdAt: Date; note?: string; newPulse?: boolean }) {
+function renderTipFeedRow(opts: {
+  amountSats: number;
+  createdAt: Date;
+  note?: string;
+  newPulse?: boolean;
+}) {
   const row = document.createElement('div');
   row.className = 'nostrstack-tip-feed__row';
   if (opts.newPulse) row.dataset.pulse = 'true';
@@ -338,7 +358,11 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
 
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
+    status.classList.remove(
+      'nostrstack-status--muted',
+      'nostrstack-status--success',
+      'nostrstack-status--danger'
+    );
     status.classList.add(`nostrstack-status--${tone}`);
   };
 
@@ -369,14 +393,27 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
     stats.textContent = `${count} tips · ${totalAmountSats} sats`;
   };
 
-  const insertTip = (tip: { id?: string; paymentId?: string; amountSats: number; createdAt: Date; note?: string }) => {
+  const insertTip = (tip: {
+    id?: string;
+    paymentId?: string;
+    amountSats: number;
+    createdAt: Date;
+    note?: string;
+  }) => {
     const key = tip.paymentId ?? tip.id;
     if (!key || seen.has(key)) return;
     seen.add(key);
     count += 1;
     totalAmountSats += tip.amountSats;
     setStats();
-    list.prepend(renderTipFeedRow({ amountSats: tip.amountSats, createdAt: tip.createdAt, note: tip.note, newPulse: true }));
+    list.prepend(
+      renderTipFeedRow({
+        amountSats: tip.amountSats,
+        createdAt: tip.createdAt,
+        note: tip.note,
+        newPulse: true
+      })
+    );
     // Trim.
     while (list.children.length > maxItems) list.lastElementChild?.remove();
   };
@@ -393,7 +430,13 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
       const body = (await res.json()) as {
         count?: number;
         totalAmountSats?: number;
-        tips?: Array<{ id?: string; paymentId?: string; amountSats?: number; createdAt?: string; metadata?: unknown }>;
+        tips?: Array<{
+          id?: string;
+          paymentId?: string;
+          amountSats?: number;
+          createdAt?: string;
+          metadata?: unknown;
+        }>;
       };
       totalAmountSats = typeof body.totalAmountSats === 'number' ? body.totalAmountSats : 0;
       count = typeof body.count === 'number' ? body.count : 0;
@@ -401,12 +444,19 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
       list.replaceChildren();
       seen.clear();
       for (const tip of body.tips ?? []) {
-        const key = typeof tip.paymentId === 'string' ? tip.paymentId : typeof tip.id === 'string' ? tip.id : null;
+        const key =
+          typeof tip.paymentId === 'string'
+            ? tip.paymentId
+            : typeof tip.id === 'string'
+              ? tip.id
+              : null;
         const amountSats = typeof tip.amountSats === 'number' ? tip.amountSats : null;
         const createdAt = typeof tip.createdAt === 'string' ? new Date(tip.createdAt) : null;
         if (!key || amountSats == null || !createdAt) continue;
         const note =
-          tip.metadata && typeof tip.metadata === 'object' && typeof (tip.metadata as Record<string, unknown>).note === 'string'
+          tip.metadata &&
+          typeof tip.metadata === 'object' &&
+          typeof (tip.metadata as Record<string, unknown>).note === 'string'
             ? ((tip.metadata as Record<string, unknown>).note as string)
             : undefined;
         seen.add(key);
@@ -489,7 +539,9 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions) {
               ? parseMaybeJson(rec.metadata)
               : undefined;
         const note =
-          meta && typeof meta === 'object' && typeof (meta as Record<string, unknown>).note === 'string'
+          meta &&
+          typeof meta === 'object' &&
+          typeof (meta as Record<string, unknown>).note === 'string'
             ? ((meta as Record<string, unknown>).note as string)
             : undefined;
         insertTip({ id: providerRef, paymentId, amountSats, createdAt, note });
@@ -568,7 +620,9 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const amountRow = document.createElement('div');
   amountRow.className = 'nostrstack-tip__amountRow';
 
-  const presets = (opts.presetAmountsSats?.filter((n) => Number.isFinite(n) && n > 0) ?? [5, 10, 21])
+  const presets = (
+    opts.presetAmountsSats?.filter((n) => Number.isFinite(n) && n > 0) ?? [5, 10, 21]
+  )
     .slice(0, 3)
     .map((n) => Math.round(n));
   const defaultAmount = Math.round(opts.defaultAmountSats ?? presets[0] ?? 5);
@@ -708,7 +762,8 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   refreshBtn.type = 'button';
   refreshBtn.className = 'nostrstack-btn--ghost nostrstack-tip__refresh';
   refreshBtn.title = 'Check payment status';
-  refreshBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>';
+  refreshBtn.innerHTML =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>';
   refreshBtn.style.display = 'none';
 
   realtime.append(realtimeDot, realtimeText, refreshBtn);
@@ -720,14 +775,15 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   invoiceBox.type = 'button';
   invoiceBox.className = 'nostrstack-invoice-box';
   invoiceBox.title = 'Click to copy invoice';
-  
+
   const invoiceIcon = document.createElement('span');
   invoiceIcon.className = 'nostrstack-invoice-icon';
-  invoiceIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-  
+  invoiceIcon.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+
   const invoiceCode = document.createElement('code');
   invoiceCode.className = 'nostrstack-code';
-  
+
   const invoiceCopyLabel = document.createElement('span');
   invoiceCopyLabel.className = 'nostrstack-invoice-label';
   invoiceCopyLabel.textContent = 'Copy';
@@ -769,7 +825,12 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     feedWrap.className = 'nostrstack-tip__feedWrap';
     const feedHost = document.createElement('div');
     feedWrap.appendChild(feedHost);
-    feed = renderTipFeed(feedHost, { itemId, baseURL: opts.baseURL, host: opts.host, maxItems: 12 });
+    feed = renderTipFeed(feedHost, {
+      itemId,
+      baseURL: opts.baseURL,
+      host: opts.host,
+      maxItems: 12
+    });
   }
 
   container.append(header, amountRow, customWrap, note, panel);
@@ -877,7 +938,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       panel.dataset.state = 'paid';
     } else {
       // Update countdown
-      const progress = Math.max(0, Math.min(1, 1 - (remainingSecs / INVOICE_TTL_SECS)));
+      const progress = Math.max(0, Math.min(1, 1 - remainingSecs / INVOICE_TTL_SECS));
       const offset = progress * RING_CIRCUMFERENCE;
       ringProgress.style.setProperty('--ring-offset', String(offset));
       ringTime.textContent = fmtClock(remainingSecs);
@@ -885,7 +946,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       ringLabel.textContent = remainingSecs > 0 ? 'left' : 'expired';
       ringIcon.style.display = 'none';
       panel.dataset.state = 'waiting';
-      
+
       if (remainingSecs <= 0) {
         refreshBtn.style.display = 'inline-flex';
       }
@@ -1014,7 +1075,8 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const startRealtime = () => {
     if (!wsUrl) return;
-    if (payWs && (payWs.readyState === WebSocket.OPEN || payWs.readyState === WebSocket.CONNECTING)) return;
+    if (payWs && (payWs.readyState === WebSocket.OPEN || payWs.readyState === WebSocket.CONNECTING))
+      return;
     closePayWs();
     try {
       setRealtime('connecting');
@@ -1136,8 +1198,16 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
           qrAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
           const signal = qrAbort?.signal;
           const qrSize = opts.size === 'compact' ? 240 : 320;
-          void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: qrSize, signal }).catch((err) => {
-            const name = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
+          void renderQrCodeInto(qrWrap, qrPayload, {
+            preset: 'brandLogo',
+            verify: 'strict',
+            size: qrSize,
+            signal
+          }).catch((err) => {
+            const name =
+              err && typeof err === 'object' && 'name' in err
+                ? String((err as { name?: unknown }).name)
+                : '';
             if (name === 'AbortError') return;
             console.warn('tip qr render failed', err);
           });
@@ -1159,15 +1229,15 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
         return pr;
       }
       const res = await fetch(`${apiBaseUrl}/api/pay`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              domain,
-              action: 'tip',
-              amount: amountSats,
-              metadata: meta
-            })
-          });
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          domain,
+          action: 'tip',
+          amount: amountSats,
+          metadata: meta
+        })
+      });
 
       if (!res.ok) throw new Error(`HTTP ${'status' in res ? (res as Response).status : 0}`);
       const body = (await (res as Response).json()) as Record<string, unknown>;
@@ -1199,8 +1269,16 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
         qrAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
         const signal = qrAbort?.signal;
         const qrSize = opts.size === 'compact' ? 240 : 320;
-        void renderQrCodeInto(qrWrap, qrPayload, { preset: 'brandLogo', verify: 'strict', size: qrSize, signal }).catch((err) => {
-          const name = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
+        void renderQrCodeInto(qrWrap, qrPayload, {
+          preset: 'brandLogo',
+          verify: 'strict',
+          size: qrSize,
+          signal
+        }).catch((err) => {
+          const name =
+            err && typeof err === 'object' && 'name' in err
+              ? String((err as { name?: unknown }).name)
+              : '';
           if (name === 'AbortError') return;
           console.warn('tip qr render failed', err);
         });
@@ -1457,10 +1535,14 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
             (typeof msg.provider_ref === 'string' ? msg.provider_ref : null);
           const msgInvoice = normalizeInvoice(msg.pr);
           const matches =
-            (msgInvoice && msgInvoice === pr) || (msgProviderRef && msgProviderRef === currentProviderRef);
+            (msgInvoice && msgInvoice === pr) ||
+            (msgProviderRef && msgProviderRef === currentProviderRef);
           if (!matches) return;
           if (msg.type === 'invoice-paid') unlock();
-          if (msg.type === 'invoice-status' && PAID_STATES.has(String(msg.status ?? '').toUpperCase())) {
+          if (
+            msg.type === 'invoice-status' &&
+            PAID_STATES.has(String(msg.status ?? '').toUpperCase())
+          ) {
             unlock();
           }
         } catch {
@@ -1512,18 +1594,23 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       currentProviderRef = null;
 
       const invoiceRes = await (async () => {
-            const client = createClient(opts);
-            const meta = await client.getLnurlpMetadata(opts.username);
-            const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
-            return await client.getLnurlpInvoice(opts.username, amount);
-          })();
+        const client = createClient(opts);
+        const meta = await client.getLnurlpMetadata(opts.username);
+        const amount = opts.amountMsat ?? meta.minSendable ?? 1000;
+        return await client.getLnurlpInvoice(opts.username, amount);
+      })();
 
       const rawPr = invoiceRes.pr;
       const pr = normalizeInvoice(rawPr);
-      const maybeProviderRef = (invoiceRes as unknown as { provider_ref?: unknown; providerRef?: unknown }).provider_ref;
-      const maybeProviderRefCamel = (invoiceRes as unknown as { providerRef?: unknown }).providerRef;
+      const maybeProviderRef = (
+        invoiceRes as unknown as { provider_ref?: unknown; providerRef?: unknown }
+      ).provider_ref;
+      const maybeProviderRefCamel = (invoiceRes as unknown as { providerRef?: unknown })
+        .providerRef;
       currentProviderRef = typeof maybeProviderRef === 'string' ? maybeProviderRef : null;
-      if (!currentProviderRef) currentProviderRef = typeof maybeProviderRefCamel === 'string' ? maybeProviderRefCamel : null;
+      if (!currentProviderRef)
+        currentProviderRef =
+          typeof maybeProviderRefCamel === 'string' ? maybeProviderRefCamel : null;
 
       if (!pr) throw new Error('Invoice not returned by LNURL endpoint');
       currentInvoice = pr;
@@ -1655,24 +1742,29 @@ type RelayConnection = {
   url?: string;
   connect: () => Promise<void>;
   close: () => void;
-  sub: (filters: unknown) => { on: (type: string, cb: (ev: NostrEvent) => void) => void; un: () => void };
+  sub: (filters: unknown) => {
+    on: (type: string, cb: (ev: NostrEvent) => void) => void;
+    un: () => void;
+  };
   publish: (ev: NostrEvent) => Promise<unknown>;
 };
 
 async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
   const relayInit = getRelayInit();
   if (!relayInit) return [];
-  const relays = await Promise.all(urls.map(async (url) => {
-    const relay = relayInit(url) as RelayConnection;
-    relay.url = relay.url ?? url;
-    try {
-      await relay.connect();
-      return relay;
-    } catch (e) {
-      console.warn('relay connect failed', url, e);
-      return null;
-    }
-  }));
+  const relays = await Promise.all(
+    urls.map(async (url) => {
+      const relay = relayInit(url) as RelayConnection;
+      relay.url = relay.url ?? url;
+      try {
+        await relay.connect();
+        return relay;
+      } catch (e) {
+        console.warn('relay connect failed', url, e);
+        return null;
+      }
+    })
+  );
   return relays.filter((r): r is RelayConnection => Boolean(r));
 }
 
@@ -1682,12 +1774,15 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   container.replaceChildren();
 
   const maxItems = Math.max(1, Math.min(200, opts.maxItems ?? 50));
-  const maxAgeDays = typeof opts.maxAgeDays === 'number' && opts.maxAgeDays > 0 ? opts.maxAgeDays : null;
-  const since = maxAgeDays ? Math.floor(Date.now() / 1000) - Math.round(maxAgeDays * 86400) : undefined;
+  const maxAgeDays =
+    typeof opts.maxAgeDays === 'number' && opts.maxAgeDays > 0 ? opts.maxAgeDays : null;
+  const since = maxAgeDays
+    ? Math.floor(Date.now() / 1000) - Math.round(maxAgeDays * 86400)
+    : undefined;
   const lazyConnect = opts.lazyConnect ?? false;
   const validateEvents = opts.validateEvents ?? false;
 
-  const threadId = opts.threadId ?? (location?.href ?? 'thread');
+  const threadId = opts.threadId ?? location?.href ?? 'thread';
 
   const header = document.createElement('div');
   header.className = 'nostrstack-comments-header';
@@ -1740,7 +1835,11 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
 
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
+    status.classList.remove(
+      'nostrstack-status--muted',
+      'nostrstack-status--success',
+      'nostrstack-status--danger'
+    );
     status.classList.add(`nostrstack-status--${tone}`);
   };
 
@@ -1756,8 +1855,10 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     submit.disabled = !enabled;
   };
 
-  const verifySignature = typeof window !== 'undefined' ? window.NostrTools?.verifySignature : undefined;
-  const validateEvent = typeof window !== 'undefined' ? window.NostrTools?.validateEvent : undefined;
+  const verifySignature =
+    typeof window !== 'undefined' ? window.NostrTools?.verifySignature : undefined;
+  const validateEvent =
+    typeof window !== 'undefined' ? window.NostrTools?.validateEvent : undefined;
   if (validateEvents && !verifySignature && !validateEvent) {
     setNotice('Signature validation unavailable in this environment.', 'muted');
   }
@@ -1802,7 +1903,8 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     if (seen.has(ev.id!)) return;
     seen.add(ev.id!);
     if (typeof ev.created_at === 'number') {
-      oldestTimestamp = oldestTimestamp === null ? ev.created_at : Math.min(oldestTimestamp, ev.created_at);
+      oldestTimestamp =
+        oldestTimestamp === null ? ev.created_at : Math.min(oldestTimestamp, ev.created_at);
     }
     const row = document.createElement('div');
     row.className = 'nostrstack-comment';
@@ -1816,12 +1918,14 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     loading = true;
     updateActions();
     setStatus('Loading…', 'muted');
-    const filters = [{
-      kinds: [1],
-      '#t': [threadId],
-      limit: maxItems,
-      ...(since ? { since } : {})
-    }];
+    const filters = [
+      {
+        kinds: [1],
+        '#t': [threadId],
+        limit: maxItems,
+        ...(since ? { since } : {})
+      }
+    ];
     let pending = relays.length;
     let received = 0;
     relays.forEach((relay) => {
@@ -1863,36 +1967,43 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     loading = true;
     updateActions();
     const until = oldestTimestamp ? oldestTimestamp - 1 : Math.floor(Date.now() / 1000);
-    const filters = [{
-      kinds: [1],
-      '#t': [threadId],
-      limit: maxItems,
-      ...(since ? { since } : {}),
-      until
-    }];
-    let received = 0;
-    await Promise.all(relays.map((relay) => new Promise<void>((resolve) => {
-      const sub = relay.sub(filters);
-      const handleEvent = (ev: NostrEvent) => {
-        const before = seen.size;
-        appendEvent(ev, relay.url ?? undefined);
-        if (seen.size > before) received += 1;
-      };
-      sub.on('event', handleEvent);
-      let eoseHandled = false;
-      const handleEose = () => {
-        if (eoseHandled) return;
-        eoseHandled = true;
-        sub.un();
-        resolve();
-      };
-      sub.on('eose', handleEose);
-      if (typeof window !== 'undefined') {
-        window.setTimeout(handleEose, 1500);
-      } else {
-        handleEose();
+    const filters = [
+      {
+        kinds: [1],
+        '#t': [threadId],
+        limit: maxItems,
+        ...(since ? { since } : {}),
+        until
       }
-    })));
+    ];
+    let received = 0;
+    await Promise.all(
+      relays.map(
+        (relay) =>
+          new Promise<void>((resolve) => {
+            const sub = relay.sub(filters);
+            const handleEvent = (ev: NostrEvent) => {
+              const before = seen.size;
+              appendEvent(ev, relay.url ?? undefined);
+              if (seen.size > before) received += 1;
+            };
+            sub.on('event', handleEvent);
+            let eoseHandled = false;
+            const handleEose = () => {
+              if (eoseHandled) return;
+              eoseHandled = true;
+              sub.un();
+              resolve();
+            };
+            sub.on('eose', handleEose);
+            if (typeof window !== 'undefined') {
+              window.setTimeout(handleEose, 1500);
+            } else {
+              handleEose();
+            }
+          })
+      )
+    );
     hasMore = received >= maxItems;
     loading = false;
     updateActions();
@@ -1902,7 +2013,10 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
     if (connected || destroyed) return;
     const { valid, invalid } = normalizeRelayUrls(opts.relays);
     if (invalid.length) {
-      setNotice(`Ignored ${invalid.length} invalid relay${invalid.length === 1 ? '' : 's'}.`, 'muted');
+      setNotice(
+        `Ignored ${invalid.length} invalid relay${invalid.length === 1 ? '' : 's'}.`,
+        'muted'
+      );
     }
     if (!valid.length) {
       setNotice('No relays configured.', 'danger');
@@ -2007,7 +2121,10 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   };
 }
 
-export async function renderCommentTipWidget(container: HTMLElement, opts: CommentTipWidgetOptions) {
+export async function renderCommentTipWidget(
+  container: HTMLElement,
+  opts: CommentTipWidgetOptions
+) {
   ensureNostrstackRoot(container);
   container.replaceChildren();
 
@@ -2016,7 +2133,8 @@ export async function renderCommentTipWidget(container: HTMLElement, opts: Comme
   grid.style.display = 'grid';
   grid.style.gap = 'var(--nostrstack-space-4)';
   grid.style.alignItems = 'start';
-  grid.style.gridTemplateColumns = opts.layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)';
+  grid.style.gridTemplateColumns =
+    opts.layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)';
 
   const left = document.createElement('div');
   const right = document.createElement('div');
@@ -2045,12 +2163,10 @@ export async function renderCommentTipWidget(container: HTMLElement, opts: Comme
 export function autoMount() {
   const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-tip]'));
   nodes.forEach((el) => {
-    // @ts-ignore
-    if (typeof el.__nostrstackDestroy === 'function') {
-      // @ts-ignore
-      el.__nostrstackDestroy();
-      // @ts-ignore
-      delete el.__nostrstackDestroy;
+    const existingDestroy = widgetDestroyMap.get(el);
+    if (existingDestroy) {
+      existingDestroy();
+      widgetDestroyMap.delete(el);
     }
 
     const username = getBrandAttr(el, 'Tip');
@@ -2064,74 +2180,98 @@ export function autoMount() {
         .split(',')
         .map((s) => Number(s.trim()))
         .filter((n) => Number.isFinite(n) && n > 0);
-      const defaultAmountSats = el.dataset.defaultAmountSats ? Number(el.dataset.defaultAmountSats) : undefined;
+      const defaultAmountSats = el.dataset.defaultAmountSats
+        ? Number(el.dataset.defaultAmountSats)
+        : undefined;
       const widget = renderTipWidget(el, {
         username,
         itemId,
         presetAmountsSats: presets.length ? presets : undefined,
-        defaultAmountSats: Number.isFinite(defaultAmountSats as number) ? defaultAmountSats : undefined,
+        defaultAmountSats: Number.isFinite(defaultAmountSats as number)
+          ? defaultAmountSats
+          : undefined,
         baseURL,
         host,
         text: el.dataset.label
       });
-      // @ts-ignore
-      el.__nostrstackDestroy = widget.destroy;
+      widgetDestroyMap.set(el, widget.destroy);
       return;
     }
-    const btn = renderTipButton(el, { username, amountMsat: amount, baseURL, host, text: el.dataset.label });
-    // @ts-ignore
-    el.__nostrstackDestroy = btn.destroy;
+    const btn = renderTipButton(el, {
+      username,
+      amountMsat: amount,
+      baseURL,
+      host,
+      text: el.dataset.label
+    });
+    widgetDestroyMap.set(el, btn.destroy);
   });
 
   const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-pay]'));
   payNodes.forEach((el) => {
-    // @ts-ignore
-    if (typeof el.__nostrstackDestroy === 'function') {
-      // @ts-ignore
-      el.__nostrstackDestroy();
-      // @ts-ignore
-      delete el.__nostrstackDestroy;
+    const existingDestroy = widgetDestroyMap.get(el);
+    if (existingDestroy) {
+      existingDestroy();
+      widgetDestroyMap.delete(el);
     }
 
     const username = getBrandAttr(el, 'Pay');
     if (!username) return;
     const amount = el.dataset.amountMsat ? Number(el.dataset.amountMsat) : undefined;
-    const widget = renderPayToAction(el, { username, amountMsat: amount, text: el.dataset.label, baseURL: el.dataset.baseUrl, host: el.dataset.host });
-    // @ts-ignore
-    el.__nostrstackDestroy = widget.destroy;
+    const widget = renderPayToAction(el, {
+      username,
+      amountMsat: amount,
+      text: el.dataset.label,
+      baseURL: el.dataset.baseUrl,
+      host: el.dataset.host
+    });
+    widgetDestroyMap.set(el, widget.destroy);
   });
 
-  const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-comments]'));
+  const commentNodes = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-nostrstack-comments]')
+  );
   commentNodes.forEach((el) => {
-    // @ts-ignore
-    if (typeof el.__nostrstackDestroy === 'function') {
-      // @ts-ignore
-      el.__nostrstackDestroy();
-      // @ts-ignore
-      delete el.__nostrstackDestroy;
+    const existingDestroy = widgetDestroyMap.get(el);
+    if (existingDestroy) {
+      existingDestroy();
+      widgetDestroyMap.delete(el);
     }
 
     const thread = getBrandAttr(el, 'Comments') || undefined;
-    const relays = el.dataset.relays ? el.dataset.relays.split(',').map((r) => r.trim()) : undefined;
-    renderCommentWidget(el, { threadId: thread, relays, headerText: el.dataset.header, placeholder: el.dataset.placeholder }).then((widget) => {
-      // @ts-ignore
-      el.__nostrstackDestroy = widget.destroy;
+    const relays = el.dataset.relays
+      ? el.dataset.relays.split(',').map((r) => r.trim())
+      : undefined;
+    renderCommentWidget(el, {
+      threadId: thread,
+      relays,
+      headerText: el.dataset.header,
+      placeholder: el.dataset.placeholder
+    }).then((widget) => {
+      widgetDestroyMap.set(el, widget.destroy);
     });
   });
 
   const shareNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-share]'));
   shareNodes.forEach((el) => {
-    // @ts-ignore
-    if (typeof el.__nostrstackDestroy === 'function') {
-      // @ts-ignore
-      el.__nostrstackDestroy();
-      // @ts-ignore
-      delete el.__nostrstackDestroy;
+    const existingDestroy = widgetDestroyMap.get(el);
+    if (existingDestroy) {
+      existingDestroy();
+      widgetDestroyMap.delete(el);
     }
 
-    const relays = el.dataset.relays ? el.dataset.relays.split(',').map((r) => r.trim()).filter(Boolean) : undefined;
-    const url = el.dataset.nostrstackShare ?? el.dataset.url ?? (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
-    const title = el.dataset.title ?? (typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share');
+    const relays = el.dataset.relays
+      ? el.dataset.relays
+          .split(',')
+          .map((r) => r.trim())
+          .filter(Boolean)
+      : undefined;
+    const url =
+      el.dataset.nostrstackShare ??
+      el.dataset.url ??
+      (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
+    const title =
+      el.dataset.title ?? (typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share');
     const widget = renderShareButton(el, {
       url,
       title,
@@ -2140,39 +2280,45 @@ export function autoMount() {
       relays,
       label: el.dataset.label
     });
-    // @ts-ignore
-    el.__nostrstackDestroy = widget.destroy;
+    widgetDestroyMap.set(el, widget.destroy);
   });
 
-  const profileNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-profile]'));
+  const profileNodes = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-nostrstack-profile]')
+  );
   profileNodes.forEach((el) => {
-    // @ts-ignore
-    if (typeof el.__nostrstackDestroy === 'function') {
-      // @ts-ignore
-      el.__nostrstackDestroy();
-      // @ts-ignore
-      delete el.__nostrstackDestroy;
+    const existingDestroy = widgetDestroyMap.get(el);
+    if (existingDestroy) {
+      existingDestroy();
+      widgetDestroyMap.delete(el);
     }
 
     const identifier = el.dataset.nostrstackProfile ?? el.dataset.profile ?? '';
-    const widget = renderNostrProfile(el, { identifier, baseURL: el.dataset.baseUrl, host: el.dataset.host, title: el.dataset.title });
-    // @ts-ignore
-    el.__nostrstackDestroy = widget.destroy;
+    const widget = renderNostrProfile(el, {
+      identifier,
+      baseURL: el.dataset.baseUrl,
+      host: el.dataset.host,
+      title: el.dataset.title
+    });
+    widgetDestroyMap.set(el, widget.destroy);
   });
 
-  const blockchainNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-blockchain]'));
+  const blockchainNodes = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-nostrstack-blockchain]')
+  );
   blockchainNodes.forEach((el) => {
-    // @ts-ignore
-    if (typeof el.__nostrstackDestroy === 'function') {
-      // @ts-ignore
-      el.__nostrstackDestroy();
-      // @ts-ignore
-      delete el.__nostrstackDestroy;
+    const existingDestroy = widgetDestroyMap.get(el);
+    if (existingDestroy) {
+      existingDestroy();
+      widgetDestroyMap.delete(el);
     }
 
-    const widget = renderBlockchainStats(el, { baseURL: el.dataset.baseUrl, host: el.dataset.host, title: el.dataset.title });
-    // @ts-ignore
-    el.__nostrstackDestroy = widget.destroy;
+    const widget = renderBlockchainStats(el, {
+      baseURL: el.dataset.baseUrl,
+      host: el.dataset.host,
+      title: el.dataset.title
+    });
+    widgetDestroyMap.set(el, widget.destroy);
   });
 }
 
@@ -2234,7 +2380,13 @@ type MountTipWidgetOptions = {
   metadata?: Record<string, unknown>;
   size?: 'full' | 'compact';
   onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void;
-  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
+  onPaid?: (info: {
+    pr: string;
+    providerRef: string | null;
+    amountSats: number;
+    itemId: string;
+    metadata?: unknown;
+  }) => void;
 };
 
 export function mountTipWidget(container: HTMLElement, opts: MountTipWidgetOptions = {}) {
@@ -2368,10 +2520,17 @@ export function mountShareButton(container: HTMLElement, opts: MountShareOptions
     container.dataset.nostrstackShare ??
     (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
   const title =
-    opts.title ?? container.dataset.title ?? (typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share');
+    opts.title ??
+    container.dataset.title ??
+    (typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share');
   const relays =
     opts.relays ??
-    (container.dataset.relays ? container.dataset.relays.split(',').map((r) => r.trim()).filter(Boolean) : undefined);
+    (container.dataset.relays
+      ? container.dataset.relays
+          .split(',')
+          .map((r) => r.trim())
+          .filter(Boolean)
+      : undefined);
   const widget = renderShareButton(container, {
     url,
     title,
@@ -2391,7 +2550,10 @@ type MountBlockchainStatsOptions = {
   title?: string;
 };
 
-export function mountBlockchainStats(container: HTMLElement, opts: MountBlockchainStatsOptions = {}) {
+export function mountBlockchainStats(
+  container: HTMLElement,
+  opts: MountBlockchainStatsOptions = {}
+) {
   return renderBlockchainStats(container, {
     baseURL: opts.baseURL,
     host: opts.host,
@@ -2409,7 +2571,11 @@ type MountNostrProfileOptions = {
 
 export function mountNostrProfile(container: HTMLElement, opts: MountNostrProfileOptions = {}) {
   const identifier =
-    opts.identifier ?? container.dataset.nostrstackProfile ?? container.dataset.profile ?? container.id ?? '';
+    opts.identifier ??
+    container.dataset.nostrstackProfile ??
+    container.dataset.profile ??
+    container.id ??
+    '';
   return renderNostrProfile(container, {
     identifier,
     baseURL: opts.baseURL,
@@ -2419,9 +2585,10 @@ export function mountNostrProfile(container: HTMLElement, opts: MountNostrProfil
   });
 }
 
-type MountCommentTipOptions = MountTipWidgetOptions & MountCommentOptions & {
-  layout?: 'full' | 'compact';
-};
+type MountCommentTipOptions = MountTipWidgetOptions &
+  MountCommentOptions & {
+    layout?: 'full' | 'compact';
+  };
 
 export function mountCommentTipWidget(container: HTMLElement, opts: MountCommentTipOptions = {}) {
   const username = opts.username ?? getBrandAttr(container, 'Tip') ?? 'anonymous';
