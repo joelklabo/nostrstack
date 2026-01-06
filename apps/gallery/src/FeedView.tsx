@@ -6,6 +6,7 @@ import type { AbstractRelay } from 'nostr-tools/abstract-relay';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveEvents } from './cache/eventCache';
+import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { useRepost } from './hooks/useRepost';
@@ -220,6 +221,8 @@ export const PostItem = memo(function PostItem({
 export function FeedView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const { isMuted } = useMuteList();
+  const { contacts, loading: contactsLoading } = useContactList();
+  const { pubkey } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const seenIds = useRef(new Set<string>());
@@ -232,6 +235,17 @@ export function FeedView() {
   const [relayStatus, setRelayStatus] = useState<Record<string, RelayStatus>>({});
   const [retryCount, setRetryCount] = useState(0);
   const [spamFilterEnabled, setSpamFilterEnabled] = useState(false);
+  
+  // Feed mode: 'all' shows all posts, 'following' shows only from contacts
+  const [feedMode, setFeedMode] = useState<'all' | 'following'>(() => {
+    const saved = localStorage.getItem('nostrstack.feedMode');
+    return saved === 'following' ? 'following' : 'all';
+  });
+  
+  // Persist feed mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('nostrstack.feedMode', feedMode);
+  }, [feedMode]);
 
   // Reset status when relay list changes
   useEffect(() => {
@@ -250,8 +264,38 @@ export function FeedView() {
     return { total, online, errors };
   }, [relayStatus]);
 
+  // Memoize contact list string to prevent effect re-runs when contacts array is recreated with same values
+  const contactsKey = useMemo(() => {
+    if (feedMode === 'all') return 'all';
+    if (contactsLoading) return 'loading';
+    return contacts.join(',');
+  }, [feedMode, contacts, contactsLoading]);
+  
+  // Use ref to access contacts in effect without adding to deps
+  const contactsRef = useRef(contacts);
+  contactsRef.current = contacts;
+  
+  // Track last used feedMode/contactsKey to detect changes
+  const lastFeedKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (relaysLoading || relayList.length === 0) return;
+    
+    // In following mode, we need contacts loaded and non-empty
+    if (feedMode === 'following') {
+      if (contactsKey === 'loading') return;
+      if (contactsRef.current.length === 0) return;
+    }
+
+    // Build the current feed key
+    const currentFeedKey = `${feedMode}:${contactsKey}`;
+    
+    // Only clear posts if the feed key has changed (not on initial mount)
+    if (lastFeedKeyRef.current !== null && lastFeedKeyRef.current !== currentFeedKey) {
+      setPosts([]);
+      seenIds.current.clear();
+    }
+    lastFeedKeyRef.current = currentFeedKey;
 
     const pool = new SimplePool();
     // Trust mock relays to bypass signature verification in dev/test
@@ -308,9 +352,15 @@ export function FeedView() {
       });
     };
 
+    // Build filter based on feed mode
+    const filter: { kinds: number[]; limit: number; authors?: string[] } = { kinds: [1], limit: 20 };
+    if (feedMode === 'following') {
+      filter.authors = contactsRef.current;
+    }
+
     const sub = pool.subscribeMany(
       relayList,
-      { kinds: [1], limit: 20 },
+      filter,
       {
         onevent(event) {
           incrementEvents();
@@ -373,7 +423,7 @@ export function FeedView() {
           }
         });
     };
-  }, [incrementEvents, relayList, relaysLoading, retryCount]);
+  }, [incrementEvents, relayList, relaysLoading, retryCount, feedMode, contactsKey]);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore || posts.length === 0) return;
@@ -382,8 +432,14 @@ export function FeedView() {
     const until = lastPost.created_at - 1;
     const pool = new SimplePool();
     
+    // Build filter based on feed mode
+    const filter: { kinds: number[]; until: number; limit: number; authors?: string[] } = { kinds: [1], until, limit: 20 };
+    if (feedMode === 'following') {
+      filter.authors = contacts;
+    }
+    
     try {
-      const olderPosts = await pool.querySync(relayList, { kinds: [1], until, limit: 20 });
+      const olderPosts = await pool.querySync(relayList, filter);
       const uniqueOlder = olderPosts.filter(p => !seenIds.current.has(p.id));
       uniqueOlder.forEach(p => seenIds.current.add(p.id));
       
@@ -396,7 +452,7 @@ export function FeedView() {
       setIsLoadingMore(false);
       try { pool.close(relayList); } catch { /* ignore */ }
     }
-  }, [isLoadingMore, posts, relayList]);
+  }, [isLoadingMore, posts, relayList, feedMode, contacts]);
 
   // Memoize filtered posts - must be called unconditionally before return
   const filteredPosts = useMemo(() => {
@@ -434,7 +490,45 @@ export function FeedView() {
         paddingBottom: '0.5rem',
         borderBottom: '1px solid var(--color-border-default)'
       }}>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>Live Feed</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>Live Feed</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <button
+              className="action-btn"
+              onClick={() => setFeedMode('all')}
+              style={{
+                fontSize: '0.75rem',
+                padding: '2px 8px',
+                borderColor: feedMode === 'all' ? 'var(--terminal-accent)' : 'var(--color-border-default)',
+                color: feedMode === 'all' ? 'var(--terminal-accent)' : 'var(--color-fg-muted)',
+                background: feedMode === 'all' ? 'var(--terminal-accent-bg)' : 'transparent'
+              }}
+              aria-pressed={feedMode === 'all'}
+              aria-label="Show all posts"
+            >
+              All
+            </button>
+            <button
+              className="action-btn"
+              onClick={() => pubkey && setFeedMode('following')}
+              disabled={!pubkey}
+              style={{
+                fontSize: '0.75rem',
+                padding: '2px 8px',
+                borderColor: feedMode === 'following' ? 'var(--terminal-accent)' : 'var(--color-border-default)',
+                color: feedMode === 'following' ? 'var(--terminal-accent)' : 'var(--color-fg-muted)',
+                background: feedMode === 'following' ? 'var(--terminal-accent-bg)' : 'transparent',
+                opacity: !pubkey ? 0.5 : 1,
+                cursor: !pubkey ? 'not-allowed' : 'pointer'
+              }}
+              aria-pressed={feedMode === 'following'}
+              aria-label={pubkey ? 'Show posts from people you follow' : 'Log in to see following feed'}
+            title={!pubkey ? 'Log in to see following feed' : undefined}
+          >
+            Following
+          </button>
+          </div>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
             className="action-btn"
@@ -465,6 +559,12 @@ export function FeedView() {
           </div>
         </div>
       </div>
+
+      {feedMode === 'following' && contacts.length === 0 && !contactsLoading && (
+        <Alert tone="info">
+          You&apos;re not following anyone yet. Switch to &quot;All&quot; to discover people, then follow them to build your feed.
+        </Alert>
+      )}
 
       {relaySummary.errors > 0 && (
         <Alert 
