@@ -13,11 +13,12 @@ interface SidebarProps {
   setCurrentView: (view: 'feed' | 'search' | 'profile' | 'notifications' | 'relays' | 'offers' | 'settings' | 'personal-site-kit' | 'messages') => void;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  onOpenHelp?: () => void;
 }
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 
-export function Sidebar({ currentView, setCurrentView, mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ currentView, setCurrentView, mobileOpen, onMobileClose, onOpenHelp }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout } = useAuth();
   const cfg = useNostrstackConfig();
@@ -225,6 +226,15 @@ export function Sidebar({ currentView, setCurrentView, mobileOpen, onMobileClose
         >
           Settings
         </button>
+        {onOpenHelp && (
+          <button 
+            className="nav-item"
+            onClick={() => { onOpenHelp(); onMobileClose?.(); }}
+            aria-label="Open help and keyboard shortcuts"
+          >
+            Help
+          </button>
+        )}
       </div>
 
       <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--color-border-default)' }} role="region" aria-label="Wallet and system status">

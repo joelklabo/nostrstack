@@ -146,6 +146,7 @@ function AppShell() {
           setCurrentView={setCurrentView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={handleMobileMenuClose}
+          onOpenHelp={() => setHelpOpen(true)}
         />
         <main className="feed-container">
           <NotFoundView />
@@ -185,6 +186,7 @@ function AppShell() {
         setCurrentView={setCurrentView}
         mobileOpen={mobileMenuOpen}
         onMobileClose={handleMobileMenuClose}
+        onOpenHelp={() => setHelpOpen(true)}
       />
       <main className="feed-container">
         {profileRouteError && (

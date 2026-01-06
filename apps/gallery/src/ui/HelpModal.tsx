@@ -11,8 +11,6 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
-  if (!open) return null;
-
   // Store trigger element and focus first focusable element
   useEffect(() => {
     if (!open) return;
@@ -90,6 +88,9 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
+
+  // Return null if not open - AFTER all hooks
+  if (!open) return null;
 
   const shortcuts = [
     { keys: ['j', 'k'], desc: 'Navigate posts' },
