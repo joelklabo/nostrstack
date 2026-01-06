@@ -1,4 +1,4 @@
-import { PaywalledContent, PostEditor, ReactionButton, ReplyModal, useStats, ZapButton } from '@nostrstack/blog-kit';
+import { PaywalledContent, PostEditor, ReactionButton, ReplyModal, useAuth, useStats, ZapButton } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools';
@@ -8,6 +8,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { saveEvents } from './cache/eventCache';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
+import { useRepost } from './hooks/useRepost';
 import { markRelayFailure } from './nostr/api';
 import { relayMonitor } from './nostr/relayHealth';
 import { filterSpam } from './nostr/spamFilter';
@@ -47,6 +48,15 @@ export const PostItem = memo(function PostItem({
   const [showJson, setShowJson] = useState(false);
   const [isZapped, setIsZapped] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
+  const [isReposted, setIsReposted] = useState(false);
+  const { repost, loading: repostLoading } = useRepost();
+  const { pubkey } = useAuth();
+
+  const handleRepost = useCallback(async () => {
+    if (repostLoading || isReposted) return;
+    const success = await repost(post);
+    if (success) setIsReposted(true);
+  }, [repost, post, repostLoading, isReposted]);
 
   const contentWarningTag = post.tags.find(t => t[0] === 'content-warning' || t[0] === 'sensitive');
   const hasContentWarning = Boolean(contentWarningTag);
@@ -168,6 +178,17 @@ export const PostItem = memo(function PostItem({
         >
           Reply
         </button>
+        {pubkey && (
+          <button 
+            className={`action-btn repost-btn ${isReposted ? 'reposted' : ''}`}
+            onClick={handleRepost}
+            disabled={repostLoading || isReposted}
+            aria-label={isReposted ? 'Reposted' : 'Repost this post'}
+            aria-busy={repostLoading}
+          >
+            {repostLoading ? '...' : isReposted ? '↻ Reposted' : '↻ Repost'}
+          </button>
+        )}
         <button 
           className="action-btn" 
           onClick={() => setShowJson(!showJson)}
