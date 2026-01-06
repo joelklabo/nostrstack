@@ -143,3 +143,39 @@ export const MultipleButtons: Story = {
   ),
   args: {}
 };
+
+/**
+ * Accessibility Example: Demonstrates keyboard navigation and screen reader support
+ * 
+ * The ReactionButton includes:
+ * - aria-label describing the action
+ * - aria-pressed to indicate toggle state
+ * - Keyboard support (Enter/Space to activate)
+ * - Visible focus indicator
+ * 
+ * Test with:
+ * - Tab to focus button
+ * - Enter/Space to activate
+ * - Screen reader announces "Like this post" and pressed state
+ */
+export const AccessibilityDemo: Story = {
+  args: {
+    event: mockEvent,
+    loggedIn: true
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Demonstrates accessible interaction patterns. The button includes proper ARIA labels and keyboard support. Check the "Accessibility" tab to verify WCAG compliance.',
+      },
+    },
+    a11y: {
+      config: {
+        rules: [
+          { id: 'button-name', enabled: true },
+          { id: 'aria-allowed-attr', enabled: true },
+        ],
+      },
+    },
+  },
+};
