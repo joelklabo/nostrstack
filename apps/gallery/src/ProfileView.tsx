@@ -33,7 +33,12 @@ interface ProfileMetadata {
   website?: string;
 }
 
-export function ProfileView({ pubkey }: { pubkey: string }) {
+interface ProfileViewProps {
+  pubkey: string;
+  onNavigateToSettings?: () => void;
+}
+
+export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const pool = useSimplePool();
   const [profile, setProfile] = useState<ProfileMetadata | null>(null);
@@ -301,6 +306,21 @@ export function ProfileView({ pubkey }: { pubkey: string }) {
                     {profile.website}
                   </a>
                 </p>
+              )}
+              {isMe && onNavigateToSettings && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', marginTop: '1rem' }}>
+                  <button
+                    className="action-btn"
+                    style={{ 
+                      borderColor: 'var(--terminal-accent)', 
+                      color: 'var(--terminal-accent)' 
+                    }}
+                    onClick={onNavigateToSettings}
+                    aria-label="Edit your profile"
+                  >
+                    [✎] EDIT PROFILE
+                  </button>
+                </div>
               )}
               {!isMe && myPubkey && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', marginTop: '1rem' }}>

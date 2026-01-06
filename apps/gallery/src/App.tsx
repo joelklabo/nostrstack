@@ -161,12 +161,12 @@ function AppShell() {
           </Alert>
         )}
         {profileRoutePubkey ? (
-          <ProfileView pubkey={profileRoutePubkey} />
+          <ProfileView pubkey={profileRoutePubkey} onNavigateToSettings={() => setCurrentView('settings')} />
         ) : (
           <>
             {currentView === 'feed' && <FeedView />}
             {currentView === 'search' && <SearchView />}
-            {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} />}
+            {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} onNavigateToSettings={() => setCurrentView('settings')} />}
             {currentView === 'notifications' && <NotificationsView />}
             {currentView === 'messages' && <DMView />}
             {currentView === 'relays' && <RelaysView />}
