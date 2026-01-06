@@ -4,7 +4,7 @@ import {
   createNostrstackBrandTheme,
   type NostrstackBrandPreset
 } from '@nostrstack/embed';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
 import { DMView } from './DMView';
@@ -13,6 +13,7 @@ import { FeedView } from './FeedView';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { LoginView } from './LoginView';
 import { NostrEventView } from './NostrEventView';
+import { NotFoundView } from './NotFoundView';
 import { NotificationsView } from './NotificationsView';
 import { OffersView } from './OffersView';
 import { PersonalSiteKitView } from './PersonalSiteKitView';
@@ -71,6 +72,20 @@ function AppShell() {
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
 
+  // Check if the current path is a valid route
+  const isValidRoute = useMemo(() => {
+    // Root is always valid
+    if (pathname === '/' || pathname === '') return true;
+    // Known routes
+    if (isSearchRoute) return true;
+    if (isPersonalSiteKitRoute) return true;
+    if (nostrRouteId) return true;
+    if (profileRoutePubkey) return true;
+    // Profile route with error is still "handled" (shows error)
+    if (pathname.startsWith('/p/')) return true;
+    return false;
+  }, [pathname, isSearchRoute, isPersonalSiteKitRoute, nostrRouteId, profileRoutePubkey]);
+
   useEffect(() => {
     if (isPersonalSiteKitRoute) {
       setCurrentView('personal-site-kit');
@@ -120,6 +135,23 @@ function AppShell() {
 
   if (!pubkey && !isPersonalSiteKitRoute) {
     return <LoginView />;
+  }
+
+  // Show 404 for invalid routes
+  if (!isValidRoute) {
+    return (
+      <div className="social-layout">
+        <Sidebar
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={handleMobileMenuClose}
+        />
+        <main className="feed-container">
+          <NotFoundView />
+        </main>
+      </div>
+    );
   }
 
   return (
