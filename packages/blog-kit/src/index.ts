@@ -4,9 +4,26 @@ export { BlockchainStats, type BlockchainStatsProps } from './blockchain-stats';
 export { CommentTipWidget, type CommentTipWidgetProps } from './comment-tip-widget';
 export { Comments, type CommentsProps } from './comments';
 export { NostrstackProvider, type NostrstackProviderProps, useNostrstackConfig } from './context';
-export { type BitcoinStatus, type BitcoinStatusState, useBitcoinStatus } from './hooks/useBitcoinStatus';
+export {
+  type BitcoinStatus,
+  type BitcoinStatusState,
+  useBitcoinStatus
+} from './hooks/useBitcoinStatus';
+export { useFeed, type UseFeedOptions } from './hooks/useFeed';
+export {
+  useNostrQuery,
+  type UseNostrQueryOptions,
+  type UseNostrQueryResult
+} from './hooks/useNostrQuery';
+export { useProfile, type UseProfileResult } from './hooks/useProfile';
+export { useThread } from './hooks/useThread';
 export { type NostrProfileProps, NostrProfileWidget } from './nostr-profile';
-export { type NwcBalanceResult, NwcClient, type NwcClientOptions, type NwcPayInvoiceResult } from './nwc';
+export {
+  type NwcBalanceResult,
+  NwcClient,
+  type NwcClientOptions,
+  type NwcPayInvoiceResult
+} from './nwc';
 export { OfferWidget, type OfferWidgetProps } from './offer-widget';
 export { PaywalledContent } from './paywalled-content';
 export { PostEditor } from './post-editor';
