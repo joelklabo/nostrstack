@@ -56,9 +56,6 @@ describe('renderInvoicePopover', () => {
   it('traps focus within the modal', () => {
     const popover = renderInvoicePopover('lnbc1test', { mount });
     const closeBtn = popover.querySelector('.nostrstack-popover-close') as HTMLButtonElement;
-    const copyBtn = popover.querySelector(
-      '.nostrstack-popover-actions button'
-    ) as HTMLButtonElement;
 
     // Setup focusable elements
     // We need to ensure elements are seen as focusable. jsdom might need help.

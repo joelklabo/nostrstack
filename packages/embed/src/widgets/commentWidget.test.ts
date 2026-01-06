@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { RelayConnection } from '../relays.js';
 import { connectRelays } from '../relays.js';
 import { renderCommentWidget } from './commentWidget.js';
 
@@ -32,11 +31,12 @@ describe('renderCommentWidget', () => {
   beforeEach(() => {
     host = document.createElement('div');
     vi.clearAllMocks();
-    (connectRelays as any).mockResolvedValue([]);
+    vi.mocked(connectRelays).mockResolvedValue([]);
   });
 
   afterEach(() => {
     document.body.innerHTML = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (window as any).nostr;
   });
 
@@ -54,7 +54,7 @@ describe('renderCommentWidget', () => {
       publish: vi.fn(),
       close: vi.fn()
     };
-    (connectRelays as any).mockResolvedValue([mockRelay]);
+    vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     await renderCommentWidget(host, { relays: ['wss://relay.example.com'] });
 
@@ -75,7 +75,7 @@ describe('renderCommentWidget', () => {
       publish: vi.fn(),
       close: vi.fn()
     };
-    (connectRelays as any).mockResolvedValue([mockRelay]);
+    vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     await renderCommentWidget(host, { lazyConnect: true, relays: ['wss://relay.example.com'] });
 
@@ -96,7 +96,7 @@ describe('renderCommentWidget', () => {
       publish: vi.fn().mockResolvedValue(undefined),
       close: vi.fn()
     };
-    (connectRelays as any).mockResolvedValue([mockRelay]);
+    vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     // Mock window.nostr
     const signEvent = vi.fn().mockResolvedValue({
@@ -134,7 +134,7 @@ describe('renderCommentWidget', () => {
       publish: vi.fn(),
       close: vi.fn()
     };
-    (connectRelays as any).mockResolvedValue([mockRelay]);
+    vi.mocked(connectRelays).mockResolvedValue([mockRelay]);
 
     const widget = await renderCommentWidget(host, { relays: ['wss://relay.example.com'] });
 
