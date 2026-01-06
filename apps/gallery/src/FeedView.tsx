@@ -39,12 +39,14 @@ export const PostItem = memo(function PostItem({
   post,
   authorLightningAddress,
   apiBase,
-  enableRegtestPay
+  enableRegtestPay,
+  onOpenThread
 }: {
   post: Post;
   authorLightningAddress?: string;
   apiBase?: string;
   enableRegtestPay?: boolean;
+  onOpenThread?: (eventId: string) => void;
 }) {
   const [showJson, setShowJson] = useState(false);
   const [isZapped, setIsZapped] = useState(false);
@@ -178,6 +180,13 @@ export const PostItem = memo(function PostItem({
           aria-label="Reply to this post"
         >
           Reply
+        </button>
+        <button 
+          className="action-btn" 
+          onClick={() => onOpenThread?.(post.id)}
+          aria-label="View thread"
+        >
+          Thread
         </button>
         {pubkey && (
           <button 
@@ -460,6 +469,10 @@ export function FeedView() {
     return spamFilterEnabled ? filterSpam(filtered) : filtered;
   }, [posts, isMuted, spamFilterEnabled]);
 
+  const handleOpenThread = useCallback((eventId: string) => {
+    navigateTo(`/nostr/${eventId}`);
+  }, []);
+
   return relaysLoading ? (
     <div className="feed-stream">
       <div style={{ marginBottom: '1.5rem' }}>
@@ -584,7 +597,13 @@ export function FeedView() {
       )}
 
       {filteredPosts.map(post => (
-        <PostItem key={post.id} post={post} apiBase={apiBase} enableRegtestPay={enableRegtestPay} />
+        <PostItem 
+          key={post.id} 
+          post={post} 
+          apiBase={apiBase} 
+          enableRegtestPay={enableRegtestPay} 
+          onOpenThread={handleOpenThread}
+        />
       ))}
 
       {posts.length > 0 && (
