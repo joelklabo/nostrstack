@@ -35,8 +35,10 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   const [_monitorVersion, setMonitorVersion] = useState(0);
 
   // Parse environment default relays once
-  const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
-  const bootstrapRelays = useMemo(() => envRelays.length ? envRelays : DEFAULT_RELAYS, [envRelays]);
+  const bootstrapRelays = useMemo(() => {
+    const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+    return envRelays.length ? envRelays : DEFAULT_RELAYS;
+  }, []); // Empty deps - only parse once on mount
 
   // Listen for relay health changes
   useEffect(() => {
