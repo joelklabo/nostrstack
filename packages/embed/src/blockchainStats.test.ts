@@ -64,11 +64,15 @@ describe('renderBlockchainStats', () => {
     } as Response);
 
     const widget = renderBlockchainStats(host);
+
     await widget.refresh();
 
     expect(host.querySelector('.nostrstack-status--danger')?.textContent).toBe(
       'Telemetry unavailable'
     );
-    expect(host.querySelector('.nostrstack-btn')?.hidden).toBe(false); // Retry button visible
+
+    const retryBtn = host.querySelector('.nostrstack-btn') as HTMLButtonElement;
+
+    expect(retryBtn.hidden).toBe(false); // Retry button visible
   });
 });

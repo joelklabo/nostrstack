@@ -35,7 +35,8 @@ const mockEvent = {
   kind: 1,
   content: 'hello',
   created_at: 1000,
-  tags: []
+  tags: [],
+  sig: 'sig'
 };
 
 describe('ZapButton', () => {

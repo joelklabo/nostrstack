@@ -16,7 +16,7 @@ describe('renderTipWidget', () => {
   });
 
   it('renders initial state correctly', () => {
-    renderTipWidget(host, { username: 'alice' });
+    renderTipWidget(host, { username: 'alice', itemId: 'item123' });
 
     expect(host.querySelector('.nostrstack-tip__title')).toBeTruthy();
     expect(host.textContent).toContain('Pay @alice');
@@ -41,7 +41,7 @@ describe('renderTipWidget', () => {
       }
     });
 
-    renderTipWidget(host, { username: 'alice', host: 'example.com' });
+    renderTipWidget(host, { username: 'alice', itemId: 'item123', host: 'example.com' });
 
     const presetBtn = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
     await presetBtn.onclick?.(new MouseEvent('click'));
@@ -63,6 +63,7 @@ describe('renderTipWidget', () => {
 
     renderTipWidget(host, {
       username: 'alice',
+      itemId: 'item123',
       baseURL: 'mock',
       presetAmountsSats: [50],
       showFeed: false
@@ -77,7 +78,7 @@ describe('renderTipWidget', () => {
   });
 
   it('destroys correctly', async () => {
-    const widget = renderTipWidget(host, { username: 'alice' });
+    const widget = renderTipWidget(host, { username: 'alice', itemId: 'item123' });
     // Should not throw
     widget.destroy();
   });

@@ -1,9 +1,17 @@
 import { parseRelays, useAuth } from '@nostrstack/blog-kit';
 import { type Filter, SimplePool } from 'nostr-tools';
 import { normalizeURL } from 'nostr-tools/utils';
-import { createContext, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 
-import { relayMonitor } from '../nostr/relayHealth';
+import { relayMonitor } from './nostr/relayHealth';
 
 // Reusing default relays from API module logic
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
@@ -32,7 +40,7 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   const [userRelays, setUserRelays] = useState<RelayConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Track stable active relays to prevent cascading re-renders
   const [stableActiveRelays, setStableActiveRelays] = useState<string[]>([]);
   const lastActiveRelaysRef = useRef<string>('');
@@ -40,28 +48,27 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   // Parse environment default relays once
   const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
   const bootstrapRelays = useMemo(
-    () => envRelays.length ? envRelays : DEFAULT_RELAYS,
+    () => (envRelays.length ? envRelays : DEFAULT_RELAYS),
     [envRelays]
   );
 
   // Listen for relay health changes - only update if activeRelays actually changes
   useEffect(() => {
     const updateActiveRelays = () => {
-      const newActive = [...new Set([
-        ...bootstrapRelays,
-        ...userRelays.map((r) => r.url)
-      ])].filter(url => relayMonitor.isHealthy(url)).sort();
-      
+      const newActive = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])]
+        .filter((url) => relayMonitor.isHealthy(url))
+        .sort();
+
       const newActiveKey = newActive.join(',');
       if (newActiveKey !== lastActiveRelaysRef.current) {
         lastActiveRelaysRef.current = newActiveKey;
         setStableActiveRelays(newActive);
       }
     };
-    
+
     // Initial calculation
     updateActiveRelays();
-    
+
     // Subscribe to monitor changes
     return relayMonitor.subscribe(updateActiveRelays);
   }, [bootstrapRelays, userRelays]);
@@ -79,7 +86,8 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     const filter: Filter = { kinds: [10002], authors: [pubkey] };
 
     // Use bootstrap relays to find the user's relay list
-    pool.get(bootstrapRelays, filter)
+    pool
+      .get(bootstrapRelays, filter)
       .then((event) => {
         if (event) {
           const parsed = event.tags
@@ -101,7 +109,11 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => {
         setIsLoading(false);
-        try { pool.close(bootstrapRelays); } catch { /* ignore */ }
+        try {
+          pool.close(bootstrapRelays);
+        } catch {
+          /* ignore */
+        }
       });
 
     return () => {
@@ -147,10 +159,14 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       const event = await signEvent(template);
       const pool = new SimplePool();
       // Publish to both the new list and the bootstrap list to ensure propagation
-      const publishRelays = [...new Set([...bootstrapRelays, ...userRelays.map(r => r.url)])];
-      
+      const publishRelays = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])];
+
       await Promise.allSettled(pool.publish(publishRelays, event));
-      try { pool.close(publishRelays); } catch { /* ignore */ }
+      try {
+        pool.close(publishRelays);
+      } catch {
+        /* ignore */
+      }
     } catch (e) {
       console.error('Failed to save relays:', e);
       setError('Failed to publish relay list.');
@@ -158,19 +174,18 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   }, [pubkey, signEvent, userRelays, bootstrapRelays]);
 
   // Memoize the context value to prevent unnecessary re-renders of consumers
-  const value: RelayContextValue = useMemo(() => ({
-    relays: stableActiveRelays,
-    userRelays,
-    addRelay,
-    removeRelay,
-    saveRelays,
-    isLoading,
-    error
-  }), [stableActiveRelays, userRelays, addRelay, removeRelay, saveRelays, isLoading, error]);
-
-  return (
-    <RelayContext.Provider value={value}>
-      {children}
-    </RelayContext.Provider>
+  const value: RelayContextValue = useMemo(
+    () => ({
+      relays: stableActiveRelays,
+      userRelays,
+      addRelay,
+      removeRelay,
+      saveRelays,
+      isLoading,
+      error
+    }),
+    [stableActiveRelays, userRelays, addRelay, removeRelay, saveRelays, isLoading, error]
   );
+
+  return <RelayContext.Provider value={value}>{children}</RelayContext.Provider>;
 }
