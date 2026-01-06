@@ -441,6 +441,40 @@ export function FeedView() {
         </div>
       )}
 
+      {posts.length === 0 && !feedLoading && (
+        <div
+          style={{
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            border: '1px dashed var(--color-border-default)',
+            borderRadius: '8px',
+            backgroundColor: 'var(--color-canvas-subtle)'
+          }}
+        >
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
+          <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-fg-default)' }}>No posts yet</h3>
+          <p style={{ color: 'var(--color-fg-muted)', margin: '0 0 1.5rem' }}>
+            Be the first to share something with the network!
+          </p>
+          <button
+            className="action-btn"
+            onClick={() => {
+              const editor = document.querySelector('textarea');
+              editor?.focus();
+            }}
+            style={{
+              padding: '0.5rem 1.5rem',
+              fontWeight: '600',
+              borderColor: 'var(--color-accent-emphasis)',
+              color: 'var(--color-accent-fg)',
+              background: 'var(--color-accent-subtle)'
+            }}
+          >
+            Write your first post
+          </button>
+        </div>
+      )}
+
       {filteredPosts.map((post) => (
         <PostItem
           key={post.id}

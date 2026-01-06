@@ -1,4 +1,10 @@
-import { AuthProvider, NostrstackProvider, parseRelays, StatsProvider, useAuth } from '@nostrstack/blog-kit';
+import {
+  AuthProvider,
+  NostrstackProvider,
+  parseRelays,
+  StatsProvider,
+  useAuth
+} from '@nostrstack/blog-kit';
 import {
   applyNostrstackTheme,
   createNostrstackBrandTheme,
@@ -63,7 +69,7 @@ function AppShell() {
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
 
   const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), []);
-  const handleMobileMenuToggle = useCallback(() => setMobileMenuOpen(prev => !prev), []);
+  const handleMobileMenuToggle = useCallback(() => setMobileMenuOpen((prev) => !prev), []);
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
@@ -110,7 +116,10 @@ function AppShell() {
 
   useEffect(() => {
     // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
-    applyNostrstackTheme(document.body, createNostrstackBrandTheme({ preset: brandPreset, mode: theme }));
+    applyNostrstackTheme(
+      document.body,
+      createNostrstackBrandTheme({ preset: brandPreset, mode: theme })
+    );
     document.body.setAttribute('data-theme', theme);
   }, [brandPreset, theme]);
 
@@ -120,14 +129,16 @@ function AppShell() {
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100dvh', 
-        color: 'var(--color-fg-muted)',
-        fontFamily: 'var(--font-body)'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100dvh',
+          color: 'var(--color-fg-muted)',
+          fontFamily: 'var(--font-body)'
+        }}
+      >
         Loading NostrStack...
       </div>
     );
@@ -148,7 +159,7 @@ function AppShell() {
           onMobileClose={handleMobileMenuClose}
           onOpenHelp={() => setHelpOpen(true)}
         />
-        <main className="feed-container">
+        <main className="feed-container" role="main" id="main-content">
           <NotFoundView />
         </main>
       </div>
@@ -157,6 +168,9 @@ function AppShell() {
 
   return (
     <div className="social-layout">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <OnboardingTour />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
 
@@ -188,19 +202,27 @@ function AppShell() {
         onMobileClose={handleMobileMenuClose}
         onOpenHelp={() => setHelpOpen(true)}
       />
-      <main className="feed-container">
+      <main className="feed-container" role="main" id="main-content">
         {profileRouteError && (
           <Alert tone="danger" title="Routing Error">
             Invalid profile id. Showing your current view instead.
           </Alert>
         )}
         {profileRoutePubkey ? (
-          <ProfileView pubkey={profileRoutePubkey} onNavigateToSettings={() => setCurrentView('settings')} />
+          <ProfileView
+            pubkey={profileRoutePubkey}
+            onNavigateToSettings={() => setCurrentView('settings')}
+          />
         ) : (
           <>
             {currentView === 'feed' && <FeedView />}
             {currentView === 'search' && <SearchView />}
-            {currentView === 'profile' && pubkey && <ProfileView pubkey={pubkey} onNavigateToSettings={() => setCurrentView('settings')} />}
+            {currentView === 'profile' && pubkey && (
+              <ProfileView
+                pubkey={pubkey}
+                onNavigateToSettings={() => setCurrentView('settings')}
+              />
+            )}
             {currentView === 'notifications' && <NotificationsView />}
             {currentView === 'messages' && <DMView />}
             {currentView === 'relays' && <RelaysView />}
@@ -218,7 +240,9 @@ function AppShell() {
         )}
       </main>
       <aside className="telemetry-sidebar">
-        <ErrorBoundary fallback={<div style={{ padding: '1rem', color: '#666' }}>Telemetry Unavailable</div>}>
+        <ErrorBoundary
+          fallback={<div style={{ padding: '1rem', color: '#666' }}>Telemetry Unavailable</div>}
+        >
           <TelemetryBar />
         </ErrorBoundary>
       </aside>
@@ -230,7 +254,8 @@ export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const apiBaseConfig = resolveApiBase(apiBase);
   const enableRegtestPay =
-    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
+    import.meta.env.DEV;
   const relays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
   const envZapAddress =
     (import.meta.env.VITE_ZAP_LNURL ?? import.meta.env.VITE_ZAP_ADDRESS ?? '').trim() || undefined;
