@@ -97,6 +97,7 @@ export function ZapButton({
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -355,8 +356,9 @@ export function ZapButton({
 
       // (Optional) Poll for payment status
       timerRef.current = window.setTimeout(() => {
-        setZapState('idle');
-        setInvoice(null);
+        // Show timeout notification instead of silently closing
+        setTimedOut(true);
+        emitPaymentTelemetry('payment_failed', { reason: 'timeout' as PaymentFailureReason });
       }, 5 * 60 * 1000); // 5 minutes to pay
       
     } catch (err: unknown) {
@@ -446,6 +448,7 @@ export function ZapButton({
     setStatusUrl(null);
     resetNwcPayment();
     setCopyStatus('idle');
+    setTimedOut(false);
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -541,15 +544,18 @@ export function ZapButton({
     }
 
     if (nwcStatusItem) items.push(nwcStatusItem);
-    if (awaitingPayment) {
+    if (awaitingPayment && !timedOut) {
       items.push({ text: 'Awaiting payment confirmation...', spinner: true });
+    }
+    if (timedOut) {
+      items.push({ text: 'Payment timed out. Please try again.', tone: 'error' });
     }
     if (effectiveRegtestError) {
       items.push({ text: effectiveRegtestError, tone: 'error' });
     }
 
     return items;
-  }, [zapState, authorNpub, invoice, errorMessage, nwcStatusItem, effectiveRegtestError]);
+  }, [zapState, authorNpub, invoice, errorMessage, nwcStatusItem, timedOut, effectiveRegtestError]);
 
   const successActionDisplay = useMemo<PaymentSuccessAction | null>(() => {
     if (!successAction) return null;
@@ -618,7 +624,7 @@ export function ZapButton({
         success={zapState === 'paid'}
         successMessage="Payment sent."
         successAction={successActionDisplay}
-        error={zapState === 'error'}
+        error={zapState === 'error' || timedOut}
         disclaimer={nip57Disclaimer}
         onClose={handleCloseZap}
         titleId="zap-title"
