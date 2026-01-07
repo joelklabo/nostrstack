@@ -111,6 +111,7 @@ jobs:
           pnpm --filter api test
 
       - name: E2E (Playwright LNURL)
+        working-directory: apps/api
         env:
           DATABASE_URL: file:./test-e2e.db
           PRISMA_SCHEMA_FILE: prisma/schema.prisma
@@ -118,8 +119,8 @@ jobs:
           OP_NODE_API_KEY: test-key
           OP_NODE_WEBHOOK_SECRET: whsec_test
         run: |
-          pnpm --filter api prisma:generate
-          pnpm --filter api test:e2e
+          pnpm exec prisma generate
+          pnpm exec playwright test
 
       - name: Regtest e2e (SQLite)
         working-directory: apps/api
