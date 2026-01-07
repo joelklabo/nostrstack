@@ -14,3 +14,7 @@ ignore:
   - '.github'
   - '.vscode'
   - '.pnpm-store'
+  - '.oracle'
+  - 'apps/gallery/src/DMView.tsx'
+  - 'apps/gallery/src/components/ZapModal.css'
+  - 'apps/gallery/src/nostr/eventRenderers.tsx'
