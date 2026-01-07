@@ -61,11 +61,10 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     services:
       postgres:
         image: postgres:15
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         env:
           POSTGRES_USER: nostrstack
           POSTGRES_PASSWORD: nostrstack
