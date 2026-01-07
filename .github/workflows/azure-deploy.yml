@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Docker image tag (default: commit SHA)"
+        description: 'Docker image tag (default: commit SHA)'
         required: false
   push:
     branches:
@@ -25,11 +25,7 @@ jobs:
       env_name: nostrstack-env
       run_e2e_tests: true
       run_health_check: false
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
-      OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
-      OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}
+    secrets: inherit
 
   deploy-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -43,8 +39,4 @@ jobs:
       env_name: nostrstack-env
       run_e2e_tests: true
       run_health_check: false
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
-      OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
-      OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}
+    secrets: inherit
