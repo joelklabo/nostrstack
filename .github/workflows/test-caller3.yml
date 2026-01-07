@@ -1,0 +1,10 @@
+name: Test Caller 3
+
+on:
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/test-reusable3.yml
+    with:
+      message: 'Hello!'
