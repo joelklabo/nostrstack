@@ -41,8 +41,6 @@ on:
         type: boolean
         default: false
     secrets:
-      GITHUB_TOKEN:
-        required: false
       AZURE_CREDENTIALS:
         required: false
       ADMIN_API_KEY:
