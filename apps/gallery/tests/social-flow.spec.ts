@@ -4,7 +4,7 @@ import { resolveDocScreenshotPath } from './helpers.ts';
 
 test.describe('Social App Flow', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
     // Navigate to the app
     await page.goto('/');
   });
@@ -19,10 +19,10 @@ test.describe('Social App Flow', () => {
   test('User can login with nsec and see feed', async ({ page }) => {
     // 1. Login with NSEC
     await page.getByText('Enter nsec manually').click();
-    
+
     // Use a valid nsec
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    
+
     await page.getByPlaceholder('nsec1...').fill(validNsec);
     await page.getByRole('button', { name: 'Sign in' }).click();
 
@@ -45,7 +45,9 @@ test.describe('Social App Flow', () => {
     await page.getByText('PUBLISH_EVENT').click();
 
     // 4. Check for success status
-    await expect(page.getByText(/STATUS: Signing event|SUCCESS:|ERROR:/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/STATUS: Signing event|SUCCESS:|ERROR:/)).toBeVisible({
+      timeout: 10000
+    });
     await page.screenshot({ path: resolveDocScreenshotPath('post-result.png') });
 
     // 5. Interact: Click Zap (opens modal)
@@ -101,9 +103,9 @@ test.describe('Social App Flow', () => {
 
     // Check Profile View
     await expect(page.locator('.profile-view')).toBeVisible();
-    
+
     // Interact: Follow
-    await page.getByText('[+] FOLLOW_USER').click();
+    await page.getByText('[+] FOLLOW').click();
     await page.screenshot({ path: resolveDocScreenshotPath('profile.png') });
   });
 
@@ -124,7 +126,10 @@ test.describe('Social App Flow', () => {
     await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
     // Click VIEW_SRC on the first post
     const viewSource = page.getByText('View Source').first();
-    const hasPost = await viewSource.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
+    const hasPost = await viewSource
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
     if (!hasPost) {
       test.skip(true, 'No posts available for source view');
       return;
@@ -132,7 +137,7 @@ test.describe('Social App Flow', () => {
     await viewSource.click();
     // Expect JSON view to appear (contains "EVENT_ID:")
     await expect(page.getByText(/Event ID:/)).toBeVisible();
-    
+
     // Toggle back (HIDE_SRC)
     await page.getByText('Hide Source').first().click();
     await expect(page.getByText(/Event ID:/)).not.toBeVisible();
@@ -142,7 +147,7 @@ test.describe('Social App Flow', () => {
 
     // Logout
     await page.getByRole('button', { name: 'Log out' }).click();
-    
+
     // Expect Login Screen
     await expect(page.getByText('Sign in to NostrStack')).toBeVisible();
     await expect(page.getByText('Enter nsec manually')).toBeVisible();
