@@ -102,7 +102,9 @@ export async function buildServer() {
 
     if (useHttps) {
       if (!certPath || !keyPath) {
-        throw new Error(`USE_HTTPS=true but cert/key missing (checked: ${defaultCerts.join(', ')} / ${defaultKeys.join(', ')})`);
+        throw new Error(
+          `USE_HTTPS=true but cert/key missing (checked: ${defaultCerts.join(', ')} / ${defaultKeys.join(', ')})`
+        );
       }
       if (!env.PUBLIC_ORIGIN.startsWith('https://')) {
         console.warn(`USE_HTTPS=true but PUBLIC_ORIGIN is not https: ${env.PUBLIC_ORIGIN}`);
@@ -121,6 +123,11 @@ export async function buildServer() {
 
   const server = Fastify({
     ...httpsOpts,
+    ajv: {
+      customOptions: {
+        keywords: ['example']
+      }
+    },
     logger: {
       level: env.LOG_LEVEL,
       transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
@@ -128,9 +135,15 @@ export async function buildServer() {
       hooks: {
         logMethod(inputArgs, method: LogFn & { level?: string | number; levelVal?: number }) {
           try {
-            const meta = method as { level?: string | number; levelVal?: number; apply: LogFn['apply'] };
+            const meta = method as {
+              level?: string | number;
+              levelVal?: number;
+              apply: LogFn['apply'];
+            };
             const level = meta.level ?? meta.levelVal ?? 'info';
-            const msg = inputArgs.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+            const msg = inputArgs
+              .map((a) => (typeof a === 'string' ? a : JSON.stringify(a)))
+              .join(' ');
             logHub.publish({ ts: Date.now(), level, message: msg, data: inputArgs[0] });
           } catch {
             // swallow log hook errors
@@ -164,7 +177,8 @@ export async function buildServer() {
     max: 60,
     timeWindow: '1 minute',
     keyGenerator: (req) => {
-      const host = (req.headers['x-forwarded-host'] as string | undefined) || req.headers.host || 'unknown';
+      const host =
+        (req.headers['x-forwarded-host'] as string | undefined) || req.headers.host || 'unknown';
       const tenant = host.split(':')[0].toLowerCase();
       const route = req.routeOptions?.url || req.raw.url || 'unknown';
       return `${tenant}:${route}`;
@@ -175,13 +189,14 @@ export async function buildServer() {
   await server.register(rawBodyPlugin);
   await server.register(prismaPlugin);
 
-   // Lightning provider (default OpenNode). Could later be per-tenant.
-  const providerKind = env.LIGHTNING_PROVIDER === 'lnbits'
-    ? LightningProviderKind.Lnbits
-    : env.LIGHTNING_PROVIDER === 'mock'
-      ? LightningProviderKind.Mock
-      : LightningProviderKind.OpenNode;
-  
+  // Lightning provider (default OpenNode). Could later be per-tenant.
+  const providerKind =
+    env.LIGHTNING_PROVIDER === 'lnbits'
+      ? LightningProviderKind.Lnbits
+      : env.LIGHTNING_PROVIDER === 'mock'
+        ? LightningProviderKind.Mock
+        : LightningProviderKind.OpenNode;
+
   server.log.info({ provider: providerKind }, 'Initializing Lightning Provider');
 
   const lightningProvider = buildLightningProvider(providerKind, {
@@ -191,7 +206,10 @@ export async function buildServer() {
         server.log.error('LN_BITS_URL/LN_BITS_API_KEY required for lnbits provider');
         throw new Error('LNbits config missing');
       }
-      return new LnbitsProvider({ baseUrl: env.LN_BITS_URL, apiKey: env.LN_BITS_API_KEY }, server.log);
+      return new LnbitsProvider(
+        { baseUrl: env.LN_BITS_URL, apiKey: env.LN_BITS_API_KEY },
+        server.log
+      );
     },
     mock: () => new MockLightningProvider()
   });
@@ -216,8 +234,13 @@ export async function buildServer() {
   });
 
   if (env.NOSTR_SECRET_KEY) {
-    const relays = env.NOSTR_RELAYS?.split(',').map((s) => s.trim()).filter(Boolean) || ['wss://relay.damus.io'];
-    server.decorate('nostrClient', new NostrClient(env.NOSTR_SECRET_KEY, server.log.child({ scope: 'nostr' })));
+    const relays = env.NOSTR_RELAYS?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) || ['wss://relay.damus.io'];
+    server.decorate(
+      'nostrClient',
+      new NostrClient(env.NOSTR_SECRET_KEY, server.log.child({ scope: 'nostr' }))
+    );
     server.decorate('nostrRelays', relays);
   }
 
@@ -256,7 +279,8 @@ export async function buildServer() {
   });
 
   server.setErrorHandler((err, req, reply) => {
-    const status = err.statusCode && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : 500;
+    const status =
+      err.statusCode && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : 500;
     if (status >= 500) {
       req.log.error({ err, status }, 'request errored');
     } else {

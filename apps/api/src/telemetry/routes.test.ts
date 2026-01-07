@@ -93,6 +93,7 @@ describe('/api/bitcoin/status', () => {
       NODE_ENV: 'production',
       TELEMETRY_PROVIDER: 'esplora',
       TELEMETRY_ESPLORA_URL: 'https://esplora.test',
+      BITCOIND_RPC_URL: 'https://bitcoin.test',
       BITCOIN_NETWORK: 'mainnet'
     });
 
