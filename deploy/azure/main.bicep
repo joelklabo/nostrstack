@@ -24,30 +24,31 @@ param logAnalyticsWorkspaceId string = ''
 @secure()
 param logAnalyticsSharedKey string = ''
 param deployerObjectId string = ''
-param workloadProfiles array = [
-  {
-    name: 'Consumption'
-    workloadProfileType: 'Consumption'
-  }
-]
+param enableWorkloadProfiles bool = false
 
 var useRegistry = !empty(registryServer)
 var useOtel = otelEnabled && !empty(otelEndpoint)
 var useLogAnalytics = !empty(logAnalyticsWorkspaceId) && !empty(logAnalyticsSharedKey)
-var envProps = union(
-  {
-    workloadProfiles: workloadProfiles
-  },
-  useLogAnalytics ? {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: logAnalyticsWorkspaceId
-        sharedKey: logAnalyticsSharedKey
-      }
+
+// Only include workload profiles when explicitly enabled (for new environments)
+var baseEnvProps = useLogAnalytics ? {
+  appLogsConfiguration: {
+    destination: 'log-analytics'
+    logAnalyticsConfiguration: {
+      customerId: logAnalyticsWorkspaceId
+      sharedKey: logAnalyticsSharedKey
     }
-  } : {}
-)
+  }
+} : {}
+
+var envProps = enableWorkloadProfiles ? union(baseEnvProps, {
+  workloadProfiles: [
+    {
+      name: 'Consumption'
+      workloadProfileType: 'Consumption'
+    }
+  ]
+}) : baseEnvProps
 
 resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: kvName

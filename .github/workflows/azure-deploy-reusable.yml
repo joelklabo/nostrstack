@@ -163,6 +163,7 @@ jobs:
           if [ "${{ inputs.environment }}" = "staging" ]; then
             params+=(-p appName="${{ inputs.app_name }}")
             params+=(-p envName="${{ inputs.env_name }}")
+            params+=(-p enableWorkloadProfiles=true)
             if [ -n "$LOG_WS_ID" ]; then
               params+=(-p logAnalyticsWorkspaceId="$LOG_WS_ID")
             fi
