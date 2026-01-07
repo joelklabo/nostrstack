@@ -17,7 +17,7 @@ mkdir -p "${LOG_DIR}"
 if command -v pgrep >/dev/null 2>&1; then
   mapfile -t MCP_PIDS < <(pgrep -f "chrome-devtools-mcp" || true)
   if (( ${#MCP_PIDS[@]} > 0 )); then
-    IFS=$'\n' MCP_PIDS_SORTED=($(printf '%s\n' "${MCP_PIDS[@]}" | sort -n))
+    IFS=$'\n' mapfile -t MCP_PIDS_SORTED < <(printf '%s\n' "${MCP_PIDS[@]}" | sort -n)
     KEEP_PID=${MCP_PIDS_SORTED[-1]}
     if (( ${#MCP_PIDS_SORTED[@]} > 1 )); then
       echo "Multiple chrome-devtools-mcp processes detected; keeping PID ${KEEP_PID} and stopping others." >&2
