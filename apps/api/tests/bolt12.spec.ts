@@ -1,9 +1,14 @@
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { expect, test } from '@playwright/test';
 
 import { waitForHealth } from './utils/wait-for-health.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const apiRoot = join(__dirname, '..');
 
 type MockServer = {
   baseUrl: string;
@@ -57,7 +62,8 @@ async function startMockBolt12Server(): Promise<MockServer> {
   });
 
   const address = server.address();
-  if (!address || typeof address === 'string') throw new Error('Unable to start mock BOLT12 server');
+  if (!address || typeof address === 'string')
+    throw new Error('Unable to start mock BOLT12 server');
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   return {
@@ -77,6 +83,9 @@ test.beforeAll(async ({ playwright }) => {
   test.setTimeout(120_000);
   process.env.NODE_ENV = 'test';
   process.env.VITEST = 'true';
+  process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';
+  process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';
+  process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';
   process.env.LIGHTNING_PROVIDER = 'mock';
   process.env.ENABLE_BOLT12 = 'true';
   process.env.BOLT12_PROVIDER = 'cln-rest';
@@ -92,6 +101,7 @@ test.beforeAll(async ({ playwright }) => {
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
   execSync(`pnpm exec prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
     stdio: 'inherit',
+    cwd: apiRoot,
     env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
   });
 
