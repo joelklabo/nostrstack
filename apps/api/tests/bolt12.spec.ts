@@ -91,13 +91,24 @@ test.beforeAll(async ({ playwright }) => {
   process.env.BOLT12_REST_URL = mock.baseUrl;
   stopBolt12 = mock.close;
 
-  const dbPath = process.env.DATABASE_URL ?? 'file:./tmp-bolt12.db';
+  // Use a unique database file for bolt12 tests to avoid conflicts with other parallel tests
+  const dbPath = process.env.DATABASE_URL
+    ? process.env.DATABASE_URL.replace(/\.db$/, '-bolt12.db')
+    : 'file:./tmp-bolt12.db';
   process.env.DATABASE_URL = dbPath;
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
-  execSync(`pnpm exec prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-    stdio: 'inherit',
-    env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-  });
+  try {
+    execSync(`pnpm exec prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
+      stdio: 'pipe',
+      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+    });
+  } catch (err: unknown) {
+    const error = err as { message?: string; stdout?: Buffer; stderr?: Buffer };
+    console.error('prisma db push failed:', error.message);
+    if (error.stdout) console.error('stdout:', error.stdout.toString());
+    if (error.stderr) console.error('stderr:', error.stderr.toString());
+    throw err;
+  }
 
   const { buildServer } = await import('../src/server.js');
   const server = await buildServer();
@@ -110,7 +121,7 @@ test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: baseUrl });
 });
 
-test.skip('creates offer and fetches invoice', async () => {
+test('creates offer and fetches invoice', async () => {
   const offerRes = await api.post('/api/bolt12/offers', {
     data: { description: 'Monthly updates', amountMsat: 1000 }
   });
@@ -126,7 +137,7 @@ test.skip('creates offer and fetches invoice', async () => {
   expect(invoice.invoice).toContain('lni1');
 });
 
-test.skip('rejects amounts above configured max', async () => {
+test('rejects amounts above configured max', async () => {
   const res = await api.post('/api/bolt12/offers', {
     data: { description: 'Too much', amountMsat: 200000 }
   });
@@ -135,7 +146,7 @@ test.skip('rejects amounts above configured max', async () => {
   expect(body.error).toBe('bolt12_amount_out_of_range');
 });
 
-test.skip('returns provider failure when upstream errors', async () => {
+test('returns provider failure when upstream errors', async () => {
   const res = await api.post('/api/bolt12/offers', {
     data: { description: 'fail' }
   });
