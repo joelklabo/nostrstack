@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Docker image tag (default: commit SHA)"
+        description: 'Docker image tag (default: commit SHA)'
         required: false
   push:
     paths:
@@ -20,6 +20,10 @@ jobs:
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/azure-deploy-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     with:
       environment: staging
       image_tag: ${{ inputs.image_tag }}
