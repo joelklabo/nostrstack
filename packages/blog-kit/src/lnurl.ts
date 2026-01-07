@@ -29,9 +29,10 @@ export function decodeLnurl(value: string): string | null {
   const lower = trimmed.toLowerCase();
   if (lower.startsWith('lnurl')) {
     try {
-      const { words } = bech32.decode(lower, 1000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { words } = bech32.decode(lower as any, 1000);
       const data = bech32.fromWords(words);
-      return new TextDecoder().decode(data);
+      return new TextDecoder().decode(new Uint8Array(data));
     } catch {
       // ignore invalid bech32
     }
@@ -113,7 +114,12 @@ export async function getLnurlpInvoice(
 }
 
 function isLocalhost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '[::1]';
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname === '[::1]'
+  );
 }
 
 export function validateLnurlCallbackUrl(callback: string, allowHttp: boolean): void {
@@ -128,7 +134,10 @@ export function validateLnurlCallbackUrl(callback: string, allowHttp: boolean): 
   throw new Error('LNURL callback must use https.');
 }
 
-export function parseLnurlPayMetadata(raw: Record<string, unknown>, options: { allowHttp?: boolean } = {}): LnurlPayMetadata {
+export function parseLnurlPayMetadata(
+  raw: Record<string, unknown>,
+  options: { allowHttp?: boolean } = {}
+): LnurlPayMetadata {
   if (!raw || typeof raw !== 'object') {
     throw new Error('LNURL metadata is invalid.');
   }
@@ -177,7 +186,10 @@ export function sanitizeSuccessAction(raw: unknown): LnurlSuccessAction | null {
   const candidate = raw as LnurlSuccessAction;
   const tag = typeof candidate.tag === 'string' ? candidate.tag.toLowerCase() : '';
   if (tag === 'message') {
-    return { tag: 'message', message: typeof candidate.message === 'string' ? candidate.message : undefined };
+    return {
+      tag: 'message',
+      message: typeof candidate.message === 'string' ? candidate.message : undefined
+    };
   }
   if (tag === 'url') {
     if (typeof candidate.url !== 'string') return null;

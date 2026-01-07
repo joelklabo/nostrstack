@@ -5,7 +5,6 @@ import {
   ReplyModal,
   useAuth,
   useFeed,
-  useRepost,
   ZapButton
 } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
@@ -15,6 +14,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
+import { useRepost } from './hooks/useRepost';
 import { filterSpam } from './nostr/spamFilter';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
@@ -246,7 +246,8 @@ export function FeedView() {
 
   // Feed mode: 'all' shows all posts, 'following' shows only from contacts
   const [feedMode, setFeedMode] = useState<'all' | 'following'>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('nostrstack.feedMode') : 'all';
+    const saved =
+      typeof window !== 'undefined' ? localStorage.getItem('nostrstack.feedMode') : 'all';
     return saved === 'following' ? 'following' : 'all';
   });
 

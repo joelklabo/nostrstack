@@ -4,12 +4,12 @@ import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { paymentConfig } from './config/payments';
-import { PostItem } from './FeedView';
 import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { Alert } from './ui/Alert';
 import { Image } from './ui/Image';
+import { NostrEventCard } from './ui/NostrEventCard';
 import { PostSkeleton } from './ui/PostSkeleton';
 import { Skeleton } from './ui/Skeleton';
 
@@ -410,9 +410,9 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
         ) : (
           <>
             {events.map((event) => (
-              <PostItem
+              <NostrEventCard
                 key={event.id}
-                post={event}
+                event={event}
                 authorLightningAddress={profile?.lud16 ?? profile?.lud06}
                 apiBase={apiBase}
                 enableRegtestPay={enableRegtestPay}

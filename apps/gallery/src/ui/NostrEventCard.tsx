@@ -3,13 +3,13 @@ import {
   ReactionButton,
   ReplyModal,
   useAuth,
-  useRepost,
   ZapButton
 } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { memo, useCallback, useState } from 'react';
 
+import { useRepost } from '../hooks/useRepost';
 import { JsonView } from './JsonView';
 import { ProfileLink } from './ProfileLink';
 
@@ -70,13 +70,27 @@ export const NostrEventCard = memo(function NostrEventCard({
     'nostrstack-event-card',
     `nostrstack-event-card--${variant}`,
     className
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const renderContent = () => {
     if (hasContentWarning && !showContent) {
       return (
-        <div className="nostrstack-callout" style={{ '--nostrstack-callout-tone': 'var(--nostrstack-color-warning)' } as React.CSSProperties} role="region" aria-label="Content warning">
-          <div className="nostrstack-callout__title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div
+          className="nostrstack-callout"
+          style={
+            {
+              '--nostrstack-callout-tone': 'var(--nostrstack-color-warning)'
+            } as React.CSSProperties
+          }
+          role="region"
+          aria-label="Content warning"
+        >
+          <div
+            className="nostrstack-callout__title"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
             <span>⚠️</span>
             Content Warning
           </div>
@@ -104,7 +118,11 @@ export const NostrEventCard = memo(function NostrEventCard({
   };
 
   return (
-    <article className={rootClasses} tabIndex={0} aria-label={`Post by ${event.pubkey.slice(0, 8)}`}>
+    <article
+      className={rootClasses}
+      tabIndex={0}
+      aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
+    >
       <header className="nostrstack-event-card__header">
         <div className="nostrstack-event-card__meta">
           <ProfileLink
@@ -113,20 +131,21 @@ export const NostrEventCard = memo(function NostrEventCard({
             title={event.pubkey}
             className="nostrstack-profile-link"
           />
-          <span className="nostrstack-separator" aria-hidden="true">•</span>
+          <span className="nostrstack-separator" aria-hidden="true">
+            •
+          </span>
           <time
             className="nostrstack-timestamp"
             dateTime={new Date(event.created_at * 1000).toISOString()}
           >
-            {new Date(event.created_at * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            {new Date(event.created_at * 1000).toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit'
+            })}
           </time>
         </div>
-        
-        {variant !== 'compact' && (
-          <div className="nostrstack-badge">
-            Kind {event.kind}
-          </div>
-        )}
+
+        {variant !== 'compact' && <div className="nostrstack-badge">Kind {event.kind}</div>}
       </header>
 
       <div className="nostrstack-event-card__body">
@@ -187,10 +206,12 @@ export const NostrEventCard = memo(function NostrEventCard({
             aria-label={isReposted ? 'Reposted' : 'Repost this post'}
           >
             <span className="icon">↻</span>
-            <span className="label">{repostLoading ? '...' : isReposted ? 'Reposted' : 'Repost'}</span>
+            <span className="label">
+              {repostLoading ? '...' : isReposted ? 'Reposted' : 'Repost'}
+            </span>
           </button>
         )}
-        
+
         <button
           className="nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-action-btn"
           onClick={() => setShowJson(!showJson)}
@@ -203,10 +224,7 @@ export const NostrEventCard = memo(function NostrEventCard({
 
       {showJson && (
         <div className="nostrstack-event-card__json">
-          <JsonView
-            value={event}
-            title={`Event ID: ${event.id.slice(0, 8)}...`}
-          />
+          <JsonView value={event} title={`Event ID: ${event.id.slice(0, 8)}...`} />
         </div>
       )}
 

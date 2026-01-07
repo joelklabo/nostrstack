@@ -3,10 +3,10 @@ import { type Event, type Filter } from 'nostr-tools';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveEvents } from './cache/eventCache';
-import { PostItem } from './FeedView';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
+import { NostrEventCard } from './ui/NostrEventCard';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
 import { NotificationSkeleton } from './ui/Skeleton';
 
@@ -21,29 +21,29 @@ export function NotificationsView() {
 
   useEffect(() => {
     if (!pubkey || relaysLoading) return;
-    
+
     const filter: Filter = { kinds: [1, 6, 7, 9735], '#p': [pubkey], limit: 50 };
     let sub: { close: () => void } | undefined;
-    
+
     // Batch state to avoid excessive re-renders
     const pendingEvents: Event[] = [];
     let batchTimer: number | null = null;
-    
+
     const flushBatch = () => {
       if (pendingEvents.length === 0) return;
       const batch = [...pendingEvents];
       pendingEvents.length = 0;
-      
+
       // Save to cache asynchronously
-      saveEvents(batch).catch(e => console.warn('[Cache] Failed to save notifications:', e));
-      
-      setEvents(prev => {
+      saveEvents(batch).catch((e) => console.warn('[Cache] Failed to save notifications:', e));
+
+      setEvents((prev) => {
         const combined = [...prev, ...batch];
         const sorted = combined.sort((a, b) => b.created_at - a.created_at);
         return sorted.slice(0, 100);
       });
     };
-    
+
     const scheduleBatch = () => {
       if (batchTimer !== null) return;
       batchTimer = window.setTimeout(() => {
@@ -51,7 +51,7 @@ export function NotificationsView() {
         batchTimer = null;
       }, 300);
     };
-    
+
     try {
       sub = pool.subscribeMany(relayList, filter, {
         onevent(event) {
@@ -80,11 +80,11 @@ export function NotificationsView() {
   }, [pubkey, relayList, relaysLoading, incrementEvents, pool]);
 
   const displayGroups = useMemo(() => {
-    const filteredEvents = events.filter(e => !isMuted(e.pubkey));
+    const filteredEvents = events.filter((e) => !isMuted(e.pubkey));
     const groups: (NotificationGroup | Event)[] = [];
     const interactionGroups = new Map<string, NotificationGroup>();
 
-    filteredEvents.forEach(event => {
+    filteredEvents.forEach((event) => {
       // Grouping logic
       let type: 'reaction' | 'zap' | 'mention' | null = null;
       if (event.kind === 7) type = 'reaction';
@@ -92,8 +92,8 @@ export function NotificationsView() {
       if (event.kind === 1) type = 'mention';
 
       if (type) {
-        const targetEventId = event.tags.find(t => t[0] === 'e')?.[1];
-        
+        const targetEventId = event.tags.find((t) => t[0] === 'e')?.[1];
+
         if (targetEventId) {
           const groupId = `${type}-${targetEventId}`;
           let group = interactionGroups.get(groupId);
@@ -115,7 +115,7 @@ export function NotificationsView() {
           return;
         }
       }
-      
+
       // Fallback: not grouped or no target
       groups.push(event);
     });
@@ -135,7 +135,9 @@ export function NotificationsView() {
           {' >'} INCOMING_TRANSMISSIONS...
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-          {[1, 2, 3, 4, 5].map(i => <NotificationSkeleton key={i} />)}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <NotificationSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -146,10 +148,10 @@ export function NotificationsView() {
       <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)' }}>
         {' >'} INCOMING_TRANSMISSIONS...
       </div>
-      
+
       {displayGroups.map((item) => {
         if ('kind' in item) {
-          return <PostItem key={item.id} post={item} />;
+          return <NostrEventCard key={item.id} event={item} />;
         }
         return <NotificationItem key={item.id} group={item} />;
       })}
