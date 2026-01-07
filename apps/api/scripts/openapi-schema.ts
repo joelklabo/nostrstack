@@ -15,7 +15,14 @@ import { setupRoutes } from '../src/setup-routes.js';
 import { metricsPlugin } from '../src/telemetry/metrics.js';
 
 async function main() {
-  const app = Fastify();
+  const app = Fastify({
+    ajv: {
+      customOptions: {
+        // Allow OpenAPI 'example' keyword in schemas
+        keywords: ['example']
+      }
+    }
+  });
   await app.register(sensible);
   await app.register(cors, { origin: true });
   await app.register(helmet, { global: true });
