@@ -7,18 +7,26 @@
     "apps/*/src/main.tsx",
     "scripts/*.ts"
   ],
-  "project": [
-    "packages/*/src/**/*.{ts,tsx}",
-    "apps/*/src/**/*.{ts,tsx}",
-    "scripts/*.ts"
-  ],
+  "project": ["packages/*/src/**/*.{ts,tsx}", "apps/*/src/**/*.{ts,tsx}", "scripts/*.ts"],
   "ignore": [
     "**/*.d.ts",
     "**/dist/**",
     "**/node_modules/**",
+    "**/vitest.config.ts",
+    "**/vite.config.ts",
+    "**/*.stories.tsx",
+    "**/.storybook/**",
     "apps/gallery/src/KeyChip.tsx",
     "apps/gallery/src/KeyToggle.tsx",
-    "apps/gallery/src/RelayCard.stories.tsx"
+    "apps/gallery/src/RelayCard.stories.tsx",
+    "apps/gallery/src/cache/cacheManager.ts",
+    "apps/gallery/src/cache/eventCache.ts",
+    "apps/gallery/src/nostr/api.ts",
+    "apps/gallery/src/nostr/spamFilter.ts",
+    "apps/gallery/src/RelayProvider.tsx",
+    "apps/gallery/src/components/ZapModal.tsx",
+    "packages/embed/src/config.ts",
+    "packages/embed/src/helpers.ts"
   ],
   "ignoreDependencies": [
     "eslint",
@@ -26,7 +34,6 @@
     "@fastify/static",
     "fastify-type-provider-zod",
     "pino-pretty",
-    "qrcode",
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser",
     "eslint-plugin-import",
@@ -35,11 +42,21 @@
     "@types/pino-pretty",
     "@types/sinon",
     "wait-on",
-    "@types/qrcode",
     "@beads/bd",
     "@commitlint/cli",
     "@secretlint/secretlint-rule-preset-recommend",
-    "chrome-devtools-mcp"
+    "chrome-devtools-mcp",
+    "@storybook/react",
+    "@storybook/test",
+    "linkify-it",
+    "qrcode.react",
+    "@vitest/coverage-v8",
+    "@storybook/addon-docs",
+    "@vitejs/plugin-basic-ssl",
+    "@vitejs/plugin-react",
+    "axe-core",
+    "eslint-plugin-storybook",
+    "@vitest/browser-playwright"
   ],
   "ignoreBinaries": [
     "test:e2e",
@@ -49,7 +66,8 @@
     "test:e2e:pay",
     "gh",
     "nostrstack-inject",
-    "tsx"
+    "tsx",
+    "preview"
   ],
   "ignoreExportsUsedInFile": true,
   "ignoreExports": {
@@ -66,11 +84,17 @@
     "apps/gallery/src/toast.tsx": ["ToastTone"],
     "apps/gallery/src/ui/JsonView.tsx": ["JsonViewProps"],
     "apps/gallery/src/useCopyAction.ts": ["CopyState"],
+    "apps/gallery/src/cache/cacheManager.ts": ["stopCacheManager", "warmCommonQueries"],
+    "apps/gallery/src/cache/eventCache.ts": ["warmCache", "getEvent"],
+    "apps/gallery/src/nostr/api.ts": ["getDefaultRelays", "markRelayFailure"],
+    "apps/gallery/src/nostr/spamFilter.ts": ["getSpamStats"],
     "packages/blog-kit/src/context.tsx": ["ThemeVars", "NostrstackConfig"],
     "packages/embed/src/copyButton.ts": ["CopyButtonState"],
     "packages/embed/src/invoicePopover.ts": ["InvoicePopoverOptions"],
     "packages/embed/src/nostrUserCard.ts": ["NostrProfile"],
-    "packages/embed/src/relayBadge.ts": ["RelayBadgeState"]
+    "packages/embed/src/relayBadge.ts": ["RelayBadgeState"],
+    "packages/embed/src/config.ts": ["RELAY_CONNECT_TIMEOUT_MS"],
+    "packages/embed/src/helpers.ts": ["formatCountdown"]
   },
   "workspaces": {
     ".": {
@@ -83,7 +107,9 @@
     },
     "apps/*": {
       "entry": ["src/index.ts", "src/main.ts", "src/main.tsx", "src/App.tsx"],
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx}"],
+      "vitest": false,
+      "vite": false
     }
   }
 }
