@@ -2,7 +2,6 @@ import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostr
 import { useEffect, useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
-import { Alert } from './ui/Alert';
 import { useToast } from './ui/toast';
 import { resolveApiBase } from './utils/api-base';
 import { navigateTo } from './utils/navigation';
@@ -69,7 +68,6 @@ export function Sidebar({
   const configuredNetworkRaw =
     devNetworkOverride ?? statusNetwork ?? String(import.meta.env.VITE_NETWORK ?? 'regtest').trim();
   const configuredNetwork = (configuredNetworkRaw || 'regtest').trim();
-  const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
   const sourceLabel = status?.source ? status.source.toUpperCase() : '—';
   const provider = status?.lightning?.provider;
   const lnbitsStatus = status?.lightning?.lnbits?.status;
@@ -293,52 +291,31 @@ export function Sidebar({
         )}
       </div>
 
-      <div
-        style={{
-          marginTop: 'auto',
-          padding: '1rem',
-          borderTop: '1px solid var(--color-border-default)'
-        }}
-        role="region"
-        aria-label="Wallet and system status"
-      >
+      <div className="sidebar-footer" role="region" aria-label="Wallet and system status">
         {wallet && (
           <div style={{ marginBottom: '1rem' }}>
+            <div className="sidebar-status-label">Wallet</div>
             <div
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--color-fg-muted)',
-                textTransform: 'uppercase',
-                marginBottom: '0.25rem'
-              }}
-            >
-              Wallet
-            </div>
-            <div
-              style={{ fontSize: '0.9rem', fontWeight: '600' }}
+              style={{ fontSize: '0.95rem', fontWeight: '700' }}
               role="status"
               aria-label={`Wallet balance: ${wallet.balance?.toLocaleString() ?? 0} sats`}
             >
               {wallet.balance?.toLocaleString() ?? 0}{' '}
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-fg-muted)' }}>sats</span>
+              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>sats</span>
             </div>
             {(wallet.balance ?? 0) === 0 && (
               <div
                 style={{
                   fontSize: '0.75rem',
-                  color: 'var(--color-accent-fg)',
+                  color: 'var(--nostrstack-color-warning)',
                   marginTop: '0.25rem',
                   fontStyle: 'italic'
                 }}
               >
-                Your wallet is empty. Ready to stack some sats?
+                Your wallet is empty.
               </div>
             )}
-            <div
-              style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)', marginTop: '0.25rem' }}
-            >
-              {wallet.name || 'LNbits'}
-            </div>
+            <div className="sidebar-network-meta">{wallet.name || 'LNbits'}</div>
             {showRegtestActions && (
               <div className="wallet-actions" role="group" aria-label="Wallet actions">
                 <button
@@ -346,16 +323,7 @@ export function Sidebar({
                   className="wallet-action-btn"
                   onClick={handleRegtestFund}
                   disabled={isFunding || !apiBaseConfig.isConfigured}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem'
-                  }}
                   aria-busy={isFunding}
-                  aria-label={
-                    isFunding ? 'Mining regtest blocks' : 'Add funds to wallet using regtest'
-                  }
                 >
                   {!apiBaseConfig.isConfigured ? (
                     'REGTEST_CONFIG_REQUIRED'
@@ -364,9 +332,8 @@ export function Sidebar({
                       <span
                         className="nostrstack-spinner"
                         style={{ width: '12px', height: '12px' }}
-                        aria-hidden="true"
                       />
-                      Mining regtest blocks…
+                      Mining...
                     </>
                   ) : (
                     'Add funds (regtest)'
@@ -377,72 +344,34 @@ export function Sidebar({
                   className="wallet-action-btn"
                   onClick={() => setWithdrawOpen(true)}
                   disabled={!withdrawAvailable}
-                  aria-label="Withdraw sats via LNURL"
                 >
                   {!withdrawAvailable ? withdrawUnavailableReason : 'Withdraw via LNURL'}
                 </button>
-                {regtestUnavailableReason && (
-                  <div
-                    style={{
-                      marginTop: '0.4rem',
-                      fontSize: '0.7rem',
-                      color: 'var(--color-fg-muted)'
-                    }}
-                  >
-                    {regtestUnavailableReason}
-                  </div>
-                )}
               </div>
             )}
           </div>
         )}
 
         <div style={{ marginBottom: '1rem' }} role="status" aria-label="Network and system status">
-          <div
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-fg-muted)',
-              textTransform: 'uppercase',
-              marginBottom: '0.35rem'
-            }}
-          >
-            Network
-          </div>
+          <div className="sidebar-status-label">Network</div>
           <div className="sidebar-network-badges">
             <span className={`sidebar-network-badge is-${configuredNetwork.toLowerCase()}`}>
               {configuredNetwork.toUpperCase()}
             </span>
-            {status?.source && (
-              <span className="sidebar-network-badge is-muted">SOURCE: {sourceLabel}</span>
-            )}
+            {status?.source && <span className="sidebar-network-badge">SOURCE: {sourceLabel}</span>}
           </div>
           <div className="sidebar-network-meta">
             <span className={`sidebar-network-status is-${lightningTone}`}>{lightningLabel}</span>
           </div>
-          {status?.telemetryError && (
-            <div className="sidebar-network-meta sidebar-network-warning" role="alert">
-              Telemetry: {status.telemetryError}
-            </div>
-          )}
           <div className="sidebar-network-meta" aria-label={`${eventCount} events in feed`}>
             Events: {eventCount}
           </div>
-          {isMainnet && (
-            <Alert
-              tone="danger"
-              title="Mainnet enabled"
-              style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}
-            >
-              Real sats and payments are live.
-            </Alert>
-          )}
         </div>
 
         <button
           className="nav-item"
           onClick={logout}
-          style={{ color: 'var(--color-danger-fg)', paddingLeft: 0 }}
-          aria-label="Log out of NostrStack"
+          style={{ color: 'var(--nostrstack-color-danger)', paddingLeft: 0 }}
         >
           Log out
         </button>

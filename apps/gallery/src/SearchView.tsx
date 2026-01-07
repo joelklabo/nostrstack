@@ -1,7 +1,5 @@
 import './styles/search-view.css';
 
-import { PostEditor } from '@nostrstack/blog-kit'; // Might be needed for editor, but not used here? Remove unused imports.
-// Actually SearchView imports PostItem. I will replace it with NostrEventCard.
 import { emitTelemetryEvent, useNostrstackConfig } from '@nostrstack/blog-kit';
 import { type Event, nip19 } from 'nostr-tools';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';

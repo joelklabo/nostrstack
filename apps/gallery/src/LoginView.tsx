@@ -1,5 +1,3 @@
-import './styles/lnurl-auth.css';
-
 import { resolveApiBase, useAuth, useNostrstackConfig } from '@nostrstack/blog-kit';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +11,14 @@ type LnurlAuthRequest = {
   expiresAt: string;
 };
 
-type LnurlAuthStatus = 'idle' | 'loading' | 'polling' | 'verified' | 'expired' | 'timeout' | 'error';
+type LnurlAuthStatus =
+  | 'idle'
+  | 'loading'
+  | 'polling'
+  | 'verified'
+  | 'expired'
+  | 'timeout'
+  | 'error';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 90000;
@@ -29,7 +34,8 @@ export function LoginView() {
   const [lnurlError, setLnurlError] = useState<string | null>(null);
   const [lnurlQr, setLnurlQr] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
-  const enableLnurlAuth = String(import.meta.env.VITE_ENABLE_LNURL_AUTH ?? '').toLowerCase() === 'true';
+  const enableLnurlAuth =
+    String(import.meta.env.VITE_ENABLE_LNURL_AUTH ?? '').toLowerCase() === 'true';
   const lnurlModalRef = useRef<HTMLDivElement>(null);
   const lnurlTriggerRef = useRef<HTMLElement | null>(null);
 
@@ -109,21 +115,21 @@ export function LoginView() {
   // Focus management for LNURL modal
   useEffect(() => {
     if (!lnurlModalOpen) return;
-    
+
     // Store trigger element
     lnurlTriggerRef.current = document.activeElement as HTMLElement;
-    
+
     // Focus first button when modal opens
     const modal = lnurlModalRef.current;
     if (!modal) return;
-    
+
     const focusable = modal.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     if (focusable) {
       setTimeout(() => focusable.focus(), 100);
     }
-    
+
     // Return focus on close
     return () => {
       if (lnurlTriggerRef.current && document.contains(lnurlTriggerRef.current)) {
@@ -135,25 +141,25 @@ export function LoginView() {
   // Focus trap for LNURL modal
   useEffect(() => {
     if (!lnurlModalOpen) return;
-    
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
-      
+
       const modal = lnurlModalRef.current;
       if (!modal) return;
-      
+
       const focusable = Array.from(
         modal.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         )
       ).filter((el) => !el.hasAttribute('disabled'));
-      
+
       if (!focusable.length) return;
-      
+
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       const active = document.activeElement;
-      
+
       if (e.shiftKey) {
         if (active === first) {
           e.preventDefault();
@@ -166,7 +172,7 @@ export function LoginView() {
         }
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [lnurlModalOpen]);
@@ -276,158 +282,201 @@ export function LoginView() {
     }
   }, [lnurlError, lnurlStatus]);
 
-  const showRetry = lnurlStatus === 'error' || lnurlStatus === 'expired' || lnurlStatus === 'timeout';
+  const showRetry =
+    lnurlStatus === 'error' || lnurlStatus === 'expired' || lnurlStatus === 'timeout';
 
   return (
     <div className="login-container">
-      <div className="login-terminal">
-        <div className="terminal-header">
-          <span className="terminal-title">Sign in to NostrStack</span>
+      <div className="login-card">
+        <div className="login-header">
+          <h1 className="login-title">NostrStack</h1>
+          <p className="login-subtitle">Connect your identity to get started</p>
         </div>
-        <div className="terminal-body">
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--color-fg-default)' }}>Welcome back</h1>
-            <p style={{ color: 'var(--color-fg-muted)' }}>Connect your Nostr identity to continue</p>
+
+        {error && (
+          <Alert tone="danger" role="alert">
+            {error}
+          </Alert>
+        )}
+
+        {mode === 'menu' && (
+          <div className="auth-options" role="group" aria-label="Authentication methods">
+            <button
+              className="auth-btn auth-btn--primary"
+              onClick={() => loginWithNip07()}
+              aria-label="Sign in with Nostr browser extension"
+            >
+              Sign in with Extension
+            </button>
+            {enableLnurlAuth && (
+              <button
+                className="auth-btn auth-btn--secondary"
+                onClick={openLnurlModal}
+                aria-label="Login using Lightning wallet"
+              >
+                Login with Lightning
+              </button>
+            )}
+            <button
+              className="auth-btn auth-btn--outline"
+              onClick={() => setMode('nsec')}
+              aria-label="Enter private key manually"
+            >
+              Enter nsec manually
+            </button>
           </div>
-          
-          {error && (
-            <Alert tone="danger" role="alert">
-              {error}
+        )}
+
+        {mode === 'nsec' && (
+          <div className="nsec-form" style={{ display: 'grid', gap: '1.25rem' }}>
+            <Alert tone="warning">
+              <strong>Security Warning:</strong> Entering your private key directly is risky. Use a
+              browser extension if possible.
             </Alert>
-          )}
-
-          {mode === 'menu' && (
-            <div className="auth-options" role="group" aria-label="Authentication methods">
-              <button className="auth-btn" onClick={() => loginWithNip07()} aria-label="Sign in with Nostr browser extension">
-                Sign in with Extension (NIP-07)
-              </button>
-              {enableLnurlAuth && (
-                <button className="auth-btn" onClick={openLnurlModal} aria-label="Login using Lightning wallet">
-                  Login with Lightning (LNURL-auth)
-                </button>
-              )}
-              <button className="auth-btn" style={{ background: 'transparent', borderStyle: 'dashed' }} onClick={() => setMode('nsec')} aria-label="Enter private key manually"> 
-                Enter nsec manually
-              </button>
-            </div>
-          )}
-
-          {mode === 'nsec' && (
-            <div className="nsec-form">
-              <div style={{ 
-                fontSize: '0.8rem', 
-                color: 'var(--color-attention-fg)', 
-                marginBottom: '1rem',
-                backgroundColor: '#fff8c5',
-                padding: '0.5rem',
-                borderRadius: '6px',
-                border: '1px solid var(--color-attention-fg)'
-              }} role="alert">
-                <strong>Warning:</strong> Entering your private key directly is risky. Use a burner key or an extension if possible.
-              </div>
-              <label htmlFor="nsec-input" className="sr-only">Private key (nsec)</label>
-              <input 
-                type="password" 
-                className="terminal-input"
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <label htmlFor="nsec-input" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+                Private key (nsec)
+              </label>
+              <input
+                type="password"
+                className="nostrstack-input"
                 id="nsec-input"
                 name="nsec"
-                placeholder="nsec1..." 
+                placeholder="nsec1..."
                 value={nsec}
-                onChange={e => setNsec(e.target.value)}
-                aria-describedby="nsec-warning"
+                onChange={(e) => setNsec(e.target.value)}
+                autoFocus
               />
-              <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
-                <button className="auth-btn" style={{ backgroundColor: 'var(--color-accent-fg)', color: 'white', border: 'none' }} onClick={() => loginWithNsec(nsec).catch(() => {})} aria-label="Sign in with private key">
-                  Sign in
-                </button>
-                <button 
-                  className="auth-btn" 
-                  style={{ width: 'auto', border: 'none' }} 
-                  onClick={() => setMode('menu')}
-                  aria-label="Cancel and go back"
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
-          )}
-        </div>
+            <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                className="auth-btn auth-btn--primary"
+                onClick={() => loginWithNsec(nsec).catch(() => {})}
+                aria-label="Sign in with private key"
+              >
+                Sign in
+              </button>
+              <button
+                className="auth-btn auth-btn--secondary"
+                onClick={() => setMode('menu')}
+                aria-label="Cancel and go back"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {lnurlModalOpen && (
-        <div className="lnurl-auth-overlay">
-          <div 
+        <div className="nostrstack-dialog-overlay">
+          <div
             ref={lnurlModalRef}
-            className="lnurl-auth-modal" 
-            role="dialog" 
-            aria-modal="true" 
-            aria-labelledby="lnurl-title" 
+            className="nostrstack-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lnurl-title"
             aria-describedby="lnurl-subtitle"
           >
-            <div className="lnurl-auth-header">
+            <div className="nostrstack-dialog__header">
               <div>
-                <div id="lnurl-title" className="lnurl-auth-title">Lightning Login</div>
-                <div id="lnurl-subtitle" className="lnurl-auth-subtitle">Sign in by approving a LNURL-auth request.</div>
+                <div id="lnurl-title" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+                  Lightning Login
+                </div>
+                <div id="lnurl-subtitle" style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+                  Approve the request in your wallet.
+                </div>
               </div>
-              <button className="lnurl-auth-close" onClick={closeLnurlModal} aria-label="Close Lightning login dialog">
+              <button
+                className="lnurl-auth-close"
+                style={{
+                  fontSize: '1.5rem',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
+                onClick={closeLnurlModal}
+                aria-label="Close Lightning login dialog"
+              >
                 ×
               </button>
             </div>
-            <div className="lnurl-auth-body">
+            <div className="nostrstack-dialog__body">
               {statusMessage && (
-                <Alert 
-                  tone={lnurlStatus === 'error' || lnurlStatus === 'expired' || lnurlStatus === 'timeout' ? 'danger' : lnurlStatus === 'verified' ? 'success' : 'info'}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+                <Alert
+                  tone={
+                    lnurlStatus === 'error' ||
+                    lnurlStatus === 'expired' ||
+                    lnurlStatus === 'timeout'
+                      ? 'danger'
+                      : lnurlStatus === 'verified'
+                        ? 'success'
+                        : 'info'
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    justifyContent: 'center'
+                  }}
                   role="status"
                   aria-live="polite"
                 >
-                  {(lnurlStatus === 'loading' || lnurlStatus === 'verified') && <span className="nostrstack-spinner" aria-hidden="true" />}
+                  {(lnurlStatus === 'loading' || lnurlStatus === 'verified') && (
+                    <span className="nostrstack-spinner" aria-hidden="true" />
+                  )}
                   {statusMessage}
                 </Alert>
               )}
 
               {lnurlRequest && (
-                <div className="lnurl-auth-grid">
-                  <div className="lnurl-auth-qr">
+                <div className="nostrstack-dialog__grid">
+                  <div className="nostrstack-dialog__qr">
                     {lnurlQr ? (
-                      <img src={lnurlQr} alt="LNURL-auth QR code for Lightning login" role="img" />
+                      <img src={lnurlQr} alt="LNURL-auth QR code" role="img" />
                     ) : (
-                      <div className="lnurl-auth-qr-fallback">LNURL</div>
+                      <div style={{ padding: '2rem', textAlign: 'center' }}>QR_ERROR</div>
                     )}
                   </div>
-                  <div className="lnurl-auth-meta">
-                    {lnurlStatus === 'polling' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', color: 'var(--color-fg-muted)' }} role="status" aria-live="polite">
-                        <span className="nostrstack-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />
-                        POLLING_STATUS...
-                      </div>
-                    )}
-                    <div className="lnurl-auth-chip">k1: {lnurlRequest.k1.slice(0, 8)}…</div>
-                    <div className="lnurl-auth-instructions">
-                      Scan with a Lightning wallet that supports LNURL-auth and approve the request.
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        padding: '0.25rem 0.6rem',
+                        background: 'var(--nostrstack-color-surface-subtle)',
+                        borderRadius: '99px',
+                        fontSize: '0.75rem',
+                        width: 'fit-content'
+                      }}
+                    >
+                      k1: {lnurlRequest.k1.slice(0, 8)}…
                     </div>
-                    <div className="lnurl-auth-actions" role="group" aria-label="LNURL actions">
-                      <button className="action-btn" onClick={handleCopyLnurl} aria-label="Copy LNURL to clipboard">
-                        {copyStatus === 'copied' ? 'COPIED' : 'COPY_LNURL'}
+                    <div style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
+                      Scan with a Lightning wallet that supports LNURL-auth.
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <button
+                        className="nostrstack-btn nostrstack-btn--sm"
+                        onClick={handleCopyLnurl}
+                      >
+                        {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
                       </button>
-                      <button className="action-btn" onClick={handleOpenWallet} aria-label="Open Lightning wallet">
-                        OPEN_WALLET
+                      <button
+                        className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                        onClick={handleOpenWallet}
+                      >
+                        OPEN WALLET
                       </button>
                       {showRetry && (
-                        <button className="action-btn" onClick={openLnurlModal} aria-label="Generate new QR code">
-                          NEW_QR
+                        <button
+                          className="nostrstack-btn nostrstack-btn--sm"
+                          onClick={openLnurlModal}
+                        >
+                          RETRY
                         </button>
                       )}
                     </div>
-                    {copyStatus === 'error' && <div className="lnurl-auth-hint" role="alert">Clipboard unavailable.</div>}
                   </div>
-                </div>
-              )}
-
-              {!lnurlRequest && lnurlStatus === 'loading' && (
-                <div className="lnurl-auth-loading" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }} role="status">
-                  <span className="nostrstack-spinner" aria-hidden="true" />
-                  Preparing LNURL-auth request…
                 </div>
               )}
             </div>
