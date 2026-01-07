@@ -42,13 +42,13 @@ on:
         default: false
     secrets:
       AZURE_CREDENTIALS:
-        required: true
+        required: false
       ADMIN_API_KEY:
-        required: true
+        required: false
       OP_NODE_API_KEY:
-        required: true
+        required: false
       OP_NODE_WEBHOOK_SECRET:
-        required: true
+        required: false
       AZURE_LOG_ANALYTICS_ID:
         required: false
       AZURE_LOG_ANALYTICS_KEY:
