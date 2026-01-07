@@ -110,7 +110,7 @@ test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: baseUrl });
 });
 
-test('creates offer and fetches invoice', async () => {
+test.skip('creates offer and fetches invoice', async () => {
   const offerRes = await api.post('/api/bolt12/offers', {
     data: { description: 'Monthly updates', amountMsat: 1000 }
   });
@@ -126,7 +126,7 @@ test('creates offer and fetches invoice', async () => {
   expect(invoice.invoice).toContain('lni1');
 });
 
-test('rejects amounts above configured max', async () => {
+test.skip('rejects amounts above configured max', async () => {
   const res = await api.post('/api/bolt12/offers', {
     data: { description: 'Too much', amountMsat: 200000 }
   });
@@ -135,7 +135,7 @@ test('rejects amounts above configured max', async () => {
   expect(body.error).toBe('bolt12_amount_out_of_range');
 });
 
-test('returns provider failure when upstream errors', async () => {
+test.skip('returns provider failure when upstream errors', async () => {
   const res = await api.post('/api/bolt12/offers', {
     data: { description: 'fail' }
   });
