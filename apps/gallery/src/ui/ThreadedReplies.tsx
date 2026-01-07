@@ -1,7 +1,8 @@
 import type { Event } from 'nostr-tools';
 import { useMemo, useState } from 'react';
 
-import { PostItem } from '../FeedView';
+import { navigateTo } from '../utils/navigation';
+import { NostrEventCard } from './NostrEventCard';
 
 type ThreadedRepliesProps = {
   events: Event[];
@@ -86,10 +87,12 @@ function ReplyNode({
     <div className={`thread-node ${depth > 0 ? 'thread-child' : ''}`} style={{ marginLeft: isTooDeep ? 0 : (depth > 0 ? '1.5rem' : 0) }}>
       <div className="thread-content">
          {/* Vertical line for threading if needed, or handled by CSS on thread-child */}
-         <PostItem 
-            post={event} 
+         <NostrEventCard 
+            event={event} 
+            variant="compact"
             apiBase={apiBase} 
             enableRegtestPay={enableRegtestPay} 
+            onOpenThread={() => navigateTo(`/nostr/${event.id}`)}
          />
          {hasChildren && (
              <button 

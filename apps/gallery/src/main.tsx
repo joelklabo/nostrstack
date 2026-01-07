@@ -1,6 +1,5 @@
 import './utils/mock-relay-init';
 import './gallery.css';
-import '@nostrstack/blog-kit/styles/payments.css';
 
 import { ensureNostrstackEmbedStyles } from '@nostrstack/embed';
 import React from 'react';

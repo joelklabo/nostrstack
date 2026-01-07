@@ -1,5 +1,3 @@
-import './styles/withdraw.css';
-
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -89,45 +87,6 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
         triggerRef.current.focus();
       }
     };
-  }, [open]);
-
-  // Focus trap
-  useEffect(() => {
-    if (!open) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      
-      const modal = modalRef.current;
-      if (!modal) return;
-      
-      const focusable = Array.from(
-        modal.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )
-      ).filter((el) => !el.hasAttribute('disabled'));
-      
-      if (!focusable.length) return;
-      
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement;
-      
-      if (e.shiftKey) {
-        if (active === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
   const fetchWithdraw = useCallback(async () => {
@@ -259,31 +218,32 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
   if (!open) return null;
 
   return (
-    <div className="withdraw-overlay" role="presentation" onClick={handleClose}>
+    <div className="nostrstack-dialog-overlay" role="presentation" onClick={handleClose}>
       <div 
         ref={modalRef}
-        className="withdraw-modal" 
+        className="nostrstack-dialog" 
         onClick={(event) => event.stopPropagation()} 
         role="dialog" 
         aria-modal="true" 
         aria-labelledby="withdraw-title" 
         aria-describedby="withdraw-subtitle"
       >
-        <div className="withdraw-header">
+        <div className="nostrstack-dialog__header">
           <div>
-            <div id="withdraw-title" className="withdraw-title">Withdraw Funds</div>
-            <div id="withdraw-subtitle" className="withdraw-subtitle">Send sats to your Lightning wallet via LNURL-withdraw.</div>
+            <div id="withdraw-title" className="nostrstack-dialog__title">Withdraw Funds</div>
+            <div id="withdraw-subtitle" className="nostrstack-dialog__subtitle">Send sats to your Lightning wallet via LNURL-withdraw.</div>
           </div>
-          <button className="withdraw-close" onClick={handleClose} aria-label="Close withdraw dialog">×</button>
+          <button className="nostrstack-dialog__close" onClick={handleClose} aria-label="Close withdraw dialog">×</button>
         </div>
 
-        <div className="withdraw-body">
+        <div className="nostrstack-dialog__body">
           {status !== 'idle' && (
             <Alert 
               tone={status === 'error' || status === 'expired' ? 'danger' : status === 'paid' ? 'success' : 'info'}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
               role="status"
               aria-live="polite"
+              className="withdraw-status"
             >
               {status === 'loading' && (
                 <>
@@ -300,29 +260,41 @@ export function WalletView({ open, onClose, balanceSats, apiBase, apiConfigured,
           )}
 
           {request && status !== 'loading' && (
-            <div className="withdraw-grid">
-              <div className="withdraw-qr">
+            <div className="nostrstack-dialog__grid">
+              <div className="nostrstack-dialog__qr withdraw-qr">
                 {qr ? <img src={qr} alt="LNURL withdraw QR code" role="img" /> : <div className="withdraw-qr-fallback">LNURL</div>}
               </div>
-              <div className="withdraw-details">
-                <div className="withdraw-amount" role="status" aria-label={`${balanceSats?.toLocaleString() ?? 0} sats available to withdraw`}>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 600 }} role="status" aria-label={`${balanceSats?.toLocaleString() ?? 0} sats available to withdraw`}>
                   {balanceSats?.toLocaleString() ?? 0} sats available
                 </div>
                 {(balanceSats ?? 0) === 0 && (
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-accent-fg)', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--nostrstack-color-warning)', fontStyle: 'italic' }}>
                     Stack some sats first to withdraw them!
                   </div>
                 )}
-                <code className="withdraw-lnurl" aria-label="LNURL withdraw code">{request.lnurl}</code>
-                <div className="withdraw-actions" role="group" aria-label="Withdrawal actions">
-                  <button className="action-btn" onClick={handleCopy} disabled={!canWithdraw} aria-label="Copy LNURL to clipboard">
-                    {copyState === 'copied' ? 'COPIED' : 'COPY_LNURL'}
+                
+                <div style={{ 
+                  fontFamily: 'var(--nostrstack-font-mono)', 
+                  fontSize: '0.8rem', 
+                  wordBreak: 'break-all', 
+                  padding: '0.75rem', 
+                  background: 'var(--nostrstack-color-surface-subtle)', 
+                  borderRadius: 'var(--nostrstack-radius-md)',
+                  border: '1px solid var(--nostrstack-color-border)'
+                }}>
+                  {request.lnurl}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }} role="group" aria-label="Withdrawal actions">
+                  <button className="nostrstack-btn nostrstack-btn--sm" onClick={handleCopy} disabled={!canWithdraw} aria-label="Copy LNURL to clipboard">
+                    {copyState === 'copied' ? 'COPIED' : 'COPY LNURL'}
                   </button>
-                  <button className="action-btn" onClick={handleOpenWallet} disabled={!canWithdraw} aria-label="Open Lightning wallet">
-                    OPEN_WALLET
+                  <button className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm" onClick={handleOpenWallet} disabled={!canWithdraw} aria-label="Open Lightning wallet">
+                    OPEN WALLET
                   </button>
                 </div>
-                {copyState === 'error' && <div className="withdraw-hint" role="alert">Clipboard unavailable.</div>}
+                {copyState === 'error' && <div style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-danger)' }} role="alert">Clipboard unavailable.</div>}
               </div>
             </div>
           )}

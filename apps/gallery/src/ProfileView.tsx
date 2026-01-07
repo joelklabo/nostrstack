@@ -1,6 +1,3 @@
-import './styles/lightning-card.css';
-import './styles/profile-tip.css';
-
 import { SendSats, useAuth, useFeed, useNostrQuery, useProfile } from '@nostrstack/blog-kit';
 import { nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';

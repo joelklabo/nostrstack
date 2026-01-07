@@ -5,16 +5,16 @@ import {
   ReplyModal,
   useAuth,
   useFeed,
+  useRepost,
   ZapButton
 } from '@nostrstack/blog-kit';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
-import { useRepost } from './hooks/useRepost';
 import { filterSpam } from './nostr/spamFilter';
 import { Alert } from './ui/Alert';
 import { FindFriendCard } from './ui/FindFriendCard';
@@ -33,7 +33,7 @@ const md = new MarkdownIt({
 
 type Post = Event;
 
-export const PostItem = memo(function PostItem({
+const PostItem = memo(function PostItem({
   post,
   authorLightningAddress,
   apiBase,
@@ -150,7 +150,7 @@ export const PostItem = memo(function PostItem({
         <PaywalledContent
           itemId={paywallItemId}
           amountSats={paywallAmount}
-          apiBase={import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'}
+          apiBase={apiBase ?? 'http://localhost:3001'}
           host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
           unlockedContent={renderContent()}
           lockedContent={
@@ -237,7 +237,6 @@ export function FeedView() {
   const { isMuted } = useMuteList();
   const { contacts, loading: contactsLoading } = useContactList();
   const { pubkey } = useAuth();
-  // const { incrementEvents } = useStats();
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
@@ -247,17 +246,16 @@ export function FeedView() {
 
   // Feed mode: 'all' shows all posts, 'following' shows only from contacts
   const [feedMode, setFeedMode] = useState<'all' | 'following'>(() => {
-    const saved = localStorage.getItem('nostrstack.feedMode');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('nostrstack.feedMode') : 'all';
     return saved === 'following' ? 'following' : 'all';
   });
 
   // Persist feed mode to localStorage
-  // useEffect(() => { // Hook handles persistence itself? No, useFeed doesn't.
-  // The state init reads from localStorage.
-  // We should save it when it changes.
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('nostrstack.feedMode', feedMode);
-  }
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nostrstack.feedMode', feedMode);
+    }
+  }, [feedMode]);
 
   // Determine feed parameters
   const isFollowingMode = feedMode === 'following';
@@ -277,24 +275,6 @@ export function FeedView() {
     authors: isFollowingMode ? contacts : undefined,
     limit: 20
   });
-
-  // Track event stats
-  // Note: this will increment on every render if not careful, but useStats handles that?
-  // Actually incrementEvents() is a simple counter in context.
-  // We should only increment for new events.
-  // The hook abstracts this away, so we lose the "new event arrived" signal for stats.
-  // We can assume the hook manages the list.
-  // Ideally, useFeed would expose `onEvent` or similar, or we just rely on total count updates.
-  // For now, let's skip the explicit `incrementEvents` call or implement it in a `useEffect` watching `posts` length?
-  // Watching length is okay.
-  /*
-  useEffect(() => {
-    incrementEvents(posts.length); // If incrementEvents adds N, we need diff.
-    // ... logic to track diff ...
-  }, [posts.length]);
-  */
-  // Actually, `useStats` typically just wants a number or we call it on event.
-  // Let's omit `incrementEvents` for now to avoid complexity or loop.
 
   const handleOpenThread = useCallback((eventId: string) => {
     navigateTo(`/nostr/${eventId}`);

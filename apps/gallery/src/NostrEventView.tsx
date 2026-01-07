@@ -4,11 +4,12 @@ import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
 import { fetchNostrEventFromApi } from './nostr/api';
-import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, ProfileCard, type ProfileMeta, renderEvent } from './nostr/eventRenderers';
+import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, type ProfileMeta } from './nostr/eventRenderers';
 import { ReferencePreview } from './nostr/ReferencePreview';
 import { Alert } from './ui/Alert';
 import { CopyButton } from './ui/CopyButton';
 import { JsonView } from './ui/JsonView';
+import { NostrEventCard } from './ui/NostrEventCard';
 import { ThreadedReplies } from './ui/ThreadedReplies';
 import { resolveGalleryApiBase } from './utils/api-base';
 
@@ -458,8 +459,6 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
   const event = state.event;
   const authorProfile = state.authorProfile;
-  const title = event ? getEventKindLabel(event.kind) : 'Nostr Event';
-  const rendered = event ? renderEvent(event) : null;
   const references = state.references;
   const hasReferences =
     !!references &&
@@ -567,7 +566,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
     <div className="nostr-event-page">
       <header className="nostr-event-header">
         <div>
-          <div className="nostr-event-title">{title}</div>
+          <div className="nostr-event-title">{state.targetLabel ?? 'Event'}</div>
           <div className="nostr-event-subtitle">Rendered by NostrStack</div>
         </div>
         <div className="nostr-event-actions">
@@ -615,36 +614,12 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
         {event && (
           <>
-            <div className="nostr-event-details">
-              <div className="nostr-event-detail">
-                <span className="nostr-event-label">Event ID</span>
-                <div className="nostr-event-value">
-                  {toNote(event.id)}
-                  <CopyButton text={event.id} label="Copy ID" size="sm" />
-                </div>
-              </div>
-              <div className="nostr-event-detail">
-                <span className="nostr-event-label">Author</span>
-                <div className="nostr-event-value">
-                  {toNpub(event.pubkey)}
-                  <CopyButton text={event.pubkey} label="Copy Pubkey" size="sm" />
-                </div>
-              </div>
-              <div className="nostr-event-detail">
-                <span className="nostr-event-label">Created</span>
-                <div className="nostr-event-value">{formatTime(event.created_at)}</div>
-              </div>
-              <div className="nostr-event-detail">
-                <span className="nostr-event-label">Kind</span>
-                <div className="nostr-event-value">{event.kind}</div>
-              </div>
-            </div>
-
-            <div className="nostr-event-content">
-              {authorProfile && event.kind !== 0 && <ProfileCard profile={authorProfile} />}
-              {rendered?.body}
-              {rendered?.footer}
-            </div>
+            <NostrEventCard
+              event={event}
+              variant="hero"
+              apiBase={apiBase}
+              enableRegtestPay={enableRegtestPay}
+            />
 
             {repliesEnabled && (
               <div className="nostr-event-replies">
