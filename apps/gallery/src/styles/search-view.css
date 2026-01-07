@@ -125,8 +125,8 @@
 }
 
 .search-alert--error {
-  border-color: rgba(207, 34, 46, 0.4);
-  background: rgba(207, 34, 46, 0.08);
+  border-color: rgb(207 34 46 / 40%);
+  background: rgb(207 34 46 / 8%);
 }
 
 .search-alert-title {
@@ -147,7 +147,7 @@
   word-break: break-all;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .search-input-row {
     flex-direction: column;
     align-items: stretch;

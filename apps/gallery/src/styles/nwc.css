@@ -23,20 +23,20 @@
 
 .nwc-status-pill.is-success {
   color: var(--color-success-fg);
-  border-color: rgba(26, 127, 55, 0.4);
-  background: rgba(26, 127, 55, 0.08);
+  border-color: rgb(26 127 55 / 40%);
+  background: rgb(26 127 55 / 8%);
 }
 
 .nwc-status-pill.is-error {
   color: var(--color-danger-fg);
-  border-color: rgba(218, 54, 51, 0.4);
-  background: rgba(218, 54, 51, 0.08);
+  border-color: rgb(218 54 51 / 40%);
+  background: rgb(218 54 51 / 8%);
 }
 
 .nwc-status-pill.is-pending {
   color: var(--color-accent-fg);
-  border-color: rgba(59, 130, 246, 0.45);
-  background: rgba(59, 130, 246, 0.08);
+  border-color: rgb(59 130 246 / 45%);
+  background: rgb(59 130 246 / 8%);
 }
 
 .nwc-status-row {
@@ -84,14 +84,14 @@
 
 .nwc-last-pill.is-success {
   color: var(--color-success-fg);
-  border-color: rgba(26, 127, 55, 0.4);
-  background: rgba(26, 127, 55, 0.08);
+  border-color: rgb(26 127 55 / 40%);
+  background: rgb(26 127 55 / 8%);
 }
 
 .nwc-last-pill.is-error {
   color: var(--color-danger-fg);
-  border-color: rgba(218, 54, 51, 0.4);
-  background: rgba(218, 54, 51, 0.08);
+  border-color: rgb(218 54 51 / 40%);
+  background: rgb(218 54 51 / 8%);
 }
 
 .nwc-last-time {
@@ -136,4 +136,3 @@
   font-size: 0.8rem;
   color: var(--color-fg-muted);
 }
-

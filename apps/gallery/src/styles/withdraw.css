@@ -1,7 +1,7 @@
 .withdraw-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgb(15 23 42 / 55%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,7 +14,7 @@
   background: var(--color-canvas-default);
   border-radius: 12px;
   border: 1px solid var(--color-border-default);
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 30px 80px rgb(15 23 42 / 20%);
   overflow: hidden;
   animation: withdraw-pop 220ms ease-out;
 }
@@ -25,7 +25,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--color-border-default);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(248, 250, 252, 0.95));
+  background: linear-gradient(135deg, rgb(255 255 255 / 70%), rgb(248 250 252 / 95%));
 }
 
 .withdraw-title {
@@ -113,7 +113,7 @@
   color: var(--color-fg-muted);
 }
 
-@media (max-width: 720px) {
+@media (width <= 720px) {
   .withdraw-header {
     padding: 1.25rem 1.5rem 0.85rem;
   }
@@ -132,6 +132,7 @@
     opacity: 0;
     transform: translateY(12px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

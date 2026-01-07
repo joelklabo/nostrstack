@@ -34,8 +34,8 @@
 }
 
 .profile-badge--success {
-  background: rgba(26, 127, 55, 0.12);
-  border-color: rgba(26, 127, 55, 0.4);
+  background: rgb(26 127 55 / 12%);
+  border-color: rgb(26 127 55 / 40%);
   color: var(--color-success-fg);
 }
 
@@ -57,7 +57,7 @@
   border: 1px solid var(--color-border-default);
   border-radius: 16px;
   padding: 1.25rem;
-  background: linear-gradient(135deg, rgba(9, 105, 218, 0.08), rgba(255, 255, 255, 0));
+  background: linear-gradient(135deg, rgb(9 105 218 / 8%), rgb(255 255 255 / 0%));
 }
 
 .profile-tip-header {
@@ -124,7 +124,7 @@
 .profile-tip .send-sats-card {
   border-color: var(--color-border-default);
   background: var(--color-canvas-default);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 18px rgb(15 23 42 / 8%);
 }
 
 .profile-tip .send-sats-header {
@@ -145,7 +145,7 @@
 .profile-tip .send-sats-card > .action-btn {
   background: var(--color-accent-emphasis);
   border-color: var(--color-accent-emphasis);
-  color: #ffffff;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -181,7 +181,7 @@
   font-size: 0.9rem;
 }
 
-@media (max-width: 720px) {
+@media (width <= 720px) {
   .profile-tip {
     padding: 1rem;
   }

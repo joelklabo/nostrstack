@@ -1,7 +1,7 @@
 .shortcuts-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgb(15 23 42 / 45%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,7 +18,7 @@
   background: var(--color-canvas-default);
   border: 1px solid var(--color-border-default);
   border-radius: 12px;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
+  box-shadow: 0 24px 64px rgb(15 23 42 / 28%);
   overflow: hidden;
   animation: shortcuts-pop-in 0.2s ease-out;
   outline: none;
@@ -104,13 +104,24 @@
 }
 
 @keyframes shortcuts-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes shortcuts-pop-in {
-  from { transform: scale(0.98); opacity: 0.8; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

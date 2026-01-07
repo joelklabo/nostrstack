@@ -1,14 +1,14 @@
 .onboarding-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgb(0 0 0 / 50%);
   z-index: 9999;
   transition: opacity 0.3s ease;
 }
 
 .onboarding-spotlight {
   position: fixed;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
   border-radius: 6px;
   pointer-events: none;
   z-index: 9998;
@@ -23,7 +23,7 @@
   padding: 1.5rem;
   width: 320px;
   max-width: 90vw;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
   z-index: 10000;
   transition: all 0.3s ease;
 }
