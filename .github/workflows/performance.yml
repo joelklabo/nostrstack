@@ -26,23 +26,18 @@ jobs:
       - name: Build Gallery
         run: pnpm --filter gallery build
 
+      - name: Start preview server
+        run: |
+          cd apps/gallery
+          pnpm preview &
+          sleep 5
+
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v11
         with:
-          # Use static serve or start preview server
-          # We'll use static serve from dist folder to be faster/simpler if possible,
-          # or run the preview command.
-          # lhci can serve static folders.
-          # apps/gallery/dist
           urls: |
             http://localhost:4173/
-            http://localhost:4173/nostr/note1mq29c67332205362536
-          # We need to start the server.
-          # 'startServerCommand' option in lhci action allows this.
-          startServerCommand: pnpm --filter gallery preview
-          startServerReadyPattern: 'Local:'
           uploadArtifacts: true
           temporaryPublicStorage: true
           runs: 3
-          # Budget configuration
           budgetPath: .github/lighthouse/budget.json
