@@ -9,3 +9,14 @@ coverage
 docs/**
 plan.md
 verification-plan.md
+apps/gallery/COMPREHENSIVE_TEST_REPORT.md
+apps/gallery/TESTING_INFRASTRUCTURE_GUIDE.md
+apps/gallery/tests/README.md
+DESIGN_REVIEW.md
+ULTRA_DESIGN_REVIEW.md
+DESIGN_FIXES_SUMMARY.md
+FINAL_ULTRA_REVIEW_SUMMARY.md
+NEXT_TASKS_ANALYSIS.md
+GEMINI.md
+CONTRIBUTING.md
+packages/create-nostrstack-site/**
