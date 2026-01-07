@@ -4,7 +4,12 @@ import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
 import { fetchNostrEventFromApi } from './nostr/api';
-import { type EventReferences, extractEventReferences, getEventKindLabel, parseProfileContent, type ProfileMeta } from './nostr/eventRenderers';
+import {
+  type EventReferences,
+  extractEventReferences,
+  parseProfileContent,
+  type ProfileMeta
+} from './nostr/eventRenderers';
 import { ReferencePreview } from './nostr/ReferencePreview';
 import { Alert } from './ui/Alert';
 import { CopyButton } from './ui/CopyButton';
@@ -42,11 +47,7 @@ type RepliesState = {
   source?: 'api' | 'relay';
 };
 
-const FALLBACK_RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
+const FALLBACK_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 const REQUEST_TIMEOUT_MS = 8000;
 const REPLY_PAGE_LIMIT = 50;
 const EMPTY_REPLIES_STATE: RepliesState = {
@@ -110,7 +111,12 @@ function resolveTarget(rawId: string): Target | null {
       return { type: 'profile', pubkey: data.pubkey, relays: data.relays ?? [] };
     }
     if (decoded.type === 'naddr') {
-      const data = decoded.data as { kind: number; pubkey: string; identifier: string; relays?: string[] };
+      const data = decoded.data as {
+        kind: number;
+        pubkey: string;
+        identifier: string;
+        relays?: string[];
+      };
       return {
         type: 'address',
         kind: data.kind,
@@ -126,26 +132,12 @@ function resolveTarget(rawId: string): Target | null {
   return null;
 }
 
-function formatTime(ts?: number) {
-  if (!ts) return '—';
-  return new Date(ts * 1000).toLocaleString([], { hour12: false });
-}
-
 function toNpub(pubkey?: string) {
   if (!pubkey) return '—';
   try {
     return nip19.npubEncode(pubkey);
   } catch {
     return pubkey;
-  }
-}
-
-function toNote(id?: string) {
-  if (!id) return '—';
-  try {
-    return nip19.noteEncode(id);
-  } catch {
-    return id;
   }
 }
 
@@ -224,13 +216,16 @@ export function NostrEventView({ rawId }: { rawId: string }) {
   );
   const apiBase = apiBaseConfig.baseUrl;
   const enableRegtestPay =
-    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+    String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
+    import.meta.env.DEV;
   const repliesEnabled = target?.type === 'event';
-  
+
   const relayList = useMemo(() => {
     const rawEnvRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
     const rawTargetRelays = target?.relays ?? [];
-    const usesMockRelays = [...rawEnvRelays, ...rawTargetRelays].some((relay) => isMockRelay(relay));
+    const usesMockRelays = [...rawEnvRelays, ...rawTargetRelays].some((relay) =>
+      isMockRelay(relay)
+    );
     const envRelays = rawEnvRelays.map(normalizeMockRelay);
     const targetRelays = rawTargetRelays.map(normalizeMockRelay);
     const relays = usesMockRelays
@@ -327,7 +322,11 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         } else {
           const identifier = target.identifier ?? '';
           event = await withTimeout(
-            pool.get(relayList, { kinds: [target.kind], authors: [target.pubkey], '#d': [identifier] }),
+            pool.get(relayList, {
+              kinds: [target.kind],
+              authors: [target.pubkey],
+              '#d': [identifier]
+            }),
             REQUEST_TIMEOUT_MS
           );
         }
@@ -346,7 +345,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         } else {
           authorProfile = parseProfileContent(event.content);
         }
-        
+
         return { event, authorProfile, authorPubkey: event.pubkey, repliesState };
       } finally {
         closePool();
@@ -389,13 +388,13 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
             let repliesState = repliesEnabled
               ? {
-                status: 'ready' as const,
-                items: normalizeReplies(apiResult.replies ?? []),
-                hasMore: apiResult.replyPage?.hasMore ?? false,
-                nextCursor: apiResult.replyPage?.nextCursor ?? null,
-                isLoadingMore: false,
-                source: 'api' as const
-              }
+                  status: 'ready' as const,
+                  items: normalizeReplies(apiResult.replies ?? []),
+                  hasMore: apiResult.replyPage?.hasMore ?? false,
+                  nextCursor: apiResult.replyPage?.nextCursor ?? null,
+                  isLoadingMore: false,
+                  source: 'api' as const
+                }
               : EMPTY_REPLIES_STATE;
 
             if (repliesEnabled && apiResult.replies === undefined) {
@@ -442,10 +441,10 @@ export function NostrEventView({ rawId }: { rawId: string }) {
           error: apiError ? `${relayMessage} (API: ${apiError})` : relayMessage,
           replies: repliesEnabled
             ? {
-              ...EMPTY_REPLIES_STATE,
-              status: 'error',
-              error: 'Replies unavailable while event failed to load.'
-            }
+                ...EMPTY_REPLIES_STATE,
+                status: 'error',
+                error: 'Replies unavailable while event failed to load.'
+              }
             : EMPTY_REPLIES_STATE
         });
       }
@@ -458,7 +457,6 @@ export function NostrEventView({ rawId }: { rawId: string }) {
   }, [apiBase, apiBaseConfig.isConfigured, rawId, relayList, target, repliesEnabled, reloadToken]);
 
   const event = state.event;
-  const authorProfile = state.authorProfile;
   const references = state.references;
   const hasReferences =
     !!references &&
@@ -596,7 +594,11 @@ export function NostrEventView({ rawId }: { rawId: string }) {
         </div>
 
         {state.status === 'loading' && (
-          <div className="nostr-event-loading" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} role="status">
+          <div
+            className="nostr-event-loading"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            role="status"
+          >
             <span className="nostrstack-spinner" aria-hidden="true" />
             Fetching event data...
           </div>
@@ -630,7 +632,11 @@ export function NostrEventView({ rawId }: { rawId: string }) {
                   </div>
                 </div>
                 {state.apiError && repliesState.status === 'ready' && (
-                  <Alert tone="warning" title="API unavailable" className="nostr-event-replies-fallback">
+                  <Alert
+                    tone="warning"
+                    title="API unavailable"
+                    className="nostr-event-replies-fallback"
+                  >
                     Showing relay results while the API is unavailable. {state.apiError}
                   </Alert>
                 )}
@@ -691,29 +697,32 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
             {hasReferences && (
               <div className="nostr-event-reference-sections">
-                {previewsEnabled && referencePreviewSections.map((section) => {
-                  if (section.items.length === 0) return null;
-                  return (
-                    <div key={section.key} className="nostr-event-preview-group">
-                      <div className="nostr-event-preview-header">
-                        <span className="nostr-event-label">{section.label}</span>
-                        {section.overflow > 0 && (
-                          <span className="nostr-event-preview-overflow">+{section.overflow} more</span>
-                        )}
+                {previewsEnabled &&
+                  referencePreviewSections.map((section) => {
+                    if (section.items.length === 0) return null;
+                    return (
+                      <div key={section.key} className="nostr-event-preview-group">
+                        <div className="nostr-event-preview-header">
+                          <span className="nostr-event-label">{section.label}</span>
+                          {section.overflow > 0 && (
+                            <span className="nostr-event-preview-overflow">
+                              +{section.overflow} more
+                            </span>
+                          )}
+                        </div>
+                        <div className="nostr-event-preview-grid">
+                          {section.items.map((id) => (
+                            <ReferencePreview
+                              key={`${section.key}-${id}`}
+                              target={id}
+                              apiBase={apiBase}
+                              hrefTarget={section.key === 'address' ? id : undefined}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      <div className="nostr-event-preview-grid">
-                        {section.items.map((id) => (
-                          <ReferencePreview
-                            key={`${section.key}-${id}`}
-                            target={id}
-                            apiBase={apiBase}
-                            hrefTarget={section.key === 'address' ? id : undefined}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
 
                 {profileChips.items.length > 0 && (
                   <div className="nostr-event-ref">
@@ -722,7 +731,11 @@ export function NostrEventView({ rawId }: { rawId: string }) {
                       {profileChips.items.map((pk) => {
                         const npub = toNpub(pk);
                         return (
-                          <a key={pk} href={`/nostr/${encodeURIComponent(npub)}`} className="nostr-event-chip">
+                          <a
+                            key={pk}
+                            href={`/nostr/${encodeURIComponent(npub)}`}
+                            className="nostr-event-chip"
+                          >
                             {npub}
                           </a>
                         );
