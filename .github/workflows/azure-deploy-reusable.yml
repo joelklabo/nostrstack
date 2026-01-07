@@ -61,16 +61,6 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        ports: ['5432:5432']
-        env:
-          POSTGRES_USER: nostrstack
-          POSTGRES_PASSWORD: nostrstack
-          POSTGRES_DB: nostrstack
-        options: >-
-          --health-cmd "pg_isready -U nostrstack" --health-interval=10s --health-timeout=5s --health-retries=5
     permissions:
       contents: read
       packages: write
@@ -91,7 +81,19 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm test
+        run: |
+          # Start postgres container for tests
+          docker run -d --name postgres-test -p 5432:5432 \
+            -e POSTGRES_USER=nostrstack \
+            -e POSTGRES_PASSWORD=nostrstack \
+            -e POSTGRES_DB=nostrstack \
+            postgres:15
+          # Wait for postgres to be ready
+          for i in {1..30}; do
+            docker exec postgres-test pg_isready -U nostrstack && break
+            sleep 1
+          done
+          pnpm test
         env:
           DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
 
