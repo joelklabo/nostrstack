@@ -538,7 +538,10 @@
     "mempoolminfee",
     "minrelaytxfee",
     "ycasts",
-    "tlnp"
+    "tlnp",
+    "oklch",
+    "OKLCH",
+    "noninteractive"
   ],
   "ignoreRegExpList": [
     "/nsec1[0-9a-z]{20,}/g",
