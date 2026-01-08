@@ -13,16 +13,20 @@ process.env.CORS_ALLOWED_ORIGINS = 'https://allowed.example';
 const allowedOrigin = 'https://allowed.example';
 const blockedOrigin = 'https://blocked.example';
 
-type Server = Awaited<ReturnType<typeof import('./server.js')['buildServer']>>;
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Dynamic import for type inference
+type Server = Awaited<ReturnType<(typeof import('./server.js'))['buildServer']>>;
 let server: Server;
 
 describe('CORS allowlist', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('./server.js');
     server = await buildServer();
   });

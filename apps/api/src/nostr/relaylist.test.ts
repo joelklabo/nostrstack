@@ -9,10 +9,12 @@ process.env.LOG_LEVEL = 'error';
 process.env.NOSTR_SECRET_KEY = '1'.repeat(64);
 process.env.NOSTR_RELAYS = 'wss://relay.test';
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Dynamic import for test setup
 let client: (typeof import('./nostr-client.js'))['NostrClient'];
 let instance: InstanceType<typeof client>;
 
 vi.mock('nostr-tools', async () => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importActual requires inline import() syntax
   const actual = await vi.importActual<typeof import('nostr-tools')>('nostr-tools');
   return {
     ...actual,
@@ -94,10 +96,13 @@ describe('relay allowlist/denylist filters', () => {
   });
 
   it('ignores invalid patterns and respects localhost ws allowances', () => {
-    const relays = normalizeRelays(['ws://localhost:8080', 'ws://relay.example.com', 'wss://relay.test'], {
-      allowlist: ['://bad'],
-      denylist: []
-    });
+    const relays = normalizeRelays(
+      ['ws://localhost:8080', 'ws://relay.example.com', 'wss://relay.test'],
+      {
+        allowlist: ['://bad'],
+        denylist: []
+      }
+    );
 
     expect(relays).toEqual(['ws://localhost:8080', 'wss://relay.test']);
   });

@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { type Event,nip19 } from 'nostr-tools';
+import { type Event, nip19 } from 'nostr-tools';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getCachedEvent } from './event-cache.js';
@@ -10,6 +10,7 @@ import { selectRelays } from './relay-utils.js';
 const querySyncMock = vi.fn(async (): Promise<Event[]> => []);
 
 vi.mock('nostr-tools', async () => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importActual requires inline import() syntax
   const actual = await vi.importActual<typeof import('nostr-tools')>('nostr-tools');
   return {
     ...actual,
@@ -494,6 +495,8 @@ describe('resolveNostrEvent', () => {
   });
 
   it('rejects when no relays are configured', async () => {
-    await expect(resolveNostrEvent(baseEvent.id, { defaultRelays: [] })).rejects.toThrow('no_relays');
+    await expect(resolveNostrEvent(baseEvent.id, { defaultRelays: [] })).rejects.toThrow(
+      'no_relays'
+    );
   });
 });

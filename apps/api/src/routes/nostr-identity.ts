@@ -30,8 +30,10 @@ type Nip05Response = {
 };
 
 const NAME_RE = /^[a-z0-9._-]{1,64}$/i;
+/* eslint-disable security/detect-unsafe-regex -- Anchored patterns with bounded character classes are safe */
 const DOMAIN_RE = /^[a-z0-9.-]+(?::\d{1,5})?$/i;
 const IPV6_RE = /^\[[0-9a-f:]+\](?::\d{1,5})?$/i;
+/* eslint-enable security/detect-unsafe-regex */
 
 function isLocalhost(hostname: string) {
   return (

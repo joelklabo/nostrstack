@@ -54,7 +54,8 @@ const waitFor = async (
   throw new Error(`timeout waiting for ${label}`);
 };
 
-type Server = Awaited<ReturnType<typeof import('../server.js')['buildServer']>>;
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Dynamic import for type inference
+type Server = Awaited<ReturnType<(typeof import('../server.js'))['buildServer']>>;
 let server: Server;
 let baseUrl: string;
 let tenantAId: string;
@@ -63,10 +64,13 @@ let wsOptions: ClientOptions = {};
 describe('/ws/tips', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
     await server.listen({ port: 0, host: '127.0.0.1' });
@@ -143,9 +147,33 @@ describe('/ws/tips', () => {
     wsA.on('error', () => {});
     wsB.on('error', () => {});
     wsC.on('error', () => {});
-    wsA.on('message', (data) => handleMessage(data, () => { readyA = true; }, receivedA));
-    wsB.on('message', (data) => handleMessage(data, () => { readyB = true; }, receivedB));
-    wsC.on('message', (data) => handleMessage(data, () => { readyC = true; }, receivedC));
+    wsA.on('message', (data) =>
+      handleMessage(
+        data,
+        () => {
+          readyA = true;
+        },
+        receivedA
+      )
+    );
+    wsB.on('message', (data) =>
+      handleMessage(
+        data,
+        () => {
+          readyB = true;
+        },
+        receivedB
+      )
+    );
+    wsC.on('message', (data) =>
+      handleMessage(
+        data,
+        () => {
+          readyC = true;
+        },
+        receivedC
+      )
+    );
 
     await Promise.all([waitForOpen(wsA), waitForOpen(wsB), waitForOpen(wsC)]);
 

@@ -14,16 +14,20 @@ process.env.NOSTR_EMBED_CDN = 'https://cdn.example.com/embed.js';
 process.env.NOSTR_THEME_ACCENT = '#ff00ff';
 process.env.DEV_MOCKS = 'false';
 
-type Server = Awaited<ReturnType<typeof import('../server.js')['buildServer']>>;
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Dynamic import for type inference
+type Server = Awaited<ReturnType<(typeof import('../server.js'))['buildServer']>>;
 let server: Server;
 
 describe('/embed-config', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
   });

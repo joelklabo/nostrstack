@@ -45,6 +45,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerWalletRoutes(app);
 }
 
+/* eslint-disable @typescript-eslint/consistent-type-imports -- Module augmentation requires inline import() syntax */
 declare module 'fastify' {
   interface FastifyInstance {
     prisma: import('@prisma/client').PrismaClient;
