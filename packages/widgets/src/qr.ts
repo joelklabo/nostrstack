@@ -1,10 +1,12 @@
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 
+/* eslint-disable @typescript-eslint/consistent-type-imports -- Dynamic imports for lazy-loaded module types */
 type QrCodeStylingType = typeof import('qr-code-styling').default;
 type QrCodeStylingOptions = import('qr-code-styling').Options;
 type QrCodeStylingErrorCorrectionLevel = import('qr-code-styling').ErrorCorrectionLevel;
 type QrCodeStylingGradient = import('qr-code-styling').Gradient;
+/* eslint-enable @typescript-eslint/consistent-type-imports */
 
 export type NostrstackQrPreset = 'safe' | 'brand' | 'brandLogo';
 export type NostrstackQrVerifyMode = 'off' | 'auto' | 'strict';
