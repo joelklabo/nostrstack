@@ -3,6 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useNostrstackConfig } from '../context';
 
+// Stable empty array to prevent unnecessary effect re-runs
+const EMPTY_EVENTS: Event[] = [];
+
 /**
  * Options for the useNostrQuery hook.
  */
@@ -54,7 +57,7 @@ export function useNostrQuery(
   filters: Filter[],
   options: UseNostrQueryOptions = {}
 ): UseNostrQueryResult {
-  const { enabled = true, relays, limit = 20, initialEvents = [] } = options;
+  const { enabled = true, relays, limit = 20, initialEvents = EMPTY_EVENTS } = options;
   const cfg = useNostrstackConfig();
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [loading, setLoading] = useState(false);
