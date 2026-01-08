@@ -266,10 +266,6 @@ jobs:
       - name: Social E2E (Social Flow)
         working-directory: apps/social
         run: pnpm exec playwright test tests/social-flow.spec.ts --project=chromium
-        env:
-          VITE_NOSTRSTACK_RELAYS: wss://relay.damus.io
-          VITE_API_BASE_URL: http://localhost:3001
-          VITE_NOSTRSTACK_HOST: localhost:3001
 
       - name: Upload Playwright artifacts
         if: always()

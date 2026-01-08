@@ -85,7 +85,7 @@ jobs:
             -e POSTGRES_DB=nostrstack \
             postgres:15
           # Wait for postgres to be ready
-          for i in {1..30}; do
+          for _ in {1..30}; do
             docker exec postgres-test pg_isready -U nostrstack && break
             sleep 1
           done
