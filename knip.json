@@ -43,8 +43,6 @@
     "eslint-plugin-jsx-a11y",
     "eslint-plugin-security",
     "@nostrstack/widgets",
-    "@testing-library/react",
-    "@types/react-dom",
     "zod",
     "@types/pino-pretty",
     "@types/sinon",
@@ -111,6 +109,14 @@
     "packages/*": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/nostr": {
+      "entry": ["src/index.ts", "src/testing.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/test-utils": {
+      "entry": ["src/index.ts", "src/api/index.ts"],
+      "project": ["src/**/*.ts"]
     },
     "apps/*": {
       "entry": ["src/index.ts", "src/main.ts", "src/main.tsx", "src/App.tsx"],

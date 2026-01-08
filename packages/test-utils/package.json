@@ -14,14 +14,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@nostrstack/nostr": "workspace:*",
     "nostr-tools": "^2.18.2"
   },
   "devDependencies": {
     "@types/node": "22.7.5",
     "fastify": "5.3.0",
-    "typescript": "5.6.2",
-    "vitest": "2.1.9"
+    "typescript": "5.6.2"
   },
   "peerDependencies": {
     "vitest": ">=2.0.0"

@@ -1,21 +1,12 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import { resolveDocScreenshotPath } from './helpers.ts';
 
 /**
- * Helper to dismiss the onboarding tour if it appears
+ * Helper to perform nsec login and dismiss onboarding if it appears
  */
-async function dismissOnboarding(page: import('@playwright/test').Page) {
-  // Set localStorage to skip onboarding tour
-  await page.evaluate(() => {
-    localStorage.setItem('nostrstack.onboarding.v1', 'true');
-  });
-}
-
-/**
- * Helper to perform nsec login
- */
-async function loginWithNsec(page: import('@playwright/test').Page, nsec: string) {
+async function loginWithNsec(page: Page, nsec: string) {
   await page.getByText('Enter nsec manually').click();
   await page.getByPlaceholder('nsec1...').fill(nsec);
   await page.getByRole('button', { name: 'Sign in' }).click();

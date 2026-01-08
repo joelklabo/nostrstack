@@ -23,7 +23,7 @@
     "lint:css": "stylelint \"**/*.css\"",
     "lint:md": "markdownlint \"**/*.md\"",
     "lint:pub": "pnpm --filter @nostrstack/sdk run build && pnpm --filter @nostrstack/widgets run build && pnpm --filter @nostrstack/react run build && pnpm -r exec publint",
-    "lint:attw": "pnpm --filter \"./packages/**\" --filter \"!create-nostrstack-site\" -r exec attw --pack . --ignore-rules no-resolution",
+    "lint:attw": "pnpm --filter \"./packages/**\" --filter \"!create-nostrstack-site\" --filter \"!test-utils\" -r exec attw --pack . --ignore-rules no-resolution",
     "lint:sh": "shellcheck scripts/*.sh",
     "lint:secrets": "secretlint \"**\"",
     "lint:audit": "audit-ci --moderate",
