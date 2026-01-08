@@ -42,7 +42,7 @@
     "qrcode.react": "^4.2.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",
     "@types/node": "22.7.5",
     "@types/react": "19.0.1",
