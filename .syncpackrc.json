@@ -6,6 +6,11 @@
       "dependencies": ["@nostrstack/*"],
       "dependencyTypes": ["dev", "prod", "peer"],
       "pinVersion": "workspace:*"
+    },
+    {
+      "label": "Allow different fastify versions (api needs 4.x for plugins)",
+      "dependencies": ["fastify"],
+      "isIgnored": true
     }
   ]
 }
