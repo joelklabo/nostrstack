@@ -1,7 +1,7 @@
 'use client';
 
 import { mountCommentWidget } from '@nostrstack/widgets';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 
@@ -31,13 +31,19 @@ export function Comments({
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
+  // Memoize merged relays to avoid reference changes causing re-renders
+  const mergedRelays = useMemo(
+    () => relays ?? cfg.relays ?? [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- serialize arrays for stable comparison
+    [relays?.join(','), cfg.relays?.join(',')]
+  );
+
+  const thread = threadId ?? 'nostrstack-thread';
+
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     node.innerHTML = '';
-
-    const mergedRelays = relays ?? cfg.relays ?? [];
-    const thread = threadId ?? 'nostrstack-thread';
 
     const promise = mountCommentWidget(node, {
       threadId: thread,
@@ -61,15 +67,14 @@ export function Comments({
       node.innerHTML = '';
     };
   }, [
-    threadId,
-    relays,
+    thread,
+    mergedRelays,
     headerText,
     placeholder,
     maxItems,
     maxAgeDays,
     lazyConnect,
-    validateEvents,
-    cfg.relays
+    validateEvents
   ]);
 
   return <div ref={ref} className={className} data-nostrstack-comments />;

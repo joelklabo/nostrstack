@@ -1,7 +1,7 @@
 'use client';
 
 import { mountTipWidget } from '@nostrstack/widgets';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 import { parseLnAddress } from './utils';
@@ -50,6 +50,14 @@ export function TipWidget({
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
+  // Use refs to avoid infinite loops when parent doesn't memoize callbacks
+  const onInvoiceRef = useRef(onInvoice);
+  const onPaidRef = useRef(onPaid);
+  useEffect(() => {
+    onInvoiceRef.current = onInvoice;
+    onPaidRef.current = onPaid;
+  });
+
   const resolved = useMemo(() => {
     const parsed = parseLnAddress(lnAddress ?? cfg.lnAddress);
     return {
@@ -58,6 +66,27 @@ export function TipWidget({
       baseUrl: baseUrl ?? cfg.baseUrl
     };
   }, [lnAddress, baseUrl, host, cfg.lnAddress, cfg.baseUrl, cfg.host]);
+
+  // Stable callback wrappers that always call the latest ref
+  const stableOnInvoice = useCallback(
+    (info: { pr: string; providerRef: string | null; amountSats: number }) => {
+      return onInvoiceRef.current?.(info);
+    },
+    []
+  );
+
+  const stableOnPaid = useCallback(
+    (info: {
+      pr: string;
+      providerRef: string | null;
+      amountSats: number;
+      itemId: string;
+      metadata?: unknown;
+    }) => {
+      onPaidRef.current?.(info);
+    },
+    []
+  );
 
   useEffect(() => {
     const node = ref.current;
@@ -75,8 +104,8 @@ export function TipWidget({
       baseURL: resolved.baseUrl,
       host: resolved.host,
       metadata,
-      onInvoice,
-      onPaid
+      onInvoice: stableOnInvoice,
+      onPaid: stableOnPaid
     });
 
     return () => {
@@ -98,8 +127,8 @@ export function TipWidget({
     allowCustomAmount,
     showFeed,
     metadata,
-    onInvoice,
-    onPaid
+    stableOnInvoice,
+    stableOnPaid
   ]);
 
   return <div ref={ref} className={className} data-nostrstack-tip-widget />;

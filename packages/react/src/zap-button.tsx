@@ -113,11 +113,17 @@ export function ZapButton({
     paymentFailures: new Set<string>()
   });
 
+  // Use ref to avoid infinite loops when parent doesn't memoize onZapSuccess
+  const onZapSuccessRef = useRef(onZapSuccess);
+  useEffect(() => {
+    onZapSuccessRef.current = onZapSuccess;
+  });
+
   useEffect(() => {
     if (zapState === 'paid') {
-      onZapSuccess?.();
+      onZapSuccessRef.current?.();
     }
-  }, [zapState, onZapSuccess]);
+  }, [zapState]);
 
   const authorPubkey = event.pubkey;
   const authorNpub = useMemo(() => nip19.npubEncode(authorPubkey), [authorPubkey]);
