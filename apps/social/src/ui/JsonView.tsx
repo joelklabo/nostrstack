@@ -50,7 +50,9 @@ export function JsonView({
                 {isCollapsed ? 'Expand' : 'Collapse'}
               </button>
             ) : null}
-            {canCopy ? <CopyButton text={formatted.copyText} label={copyLabel} variant="icon" size="sm" /> : null}
+            {canCopy ? (
+              <CopyButton text={formatted.copyText} label={copyLabel} variant="icon" size="sm" />
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -71,8 +73,10 @@ function escapeHtml(unsafe: string) {
 function highlightJson(json: string) {
   if (!json || json === '—') return json;
   const escaped = escapeHtml(json);
+  /* eslint-disable security/detect-unsafe-regex -- JSON syntax highlighter regex is safe for trusted input */
   return escaped.replace(
     /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
+    /* eslint-enable security/detect-unsafe-regex */
     (match) => {
       let cls = 'json-number';
       if (/^&quot;/.test(match)) {

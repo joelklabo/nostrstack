@@ -62,11 +62,13 @@ pnpm --filter api seed                 # Seed demo data
 ## Architecture
 
 ### Apps
+
 - **apps/api**: Fastify + Prisma API server. Multi-tenant with LightningProvider abstraction (LNbits). Handles payments, Nostr endpoints, LNURLp/NIP-05, webhooks. Prometheus metrics at `/metrics`, optional OpenTelemetry.
 - **apps/social**: Production Nostr social network with feed, profiles, DMs, notifications, wallet. Uses `@nostrstack/react` and `@nostrstack/widgets`.
 - **apps/docs**: Widget documentation and demos. Standalone Vite app showcasing embeddable components.
 
 ### Packages
+
 - **packages/sdk**: Typed client for the API
 - **packages/widgets**: Browser bundle with script-tag widgets (tip, comments, share, profile, blockchain stats). Uses `data-nostrstack-*` attributes for auto-mount.
 - **packages/react**: React components (SupportSection, profile, share, comments, tip feed, blockchain stats)
@@ -77,12 +79,15 @@ pnpm --filter api seed                 # Seed demo data
 - **packages/create-nostrstack-site**: Site scaffolding tool
 
 ### Data Flow (Happy Path Tip)
+
 Browser widget → API `/api/pay` (tenant lookup) → LightningProvider.createCharge → invoice to browser → payer pays → LNbits webhook → API updates Payment → widgets poll/verify
 
 ### Tenancy
+
 Tenant resolved from host header or `domain` param. User entries store lightningAddress; LNURLp uses tenant domain + username.
 
 ### Environments
+
 - **Local**: SQLite dev DB, regtest LNbits; social :4173, docs :4174, API :3001
 - **Staging**: LNbits + Voltage mutinynet LND, Postgres, Azure Container Apps
 - **Prod**: LNbits + Voltage mainnet LND
@@ -101,6 +106,7 @@ Tenant resolved from host header or `domain` param. User entries store lightning
 ## Beads Task Management
 
 The project uses Beads (`bd`) for task tracking:
+
 ```bash
 pnpm exec bd list            # List tasks
 pnpm exec bd ready           # Get next task

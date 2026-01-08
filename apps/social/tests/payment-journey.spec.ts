@@ -21,7 +21,7 @@ const profileEvent = {
     lud16: 'sats@example.com',
     about: 'Test profile with lightning address'
   }),
-  sig: 'c'.repeat(128),
+  sig: 'c'.repeat(128)
 };
 
 const postEvents = [
@@ -32,7 +32,7 @@ const postEvents = [
     created_at: now - 10,
     tags: [],
     content: 'First zapgable post',
-    sig: 'd'.repeat(128),
+    sig: 'd'.repeat(128)
   },
   {
     id: 'post-2',
@@ -41,10 +41,11 @@ const postEvents = [
     created_at: now - 5,
     tags: [],
     content: 'Second zapgable post',
-    sig: 'e'.repeat(128),
-  },
+    sig: 'e'.repeat(128)
+  }
 ];
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- Inline import for standalone function
 async function loginWithNsec(page: import('@playwright/test').Page) {
   await page.goto('/');
   await page.getByText('Enter nsec manually').click();
@@ -60,77 +61,80 @@ test('zap two posts and send sats from profile', async ({ page }) => {
   });
   page.on('pageerror', (err) => consoleErrors.push(err.message));
 
-  await page.addInitScript(({ profileEvent, postEvents }) => {
-    type MockEvent = { data?: string; type?: string };
+  await page.addInitScript(
+    ({ profileEvent, postEvents }) => {
+      type MockEvent = { data?: string; type?: string };
 
-    const events = [profileEvent, ...postEvents];
+      const events = [profileEvent, ...postEvents];
 
-    class MockWebSocket {
-      static CONNECTING = 0;
-      static OPEN = 1;
-      static CLOSING = 2;
-      static CLOSED = 3;
-      url: string;
-      readyState = MockWebSocket.CONNECTING;
-      onopen: ((ev: MockEvent) => void) | null = null;
-      onmessage: ((ev: MockEvent) => void) | null = null;
-      onerror: ((ev: MockEvent) => void) | null = null;
-      onclose: ((ev: MockEvent) => void) | null = null;
+      class MockWebSocket {
+        static CONNECTING = 0;
+        static OPEN = 1;
+        static CLOSING = 2;
+        static CLOSED = 3;
+        url: string;
+        readyState = MockWebSocket.CONNECTING;
+        onopen: ((ev: MockEvent) => void) | null = null;
+        onmessage: ((ev: MockEvent) => void) | null = null;
+        onerror: ((ev: MockEvent) => void) | null = null;
+        onclose: ((ev: MockEvent) => void) | null = null;
 
-      constructor(url: string) {
-        this.url = url;
-        setTimeout(() => {
-          this.readyState = MockWebSocket.OPEN;
-          this.onopen?.({ type: 'open' });
-        }, 0);
-      }
+        constructor(url: string) {
+          this.url = url;
+          setTimeout(() => {
+            this.readyState = MockWebSocket.OPEN;
+            this.onopen?.({ type: 'open' });
+          }, 0);
+        }
 
-      send(data: string) {
-        try {
-          const parsed = JSON.parse(data) as unknown[];
-          if (parsed[0] !== 'REQ') return;
-          const subId = parsed[1] as string;
-          const filters = parsed.slice(2) as Array<{ kinds?: number[]; authors?: string[] }>;
-          const sent = new Set<string>();
-          for (const filter of filters) {
-            for (const event of events) {
-              const kindOk = !filter.kinds || filter.kinds.includes(event.kind);
-              const authorOk = !filter.authors || filter.authors.includes(event.pubkey);
-              if (kindOk && authorOk && !sent.has(event.id)) {
-                sent.add(event.id);
-                this.onmessage?.({ data: JSON.stringify(['EVENT', subId, event]) });
+        send(data: string) {
+          try {
+            const parsed = JSON.parse(data) as unknown[];
+            if (parsed[0] !== 'REQ') return;
+            const subId = parsed[1] as string;
+            const filters = parsed.slice(2) as Array<{ kinds?: number[]; authors?: string[] }>;
+            const sent = new Set<string>();
+            for (const filter of filters) {
+              for (const event of events) {
+                const kindOk = !filter.kinds || filter.kinds.includes(event.kind);
+                const authorOk = !filter.authors || filter.authors.includes(event.pubkey);
+                if (kindOk && authorOk && !sent.has(event.id)) {
+                  sent.add(event.id);
+                  this.onmessage?.({ data: JSON.stringify(['EVENT', subId, event]) });
+                }
               }
+              this.onmessage?.({ data: JSON.stringify(['EOSE', subId]) });
             }
-            this.onmessage?.({ data: JSON.stringify(['EOSE', subId]) });
+          } catch {
+            // ignore invalid payloads
           }
-        } catch {
-          // ignore invalid payloads
+        }
+
+        close() {
+          this.readyState = MockWebSocket.CLOSED;
+          this.onclose?.({ type: 'close' });
+        }
+
+        addEventListener(type: string, handler: (ev: MockEvent) => void) {
+          if (type === 'open') this.onopen = handler;
+          if (type === 'message') this.onmessage = handler;
+          if (type === 'error') this.onerror = handler;
+          if (type === 'close') this.onclose = handler;
+        }
+
+        removeEventListener(type: string) {
+          if (type === 'open') this.onopen = null;
+          if (type === 'message') this.onmessage = null;
+          if (type === 'error') this.onerror = null;
+          if (type === 'close') this.onclose = null;
         }
       }
 
-      close() {
-        this.readyState = MockWebSocket.CLOSED;
-        this.onclose?.({ type: 'close' });
-      }
-
-      addEventListener(type: string, handler: (ev: MockEvent) => void) {
-        if (type === 'open') this.onopen = handler;
-        if (type === 'message') this.onmessage = handler;
-        if (type === 'error') this.onerror = handler;
-        if (type === 'close') this.onclose = handler;
-      }
-
-      removeEventListener(type: string) {
-        if (type === 'open') this.onopen = null;
-        if (type === 'message') this.onmessage = null;
-        if (type === 'error') this.onerror = null;
-        if (type === 'close') this.onclose = null;
-      }
-    }
-
-    window.WebSocket = MockWebSocket as typeof WebSocket;
-    window.__NOSTRSTACK_ZAP_ADDRESS__ = 'https://mock.lnurl/lnurlp/test';
-  }, { profileEvent, postEvents });
+      window.WebSocket = MockWebSocket as typeof WebSocket;
+      window.__NOSTRSTACK_ZAP_ADDRESS__ = 'https://mock.lnurl/lnurlp/test';
+    },
+    { profileEvent, postEvents }
+  );
 
   await mockLnurlPay(page);
   await loginWithNsec(page);

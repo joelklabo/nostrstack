@@ -213,7 +213,7 @@ export function SearchView() {
           </button>
         </div>
         <div id="search-helper" className="search-helper">
-          Try "bitcoin", "nostr", or an npub1...
+          Try &quot;bitcoin&quot;, &quot;nostr&quot;, or an npub1...
         </div>
         <div
           className={`search-status search-status--${status}`}

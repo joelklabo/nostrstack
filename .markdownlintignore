@@ -9,9 +9,8 @@ coverage
 docs/**
 plan.md
 verification-plan.md
-apps/gallery/COMPREHENSIVE_TEST_REPORT.md
-apps/gallery/TESTING_INFRASTRUCTURE_GUIDE.md
-apps/gallery/tests/README.md
+apps/social/COMPREHENSIVE_TEST_REPORT.md
+apps/social/TESTING_INFRASTRUCTURE_GUIDE.md
 DESIGN_REVIEW.md
 ULTRA_DESIGN_REVIEW.md
 DESIGN_FIXES_SUMMARY.md

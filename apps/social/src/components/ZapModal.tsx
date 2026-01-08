@@ -19,7 +19,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
   isOpen,
   onClose,
   recipientName = 'User',
-  onZap,
+  onZap
 }) => {
   const [amount, setAmount] = useState<number>(50);
   const [message, setMessage] = useState('');
@@ -49,9 +49,9 @@ export const ZapModal: React.FC<ZapModalProps> = ({
       // In a real app, here we would start polling for payment success
     } catch (e: unknown) {
       if (e instanceof Error) {
-         setError(e.message);
+        setError(e.message);
       } else {
-         setError('Failed to generate invoice');
+        setError('Failed to generate invoice');
       }
       setState('error');
     }
@@ -63,13 +63,16 @@ export const ZapModal: React.FC<ZapModalProps> = ({
 
   if (!isOpen) return null;
 
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- Modal overlay/content click patterns */
   return (
     <div className="zap-modal-overlay" onClick={onClose}>
       <div className="zap-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="zap-header">
           <h2>Zap {recipientName}</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+          <button className="close-btn" onClick={onClose}>
+            &times;
+          </button>
         </div>
 
         <div className="zap-content-grid">
@@ -86,10 +89,11 @@ export const ZapModal: React.FC<ZapModalProps> = ({
                 </button>
               ))}
             </div>
-            
+
             <div className="input-group">
-              <label>Custom Amount (sats)</label>
+              <label htmlFor="zap-amount">Custom Amount (sats)</label>
               <input
+                id="zap-amount"
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
@@ -98,8 +102,9 @@ export const ZapModal: React.FC<ZapModalProps> = ({
             </div>
 
             <div className="input-group">
-              <label>Message (optional)</label>
+              <label htmlFor="zap-message">Message (optional)</label>
               <input
+                id="zap-message"
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -109,7 +114,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
 
             {state === 'error' && <div className="error-msg">{error}</div>}
 
-            <button 
+            <button
               className="zap-confirm-btn"
               disabled={state === 'resolving' || state === 'paid'}
               onClick={handleZap}
@@ -129,9 +134,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
               <div className="qr-container">
                 <QRCodeSVG value={invoice} size={200} level="L" includeMargin />
                 <div className="invoice-actions">
-                  <button onClick={copyInvoice}>
-                    Copy Invoice
-                  </button>
+                  <button onClick={copyInvoice}>Copy Invoice</button>
                   <a href={`lightning:${invoice}`} className="open-wallet-btn">
                     Open Wallet
                   </a>

@@ -14,21 +14,21 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
   // Store trigger element and focus first focusable element
   useEffect(() => {
     if (!open) return;
-    
+
     // Store the element that had focus before modal opened
     triggerRef.current = document.activeElement as HTMLElement;
-    
+
     // Focus first focusable element in modal
     const modal = modalRef.current;
     if (!modal) return;
-    
+
     const focusable = modal.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     if (focusable) {
       focusable.focus();
     }
-    
+
     // Return focus to trigger when modal closes
     return () => {
       if (triggerRef.current && document.contains(triggerRef.current)) {
@@ -53,25 +53,25 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
   // Focus trap
   useEffect(() => {
     if (!open) return;
-    
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
-      
+
       const modal = modalRef.current;
       if (!modal) return;
-      
+
       const focusable = Array.from(
         modal.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         )
       ).filter((el) => !el.hasAttribute('disabled'));
-      
+
       if (!focusable.length) return;
-      
+
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       const active = document.activeElement;
-      
+
       if (e.shiftKey) {
         if (active === first) {
           e.preventDefault();
@@ -84,7 +84,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
         }
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
@@ -97,22 +97,31 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
     { keys: ['/'], desc: 'Search' },
     { keys: ['n'], desc: 'New post' },
     { keys: ['?'], desc: 'Show this help' },
-    { keys: ['Esc'], desc: 'Close modal' },
+    { keys: ['Esc'], desc: 'Close modal' }
   ];
 
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions -- Modal overlay/content click patterns */
   return (
     <div className="shortcuts-overlay" onClick={onClose}>
-      <div 
+      <div
         ref={modalRef}
-        className="shortcuts-modal" 
-        onClick={e => e.stopPropagation()}
+        className="shortcuts-modal"
+        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"
       >
         <div className="shortcuts-header">
-          <div id="help-modal-title" className="shortcuts-title">Keyboard Shortcuts</div>
-          <button className="shortcuts-close" onClick={onClose} aria-label="Close keyboard shortcuts">&times;</button>
+          <div id="help-modal-title" className="shortcuts-title">
+            Keyboard Shortcuts
+          </div>
+          <button
+            className="shortcuts-close"
+            onClick={onClose}
+            aria-label="Close keyboard shortcuts"
+          >
+            &times;
+          </button>
         </div>
         <div className="shortcuts-body">
           <div className="shortcuts-list">
@@ -120,8 +129,10 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
               <div key={i} className="shortcut-item">
                 <div className="shortcut-desc">{s.desc}</div>
                 <div className="shortcut-keys">
-                  {s.keys.map(k => (
-                    <span key={k} className="shortcut-key">{k}</span>
+                  {s.keys.map((k) => (
+                    <span key={k} className="shortcut-key">
+                      {k}
+                    </span>
                   ))}
                 </div>
               </div>

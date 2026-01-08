@@ -134,7 +134,10 @@ function getTagValue(event: Event, tag: string) {
 }
 
 function getTagValues(event: Event, tag: string) {
-  return event.tags.filter((t) => t[0] === tag).map((t) => t[1]).filter(Boolean);
+  return event.tags
+    .filter((t) => t[0] === tag)
+    .map((t) => t[1])
+    .filter(Boolean);
 }
 
 function toNote(id: string) {
@@ -174,7 +177,11 @@ function renderContentWithLinks(content: string) {
             return <span key={`text-${idx}`}>{part}</span>;
           }
           return (
-            <a key={`nostr-${idx}`} href={`/nostr/${encodeURIComponent(id)}`} className="nostr-event-link">
+            <a
+              key={`nostr-${idx}`}
+              href={`/nostr/${encodeURIComponent(id)}`}
+              className="nostr-event-link"
+            >
               {part}
             </a>
           );
@@ -185,13 +192,19 @@ function renderContentWithLinks(content: string) {
             if (IMAGE_EXTENSIONS.test(url.pathname)) {
               return (
                 <div key={`media-${idx}`} className="nostr-media-container">
-                  <img src={part} alt="Embedded content" loading="lazy" className="nostr-media-img" />
+                  <img
+                    src={part}
+                    alt="Embedded content"
+                    loading="lazy"
+                    className="nostr-media-img"
+                  />
                 </div>
               );
             }
             if (VIDEO_EXTENSIONS.test(url.pathname)) {
               return (
                 <div key={`media-${idx}`} className="nostr-media-container">
+                  {/* eslint-disable-next-line jsx-a11y/media-has-caption -- User-generated content may not have captions */}
                   <video src={part} controls className="nostr-media-video" />
                 </div>
               );
@@ -304,7 +317,11 @@ function renderReferences(event: Event) {
             {eventRefs.map((id) => {
               const note = toNote(id);
               return (
-                <a key={id} href={`/nostr/${encodeURIComponent(note)}`} className="nostr-event-chip">
+                <a
+                  key={id}
+                  href={`/nostr/${encodeURIComponent(note)}`}
+                  className="nostr-event-chip"
+                >
                   {note}
                 </a>
               );
@@ -319,7 +336,11 @@ function renderReferences(event: Event) {
             {pubRefs.map((pk) => {
               const npub = toNpub(pk);
               return (
-                <a key={pk} href={`/nostr/${encodeURIComponent(npub)}`} className="nostr-event-chip">
+                <a
+                  key={pk}
+                  href={`/nostr/${encodeURIComponent(npub)}`}
+                  className="nostr-event-chip"
+                >
                   {npub}
                 </a>
               );
@@ -338,7 +359,11 @@ export function renderEvent(event: Event): RenderedEvent {
     const profile = parseProfileContent(event.content);
     return {
       label,
-      body: profile ? <ProfileCard profile={profile} /> : <span>Profile metadata unavailable.</span>,
+      body: profile ? (
+        <ProfileCard profile={profile} />
+      ) : (
+        <span>Profile metadata unavailable.</span>
+      ),
       footer: renderReferences(event) ?? undefined
     };
   }
@@ -414,7 +439,10 @@ export function renderEvent(event: Event): RenderedEvent {
         <div className="nostr-event-text">
           {url && (
             <div>
-              File: <a href={url} target="_blank" rel="noreferrer noopener">{url}</a>
+              File:{' '}
+              <a href={url} target="_blank" rel="noreferrer noopener">
+                {url}
+              </a>
             </div>
           )}
           {mime && <div>Type: {mime}</div>}

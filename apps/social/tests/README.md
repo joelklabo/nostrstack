@@ -5,6 +5,7 @@ This directory contains comprehensive E2E accessibility tests using Playwright a
 ## Test Coverage
 
 ### WCAG 2.1 AA Compliance
+
 - **Page Scans**: Automated axe-core scans on all major pages (login, feed, search)
 - **Keyboard Navigation**: Tab order, focus management, keyboard shortcuts
 - **Focus Management**: Modal focus traps, return focus on close
@@ -15,13 +16,15 @@ This directory contains comprehensive E2E accessibility tests using Playwright a
 
 ## Running Tests Locally
 
-### All accessibility tests:
+### All accessibility tests
+
 ```bash
 cd apps/social
 pnpm run e2e accessibility.spec.ts
 ```
 
-### Specific test suites:
+### Specific test suites
+
 ```bash
 # Page scans only
 pnpm run e2e accessibility.spec.ts --grep "Page Scans"
@@ -36,12 +39,14 @@ pnpm run e2e accessibility.spec.ts --grep "Modal Focus"
 pnpm run e2e accessibility.spec.ts --grep "Color Contrast"
 ```
 
-### Debug mode (headed browser):
+### Debug mode (headed browser)
+
 ```bash
 pnpm run e2e accessibility.spec.ts --headed --debug
 ```
 
-### Test report:
+### Test report
+
 ```bash
 # Run tests with HTML report
 pnpm run e2e accessibility.spec.ts --reporter=html
@@ -54,7 +59,7 @@ npx playwright show-report
 
 Many tests require authentication to access protected pages. When running locally without auth setup, these tests will be **skipped** with a message like:
 
-```
+```text
 Skipping modal test - authentication required
 ```
 
@@ -65,23 +70,27 @@ This is expected behavior. In CI, these tests run against a real environment wit
 ### Common Issues
 
 **Color Contrast Violations**:
+
 - Check `--color-fg-muted` and other CSS variables
 - Use browser DevTools to inspect computed colors
 - Target: 4.5:1 for normal text, 3:1 for large text (18pt+)
 
 **Missing ARIA Attributes**:
+
 - Add `aria-label` to buttons without visible text
 - Use `aria-describedby` for form hints/errors
 - Set `role="status"` or `role="alert"` for dynamic content
 - Add `aria-busy` to loading states
 
 **Focus Management**:
+
 - Modals must trap focus (Tab cycles within modal)
 - Auto-focus first focusable element on open
 - Return focus to trigger element on close
 - Use `modalRef.current.focus()` to manage focus programmatically
 
 **Keyboard Navigation**:
+
 - All interactive elements must be reachable by Tab
 - Add keyboard shortcuts for common actions
 - Prevent default on arrow keys in custom widgets
@@ -90,17 +99,21 @@ This is expected behavior. In CI, these tests run against a real environment wit
 ### Debugging Test Failures
 
 1. **Run in headed mode** to see what's happening:
+
    ```bash
    pnpm run e2e accessibility.spec.ts --headed
    ```
 
 2. **Check axe-core violations** in test output:
-   ```
+
+   ```text
    expect(accessibilityScanResults.violations).toEqual([]);
    ```
+
    Look for `violations` array with details on what failed.
 
 3. **Use Playwright trace viewer**:
+
    ```bash
    pnpm run e2e accessibility.spec.ts --trace on
    npx playwright show-trace test-results/.../trace.zip
@@ -114,55 +127,58 @@ This is expected behavior. In CI, these tests run against a real environment wit
 
 ## Adding New Tests
 
-### Template for new page scan:
+### Template for new page scan
+
 ```typescript
 test('New page has no accessibility violations', async ({ page }) => {
   await page.goto('/new-page');
   await page.waitForSelector('.page-container', { timeout: 5000 });
-  
+
   const accessibilityScanResults = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
-  
+
   expect(accessibilityScanResults.violations).toEqual([]);
 });
 ```
 
-### Template for keyboard navigation:
+### Template for keyboard navigation
+
 ```typescript
 test('Component supports keyboard navigation', async ({ page }) => {
   await page.goto('/page');
   await page.waitForSelector('.component', { timeout: 5000 });
-  
+
   // Tab to first button
   await page.keyboard.press('Tab');
   const firstButton = page.locator('button').first();
   await expect(firstButton).toBeFocused();
-  
+
   // Test interaction
   await page.keyboard.press('Enter');
   // ... assertions
 });
 ```
 
-### Template for modal focus trap:
+### Template for modal focus trap
+
 ```typescript
 test('Modal traps focus', async ({ page }) => {
   await page.goto('/');
-  
+
   // Open modal
   await page.click('button:has-text("Open Modal")');
   await page.waitForSelector('[role="dialog"]', { timeout: 2000 });
-  
+
   const modal = page.locator('[role="dialog"]');
   const buttons = modal.locator('button');
-  
+
   // Tab through all buttons
   const count = await buttons.count();
   for (let i = 0; i < count; i++) {
     await page.keyboard.press('Tab');
   }
-  
+
   // Focus should wrap to first button
   await expect(buttons.first()).toBeFocused();
 });
@@ -185,6 +201,7 @@ View results at: `https://github.com/your-org/nostrstack/actions`
 ## Accessibility Documentation
 
 See `docs/accessibility.md` for:
+
 - Component patterns and guidelines
 - Manual testing procedures
 - Checklist for new components

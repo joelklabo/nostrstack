@@ -27,7 +27,7 @@ export function useMuteList() {
       const event = await getCached({ kinds: [10000], authors: [pubkey] });
       if (event) {
         setMuteEvent(event);
-        const pTags = event.tags.filter(t => t[0] === 'p').map(t => t[1]);
+        const pTags = event.tags.filter((t) => t[0] === 'p').map((t) => t[1]);
         setMuted(pTags);
       } else {
         setMuted([]);
@@ -38,53 +38,60 @@ export function useMuteList() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getCached reference is stable
   }, [pubkey, relays, pool]);
 
   useEffect(() => {
     fetchMuteList();
   }, [fetchMuteList]);
 
-  const mute = useCallback(async (targetPubkey: string) => {
-    if (!pubkey) throw new Error('Not logged in');
-    if (muted.includes(targetPubkey)) return;
+  const mute = useCallback(
+    async (targetPubkey: string) => {
+      if (!pubkey) throw new Error('Not logged in');
+      if (muted.includes(targetPubkey)) return;
 
-    const newTags = muteEvent ? [...muteEvent.tags] : [];
-    if (!newTags.some(t => t[0] === 'p' && t[1] === targetPubkey)) {
+      const newTags = muteEvent ? [...muteEvent.tags] : [];
+      if (!newTags.some((t) => t[0] === 'p' && t[1] === targetPubkey)) {
         newTags.push(['p', targetPubkey]);
-    }
+      }
 
-    const template = {
-      kind: 10000,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: newTags,
-      content: muteEvent ? muteEvent.content : '',
-    };
+      const template = {
+        kind: 10000,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: newTags,
+        content: muteEvent ? muteEvent.content : ''
+      };
 
-    const signed = await signEvent(template);
-    await Promise.any(pool.publish(relays, signed));
-    saveEvent(signed).catch(console.warn);
-    setMuteEvent(signed);
-    setMuted(newTags.filter(t => t[0] === 'p').map(t => t[1]));
-  }, [pubkey, muted, muteEvent, signEvent, relays, pool]);
+      const signed = await signEvent(template);
+      await Promise.any(pool.publish(relays, signed));
+      saveEvent(signed).catch(console.warn);
+      setMuteEvent(signed);
+      setMuted(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
+    },
+    [pubkey, muted, muteEvent, signEvent, relays, pool]
+  );
 
-  const unmute = useCallback(async (targetPubkey: string) => {
-    if (!pubkey || !muteEvent) return;
-    
-    const newTags = muteEvent.tags.filter(t => !(t[0] === 'p' && t[1] === targetPubkey));
-    
-    const template = {
-      kind: 10000,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: newTags,
-      content: muteEvent.content,
-    };
+  const unmute = useCallback(
+    async (targetPubkey: string) => {
+      if (!pubkey || !muteEvent) return;
 
-    const signed = await signEvent(template);
-    await Promise.any(pool.publish(relays, signed));
-    saveEvent(signed).catch(console.warn);
-    setMuteEvent(signed);
-    setMuted(newTags.filter(t => t[0] === 'p').map(t => t[1]));
-  }, [pubkey, muteEvent, signEvent, relays, pool]);
+      const newTags = muteEvent.tags.filter((t) => !(t[0] === 'p' && t[1] === targetPubkey));
+
+      const template = {
+        kind: 10000,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: newTags,
+        content: muteEvent.content
+      };
+
+      const signed = await signEvent(template);
+      await Promise.any(pool.publish(relays, signed));
+      saveEvent(signed).catch(console.warn);
+      setMuteEvent(signed);
+      setMuted(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
+    },
+    [pubkey, muteEvent, signEvent, relays, pool]
+  );
 
   const isMuted = useCallback((targetPubkey: string) => muted.includes(targetPubkey), [muted]);
 

@@ -70,7 +70,10 @@ function truncateText(text: string, maxLen: number) {
 function buildPreviewText(event: Event, authorProfile?: ProfileMeta | null) {
   if (event.kind === 0) {
     const profile = authorProfile ?? parseProfileContent(event.content);
-    return truncateText(profile?.about || profile?.display_name || profile?.name || 'Profile metadata', PREVIEW_TEXT_LIMIT);
+    return truncateText(
+      profile?.about || profile?.display_name || profile?.name || 'Profile metadata',
+      PREVIEW_TEXT_LIMIT
+    );
   }
   if (event.kind === 30023) {
     const title = getTagValue(event, 'title') || getTagValue(event, 'subject');
@@ -118,14 +121,23 @@ export function ReferencePreview({ target, apiBase, hrefTarget }: ReferencePrevi
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- target is used via targetKey (normalized)
   }, [apiBase, targetKey]);
 
   if (state.status === 'loading') {
-    return <div className="nostr-event-preview-card nostr-event-preview-card--loading">Loading preview...</div>;
+    return (
+      <div className="nostr-event-preview-card nostr-event-preview-card--loading">
+        Loading preview...
+      </div>
+    );
   }
 
   if (state.status === 'error' || !state.event) {
-    return <div className="nostr-event-preview-card nostr-event-preview-card--error">Reference unavailable.</div>;
+    return (
+      <div className="nostr-event-preview-card nostr-event-preview-card--error">
+        Reference unavailable.
+      </div>
+    );
   }
 
   const event = state.event;
@@ -138,7 +150,9 @@ export function ReferencePreview({ target, apiBase, hrefTarget }: ReferencePrevi
   return (
     <a className="nostr-event-preview-card" href={`/nostr/${encodeURIComponent(routeId)}`}>
       <div className="nostr-event-preview-title">{title}</div>
-      <div className="nostr-event-preview-meta">{authorLabel} · {formatTime(event.created_at)}</div>
+      <div className="nostr-event-preview-meta">
+        {authorLabel} · {formatTime(event.created_at)}
+      </div>
       {summary && <div className="nostr-event-preview-body">{summary}</div>}
     </a>
   );

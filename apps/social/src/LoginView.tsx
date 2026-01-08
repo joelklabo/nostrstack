@@ -344,6 +344,7 @@ export function LoginView() {
                 placeholder="nsec1..."
                 value={nsec}
                 onChange={(e) => setNsec(e.target.value)}
+                // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional for modal/form UX
                 autoFocus
               />
             </div>
@@ -432,7 +433,7 @@ export function LoginView() {
                 <div className="nostrstack-dialog__grid">
                   <div className="nostrstack-dialog__qr">
                     {lnurlQr ? (
-                      <img src={lnurlQr} alt="LNURL-auth QR code" role="img" />
+                      <img src={lnurlQr} alt="LNURL-auth QR code" />
                     ) : (
                       <div style={{ padding: '2rem', textAlign: 'center' }}>QR_ERROR</div>
                     )}

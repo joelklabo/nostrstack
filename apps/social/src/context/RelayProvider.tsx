@@ -69,7 +69,8 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     const filter: Filter = { kinds: [10002], authors: [pubkey] };
 
     // Use bootstrap relays to find the user's relay list
-    pool.get(bootstrapRelays, filter)
+    pool
+      .get(bootstrapRelays, filter)
       .then((event) => {
         if (event) {
           const parsed = event.tags
@@ -91,7 +92,11 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => {
         setIsLoading(false);
-        try { pool.close(bootstrapRelays); } catch { /* ignore */ }
+        try {
+          pool.close(bootstrapRelays);
+        } catch {
+          /* ignore */
+        }
       });
 
     return () => {
@@ -137,10 +142,14 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       const event = await signEvent(template);
       const pool = new SimplePool();
       // Publish to both the new list and the bootstrap list to ensure propagation
-      const publishRelays = [...new Set([...bootstrapRelays, ...userRelays.map(r => r.url)])];
-      
+      const publishRelays = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])];
+
       await Promise.allSettled(pool.publish(publishRelays, event));
-      try { pool.close(publishRelays); } catch { /* ignore */ }
+      try {
+        pool.close(publishRelays);
+      } catch {
+        /* ignore */
+      }
     } catch (e) {
       console.error('Failed to save relays:', e);
       setError('Failed to publish relay list.');
@@ -150,11 +159,9 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   // Merge user relays with bootstrap/defaults for the active list
   // Include _monitorVersion to re-filter when health changes (debounced)
   const activeRelays = useMemo(() => {
-    const merged = [...new Set([
-      ...bootstrapRelays,
-      ...userRelays.map((r) => r.url)
-    ])];
-    return merged.filter(url => relayMonitor.isHealthy(url));
+    const merged = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])];
+    return merged.filter((url) => relayMonitor.isHealthy(url));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- _monitorVersion intentionally triggers re-filter on health changes
   }, [bootstrapRelays, userRelays, _monitorVersion]);
 
   const value: RelayContextValue = {
@@ -167,9 +174,5 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     error
   };
 
-  return (
-    <RelayContext.Provider value={value}>
-      {children}
-    </RelayContext.Provider>
-  );
+  return <RelayContext.Provider value={value}>{children}</RelayContext.Provider>;
 }

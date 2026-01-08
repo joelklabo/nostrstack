@@ -5,15 +5,15 @@ const meta = {
   title: 'UI/Alert',
   component: Alert,
   parameters: {
-    layout: 'centered',
+    layout: 'centered'
   },
   tags: ['autodocs'],
   argTypes: {
     tone: {
       control: 'select',
-      options: ['info', 'success', 'warning', 'danger'],
-    },
-  },
+      options: ['info', 'success', 'warning', 'danger']
+    }
+  }
 } satisfies Meta<typeof Alert>;
 
 export default meta;
@@ -23,32 +23,32 @@ export const Info: Story = {
   args: {
     tone: 'info',
     title: 'Information',
-    children: 'This is an informational alert.',
-  },
+    children: 'This is an informational alert.'
+  }
 };
 
 export const Success: Story = {
   args: {
     tone: 'success',
     title: 'Success',
-    children: 'Operation completed successfully.',
-  },
+    children: 'Operation completed successfully.'
+  }
 };
 
 export const Warning: Story = {
   args: {
     tone: 'warning',
     title: 'Warning',
-    children: 'Please be careful with this action.',
-  },
+    children: 'Please be careful with this action.'
+  }
 };
 
 export const Danger: Story = {
   args: {
     tone: 'danger',
     title: 'Error',
-    children: 'Something went wrong.',
-  },
+    children: 'Something went wrong.'
+  }
 };
 
 export const WithRetry: Story = {
@@ -57,19 +57,19 @@ export const WithRetry: Story = {
     title: 'Connection Lost',
     children: 'Unable to connect to relay.',
     onRetry: () => alert('Retrying...'),
-    retryLabel: 'Reconnect',
-  },
+    retryLabel: 'Reconnect'
+  }
 };
 
 /**
  * Accessibility Example: ARIA Live Regions
- * 
+ *
  * The Alert component uses appropriate ARIA live regions:
  * - role="alert" for danger/error alerts (assertive)
  * - role="status" for info/success (polite)
  * - Screen readers announce message immediately
  * - Focus remains where user was working
- * 
+ *
  * Different tones map to appropriate urgency:
  * - Danger: aria-live="assertive" (interrupts)
  * - Warning: aria-live="assertive" (interrupts)
@@ -79,29 +79,30 @@ export const AccessibilityDemo: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
       <Alert tone="info" title="Info">
-        This uses role="status" and aria-live="polite"
+        This uses role=&quot;status&quot; and aria-live=&quot;polite&quot;
       </Alert>
       <Alert tone="success" title="Success">
-        Also uses aria-live="polite" (non-interrupting)
+        Also uses aria-live=&quot;polite&quot; (non-interrupting)
       </Alert>
       <Alert tone="danger" title="Error">
-        This uses role="alert" and aria-live="assertive" (interrupting)
+        This uses role=&quot;alert&quot; and aria-live=&quot;assertive&quot; (interrupting)
       </Alert>
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Demonstrates proper ARIA live region usage for alerts. Different tones use appropriate assertiveness levels for screen readers. Error and warning alerts interrupt immediately (assertive), while info and success wait for a pause (polite).',
-      },
+        story:
+          'Demonstrates proper ARIA live region usage for alerts. Different tones use appropriate assertiveness levels for screen readers. Error and warning alerts interrupt immediately (assertive), while info and success wait for a pause (polite).'
+      }
     },
     a11y: {
       config: {
         rules: [
           { id: 'aria-roles', enabled: true },
-          { id: 'aria-valid-attr-value', enabled: true },
-        ],
-      },
-    },
-  },
+          { id: 'aria-valid-attr-value', enabled: true }
+        ]
+      }
+    }
+  }
 };

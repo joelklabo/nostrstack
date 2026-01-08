@@ -1,5 +1,5 @@
 import { SendSats, useAuth, useFeed, useNostrQuery, useProfile } from '@nostrstack/react';
-import { Alert , PostSkeleton , Skeleton } from '@nostrstack/ui';
+import { Alert, PostSkeleton, Skeleton } from '@nostrstack/ui';
 import { nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -385,8 +385,8 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                 <div className="profile-tip-empty">
                   <div className="profile-tip-empty-title">Tipping is currently unavailable</div>
                   <div className="profile-tip-empty-body">
-                    This user hasn't linked a Lightning address to their profile yet. Once they do,
-                    you'll be able to send them sats and zaps directly!
+                    This user hasn&apos;t linked a Lightning address to their profile yet. Once they
+                    do, you&apos;ll be able to send them sats and zaps directly!
                   </div>
                 </div>
               )}

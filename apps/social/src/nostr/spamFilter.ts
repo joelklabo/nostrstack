@@ -22,6 +22,7 @@ export function calculateSpamScore(event: Event): SpamScore {
   }
 
   // 2. Excessive emoji/special characters
+  // eslint-disable-next-line security/detect-unsafe-regex -- Simple Unicode range match, not user-controlled
   const emojiCount = (event.content.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
   const emojiRatio = emojiCount / Math.max(1, event.content.length);
   if (emojiRatio > 0.3 && event.content.length > 10) {
@@ -40,7 +41,7 @@ export function calculateSpamScore(event: Event): SpamScore {
   const urlPattern = /https?:\/\/[^\s]+/gi;
   const urls = event.content.match(urlPattern) || [];
   const urlRatio = urls.length / Math.max(1, event.content.split(/\s+/).length);
-  
+
   if (urls.length > 5) {
     score += 30;
     reasons.push('Excessive URLs');
@@ -54,7 +55,7 @@ export function calculateSpamScore(event: Event): SpamScore {
     /\b(crypto|nft|invest|pump|moon|lambo)\b.*\b(guaranteed|profit|rich|money)\b/i,
     /\b(click here|check this out|limited time|act now)\b/i,
     /\b(won|winner|congratulations).*\b(prize|reward|claim)\b/i,
-    /\b(bitcoin|btc|eth).*\b(giveaway|airdrop|free)\b/i,
+    /\b(bitcoin|btc|eth).*\b(giveaway|airdrop|free)\b/i
   ];
 
   for (const pattern of spamPhrases) {
@@ -72,7 +73,7 @@ export function calculateSpamScore(event: Event): SpamScore {
   }
 
   // 7. Suspicious tag patterns (excessive mentions)
-  const pTags = event.tags.filter(t => t[0] === 'p');
+  const pTags = event.tags.filter((t) => t[0] === 'p');
   if (pTags.length > 20) {
     score += 20;
     reasons.push('Excessive mentions');
@@ -93,7 +94,7 @@ export function calculateSpamScore(event: Event): SpamScore {
   return {
     score,
     reasons,
-    isSpam,
+    isSpam
   };
 }
 
@@ -101,7 +102,7 @@ export function calculateSpamScore(event: Event): SpamScore {
  * Filter spam events from a list
  */
 export function filterSpam(events: Event[], threshold = 50): Event[] {
-  return events.filter(event => {
+  return events.filter((event) => {
     const { score } = calculateSpamScore(event);
     return score < threshold;
   });
@@ -117,7 +118,7 @@ export function getSpamStats(events: Event[]): {
   spamRate: number;
 } {
   const total = events.length;
-  const spam = events.filter(e => calculateSpamScore(e).isSpam).length;
+  const spam = events.filter((e) => calculateSpamScore(e).isSpam).length;
   const clean = total - spam;
   const spamRate = total > 0 ? spam / total : 0;
 

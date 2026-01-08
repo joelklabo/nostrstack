@@ -120,6 +120,7 @@ export const NostrEventCard = memo(function NostrEventCard({
   return (
     <article
       className={rootClasses}
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Keyboard navigable cards for accessibility
       tabIndex={0}
       aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
     >

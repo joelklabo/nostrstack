@@ -23,7 +23,7 @@ export function useContactList() {
       const event = await getCached({ kinds: [3], authors: [pubkey] });
       if (event) {
         setContactEvent(event);
-        const pTags = event.tags.filter(t => t[0] === 'p').map(t => t[1]);
+        const pTags = event.tags.filter((t) => t[0] === 'p').map((t) => t[1]);
         setContacts(pTags);
       } else {
         setContacts([]);
@@ -34,56 +34,66 @@ export function useContactList() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getCached reference is stable
   }, [pubkey, relays, pool]);
 
   useEffect(() => {
     fetchContacts();
   }, [fetchContacts]);
 
-  const follow = useCallback(async (targetPubkey: string) => {
-    if (!pubkey) throw new Error('Not logged in');
-    if (contacts.includes(targetPubkey)) return;
+  const follow = useCallback(
+    async (targetPubkey: string) => {
+      if (!pubkey) throw new Error('Not logged in');
+      if (contacts.includes(targetPubkey)) return;
 
-    const newTags = contactEvent ? [...contactEvent.tags] : [];
-    // Check if already exists (double safety)
-    if (!newTags.some(t => t[0] === 'p' && t[1] === targetPubkey)) {
+      const newTags = contactEvent ? [...contactEvent.tags] : [];
+      // Check if already exists (double safety)
+      if (!newTags.some((t) => t[0] === 'p' && t[1] === targetPubkey)) {
         newTags.push(['p', targetPubkey, '', '']);
-    }
+      }
 
-    const template = {
-      kind: 3,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: newTags,
-      content: contactEvent ? contactEvent.content : '',
-    };
+      const template = {
+        kind: 3,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: newTags,
+        content: contactEvent ? contactEvent.content : ''
+      };
 
-    const signed = await signEvent(template);
-    await Promise.any(pool.publish(relays, signed));
-    saveEvent(signed).catch(console.warn);
-    setContactEvent(signed);
-    setContacts(newTags.filter(t => t[0] === 'p').map(t => t[1]));
-  }, [pubkey, contacts, contactEvent, signEvent, relays, pool]);
+      const signed = await signEvent(template);
+      await Promise.any(pool.publish(relays, signed));
+      saveEvent(signed).catch(console.warn);
+      setContactEvent(signed);
+      setContacts(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
+    },
+    [pubkey, contacts, contactEvent, signEvent, relays, pool]
+  );
 
-  const unfollow = useCallback(async (targetPubkey: string) => {
-    if (!pubkey || !contactEvent) return;
-    
-    const newTags = contactEvent.tags.filter(t => !(t[0] === 'p' && t[1] === targetPubkey));
-    
-    const template = {
-      kind: 3,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: newTags,
-      content: contactEvent.content,
-    };
+  const unfollow = useCallback(
+    async (targetPubkey: string) => {
+      if (!pubkey || !contactEvent) return;
 
-    const signed = await signEvent(template);
-    await Promise.any(pool.publish(relays, signed));
-    saveEvent(signed).catch(console.warn);
-    setContactEvent(signed);
-    setContacts(newTags.filter(t => t[0] === 'p').map(t => t[1]));
-  }, [pubkey, contactEvent, signEvent, relays, pool]);
+      const newTags = contactEvent.tags.filter((t) => !(t[0] === 'p' && t[1] === targetPubkey));
 
-  const isFollowing = useCallback((targetPubkey: string) => contacts.includes(targetPubkey), [contacts]);
+      const template = {
+        kind: 3,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: newTags,
+        content: contactEvent.content
+      };
+
+      const signed = await signEvent(template);
+      await Promise.any(pool.publish(relays, signed));
+      saveEvent(signed).catch(console.warn);
+      setContactEvent(signed);
+      setContacts(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
+    },
+    [pubkey, contactEvent, signEvent, relays, pool]
+  );
+
+  const isFollowing = useCallback(
+    (targetPubkey: string) => contacts.includes(targetPubkey),
+    [contacts]
+  );
 
   return { contacts, loading, follow, unfollow, isFollowing, refresh: fetchContacts };
 }
