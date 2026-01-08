@@ -64,8 +64,9 @@ jobs:
 
       - name: Deploy to Container App
         # Update existing container app to preserve custom domain config
+        # Note: Azure resource is still named nostrstack-gallery
         run: |
           az containerapp update \
-            -n nostrstack-social \
+            -n nostrstack-gallery \
             -g nostrstack-rg \
             --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
