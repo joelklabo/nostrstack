@@ -8,7 +8,15 @@ import {
   type NostrstackThemeMode,
   themeToCssVars
 } from '@nostrstack/widgets';
-import { createContext, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  type CSSProperties,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 
 import type { ApiBaseResolution } from './api-base';
 
@@ -38,9 +46,9 @@ export type NostrstackConfig = {
 
 const NostrstackContext = createContext<NostrstackConfig>({});
 
-export type NostrstackProviderProps = React.PropsWithChildren<NostrstackConfig> & {
+export type NostrstackProviderProps = PropsWithChildren<NostrstackConfig> & {
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 };
 
 type StoredNwcConfig = {
@@ -80,10 +88,10 @@ export function NostrstackProvider({
     [config, storedNwc]
   );
   const legacy = config.theme ?? {};
-  React.useEffect(() => {
+  useEffect(() => {
     ensureNostrstackEmbedStyles();
   }, []);
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     const handleStorage = (event: StorageEvent) => {
       if (event.key === NWC_STORAGE_KEY) {
@@ -115,7 +123,7 @@ export function NostrstackProvider({
     ? createNostrstackBrandTheme({ preset: config.brandPreset, mode: mode ?? 'light' })
     : undefined;
 
-  const themeVars: React.CSSProperties = {
+  const themeVars: CSSProperties = {
     ...themeToCssVars(baseTheme),
     ...(brandTheme ? themeToCssVars(brandTheme) : {}),
     ...themeToCssVars(config.nostrstackTheme ?? {}),
@@ -125,7 +133,7 @@ export function NostrstackProvider({
     '--ns-surface': 'var(--nostrstack-color-surface)',
     '--ns-border': 'var(--nostrstack-color-border)',
     ...style
-  } as React.CSSProperties;
+  } as CSSProperties;
 
   const mergedClassName = ['nostrstack', 'nostrstack-theme', className].filter(Boolean).join(' ');
 
