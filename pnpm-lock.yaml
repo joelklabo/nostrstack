@@ -547,8 +547,8 @@ importers:
         specifier: 22.7.5
         version: 22.7.5
       fastify:
-        specifier: 5.3.0
-        version: 5.3.0
+        specifier: 5.3.2
+        version: 5.3.2
       typescript:
         specifier: 5.6.2
         version: 5.6.2
@@ -6381,10 +6381,10 @@ packages:
         integrity: sha512-90pjTuPGrfVKtdpLeLzND5nyC4woXZN5VadiNQCicj/iJU4viNHKhsAnb7jmv1vu2IzkLXyBiCzdWuzeXgQ5Ug==
       }
 
-  fastify@5.3.0:
+  fastify@5.3.2:
     resolution:
       {
-        integrity: sha512-vDpCJa4KRkHrdDMpDNtyPaIDi/ptCwoJ0M8RiefuIMvyXTgG63xYGe9DYYiCpydjh0ETIaLoSyKBNKkh7ew1eA==
+        integrity: sha512-AIPqBgtqBAwkOkrnwesEE+dOyU30dQ4kh7udxeGVR05CRGwubZx+p2H8P0C4cRnQT0+EPK4VGea2DTL2RtWttg==
       }
 
   fastq@1.19.1:
@@ -15917,7 +15917,7 @@ snapshots:
       semver: 7.7.3
       toad-cache: 3.7.0
 
-  fastify@5.3.0:
+  fastify@5.3.2:
     dependencies:
       '@fastify/ajv-compiler': 4.0.5
       '@fastify/error': 4.2.0
