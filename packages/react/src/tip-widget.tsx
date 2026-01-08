@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountTipWidget } from '@nostrstack/widgets';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 import { parseLnAddress } from './utils';
@@ -18,8 +18,18 @@ export type TipWidgetProps = {
   baseUrl?: string;
   host?: string;
   className?: string;
-  onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void | Promise<void>;
-  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
+  onInvoice?: (info: {
+    pr: string;
+    providerRef: string | null;
+    amountSats: number;
+  }) => void | Promise<void>;
+  onPaid?: (info: {
+    pr: string;
+    providerRef: string | null;
+    amountSats: number;
+    itemId: string;
+    metadata?: unknown;
+  }) => void;
 };
 
 export function TipWidget({
@@ -35,7 +45,7 @@ export function TipWidget({
   host,
   className,
   onInvoice,
-  onPaid,
+  onPaid
 }: TipWidgetProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
@@ -45,7 +55,7 @@ export function TipWidget({
     return {
       username: parsed?.username ?? 'anonymous',
       host: host ?? parsed?.domain ?? cfg.host,
-      baseUrl: baseUrl ?? cfg.baseUrl,
+      baseUrl: baseUrl ?? cfg.baseUrl
     };
   }, [lnAddress, baseUrl, host, cfg.lnAddress, cfg.baseUrl, cfg.host]);
 
@@ -66,7 +76,7 @@ export function TipWidget({
       host: resolved.host,
       metadata,
       onInvoice,
-      onPaid,
+      onPaid
     });
 
     return () => {
@@ -89,9 +99,8 @@ export function TipWidget({
     showFeed,
     metadata,
     onInvoice,
-    onPaid,
+    onPaid
   ]);
 
   return <div ref={ref} className={className} data-nostrstack-tip-widget />;
 }
-

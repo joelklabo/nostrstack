@@ -5,18 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite
 import { AuthProvider, useAuth } from './auth';
 
 vi.mock('nostr-tools', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importOriginal requires inline import() syntax
   const mod = await importOriginal<typeof import('nostr-tools')>();
   return {
     ...mod,
     getPublicKey: vi.fn(),
-    finalizeEvent: vi.fn(),
+    finalizeEvent: vi.fn()
   };
 });
 
 vi.mock('nostr-tools/utils', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importOriginal requires inline import() syntax
   const mod = await importOriginal<typeof import('nostr-tools/utils')>();
   return {
-    ...mod,
+    ...mod
   };
 });
 
@@ -26,11 +28,11 @@ const mockPubkey = getPublicKey(nip19.decode(mockNsec).data as Uint8Array);
 // Mock window.nostr for NIP-07 tests
 const mockWindowNostr = {
   getPublicKey: vi.fn(() => Promise.resolve(mockPubkey)),
-  signEvent: vi.fn((event) => Promise.resolve({ ...event, id: 'mockedId', sig: 'mockedSig' })),
+  signEvent: vi.fn((event) => Promise.resolve({ ...event, id: 'mockedId', sig: 'mockedSig' }))
 };
 Object.defineProperty(window, 'nostr', {
   writable: true,
-  value: mockWindowNostr,
+  value: mockWindowNostr
 });
 
 describe('AuthProvider and useAuth', () => {
@@ -41,11 +43,15 @@ describe('AuthProvider and useAuth', () => {
     // Reset window.nostr to the mocked version for each test
     Object.defineProperty(window, 'nostr', {
       writable: true,
-      value: mockWindowNostr,
+      value: mockWindowNostr
     });
     // Mock nostr-tools functions
     (getPublicKey as Mock).mockReturnValue(mockPubkey);
-    (finalizeEvent as Mock).mockImplementation((template: EventTemplate) => ({ ...template, id: 'mockedId', sig: 'mockedSig' }));
+    (finalizeEvent as Mock).mockImplementation((template: EventTemplate) => ({
+      ...template,
+      id: 'mockedId',
+      sig: 'mockedSig'
+    }));
   });
 
   afterEach(() => {
@@ -69,7 +75,9 @@ describe('AuthProvider and useAuth', () => {
 
   it('logs in with NIP-07 successfully', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
 
     await act(async () => {
       if (result.current) {
@@ -92,14 +100,17 @@ describe('AuthProvider and useAuth', () => {
     Object.defineProperty(window, 'nostr', { writable: true, value: undefined });
     localStorage.setItem('nostrstack.auth.mode', 'nip07'); // Trigger polling
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(100); await Promise.resolve(); }); // Ensure initial useEffect has run
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+      await Promise.resolve();
+    }); // Ensure initial useEffect has run
 
     await act(async () => {
       vi.advanceTimersByTime(2000); // Give enough time for NIP-07 check timeout (100ms * 10+ attempts)
       await Promise.resolve(); // Wait for promise microtasks
     });
     // Need to await act for the state update to propagate
-    await act(async () => {}); 
+    await act(async () => {});
     expect(result.current.error).toBe('NIP-07 extension not found');
     expect(result.current.mode).toBe('guest');
   });
@@ -107,7 +118,9 @@ describe('AuthProvider and useAuth', () => {
   it('NIP-07 login fails gracefully if getPublicKey throws', async () => {
     (window.nostr!.getPublicKey as Mock).mockRejectedValueOnce(new Error('User denied'));
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
 
     await act(async () => {
       if (result.current) {
@@ -126,7 +139,9 @@ describe('AuthProvider and useAuth', () => {
 
   it('logs in with NSEC successfully', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
 
     await act(async () => {
       if (result.current) {
@@ -146,11 +161,15 @@ describe('AuthProvider and useAuth', () => {
 
   it('NSEC login fails with invalid nsec', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
 
     await act(async () => {
       if (result.current) {
-        await expect(result.current.loginWithNsec('invalid')).rejects.toThrow(/Wrong string length/);
+        await expect(result.current.loginWithNsec('invalid')).rejects.toThrow(
+          /Wrong string length/
+        );
         vi.advanceTimersByTime(1);
         await Promise.resolve();
       }
@@ -164,7 +183,9 @@ describe('AuthProvider and useAuth', () => {
 
   it('logs out successfully', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
 
     await act(async () => {
       if (result.current) {
@@ -192,7 +213,9 @@ describe('AuthProvider and useAuth', () => {
 
   it('signs event with NIP-07', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
     await act(async () => {
       if (result.current) {
         await result.current.loginWithNip07();
@@ -215,7 +238,9 @@ describe('AuthProvider and useAuth', () => {
 
   it('signs event with NSEC', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    await act(async () => { vi.advanceTimersByTime(0); });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
     await act(async () => {
       if (result.current) {
         await result.current.loginWithNsec(mockNsec);
@@ -237,12 +262,16 @@ describe('AuthProvider and useAuth', () => {
 
   it('signEvent throws if not authenticated', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider }); // starts as guest
-    await act(async () => { vi.advanceTimersByTime(0); });
-    
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
+
     const mockEventTemplate = { kind: 1, content: 'test', tags: [], created_at: 123 };
     await act(async () => {
       if (result.current) {
-        await expect(result.current.signEvent(mockEventTemplate)).rejects.toThrow('No signer available');
+        await expect(result.current.signEvent(mockEventTemplate)).rejects.toThrow(
+          'No signer available'
+        );
         vi.advanceTimersByTime(1);
         await Promise.resolve();
       }

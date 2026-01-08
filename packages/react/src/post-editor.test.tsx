@@ -6,14 +6,15 @@ import { PostEditor } from './post-editor';
 
 // Mock finalizeEvent from nostr-tools
 vi.mock('nostr-tools', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importOriginal requires inline import() syntax
   const mod = await importOriginal<typeof import('nostr-tools')>();
   return {
     ...mod,
     finalizeEvent: vi.fn(),
     SimplePool: vi.fn(() => ({
       publish: vi.fn(() => [Promise.resolve()]),
-      close: vi.fn(),
-    })),
+      close: vi.fn()
+    }))
   };
 });
 
@@ -23,7 +24,7 @@ const mockUseAuth = vi.fn();
 
 vi.mock('./auth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => children, // Simple passthrough
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children // Simple passthrough
 }));
 
 describe('PostEditor', () => {
@@ -33,7 +34,7 @@ describe('PostEditor', () => {
     (finalizeEvent as Mock).mockImplementation((template: EventTemplate) => ({
       ...template,
       id: 'mockedEventId',
-      sig: 'mockedSig',
+      sig: 'mockedSig'
     }));
   });
 
@@ -47,7 +48,7 @@ describe('PostEditor', () => {
       pubkey: 'mockedPubkey',
       signEvent: mockSignEvent,
       mode: 'nip07',
-      error: null,
+      error: null
     });
     render(<PostEditor />);
     expect(screen.getByPlaceholderText('WHAT ARE YOU HACKING ON?...')).toBeInTheDocument();
@@ -59,7 +60,7 @@ describe('PostEditor', () => {
       pubkey: null,
       signEvent: mockSignEvent,
       mode: 'guest',
-      error: null,
+      error: null
     });
     render(<PostEditor />);
     expect(screen.getByText('ACCESS_DENIED: User not authenticated.')).toBeInTheDocument();
@@ -71,7 +72,7 @@ describe('PostEditor', () => {
       pubkey: null,
       signEvent: mockSignEvent,
       mode: 'guest',
-      error: 'Auth failed',
+      error: 'Auth failed'
     });
     render(<PostEditor />);
     expect(screen.getByText('[ERROR]: Auth failed')).toBeInTheDocument();
@@ -87,10 +88,10 @@ describe('PostEditor', () => {
         created_at: 123,
         pubkey: 'mockedPubkey',
         id: 'mockedEventId',
-        sig: 'mockedSig',
+        sig: 'mockedSig'
       }),
       mode: 'nip07',
-      error: null,
+      error: null
     });
     render(<PostEditor />);
 
@@ -104,10 +105,10 @@ describe('PostEditor', () => {
     await act(async () => {
       fireEvent.click(publishButton);
     });
-    
+
     // Intermediate status "STATUS: Signing event..." might be skipped if signEvent resolves instantly.
     // We advance timers to trigger the final success state.
-    
+
     await act(async () => {
       vi.advanceTimersByTime(1000);
     });
@@ -122,7 +123,7 @@ describe('PostEditor', () => {
       pubkey: 'mockedPubkey',
       signEvent: mockSignEvent,
       mode: 'nip07',
-      error: null,
+      error: null
     });
     render(<PostEditor />);
 
@@ -140,7 +141,7 @@ describe('PostEditor', () => {
       pubkey: 'mockedPubkey',
       signEvent: mockSignEvent.mockRejectedValueOnce(new Error('Signing failed')),
       mode: 'nip07',
-      error: null,
+      error: null
     });
     render(<PostEditor />);
 
@@ -171,10 +172,10 @@ describe('PostEditor', () => {
         created_at: 123,
         pubkey: 'mockedPubkey',
         id: 'mockedEventId',
-        sig: 'mockedSig',
+        sig: 'mockedSig'
       }),
       mode: 'nip07',
-      error: null,
+      error: null
     });
     render(<PostEditor />);
 
@@ -184,7 +185,7 @@ describe('PostEditor', () => {
     });
 
     const publishButton = screen.getByText('PUBLISH_EVENT');
-    
+
     // We can't easily test the disabled state during async execution without a controlled promise.
     // Simplifying to just check it calls the function.
     await act(async () => {

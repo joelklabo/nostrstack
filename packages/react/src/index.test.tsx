@@ -1,8 +1,19 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BlockchainStats, Comments, CommentTipWidget, NostrProfileWidget, NostrstackProvider, ShareButton, ShareWidget, SupportSection, TipActivityFeed, TipButton, TipWidget } from './index';
+import {
+  BlockchainStats,
+  Comments,
+  CommentTipWidget,
+  NostrProfileWidget,
+  NostrstackProvider,
+  ShareButton,
+  ShareWidget,
+  SupportSection,
+  TipActivityFeed,
+  TipButton,
+  TipWidget
+} from './index';
 
 vi.mock('@nostrstack/widgets', () => {
   return {
@@ -31,7 +42,7 @@ vi.mock('@nostrstack/widgets', () => {
     createNostrstackBrandTheme: vi.fn(() => ({})),
     ensureNostrstackEmbedStyles: vi.fn(),
     ensureNostrstackRoot: vi.fn(),
-    themeToCssVars: vi.fn(() => ({})),
+    themeToCssVars: vi.fn(() => ({}))
   };
 });
 
@@ -40,10 +51,10 @@ vi.mock('nostr-tools', () => {
     relayInit: vi.fn(() => ({
       connect: vi.fn().mockResolvedValue(undefined),
       publish: vi.fn(() => ({
-        on: vi.fn(),
+        on: vi.fn()
       })),
-      close: vi.fn(),
-    })),
+      close: vi.fn()
+    }))
   };
 });
 
@@ -55,7 +66,7 @@ const {
   mountBlockchainStats,
   mountNostrProfile,
   mountCommentTipWidget,
-  mountShareButton,
+  mountShareButton
 } = await import('@nostrstack/widgets');
 
 describe('blog-kit components', () => {
@@ -67,12 +78,13 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider lnAddress="alice@example.com">
         <TipButton label="Tip" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountTipButton).toHaveBeenCalled();
     });
-    const call = (mountTipButton as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+    const call = (mountTipButton as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as {
       username: string;
       host: string;
     };
@@ -84,12 +96,13 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider lnAddress="alice@example.com">
         <TipWidget itemId="post-123" presetAmountsSats={[5, 10, 21]} defaultAmountSats={10} />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountTipWidget).toHaveBeenCalled();
     });
-    const call = (mountTipWidget as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+    const call = (mountTipWidget as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as {
       username: string;
       itemId: string;
       presetAmountsSats: number[];
@@ -107,7 +120,7 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider lnAddress="alice@example.com">
         <TipActivityFeed itemId="post-123" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountTipFeed).toHaveBeenCalled();
@@ -122,14 +135,15 @@ describe('blog-kit components', () => {
 
   it('mounts comments with thread id', async () => {
     render(
-      <NostrstackProvider relays={["wss://relay.test"]}>
+      <NostrstackProvider relays={['wss://relay.test']}>
         <Comments threadId="post-123" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountCommentWidget).toHaveBeenCalled();
     });
-    const call = (mountCommentWidget as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+    const call = (mountCommentWidget as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as {
       threadId: string;
       relays: string[];
     };
@@ -141,12 +155,13 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider baseUrl="http://localhost:3001">
         <BlockchainStats title="Chain" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountBlockchainStats).toHaveBeenCalled();
     });
-    const call = (mountBlockchainStats as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+    const call = (mountBlockchainStats as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as {
       baseURL?: string;
       title?: string;
     };
@@ -158,12 +173,13 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider>
         <NostrProfileWidget identifier="alice@example.com" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountNostrProfile).toHaveBeenCalled();
     });
-    const call = (mountNostrProfile as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+    const call = (mountNostrProfile as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as {
       identifier?: string;
     };
     expect(call.identifier).toBe('alice@example.com');
@@ -174,13 +190,16 @@ describe('blog-kit components', () => {
     await waitFor(() => {
       expect(mountShareButton).toHaveBeenCalled();
     });
-    const call = (mountShareButton as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as { url: string; title: string };
+    const call = (mountShareButton as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as { url: string; title: string };
     expect(call.url).toBe('https://example.com/post');
     expect(call.title).toBe('Post');
   });
 
   it('renders share widget without relays', async () => {
-    render(<ShareWidget itemId="post-123" url="https://example.com/post" title="Post" relays={[]} />);
+    render(
+      <ShareWidget itemId="post-123" url="https://example.com/post" title="Post" relays={[]} />
+    );
     await screen.findByText('Shares');
     await screen.findByText(/No relays configured/i);
   });
@@ -189,12 +208,13 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider lnAddress="alice@example.com" relays={['wss://relay.test']}>
         <CommentTipWidget itemId="post-123" layout="compact" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     await waitFor(() => {
       expect(mountCommentTipWidget).toHaveBeenCalled();
     });
-    const call = (mountCommentTipWidget as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+    const call = (mountCommentTipWidget as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][1] as {
       username: string;
       itemId: string;
       layout: string;
@@ -209,8 +229,13 @@ describe('blog-kit components', () => {
   it('renders support section with sub-components', async () => {
     render(
       <NostrstackProvider lnAddress="alice@example.com">
-        <SupportSection title="Support Me" itemId="post-123" shareUrl="https://example.com" shareTitle="Post" />
-      </NostrstackProvider>,
+        <SupportSection
+          title="Support Me"
+          itemId="post-123"
+          shareUrl="https://example.com"
+          shareTitle="Post"
+        />
+      </NostrstackProvider>
     );
     expect(screen.getByText('Support Me')).toBeTruthy();
     // SupportSection uses sub-components TipWidget, ShareButton, Comments
@@ -224,8 +249,14 @@ describe('blog-kit components', () => {
   it('renders support section in compact layout', async () => {
     render(
       <NostrstackProvider lnAddress="alice@example.com">
-        <SupportSection title="Support Me" itemId="post-123" layout="compact" shareUrl="https://example.com" shareTitle="Post" />
-      </NostrstackProvider>,
+        <SupportSection
+          title="Support Me"
+          itemId="post-123"
+          layout="compact"
+          shareUrl="https://example.com"
+          shareTitle="Post"
+        />
+      </NostrstackProvider>
     );
     expect(screen.getByText('Support Me')).toBeTruthy();
     await waitFor(() => {
@@ -238,7 +269,7 @@ describe('blog-kit components', () => {
     render(
       <NostrstackProvider>
         <SupportSection itemId="post-123" shareUrl="" />
-      </NostrstackProvider>,
+      </NostrstackProvider>
     );
     // Missing lnAddress
     expect(screen.getByText('Tips unavailable')).toBeTruthy();

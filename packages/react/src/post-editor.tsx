@@ -12,7 +12,13 @@ export interface PostEditorProps {
   autoFocus?: boolean;
 }
 
-export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, autoFocus }: PostEditorProps) {
+export function PostEditor({
+  parentEvent,
+  onSuccess,
+  onCancel,
+  placeholder,
+  autoFocus
+}: PostEditorProps) {
   const { pubkey, signEvent, mode, error } = useAuth();
   const cfg = useNostrstackConfig();
   const [content, setContent] = useState('');
@@ -50,24 +56,24 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
       if (parentEvent) {
         // NIP-10: Reply tags
         // Find existing root (e marker with root, or first e tag if no markers)
-        const rootTag = parentEvent.tags.find(t => t[0] === 'e' && t[3] === 'root');
-        
+        const rootTag = parentEvent.tags.find((t) => t[0] === 'e' && t[3] === 'root');
+
         // If there's a root, preserve it. If not, the parent IS the root.
         const rootId = rootTag ? rootTag[1] : parentEvent.id;
-        
+
         if (rootId !== parentEvent.id) {
-            tags.push(['e', rootId, '', 'root']);
+          tags.push(['e', rootId, '', 'root']);
         }
         tags.push(['e', parentEvent.id, '', 'reply']);
 
         // p tags: author of parent + anyone mentioned in parent
         const mentions = new Set<string>();
         mentions.add(parentEvent.pubkey);
-        parentEvent.tags.forEach(t => {
-            if (t[0] === 'p' && t[1]) mentions.add(t[1]);
+        parentEvent.tags.forEach((t) => {
+          if (t[0] === 'p' && t[1]) mentions.add(t[1]);
         });
-        mentions.forEach(p => {
-             if (p !== pubkey) tags.push(['p', p]);
+        mentions.forEach((p) => {
+          if (p !== pubkey) tags.push(['p', p]);
         });
       }
 
@@ -75,25 +81,27 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
         kind: 1, // Text note
         created_at: Math.floor(Date.now() / 1000),
         tags,
-        content: content.trim(),
+        content: content.trim()
       };
 
       const signedEvent = await signEvent(template);
       setPublishStatus(`STATUS: Event signed. ID: ${signedEvent.id.slice(0, 8)}... Publishing...`);
 
-      const relays = cfg.relays?.length 
-        ? cfg.relays 
+      const relays = cfg.relays?.length
+        ? cfg.relays
         : ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
-      
+
       const pool = new SimplePool();
       await Promise.any(pool.publish(relays, signedEvent));
       pool.close(relays);
-      
+
       setPublishStatus(`SUCCESS: Event published to relays.`);
       setContent('');
       onSuccess?.();
     } catch (err: unknown) {
-      setPublishStatus(`ERROR: Failed to publish: ${(err instanceof Error ? err.message : String(err))}`);
+      setPublishStatus(
+        `ERROR: Failed to publish: ${err instanceof Error ? err.message : String(err)}`
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -109,19 +117,27 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
   }
 
   return (
-    <div className="post-editor-container" role="form" aria-label={parentEvent ? 'Reply to note' : 'Create new note'}>
+    <div
+      className="post-editor-container"
+      role="form"
+      aria-label={parentEvent ? 'Reply to note' : 'Create new note'}
+    >
       <div className="editor-header">
-        <span className="editor-prompt" aria-hidden="true">[{mode.toUpperCase()}] {'>'}</span> {parentEvent ? 'Reply to note:' : 'Post a new note:'}
+        <span className="editor-prompt" aria-hidden="true">
+          [{mode.toUpperCase()}] {'>'}
+        </span>{' '}
+        {parentEvent ? 'Reply to note:' : 'Post a new note:'}
       </div>
       <textarea
         className="terminal-input editor-input"
         id="post-editor"
         name="post"
-        placeholder={placeholder ?? "WHAT ARE YOU HACKING ON?..."}
+        placeholder={placeholder ?? 'WHAT ARE YOU HACKING ON?...'}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={isPublishing}
         rows={4}
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional for modal/dialog UX
         autoFocus={autoFocus}
         aria-label={parentEvent ? 'Reply content' : 'Note content'}
         aria-describedby="editor-counter"
@@ -133,7 +149,7 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
         </div>
       )}
       <div className="editor-footer">
-        <div 
+        <div
           id="editor-counter"
           className={`editor-counter ${isOverLimit ? 'is-over-limit' : isNearLimit ? 'is-near-limit' : ''}`}
           role="status"
@@ -144,19 +160,19 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
         </div>
         <div className="editor-actions" role="group" aria-label="Editor actions">
           {onCancel && (
-            <button 
-              className="action-btn" 
-              onClick={onCancel} 
-              disabled={isPublishing} 
-              style={{marginRight: '0.5rem'}}
+            <button
+              className="action-btn"
+              onClick={onCancel}
+              disabled={isPublishing}
+              style={{ marginRight: '0.5rem' }}
               aria-label="Cancel editing"
             >
               CANCEL
             </button>
           )}
-          <button 
-            className="auth-btn" 
-            onClick={handlePublish} 
+          <button
+            className="auth-btn"
+            onClick={handlePublish}
             disabled={isPublishing || isOverLimit}
             aria-label={isPublishing ? 'Publishing note' : 'Publish note'}
             aria-busy={isPublishing}
@@ -167,7 +183,7 @@ export function PostEditor({ parentEvent, onSuccess, onCancel, placeholder, auto
         </div>
       </div>
       {publishStatus && (
-        <div 
+        <div
           className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : publishStatus.startsWith('SUCCESS') ? 'success-msg' : ''}`}
           role="status"
           aria-live="assertive"

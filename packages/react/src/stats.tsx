@@ -1,4 +1,4 @@
-import React, { createContext, type ReactNode,useCallback, useContext, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 
 interface StatsContextType {
   eventCount: number;
@@ -11,7 +11,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
   const [eventCount, setEventCount] = useState(0);
 
   const incrementEvents = useCallback((count = 1) => {
-    setEventCount(prev => prev + count);
+    setEventCount((prev) => prev + count);
   }, []);
 
   return (

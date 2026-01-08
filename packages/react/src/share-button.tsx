@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountShareButton } from '@nostrstack/widgets';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 
@@ -16,7 +16,15 @@ export type ShareButtonProps = {
   label?: string;
 };
 
-export function ShareButton({ url, title, lnAddress, relays, tag, className, label }: ShareButtonProps) {
+export function ShareButton({
+  url,
+  title,
+  lnAddress,
+  relays,
+  tag,
+  className,
+  label
+}: ShareButtonProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,7 +39,7 @@ export function ShareButton({ url, title, lnAddress, relays, tag, className, lab
       lnAddress: lnAddress ?? cfg.lnAddress,
       relays: relays ?? cfg.relays,
       tag,
-      label,
+      label
     });
 
     return () => {

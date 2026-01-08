@@ -120,6 +120,7 @@ export function useNostrQuery(
         setLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- JSON.stringify for deep comparison of filters and relayList
     [enabled, JSON.stringify(relayList), JSON.stringify(filters), limit]
   );
 
@@ -134,6 +135,7 @@ export function useNostrQuery(
     if (enabled) {
       fetchEvents();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- enabled is captured via fetchEvents callback deps
   }, [fetchEvents, initialEvents]);
 
   const loadMore = useCallback(() => {

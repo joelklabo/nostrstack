@@ -47,8 +47,9 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
   };
 
   return (
-    <dialog 
-      ref={modalRef} 
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Modal backdrop click pattern
+    <dialog
+      ref={modalRef}
       className="reply-modal"
       onClick={handleBackdropClick}
       style={{
@@ -60,23 +61,29 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
         margin: 'auto'
       }}
     >
-      <div className="reply-modal-content" style={{
-        background: 'var(--color-canvas-default)',
-        border: '1px solid var(--color-border-default)',
-        borderRadius: '12px',
-        width: 'min(600px, 90vw)',
-        padding: '0',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-      }}>
-        <div className="reply-modal-header" style={{
-          padding: '1rem',
-          borderBottom: '1px solid var(--color-border-muted)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
+      <div
+        className="reply-modal-content"
+        style={{
+          background: 'var(--color-canvas-default)',
+          border: '1px solid var(--color-border-default)',
+          borderRadius: '12px',
+          width: 'min(600px, 90vw)',
+          padding: '0',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        <div
+          className="reply-modal-header"
+          style={{
+            padding: '1rem',
+            borderBottom: '1px solid var(--color-border-muted)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
           <h3 style={{ margin: 0, fontSize: '1rem' }}>Reply to note</h3>
-          <button 
+          <button
             onClick={handleClose}
             className="action-btn"
             aria-label="Close reply modal"
@@ -86,13 +93,15 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
           </button>
         </div>
         <div style={{ padding: '1rem' }}>
-          <PostEditor 
-            parentEvent={parentEvent} 
-            onSuccess={handleClose} 
+          {/* eslint-disable jsx-a11y/no-autofocus -- Modal opens with focus for UX */}
+          <PostEditor
+            parentEvent={parentEvent}
+            onSuccess={handleClose}
             onCancel={handleClose}
             placeholder="Write your reply..."
             autoFocus
           />
+          {/* eslint-enable jsx-a11y/no-autofocus */}
         </div>
       </div>
     </dialog>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createNostrstackBrandTheme,
@@ -8,7 +8,7 @@ import {
   type NostrstackThemeMode,
   themeToCssVars
 } from '@nostrstack/widgets';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 
 import type { ApiBaseResolution } from './api-base';
 
@@ -63,7 +63,12 @@ function readStoredNwcConfig(): StoredNwcConfig | null {
   }
 }
 
-export function NostrstackProvider({ children, className, style, ...config }: NostrstackProviderProps) {
+export function NostrstackProvider({
+  children,
+  className,
+  style,
+  ...config
+}: NostrstackProviderProps) {
   const [storedNwc, setStoredNwc] = useState<StoredNwcConfig | null>(() => readStoredNwcConfig());
   const value = useMemo(
     () => ({
@@ -106,8 +111,9 @@ export function NostrstackProvider({ children, className, style, ...config }: No
   };
 
   const mode = config.nostrstackTheme?.mode ?? config.themeMode;
-  const brandTheme =
-    config.brandPreset ? createNostrstackBrandTheme({ preset: config.brandPreset, mode: mode ?? 'light' }) : undefined;
+  const brandTheme = config.brandPreset
+    ? createNostrstackBrandTheme({ preset: config.brandPreset, mode: mode ?? 'light' })
+    : undefined;
 
   const themeVars: React.CSSProperties = {
     ...themeToCssVars(baseTheme),

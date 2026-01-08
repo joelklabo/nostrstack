@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountBlockchainStats } from '@nostrstack/widgets';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 

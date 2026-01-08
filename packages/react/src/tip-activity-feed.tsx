@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountTipFeed } from '@nostrstack/widgets';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 import { parseLnAddress } from './utils';
@@ -15,7 +15,14 @@ export type TipActivityFeedProps = {
   className?: string;
 };
 
-export function TipActivityFeed({ itemId, lnAddress, maxItems, baseUrl, host, className }: TipActivityFeedProps) {
+export function TipActivityFeed({
+  itemId,
+  lnAddress,
+  maxItems,
+  baseUrl,
+  host,
+  className
+}: TipActivityFeedProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -23,7 +30,7 @@ export function TipActivityFeed({ itemId, lnAddress, maxItems, baseUrl, host, cl
     const parsed = parseLnAddress(lnAddress ?? cfg.lnAddress);
     return {
       host: host ?? parsed?.domain ?? cfg.host,
-      baseUrl: baseUrl ?? cfg.baseUrl,
+      baseUrl: baseUrl ?? cfg.baseUrl
     };
   }, [lnAddress, baseUrl, host, cfg.lnAddress, cfg.baseUrl, cfg.host]);
 
@@ -36,7 +43,7 @@ export function TipActivityFeed({ itemId, lnAddress, maxItems, baseUrl, host, cl
       itemId,
       maxItems,
       baseURL: resolved.baseUrl,
-      host: resolved.host,
+      host: resolved.host
     });
 
     return () => {
@@ -51,4 +58,3 @@ export function TipActivityFeed({ itemId, lnAddress, maxItems, baseUrl, host, cl
 
   return <div ref={ref} className={className} data-nostrstack-tip-feed />;
 }
-

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountNostrProfile } from '@nostrstack/widgets';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 
@@ -14,7 +14,14 @@ export type NostrProfileProps = {
   className?: string;
 };
 
-export function NostrProfileWidget({ identifier, relays, baseUrl, host, title, className }: NostrProfileProps) {
+export function NostrProfileWidget({
+  identifier,
+  relays,
+  baseUrl,
+  host,
+  title,
+  className
+}: NostrProfileProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 

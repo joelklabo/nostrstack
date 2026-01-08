@@ -8,6 +8,7 @@ import { ReactionButton } from './reaction-button';
 vi.mock('./auth');
 vi.mock('./context');
 vi.mock('nostr-tools', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importOriginal requires inline import() syntax
   const actual = await importOriginal<typeof import('nostr-tools')>();
   return {
     ...actual,

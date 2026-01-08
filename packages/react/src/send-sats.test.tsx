@@ -9,20 +9,21 @@ const mockUseConfig = vi.fn();
 
 vi.mock('./auth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children
 }));
 
 vi.mock('./context', () => ({
   useNostrstackConfig: () => mockUseConfig(),
-  NostrstackProvider: ({ children }: { children: React.ReactNode }) => children,
+  NostrstackProvider: ({ children }: { children: React.ReactNode }) => children
 }));
 
 vi.mock('./lnurl', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- vi.importOriginal requires inline import() syntax
   const mod = await importOriginal<typeof import('./lnurl')>();
   return {
     ...mod,
     getLnurlpMetadata: vi.fn(),
-    getLnurlpInvoice: vi.fn(),
+    getLnurlpInvoice: vi.fn()
   };
 });
 
@@ -31,7 +32,7 @@ const mockApiBaseConfig = {
   baseUrl: 'http://localhost:3001',
   isConfigured: true,
   isMock: false,
-  isRelative: false,
+  isRelative: false
 };
 const recipientPubkey = 'a'.repeat(64);
 const senderPubkey = 'b'.repeat(64);
@@ -55,7 +56,12 @@ describe('SendSats', () => {
     vi.clearAllMocks();
     mockUseAuth.mockReturnValue({
       pubkey: senderPubkey,
-      signEvent: vi.fn(async (event) => ({ ...event, id: 'signed', sig: 'sig', pubkey: senderPubkey })),
+      signEvent: vi.fn(async (event) => ({
+        ...event,
+        id: 'signed',
+        sig: 'sig',
+        pubkey: senderPubkey
+      }))
     });
     mockUseConfig.mockReturnValue({
       apiBase: 'http://localhost:3001',
@@ -65,7 +71,7 @@ describe('SendSats', () => {
       enableRegtestPay: false,
       nwcUri: undefined,
       nwcRelays: undefined,
-      nwcMaxSats: undefined,
+      nwcMaxSats: undefined
     });
   });
 
@@ -85,7 +91,7 @@ describe('SendSats', () => {
       minSendable: 1000,
       maxSendable: 500000,
       metadata: '[]',
-      commentAllowed: 120,
+      commentAllowed: 120
     });
     mockedGetLnurlpInvoice.mockResolvedValue({ pr: 'lnbc123' });
 

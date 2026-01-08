@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountCommentWidget } from '@nostrstack/widgets';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 
@@ -17,7 +17,17 @@ export type CommentsProps = {
   className?: string;
 };
 
-export function Comments({ threadId, relays, headerText, placeholder, maxItems, maxAgeDays, lazyConnect, validateEvents, className }: CommentsProps) {
+export function Comments({
+  threadId,
+  relays,
+  headerText,
+  placeholder,
+  maxItems,
+  maxAgeDays,
+  lazyConnect,
+  validateEvents,
+  className
+}: CommentsProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,7 +47,7 @@ export function Comments({ threadId, relays, headerText, placeholder, maxItems, 
       maxItems,
       maxAgeDays,
       lazyConnect,
-      validateEvents,
+      validateEvents
     });
 
     return () => {
@@ -50,7 +60,17 @@ export function Comments({ threadId, relays, headerText, placeholder, maxItems, 
       });
       node.innerHTML = '';
     };
-  }, [threadId, relays, headerText, placeholder, maxItems, maxAgeDays, lazyConnect, validateEvents, cfg.relays]);
+  }, [
+    threadId,
+    relays,
+    headerText,
+    placeholder,
+    maxItems,
+    maxAgeDays,
+    lazyConnect,
+    validateEvents,
+    cfg.relays
+  ]);
 
   return <div ref={ref} className={className} data-nostrstack-comments />;
 }

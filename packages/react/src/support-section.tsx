@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import type React from 'react';
 import { useMemo } from 'react';
@@ -102,7 +102,7 @@ export function SupportSection({
   tipClassName,
   commentsClassName,
   shareClassName,
-  ariaLabel,
+  ariaLabel
 }: SupportSectionProps) {
   const cfg = useNostrstackConfig();
   const resolvedLn = lnAddress ?? cfg.lnAddress;
@@ -116,7 +116,7 @@ export function SupportSection({
     const fallbackTitle = typeof document !== 'undefined' ? document.title ?? 'Share' : 'Share';
     return {
       url: shareUrl ?? fallbackUrl,
-      title: shareTitle ?? fallbackTitle,
+      title: shareTitle ?? fallbackTitle
     };
   }, [shareUrl, shareTitle]);
   const canShare = Boolean(shareDefaults.url && shareDefaults.title);
@@ -131,26 +131,26 @@ export function SupportSection({
     display: 'grid',
     gap: 'var(--nostrstack-space-4)',
     alignItems: 'start',
-    gridTemplateColumns: layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)',
+    gridTemplateColumns: layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)'
   };
 
   const sidebarStyle: React.CSSProperties = {
     display: 'grid',
-    gap: 'var(--nostrstack-space-3)',
+    gap: 'var(--nostrstack-space-3)'
   };
 
   const headerStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'baseline',
     gap: 'var(--nostrstack-space-2)',
-    marginBottom: 'var(--nostrstack-space-3)',
+    marginBottom: 'var(--nostrstack-space-3)'
   };
 
   const sectionTitleStyle: React.CSSProperties = {
     margin: 0,
     fontSize: '1.05rem',
     fontWeight: 800,
-    color: 'var(--nostrstack-color-text)',
+    color: 'var(--nostrstack-color-text)'
   };
 
   const tipNode = canTip ? (
@@ -179,7 +179,7 @@ export function SupportSection({
     borderRadius: 'var(--nostrstack-radius-lg)',
     border: '1px solid var(--nostrstack-color-border)',
     background: 'var(--nostrstack-color-surface)',
-    boxShadow: 'var(--nostrstack-shadow-md)',
+    boxShadow: 'var(--nostrstack-shadow-md)'
   };
 
   const shareNode = (
@@ -199,7 +199,9 @@ export function SupportSection({
       ) : (
         <div className="nostrstack-callout" role="status">
           <div className="nostrstack-callout__title">Share unavailable</div>
-          <div className="nostrstack-callout__content">Provide a share URL + title to enable sharing.</div>
+          <div className="nostrstack-callout__content">
+            Provide a share URL + title to enable sharing.
+          </div>
         </div>
       )}
     </div>
@@ -227,7 +229,7 @@ export function SupportSection({
   );
 
   return (
-    <section className={rootClassName} role="region" aria-label={regionLabel}>
+    <section className={rootClassName} aria-label={regionLabel}>
       {title && (
         <div className="nostrstack-support-header" style={headerStyle}>
           <h2 style={sectionTitleStyle}>{title}</h2>

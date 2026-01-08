@@ -13,9 +13,15 @@ import {
   type LnurlSuccessAction,
   normalizeLightningAddress,
   parseLnurlPayMetadata,
-  sanitizeSuccessAction} from './lnurl';
+  sanitizeSuccessAction
+} from './lnurl';
 import { useNwcPayment } from './nwc-pay';
-import { emitTelemetryEvent, type PaymentFailureReason, type PaymentMethod, type PaymentStage } from './telemetry';
+import {
+  emitTelemetryEvent,
+  type PaymentFailureReason,
+  type PaymentMethod,
+  type PaymentStage
+} from './telemetry';
 import { PaymentModal, type PaymentStatusItem, type PaymentSuccessAction } from './ui/PaymentModal';
 
 interface WebLN {
@@ -43,11 +49,7 @@ interface ZapButtonProps {
   style?: React.CSSProperties;
 }
 
-const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
+const RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 
 function extractLightningAddressFromProfile(raw: unknown): string | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -58,10 +60,10 @@ function extractLightningAddressFromProfile(raw: unknown): string | null {
 }
 
 function extractLightningAddressFromEvent(event: Event): string | null {
-  const lud16Tag = event.tags.find(tag => tag[0] === 'lud16');
+  const lud16Tag = event.tags.find((tag) => tag[0] === 'lud16');
   if (lud16Tag && lud16Tag[1]) return lud16Tag[1];
 
-  const lud06Tag = event.tags.find(tag => tag[0] === 'lud06');
+  const lud06Tag = event.tags.find((tag) => tag[0] === 'lud06');
   if (lud06Tag && lud06Tag[1]) return lud06Tag[1];
 
   if (event.kind === 0 && event.content) {
@@ -89,7 +91,9 @@ export function ZapButton({
 }: ZapButtonProps) {
   const { pubkey, signEvent } = useAuth();
   const cfg = useNostrstackConfig();
-  const [zapState, setZapState] = useState<'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'>('idle');
+  const [zapState, setZapState] = useState<
+    'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'
+  >('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<string | null>(null);
   const [successAction, setSuccessAction] = useState<LnurlSuccessAction | null>(null);
@@ -126,7 +130,9 @@ export function ZapButton({
   const regtestEnabled = enableRegtestPay ?? cfg.enableRegtestPay ?? false;
   const regtestAvailable = regtestEnabled && apiBaseConfig.isConfigured;
   const regtestUnavailableReason =
-    regtestEnabled && !apiBaseConfig.isConfigured ? 'Regtest pay unavailable (API base not configured).' : null;
+    regtestEnabled && !apiBaseConfig.isConfigured
+      ? 'Regtest pay unavailable (API base not configured).'
+      : null;
   const effectiveRegtestError = regtestError ?? regtestUnavailableReason;
   const nwcUri = cfg.nwcUri?.trim();
   const nwcRelays = cfg.nwcRelays;
@@ -157,40 +163,44 @@ export function ZapButton({
     };
   }, []);
 
-  const emitPaymentTelemetry = useCallback((
-    stage: PaymentStage,
-    options: { method?: PaymentMethod; reason?: PaymentFailureReason } = {}
-  ) => {
-    const state = telemetryStateRef.current;
-    if (stage === 'invoice_requested') {
-      if (state.invoiceRequested) return;
-      state.invoiceRequested = true;
-    } else if (stage === 'invoice_ready') {
-      if (state.invoiceReady) return;
-      state.invoiceReady = true;
-    } else if (stage === 'payment_sent') {
-      if (state.paymentSuccess) return;
-      state.paymentSuccess = true;
-    } else if (stage === 'payment_failed') {
-      if (state.paymentSuccess) return;
-      const failureKey = options.method ?? options.reason ?? 'unknown';
-      if (state.paymentFailures.has(failureKey)) return;
-      state.paymentFailures.add(failureKey);
-    }
-    emitTelemetryEvent({
-      type: 'payment',
-      flow: 'zap',
-      stage,
-      method: options.method,
-      reason: options.reason,
-      amountSats: amountSnapshotRef.current
-    });
-  }, []);
+  const emitPaymentTelemetry = useCallback(
+    (
+      stage: PaymentStage,
+      options: { method?: PaymentMethod; reason?: PaymentFailureReason } = {}
+    ) => {
+      const state = telemetryStateRef.current;
+      if (stage === 'invoice_requested') {
+        if (state.invoiceRequested) return;
+        state.invoiceRequested = true;
+      } else if (stage === 'invoice_ready') {
+        if (state.invoiceReady) return;
+        state.invoiceReady = true;
+      } else if (stage === 'payment_sent') {
+        if (state.paymentSuccess) return;
+        state.paymentSuccess = true;
+      } else if (stage === 'payment_failed') {
+        if (state.paymentSuccess) return;
+        const failureKey = options.method ?? options.reason ?? 'unknown';
+        if (state.paymentFailures.has(failureKey)) return;
+        state.paymentFailures.add(failureKey);
+      }
+      emitTelemetryEvent({
+        type: 'payment',
+        flow: 'zap',
+        stage,
+        method: options.method,
+        reason: options.reason,
+        amountSats: amountSnapshotRef.current
+      });
+    },
+    []
+  );
 
   const resolveLightningAddress = useCallback(async () => {
-    const globalOverride = typeof window !== 'undefined'
-      ? (window as { __NOSTRSTACK_ZAP_ADDRESS__?: string }).__NOSTRSTACK_ZAP_ADDRESS__
-      : undefined;
+    const globalOverride =
+      typeof window !== 'undefined'
+        ? (window as { __NOSTRSTACK_ZAP_ADDRESS__?: string }).__NOSTRSTACK_ZAP_ADDRESS__
+        : undefined;
     const override = normalizeLightningAddress(authorLightningAddress ?? globalOverride);
     if (override) return override;
 
@@ -203,7 +213,11 @@ export function ZapButton({
     if (!relayTargets.length) return null;
     const pool = new SimplePool();
     try {
-      const metaEvents = await pool.querySync(relayTargets, { kinds: [0], authors: [authorPubkey], limit: 10 });
+      const metaEvents = await pool.querySync(relayTargets, {
+        kinds: [0],
+        authors: [authorPubkey],
+        limit: 10
+      });
       const sorted = [...metaEvents].sort((a, b) => b.created_at - a.created_at);
       for (const meta of sorted) {
         if (!meta?.content) continue;
@@ -227,7 +241,6 @@ export function ZapButton({
       }
     }
   }, [authorLightningAddress, cfg.lnAddress, eventLightningAddress, authorPubkey, relayTargets]);
-
 
   const handleZap = useCallback(async () => {
     if (!pubkey) {
@@ -269,10 +282,13 @@ export function ZapButton({
       const maxSendable = lnurlMetadata.maxSendable;
       const amountMsat = amountSats * 1000;
       if (amountMsat < minSendable || amountMsat > maxSendable) {
-        throw new Error(`Zap amount must be between ${Math.ceil(minSendable / 1000)} and ${Math.floor(maxSendable / 1000)} sats.`);
+        throw new Error(
+          `Zap amount must be between ${Math.ceil(minSendable / 1000)} and ${Math.floor(maxSendable / 1000)} sats.`
+        );
       }
       const commentAllowed = lnurlMetadata.commentAllowed;
-      const zapMessage = typeof commentAllowed === 'number' ? message.slice(0, commentAllowed) : message;
+      const zapMessage =
+        typeof commentAllowed === 'number' ? message.slice(0, commentAllowed) : message;
 
       // 2. Create a NIP-57 Zap Request Event
       const lnurlTag = lnurlMetadata.encoded
@@ -291,11 +307,11 @@ export function ZapButton({
           ['content', zapMessage],
           ['p', pubkey] // My pubkey as sender
         ],
-        content: zapMessage,
+        content: zapMessage
       };
-      
+
       const signedZapRequest = await signEvent(zapRequestEventTemplate);
-      
+
       // 3. Get invoice from callback URL
       setZapState('pending-invoice');
       const invoiceData = await getLnurlpInvoice(
@@ -312,7 +328,9 @@ export function ZapButton({
         invoiceData?.provider_ref && typeof invoiceData.provider_ref === 'string'
           ? invoiceData.provider_ref
           : null;
-      let nextStatusUrl = nextProviderRef ? deriveLnurlStatusUrl(lnurlMetadata.callback, nextProviderRef) : null;
+      let nextStatusUrl = nextProviderRef
+        ? deriveLnurlStatusUrl(lnurlMetadata.callback, nextProviderRef)
+        : null;
       if (nextStatusUrl && resolvedApiBase) {
         try {
           const expectedOrigin = new URL(resolvedApiBase).origin;
@@ -355,12 +373,14 @@ export function ZapButton({
       }
 
       // (Optional) Poll for payment status
-      timerRef.current = window.setTimeout(() => {
-        // Show timeout notification instead of silently closing
-        setTimedOut(true);
-        emitPaymentTelemetry('payment_failed', { reason: 'timeout' as PaymentFailureReason });
-      }, 5 * 60 * 1000); // 5 minutes to pay
-      
+      timerRef.current = window.setTimeout(
+        () => {
+          // Show timeout notification instead of silently closing
+          setTimedOut(true);
+          emitPaymentTelemetry('payment_failed', { reason: 'timeout' as PaymentFailureReason });
+        },
+        5 * 60 * 1000
+      ); // 5 minutes to pay
     } catch (err: unknown) {
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setZapState('error');
@@ -499,6 +519,7 @@ export function ZapButton({
       active = false;
       if (timer) window.clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- emitPaymentTelemetry is stable
   }, [zapState, statusUrl]);
 
   const nip57Disclaimer =
@@ -602,13 +623,19 @@ export function ZapButton({
 
   return (
     <>
-      <button 
-        ref={triggerRef} 
-        className={`action-btn zap-btn ${className ?? ''}`} 
+      <button
+        ref={triggerRef}
+        className={`action-btn zap-btn ${className ?? ''}`}
         style={style}
-        onClick={handleZap} 
+        onClick={handleZap}
         disabled={zapState !== 'idle'}
-        aria-label={zapState === 'idle' ? `Send ${amountSats} sats as zap` : zapState === 'paid' ? 'Zap sent successfully' : 'Sending zap'}
+        aria-label={
+          zapState === 'idle'
+            ? `Send ${amountSats} sats as zap`
+            : zapState === 'paid'
+              ? 'Zap sent successfully'
+              : 'Sending zap'
+        }
         aria-busy={zapState !== 'idle' && zapState !== 'paid' && zapState !== 'error'}
         aria-disabled={zapState !== 'idle'}
       >

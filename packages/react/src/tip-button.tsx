@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { mountTipButton } from '@nostrstack/widgets';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useNostrstackConfig } from './context';
 import { parseLnAddress } from './utils';
@@ -15,7 +15,14 @@ export type TipButtonProps = {
   className?: string;
 };
 
-export function TipButton({ lnAddress, amountSats, label, baseUrl, host, className }: TipButtonProps) {
+export function TipButton({
+  lnAddress,
+  amountSats,
+  label,
+  baseUrl,
+  host,
+  className
+}: TipButtonProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -34,7 +41,7 @@ export function TipButton({ lnAddress, amountSats, label, baseUrl, host, classNa
       amountSats,
       text: label,
       baseURL: resolvedBase,
-      host: resolvedHost,
+      host: resolvedHost
     });
 
     return () => {

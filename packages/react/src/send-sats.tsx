@@ -17,7 +17,12 @@ import {
   sanitizeSuccessAction
 } from './lnurl';
 import { useNwcPayment } from './nwc-pay';
-import { emitTelemetryEvent, type PaymentFailureReason, type PaymentMethod, type PaymentStage } from './telemetry';
+import {
+  emitTelemetryEvent,
+  type PaymentFailureReason,
+  type PaymentMethod,
+  type PaymentStage
+} from './telemetry';
 import { PaymentModal, type PaymentStatusItem, type PaymentSuccessAction } from './ui/PaymentModal';
 
 interface WebLN {
@@ -48,11 +53,7 @@ type SendLimits = {
   commentAllowed?: number;
 };
 
-const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
+const RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 
 export function SendSats({
   pubkey,
@@ -70,7 +71,9 @@ export function SendSats({
   const [amountSats, setAmountSats] = useState(defaultAmountSats);
   const [note, setNote] = useState('');
   const [limits, setLimits] = useState<SendLimits | null>(null);
-  const [sendState, setSendState] = useState<'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'>('idle');
+  const [sendState, setSendState] = useState<
+    'idle' | 'pending-lnurl' | 'pending-invoice' | 'waiting-payment' | 'paid' | 'error'
+  >('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<string | null>(null);
   const [successAction, setSuccessAction] = useState<LnurlSuccessAction | null>(null);
@@ -98,7 +101,9 @@ export function SendSats({
   const regtestEnabled = enableRegtestPay ?? cfg.enableRegtestPay ?? false;
   const regtestAvailable = regtestEnabled && apiBaseConfig.isConfigured;
   const regtestUnavailableReason =
-    regtestEnabled && !apiBaseConfig.isConfigured ? 'Regtest pay unavailable (API base not configured).' : null;
+    regtestEnabled && !apiBaseConfig.isConfigured
+      ? 'Regtest pay unavailable (API base not configured).'
+      : null;
   const effectiveRegtestError = regtestError ?? regtestUnavailableReason;
   const nwcUri = cfg.nwcUri?.trim();
   const nwcRelays = cfg.nwcRelays;
@@ -118,7 +123,10 @@ export function SendSats({
     return cleaned.length ? cleaned : RELAYS;
   }, [relays, cfg.relays]);
 
-  const normalizedAddress = useMemo(() => normalizeLightningAddress(lightningAddress ?? null), [lightningAddress]);
+  const normalizedAddress = useMemo(
+    () => normalizeLightningAddress(lightningAddress ?? null),
+    [lightningAddress]
+  );
   const recipientNpub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
 
   const resetTelemetry = useCallback(() => {
@@ -130,35 +138,38 @@ export function SendSats({
     };
   }, []);
 
-  const emitPaymentTelemetry = useCallback((
-    stage: PaymentStage,
-    options: { method?: PaymentMethod; reason?: PaymentFailureReason } = {}
-  ) => {
-    const state = telemetryStateRef.current;
-    if (stage === 'invoice_requested') {
-      if (state.invoiceRequested) return;
-      state.invoiceRequested = true;
-    } else if (stage === 'invoice_ready') {
-      if (state.invoiceReady) return;
-      state.invoiceReady = true;
-    } else if (stage === 'payment_sent') {
-      if (state.paymentSuccess) return;
-      state.paymentSuccess = true;
-    } else if (stage === 'payment_failed') {
-      if (state.paymentSuccess) return;
-      const failureKey = options.method ?? options.reason ?? 'unknown';
-      if (state.paymentFailures.has(failureKey)) return;
-      state.paymentFailures.add(failureKey);
-    }
-    emitTelemetryEvent({
-      type: 'payment',
-      flow: 'send-sats',
-      stage,
-      method: options.method,
-      reason: options.reason,
-      amountSats: amountSnapshotRef.current
-    });
-  }, []);
+  const emitPaymentTelemetry = useCallback(
+    (
+      stage: PaymentStage,
+      options: { method?: PaymentMethod; reason?: PaymentFailureReason } = {}
+    ) => {
+      const state = telemetryStateRef.current;
+      if (stage === 'invoice_requested') {
+        if (state.invoiceRequested) return;
+        state.invoiceRequested = true;
+      } else if (stage === 'invoice_ready') {
+        if (state.invoiceReady) return;
+        state.invoiceReady = true;
+      } else if (stage === 'payment_sent') {
+        if (state.paymentSuccess) return;
+        state.paymentSuccess = true;
+      } else if (stage === 'payment_failed') {
+        if (state.paymentSuccess) return;
+        const failureKey = options.method ?? options.reason ?? 'unknown';
+        if (state.paymentFailures.has(failureKey)) return;
+        state.paymentFailures.add(failureKey);
+      }
+      emitTelemetryEvent({
+        type: 'payment',
+        flow: 'send-sats',
+        stage,
+        method: options.method,
+        reason: options.reason,
+        amountSats: amountSnapshotRef.current
+      });
+    },
+    []
+  );
 
   const handleSend = useCallback(async () => {
     if (!senderPubkey) {
@@ -201,9 +212,10 @@ export function SendSats({
         throw new Error(`Amount must be between ${minSats} and ${maxSats} sats.`);
       }
 
-      const noteContent = typeof lnurlMetadata.commentAllowed === 'number'
-        ? note.slice(0, lnurlMetadata.commentAllowed)
-        : note;
+      const noteContent =
+        typeof lnurlMetadata.commentAllowed === 'number'
+          ? note.slice(0, lnurlMetadata.commentAllowed)
+          : note;
 
       const lnurlTag = lnurlMetadata.encoded
         ? String(lnurlMetadata.encoded).toUpperCase()
@@ -284,10 +296,13 @@ export function SendSats({
         }
       }
 
-      timerRef.current = window.setTimeout(() => {
-        setSendState('idle');
-        setInvoice(null);
-      }, 5 * 60 * 1000);
+      timerRef.current = window.setTimeout(
+        () => {
+          setSendState('idle');
+          setInvoice(null);
+        },
+        5 * 60 * 1000
+      );
     } catch (err: unknown) {
       setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
       setSendState('error');
@@ -424,6 +439,7 @@ export function SendSats({
       active = false;
       if (timer) window.clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- emitPaymentTelemetry is stable
   }, [sendState, statusUrl]);
 
   const nip57Disclaimer =
@@ -571,7 +587,9 @@ export function SendSats({
           aria-describedby={commentAllowed === 0 ? 'send-sats-note-disabled' : undefined}
         />
         {commentAllowed === 0 && (
-          <span id="send-sats-note-disabled" className="sr-only">Note field is disabled for this recipient</span>
+          <span id="send-sats-note-disabled" className="sr-only">
+            Note field is disabled for this recipient
+          </span>
         )}
       </div>
       {(minSats || maxSats) && (
@@ -579,14 +597,24 @@ export function SendSats({
           Limits: {minSats ?? '—'} - {maxSats ?? '—'} sats
         </div>
       )}
-      {hasError && <div className="system-msg error-msg" role="alert">{errorMessage}</div>}
+      {hasError && (
+        <div className="system-msg error-msg" role="alert">
+          {errorMessage}
+        </div>
+      )}
       <button
         ref={triggerRef}
         className="action-btn"
         type="button"
         onClick={handleSend}
         disabled={sendState !== 'idle' || !normalizedAddress}
-        aria-label={sendState === 'idle' ? `Send ${amountSats} sats` : sendState === 'paid' ? 'Payment sent' : 'Sending payment'}
+        aria-label={
+          sendState === 'idle'
+            ? `Send ${amountSats} sats`
+            : sendState === 'paid'
+              ? 'Payment sent'
+              : 'Sending payment'
+        }
         aria-busy={sendState !== 'idle' && sendState !== 'paid' && sendState !== 'error'}
       >
         SEND {amountSats}

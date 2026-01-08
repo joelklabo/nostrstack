@@ -2,7 +2,7 @@
 
 import { ensureNostrstackRoot } from '@nostrstack/widgets';
 import { Relay, type Subscription } from 'nostr-tools/relay';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useNostrstackConfig } from './context';
 
@@ -319,6 +319,7 @@ export function ShareWidget({
       cancelled = true;
       closeAll();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- join(',') for value-based comparison of relayTargets
   }, [relayTargets.join(','), url, effectiveTag, maxItems, hydrateProfile]);
 
   const handleShare = useCallback(async () => {
