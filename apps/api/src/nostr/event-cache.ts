@@ -1,8 +1,8 @@
+import type { NostrTarget } from '@nostrstack/nostr';
 import type { PrismaClient } from '@prisma/client';
 import type { Event } from 'nostr-tools';
 
 import { pruneExpiredNostrCache } from '../services/cache-prune.js';
-import type { NostrTarget } from './nostr-utils.js';
 
 export type CachedEvent = {
   event: Event;

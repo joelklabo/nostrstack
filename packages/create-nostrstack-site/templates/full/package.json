@@ -11,8 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nostrstack/blog-kit": "^0.5.0",
-    "@nostrstack/embed": "^0.5.0",
+    "@nostrstack/react": "^0.5.0",
+    "@nostrstack/widgets": "^0.5.0",
     "buffer": "^6.0.3",
     "markdown-it": "^14.1.0",
     "nostr-tools": "^2.18.2",

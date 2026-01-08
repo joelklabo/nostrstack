@@ -1,23 +1,23 @@
-name: 🎨 Chromatic Visual Regression Testing
+name: Chromatic Visual Regression Testing
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'apps/gallery/src/**/*.tsx'
-      - 'apps/gallery/src/**/*.css'
-      - 'packages/blog-kit/src/**/*.tsx'
-      - 'packages/blog-kit/src/**/*.css'
+      - 'apps/social/src/**/*.tsx'
+      - 'apps/social/src/**/*.css'
+      - 'packages/react/src/**/*.tsx'
+      - 'packages/react/src/**/*.css'
       - '**/*.stories.tsx'
   pull_request:
     branches:
       - main
     paths:
-      - 'apps/gallery/src/**/*.tsx'
-      - 'apps/gallery/src/**/*.css'
-      - 'packages/blog-kit/src/**/*.tsx'
-      - 'packages/blog-kit/src/**/*.css'
+      - 'apps/social/src/**/*.tsx'
+      - 'apps/social/src/**/*.css'
+      - 'packages/react/src/**/*.tsx'
+      - 'packages/react/src/**/*.css'
       - '**/*.stories.tsx'
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
         uses: chromaui/action@latest
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          workingDir: apps/gallery
+          workingDir: apps/social
           buildScriptName: build-storybook
           onlyChanged: true # Only capture changed stories (requires fetch-depth: 0)
           exitZeroOnChanges: true # Don't fail CI on visual changes (review required)

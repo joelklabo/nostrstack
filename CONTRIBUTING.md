@@ -55,8 +55,8 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
 
 - `apps/gallery`: The main social network frontend (React/Vite).
 - `apps/api`: The backend API (Fastify/Node.js).
-- `packages/blog-kit`: Reusable React components (`PostEditor`, `ZapButton`, `Auth`).
-- `packages/embed`: Core embedding logic and non-React widgets.
+- `packages/react`: Reusable React components (`PostEditor`, `ZapButton`, `Auth`).
+- `packages/widgets`: Core embedding logic and script-tag widgets.
 - `packages/sdk`: The TypeScript SDK for interacting with the API.
 
 ## Submitting a Pull Request
@@ -77,7 +77,7 @@ We use [Chromatic](https://www.chromatic.com/) to catch unintended visual change
 3. **Accept or reject**: If the changes are intentional, accept them in Chromatic to update the baseline. Otherwise, fix the issue and push again.
 
 Key configuration:
-- Stories: `apps/gallery/src/**/*.stories.tsx` and `packages/blog-kit/src/*.stories.tsx`
+- Stories: `apps/gallery/src/**/*.stories.tsx` and `packages/react/src/*.stories.tsx`
 - Workflow: `.github/workflows/chromatic.yml`
 - Chromatic project: Set `CHROMATIC_PROJECT_TOKEN` in repository secrets
 

@@ -17,16 +17,16 @@ The kit includes the following widgets:
 
 ### 1. React (Blog-kit)
 
-If you are using React, install `@nostrstack/blog-kit`:
+If you are using React, install `@nostrstack/react`:
 
 ```bash
-npm install @nostrstack/blog-kit
+npm install @nostrstack/react
 ```
 
 Wrap your app in `NostrstackProvider`:
 
 ```tsx
-import { NostrstackProvider } from '@nostrstack/blog-kit';
+import { NostrstackProvider } from '@nostrstack/react';
 
 function App({ children }) {
   return (
@@ -43,7 +43,7 @@ function App({ children }) {
 Use the `SupportSection` component at the end of your posts:
 
 ```tsx
-import { SupportSection } from '@nostrstack/blog-kit';
+import { SupportSection } from '@nostrstack/react';
 
 function Post({ id, title }) {
   return (
@@ -62,10 +62,10 @@ function Post({ id, title }) {
 
 ### 2. Static Script (Embed)
 
-For static sites (Hugo, Jekyll, 11ty, etc.), include the `@nostrstack/embed` script:
+For static sites (Hugo, Jekyll, 11ty, etc.), include the `@nostrstack/widgets` script:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@nostrstack/embed/dist/index.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@nostrstack/widgets/dist/index.global.js"></script>
 ```
 
 Add data attributes to any container to mount a widget:

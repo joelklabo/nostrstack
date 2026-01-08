@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
+import { checkAndUpdatePaymentStatus,PAID_STATES } from '../services/payment-status.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
 export async function registerPayRoutes(app: FastifyInstance) {
@@ -168,69 +169,19 @@ export async function registerPayRoutes(app: FastifyInstance) {
       });
       if (!payment) return reply.code(404).send({ status: 'unknown' });
 
-      const paidStates = ['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED'];
-      if (paidStates.includes(payment.status)) {
+      // Already paid - return immediately
+      if (PAID_STATES.has(payment.status)) {
         return reply.send({ status: payment.status, amountSats: payment.amountSats });
       }
 
-      // If provider can't give status, return current known state
-      if (!app.lightningProvider.getCharge) {
-        return reply.send({ status: payment.status });
+      // Check and update status using shared service
+      const result = await checkAndUpdatePaymentStatus(app, payment, 'poll');
+
+      if (result.error) {
+        return reply.code(202).send({ status: result.status, error: result.error });
       }
 
-      try {
-        const statusRes = await app.lightningProvider.getCharge(id);
-        const normalized = statusRes?.status?.toUpperCase?.() ?? payment.status;
-        if (normalized !== payment.status) {
-          await app.prisma.payment.update({
-            where: { id: payment.id },
-            data: { status: normalized }
-          });
-          let metadata: unknown | undefined;
-          if (payment.metadata) {
-            try {
-              metadata = JSON.parse(payment.metadata) as unknown;
-            } catch {
-              metadata = undefined;
-            }
-          }
-          const ts = Date.now();
-          app.payEventHub?.broadcast({
-            type: 'invoice-status',
-            ts,
-            providerRef: id,
-            status: normalized,
-            prevStatus: payment.status,
-            pr: payment.invoice,
-            amount: payment.amountSats,
-            action: payment.action ?? undefined,
-            itemId: payment.itemId ?? undefined,
-            metadata,
-            source: 'poll',
-            tenantId: payment.tenantId,
-            paymentId: payment.id
-          });
-          if (paidStates.includes(normalized)) {
-            app.payEventHub?.broadcast({
-              type: 'invoice-paid',
-              ts,
-              pr: payment.invoice,
-              providerRef: id,
-              amount: payment.amountSats,
-              action: payment.action ?? undefined,
-              itemId: payment.itemId ?? undefined,
-              metadata,
-              source: 'poll',
-              tenantId: payment.tenantId,
-              paymentId: payment.id
-            });
-          }
-        }
-        return reply.send({ status: normalized });
-      } catch (err) {
-        app.log.warn({ err }, 'charge status check failed');
-        return reply.code(202).send({ status: payment.status, error: 'status_check_failed' });
-      }
+      return reply.send({ status: result.status });
     }
   );
 

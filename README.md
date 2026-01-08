@@ -84,7 +84,7 @@ See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.
 
 ### Embeddable comments + tips
 
-- Add a script/bundle for `@nostrstack/embed`, then drop:
+- Add a script/bundle for `@nostrstack/widgets`, then drop:
 
   ```html
   <div

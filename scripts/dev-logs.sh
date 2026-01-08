@@ -9,11 +9,11 @@ unset NO_COLOR
 
 mkdir -p "$LOG_DIR"
 API_LOG="$LOG_DIR/api.log"
-GALLERY_LOG="$LOG_DIR/gallery.log"
+GALLERY_LOG="$LOG_DIR/social.log"
 : >"$API_LOG"
 : >"$GALLERY_LOG"
 
-echo "🪵 writing logs to $LOG_DIR (api.log, gallery.log)"
+echo "🪵 writing logs to $LOG_DIR (api.log, social.log)"
 echo "💡 view live: tail -f $API_LOG $GALLERY_LOG"
 if [[ "${LOG_TAIL:-1}" != "0" ]]; then
   echo "👀 auto-following logs (set LOG_TAIL=0 to disable)"
@@ -116,8 +116,8 @@ else
   echo "🌐 BITCOIN_NETWORK=$BITCOIN_NETWORK; skipping regtest stack startup"
 fi
 
-pnpm concurrently -k -p "[{name} {time}]" -n api,gallery \
+pnpm concurrently -k -p "[{name} {time}]" -n api,social \
   "pnpm --filter api dev | tee -a $API_LOG" \
-  "pnpm --filter gallery dev -- --host --port $DEV_SERVER_PORT | tee -a $GALLERY_LOG"
+  "pnpm --filter social dev -- --host --port $DEV_SERVER_PORT | tee -a $GALLERY_LOG"
 
 echo "🧭 Reminder: verify UI changes with Chrome DevTools MCP (check console & network) and keep the tails above running while you test."

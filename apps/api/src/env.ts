@@ -85,7 +85,7 @@ const schema = z.object({
   NOSTR_RELAYS: z.string().optional(), // comma-separated
   NOSTR_RELAY_ALLOWLIST: z.string().optional(),
   NOSTR_RELAY_DENYLIST: z.string().optional(),
-  NOSTR_EMBED_CDN: z.string().url().default('https://unpkg.com/@nostrstack/embed/dist/index.global.js'),
+  NOSTR_EMBED_CDN: z.string().url().default('https://unpkg.com/@nostrstack/widgets/dist/index.global.js'),
   NOSTR_THEME_ACCENT: z.string().optional(),
   NOSTR_THEME_TEXT: z.string().optional(),
   NOSTR_THEME_SURFACE: z.string().optional(),

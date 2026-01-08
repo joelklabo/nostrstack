@@ -8,24 +8,31 @@ generator client {
 }
 
 model Tenant {
-  id          String   @id @default(cuid())
-  domain      String   @unique
+  id          String    @id @default(cuid())
+  domain      String    @unique
   displayName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  lnurlSuccessAction String?
+  lnurlCommentAllowed Int?
+  lnurlMetadata String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   users       User[]
   payments    Payment[]
+  lnurlWithdrawSessions LnurlWithdrawSession[]
 }
 
 model User {
-  id        String   @id @default(cuid())
-  tenantId  String
-  pubkey    String
+  id               String    @id @default(cuid())
+  tenantId         String
+  pubkey           String
   lightningAddress String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  payments  Payment[]
+  lnurlSuccessAction String?
+  lnurlCommentAllowed Int?
+  lnurlMetadata String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payments         Payment[]
 
   @@unique([tenantId, pubkey])
   @@unique([tenantId, lightningAddress])
@@ -38,6 +45,8 @@ model Payment {
   provider    String
   providerRef String
   invoice     String   @unique
+  action      String?
+  itemId      String?
   amountSats  Int
   status      String   @default("PENDING")
   metadata    String?
@@ -48,7 +57,39 @@ model Payment {
 
   @@unique([provider, providerRef, tenantId])
   @@index([tenantId])
+  @@index([tenantId, action])
+  @@index([tenantId, action, itemId])
   @@index([tenantId, userId])
+}
+
+model LnurlAuthSession {
+  id         String   @id @default(cuid())
+  k1         String   @unique
+  linkingKey String?
+  status     String   @default("PENDING")
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model LnurlWithdrawSession {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  k1                 String   @unique
+  minWithdrawable    BigInt
+  maxWithdrawable    BigInt
+  defaultDescription String?
+  status             String   @default("PENDING")
+  expiresAt          DateTime
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([expiresAt])
 }
 
 model NostrEventCache {

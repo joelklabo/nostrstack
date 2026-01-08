@@ -1,7 +1,8 @@
-import { AuthProvider, NostrstackProvider, PostEditor, Timeline } from '@nostrstack/blog-kit';
+import './style.css';
+
+import { AuthProvider, NostrstackProvider, PostEditor, Timeline } from '@nostrstack/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import './style.css';
 
 const DEFAULT_RELAYS = [
   'wss://relay.damus.io',

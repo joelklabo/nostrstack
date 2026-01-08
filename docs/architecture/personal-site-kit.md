@@ -5,8 +5,8 @@ Provide a framework-ready set of widgets and APIs so a personal site can accept 
 
 ## Component map
 - **API (apps/api)**: REST + WebSocket endpoints for tips, telemetry, identity, and Nostr event resolution.
-- **Embed (@nostrstack/embed)**: script-tag widgets (tip, comments, share, profile, blockchain stats) with auto-mount data attributes.
-- **Blog-kit (@nostrstack/blog-kit)**: React wrappers (SupportSection, profile, share, comments, tip feed, blockchain stats).
+- **Embed (@nostrstack/widgets)**: script-tag widgets (tip, comments, share, profile, blockchain stats) with auto-mount data attributes.
+- **Blog-kit (@nostrstack/react)**: React wrappers (SupportSection, profile, share, comments, tip feed, blockchain stats).
 - **SDK (@nostrstack/sdk)**: typed client for REST endpoints (telemetry summary, Nostr event/identity).
 - **Injector (packages/injector)**: static-site injection for script tags and widget placeholders.
 - **Gallery (apps/gallery)**: demo and QA surface for the widgets.

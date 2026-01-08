@@ -62,6 +62,6 @@ env \
   VITE_LNBITS_ADMIN_KEY="$LN_BITS_API_KEY" \
   VITE_NOSTRSTACK_RELAYS="$VITE_NOSTRSTACK_RELAYS" \
   VITE_ENABLE_TEST_SIGNER="$VITE_ENABLE_TEST_SIGNER" \
-  pnpm exec concurrently -k -n api,gallery \
+  pnpm exec concurrently -k -n api,social \
     "pnpm --filter api dev" \
-    "pnpm --filter gallery dev -- --host --port ${GALLERY_PORT}"
+    "pnpm --filter social dev -- --host --port ${GALLERY_PORT}"

@@ -1,7 +1,7 @@
 # Simplifications after dropping legacy embeds
 
 Done now:
-- Removed `data-satoshis-*` attribute support from @nostrstack/embed (only `data-nostrstack-*`).
+- Removed `data-satoshis-*` attribute support from @nostrstack/widgets (only `data-nostrstack-*`).
 - Embed auto-mount now queries solely `data-nostrstack-*` selectors.
 
 Further simplifications worth doing:

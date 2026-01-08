@@ -34,7 +34,7 @@ Defined in `packages/embed/src/qr.ts`:
 
 ## API surface
 
-From `@nostrstack/embed`:
+From `@nostrstack/widgets`:
 
 - `renderQrCodeInto(container, data, opts)` renders into a DOM node and (optionally) verifies + falls back.
 - `nostrstackQrPresetOptions(preset)` returns the base options used by presets (useful for “QR Lab”).

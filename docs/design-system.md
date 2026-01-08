@@ -1,13 +1,13 @@
 # nostrstack design system
 
 nostrstack UI is token-driven so it can inherit the host site’s look while staying consistent across:
-- `@nostrstack/embed` (DOM widgets + global CSS)
-- `@nostrstack/blog-kit` (React wrappers around embed)
+- `@nostrstack/widgets` (DOM widgets + global CSS)
+- `@nostrstack/react` (React wrappers around embed)
 - `apps/gallery` (demo + QA harness)
 
 ## Tokens (single source of truth)
 
-The base design tokens are CSS custom properties defined in `@nostrstack/embed`:
+The base design tokens are CSS custom properties defined in `@nostrstack/widgets`:
 - Selector: `.nostrstack-theme` (and `[data-nostrstack-theme="dark"]` for dark mode)
 - Prefix: `--nostrstack-*`
 
@@ -34,7 +34,7 @@ Add a wrapper and set variables:
 
 ### 2) Programmatic theme (embed helpers)
 
-`@nostrstack/embed` exports helpers that generate the CSS vars:
+`@nostrstack/widgets` exports helpers that generate the CSS vars:
 - `themeToCssVars(theme)` → object of `--nostrstack-*` vars
 - `themeToCss(theme, selector)` → CSS text for light/dark selectors
 - `applyNostrstackTheme(el, theme)` → sets vars directly on an element
@@ -53,7 +53,7 @@ Add a wrapper and set variables:
 
 ### Gallery
 - Treat as the “canary” UI: if a token is missing or a component style regresses, gallery should reveal it quickly.
-- Prefer using `.nostrstack-*` classes from `@nostrstack/embed` (buttons, inputs, popovers) so the demo stays representative.
+- Prefer using `.nostrstack-*` classes from `@nostrstack/widgets` (buttons, inputs, popovers) so the demo stays representative.
 
 ## Motion presets
 
@@ -61,11 +61,11 @@ Guidelines:
 - Default interactions: 120–180ms (`--nostrstack-motion-fast|base`) with `--nostrstack-motion-ease-standard`.
 - Emphasized entrances: `--nostrstack-motion-enter` with `--nostrstack-motion-ease-emphasized`.
 - Keep distances small (`--nostrstack-motion-distance-short`) to avoid “floaty” UI.
-- Respect reduced motion: `@nostrstack/embed` disables animations/transitions under `prefers-reduced-motion: reduce`.
+- Respect reduced motion: `@nostrstack/widgets` disables animations/transitions under `prefers-reduced-motion: reduce`.
 
 ## Primitives
 
-Provided by `@nostrstack/embed` CSS (no JS required):
+Provided by `@nostrstack/widgets` CSS (no JS required):
 - Buttons: `.nostrstack-btn`, `.nostrstack-btn--primary|--ghost|--sm`
 - Inputs: `.nostrstack-input`, `.nostrstack-textarea`, `.nostrstack-select`
 - Surfaces: `.nostrstack-card`

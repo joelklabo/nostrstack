@@ -1,3 +1,14 @@
+import {
+  decodeNostrTarget,
+  extractThreadReferences,
+  getTagValues,
+  isHex64,
+  type NostrTarget,
+  parseInlineMentions,
+  parseProfileContent,
+  type ProfileMeta,
+  uniq
+} from '@nostrstack/nostr';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { type Event, type Filter, SimplePool, validateEvent, verifyEvent } from 'nostr-tools';
@@ -10,18 +21,7 @@ import {
   nostrReplyFetchDuration
 } from '../telemetry/metrics.js';
 import { getCachedEvent, storeCachedEvent } from './event-cache.js';
-import {
-  decodeNostrTarget,
-  getTagValues,
-  isHex64,
-  type NostrTarget,
-  parseInlineMentions,
-  parseProfileContent,
-  type ProfileMeta,
-  uniq
-} from './nostr-utils.js';
 import { selectRelays } from './relay-utils.js';
-import { extractThreadReferences } from './threading.js';
 
 export type ResolvedAuthor = {
   pubkey: string;

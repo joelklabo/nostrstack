@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@nostrstack/blog-kit": "^0.5.0",
+    "@nostrstack/react": "^0.5.0",
     "nostr-tools": "^2.18.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

@@ -4,7 +4,7 @@
 - **API (apps/api)**: Fastify + Prisma. Multi-tenant LightningProvider abstraction (LNbits now), Nostr endpoints, LNURLp/NIP-05, payments/webhooks.
 - **Lightning backend**: LNbits (staging/prod) backed by Voltage LND; local regtest LNbits for demo.
 - **Gallery demo (apps/gallery)**: Vite/React app showcasing widgets; talks to API.
-- **Embed package (@nostrstack/embed)**: Tip/pay/comments widgets, relay badge, invoice popover, user card; exports design tokens.
+- **Embed package (@nostrstack/widgets)**: Tip/pay/comments widgets, relay badge, invoice popover, user card; exports design tokens.
 - **SDK (@nostrstack/sdk)**: Typed client for API.
 - **Injector/CLI**: Static-site injector for adding embed script to static outputs.
 

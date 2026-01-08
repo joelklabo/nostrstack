@@ -23,10 +23,10 @@ workflows:
     description: Run Playwright LNURL e2e (requires API running at localhost:3301 and PLAYWRIGHT_API_READY=1)
     steps:
       - run: PLAYWRIGHT_API_READY=1 pnpm --filter api test:e2e
-  gallery-dev:
-    description: Run demo gallery
+  social-dev:
+    description: Run demo social
     steps:
-      - run: pnpm --filter gallery dev
+      - run: pnpm --filter social dev
   db-up:
     description: Start local Postgres via docker-compose
     steps:

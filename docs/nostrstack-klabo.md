@@ -51,7 +51,7 @@ Admin compose/edit forms expose these fields; per-post disable is respected even
 - Client component `app/src/components/nostrstack-widgets.tsx` handles mock mode (stub invoices, local comments) and dynamic nostr-tools import.
 
 ## React blog kit
-- `@nostrstack/blog-kit` exposes `NostrstackProvider`, `SupportSection`, `BlockchainStats`, `NostrProfileWidget`, plus individual widgets (`TipWidget`, `Comments`, `ShareButton`).
+- `@nostrstack/react` exposes `NostrstackProvider`, `SupportSection`, `BlockchainStats`, `NostrProfileWidget`, plus individual widgets (`TipWidget`, `Comments`, `ShareButton`).
 - Use when embedding widgets into other React blogs: wrap layout with `NostrstackProvider` and drop components where needed.
 
 ### Theming (blog-kit)
@@ -63,7 +63,7 @@ Quick preset:
 ```
 
 Full control:
-- Pass `nostrstackTheme` (uses `@nostrstack/embed` tokens).
+- Pass `nostrstackTheme` (uses `@nostrstack/widgets` tokens).
 - Or set `--nostrstack-*` CSS vars on a wrapping selector (the provider renders `.nostrstack-theme`).
 
 ## Static-site injector

@@ -28,6 +28,7 @@ report/
 .gemini-clipboard/
 
 .gemini/
+gemini-conversation-*.json
 gha-creds-*.json
 .vercel
 

@@ -12,11 +12,11 @@ if [[ -f "apps/api/.env.local" ]]; then
   set +a
 fi
 
-# Load local gallery env if present (provides VITE_* overrides)
-if [[ -f "apps/gallery/.env.local" ]]; then
+# Load local social env if present (provides VITE_* overrides)
+if [[ -f "apps/social/.env.local" ]]; then
   set -a
 # shellcheck disable=SC1091
-  source apps/gallery/.env.local
+  source apps/social/.env.local
   set +a
 fi
 
@@ -78,7 +78,7 @@ EOF
   echo "[demo] Wrote $API_ENV"
 fi
 
-GALLERY_ENV="apps/gallery/.env.local"
+GALLERY_ENV="apps/social/.env.local"
 if [[ ! -f "$GALLERY_ENV" ]]; then
   cat > "$GALLERY_ENV" <<EOF
 VITE_API_BASE_URL=$VITE_API_BASE_URL
@@ -89,7 +89,7 @@ EOF
 fi
 
 # Start dev servers
-echo "[demo] Starting API on :$PORT and gallery on :4173..."
+echo "[demo] Starting API on :$PORT and social on :4173..."
 PORT=$PORT DATABASE_URL=$DATABASE_URL LN_BITS_URL=$LN_BITS_URL LN_BITS_API_KEY=$LN_BITS_API_KEY ADMIN_API_KEY=$ADMIN_API_KEY \
   VITE_API_BASE_URL=$VITE_API_BASE_URL VITE_NOSTRSTACK_HOST=$VITE_NOSTRSTACK_HOST VITE_ENABLE_REAL_PAYMENTS=$VITE_ENABLE_REAL_PAYMENTS \
   LIGHTNING_PROVIDER=${LIGHTNING_PROVIDER:-lnbits} \

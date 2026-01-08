@@ -87,7 +87,7 @@ ENABLE_REGTEST_FUND=true
 LOG_LEVEL=info
 EOF
 
-  cat > "$ROOT/apps/gallery/.env.local" << EOF
+  cat > "$ROOT/apps/social/.env.local" << EOF
 VITE_API_BASE_URL=http://localhost:$API_PORT
 VITE_NOSTRSTACK_HOST=localhost:$API_PORT
 VITE_NOSTRSTACK_RELAYS=wss://relay.damus.io,wss://relay.snort.social,wss://nos.lol
@@ -127,11 +127,11 @@ start_servers() {
   cd "$ROOT"
   exec pnpm exec concurrently \
     --kill-others \
-    --names "api,gallery" \
+    --names "api,social" \
     --prefix-colors "blue,magenta" \
     --prefix "[{name}]" \
     "pnpm --filter api exec tsx watch src/server.ts" \
-    "pnpm --filter gallery dev -- --host --port $GALLERY_PORT --strictPort"
+    "pnpm --filter social dev -- --host --port $GALLERY_PORT --strictPort"
 }
 
 main() {

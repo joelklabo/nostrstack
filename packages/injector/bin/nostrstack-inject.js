@@ -5,7 +5,7 @@ import path from 'node:path';
 function usage() {
   console.log(`nostrstack-inject
 
-Inject @nostrstack/embed tags into static HTML/MD/MDX output.
+Inject @nostrstack/widgets tags into static HTML/MD/MDX output.
 
 Options:
   -i, --input <path>     File or directory to process (default: dist)
@@ -208,7 +208,7 @@ function buildSnippet({
 
   const sections = [
     '<!-- nostrstack-inject start -->',
-    '<script src="https://unpkg.com/@nostrstack/embed/dist/index.global.js"></script>',
+    '<script src="https://unpkg.com/@nostrstack/widgets/dist/index.global.js"></script>',
     
     // Use the composed widget for the main interaction area
     `<div ${attrsComposed}></div>`,

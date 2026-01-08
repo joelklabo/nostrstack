@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
-const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED', 'PAID']);
+import { checkAndUpdatePaymentStatus,PAID_STATES } from './payment-status.js';
 
 export function startPaymentReconciler(app: FastifyInstance) {
   if (!app.lightningProvider.getCharge) {
@@ -12,61 +12,15 @@ export function startPaymentReconciler(app: FastifyInstance) {
     try {
       // reconcile only recent pending payments to avoid hammering providers
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const paidStatuses = Array.from(PAID_STATES);
       const pending = await app.prisma.payment.findMany({
-        where: { status: { notIn: ['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED'] }, updatedAt: { gte: since } },
+        where: { status: { notIn: paidStatuses }, updatedAt: { gte: since } },
         take: 20,
         orderBy: { updatedAt: 'desc' }
       });
 
-      for (const p of pending) {
-        try {
-          const statusRes = await app.lightningProvider.getCharge!(p.providerRef);
-          const normalized = statusRes?.status?.toString().toUpperCase() ?? p.status;
-          if (normalized !== p.status) {
-            await app.prisma.payment.update({ where: { id: p.id }, data: { status: normalized } });
-            let metadata: unknown | undefined;
-            if (p.metadata) {
-              try {
-                metadata = JSON.parse(p.metadata) as unknown;
-              } catch {
-                metadata = undefined;
-              }
-            }
-            const ts = Date.now();
-            app.payEventHub?.broadcast({
-              type: 'invoice-status',
-              ts,
-              providerRef: p.providerRef,
-              status: normalized,
-              prevStatus: p.status,
-              pr: p.invoice,
-              amount: p.amountSats,
-              action: p.action ?? undefined,
-              itemId: p.itemId ?? undefined,
-              metadata,
-              source: 'reconciler',
-              tenantId: p.tenantId,
-              paymentId: p.id
-            });
-            if (PAID_STATES.has(normalized)) {
-              app.payEventHub?.broadcast({
-                type: 'invoice-paid',
-                ts,
-                pr: p.invoice,
-                providerRef: p.providerRef,
-                amount: p.amountSats,
-                action: p.action ?? undefined,
-                itemId: p.itemId ?? undefined,
-                metadata,
-                source: 'reconciler',
-                tenantId: p.tenantId,
-                paymentId: p.id
-              });
-            }
-          }
-        } catch (err) {
-          app.log.warn({ err, providerRef: p.providerRef }, 'payment reconciler status check failed');
-        }
+      for (const payment of pending) {
+        await checkAndUpdatePaymentStatus(app, payment, 'reconciler');
       }
     } catch (err) {
       app.log.warn({ err }, 'payment reconciler loop failed');
