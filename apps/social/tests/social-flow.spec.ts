@@ -2,6 +2,31 @@ import { expect, test } from '@playwright/test';
 
 import { resolveDocScreenshotPath } from './helpers.ts';
 
+/**
+ * Helper to dismiss the onboarding tour if it appears
+ */
+async function dismissOnboarding(page: import('@playwright/test').Page) {
+  // Set localStorage to skip onboarding tour
+  await page.evaluate(() => {
+    localStorage.setItem('nostrstack.onboarding.v1', 'true');
+  });
+}
+
+/**
+ * Helper to perform nsec login
+ */
+async function loginWithNsec(page: import('@playwright/test').Page, nsec: string) {
+  await page.getByText('Enter nsec manually').click();
+  await page.getByPlaceholder('nsec1...').fill(nsec);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  // Wait for navigation and dismiss onboarding if it appears
+  await page.waitForTimeout(500);
+  const skipBtn = page.getByRole('button', { name: 'Skip' });
+  if (await skipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await skipBtn.click();
+  }
+}
+
 test.describe('Social App Flow', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
@@ -10,25 +35,22 @@ test.describe('Social App Flow', () => {
   });
 
   test('Guest user sees login screen', async ({ page }) => {
-    await expect(page.getByText('Sign in to NostrStack')).toBeVisible();
-    await expect(page.getByText('Sign in with Extension (NIP-07)')).toBeVisible();
+    // Login screen text - check for key elements
+    await expect(page.getByRole('heading', { name: 'NostrStack' })).toBeVisible();
+    await expect(page.getByText('Connect your identity to get started')).toBeVisible();
+    await expect(page.getByText('Sign in with Extension')).toBeVisible();
     await expect(page.getByText('Enter nsec manually')).toBeVisible();
     await page.screenshot({ path: resolveDocScreenshotPath('login.png') });
   });
 
   test('User can login with nsec and see feed', async ({ page }) => {
-    // 1. Login with NSEC
-    await page.getByText('Enter nsec manually').click();
-
-    // Use a valid nsec
+    // 1. Login with NSEC and dismiss onboarding
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-
-    await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await loginWithNsec(page, validNsec);
 
     // Check for potential error message
     const errorMsg = page.locator('.error-msg');
-    if (await errorMsg.isVisible()) {
+    if (await errorMsg.isVisible().catch(() => false)) {
       console.error('Login Error:', await errorMsg.textContent());
     }
 
@@ -103,11 +125,9 @@ test.describe('Social App Flow', () => {
   });
 
   test('Navigation to Profile, Follow, and Screenshot', async ({ page }) => {
-    // Login first
+    // Login first and dismiss onboarding
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await page.getByText('Enter nsec manually').click();
-    await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await loginWithNsec(page, validNsec);
 
     // Click Profile
     await page.getByRole('button', { name: 'Profile' }).click();
@@ -132,11 +152,9 @@ test.describe('Social App Flow', () => {
   });
 
   test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {
-    // Login
+    // Login and dismiss onboarding
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await page.getByText('Enter nsec manually').click();
-    await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await loginWithNsec(page, validNsec);
 
     // Verify Sidebar Buttons exist and are clickable (even if no-op)
     await page.getByRole('button', { name: 'Notifications' }).click();
@@ -171,7 +189,7 @@ test.describe('Social App Flow', () => {
     await page.getByRole('button', { name: 'Log out' }).click();
 
     // Expect Login Screen
-    await expect(page.getByText('Sign in to NostrStack')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'NostrStack' })).toBeVisible();
     await expect(page.getByText('Enter nsec manually')).toBeVisible();
   });
 });
