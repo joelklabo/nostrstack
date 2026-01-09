@@ -326,9 +326,9 @@ export function WalletView({
                     fontSize: '0.8rem',
                     wordBreak: 'break-all',
                     padding: '0.75rem',
-                    background: 'var(--ns-color-surface-subtle)',
+                    background: 'var(--ns-color-bg-subtle)',
                     borderRadius: 'var(--ns-radius-md)',
-                    border: '1px solid var(--ns-color-border)'
+                    border: '1px solid var(--ns-color-border-default)'
                   }}
                 >
                   {request.lnurl}

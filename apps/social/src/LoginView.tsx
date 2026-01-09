@@ -443,7 +443,7 @@ export function LoginView() {
                       style={{
                         display: 'inline-flex',
                         padding: '0.25rem 0.6rem',
-                        background: 'var(--ns-color-surface-subtle)',
+                        background: 'var(--ns-color-bg-subtle)',
                         borderRadius: '99px',
                         fontSize: '0.75rem',
                         width: 'fit-content'

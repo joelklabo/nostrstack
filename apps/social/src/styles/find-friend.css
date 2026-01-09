@@ -4,12 +4,12 @@
   justify-content: space-between;
   gap: var(--ns-space-4);
   padding: var(--ns-space-4) var(--ns-space-5);
-  border: 1px solid var(--ns-color-border);
+  border: 1px solid var(--ns-color-border-default);
   border-radius: var(--ns-radius-lg);
   background: linear-gradient(
     135deg,
-    var(--ns-color-surface) 0%,
-    var(--ns-color-surface-subtle) 100%
+    var(--ns-color-surface-default) 0%,
+    var(--ns-color-bg-subtle) 100%
   );
   margin-bottom: var(--ns-space-5);
   transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
@@ -28,7 +28,7 @@
 .find-friend-card__title {
   font-size: var(--ns-font-size-base);
   font-weight: var(--ns-font-weight-semibold);
-  color: var(--ns-color-text);
+  color: var(--ns-color-text-default);
   margin-bottom: var(--ns-space-1);
 }
 
@@ -45,14 +45,14 @@
   font-size: var(--ns-font-size-sm);
   font-weight: var(--ns-font-weight-semibold);
   cursor: pointer;
-  border: 1px solid var(--ns-color-primary);
+  border: 1px solid var(--ns-color-primary-default);
   background: transparent;
-  color: var(--ns-color-primary);
+  color: var(--ns-color-primary-default);
   transition: all var(--ns-duration-fast) var(--ns-easing-easeInOut);
 }
 
 .find-friend-card__action:hover {
-  background: var(--ns-color-primary);
+  background: var(--ns-color-primary-default);
   color: #fff;
 }
 

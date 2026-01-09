@@ -1703,6 +1703,7 @@ body {
   z-index: 9999;
   padding: var(--ns-space-4);
   backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .ns-dialog {
