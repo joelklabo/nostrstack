@@ -65,12 +65,7 @@ export const NostrEventCard = memo(function NostrEventCard({
     : 0;
   const paywallItemId = event.id;
 
-  const rootClasses = [
-    'nostrstack-card',
-    'nostrstack-event-card',
-    `nostrstack-event-card--${variant}`,
-    className
-  ]
+  const rootClasses = ['ns-card', 'ns-event-card', `ns-event-card--${variant}`, className]
     .filter(Boolean)
     .join(' ');
 
@@ -78,28 +73,25 @@ export const NostrEventCard = memo(function NostrEventCard({
     if (hasContentWarning && !showContent) {
       return (
         <div
-          className="nostrstack-callout"
+          className="ns-callout"
           style={
             {
-              '--nostrstack-callout-tone': 'var(--nostrstack-color-warning)'
+              '--ns-callout-tone': 'var(--ns-color-warning)'
             } as React.CSSProperties
           }
           role="region"
           aria-label="Content warning"
         >
           <div
-            className="nostrstack-callout__title"
+            className="ns-callout__title"
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <span>⚠️</span>
             Content Warning
           </div>
-          <div className="nostrstack-callout__content">
+          <div className="ns-callout__content">
             <p style={{ margin: '0 0 0.5rem' }}>{contentWarningReason}</p>
-            <button
-              className="nostrstack-btn nostrstack-btn--sm"
-              onClick={() => setShowContent(true)}
-            >
+            <button className="ns-btn ns-btn--sm" onClick={() => setShowContent(true)}>
               Show Content
             </button>
           </div>
@@ -109,7 +101,7 @@ export const NostrEventCard = memo(function NostrEventCard({
 
     return (
       <div
-        className="nostrstack-content"
+        className="ns-content"
         dangerouslySetInnerHTML={{ __html: md.render(event.content) }}
         role="article"
         aria-label="Post content"
@@ -124,21 +116,18 @@ export const NostrEventCard = memo(function NostrEventCard({
       tabIndex={0}
       aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
     >
-      <header className="nostrstack-event-card__header">
-        <div className="nostrstack-event-card__meta">
+      <header className="ns-event-card__header">
+        <div className="ns-event-card__meta">
           <ProfileLink
             pubkey={event.pubkey}
             label={`${event.pubkey.slice(0, 8)}...`}
             title={event.pubkey}
-            className="nostrstack-profile-link"
+            className="ns-profile-link"
           />
-          <span className="nostrstack-separator" aria-hidden="true">
+          <span className="ns-separator" aria-hidden="true">
             •
           </span>
-          <time
-            className="nostrstack-timestamp"
-            dateTime={new Date(event.created_at * 1000).toISOString()}
-          >
+          <time className="ns-timestamp" dateTime={new Date(event.created_at * 1000).toISOString()}>
             {new Date(event.created_at * 1000).toLocaleTimeString([], {
               hour: 'numeric',
               minute: '2-digit'
@@ -146,10 +135,10 @@ export const NostrEventCard = memo(function NostrEventCard({
           </time>
         </div>
 
-        {variant !== 'compact' && <div className="nostrstack-badge">Kind {event.kind}</div>}
+        {variant !== 'compact' && <div className="ns-badge">Kind {event.kind}</div>}
       </header>
 
-      <div className="nostrstack-event-card__body">
+      <div className="ns-event-card__body">
         {isPaywalled ? (
           <PaywalledContent
             itemId={paywallItemId}
@@ -158,9 +147,9 @@ export const NostrEventCard = memo(function NostrEventCard({
             host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
             unlockedContent={renderContent()}
             lockedContent={
-              <div className="nostrstack-callout">
-                <div className="nostrstack-callout__title">Premium Content</div>
-                <div className="nostrstack-callout__content">
+              <div className="ns-callout">
+                <div className="ns-callout__title">Premium Content</div>
+                <div className="ns-callout__content">
                   This content requires a payment of {paywallAmount} sats.
                 </div>
               </div>
@@ -171,7 +160,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         )}
       </div>
 
-      <div className="nostrstack-event-card__actions" role="group" aria-label="Post actions">
+      <div className="ns-event-card__actions" role="group" aria-label="Post actions">
         <ReactionButton event={event} />
         <ZapButton
           event={event}
@@ -182,7 +171,7 @@ export const NostrEventCard = memo(function NostrEventCard({
           className={isZapped ? 'zapped' : ''}
         />
         <button
-          className="nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-action-btn"
+          className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
           onClick={() => setIsReplying(true)}
           aria-label="Reply to this post"
         >
@@ -191,7 +180,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         </button>
         {onOpenThread && (
           <button
-            className="nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-action-btn"
+            className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
             onClick={() => onOpenThread(event.id)}
             aria-label="View thread"
           >
@@ -201,7 +190,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         )}
         {pubkey && (
           <button
-            className={`nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-action-btn ${isReposted ? 'active' : ''}`}
+            className={`ns-btn ns-btn--ghost ns-btn--sm ns-action-btn ${isReposted ? 'active' : ''}`}
             onClick={handleRepost}
             disabled={repostLoading || isReposted}
             aria-label={isReposted ? 'Reposted' : 'Repost this post'}
@@ -214,7 +203,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         )}
 
         <button
-          className="nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-action-btn"
+          className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
           onClick={() => setShowJson(!showJson)}
           style={{ marginLeft: 'auto' }}
           aria-label={showJson ? 'Hide source' : 'View source'}
@@ -224,7 +213,7 @@ export const NostrEventCard = memo(function NostrEventCard({
       </div>
 
       {showJson && (
-        <div className="nostrstack-event-card__json">
+        <div className="ns-event-card__json">
           <JsonView value={event} title={`Event ID: ${event.id.slice(0, 8)}...`} />
         </div>
       )}

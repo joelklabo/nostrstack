@@ -120,9 +120,17 @@ function formatPaymentTelemetry(event: PaymentTelemetryEvent): LogEntry {
     case 'invoice_ready':
       return { ts, level: 'info', message: `${flowLabel}: invoice ready${amountLabel}` };
     case 'payment_sent':
-      return { ts, level: 'info', message: `${flowLabel}: payment sent${amountLabel}${methodSuffix}` };
+      return {
+        ts,
+        level: 'info',
+        message: `${flowLabel}: payment sent${amountLabel}${methodSuffix}`
+      };
     case 'payment_failed':
-      return { ts, level: 'error', message: `${flowLabel}: payment failed${amountLabel}${methodSuffix}${reasonSuffix}` };
+      return {
+        ts,
+        level: 'error',
+        message: `${flowLabel}: payment failed${amountLabel}${methodSuffix}${reasonSuffix}`
+      };
     default:
       return { ts, level: 'info', message: `${flowLabel}: event` };
   }
@@ -172,13 +180,17 @@ function preferSecureBase(base: string) {
 function safeClose(socket: WebSocket | null) {
   if (!socket) return;
   if (socket.readyState === WebSocket.CONNECTING) {
-    socket.addEventListener('open', () => {
-      try {
-        socket.close();
-      } catch {
-        // Ignore close errors from already-closed sockets.
-      }
-    }, { once: true });
+    socket.addEventListener(
+      'open',
+      () => {
+        try {
+          socket.close();
+        } catch {
+          // Ignore close errors from already-closed sockets.
+        }
+      },
+      { once: true }
+    );
     return;
   }
   if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CLOSING) {
@@ -199,8 +211,9 @@ function applyJitter(baseMs: number, jitter: number) {
 function resolveTelemetryTiming(): TelemetryTiming {
   if (typeof window === 'undefined') return DEFAULT_TELEMETRY_TIMING;
   if (!import.meta.env.DEV) return DEFAULT_TELEMETRY_TIMING;
-  const overrides = (window as Window & { __NOSTRSTACK_TELEMETRY_TIMING__?: Partial<TelemetryTiming> })
-    .__NOSTRSTACK_TELEMETRY_TIMING__;
+  const overrides = (
+    window as Window & { __NOSTRSTACK_TELEMETRY_TIMING__?: Partial<TelemetryTiming> }
+  ).__NOSTRSTACK_TELEMETRY_TIMING__;
   if (!overrides) return DEFAULT_TELEMETRY_TIMING;
   const readNumber = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -209,9 +222,18 @@ function resolveTelemetryTiming(): TelemetryTiming {
     wsMaxDelayMs: readNumber(overrides.wsMaxDelayMs, DEFAULT_TELEMETRY_TIMING.wsMaxDelayMs),
     wsMaxAttempts: readNumber(overrides.wsMaxAttempts, DEFAULT_TELEMETRY_TIMING.wsMaxAttempts),
     wsJitter: readNumber(overrides.wsJitter, DEFAULT_TELEMETRY_TIMING.wsJitter),
-    offlinePollBaseMs: readNumber(overrides.offlinePollBaseMs, DEFAULT_TELEMETRY_TIMING.offlinePollBaseMs),
-    offlinePollMaxMs: readNumber(overrides.offlinePollMaxMs, DEFAULT_TELEMETRY_TIMING.offlinePollMaxMs),
-    offlinePollJitter: readNumber(overrides.offlinePollJitter, DEFAULT_TELEMETRY_TIMING.offlinePollJitter),
+    offlinePollBaseMs: readNumber(
+      overrides.offlinePollBaseMs,
+      DEFAULT_TELEMETRY_TIMING.offlinePollBaseMs
+    ),
+    offlinePollMaxMs: readNumber(
+      overrides.offlinePollMaxMs,
+      DEFAULT_TELEMETRY_TIMING.offlinePollMaxMs
+    ),
+    offlinePollJitter: readNumber(
+      overrides.offlinePollJitter,
+      DEFAULT_TELEMETRY_TIMING.offlinePollJitter
+    ),
     statusDwellMs: readNumber(overrides.statusDwellMs, DEFAULT_TELEMETRY_TIMING.statusDwellMs)
   };
 }
@@ -245,40 +267,46 @@ export function TelemetryBar() {
   const wsRef = useRef<WebSocket | null>(null);
   const statusDwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const telemetryTiming = useMemo(resolveTelemetryTiming, []);
-  
-  const appendLog = useCallback((entry: LogEntry) => {
-    setLogs(prev => {
-      const next = [...prev, entry];
-      return next.slice(-logLimit);
-    });
-  }, [logLimit]);
+
+  const appendLog = useCallback(
+    (entry: LogEntry) => {
+      setLogs((prev) => {
+        const next = [...prev, entry];
+        return next.slice(-logLimit);
+      });
+    },
+    [logLimit]
+  );
 
   const mergeNodeState = useCallback((next: Partial<NodeState>) => {
-    setNodeState(prev => ({ ...prev, ...next }));
+    setNodeState((prev) => ({ ...prev, ...next }));
   }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('nostrstack.telemetry.logLimit', String(logLimit));
     }
-    setLogs(prev => prev.slice(-logLimit));
+    setLogs((prev) => prev.slice(-logLimit));
   }, [logLimit]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') return;
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{
-        status?: WsStatus;
-        offlineReason?: string | null;
-        attempt?: number;
-      }>).detail;
+      const detail = (
+        event as CustomEvent<{
+          status?: WsStatus;
+          offlineReason?: string | null;
+          attempt?: number;
+        }>
+      ).detail;
       if (!detail) return;
       if (detail.status) setWsStatus(detail.status);
       if ('offlineReason' in detail) setOfflineReason(detail.offlineReason ?? null);
       if (typeof detail.attempt === 'number') setWsAttempt(detail.attempt);
     };
     window.addEventListener('nostrstack:telemetry-ws-state', handler as EventListener);
-    return () => window.removeEventListener('nostrstack:telemetry-ws-state', handler as EventListener);
+    return () =>
+      window.removeEventListener('nostrstack:telemetry-ws-state', handler as EventListener);
   }, []);
 
   useEffect(() => {
@@ -298,12 +326,16 @@ export function TelemetryBar() {
     readOverride();
     window.addEventListener('storage', handleStorage);
     window.addEventListener('nostrstack:dev-network', handleCustom as EventListener);
-    
+
     const handleManualUpdate = (event: Event) => {
       const detail = (event as CustomEvent<{ height: number }>).detail;
       if (detail && detail.height) {
-        setNodeState(prev => ({ ...prev, height: detail.height }));
-        appendLog({ ts: Date.now(), level: 'info', message: `Manual update: Block ${detail.height}` });
+        setNodeState((prev) => ({ ...prev, height: detail.height }));
+        appendLog({
+          ts: Date.now(),
+          level: 'info',
+          message: `Manual update: Block ${detail.height}`
+        });
         refresh();
       }
     };
@@ -312,7 +344,10 @@ export function TelemetryBar() {
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('nostrstack:dev-network', handleCustom as EventListener);
-      window.removeEventListener('nostrstack:manual-block-update', handleManualUpdate as EventListener);
+      window.removeEventListener(
+        'nostrstack:manual-block-update',
+        handleManualUpdate as EventListener
+      );
     };
   }, [refresh, appendLog]);
 
@@ -379,7 +414,9 @@ export function TelemetryBar() {
   }, [displayStatus, telemetryTiming.statusDwellMs, wsStatus]);
 
   useEffect(() => {
-    const telemetryWsUrl = resolveTelemetryWs(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001');
+    const telemetryWsUrl = resolveTelemetryWs(
+      import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
+    );
     if (!telemetryWsUrl) {
       appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' });
       setWsStatus('offline');
@@ -405,14 +442,15 @@ export function TelemetryBar() {
     };
 
     const schedulePoll = () => {
-      const base = pollFailuresRef.current >= 3
-        ? telemetryTiming.offlinePollMaxMs
-        : telemetryTiming.offlinePollBaseMs;
+      const base =
+        pollFailuresRef.current >= 3
+          ? telemetryTiming.offlinePollMaxMs
+          : telemetryTiming.offlinePollBaseMs;
       const delay = applyJitter(base, telemetryTiming.offlinePollJitter);
       pollTimeout = setTimeout(() => {
         if (cancelled) return;
         if (statusErrorRef.current) {
-          setPollFailures(prev => Math.min(prev + 1, 3));
+          setPollFailures((prev) => Math.min(prev + 1, 3));
         } else {
           setPollFailures(0);
         }
@@ -466,7 +504,7 @@ export function TelemetryBar() {
           const msg = JSON.parse(event.data) as TelemetryEvent;
 
           if (msg.type === 'block') {
-            setNodeState(prev => ({
+            setNodeState((prev) => ({
               ...prev,
               network: msg.network ?? prev?.network,
               height: msg.height ?? prev?.height,
@@ -524,7 +562,11 @@ export function TelemetryBar() {
         attempt = nextAttempt;
         setWsAttempt(nextAttempt);
         setWsStatus('reconnecting');
-        appendLog({ ts: Date.now(), level: 'warn', message: `Disconnected from telemetry. Reconnecting in ${Math.round(delay / 1000)}s.` });
+        appendLog({
+          ts: Date.now(),
+          level: 'warn',
+          message: `Disconnected from telemetry. Reconnecting in ${Math.round(delay / 1000)}s.`
+        });
         retryTimeout = setTimeout(connect, delay);
       };
     };
@@ -571,29 +613,36 @@ export function TelemetryBar() {
     });
   }, [appendLog]);
 
-  const nodeInfo = status || nodeState
-    ? {
-        ...status?.telemetry,
-        ...nodeState,
-        network: nodeState?.network ?? status?.network ?? status?.telemetry?.network,
-        configuredNetwork: status?.configuredNetwork ?? nodeState?.configuredNetwork,
-        source: status?.source ?? nodeState?.source,
-        telemetryError: status?.telemetryError ?? nodeState?.telemetryError,
-        lightning: status?.lightning ?? nodeState?.lightning
-      }
-    : null;
+  const nodeInfo =
+    status || nodeState
+      ? {
+          ...status?.telemetry,
+          ...nodeState,
+          network: nodeState?.network ?? status?.network ?? status?.telemetry?.network,
+          configuredNetwork: status?.configuredNetwork ?? nodeState?.configuredNetwork,
+          source: status?.source ?? nodeState?.source,
+          telemetryError: status?.telemetryError ?? nodeState?.telemetryError,
+          lightning: status?.lightning ?? nodeState?.lightning
+        }
+      : null;
   const defaultNetwork = String(import.meta.env.VITE_NETWORK ?? 'regtest').trim();
-  const configuredNetwork = (devNetworkOverride ?? nodeInfo?.configuredNetwork ?? nodeInfo?.network ?? defaultNetwork).trim();
+  const configuredNetwork = (
+    devNetworkOverride ??
+    nodeInfo?.configuredNetwork ??
+    nodeInfo?.network ??
+    defaultNetwork
+  ).trim();
   const nodeInfoWithConfig = nodeInfo ? { ...nodeInfo, configuredNetwork } : null;
   const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
   const reconnectAttempt = Math.min(Math.max(wsAttempt, 0), telemetryTiming.wsMaxAttempts);
-  const wsStatusLabel = displayStatus === 'connected'
-    ? 'Connected'
-    : displayStatus === 'connecting'
-      ? 'Connecting'
-      : displayStatus === 'reconnecting'
-        ? `Reconnecting (${Math.max(1, reconnectAttempt)}/${telemetryTiming.wsMaxAttempts})`
-        : 'Offline';
+  const wsStatusLabel =
+    displayStatus === 'connected'
+      ? 'Connected'
+      : displayStatus === 'connecting'
+        ? 'Connecting'
+        : displayStatus === 'reconnecting'
+          ? `Reconnecting (${Math.max(1, reconnectAttempt)}/${telemetryTiming.wsMaxAttempts})`
+          : 'Offline';
   const lastUpdateLabel = lastUpdateAt
     ? `Updated ${new Date(lastUpdateAt).toLocaleTimeString([], { hour12: false })}`
     : 'No updates yet';
@@ -627,56 +676,30 @@ export function TelemetryBar() {
         </span>
       </div>
       {displayStatus === 'offline' && offlineReason && (
-        <div className="telemetry-status-note">
-          Offline reason: {offlineReason}
-        </div>
+        <div className="telemetry-status-note">Offline reason: {offlineReason}</div>
       )}
       {nodeInfoWithConfig && (
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div className="telemetry-node-section">
           <BitcoinNodeCard info={nodeInfoWithConfig} />
         </div>
       )}
 
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ 
-          fontSize: '0.75rem', 
-          color: 'var(--color-fg-muted)', 
-          textTransform: 'uppercase', 
-          letterSpacing: '0.05em', 
-          marginBottom: '0.5rem' 
-        }}>
-          Monitored Relays
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {[
-            'wss://relay.damus.io',
-            'wss://relay.snort.social',
-            'wss://nos.lol'
-          ].map(relay => (
-            <div key={relay} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              fontSize: '0.8rem',
-              color: 'var(--color-fg-default)' 
-            }}>
-              <div style={{ 
-                width: '6px', 
-                height: '6px', 
-                borderRadius: '50%', 
-                background: 'var(--color-success-fg)', 
-                marginRight: '8px' 
-              }} />
+      <div className="telemetry-relays">
+        <div className="telemetry-relays-title">Monitored Relays</div>
+        <div className="telemetry-relays-list">
+          {['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'].map((relay) => (
+            <div key={relay} className="telemetry-relay-item">
+              <div className="telemetry-relay-dot" />
               {relay.replace('wss://', '')}
             </div>
           ))}
         </div>
       </div>
-      
-      <div className="telemetry-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        Activity Log
-        <select 
-          className="nostrstack-select" 
-          style={{ width: 'auto', fontSize: '0.7rem', padding: '2px 1.5rem 2px 6px', height: 'auto' }}
+
+      <div className="telemetry-header">
+        <span>Activity Log</span>
+        <select
+          className="ns-select telemetry-log-select"
           value={logLimit}
           onChange={(e) => setLogLimit(parseInt(e.target.value, 10))}
           title="Max log entries"
@@ -688,23 +711,13 @@ export function TelemetryBar() {
         </select>
       </div>
       <div className="telemetry-log">
-        {logs.length === 0 && (
-          <div style={{ padding: '0.5rem', fontStyle: 'italic', color: 'var(--color-fg-muted)' }}>
-            No recent activity...
-          </div>
-        )}
+        {logs.length === 0 && <div className="telemetry-log-empty">No recent activity...</div>}
         {logs.map((log, i) => (
-          <div key={i} style={{ 
-            color: log.level === 'error' ? 'var(--color-danger-fg)' : log.level === 'warn' ? 'var(--color-attention-fg)' : 'var(--color-fg-muted)',
-            marginBottom: '4px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.75rem',
-            lineHeight: '1.4'
-          }}>
-            <span style={{ color: 'var(--color-fg-subtle)', marginRight: '6px' }}>
+          <div key={i} className={`telemetry-log-entry is-${log.level}`}>
+            <span className="telemetry-log-time">
               {new Date(log.ts).toLocaleTimeString([], { hour12: false })}
             </span>
-            {log.message}
+            <span className="telemetry-log-message">{log.message}</span>
           </div>
         ))}
       </div>

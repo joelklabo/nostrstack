@@ -6,11 +6,7 @@ import {
   useAuth
 } from '@nostrstack/react';
 import { Alert } from '@nostrstack/ui';
-import {
-  applyNostrstackTheme,
-  createNostrstackBrandTheme,
-  type NostrstackBrandPreset
-} from '@nostrstack/widgets';
+import { applyNsTheme, createNsBrandTheme, type NsBrandPreset } from '@nostrstack/widgets';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
@@ -71,7 +67,7 @@ function getNostrRouteId(pathname: string) {
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [brandPreset, setBrandPreset] = useState<NostrstackBrandPreset>('default');
+  const [brandPreset, setBrandPreset] = useState<NsBrandPreset>('default');
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
@@ -116,10 +112,7 @@ function AppShell() {
 
   useEffect(() => {
     // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
-    applyNostrstackTheme(
-      document.body,
-      createNostrstackBrandTheme({ preset: brandPreset, mode: theme })
-    );
+    applyNsTheme(document.body, createNsBrandTheme({ preset: brandPreset, mode: theme }));
     document.body.setAttribute('data-theme', theme);
   }, [brandPreset, theme]);
 

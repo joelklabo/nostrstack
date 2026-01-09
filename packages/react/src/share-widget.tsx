@@ -1,6 +1,6 @@
 'use client';
 
-import { ensureNostrstackRoot } from '@nostrstack/widgets';
+import { ensureNsRoot } from '@nostrstack/widgets';
 import { Relay, type Subscription } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -143,7 +143,7 @@ export function ShareWidget({
 
   useEffect(() => {
     if (!rootRef.current) return;
-    ensureNostrstackRoot(rootRef.current);
+    ensureNsRoot(rootRef.current);
   }, []);
 
   useEffect(() => {
@@ -393,8 +393,8 @@ export function ShareWidget({
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
         <div style={{ fontWeight: 800 }}>Shares</div>
-        <div style={{ color: 'var(--nostrstack-color-text-muted)', fontSize: 13 }}>
-          <strong style={{ color: 'var(--nostrstack-color-text)' }}>{countLabel}</strong>{' '}
+        <div style={{ color: 'var(--ns-color-text-muted)', fontSize: 13 }}>
+          <strong style={{ color: 'var(--ns-color-text)' }}>{countLabel}</strong>{' '}
           {Number(countLabel.replace('+', '')) === 1 ? 'share' : 'shares'}
           {uniqueSharers.length ? ` · ${uniqueSharers.length} people` : ''}
         </div>
@@ -407,15 +407,15 @@ export function ShareWidget({
             gap: 6,
             padding: '2px 10px',
             borderRadius: 999,
-            border: '1px solid var(--nostrstack-color-border)',
-            background: 'var(--nostrstack-color-surface)',
+            border: '1px solid var(--ns-color-border)',
+            background: 'var(--ns-color-surface)',
             fontSize: 12,
             color:
               status === 'connected'
-                ? 'var(--nostrstack-color-success)'
+                ? 'var(--ns-color-success)'
                 : status === 'error'
-                  ? 'var(--nostrstack-color-danger)'
-                  : 'var(--nostrstack-color-text-muted)',
+                  ? 'var(--ns-color-danger)'
+                  : 'var(--ns-color-text-muted)',
             whiteSpace: 'nowrap'
           }}
           aria-live="polite"
@@ -427,10 +427,10 @@ export function ShareWidget({
               borderRadius: 99,
               background:
                 status === 'connected'
-                  ? 'var(--nostrstack-color-success)'
+                  ? 'var(--ns-color-success)'
                   : status === 'error'
-                    ? 'var(--nostrstack-color-danger)'
-                    : 'var(--nostrstack-color-border)'
+                    ? 'var(--ns-color-danger)'
+                    : 'var(--ns-color-border)'
             }}
           />
           {status === 'connected'
@@ -470,14 +470,13 @@ export function ShareWidget({
                 width: 28,
                 height: 28,
                 borderRadius: 999,
-                border: '1px solid var(--nostrstack-color-border)',
-                background: 'var(--nostrstack-color-surface)',
+                border: '1px solid var(--ns-color-border)',
+                background: 'var(--ns-color-surface)',
                 marginLeft: idx === 0 ? 0 : -8,
                 display: 'grid',
                 placeItems: 'center',
                 overflow: 'hidden',
-                boxShadow:
-                  '0 0 0 2px color-mix(in oklab, var(--nostrstack-color-surface) 90%, transparent)'
+                boxShadow: '0 0 0 2px color-mix(in oklab, var(--ns-color-surface) 90%, transparent)'
               }}
               aria-label={label}
             >
@@ -488,9 +487,7 @@ export function ShareWidget({
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <span
-                  style={{ fontSize: 12, fontWeight: 800, color: 'var(--nostrstack-color-text)' }}
-                >
+                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ns-color-text)' }}>
                   {(profile?.display_name || profile?.name || pk).slice(0, 1).toUpperCase()}
                 </span>
               )}
@@ -503,15 +500,15 @@ export function ShareWidget({
               width: 28,
               height: 28,
               borderRadius: 999,
-              border: '1px solid var(--nostrstack-color-border)',
+              border: '1px solid var(--ns-color-border)',
               background:
-                'color-mix(in oklab, var(--nostrstack-color-primary) 12%, var(--nostrstack-color-surface))',
+                'color-mix(in oklab, var(--ns-color-primary) 12%, var(--ns-color-surface))',
               marginLeft: avatarPubkeys.length ? -8 : 0,
               display: 'grid',
               placeItems: 'center',
               fontSize: 12,
               fontWeight: 800,
-              color: 'var(--nostrstack-color-text)'
+              color: 'var(--ns-color-text)'
             }}
             title={`${uniqueSharers.length - avatarPubkeys.length} more`}
           >
@@ -520,7 +517,7 @@ export function ShareWidget({
         )}
       </div>
       {!uniqueSharers.length && (
-        <div style={{ fontSize: 13, color: 'var(--nostrstack-color-text-muted)' }}>
+        <div style={{ fontSize: 13, color: 'var(--ns-color-text-muted)' }}>
           No shares yet. Be the first.
         </div>
       )}
@@ -534,12 +531,12 @@ export function ShareWidget({
       ref={rootRef}
       className={className}
       style={{
-        border: '1px solid var(--nostrstack-color-border)',
-        borderRadius: 'var(--nostrstack-radius-lg)',
+        border: '1px solid var(--ns-color-border)',
+        borderRadius: 'var(--ns-radius-lg)',
         background:
-          'radial-gradient(900px circle at top left, color-mix(in oklab, var(--nostrstack-color-primary) 10%, transparent), transparent 60%), var(--nostrstack-color-surface)',
+          'radial-gradient(900px circle at top left, color-mix(in oklab, var(--ns-color-primary) 10%, transparent), transparent 60%), var(--ns-color-surface)',
         padding: 14,
-        boxShadow: 'var(--nostrstack-shadow-md)'
+        boxShadow: 'var(--ns-shadow-md)'
       }}
     >
       {header}
@@ -565,10 +562,10 @@ export function ShareWidget({
                   alignItems: 'center',
                   padding: '8px 10px',
                   borderRadius: 12,
-                  border: '1px solid var(--nostrstack-color-border)',
-                  background: 'color-mix(in oklab, var(--nostrstack-color-surface) 90%, white)',
+                  border: '1px solid var(--ns-color-border)',
+                  background: 'color-mix(in oklab, var(--ns-color-surface) 90%, white)',
                   textDecoration: 'none',
-                  color: 'var(--nostrstack-color-text)'
+                  color: 'var(--ns-color-text)'
                 }}
               >
                 <div
@@ -577,10 +574,10 @@ export function ShareWidget({
                     height: 30,
                     borderRadius: 999,
                     overflow: 'hidden',
-                    border: '1px solid var(--nostrstack-color-border)',
+                    border: '1px solid var(--ns-color-border)',
                     display: 'grid',
                     placeItems: 'center',
-                    background: 'var(--nostrstack-color-surface)',
+                    background: 'var(--ns-color-surface)',
                     flex: '0 0 auto'
                   }}
                   aria-hidden="true"
@@ -610,7 +607,7 @@ export function ShareWidget({
                   >
                     {name}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--nostrstack-color-text-muted)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--ns-color-text-muted)' }}>
                     {timeAgo(nowMs, ev.created_at)}
                   </div>
                 </div>
@@ -618,7 +615,7 @@ export function ShareWidget({
                   style={{
                     marginLeft: 'auto',
                     fontSize: 12,
-                    color: 'var(--nostrstack-color-text-muted)'
+                    color: 'var(--ns-color-text-muted)'
                   }}
                 >
                   Open
@@ -635,15 +632,15 @@ export function ShareWidget({
           style={{
             marginTop: 10,
             fontSize: 13,
-            color: 'var(--nostrstack-color-danger)'
+            color: 'var(--ns-color-danger)'
           }}
         >
           {error}
         </div>
       )}
-      <div style={{ marginTop: 10, fontSize: 12, color: 'var(--nostrstack-color-text-muted)' }}>
+      <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ns-color-text-muted)' }}>
         Tracking shares for{' '}
-        <code style={{ fontFamily: 'var(--nostrstack-font-mono)' }}>{effectiveTag}</code>
+        <code style={{ fontFamily: 'var(--ns-font-mono)' }}>{effectiveTag}</code>
       </div>
     </div>
   );

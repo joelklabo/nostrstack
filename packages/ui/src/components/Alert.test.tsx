@@ -18,13 +18,13 @@ describe('Alert', () => {
   it('does not render title when not provided', () => {
     render(<Alert>Content only</Alert>);
     const alert = screen.getByRole('alert');
-    expect(alert.querySelector('.nostrstack-alert__title')).toBeNull();
+    expect(alert.querySelector('.ns-alert__title')).toBeNull();
   });
 
   it('applies default info tone', () => {
     render(<Alert>Info alert</Alert>);
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveClass('nostrstack-alert--info');
+    expect(alert).toHaveClass('ns-alert--info');
   });
 
   it.each(['info', 'success', 'warning', 'danger'] as const)(
@@ -32,7 +32,7 @@ describe('Alert', () => {
     (tone) => {
       render(<Alert tone={tone}>Alert content</Alert>);
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveClass(`nostrstack-alert--${tone}`);
+      expect(alert).toHaveClass(`ns-alert--${tone}`);
     }
   );
 
@@ -67,7 +67,7 @@ describe('Alert', () => {
     render(<Alert className="custom-class">Content</Alert>);
     const alert = screen.getByRole('alert');
     expect(alert).toHaveClass('custom-class');
-    expect(alert).toHaveClass('nostrstack-alert');
+    expect(alert).toHaveClass('ns-alert');
   });
 
   it('applies custom style', () => {

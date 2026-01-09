@@ -8,22 +8,32 @@ type QrCodeStylingErrorCorrectionLevel = import('qr-code-styling').ErrorCorrecti
 type QrCodeStylingGradient = import('qr-code-styling').Gradient;
 /* eslint-enable @typescript-eslint/consistent-type-imports */
 
-export type NostrstackQrPreset = 'safe' | 'brand' | 'brandLogo';
-export type NostrstackQrVerifyMode = 'off' | 'auto' | 'strict';
+export type NsQrPreset = 'safe' | 'brand' | 'brandLogo';
+export type NsQrVerifyMode = 'off' | 'auto' | 'strict';
 
-export type NostrstackQrStyleOptions = Partial<Omit<QrCodeStylingOptions, 'data' | 'width' | 'height'>>;
+export type NsQrStyleOptions = Partial<Omit<QrCodeStylingOptions, 'data' | 'width' | 'height'>>;
 
-export type NostrstackQrRenderOptions = {
+export type NsQrRenderOptions = {
   size?: number;
-  preset?: NostrstackQrPreset;
-  verify?: NostrstackQrVerifyMode;
-  options?: NostrstackQrStyleOptions;
+  preset?: NsQrPreset;
+  verify?: NsQrVerifyMode;
+  options?: NsQrStyleOptions;
   signal?: AbortSignal;
 };
 
-export type NostrstackQrRenderResult =
-  | { ok: true; fallbackUsed: false; decodedText: string; verifyEngine: 'barcode-detector' | 'jsqr' | 'none' }
-  | { ok: true; fallbackUsed: true; decodedText: string; verifyEngine: 'barcode-detector' | 'jsqr' | 'none' }
+export type NsQrRenderResult =
+  | {
+      ok: true;
+      fallbackUsed: false;
+      decodedText: string;
+      verifyEngine: 'barcode-detector' | 'jsqr' | 'none';
+    }
+  | {
+      ok: true;
+      fallbackUsed: true;
+      decodedText: string;
+      verifyEngine: 'barcode-detector' | 'jsqr' | 'none';
+    }
   | { ok: false; fallbackUsed: boolean; error: string };
 
 const DEFAULT_SIZE = 256;
@@ -40,7 +50,7 @@ const brandGradient: QrCodeStylingGradient = {
 const lightningLogoDataUri =
   'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%23111827%22%20d%3D%22M13%202%20L3%2014h7l-1%208%2012-14h-7l-1-6z%22/%3E%3C/svg%3E';
 
-export function nostrstackQrPresetOptions(preset: NostrstackQrPreset): Omit<QrCodeStylingOptions, 'data'> {
+export function nsQrPresetOptions(preset: NsQrPreset): Omit<QrCodeStylingOptions, 'data'> {
   const base: Omit<QrCodeStylingOptions, 'data'> = {
     type: 'svg',
     shape: 'square',
@@ -110,11 +120,16 @@ async function loadQrCodeStyling(): Promise<QrCodeStylingType> {
 
 const activeRenderTokens = new WeakMap<HTMLElement, object>();
 
-function shouldVerify(mode: NostrstackQrVerifyMode, opts: Partial<Omit<QrCodeStylingOptions, 'data'>>): boolean {
+function shouldVerify(
+  mode: NsQrVerifyMode,
+  opts: Partial<Omit<QrCodeStylingOptions, 'data'>>
+): boolean {
   if (mode === 'off') return false;
   if (mode === 'strict') return true;
   const hasGradient = Boolean(
-    opts?.dotsOptions?.gradient || opts?.cornersDotOptions?.gradient || opts?.cornersSquareOptions?.gradient
+    opts?.dotsOptions?.gradient ||
+      opts?.cornersDotOptions?.gradient ||
+      opts?.cornersSquareOptions?.gradient
   );
   const hasLogo = Boolean(opts?.image);
   return hasGradient || hasLogo;
@@ -141,7 +156,9 @@ async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
   }
 }
 
-async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data: string; engine: 'barcode-detector' | 'jsqr' } | { ok: false }> {
+async function decodeCanvas(
+  canvas: HTMLCanvasElement
+): Promise<{ ok: true; data: string; engine: 'barcode-detector' | 'jsqr' } | { ok: false }> {
   try {
     type BarcodeDetectorCtor = new (opts: { formats: string[] }) => {
       detect: (image: unknown) => Promise<Array<{ rawValue?: string }>>;
@@ -175,7 +192,8 @@ async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data
       const r = imageData.data[i] ?? 0;
       const g = imageData.data[i + 1] ?? 0;
       const b = imageData.data[i + 2] ?? 0;
-      const lum = a < 20 ? 255 : Math.max(0, Math.min(255, Math.round((r * 299 + g * 587 + b * 114) / 1000)));
+      const lum =
+        a < 20 ? 255 : Math.max(0, Math.min(255, Math.round((r * 299 + g * 587 + b * 114) / 1000)));
       hist[lum] = (hist[lum] ?? 0) + 1;
       count += 1;
       sum += lum;
@@ -208,7 +226,8 @@ async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data
       const r = imageData.data[i] ?? 0;
       const g = imageData.data[i + 1] ?? 0;
       const b = imageData.data[i + 2] ?? 0;
-      const lum = a < 20 ? 255 : Math.max(0, Math.min(255, Math.round((r * 299 + g * 587 + b * 114) / 1000)));
+      const lum =
+        a < 20 ? 255 : Math.max(0, Math.min(255, Math.round((r * 299 + g * 587 + b * 114) / 1000)));
       const v = lum > threshold ? 255 : 0;
       bw[i] = v;
       bw[i + 1] = v;
@@ -216,7 +235,9 @@ async function decodeCanvas(canvas: HTMLCanvasElement): Promise<{ ok: true; data
       bw[i + 3] = 255;
     }
 
-    const decodedBw = jsQR(bw, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    const decodedBw = jsQR(bw, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert'
+    });
     if (decodedBw?.data) return { ok: true, data: decodedBw.data, engine: 'jsqr' };
   } catch {
     // ignore
@@ -243,7 +264,7 @@ async function renderFallbackImg(
   img.style.width = '100%';
   img.style.height = 'auto';
   img.style.display = 'block';
-  img.style.borderRadius = 'var(--nostrstack-radius-md)';
+  img.style.borderRadius = 'var(--ns-radius-md)';
   img.src = src;
   return img;
 }
@@ -259,19 +280,24 @@ function throwIfAborted(signal?: AbortSignal) {
 }
 
 function isAbortError(err: unknown) {
-  return Boolean(err && typeof err === 'object' && 'name' in err && (err as { name?: unknown }).name === 'AbortError');
+  return Boolean(
+    err &&
+      typeof err === 'object' &&
+      'name' in err &&
+      (err as { name?: unknown }).name === 'AbortError'
+  );
 }
 
 export async function renderQrCodeInto(
   container: HTMLElement,
   data: string,
-  opts: NostrstackQrRenderOptions = {}
-): Promise<NostrstackQrRenderResult> {
+  opts: NsQrRenderOptions = {}
+): Promise<NsQrRenderResult> {
   const size = opts.size ?? DEFAULT_SIZE;
   const preset = opts.preset ?? 'brand';
   const verify = opts.verify ?? 'auto';
   const signal = opts.signal;
-  const base = nostrstackQrPresetOptions(preset);
+  const base = nsQrPresetOptions(preset);
   const options: Omit<QrCodeStylingOptions, 'data'> = {
     ...base,
     ...opts.options,
@@ -279,7 +305,9 @@ export async function renderQrCodeInto(
     height: size
   };
 
-  const requestedEcl = (options.qrOptions?.errorCorrectionLevel ?? base.qrOptions?.errorCorrectionLevel ?? 'M') as QrCodeStylingErrorCorrectionLevel;
+  const requestedEcl = (options.qrOptions?.errorCorrectionLevel ??
+    base.qrOptions?.errorCorrectionLevel ??
+    'M') as QrCodeStylingErrorCorrectionLevel;
   const needVerify = shouldVerify(verify, options);
   const token = {};
   if (signal) activeRenderTokens.set(container, token);
@@ -311,7 +339,12 @@ export async function renderQrCodeInto(
     throwIfStale();
     if (decoded.ok && decoded.data === data) {
       container.replaceChildren(...Array.from(next.childNodes));
-      return { ok: true, fallbackUsed: false, decodedText: decoded.data, verifyEngine: decoded.engine };
+      return {
+        ok: true,
+        fallbackUsed: false,
+        decodedText: decoded.data,
+        verifyEngine: decoded.engine
+      };
     }
 
     if (verify === 'strict') {
@@ -335,7 +368,11 @@ export async function renderQrCodeInto(
       const fallbackImg = await renderFallbackImg(data, size, requestedEcl, signal);
       throwIfStale();
       container.replaceChildren(fallbackImg);
-      return { ok: false, fallbackUsed: true, error: err instanceof Error ? err.message : String(err) };
+      return {
+        ok: false,
+        fallbackUsed: true,
+        error: err instanceof Error ? err.message : String(err)
+      };
     } catch (fallbackErr) {
       if (isAbortError(fallbackErr) || signal?.aborted) throw fallbackErr;
       return {

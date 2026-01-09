@@ -4,7 +4,7 @@
 
 import { createClient, setBrandAttr } from '../helpers.js';
 import { renderInvoicePopover } from '../invoicePopover.js';
-import { ensureNostrstackRoot } from '../styles.js';
+import { ensureNsRoot } from '../styles.js';
 import type { TipWidgetOptions } from '../types.js';
 
 export interface TipButtonResult {
@@ -16,17 +16,17 @@ export interface TipButtonResult {
  * Render a simple tip button that generates an invoice when clicked
  */
 export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions): TipButtonResult {
-  ensureNostrstackRoot(container);
+  ensureNsRoot(container);
   container.replaceChildren();
 
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'nostrstack-btn nostrstack-btn--primary';
+  btn.className = 'ns-btn ns-btn--primary';
   btn.textContent = opts.text ?? 'Send sats';
   setBrandAttr(btn, 'Tip', opts.username);
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.className = 'ns-status ns-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.style.marginTop = '0.5rem';
@@ -35,8 +35,8 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions):
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
     status.textContent = 'Generating invoice…';
-    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
-    status.classList.add('nostrstack-status--muted');
+    status.classList.remove('ns-status--danger', 'ns-status--success');
+    status.classList.add('ns-status--muted');
 
     try {
       const client = createClient(opts);
@@ -58,8 +58,8 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions):
     } catch (e) {
       console.error('tip error', e);
       status.textContent = 'Failed to generate invoice';
-      status.classList.remove('nostrstack-status--muted');
-      status.classList.add('nostrstack-status--danger');
+      status.classList.remove('ns-status--muted');
+      status.classList.add('ns-status--danger');
     } finally {
       btn.disabled = false;
       btn.removeAttribute('aria-busy');

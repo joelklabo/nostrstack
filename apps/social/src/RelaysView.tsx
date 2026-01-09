@@ -291,7 +291,7 @@ export function RelaysView() {
         >
           {summary.connecting > 0 && (
             <span
-              className="nostrstack-spinner"
+              className="ns-spinner"
               style={{ width: '12px', height: '12px' }}
               aria-hidden="true"
             />
@@ -309,7 +309,7 @@ export function RelaysView() {
             placeholder="wss://relay.example.com"
             value={newRelayInput}
             onChange={(e) => setNewRelayInput(e.target.value)}
-            className="nostrstack-input"
+            className="ns-input"
             pattern="^wss?://.*"
             title="Must start with wss:// or ws://"
             required

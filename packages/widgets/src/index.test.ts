@@ -89,7 +89,7 @@ describe('mountPayToAction', () => {
     await button.onclick?.(new MouseEvent('click'));
 
     // Simulate user confirming payment
-    const confirm = host.querySelector('.nostrstack-pay-confirm') as HTMLButtonElement;
+    const confirm = host.querySelector('.ns-pay-confirm') as HTMLButtonElement;
     await confirm.onclick?.(new MouseEvent('click'));
 
     expect(write).toHaveBeenCalledWith(pr);
@@ -175,11 +175,11 @@ describe('mountTipWidget', () => {
       showFeed: false
     });
 
-    const preset = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
+    const preset = host.querySelector('.ns-tip__amt') as HTMLButtonElement;
     expect(preset).toBeTruthy();
     await preset.onclick?.(new MouseEvent('click'));
 
-    const code = host.querySelector('.nostrstack-invoice-box code')?.textContent?.trim() ?? '';
+    const code = host.querySelector('.ns-invoice-box code')?.textContent?.trim() ?? '';
     expect(code).toMatch(/^ln/i);
     expect(write).toHaveBeenCalledWith(expect.stringMatching(/^ln/i));
   });
@@ -220,7 +220,7 @@ describe('mountTipWidget', () => {
       showFeed: false
     });
 
-    const preset = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
+    const preset = host.querySelector('.ns-tip__amt') as HTMLButtonElement;
     await preset.onclick?.(new MouseEvent('click'));
 
     expect(fetchSpy).toHaveBeenCalled();
@@ -354,7 +354,7 @@ describe('mountTipFeed realtime', () => {
     ws.onmessage?.({ data: JSON.stringify(payload) });
     ws.onmessage?.({ data: JSON.stringify(payload) });
 
-    const rows = host.querySelectorAll('.nostrstack-tip-feed__row');
+    const rows = host.querySelectorAll('.ns-tip-feed__row');
     expect(rows.length).toBe(1);
     expect(host.textContent).toContain('21 sats');
   });
@@ -436,9 +436,9 @@ describe('renderCommentWidget', () => {
     });
     sub.emitEose();
 
-    expect(host.querySelectorAll('.nostrstack-comment').length).toBe(2);
+    expect(host.querySelectorAll('.ns-comment').length).toBe(2);
 
-    const loadMoreBtn = host.querySelector('.nostrstack-comments-more') as HTMLButtonElement;
+    const loadMoreBtn = host.querySelector('.ns-comments-more') as HTMLButtonElement;
     expect(loadMoreBtn.hidden).toBe(false);
 
     loadMoreBtn.click();
@@ -454,7 +454,7 @@ describe('renderCommentWidget', () => {
     });
     sub2.emitEose();
 
-    expect(host.querySelectorAll('.nostrstack-comment').length).toBe(3);
+    expect(host.querySelectorAll('.ns-comment').length).toBe(3);
   });
 
   it('skips unsigned events when validation is enabled', async () => {
@@ -513,7 +513,7 @@ describe('renderCommentWidget', () => {
     });
     sub.emitEose();
 
-    expect(host.querySelectorAll('.nostrstack-comment').length).toBe(0);
+    expect(host.querySelectorAll('.ns-comment').length).toBe(0);
   });
 });
 
@@ -597,7 +597,7 @@ describe('mountNostrProfile', () => {
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    const card = host.querySelector('.nostrstack-user-card');
+    const card = host.querySelector('.ns-user-card');
     expect(card).toBeTruthy();
 
     widget.destroy();

@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  createNostrstackBrandTheme,
-  ensureNostrstackEmbedStyles,
-  type NostrstackBrandPreset,
-  type NostrstackTheme,
-  type NostrstackThemeMode,
+  createNsBrandTheme,
+  ensureNsEmbedStyles,
+  type NsBrandPreset,
+  type NsTheme,
+  type NsThemeMode,
   themeToCssVars
 } from '@nostrstack/widgets';
 import {
@@ -39,9 +39,9 @@ export type NostrstackConfig = {
   nwcMaxSats?: number;
   enableRegtestPay?: boolean;
   theme?: ThemeVars;
-  nostrstackTheme?: NostrstackTheme;
-  brandPreset?: NostrstackBrandPreset;
-  themeMode?: NostrstackThemeMode;
+  nostrstackTheme?: NsTheme;
+  brandPreset?: NsBrandPreset;
+  themeMode?: NsThemeMode;
 };
 
 const NostrstackContext = createContext<NostrstackConfig>({});
@@ -89,7 +89,7 @@ export function NostrstackProvider({
   );
   const legacy = config.theme ?? {};
   useEffect(() => {
-    ensureNostrstackEmbedStyles();
+    ensureNsEmbedStyles();
   }, []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -109,7 +109,7 @@ export function NostrstackProvider({
       window.removeEventListener('nostrstack:nwc-update', handleCustom as EventListener);
     };
   }, []);
-  const baseTheme: NostrstackTheme = {
+  const baseTheme: NsTheme = {
     color: {
       primary: legacy.accent ?? '#f59e0b',
       text: legacy.text ?? '#0f172a',
@@ -120,7 +120,7 @@ export function NostrstackProvider({
 
   const mode = config.nostrstackTheme?.mode ?? config.themeMode;
   const brandTheme = config.brandPreset
-    ? createNostrstackBrandTheme({ preset: config.brandPreset, mode: mode ?? 'light' })
+    ? createNsBrandTheme({ preset: config.brandPreset, mode: mode ?? 'light' })
     : undefined;
 
   const themeVars: CSSProperties = {
@@ -128,10 +128,10 @@ export function NostrstackProvider({
     ...(brandTheme ? themeToCssVars(brandTheme) : {}),
     ...themeToCssVars(config.nostrstackTheme ?? {}),
     // Legacy aliases (blog-kit v1)
-    '--ns-accent': 'var(--nostrstack-color-primary)',
-    '--ns-text': 'var(--nostrstack-color-text)',
-    '--ns-surface': 'var(--nostrstack-color-surface)',
-    '--ns-border': 'var(--nostrstack-color-border)',
+    '--ns-accent': 'var(--ns-color-primary)',
+    '--ns-text': 'var(--ns-color-text)',
+    '--ns-surface': 'var(--ns-color-surface)',
+    '--ns-border': 'var(--ns-color-border)',
     ...style
   } as CSSProperties;
 
@@ -139,7 +139,7 @@ export function NostrstackProvider({
 
   return (
     <NostrstackContext.Provider value={value}>
-      <div className={mergedClassName} style={themeVars} data-nostrstack-theme={mode}>
+      <div className={mergedClassName} style={themeVars} data-ns-theme={mode}>
         {children}
       </div>
     </NostrstackContext.Provider>

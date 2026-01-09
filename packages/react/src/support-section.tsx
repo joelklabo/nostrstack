@@ -129,28 +129,28 @@ export function SupportSection({
 
   const gridStyle: React.CSSProperties = {
     display: 'grid',
-    gap: 'var(--nostrstack-space-4)',
+    gap: 'var(--ns-space-4)',
     alignItems: 'start',
     gridTemplateColumns: layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)'
   };
 
   const sidebarStyle: React.CSSProperties = {
     display: 'grid',
-    gap: 'var(--nostrstack-space-3)'
+    gap: 'var(--ns-space-3)'
   };
 
   const headerStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'baseline',
-    gap: 'var(--nostrstack-space-2)',
-    marginBottom: 'var(--nostrstack-space-3)'
+    gap: 'var(--ns-space-2)',
+    marginBottom: 'var(--ns-space-3)'
   };
 
   const sectionTitleStyle: React.CSSProperties = {
     margin: 0,
     fontSize: '1.05rem',
     fontWeight: 800,
-    color: 'var(--nostrstack-color-text)'
+    color: 'var(--ns-color-text)'
   };
 
   const tipNode = canTip ? (
@@ -175,11 +175,11 @@ export function SupportSection({
   );
 
   const shareWrapStyle: React.CSSProperties = {
-    padding: 'var(--nostrstack-space-3)',
-    borderRadius: 'var(--nostrstack-radius-lg)',
-    border: '1px solid var(--nostrstack-color-border)',
-    background: 'var(--nostrstack-color-surface)',
-    boxShadow: 'var(--nostrstack-shadow-md)'
+    padding: 'var(--ns-space-3)',
+    borderRadius: 'var(--ns-radius-lg)',
+    border: '1px solid var(--ns-color-border)',
+    background: 'var(--ns-color-surface)',
+    boxShadow: 'var(--ns-shadow-md)'
   };
 
   const shareNode = (

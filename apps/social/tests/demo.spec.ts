@@ -11,12 +11,12 @@ test.describe('Widget Demos', () => {
     await expect(page.getByText('Widget Demos')).toBeVisible();
 
     // Blockchain Stats
-    const stats = page.locator('[data-nostrstack-blockchain]');
+    const stats = page.locator('[data-ns-blockchain]');
     await expect(stats).toBeVisible();
     await stats.screenshot({ path: resolveDocScreenshotPath('demo/blockchain-stats.png') });
 
     // Nostr Profile
-    const profile = page.locator('[data-nostrstack-profile]');
+    const profile = page.locator('[data-ns-profile]');
     await expect(profile).toBeVisible();
     await profile.screenshot({ path: resolveDocScreenshotPath('demo/nostr-profile.png') });
 
@@ -26,17 +26,17 @@ test.describe('Widget Demos', () => {
     await supportFull.screenshot({ path: resolveDocScreenshotPath('demo/support-section.png') });
 
     // Check TipWidget inside SupportSection
-    const tipWidget = page.locator('[data-nostrstack-tip-widget]').first();
+    const tipWidget = page.locator('[data-ns-tip-widget]').first();
     await expect(tipWidget).toBeVisible();
     await tipWidget.screenshot({ path: resolveDocScreenshotPath('demo/tip-widget.png') });
 
     // Check ShareButton inside SupportSection
-    const shareBtn = page.locator('[data-nostrstack-share-button]').first();
+    const shareBtn = page.locator('[data-ns-share-button]').first();
     await expect(shareBtn).toBeVisible();
     await shareBtn.screenshot({ path: resolveDocScreenshotPath('demo/share-button.png') });
 
     // Check Comments inside SupportSection
-    const comments = page.locator('[data-nostrstack-comments]').first();
+    const comments = page.locator('[data-ns-comments]').first();
     await expect(comments).toBeVisible();
     await comments.screenshot({ path: resolveDocScreenshotPath('demo/comments.png') });
 
@@ -45,7 +45,7 @@ test.describe('Widget Demos', () => {
 
     // Check CommentTipWidget (Embed wrapper)
     await expect(page.getByText('CommentTipWidget (Embed Wrapper)')).toBeVisible();
-    const commentTipWrapper = page.locator('[data-nostrstack-comment-tip-widget]');
+    const commentTipWrapper = page.locator('[data-ns-comment-tip-widget]');
     await expect(commentTipWrapper).toBeVisible();
     await commentTipWrapper.screenshot({
       path: resolveDocScreenshotPath('demo/comment-tip-widget-wrapper.png')

@@ -77,5 +77,5 @@ export function Comments({
     validateEvents
   ]);
 
-  return <div ref={ref} className={className} data-nostrstack-comments />;
+  return <div ref={ref} className={className} data-ns-comments />;
 }

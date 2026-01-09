@@ -53,7 +53,11 @@ function formatProgress(progress?: number): string {
   return `${(progress * 100).toFixed(2)}%`;
 }
 
-export function BitcoinNodeCard({ info, className, ...props }: { info: NodeInfo } & HTMLAttributes<HTMLDivElement>) {
+export function BitcoinNodeCard({
+  info,
+  className,
+  ...props
+}: { info: NodeInfo } & HTMLAttributes<HTMLDivElement>) {
   const networkRaw = (info.configuredNetwork ?? info.network ?? '').toLowerCase();
   const isMainnet = networkRaw === 'mainnet' || networkRaw === 'main';
   const isTestnet = ['test', 'testnet', 'mutinynet', 'signet'].includes(networkRaw);
@@ -74,7 +78,9 @@ export function BitcoinNodeCard({ info, className, ...props }: { info: NodeInfo 
   const mempoolTxs = info.mempoolTxs != null ? info.mempoolTxs.toLocaleString() : '—';
   const mempoolBytes = info.mempoolBytes != null ? formatBytes(info.mempoolBytes) : '—';
   const mempoolValue =
-    info.mempoolTxs != null || info.mempoolBytes != null ? `${mempoolTxs} tx / ${mempoolBytes}` : '—';
+    info.mempoolTxs != null || info.mempoolBytes != null
+      ? `${mempoolTxs} tx / ${mempoolBytes}`
+      : '—';
 
   const syncProgress = formatProgress(info.verificationProgress);
   const blockHeaderLabel =
@@ -106,90 +112,69 @@ export function BitcoinNodeCard({ info, className, ...props }: { info: NodeInfo 
   }
 
   return (
-    <div className={`nostrstack-node-card ${className || ''}`} {...props}>
-      <div className="nostrstack-node-header">
-        <div className="nostrstack-node-title">
-          <span className="nostrstack-node-icon">₿</span>
+    <div className={`ns-node-card ${className || ''}`} {...props}>
+      <div className="ns-node-header">
+        <div className="ns-node-title">
+          <span className="ns-node-icon">₿</span>
           Bitcoin Node
         </div>
-        <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+        <div className="ns-node-badges">
           <div
-            style={{
-              fontSize: '0.7rem',
-              fontWeight: '600',
-              padding: '2px 6px',
-              borderRadius: '10px',
-              border: `1px solid ${networkColor}`,
-              color: networkColor,
-              backgroundColor: 'var(--color-canvas-subtle)'
-            }}
+            className="ns-node-badge ns-node-badge--network"
+            style={{ '--node-network-color': networkColor } as React.CSSProperties}
           >
             {networkLabel}
           </div>
-          {sourceLabel && (
-            <div
-              style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                padding: '2px 6px',
-                borderRadius: '10px',
-                border: '1px solid var(--color-border-default)',
-                color: 'var(--color-fg-muted)',
-                backgroundColor: 'var(--color-canvas-subtle)'
-              }}
-            >
-              {sourceLabel}
-            </div>
-          )}
+          {sourceLabel && <div className="ns-node-badge">{sourceLabel}</div>}
         </div>
       </div>
-      {chainLabel && <div className="nostrstack-node-subtitle">Chain: {chainLabel}</div>}
+      {chainLabel && <div className="ns-node-subtitle">Chain: {chainLabel}</div>}
 
-      <div className="nostrstack-node-grid">
-        <div className="nostrstack-stat">
-          <div className="nostrstack-stat-label">Block Height</div>
-          <div className="nostrstack-stat-value" style={{ fontSize: '1.2rem' }}>
-            {info.height?.toLocaleString() ?? '—'}
-          </div>
+      <div className="ns-node-grid">
+        <div className="ns-stat">
+          <div className="ns-stat-label">Block Height</div>
+          <div className="ns-stat-value lg">{info.height?.toLocaleString() ?? '—'}</div>
         </div>
-        <div className="nostrstack-stat">
-          <div className="nostrstack-stat-label">Peers</div>
-          <div className="nostrstack-stat-value">{info.connections ?? '—'}</div>
+        <div className="ns-stat">
+          <div className="ns-stat-label">Peers</div>
+          <div className="ns-stat-value">{info.connections ?? '—'}</div>
         </div>
-        <div className="nostrstack-stat">
-          <div className="nostrstack-stat-label">Mempool</div>
-          <div className="nostrstack-stat-value">{mempoolValue}</div>
+        <div className="ns-stat">
+          <div className="ns-stat-label">Mempool</div>
+          <div className="ns-stat-value">{mempoolValue}</div>
         </div>
-        <div className="nostrstack-stat">
-          <div className="nostrstack-stat-label">Last Block</div>
-          <div className="nostrstack-stat-value">{formatAge(info.time)}</div>
+        <div className="ns-stat">
+          <div className="ns-stat-label">Last Block</div>
+          <div className="ns-stat-value">{formatAge(info.time)}</div>
         </div>
-        <div className="nostrstack-stat" style={{ gridColumn: '1 / -1' }}>
-          <div className="nostrstack-stat-label">Sync</div>
-          <div className="nostrstack-stat-value sm">
+        <div className="ns-stat ns-stat--full">
+          <div className="ns-stat-label">Sync</div>
+          <div className="ns-stat-value sm">
             {syncValue} ({syncState})
           </div>
         </div>
-        <div className="nostrstack-stat" style={{ gridColumn: '1 / -1' }}>
-          <div className="nostrstack-stat-label">Version</div>
-          <div className="nostrstack-stat-value sm">{info.version != null ? String(info.version) : '—'}</div>
+        <div className="ns-stat ns-stat--full">
+          <div className="ns-stat-label">Version</div>
+          <div className="ns-stat-value sm">
+            {info.version != null ? String(info.version) : '—'}
+          </div>
         </div>
-        <div className="nostrstack-stat" style={{ gridColumn: '1 / -1' }}>
-          <div className="nostrstack-stat-label">Lightning</div>
-          <div className={`nostrstack-status nostrstack-status--${lightningTone}`}>{lightningLabel}</div>
+        <div className="ns-stat ns-stat--full">
+          <div className="ns-stat-label">Lightning</div>
+          <div className={`ns-status ns-status--${lightningTone}`}>{lightningLabel}</div>
         </div>
       </div>
 
       {info.telemetryError && (
-        <Alert tone="warning" title="Telemetry degraded" style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+        <Alert tone="warning" title="Telemetry degraded" className="ns-node-alert">
           {info.telemetryError}
         </Alert>
       )}
 
       {info.hash && (
-        <div className="nostrstack-hash-bar">
-          <div className="nostrstack-stat-label">Tip Hash</div>
-          <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>
+        <div className="ns-hash-bar">
+          <div className="ns-stat-label">Tip Hash</div>
+          <code>
             {info.hash.slice(0, 12)}...{info.hash.slice(-12)}
           </code>
         </div>

@@ -45,5 +45,5 @@ export function BlockchainStats({ baseUrl, host, title, className }: BlockchainS
     };
   }, [resolved.baseUrl, resolved.host, title]);
 
-  return <div ref={ref} className={className} data-nostrstack-blockchain />;
+  return <div ref={ref} className={className} data-ns-blockchain />;
 }

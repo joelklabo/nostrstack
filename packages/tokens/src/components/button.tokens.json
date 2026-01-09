@@ -1,0 +1,191 @@
+{
+  "$description": "Button Component Tokens",
+  "component": {
+    "button": {
+      "padding": {
+        "x": {
+          "$value": "{space.4}",
+          "$type": "dimension"
+        },
+        "y": {
+          "$value": "{space.2.5}",
+          "$type": "dimension"
+        }
+      },
+      "paddingSm": {
+        "x": {
+          "$value": "{space.3}",
+          "$type": "dimension"
+        },
+        "y": {
+          "$value": "{space.1.5}",
+          "$type": "dimension"
+        }
+      },
+      "paddingLg": {
+        "x": {
+          "$value": "{space.6}",
+          "$type": "dimension"
+        },
+        "y": {
+          "$value": "{space.3}",
+          "$type": "dimension"
+        }
+      },
+      "borderRadius": {
+        "$value": "{radius.lg}",
+        "$type": "dimension"
+      },
+      "fontSize": {
+        "$value": "{font.size.sm}",
+        "$type": "dimension"
+      },
+      "fontSizeSm": {
+        "$value": "{font.size.xs}",
+        "$type": "dimension"
+      },
+      "fontSizeLg": {
+        "$value": "{font.size.base}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.semibold}",
+        "$type": "fontWeight"
+      },
+      "gap": {
+        "$value": "{space.2}",
+        "$type": "dimension"
+      },
+      "minHeight": {
+        "$value": "2.5rem",
+        "$type": "dimension"
+      },
+      "minHeightSm": {
+        "$value": "2rem",
+        "$type": "dimension"
+      },
+      "minHeightLg": {
+        "$value": "3rem",
+        "$type": "dimension"
+      },
+      "transition": {
+        "$value": "all {duration.normal} {easing.easeInOut}",
+        "$type": "transition"
+      },
+      "default": {
+        "bg": {
+          "$value": "{color.surface.default}",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "{color.bg.subtle}",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "{color.text.default}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{color.border.default}",
+          "$type": "color"
+        },
+        "borderHover": {
+          "$value": "{color.border.strong}",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "{shadow.xs}",
+          "$type": "shadow"
+        },
+        "shadowHover": {
+          "$value": "{shadow.sm}",
+          "$type": "shadow"
+        }
+      },
+      "primary": {
+        "bg": {
+          "$value": "{color.primary.default}",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "{color.primary.hover}",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "{color.primary.text}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{color.primary.default}",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "0 4px 14px -3px {color.primary.default}",
+          "$type": "shadow"
+        },
+        "shadowHover": {
+          "$value": "0 6px 20px -3px {color.primary.default}",
+          "$type": "shadow"
+        }
+      },
+      "ghost": {
+        "bg": {
+          "$value": "transparent",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "{color.bg.subtle}",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "{color.text.muted}",
+          "$type": "color"
+        },
+        "textHover": {
+          "$value": "{color.text.default}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "transparent",
+          "$type": "color"
+        }
+      },
+      "danger": {
+        "bg": {
+          "$value": "{color.danger.default}",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "{color.danger.hover}",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "{color.static.white}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{color.danger.default}",
+          "$type": "color"
+        }
+      },
+      "disabled": {
+        "bg": {
+          "$value": "{color.bg.muted}",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "{color.text.disabled}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{color.border.subtle}",
+          "$type": "color"
+        },
+        "opacity": {
+          "$value": "0.6",
+          "$type": "number"
+        }
+      }
+    }
+  }
+}

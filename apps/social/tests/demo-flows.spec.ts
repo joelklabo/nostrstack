@@ -4,7 +4,7 @@ import { expectRelayMode, loginWithNsec, toggleTheme } from './helpers.ts';
 
 async function measureCardOverflow(page: Page) {
   return page.evaluate(() => {
-    const payWidget = document.querySelector('.nostrstack-pay') as HTMLElement | null;
+    const payWidget = document.querySelector('.ns-pay') as HTMLElement | null;
     const card = payWidget?.closest('.paywall-payment-modal-content') as HTMLElement | null;
     if (!payWidget || !card) return null;
     const cardRect = card.getBoundingClientRect();
@@ -57,8 +57,11 @@ test('pay-to-unlock does not overflow card at common widths', async ({ page }) =
     return;
   }
   await unlockButtons.first().click();
-  const payWidget = page.locator('.nostrstack-pay');
-  const widgetReady = await payWidget.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
+  const payWidget = page.locator('.ns-pay');
+  const widgetReady = await payWidget
+    .waitFor({ state: 'visible', timeout: 8000 })
+    .then(() => true)
+    .catch(() => false);
   if (!widgetReady) {
     test.skip(true, 'Paywall widget did not render');
     return;
@@ -70,7 +73,10 @@ test('pay-to-unlock does not overflow card at common widths', async ({ page }) =
     await page.waitForTimeout(50);
     const overflow = await measureCardOverflow(page);
     expect(overflow, 'paywall card not found').not.toBeNull();
-    expect(overflow!.maxDelta, `overflow at ${width}px: ${JSON.stringify(overflow!.offender)}`).toBeLessThanOrEqual(1);
+    expect(
+      overflow!.maxDelta,
+      `overflow at ${width}px: ${JSON.stringify(overflow!.offender)}`
+    ).toBeLessThanOrEqual(1);
   }
 });
 
@@ -84,7 +90,10 @@ test('tip flow generates invoice', async ({ page }) => {
   await zapButtons.first().click();
   await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
   const invoiceBox = page.locator('.payment-invoice-box');
-  const invoiceReady = await invoiceBox.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
+  const invoiceReady = await invoiceBox
+    .waitFor({ state: 'visible', timeout: 8000 })
+    .then(() => true)
+    .catch(() => false);
   if (!invoiceReady) {
     test.skip(true, 'Zap invoice not available');
     return;

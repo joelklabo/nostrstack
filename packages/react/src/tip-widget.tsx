@@ -131,5 +131,5 @@ export function TipWidget({
     stableOnPaid
   ]);
 
-  return <div ref={ref} className={className} data-nostrstack-tip-widget />;
+  return <div ref={ref} className={className} data-ns-tip-widget />;
 }

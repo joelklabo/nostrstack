@@ -1,5 +1,5 @@
 import { PostEditor, useAuth, useFeed } from '@nostrstack/react';
-import { Alert , PostSkeleton } from '@nostrstack/ui';
+import { Alert, PostSkeleton } from '@nostrstack/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useContactList } from './hooks/useContactList';
@@ -82,7 +82,7 @@ export function FeedView() {
   const renderContent = () => {
     if (relaysLoading || (feedLoading && posts.length === 0)) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="feed-loading">
           {[1, 2, 3].map((i) => (
             <PostSkeleton key={i} />
           ))}
@@ -92,22 +92,12 @@ export function FeedView() {
 
     if (posts.length === 0 && !feedLoading) {
       return (
-        <div
-          style={{
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            border: '1px dashed var(--nostrstack-color-border)',
-            borderRadius: 'var(--nostrstack-radius-lg)',
-            backgroundColor: 'var(--nostrstack-color-surface-subtle)'
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>📝</div>
-          <h3 style={{ margin: '0 0 0.5rem', fontWeight: 800 }}>No posts yet</h3>
-          <p style={{ color: 'var(--nostrstack-color-text-muted)', margin: '0 0 2rem' }}>
-            Be the first to share something with the network!
-          </p>
+        <div className="feed-empty">
+          <div className="feed-empty__icon">📝</div>
+          <h3 className="feed-empty__title">No posts yet</h3>
+          <p className="feed-empty__text">Be the first to share something with the network!</p>
           <button
-            className="nostrstack-btn nostrstack-btn--primary"
+            className="ns-btn ns-btn--primary"
             onClick={() => document.querySelector('textarea')?.focus()}
           >
             Write your first post
@@ -129,12 +119,11 @@ export function FeedView() {
         ))}
 
         {hasMore && (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <div className="feed-load-more">
             <button
-              className="nostrstack-btn nostrstack-btn--primary"
+              className="ns-btn ns-btn--primary feed-load-more__btn"
               onClick={loadMore}
               disabled={feedLoading}
-              style={{ minWidth: '200px' }}
             >
               {feedLoading ? 'Loading more...' : 'Load more posts'}
             </button>
@@ -148,22 +137,22 @@ export function FeedView() {
     <main className="feed-stream" role="main" aria-label="Live feed">
       <header className="feed-header">
         <h2 className="feed-title">Live Feed</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="feed-header__actions">
           <button
-            className={`nostrstack-btn nostrstack-btn--sm ${feedMode === 'all' ? 'nostrstack-btn--primary' : 'nostrstack-btn--ghost'}`}
+            className={`ns-btn ns-btn--sm ${feedMode === 'all' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setFeedMode('all')}
           >
             All
           </button>
           <button
-            className={`nostrstack-btn nostrstack-btn--sm ${feedMode === 'following' ? 'nostrstack-btn--primary' : 'nostrstack-btn--ghost'}`}
+            className={`ns-btn ns-btn--sm ${feedMode === 'following' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => pubkey && setFeedMode('following')}
             disabled={!pubkey}
           >
             Following
           </button>
           <button
-            className={`nostrstack-btn nostrstack-btn--sm ${spamFilterEnabled ? 'nostrstack-btn--primary' : 'nostrstack-btn--ghost'}`}
+            className={`ns-btn ns-btn--sm ${spamFilterEnabled ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setSpamFilterEnabled(!spamFilterEnabled)}
             title="Toggle Spam Filter"
           >
@@ -172,7 +161,7 @@ export function FeedView() {
         </div>
       </header>
 
-      <div style={{ marginBottom: '2rem' }}>
+      <div className="feed-editor">
         <PostEditor />
       </div>
 

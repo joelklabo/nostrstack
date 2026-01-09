@@ -56,5 +56,5 @@ export function TipActivityFeed({
     };
   }, [itemId, maxItems, resolved.baseUrl, resolved.host]);
 
-  return <div ref={ref} className={className} data-nostrstack-tip-feed />;
+  return <div ref={ref} className={className} data-ns-tip-feed />;
 }

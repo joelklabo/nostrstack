@@ -428,7 +428,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   {eventsLoading ? (
                     <>
                       <span
-                        className="nostrstack-spinner"
+                        className="ns-spinner"
                         style={{ marginRight: '0.5rem' }}
                         aria-hidden="true"
                       />

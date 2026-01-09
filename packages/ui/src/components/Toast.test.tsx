@@ -62,7 +62,7 @@ describe('ToastProvider', () => {
 
     fireEvent.click(screen.getByRole('button'));
     const toast = screen.getByTestId('toast');
-    expect(toast).toHaveClass('nostrstack-toast--info');
+    expect(toast).toHaveClass('ns-toast--info');
   });
 
   it.each(['info', 'success', 'danger'] as const)(
@@ -81,7 +81,7 @@ describe('ToastProvider', () => {
 
       fireEvent.click(screen.getByRole('button'));
       const toast = screen.getByTestId('toast');
-      expect(toast).toHaveClass(`nostrstack-toast--${tone}`);
+      expect(toast).toHaveClass(`ns-toast--${tone}`);
     }
   );
 

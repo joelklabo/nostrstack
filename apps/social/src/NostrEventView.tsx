@@ -599,7 +599,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             role="status"
           >
-            <span className="nostrstack-spinner" aria-hidden="true" />
+            <span className="ns-spinner" aria-hidden="true" />
             Fetching event data...
           </div>
         )}
@@ -643,7 +643,7 @@ export function NostrEventView({ rawId }: { rawId: string }) {
 
                 {repliesState.status === 'loading' && (
                   <div className="nostr-event-replies-loading" role="status">
-                    <span className="nostrstack-spinner" aria-hidden="true" />
+                    <span className="ns-spinner" aria-hidden="true" />
                     Loading replies...
                   </div>
                 )}

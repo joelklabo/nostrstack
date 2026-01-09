@@ -57,5 +57,5 @@ export function NostrProfileWidget({
     };
   }, [identifier, resolved.baseUrl, resolved.host, resolved.relays, title]);
 
-  return <div ref={ref} className={className} data-nostrstack-profile />;
+  return <div ref={ref} className={className} data-ns-profile />;
 }

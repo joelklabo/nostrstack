@@ -188,22 +188,11 @@ export function Sidebar({
       <div className="sidebar-header">
         <h1 className="sidebar-title">
           <span>NostrStack</span>
-          <span
-            style={{
-              fontSize: '0.7rem',
-              color: 'var(--color-fg-muted)',
-              fontWeight: 'normal',
-              border: '1px solid var(--color-border-default)',
-              padding: '0 4px',
-              borderRadius: '4px'
-            }}
-          >
-            v1.0
-          </span>
+          <span className="version-badge">v1.0</span>
         </h1>
       </div>
 
-      <div style={{ padding: '0 0.5rem', marginBottom: '1rem' }}>
+      <div className="sidebar-nav-items">
         <button
           className={`nav-item ${currentView === 'feed' ? 'active' : ''}`}
           onClick={() => handleNavigate('feed')}
@@ -278,27 +267,18 @@ export function Sidebar({
 
       <div className="sidebar-footer" role="region" aria-label="Wallet and system status">
         {wallet && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="sidebar-wallet-section">
             <div className="sidebar-status-label">Wallet</div>
             <div
-              style={{ fontSize: '0.95rem', fontWeight: '700' }}
+              className="sidebar-wallet-balance"
               role="status"
               aria-label={`Wallet balance: ${wallet.balance?.toLocaleString() ?? 0} sats`}
             >
               {wallet.balance?.toLocaleString() ?? 0}{' '}
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>sats</span>
+              <span className="sidebar-wallet-unit">sats</span>
             </div>
             {(wallet.balance ?? 0) === 0 && (
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--nostrstack-color-warning)',
-                  marginTop: '0.25rem',
-                  fontStyle: 'italic'
-                }}
-              >
-                Your wallet is empty.
-              </div>
+              <div className="sidebar-wallet-empty">Your wallet is empty.</div>
             )}
             <div className="sidebar-network-meta">{wallet.name || 'LNbits'}</div>
             {showRegtestActions && (
@@ -314,10 +294,7 @@ export function Sidebar({
                     'REGTEST_CONFIG_REQUIRED'
                   ) : isFunding ? (
                     <>
-                      <span
-                        className="nostrstack-spinner"
-                        style={{ width: '12px', height: '12px' }}
-                      />
+                      <span className="ns-spinner" style={{ width: '12px', height: '12px' }} />
                       Mining...
                     </>
                   ) : (
@@ -337,7 +314,11 @@ export function Sidebar({
           </div>
         )}
 
-        <div style={{ marginBottom: '1rem' }} role="status" aria-label="Network and system status">
+        <div
+          className="sidebar-network-section"
+          role="status"
+          aria-label="Network and system status"
+        >
           <div className="sidebar-status-label">Network</div>
           <div className="sidebar-network-badges">
             <span className={`sidebar-network-badge is-${configuredNetwork.toLowerCase()}`}>
@@ -353,11 +334,7 @@ export function Sidebar({
           </div>
         </div>
 
-        <button
-          className="nav-item"
-          onClick={logout}
-          style={{ color: 'var(--nostrstack-color-danger)', paddingLeft: 0 }}
-        >
+        <button className="nav-item nav-item--danger" onClick={logout}>
           Log out
         </button>
       </div>

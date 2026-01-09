@@ -1,0 +1,89 @@
+{
+  "$description": "NostrStack Motion/Animation Primitives",
+  "duration": {
+    "instant": {
+      "$value": "0ms",
+      "$type": "duration"
+    },
+    "fastest": {
+      "$value": "50ms",
+      "$type": "duration",
+      "$description": "Micro-interactions"
+    },
+    "fast": {
+      "$value": "100ms",
+      "$type": "duration",
+      "$description": "Quick feedback"
+    },
+    "normal": {
+      "$value": "150ms",
+      "$type": "duration",
+      "$description": "Default transitions"
+    },
+    "moderate": {
+      "$value": "200ms",
+      "$type": "duration",
+      "$description": "Standard animations"
+    },
+    "slow": {
+      "$value": "300ms",
+      "$type": "duration",
+      "$description": "Deliberate motion"
+    },
+    "slower": {
+      "$value": "400ms",
+      "$type": "duration",
+      "$description": "Complex animations"
+    },
+    "slowest": {
+      "$value": "500ms",
+      "$type": "duration",
+      "$description": "Page transitions"
+    }
+  },
+  "easing": {
+    "linear": {
+      "$value": "linear",
+      "$type": "cubicBezier"
+    },
+    "ease": {
+      "$value": "ease",
+      "$type": "cubicBezier"
+    },
+    "easeIn": {
+      "$value": "cubic-bezier(0.4, 0, 1, 1)",
+      "$type": "cubicBezier",
+      "$description": "Accelerate - exits"
+    },
+    "easeOut": {
+      "$value": "cubic-bezier(0, 0, 0.2, 1)",
+      "$type": "cubicBezier",
+      "$description": "Decelerate - entrances"
+    },
+    "easeInOut": {
+      "$value": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "$type": "cubicBezier",
+      "$description": "Standard - most transitions"
+    },
+    "emphasized": {
+      "$value": "cubic-bezier(0.25, 0, 0, 1)",
+      "$type": "cubicBezier",
+      "$description": "Emphasized - important motion"
+    },
+    "snappy": {
+      "$value": "cubic-bezier(0.2, 0, 0, 1)",
+      "$type": "cubicBezier",
+      "$description": "Quick and responsive"
+    },
+    "bounce": {
+      "$value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "$type": "cubicBezier",
+      "$description": "Playful overshoot"
+    },
+    "spring": {
+      "$value": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      "$type": "cubicBezier",
+      "$description": "Elastic feel"
+    }
+  }
+}

@@ -18,9 +18,9 @@ describe('renderTipWidget', () => {
   it('renders initial state correctly', () => {
     renderTipWidget(host, { username: 'alice', itemId: 'item123' });
 
-    expect(host.querySelector('.nostrstack-tip__title')).toBeTruthy();
+    expect(host.querySelector('.ns-tip__title')).toBeTruthy();
     expect(host.textContent).toContain('Pay @alice');
-    expect(host.querySelectorAll('.nostrstack-tip__amt').length).toBe(3);
+    expect(host.querySelectorAll('.ns-tip__amt').length).toBe(3);
   });
 
   it('generates invoice on preset click', async () => {
@@ -43,11 +43,11 @@ describe('renderTipWidget', () => {
 
     renderTipWidget(host, { username: 'alice', itemId: 'item123', host: 'example.com' });
 
-    const presetBtn = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
+    const presetBtn = host.querySelector('.ns-tip__amt') as HTMLButtonElement;
     await presetBtn.onclick?.(new MouseEvent('click'));
 
     // Should show invoice code (truncated)
-    const code = host.querySelector('.nostrstack-code')?.textContent;
+    const code = host.querySelector('.ns-code')?.textContent;
     expect(code).toContain(pr.substring(0, 8));
     // Should try to copy to clipboard
     expect(write).toHaveBeenCalledWith(pr);
@@ -69,10 +69,10 @@ describe('renderTipWidget', () => {
       showFeed: false
     });
 
-    const presetBtn = host.querySelector('.nostrstack-tip__amt') as HTMLButtonElement;
+    const presetBtn = host.querySelector('.ns-tip__amt') as HTMLButtonElement;
     await presetBtn.onclick?.(new MouseEvent('click'));
 
-    const code = host.querySelector('.nostrstack-code')?.textContent;
+    const code = host.querySelector('.ns-code')?.textContent;
     expect(code).toContain('lnbc1moc'); // Check first part
     expect(write).toHaveBeenCalledWith('lnbc1mock50');
   });

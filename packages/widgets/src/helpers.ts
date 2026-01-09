@@ -52,7 +52,7 @@ export function createClient(opts: { baseURL?: string; host?: string }): LnurlCl
   });
 }
 
-const ATTR_PREFIXES = ['nostrstack'];
+const ATTR_PREFIXES = ['ns'];
 
 /**
  * Get a branded data attribute value from an element
@@ -73,7 +73,7 @@ export function setBrandAttr(
   key: 'Tip' | 'Pay' | 'Comments',
   value: string
 ): void {
-  (el.dataset as Record<string, string>)[`nostrstack${key}`] = value;
+  (el.dataset as Record<string, string>)[`ns${key}`] = value;
 }
 
 /**

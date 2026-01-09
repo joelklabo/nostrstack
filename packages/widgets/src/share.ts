@@ -1,5 +1,5 @@
 import { copyToClipboard } from './copyButton.js';
-import { ensureNostrstackRoot } from './styles.js';
+import { ensureNsRoot } from './styles.js';
 
 type NostrEvent = {
   id?: string;
@@ -61,16 +61,16 @@ async function connectRelays(urls: string[]): Promise<RelayConnection[]> {
 }
 
 export function renderShareButton(container: HTMLElement, opts: ShareButtonOptions) {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-share');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-share');
   container.replaceChildren();
 
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'nostrstack-btn nostrstack-btn--primary';
+  button.className = 'ns-btn ns-btn--primary';
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted nostrstack-share__status';
+  status.className = 'ns-status ns-status--muted ns-share__status';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.hidden = true;
@@ -80,12 +80,8 @@ export function renderShareButton(container: HTMLElement, opts: ShareButtonOptio
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
     status.hidden = !text;
-    status.classList.remove(
-      'nostrstack-status--muted',
-      'nostrstack-status--success',
-      'nostrstack-status--danger'
-    );
-    status.classList.add(`nostrstack-status--${tone}`);
+    status.classList.remove('ns-status--muted', 'ns-status--success', 'ns-status--danger');
+    status.classList.add(`ns-status--${tone}`);
   };
 
   let resetId: number | null = null;

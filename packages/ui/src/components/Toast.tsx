@@ -5,7 +5,8 @@ import {
   useContext,
   useMemo,
   useRef,
-  useState} from 'react';
+  useState
+} from 'react';
 
 export type ToastTone = 'info' | 'success' | 'danger';
 
@@ -63,7 +64,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div
-        className="nostrstack-toast-region"
+        className="ns-toast-region"
         data-testid="toast-region"
         aria-live="polite"
         aria-relevant="additions removals"
@@ -71,15 +72,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`nostrstack-toast nostrstack-toast--${t.tone}`}
+            className={`ns-toast ns-toast--${t.tone}`}
             data-testid="toast"
             role="status"
           >
-            <span className="nostrstack-toast__dot" aria-hidden="true" />
-            <div className="nostrstack-toast__msg">{t.message}</div>
+            <span className="ns-toast__dot" aria-hidden="true" />
+            <div className="ns-toast__msg">{t.message}</div>
             <button
               type="button"
-              className="nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-toast__close"
+              className="ns-btn ns-btn--ghost ns-btn--sm ns-toast__close"
               aria-label="Dismiss toast"
               onClick={() => remove(t.id)}
             >

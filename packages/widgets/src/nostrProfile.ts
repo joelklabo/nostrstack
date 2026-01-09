@@ -1,5 +1,5 @@
 import { type NostrProfile, renderNostrUserCard } from './nostrUserCard.js';
-import { ensureNostrstackRoot } from './styles.js';
+import { ensureNsRoot } from './styles.js';
 import { isMockBase, resolveApiBaseUrl } from './url-utils.js';
 
 type Nip05Record = {
@@ -47,22 +47,22 @@ function mergeRelays(...lists: Array<string[] | undefined>) {
 
 function createCallout(title: string, message: string, tone: 'danger' | 'warning' | 'accent') {
   const callout = document.createElement('div');
-  callout.className = 'nostrstack-callout nostrstack-profile__callout';
+  callout.className = 'ns-callout ns-profile__callout';
 
   if (tone === 'danger') {
-    callout.style.setProperty('--nostrstack-callout-tone', 'var(--nostrstack-color-danger)');
+    callout.style.setProperty('--ns-callout-tone', 'var(--ns-color-danger)');
   } else if (tone === 'warning') {
-    callout.style.setProperty('--nostrstack-callout-tone', 'var(--nostrstack-color-warning)');
+    callout.style.setProperty('--ns-callout-tone', 'var(--ns-color-warning)');
   } else {
-    callout.style.setProperty('--nostrstack-callout-tone', 'var(--nostrstack-color-accent)');
+    callout.style.setProperty('--ns-callout-tone', 'var(--ns-color-accent)');
   }
 
   const titleEl = document.createElement('div');
-  titleEl.className = 'nostrstack-callout__title';
+  titleEl.className = 'ns-callout__title';
   titleEl.textContent = title;
 
   const content = document.createElement('div');
-  content.className = 'nostrstack-callout__content';
+  content.className = 'ns-callout__content';
   content.textContent = message;
 
   callout.append(titleEl, content);
@@ -70,39 +70,39 @@ function createCallout(title: string, message: string, tone: 'danger' | 'warning
 }
 
 export function renderNostrProfile(container: HTMLElement, opts: NostrProfileOptions) {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-profile');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-profile');
   container.replaceChildren();
 
   const header = document.createElement('div');
-  header.className = 'nostrstack-profile__header';
+  header.className = 'ns-profile__header';
 
   const heading = document.createElement('div');
-  heading.className = 'nostrstack-profile__heading';
+  heading.className = 'ns-profile__heading';
 
   const title = document.createElement('div');
-  title.className = 'nostrstack-profile__title';
+  title.className = 'ns-profile__title';
   title.textContent = opts.title ?? 'Nostr profile';
 
   const badge = document.createElement('span');
-  badge.className = 'nostrstack-badge nostrstack-profile__badge';
+  badge.className = 'ns-badge ns-profile__badge';
   badge.textContent = 'Verified';
   badge.hidden = true;
 
   heading.append(title, badge);
 
   const statusWrap = document.createElement('div');
-  statusWrap.className = 'nostrstack-profile__status';
+  statusWrap.className = 'ns-profile__status';
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.className = 'ns-status ns-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.textContent = 'Loading…';
 
   const retry = document.createElement('button');
   retry.type = 'button';
-  retry.className = 'nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm';
+  retry.className = 'ns-btn ns-btn--ghost ns-btn--sm';
   retry.textContent = 'Retry';
   retry.hidden = true;
 
@@ -110,10 +110,10 @@ export function renderNostrProfile(container: HTMLElement, opts: NostrProfileOpt
   header.append(heading, statusWrap);
 
   const body = document.createElement('div');
-  body.className = 'nostrstack-profile__body';
+  body.className = 'ns-profile__body';
 
   const cardHost = document.createElement('div');
-  cardHost.className = 'nostrstack-profile__card';
+  cardHost.className = 'ns-profile__card';
 
   body.append(cardHost);
   container.append(header, body);
@@ -125,8 +125,8 @@ export function renderNostrProfile(container: HTMLElement, opts: NostrProfileOpt
 
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
-    status.classList.add(`nostrstack-status--${tone}`);
+    status.classList.remove('ns-status--muted', 'ns-status--success', 'ns-status--danger');
+    status.classList.add(`ns-status--${tone}`);
   };
 
   const showError = (titleText: string, message: string) => {
@@ -172,7 +172,9 @@ export function renderNostrProfile(container: HTMLElement, opts: NostrProfileOpt
     if (isNip05(raw)) {
       setStatus('Resolving NIP-05…', 'muted');
       try {
-        const res = await fetch(`${apiBaseUrl}/api/nostr/identity?nip05=${encodeURIComponent(raw)}`);
+        const res = await fetch(
+          `${apiBaseUrl}/api/nostr/identity?nip05=${encodeURIComponent(raw)}`
+        );
         if (!res.ok) {
           if (res.status === 404) {
             showError('NIP-05 not found', 'Check the identifier and try again.');
@@ -196,7 +198,9 @@ export function renderNostrProfile(container: HTMLElement, opts: NostrProfileOpt
     const relayParam = relays.length ? `?relays=${encodeURIComponent(relays.join(','))}` : '';
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/nostr/event/${encodeURIComponent(resolvedId)}${relayParam}`);
+      const res = await fetch(
+        `${apiBaseUrl}/api/nostr/event/${encodeURIComponent(resolvedId)}${relayParam}`
+      );
       if (!res.ok) {
         if (res.status === 404) {
           showError('Profile not found', 'The profile could not be found on available relays.');

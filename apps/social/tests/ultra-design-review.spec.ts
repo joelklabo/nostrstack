@@ -279,11 +279,11 @@ test.describe('Ultra Review: Component States & Edge Cases', () => {
     await loginWithNsec(page);
 
     // Check if Alert component exists and has proper styling
-    const alerts = await page.locator('.nostrstack-alert').count();
+    const alerts = await page.locator('.ns-alert').count();
 
     if (alerts > 0) {
       const alertStyles = await page.evaluate(() => {
-        const alert = document.querySelector('.nostrstack-alert');
+        const alert = document.querySelector('.ns-alert');
         if (!alert) return null;
 
         const styles = window.getComputedStyle(alert);
@@ -444,13 +444,11 @@ test.describe('Ultra Review: Micro-interactions & Polish', () => {
     await loginWithNsec(page);
 
     // Check for spinner elements
-    const spinners = await page
-      .locator('.zap-spinner, .nostrstack-spinner, [class*="spinner"]')
-      .count();
+    const spinners = await page.locator('.zap-spinner, .ns-spinner, [class*="spinner"]').count();
 
     if (spinners > 0) {
       const spinnerAnimation = await page.evaluate(() => {
-        const spinner = document.querySelector('.zap-spinner, .nostrstack-spinner');
+        const spinner = document.querySelector('.zap-spinner, .ns-spinner');
         if (!spinner) return null;
 
         const styles = window.getComputedStyle(spinner);

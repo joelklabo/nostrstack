@@ -1,11 +1,11 @@
-import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles } from './styles.js';
+import { ensureNsEmbedStyles, nsEmbedStyles } from './styles.js';
 
 export function renderRelayBadge(relays: string[], target?: HTMLElement) {
   const el = target ?? document.createElement('span');
-  el.className = 'nostrstack-relay-badge';
-  ensureNostrstackEmbedStyles(el.ownerDocument);
-  if (!el.closest?.('.nostrstack-theme')) el.classList.add('nostrstack-theme');
-  el.classList.add('nostrstack');
+  el.className = 'ns-relay-badge';
+  ensureNsEmbedStyles(el.ownerDocument);
+  if (!el.closest?.('.ns-theme')) el.classList.add('ns-theme');
+  el.classList.add('ns');
   el.setAttribute('role', 'status');
   el.setAttribute('aria-label', 'Relay connection status');
   const dot = document.createElement('span');
@@ -28,4 +28,4 @@ export function updateRelayBadge(el: HTMLElement, relays: string[]) {
 }
 
 // For SSR / manual inclusion (includes tokens + base primitives + badge styles).
-export const relayBadgeStyles = nostrstackEmbedStyles;
+export const relayBadgeStyles = nsEmbedStyles;

@@ -3,7 +3,7 @@ import { copyToClipboard } from '../copyButton.js';
 import { type ConnectionState, PaymentConnection } from '../core/paymentConnection.js';
 import { extractPayEventInvoice, resolveTenantDomain } from '../helpers.js';
 import { renderQrCodeInto } from '../qr.js';
-import { ensureNostrstackRoot } from '../styles.js';
+import { ensureNsRoot } from '../styles.js';
 import type { TipWidgetV2Options } from '../types.js';
 import { isMockBase, resolveApiBaseUrl, resolvePayWsUrl } from '../url-utils.js';
 import { renderTipFeed } from './tipFeed.js';
@@ -23,10 +23,10 @@ function fmtClock(secs: number) {
 }
 
 export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options) {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-tip');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-tip');
   if (opts.size === 'compact') {
-    container.classList.add('nostrstack-tip--compact');
+    container.classList.add('ns-tip--compact');
   }
   container.replaceChildren();
 
@@ -38,29 +38,29 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   // Header with lightning icon
   const header = document.createElement('div');
-  header.className = 'nostrstack-tip__header';
+  header.className = 'ns-tip__header';
 
   const headerLeft = document.createElement('div');
-  headerLeft.className = 'nostrstack-tip__headerLeft';
+  headerLeft.className = 'ns-tip__headerLeft';
 
   const title = document.createElement('div');
-  title.className = 'nostrstack-tip__title';
+  title.className = 'ns-tip__title';
   const titleIcon = document.createElement('span');
-  titleIcon.className = 'nostrstack-tip__titleIcon';
+  titleIcon.className = 'ns-tip__titleIcon';
   titleIcon.textContent = '⚡';
   titleIcon.setAttribute('aria-hidden', 'true');
   const titleText = document.createTextNode(opts.text ?? 'Send a tip');
   title.append(titleIcon, titleText);
 
   const subtitle = document.createElement('div');
-  subtitle.className = 'nostrstack-tip__sub';
+  subtitle.className = 'ns-tip__sub';
   subtitle.textContent = `Pay @${opts.username}`;
 
   headerLeft.append(title, subtitle);
   header.appendChild(headerLeft);
 
   const amountRow = document.createElement('div');
-  amountRow.className = 'nostrstack-tip__amountRow';
+  amountRow.className = 'ns-tip__amountRow';
 
   const presets = (
     opts.presetAmountsSats?.filter((n) => Number.isFinite(n) && n > 0) ?? [5, 10, 21]
@@ -83,9 +83,9 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   presets.forEach((n) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-tip__amt';
+    b.className = 'ns-btn ns-btn--sm ns-tip__amt';
     const label = document.createElement('span');
-    label.className = 'nostrstack-tip__amtLabel';
+    label.className = 'ns-tip__amtLabel';
     label.textContent = `${n} sats`;
     b.appendChild(label);
     b.dataset.amount = String(n);
@@ -99,7 +99,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   });
 
   const customWrap = document.createElement('div');
-  customWrap.className = 'nostrstack-tip__custom';
+  customWrap.className = 'ns-tip__custom';
   if (opts.allowCustomAmount === false) customWrap.style.display = 'none';
 
   const customInput = document.createElement('input');
@@ -108,7 +108,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   customInput.inputMode = 'numeric';
   customInput.placeholder = 'Custom';
   customInput.min = '1';
-  customInput.className = 'nostrstack-input nostrstack-tip__customInput';
+  customInput.className = 'ns-input ns-tip__customInput';
   customInput.dataset.dirty = 'false';
   customInput.oninput = () => {
     customInput.dataset.dirty = customInput.value.trim() ? 'true' : 'false';
@@ -117,7 +117,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
   const tipBtn = document.createElement('button');
   tipBtn.type = 'button';
-  tipBtn.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm nostrstack-tip__go';
+  tipBtn.className = 'ns-btn ns-btn--primary ns-btn--sm ns-tip__go';
   tipBtn.textContent = 'Tip';
   tipBtn.onclick = async () => {
     const n = Number(customInput.value);
@@ -135,29 +135,29 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   note.type = 'text';
   note.name = 'note';
   note.placeholder = 'Add a note (optional)';
-  note.className = 'nostrstack-input nostrstack-tip__note';
+  note.className = 'ns-input ns-tip__note';
   note.maxLength = 140;
 
   const panel = document.createElement('div');
-  panel.className = 'nostrstack-tip__panel';
+  panel.className = 'ns-tip__panel';
   panel.dataset.state = 'initial';
 
   // Countdown ring
   const ring = document.createElement('div');
-  ring.className = 'nostrstack-tip__ring';
+  ring.className = 'ns-tip__ring';
 
   const ringSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  ringSvg.setAttribute('class', 'nostrstack-tip__ringSvg');
+  ringSvg.setAttribute('class', 'ns-tip__ringSvg');
   ringSvg.setAttribute('viewBox', '0 0 72 72');
 
   const ringBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  ringBg.setAttribute('class', 'nostrstack-tip__ringBg');
+  ringBg.setAttribute('class', 'ns-tip__ringBg');
   ringBg.setAttribute('cx', '36');
   ringBg.setAttribute('cy', '36');
   ringBg.setAttribute('r', '30');
 
   const ringProgress = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  ringProgress.setAttribute('class', 'nostrstack-tip__ringProgress');
+  ringProgress.setAttribute('class', 'ns-tip__ringProgress');
   ringProgress.setAttribute('cx', '36');
   ringProgress.setAttribute('cy', '36');
   ringProgress.setAttribute('r', '30');
@@ -165,18 +165,18 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   ringSvg.append(ringBg, ringProgress);
 
   const ringCenter = document.createElement('div');
-  ringCenter.className = 'nostrstack-tip__ringCenter';
+  ringCenter.className = 'ns-tip__ringCenter';
 
   const ringTime = document.createElement('div');
-  ringTime.className = 'nostrstack-tip__ringTime';
+  ringTime.className = 'ns-tip__ringTime';
   ringTime.textContent = '2:00';
 
   const ringLabel = document.createElement('div');
-  ringLabel.className = 'nostrstack-tip__ringLabel';
+  ringLabel.className = 'ns-tip__ringLabel';
   ringLabel.textContent = 'left';
 
   const ringIcon = document.createElement('div');
-  ringIcon.className = 'nostrstack-tip__ringIcon';
+  ringIcon.className = 'ns-tip__ringIcon';
   ringIcon.textContent = '⏳';
   ringIcon.style.display = 'none';
 
@@ -184,25 +184,25 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   ring.append(ringSvg, ringCenter);
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.className = 'ns-status ns-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.textContent = '';
 
   // Realtime indicator with pulse dot
   const realtime = document.createElement('div');
-  realtime.className = 'nostrstack-tip__realtime';
+  realtime.className = 'ns-tip__realtime';
   realtime.dataset.state = 'idle';
 
   const realtimeDot = document.createElement('span');
-  realtimeDot.className = 'nostrstack-tip__realtimeDot';
+  realtimeDot.className = 'ns-tip__realtimeDot';
 
   const realtimeText = document.createElement('span');
   realtimeText.textContent = '';
 
   const refreshBtn = document.createElement('button');
   refreshBtn.type = 'button';
-  refreshBtn.className = 'nostrstack-btn--ghost nostrstack-tip__refresh';
+  refreshBtn.className = 'ns-btn--ghost ns-tip__refresh';
   refreshBtn.title = 'Check payment status';
   refreshBtn.innerHTML =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>';
@@ -211,33 +211,33 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   realtime.append(realtimeDot, realtimeText, refreshBtn);
 
   const qrWrap = document.createElement('div');
-  qrWrap.className = 'nostrstack-tip__qr';
+  qrWrap.className = 'ns-tip__qr';
 
   const invoiceBox = document.createElement('button');
   invoiceBox.type = 'button';
-  invoiceBox.className = 'nostrstack-invoice-box';
+  invoiceBox.className = 'ns-invoice-box';
   invoiceBox.title = 'Click to copy invoice';
 
   const invoiceIcon = document.createElement('span');
-  invoiceIcon.className = 'nostrstack-invoice-icon';
+  invoiceIcon.className = 'ns-invoice-icon';
   invoiceIcon.innerHTML =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
 
   const invoiceCode = document.createElement('code');
-  invoiceCode.className = 'nostrstack-code';
+  invoiceCode.className = 'ns-code';
 
   const invoiceCopyLabel = document.createElement('span');
-  invoiceCopyLabel.className = 'nostrstack-invoice-label';
+  invoiceCopyLabel.className = 'ns-invoice-label';
   invoiceCopyLabel.textContent = 'Copy';
 
   invoiceBox.append(invoiceIcon, invoiceCode, invoiceCopyLabel);
 
   const actions = document.createElement('div');
-  actions.className = 'nostrstack-tip__actions';
+  actions.className = 'ns-tip__actions';
 
   const openWallet = document.createElement('a');
   openWallet.textContent = 'Open in wallet';
-  openWallet.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm';
+  openWallet.className = 'ns-btn ns-btn--primary ns-btn--sm';
   openWallet.rel = 'noreferrer';
   openWallet.style.display = 'none';
 
@@ -249,7 +249,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   let feedWrap: HTMLDivElement | null = null;
   if (opts.showFeed !== false) {
     feedWrap = document.createElement('div');
-    feedWrap.className = 'nostrstack-tip__feedWrap';
+    feedWrap.className = 'ns-tip__feedWrap';
     const feedHost = document.createElement('div');
     feedWrap.appendChild(feedHost);
     feed = renderTipFeed(feedHost, {
@@ -312,7 +312,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     if (isPaid) {
       // Show checkmark
       ringTime.textContent = '✓';
-      ringTime.style.color = 'var(--nostrstack-color-success)';
+      ringTime.style.color = 'var(--ns-color-success)';
       ringLabel.textContent = 'Paid';
       ringIcon.style.display = 'none';
       ringProgress.style.setProperty('--ring-offset', '0');
@@ -368,16 +368,16 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
     // Success burst ring
     const burst = document.createElement('div');
-    burst.className = 'nostrstack-tip__successBurst';
+    burst.className = 'ns-tip__successBurst';
     container.appendChild(burst);
     window.setTimeout(() => burst.remove(), 700);
 
     // Lightning bolts rain
     const celebration = document.createElement('div');
-    celebration.className = 'nostrstack-tip__celebration';
+    celebration.className = 'ns-tip__celebration';
     for (let i = 0; i < 8; i++) {
       const bolt = document.createElement('span');
-      bolt.className = 'nostrstack-tip__celebrationBolt';
+      bolt.className = 'ns-tip__celebrationBolt';
       bolt.textContent = '⚡';
       bolt.style.left = `${10 + Math.round(Math.random() * 80)}%`;
       bolt.style.animationDelay = `${Math.random() * 200}ms`;
@@ -387,12 +387,12 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
     // Confetti particles
     const confetti = document.createElement('div');
-    confetti.className = 'nostrstack-tip__confetti';
+    confetti.className = 'ns-tip__confetti';
     const colors = [
-      'var(--nostrstack-color-primary)',
-      'var(--nostrstack-color-accent)',
-      'var(--nostrstack-color-success)',
-      'var(--nostrstack-color-warning)'
+      'var(--ns-color-primary)',
+      'var(--ns-color-accent)',
+      'var(--ns-color-success)',
+      'var(--ns-color-warning)'
     ];
     for (let i = 0; i < 20; i++) {
       const p = document.createElement('span');
@@ -428,8 +428,8 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     if (didPay) return;
     didPay = true;
     status.textContent = 'Payment confirmed. Thank you!';
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
-    status.classList.add('nostrstack-status--success');
+    status.classList.remove('ns-status--muted', 'ns-status--danger');
+    status.classList.add('ns-status--success');
     refreshBtn.style.display = 'none';
     tipBtn.disabled = false;
     celebrate();
@@ -459,19 +459,19 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
   const startTip = async (amountSats: number) => {
     if (!domain) {
       status.textContent = 'Missing domain/host for tip payments';
-      status.classList.remove('nostrstack-status--muted');
-      status.classList.add('nostrstack-status--danger');
+      status.classList.remove('ns-status--muted');
+      status.classList.add('ns-status--danger');
       return;
     }
     didPay = false;
     status.textContent = 'Generating invoice…';
-    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
-    status.classList.add('nostrstack-status--muted');
+    status.classList.remove('ns-status--danger', 'ns-status--success');
+    status.classList.add('ns-status--muted');
     tipBtn.disabled = true;
     openWallet.style.display = 'none';
     refreshBtn.style.display = 'none';
     invoiceCode.textContent = '';
-    invoiceBox.classList.remove('nostrstack-visible');
+    invoiceBox.classList.remove('ns-visible');
     qrWrap.replaceChildren();
     abortQr();
     currentInvoice = null;
@@ -528,7 +528,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       currentInvoice = pr;
       currentProviderRef = providerRef;
       invoiceCode.textContent = pr.substring(0, 8) + '...' + pr.substring(pr.length - 8);
-      invoiceBox.classList.add('nostrstack-visible');
+      invoiceBox.classList.add('ns-visible');
       openWallet.href = `lightning:${pr}`;
       openWallet.style.display = '';
       status.textContent = 'Waiting for payment…';
@@ -575,8 +575,8 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
     } catch (e) {
       console.error('tip v2 error', e);
       status.textContent = 'Failed to generate invoice';
-      status.classList.remove('nostrstack-status--muted');
-      status.classList.add('nostrstack-status--danger');
+      status.classList.remove('ns-status--muted');
+      status.classList.add('ns-status--danger');
       return null;
     } finally {
       tipBtn.disabled = false;
@@ -594,7 +594,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
 
     setTimeout(() => {
       if (!didPay) {
-        refreshBtn.style.color = 'var(--nostrstack-color-warning)';
+        refreshBtn.style.color = 'var(--ns-color-warning)';
         setTimeout(() => {
           refreshBtn.style.color = '';
           refreshBtn.disabled = false;

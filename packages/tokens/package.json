@@ -1,0 +1,50 @@
+{
+  "name": "@nostrstack/tokens",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "NostrStack Design System Tokens - W3C DTCG Format",
+  "main": "dist/js/tokens.cjs",
+  "module": "dist/js/tokens.js",
+  "types": "dist/js/tokens.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/js/tokens.d.ts",
+        "default": "./dist/js/tokens.js"
+      },
+      "require": {
+        "types": "./dist/js/tokens.d.ts",
+        "default": "./dist/js/tokens.cjs"
+      }
+    },
+    "./css": "./dist/css/tokens.css",
+    "./css/scoped": "./dist/css/tokens-scoped.css",
+    "./css/components": "./dist/css/components.css",
+    "./css/utilities": "./dist/css/utilities.css",
+    "./json": "./dist/json/tokens.json",
+    "./themes/light": "./dist/css/theme-light.css",
+    "./themes/dark": "./dist/css/theme-dark.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "build:watch": "node build.js --watch",
+    "clean": "rm -rf dist",
+    "lint": "echo 'No lint for tokens'",
+    "test": "echo 'No tests yet' && exit 0",
+    "typecheck": "echo 'No TS sources to check' && exit 0"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.5",
+    "chokidar": "^4.0.3",
+    "style-dictionary": "^4.3.2",
+    "typescript": "5.6.2",
+    "vitest": "2.1.9"
+  }
+}

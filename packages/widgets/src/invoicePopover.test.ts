@@ -24,7 +24,7 @@ describe('renderInvoicePopover', () => {
     const popover = renderInvoicePopover(pr, { mount });
 
     expect(popover.getAttribute('role')).toBe('dialog');
-    expect(popover.querySelector('.nostrstack-popover-title')?.textContent).toBe('Invoice');
+    expect(popover.querySelector('.ns-popover-title')?.textContent).toBe('Invoice');
     expect(popover.querySelector('code')?.textContent).toBe(pr);
     expect(renderQrCodeInto).toHaveBeenCalledWith(
       expect.any(HTMLElement),
@@ -39,7 +39,7 @@ describe('renderInvoicePopover', () => {
     // Ensure it's mounted
     expect(mount.contains(popover)).toBe(true);
 
-    const closeBtn = popover.querySelector('.nostrstack-popover-close') as HTMLButtonElement;
+    const closeBtn = popover.querySelector('.ns-popover-close') as HTMLButtonElement;
     closeBtn.click();
 
     expect(mount.contains(popover)).toBe(false);
@@ -55,7 +55,7 @@ describe('renderInvoicePopover', () => {
 
   it('traps focus within the modal', () => {
     const popover = renderInvoicePopover('lnbc1test', { mount });
-    const closeBtn = popover.querySelector('.nostrstack-popover-close') as HTMLButtonElement;
+    const closeBtn = popover.querySelector('.ns-popover-close') as HTMLButtonElement;
 
     // Setup focusable elements
     // We need to ensure elements are seen as focusable. jsdom might need help.
@@ -83,7 +83,7 @@ describe('renderInvoicePopover', () => {
     // So order: Close -> Copy -> OpenWallet.
 
     // Tab on OpenWallet should go to Close.
-    const openWallet = popover.querySelector('a.nostrstack-btn') as HTMLAnchorElement;
+    const openWallet = popover.querySelector('a.ns-btn') as HTMLAnchorElement;
     openWallet.focus();
 
     const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });

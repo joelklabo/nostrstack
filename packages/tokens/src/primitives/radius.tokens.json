@@ -1,0 +1,44 @@
+{
+  "$description": "NostrStack Border Radius Scale",
+  "radius": {
+    "none": {
+      "$value": "0",
+      "$type": "dimension"
+    },
+    "sm": {
+      "$value": "0.25rem",
+      "$type": "dimension",
+      "$description": "4px - Subtle rounding"
+    },
+    "md": {
+      "$value": "0.5rem",
+      "$type": "dimension",
+      "$description": "8px - Default rounding"
+    },
+    "lg": {
+      "$value": "0.75rem",
+      "$type": "dimension",
+      "$description": "12px - Cards, containers"
+    },
+    "xl": {
+      "$value": "1rem",
+      "$type": "dimension",
+      "$description": "16px - Large cards"
+    },
+    "2xl": {
+      "$value": "1.5rem",
+      "$type": "dimension",
+      "$description": "24px - Modals, prominent elements"
+    },
+    "3xl": {
+      "$value": "2rem",
+      "$type": "dimension",
+      "$description": "32px - Large containers"
+    },
+    "full": {
+      "$value": "9999px",
+      "$type": "dimension",
+      "$description": "Fully rounded (pill shape)"
+    }
+  }
+}

@@ -39,9 +39,9 @@ vi.mock('@nostrstack/widgets', () => {
       el.appendChild(btn);
       return { destroy: vi.fn() };
     }),
-    createNostrstackBrandTheme: vi.fn(() => ({})),
-    ensureNostrstackEmbedStyles: vi.fn(),
-    ensureNostrstackRoot: vi.fn(),
+    createNsBrandTheme: vi.fn(() => ({})),
+    ensureNsEmbedStyles: vi.fn(),
+    ensureNsRoot: vi.fn(),
     themeToCssVars: vi.fn(() => ({}))
   };
 });

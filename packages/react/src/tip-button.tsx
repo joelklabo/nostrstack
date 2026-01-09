@@ -49,5 +49,5 @@ export function TipButton({
     };
   }, [lnAddress, amountSats, label, baseUrl, host, cfg.lnAddress, cfg.baseUrl, cfg.host]);
 
-  return <div ref={ref} className={className} data-nostrstack-tip />;
+  return <div ref={ref} className={className} data-ns-tip />;
 }

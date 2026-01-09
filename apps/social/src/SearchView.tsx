@@ -201,7 +201,7 @@ export function SearchView() {
         <div className="search-input-row">
           <input
             id="friend-search"
-            className="nostrstack-input search-input"
+            className="ns-input search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Keywords, npub, or name@domain"
@@ -223,7 +223,7 @@ export function SearchView() {
         >
           {(status === 'validating' || status === 'resolving' || notesLoading) && (
             <span
-              className="nostrstack-spinner"
+              className="ns-spinner"
               style={{ width: '14px', height: '14px' }}
               aria-hidden="true"
             />

@@ -18,7 +18,8 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --dts --format iife,esm,cjs --global-name NostrstackEmbed",
+    "generate:styles": "node scripts/generate-styles.js",
+    "build": "pnpm generate:styles && tsup src/index.ts --dts --format iife,esm,cjs --global-name NostrstackEmbed",
     "prepare": "pnpm build",
     "prepack": "pnpm build",
     "lint": "eslint . --ext .ts --max-warnings=0",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@nostrstack/sdk": "workspace:*",
+    "@nostrstack/tokens": "workspace:*",
     "jsqr": "^1.4.0",
     "qr-code-styling": "^1.9.2",
     "qrcode": "^1.5.4"

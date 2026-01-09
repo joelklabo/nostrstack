@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { nostrstackQrPresetOptions, renderQrCodeInto } from './qr.js';
+import { nsQrPresetOptions, renderQrCodeInto } from './qr.js';
 
 // Mock QrCodeStyling
 const mockAppend = vi.fn();
@@ -43,13 +43,13 @@ describe('renderQrCodeInto', () => {
   });
 
   it('generates correct options for presets', () => {
-    const safe = nostrstackQrPresetOptions('safe');
+    const safe = nsQrPresetOptions('safe');
     expect(safe.dotsOptions?.type).toBe('square');
 
-    const brand = nostrstackQrPresetOptions('brand');
+    const brand = nsQrPresetOptions('brand');
     expect(brand.dotsOptions?.type).toBe('rounded');
 
-    const brandLogo = nostrstackQrPresetOptions('brandLogo');
+    const brandLogo = nsQrPresetOptions('brandLogo');
     expect(brandLogo.image).toBeTruthy();
   });
 });

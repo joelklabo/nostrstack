@@ -18,14 +18,14 @@ function createMockRelay(overrides?: Partial<RelayConnection>): RelayConnection 
 vi.mock('../relayBadge.js', () => ({
   renderRelayBadge: () => {
     const el = document.createElement('div');
-    el.className = 'nostrstack-relay-badge';
+    el.className = 'ns-relay-badge';
     return el;
   },
   updateRelayBadge: vi.fn()
 }));
 
 vi.mock('../styles.js', () => ({
-  ensureNostrstackRoot: vi.fn()
+  ensureNsRoot: vi.fn()
 }));
 
 vi.mock('../relays.js', () => ({
@@ -52,7 +52,7 @@ describe('renderCommentWidget', () => {
 
   it('renders initial state correctly', async () => {
     await renderCommentWidget(host, { headerText: 'Test Comments' });
-    expect(host.querySelector('.nostrstack-comments-title')?.textContent).toBe('Test Comments');
+    expect(host.querySelector('.ns-comments-title')?.textContent).toBe('Test Comments');
     expect(host.querySelector('textarea')).toBeTruthy();
     expect(host.querySelector('button[type="submit"]')).toBeTruthy();
   });
@@ -69,7 +69,7 @@ describe('renderCommentWidget', () => {
   it('does not connect if lazyConnect is true', async () => {
     await renderCommentWidget(host, { lazyConnect: true });
     expect(connectRelays).not.toHaveBeenCalled();
-    const btn = host.querySelector('.nostrstack-comments-more');
+    const btn = host.querySelector('.ns-comments-more');
     expect(btn?.textContent).toBe('Load comments');
   });
 
@@ -79,7 +79,7 @@ describe('renderCommentWidget', () => {
 
     await renderCommentWidget(host, { lazyConnect: true, relays: ['wss://relay.example.com'] });
 
-    const btn = host.querySelector('.nostrstack-comments-more') as HTMLButtonElement;
+    const btn = host.querySelector('.ns-comments-more') as HTMLButtonElement;
     expect(btn).toBeTruthy();
     btn.click();
 

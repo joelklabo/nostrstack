@@ -15,7 +15,7 @@ describe('relayBadge', () => {
 
   it('renders initial state correctly with empty relays', () => {
     const badge = renderRelayBadge([], host);
-    expect(badge.className).toContain('nostrstack-relay-badge');
+    expect(badge.className).toContain('ns-relay-badge');
     expect(badge.querySelector('.relay-dot')).toBeTruthy();
     expect(badge.querySelector('.relay-label')?.textContent).toBe('offline');
   });

@@ -26,24 +26,19 @@ export function CopyButton({
     disabled
   });
 
-  const buttonLabel =
-    state === 'copied'
-      ? 'Copied'
-      : state === 'error'
-        ? 'Copy failed'
-        : label;
+  const buttonLabel = state === 'copied' ? 'Copied' : state === 'error' ? 'Copy failed' : label;
 
   return (
     <div style={{ display: 'inline-flex' }}>
       <button
         type="button"
         onClick={() => copy()}
-        aria-label={variant === 'icon' ? (ariaLabel ?? label) : ariaLabel}
+        aria-label={variant === 'icon' ? ariaLabel ?? label : ariaLabel}
         className={[
-          'nostrstack-btn',
-          size === 'sm' ? 'nostrstack-btn--sm' : '',
-          'nostrstack-copybtn',
-          variant === 'icon' ? 'nostrstack-copybtn--icon' : ''
+          'ns-btn',
+          size === 'sm' ? 'ns-btn--sm' : '',
+          'ns-copybtn',
+          variant === 'icon' ? 'ns-copybtn--icon' : ''
         ]
           .filter(Boolean)
           .join(' ')}
@@ -51,13 +46,13 @@ export function CopyButton({
         data-variant={variant}
         disabled={isDisabled}
       >
-        <span className="nostrstack-copybtn__bubble" aria-hidden="true">
+        <span className="ns-copybtn__bubble" aria-hidden="true">
           {toastMessageFromLabel(label)}
         </span>
-        <span className="nostrstack-copybtn__icon" aria-hidden="true">
+        <span className="ns-copybtn__icon" aria-hidden="true">
           {state === 'copied' ? <CheckIcon /> : state === 'error' ? <ErrorIcon /> : <CopyIcon />}
         </span>
-        {variant !== 'icon' ? <span className="nostrstack-copybtn__label">{buttonLabel}</span> : null}
+        {variant !== 'icon' ? <span className="ns-copybtn__label">{buttonLabel}</span> : null}
       </button>
     </div>
   );

@@ -1,0 +1,301 @@
+{
+  "$description": "NostrStack Semantic Color Tokens - Role-based color assignments",
+  "color": {
+    "bg": {
+      "$description": "Background colors",
+      "default": {
+        "$value": "{color.neutral.0}",
+        "$type": "color",
+        "$description": "Page background"
+      },
+      "subtle": {
+        "$value": "{color.neutral.50}",
+        "$type": "color",
+        "$description": "Subtle background variation"
+      },
+      "muted": {
+        "$value": "{color.neutral.100}",
+        "$type": "color",
+        "$description": "Muted sections"
+      },
+      "emphasis": {
+        "$value": "{color.neutral.200}",
+        "$type": "color",
+        "$description": "Emphasized backgrounds"
+      },
+      "inverse": {
+        "$value": "{color.neutral.900}",
+        "$type": "color",
+        "$description": "Inverted background"
+      }
+    },
+    "surface": {
+      "$description": "Surface/card colors",
+      "default": {
+        "$value": "{color.static.white}",
+        "$type": "color",
+        "$description": "Card background"
+      },
+      "raised": {
+        "$value": "{color.static.white}",
+        "$type": "color",
+        "$description": "Elevated surface"
+      },
+      "overlay": {
+        "$value": "oklch(0.98 0.005 250 / 0.95)",
+        "$type": "color",
+        "$description": "Modal/popover overlay"
+      },
+      "sunken": {
+        "$value": "{color.neutral.50}",
+        "$type": "color",
+        "$description": "Inset surfaces"
+      }
+    },
+    "border": {
+      "$description": "Border colors",
+      "default": {
+        "$value": "{color.neutral.200}",
+        "$type": "color",
+        "$description": "Standard borders"
+      },
+      "subtle": {
+        "$value": "{color.neutral.100}",
+        "$type": "color",
+        "$description": "Subtle dividers"
+      },
+      "strong": {
+        "$value": "{color.neutral.300}",
+        "$type": "color",
+        "$description": "Emphasized borders"
+      },
+      "focus": {
+        "$value": "{color.blue.500}",
+        "$type": "color",
+        "$description": "Focus ring color"
+      }
+    },
+    "text": {
+      "$description": "Text colors",
+      "default": {
+        "$value": "{color.neutral.900}",
+        "$type": "color",
+        "$description": "Primary text"
+      },
+      "muted": {
+        "$value": "{color.neutral.600}",
+        "$type": "color",
+        "$description": "Secondary text"
+      },
+      "subtle": {
+        "$value": "{color.neutral.500}",
+        "$type": "color",
+        "$description": "Tertiary/placeholder text"
+      },
+      "disabled": {
+        "$value": "{color.neutral.400}",
+        "$type": "color",
+        "$description": "Disabled state"
+      },
+      "inverse": {
+        "$value": "{color.static.white}",
+        "$type": "color",
+        "$description": "Text on dark backgrounds"
+      },
+      "link": {
+        "$value": "{color.blue.600}",
+        "$type": "color",
+        "$description": "Link text"
+      },
+      "linkHover": {
+        "$value": "{color.blue.700}",
+        "$type": "color",
+        "$description": "Link hover state"
+      }
+    },
+    "primary": {
+      "$description": "Primary brand color",
+      "default": {
+        "$value": "{color.blue.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.blue.600}",
+        "$type": "color"
+      },
+      "active": {
+        "$value": "{color.blue.700}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.blue.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.blue.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.static.white}",
+        "$type": "color",
+        "$description": "Text on primary background"
+      }
+    },
+    "accent": {
+      "$description": "Accent/secondary color",
+      "default": {
+        "$value": "{color.violet.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.violet.600}",
+        "$type": "color"
+      },
+      "active": {
+        "$value": "{color.violet.700}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.violet.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.violet.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.static.white}",
+        "$type": "color"
+      }
+    },
+    "success": {
+      "$description": "Success/positive state",
+      "default": {
+        "$value": "{color.green.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.green.600}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.green.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.green.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.green.700}",
+        "$type": "color"
+      }
+    },
+    "warning": {
+      "$description": "Warning/attention state",
+      "default": {
+        "$value": "{color.amber.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.amber.600}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.amber.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.amber.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.amber.800}",
+        "$type": "color"
+      }
+    },
+    "danger": {
+      "$description": "Error/danger state",
+      "default": {
+        "$value": "{color.red.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.red.600}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.red.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.red.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.red.700}",
+        "$type": "color"
+      }
+    },
+    "info": {
+      "$description": "Informational state",
+      "default": {
+        "$value": "{color.cyan.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.cyan.600}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.cyan.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.cyan.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.cyan.700}",
+        "$type": "color"
+      }
+    },
+    "interactive": {
+      "$description": "Interactive element colors",
+      "default": {
+        "$value": "{color.blue.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.blue.600}",
+        "$type": "color"
+      },
+      "active": {
+        "$value": "{color.blue.700}",
+        "$type": "color"
+      },
+      "disabled": {
+        "$value": "{color.neutral.300}",
+        "$type": "color"
+      }
+    },
+    "overlay": {
+      "$description": "Overlay colors for modals",
+      "default": {
+        "$value": "oklch(0.15 0.02 250 / 0.6)",
+        "$type": "color"
+      },
+      "strong": {
+        "$value": "oklch(0.1 0.02 250 / 0.8)",
+        "$type": "color"
+      }
+    },
+    "focus": {
+      "$description": "Focus ring",
+      "ring": {
+        "$value": "oklch(0.6 0.22 250 / 0.4)",
+        "$type": "color"
+      }
+    }
+  }
+}

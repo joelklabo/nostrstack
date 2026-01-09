@@ -1,0 +1,131 @@
+{
+  "$description": "Input/Form Component Tokens",
+  "component": {
+    "input": {
+      "padding": {
+        "x": {
+          "$value": "{space.4}",
+          "$type": "dimension"
+        },
+        "y": {
+          "$value": "{space.3}",
+          "$type": "dimension"
+        }
+      },
+      "paddingSm": {
+        "x": {
+          "$value": "{space.3}",
+          "$type": "dimension"
+        },
+        "y": {
+          "$value": "{space.2}",
+          "$type": "dimension"
+        }
+      },
+      "borderRadius": {
+        "$value": "{radius.lg}",
+        "$type": "dimension"
+      },
+      "borderWidth": {
+        "$value": "1px",
+        "$type": "dimension"
+      },
+      "fontSize": {
+        "$value": "{font.size.sm}",
+        "$type": "dimension"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.normal}",
+        "$type": "number"
+      },
+      "minHeight": {
+        "$value": "2.5rem",
+        "$type": "dimension"
+      },
+      "transition": {
+        "$value": "all {duration.normal} {easing.easeInOut}",
+        "$type": "transition"
+      },
+      "bg": {
+        "$value": "{color.surface.default}",
+        "$type": "color"
+      },
+      "bgFocus": {
+        "$value": "{color.surface.default}",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "{color.border.default}",
+        "$type": "color"
+      },
+      "borderHover": {
+        "$value": "{color.border.strong}",
+        "$type": "color"
+      },
+      "borderFocus": {
+        "$value": "{color.primary.default}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.text.default}",
+        "$type": "color"
+      },
+      "placeholder": {
+        "$value": "{color.text.subtle}",
+        "$type": "color"
+      },
+      "focusRing": {
+        "$value": "{effect.focus.ring}",
+        "$type": "shadow"
+      },
+      "shadow": {
+        "$value": "{shadow.inner}",
+        "$type": "shadow"
+      },
+      "disabled": {
+        "bg": {
+          "$value": "{color.bg.muted}",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "{color.text.disabled}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{color.border.subtle}",
+          "$type": "color"
+        }
+      },
+      "error": {
+        "border": {
+          "$value": "{color.danger.default}",
+          "$type": "color"
+        },
+        "focusRing": {
+          "$value": "0 0 0 3px {color.danger.subtle}",
+          "$type": "shadow"
+        }
+      }
+    },
+    "textarea": {
+      "minHeight": {
+        "$value": "5rem",
+        "$type": "dimension"
+      },
+      "resize": {
+        "$value": "vertical",
+        "$type": "string"
+      }
+    },
+    "select": {
+      "indicatorSize": {
+        "$value": "1rem",
+        "$type": "dimension"
+      },
+      "indicatorColor": {
+        "$value": "{color.text.muted}",
+        "$type": "color"
+      }
+    }
+  }
+}

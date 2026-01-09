@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -144,79 +145,46 @@ function buildSnippet({
 }) {
   // Use the new composed widget (SupportSection) for tips + comments + share
   const attrsComposed = [
-    `data-nostrstack-comment-tip="${threadId}"`,
+    `data-ns-comment-tip="${threadId}"`,
     `data-tip-username="${tenant}"`,
     apiBase ? `data-base-url="${apiBase}"` : null,
     host ? `data-host="${host}"` : null,
     relays ? `data-relays="${relays}"` : null,
     layout ? `data-layout="${layout}"` : null,
-    // Pass share config to the composed widget via data attributes if needed, 
-    // but the embed currently reads data-nostrstack-share from its container or children.
-    // However, the SupportSection/CommentTipWidget in embed usually takes opts.
-    // Let's check how embed reads them. 
-    // Actually, embed mountCommentTipWidget uses its own logic.
-    // For now, let's inject separate attributes on the same div if possible, or just pass them as props.
-    // Looking at embed source: it reads data attributes from the container.
-    // We can add data-share-url etc if the widget supports it.
-    // If not supported by the composed widget in embed yet, we might need to rely on the fact that
-    // the composed widget renders a ShareButton if we pass shareUrl.
-    // The current embed implementation of renderCommentTipWidget (which I read earlier) 
-    // DOES NOT seem to automatically pull shareUrl from dataset for the composed widget.
-    // It takes opts.
-    // Wait, `mountCommentTipWidget` in embed/src/index.ts uses `...opts` and defaults.
-    // It doesn't explicitly read `data-share-url` from the container to pass to `renderCommentTipWidget`.
-    // It reads: username, itemId, threadId.
-    // AND:
-    // `const shareDefaults` in SupportSection (React) reads window.location.
-    // The embed version: let's verify if it supports share props.
-    // Looking at my previous `read_file` of `renderCommentTipWidget`: it creates `ShareButton` if `canShare`.
-    // `canShare` logic in embed?
-    // I should probably double check embed/src/index.ts again to see if it reads share options.
-    // If not, I might need to stick to separate widgets or assume the user wants the default "current URL" sharing.
-    // But the injector allows custom shareUrl.
-    
-    // Let's stick to the safe bet: The composed widget is great, but if I can't pass shareUrl via attributes easily,
-    // I might lose that feature.
-    // BUT, `mountCommentTipWidget` takes `opts`.
-    // Does `autoMount` or the thing that handles `data-nostrstack-comment-tip` read share attributes?
-    // I need to check `autoMount` in embed/src/index.ts.
-  ].filter(Boolean).join(' ');
-
-  // NOTE: For now, we will assume the composed widget uses default share behavior (current URL) 
-  // or that we can pass it if we add support. 
-  // If the user provided specific shareUrl/Title, we should probably add them as data attributes
-  // and hope the embed `autoMount` reads them, or update `autoMount` to read them.
-  // I will add them here just in case.
-  
-  if (includeShare) {
-    if (shareUrl) attrsComposed += ` data-share-url="${shareUrl}"`;
-    if (shareTitle) attrsComposed += ` data-share-title="${shareTitle}"`;
-  }
+    includeShare && shareUrl ? `data-share-url="${shareUrl}"` : null,
+    includeShare && shareTitle ? `data-share-title="${shareTitle}"` : null
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const attrsProfile = [
-    profileId ? `data-nostrstack-profile="${profileId}"` : null,
+    profileId ? `data-ns-profile="${profileId}"` : null,
     apiBase ? `data-base-url="${apiBase}"` : null,
-    host ? `data-host="${host}"` : null,
-  ].filter(Boolean).join(' ');
+    host ? `data-host="${host}"` : null
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const attrsBlockchain = [
-    `data-nostrstack-blockchain="true"`,
+    `data-ns-blockchain="true"`,
     apiBase ? `data-base-url="${apiBase}"` : null,
     host ? `data-host="${host}"` : null,
-    blockchainTitle ? `data-title="${blockchainTitle}"` : null,
-  ].filter(Boolean).join(' ');
+    blockchainTitle ? `data-title="${blockchainTitle}"` : null
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const sections = [
     '<!-- nostrstack-inject start -->',
     '<script src="https://unpkg.com/@nostrstack/widgets/dist/index.global.js"></script>',
-    
+
     // Use the composed widget for the main interaction area
     `<div ${attrsComposed}></div>`,
-    
+
     // Optional extras
     includeProfile ? `<div ${attrsProfile}></div>` : null,
     includeBlockchain ? `<div ${attrsBlockchain}></div>` : null,
-    
+
     '<!-- nostrstack-inject end -->'
   ].filter(Boolean);
 

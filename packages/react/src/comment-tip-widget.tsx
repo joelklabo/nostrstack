@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { mountCommentTipWidget } from '@nostrstack/widgets';
 import { useEffect, useMemo, useRef } from 'react';
@@ -30,8 +30,18 @@ export type CommentTipWidgetProps = {
   commentsLazyConnect?: boolean;
   commentsValidateEvents?: boolean;
   className?: string;
-  onInvoice?: (info: { pr: string; providerRef: string | null; amountSats: number }) => void | Promise<void>;
-  onPaid?: (info: { pr: string; providerRef: string | null; amountSats: number; itemId: string; metadata?: unknown }) => void;
+  onInvoice?: (info: {
+    pr: string;
+    providerRef: string | null;
+    amountSats: number;
+  }) => void | Promise<void>;
+  onPaid?: (info: {
+    pr: string;
+    providerRef: string | null;
+    amountSats: number;
+    itemId: string;
+    metadata?: unknown;
+  }) => void;
 };
 
 /**
@@ -60,7 +70,7 @@ export function CommentTipWidget({
   commentsValidateEvents,
   className,
   onInvoice,
-  onPaid,
+  onPaid
 }: CommentTipWidgetProps) {
   const cfg = useNostrstackConfig();
   const ref = useRef<HTMLDivElement>(null);
@@ -70,7 +80,7 @@ export function CommentTipWidget({
     return {
       username: parsed?.username ?? 'anonymous',
       host: host ?? parsed?.domain ?? cfg.host,
-      baseUrl: baseUrl ?? cfg.baseUrl,
+      baseUrl: baseUrl ?? cfg.baseUrl
     };
   }, [lnAddress, baseUrl, host, cfg.lnAddress, cfg.baseUrl, cfg.host]);
 
@@ -103,16 +113,18 @@ export function CommentTipWidget({
       lazyConnect: commentsLazyConnect,
       validateEvents: commentsValidateEvents,
       onInvoice,
-      onPaid,
-    }).then((handle) => {
-      if (cancelled) {
-        handle?.destroy?.();
-        return;
-      }
-      cleanup = handle as { destroy?: () => void };
-    }).catch(() => {
-      // ignore mount errors
-    });
+      onPaid
+    })
+      .then((handle) => {
+        if (cancelled) {
+          handle?.destroy?.();
+          return;
+        }
+        cleanup = handle as { destroy?: () => void };
+      })
+      .catch(() => {
+        // ignore mount errors
+      });
 
     return () => {
       cancelled = true;
@@ -148,8 +160,8 @@ export function CommentTipWidget({
     commentsValidateEvents,
     onInvoice,
     onPaid,
-    cfg.relays,
+    cfg.relays
   ]);
 
-  return <div ref={ref} className={className} data-nostrstack-comment-tip-widget />;
+  return <div ref={ref} className={className} data-ns-comment-tip-widget />;
 }

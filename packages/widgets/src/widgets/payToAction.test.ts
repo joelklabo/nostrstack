@@ -19,8 +19,8 @@ describe('renderPayToAction', () => {
     const { el } = renderPayToAction(host, { username: 'alice', text: 'Unlock Me' });
     expect(el.tagName).toBe('BUTTON');
     expect(el.textContent).toBe('Unlock Me');
-    expect(host.querySelector('.nostrstack-pay-panel')).toBeTruthy();
-    expect((host.querySelector('.nostrstack-pay-panel') as HTMLElement).style.display).toBe('none');
+    expect(host.querySelector('.ns-pay-panel')).toBeTruthy();
+    expect((host.querySelector('.ns-pay-panel') as HTMLElement).style.display).toBe('none');
   });
 
   it('generates invoice and shows panel on click', async () => {
@@ -50,11 +50,9 @@ describe('renderPayToAction', () => {
     await btn.onclick?.(new MouseEvent('click'));
 
     // Should display panel
-    expect((host.querySelector('.nostrstack-pay-panel') as HTMLElement).style.display).toBe(
-      'block'
-    );
+    expect((host.querySelector('.ns-pay-panel') as HTMLElement).style.display).toBe('block');
     // Should show invoice code
-    expect(host.querySelector('.nostrstack-code')?.textContent).toBe(pr);
+    expect(host.querySelector('.ns-code')?.textContent).toBe(pr);
     // Should try to copy to clipboard
     expect(write).toHaveBeenCalledWith(pr);
   });
@@ -84,12 +82,12 @@ describe('renderPayToAction', () => {
     await btn.onclick?.(new MouseEvent('click'));
 
     // Manually click "I've paid" since verifyPayment is mocked to be manual or we wait for it
-    const confirm = host.querySelector('.nostrstack-pay-confirm') as HTMLButtonElement;
+    const confirm = host.querySelector('.ns-pay-confirm') as HTMLButtonElement;
     await confirm.onclick?.(new MouseEvent('click'));
 
     expect(verifyPayment).toHaveBeenCalledWith(pr);
     expect(onUnlock).toHaveBeenCalled();
-    expect(host.classList.contains('nostrstack-pay--unlocked')).toBe(true);
+    expect(host.classList.contains('ns-pay--unlocked')).toBe(true);
   });
 
   it('unlocks when PaymentConnection detects payment', async () => {

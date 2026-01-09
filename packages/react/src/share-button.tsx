@@ -52,5 +52,5 @@ export function ShareButton({
     };
   }, [url, title, lnAddress, relays, tag, label, cfg.lnAddress, cfg.relays]);
 
-  return <div ref={ref} className={className} data-nostrstack-share-button />;
+  return <div ref={ref} className={className} data-ns-share-button />;
 }

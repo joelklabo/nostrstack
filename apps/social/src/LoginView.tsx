@@ -338,7 +338,7 @@ export function LoginView() {
               </label>
               <input
                 type="password"
-                className="nostrstack-input"
+                className="ns-input"
                 id="nsec-input"
                 name="nsec"
                 placeholder="nsec1..."
@@ -369,16 +369,16 @@ export function LoginView() {
       </div>
 
       {lnurlModalOpen && (
-        <div className="nostrstack-dialog-overlay">
+        <div className="ns-dialog-overlay">
           <div
             ref={lnurlModalRef}
-            className="nostrstack-dialog"
+            className="ns-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="lnurl-title"
             aria-describedby="lnurl-subtitle"
           >
-            <div className="nostrstack-dialog__header">
+            <div className="ns-dialog__header">
               <div>
                 <div id="lnurl-title" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
                   Lightning Login
@@ -401,7 +401,7 @@ export function LoginView() {
                 ×
               </button>
             </div>
-            <div className="nostrstack-dialog__body">
+            <div className="ns-dialog__body">
               {statusMessage && (
                 <Alert
                   tone={
@@ -423,15 +423,15 @@ export function LoginView() {
                   aria-live="polite"
                 >
                   {(lnurlStatus === 'loading' || lnurlStatus === 'verified') && (
-                    <span className="nostrstack-spinner" aria-hidden="true" />
+                    <span className="ns-spinner" aria-hidden="true" />
                   )}
                   {statusMessage}
                 </Alert>
               )}
 
               {lnurlRequest && (
-                <div className="nostrstack-dialog__grid">
-                  <div className="nostrstack-dialog__qr">
+                <div className="ns-dialog__grid">
+                  <div className="ns-dialog__qr">
                     {lnurlQr ? (
                       <img src={lnurlQr} alt="LNURL-auth QR code" />
                     ) : (
@@ -443,7 +443,7 @@ export function LoginView() {
                       style={{
                         display: 'inline-flex',
                         padding: '0.25rem 0.6rem',
-                        background: 'var(--nostrstack-color-surface-subtle)',
+                        background: 'var(--ns-color-surface-subtle)',
                         borderRadius: '99px',
                         fontSize: '0.75rem',
                         width: 'fit-content'
@@ -455,23 +455,17 @@ export function LoginView() {
                       Scan with a Lightning wallet that supports LNURL-auth.
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <button
-                        className="nostrstack-btn nostrstack-btn--sm"
-                        onClick={handleCopyLnurl}
-                      >
+                      <button className="ns-btn ns-btn--sm" onClick={handleCopyLnurl}>
                         {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
                       </button>
                       <button
-                        className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                        className="ns-btn ns-btn--primary ns-btn--sm"
                         onClick={handleOpenWallet}
                       >
                         OPEN WALLET
                       </button>
                       {showRetry && (
-                        <button
-                          className="nostrstack-btn nostrstack-btn--sm"
-                          onClick={openLnurlModal}
-                        >
+                        <button className="ns-btn ns-btn--sm" onClick={openLnurlModal}>
                           RETRY
                         </button>
                       )}

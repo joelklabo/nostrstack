@@ -18,10 +18,8 @@ describe('renderBlockchainStats', () => {
 
   it('renders loading state initially', () => {
     renderBlockchainStats(host);
-    expect(host.querySelector('.nostrstack-blockchain-stats__title')?.textContent).toBe(
-      'Blockchain'
-    );
-    expect(host.querySelector('.nostrstack-status')?.textContent).toBe('Loading…');
+    expect(host.querySelector('.ns-blockchain-stats__title')?.textContent).toBe('Blockchain');
+    expect(host.querySelector('.ns-status')?.textContent).toBe('Loading…');
   });
 
   it('renders mock data correctly', () => {
@@ -31,7 +29,7 @@ describe('renderBlockchainStats', () => {
     // For now let's assume `mock` triggers it based on test in tipWidget.
 
     renderBlockchainStats(host, { baseURL: 'mock' });
-    expect(host.querySelector('.nostrstack-status')?.textContent).toBe('Mock data');
+    expect(host.querySelector('.ns-status')?.textContent).toBe('Mock data');
     expect(host.querySelector('[data-stat="height"]')?.textContent).not.toBe('—');
   });
 
@@ -67,11 +65,9 @@ describe('renderBlockchainStats', () => {
 
     await widget.refresh();
 
-    expect(host.querySelector('.nostrstack-status--danger')?.textContent).toBe(
-      'Telemetry unavailable'
-    );
+    expect(host.querySelector('.ns-status--danger')?.textContent).toBe('Telemetry unavailable');
 
-    const retryBtn = host.querySelector('.nostrstack-btn') as HTMLButtonElement;
+    const retryBtn = host.querySelector('.ns-btn') as HTMLButtonElement;
 
     expect(retryBtn.hidden).toBe(false); // Retry button visible
   });

@@ -53,11 +53,14 @@ test.describe('Bitcoin network status', () => {
     await mockStatus(page, baseStatus);
 
     await page.goto('/demo');
-    await expect(page.locator('.nostrstack-node-card')).toBeVisible();
+    await expect(page.locator('.ns-node-card')).toBeVisible();
     await expect(page.locator('.sidebar-network-badge').first()).toHaveText('REGTEST');
     await expect(page.getByText('SOURCE: MOCK')).toBeVisible();
 
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'regtest-status.png'), fullPage: true });
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'regtest-status.png'),
+      fullPage: true
+    });
   });
 
   test('shows mutinynet status and captures screenshot', async ({ page }) => {
@@ -75,11 +78,14 @@ test.describe('Bitcoin network status', () => {
     });
 
     await page.goto('/demo');
-    await expect(page.locator('.nostrstack-node-card')).toBeVisible();
+    await expect(page.locator('.ns-node-card')).toBeVisible();
     await expect(page.locator('.sidebar-network-badge').first()).toHaveText('MUTINYNET');
     await expect(page.getByText('SOURCE: ESPLORA')).toBeVisible();
 
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'mutinynet-status.png'), fullPage: true });
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'mutinynet-status.png'),
+      fullPage: true
+    });
   });
 
   test('shows mainnet warning and captures screenshot', async ({ page }) => {
@@ -97,11 +103,14 @@ test.describe('Bitcoin network status', () => {
     });
 
     await page.goto('/demo');
-    await expect(page.locator('.nostrstack-node-card')).toBeVisible();
+    await expect(page.locator('.ns-node-card')).toBeVisible();
     await expect(page.locator('.sidebar-network-badge').first()).toHaveText('MAINNET');
     await expect(page.getByText('Mainnet active')).toBeVisible();
 
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'mainnet-warning.png'), fullPage: true });
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'mainnet-warning.png'),
+      fullPage: true
+    });
   });
 
   test('renders status error callout without crashing', async ({ page }) => {

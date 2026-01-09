@@ -229,27 +229,27 @@ export function WalletView({
 
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Modal overlay/content click patterns */
   return (
-    <div className="nostrstack-dialog-overlay" role="presentation" onClick={handleClose}>
+    <div className="ns-dialog-overlay" role="presentation" onClick={handleClose}>
       <div
         ref={modalRef}
-        className="nostrstack-dialog"
+        className="ns-dialog"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="withdraw-title"
         aria-describedby="withdraw-subtitle"
       >
-        <div className="nostrstack-dialog__header">
+        <div className="ns-dialog__header">
           <div>
-            <div id="withdraw-title" className="nostrstack-dialog__title">
+            <div id="withdraw-title" className="ns-dialog__title">
               Withdraw Funds
             </div>
-            <div id="withdraw-subtitle" className="nostrstack-dialog__subtitle">
+            <div id="withdraw-subtitle" className="ns-dialog__subtitle">
               Send sats to your Lightning wallet via LNURL-withdraw.
             </div>
           </div>
           <button
-            className="nostrstack-dialog__close"
+            className="ns-dialog__close"
             onClick={handleClose}
             aria-label="Close withdraw dialog"
           >
@@ -257,7 +257,7 @@ export function WalletView({
           </button>
         </div>
 
-        <div className="nostrstack-dialog__body">
+        <div className="ns-dialog__body">
           {status !== 'idle' && (
             <Alert
               tone={
@@ -279,7 +279,7 @@ export function WalletView({
             >
               {status === 'loading' && (
                 <>
-                  <span className="nostrstack-spinner" aria-hidden="true" />
+                  <span className="ns-spinner" aria-hidden="true" />
                   Preparing withdraw request...
                 </>
               )}
@@ -292,8 +292,8 @@ export function WalletView({
           )}
 
           {request && status !== 'loading' && (
-            <div className="nostrstack-dialog__grid">
-              <div className="nostrstack-dialog__qr withdraw-qr">
+            <div className="ns-dialog__grid">
+              <div className="ns-dialog__qr withdraw-qr">
                 {qr ? (
                   <img src={qr} alt="LNURL withdraw QR code" />
                 ) : (
@@ -312,7 +312,7 @@ export function WalletView({
                   <div
                     style={{
                       fontSize: '0.8rem',
-                      color: 'var(--nostrstack-color-warning)',
+                      color: 'var(--ns-color-warning)',
                       fontStyle: 'italic'
                     }}
                   >
@@ -322,13 +322,13 @@ export function WalletView({
 
                 <div
                   style={{
-                    fontFamily: 'var(--nostrstack-font-mono)',
+                    fontFamily: 'var(--ns-font-mono)',
                     fontSize: '0.8rem',
                     wordBreak: 'break-all',
                     padding: '0.75rem',
-                    background: 'var(--nostrstack-color-surface-subtle)',
-                    borderRadius: 'var(--nostrstack-radius-md)',
-                    border: '1px solid var(--nostrstack-color-border)'
+                    background: 'var(--ns-color-surface-subtle)',
+                    borderRadius: 'var(--ns-radius-md)',
+                    border: '1px solid var(--ns-color-border)'
                   }}
                 >
                   {request.lnurl}
@@ -340,7 +340,7 @@ export function WalletView({
                   aria-label="Withdrawal actions"
                 >
                   <button
-                    className="nostrstack-btn nostrstack-btn--sm"
+                    className="ns-btn ns-btn--sm"
                     onClick={handleCopy}
                     disabled={!canWithdraw}
                     aria-label="Copy LNURL to clipboard"
@@ -348,7 +348,7 @@ export function WalletView({
                     {copyState === 'copied' ? 'COPIED' : 'COPY LNURL'}
                   </button>
                   <button
-                    className="nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm"
+                    className="ns-btn ns-btn--primary ns-btn--sm"
                     onClick={handleOpenWallet}
                     disabled={!canWithdraw}
                     aria-label="Open Lightning wallet"
@@ -358,7 +358,7 @@ export function WalletView({
                 </div>
                 {copyState === 'error' && (
                   <div
-                    style={{ fontSize: '0.75rem', color: 'var(--nostrstack-color-danger)' }}
+                    style={{ fontSize: '0.75rem', color: 'var(--ns-color-danger)' }}
                     role="alert"
                   >
                     Clipboard unavailable.

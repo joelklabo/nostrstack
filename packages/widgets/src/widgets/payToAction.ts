@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import { copyToClipboard, createCopyButton } from '../copyButton.js';
 import { type ConnectionState, PaymentConnection } from '../core/paymentConnection.js';
 import { createClient } from '../helpers.js';
-import { ensureNostrstackRoot } from '../styles.js';
+import { ensureNsRoot } from '../styles.js';
 import type { PayToActionOptions } from '../types.js';
 import { resolveApiBaseUrl, resolvePayWsUrl } from '../url-utils.js';
 
@@ -13,8 +13,8 @@ function normalizeInvoice(pr: string | null | undefined): string | null {
 }
 
 export function renderPayToAction(container: HTMLElement, opts: PayToActionOptions) {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-pay');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-pay');
   container.replaceChildren();
 
   const wsUrl = resolvePayWsUrl(opts.baseURL);
@@ -25,31 +25,31 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   // UI Elements
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'nostrstack-btn nostrstack-btn--primary';
+  btn.className = 'ns-btn ns-btn--primary';
   btn.textContent = opts.text ?? 'Unlock';
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-pay-status nostrstack-status nostrstack-status--muted';
+  status.className = 'ns-pay-status ns-status ns-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
 
   const realtime = document.createElement('div');
-  realtime.className = 'nostrstack-pay-realtime';
+  realtime.className = 'ns-pay-realtime';
   realtime.textContent = '';
 
   const header = document.createElement('div');
-  header.className = 'nostrstack-pay-header';
+  header.className = 'ns-pay-header';
   header.append(btn, status);
 
   const panel = document.createElement('div');
-  panel.className = 'nostrstack-pay-panel';
+  panel.className = 'ns-pay-panel';
   panel.style.display = 'none';
 
   const grid = document.createElement('div');
-  grid.className = 'nostrstack-pay-grid';
+  grid.className = 'ns-pay-grid';
 
   const qrWrap = document.createElement('div');
-  qrWrap.className = 'nostrstack-pay-qr';
+  qrWrap.className = 'ns-pay-qr';
   const qrImg = document.createElement('img');
   qrImg.alt = 'Lightning invoice QR';
   qrImg.decoding = 'async';
@@ -57,17 +57,17 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   qrWrap.appendChild(qrImg);
 
   const right = document.createElement('div');
-  right.className = 'nostrstack-pay-right';
+  right.className = 'ns-pay-right';
 
   const invoiceBox = document.createElement('div');
-  invoiceBox.className = 'nostrstack-invoice-box';
+  invoiceBox.className = 'ns-invoice-box';
   const invoiceCode = document.createElement('code');
-  invoiceCode.className = 'nostrstack-code';
+  invoiceCode.className = 'ns-code';
   invoiceBox.appendChild(invoiceCode);
 
   const openWallet = document.createElement('a');
   openWallet.textContent = 'Open in wallet';
-  openWallet.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm';
+  openWallet.className = 'ns-btn ns-btn--primary ns-btn--sm';
   openWallet.rel = 'noreferrer';
   openWallet.style.display = 'none';
 
@@ -81,11 +81,11 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   const paidBtn = document.createElement('button');
   paidBtn.type = 'button';
   paidBtn.textContent = "I've paid";
-  paidBtn.className = 'nostrstack-btn nostrstack-btn--sm nostrstack-pay-confirm';
+  paidBtn.className = 'ns-btn ns-btn--sm ns-pay-confirm';
   paidBtn.style.display = 'none';
 
   const actions = document.createElement('div');
-  actions.className = 'nostrstack-pay-actions';
+  actions.className = 'ns-pay-actions';
   actions.append(copyBtn, openWallet, paidBtn);
 
   right.append(realtime, actions, invoiceBox);
@@ -114,12 +114,12 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     if (didUnlock) return;
     didUnlock = true;
     status.textContent = 'Unlocked';
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
-    status.classList.add('nostrstack-status--success');
+    status.classList.remove('ns-status--muted', 'ns-status--danger');
+    status.classList.add('ns-status--success');
     btn.disabled = true;
     paidBtn.disabled = true;
     copyBtn.disabled = true;
-    container.classList.add('nostrstack-pay--unlocked');
+    container.classList.add('ns-pay--unlocked');
 
     connection.stop();
     setRealtime('idle');
@@ -138,8 +138,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
     status.textContent = 'Generating invoice…';
-    status.classList.remove('nostrstack-status--danger', 'nostrstack-status--success');
-    status.classList.add('nostrstack-status--muted');
+    status.classList.remove('ns-status--danger', 'ns-status--success');
+    status.classList.add('ns-status--muted');
 
     try {
       connection.stop();
@@ -208,8 +208,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
     } catch (e) {
       console.error('pay-to-action error', e);
       status.textContent = 'Failed to generate invoice';
-      status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success');
-      status.classList.add('nostrstack-status--danger');
+      status.classList.remove('ns-status--muted', 'ns-status--success');
+      status.classList.add('ns-status--danger');
       return null;
     } finally {
       btn.disabled = false;

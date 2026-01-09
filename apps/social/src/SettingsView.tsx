@@ -1,7 +1,7 @@
 import './styles/nwc.css';
 
 import { NwcClient } from '@nostrstack/react';
-import { type NostrstackBrandPreset } from '@nostrstack/widgets';
+import { type NsBrandPreset } from '@nostrstack/widgets';
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 
 import { usePushNotifications } from './hooks/usePushNotifications';
@@ -33,8 +33,8 @@ function readLastPayment(): NwcLastPayment | null {
 interface SettingsViewProps {
   theme: 'light' | 'dark';
   setTheme: (t: 'light' | 'dark') => void;
-  brandPreset: NostrstackBrandPreset;
-  setBrandPreset: (p: NostrstackBrandPreset) => void;
+  brandPreset: NsBrandPreset;
+  setBrandPreset: (p: NsBrandPreset) => void;
 }
 
 export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: SettingsViewProps) {
@@ -43,7 +43,9 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   const [nwcMaxSats, setNwcMaxSats] = useState('');
   const [persistNwc, setPersistNwc] = useState(false);
   const [nwcMessage, setNwcMessage] = useState<string | null>(null);
-  const [nwcCheckStatus, setNwcCheckStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>('idle');
+  const [nwcCheckStatus, setNwcCheckStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>(
+    'idle'
+  );
   const [nwcCheckMessage, setNwcCheckMessage] = useState<string | null>(null);
   const [nwcBalanceMsat, setNwcBalanceMsat] = useState<number | null>(null);
   const [nwcLastPayment, setNwcLastPayment] = useState<NwcLastPayment | null>(null);
@@ -140,7 +142,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     () =>
       nwcRelays
         .split(/[\s,]+/g)
-        .map(relay => relay.trim())
+        .map((relay) => relay.trim())
         .filter(Boolean),
     [nwcRelays]
   );
@@ -220,7 +222,14 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
     setNwcCheckMessage('Checking wallet connection…');
     let client: NwcClient | null = null;
     try {
-      const mock = typeof window !== 'undefined' ? (window as { __NOSTRSTACK_NWC_MOCK__?: { getBalance?: () => Promise<{ balance: number }> } }).__NOSTRSTACK_NWC_MOCK__ : null;
+      const mock =
+        typeof window !== 'undefined'
+          ? (
+              window as {
+                __NOSTRSTACK_NWC_MOCK__?: { getBalance?: () => Promise<{ balance: number }> };
+              }
+            ).__NOSTRSTACK_NWC_MOCK__
+          : null;
       if (mock?.getBalance) {
         const result = await mock.getBalance();
         setNwcBalanceMsat(result.balance);
@@ -228,7 +237,10 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         setNwcCheckMessage('Wallet reachable.');
         return;
       }
-      client = new NwcClient({ uri: nwcUriTrimmed, relays: parsedRelays.length ? parsedRelays : undefined });
+      client = new NwcClient({
+        uri: nwcUriTrimmed,
+        relays: parsedRelays.length ? parsedRelays : undefined
+      });
       const result = await client.getBalance();
       setNwcBalanceMsat(result.balance);
       setNwcCheckStatus('connected');
@@ -263,20 +275,26 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   return (
     <div className="profile-view">
       <h3>SYSTEM_SETTINGS</h3>
-      
+
       <div className="paywall-container">
         <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>VISUAL_THEME</h4>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
+          <button
             className="action-btn"
-            style={{ borderColor: theme === 'dark' ? 'var(--terminal-text)' : undefined, color: theme === 'dark' ? 'var(--terminal-text)' : undefined }}
+            style={{
+              borderColor: theme === 'dark' ? 'var(--terminal-text)' : undefined,
+              color: theme === 'dark' ? 'var(--terminal-text)' : undefined
+            }}
             onClick={() => setTheme('dark')}
           >
             DARK_MODE
           </button>
-          <button 
+          <button
             className="action-btn"
-            style={{ borderColor: theme === 'light' ? 'var(--terminal-text)' : undefined, color: theme === 'light' ? 'var(--terminal-text)' : undefined }}
+            style={{
+              borderColor: theme === 'light' ? 'var(--terminal-text)' : undefined,
+              color: theme === 'light' ? 'var(--terminal-text)' : undefined
+            }}
             onClick={() => setTheme('light')}
           >
             LIGHT_MODE
@@ -287,12 +305,15 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       <div className="paywall-container">
         <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>BRAND_PRESET</h4>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map(preset => (
+          {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map((preset) => (
             <button
               key={preset}
               className="action-btn"
-              style={{ borderColor: brandPreset === preset ? 'var(--terminal-text)' : undefined, color: brandPreset === preset ? 'var(--terminal-text)' : undefined }}
-              onClick={() => setBrandPreset(preset as NostrstackBrandPreset)}
+              style={{
+                borderColor: brandPreset === preset ? 'var(--terminal-text)' : undefined,
+                color: brandPreset === preset ? 'var(--terminal-text)' : undefined
+              }}
+              onClick={() => setBrandPreset(preset as NsBrandPreset)}
             >
               {preset.toUpperCase()}
             </button>
@@ -303,7 +324,9 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       <div className="paywall-container">
         <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>NOTIFICATIONS</h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ fontSize: '0.9rem' }}>Status: <strong>{permission.toUpperCase()}</strong></div>
+          <div style={{ fontSize: '0.9rem' }}>
+            Status: <strong>{permission.toUpperCase()}</strong>
+          </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             {permission === 'default' && (
               <button className="action-btn" onClick={requestPermission}>
@@ -311,9 +334,13 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               </button>
             )}
             {permission === 'granted' && (
-              <button 
-                className="action-btn" 
-                onClick={() => sendLocalNotification('Test Notification', { body: 'This is a test notification from NostrStack.' })}
+              <button
+                className="action-btn"
+                onClick={() =>
+                  sendLocalNotification('Test Notification', {
+                    body: 'This is a test notification from NostrStack.'
+                  })
+                }
               >
                 TEST_NOTIFICATION
               </button>
@@ -329,11 +356,13 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
       {import.meta.env.DEV && (
         <div className="paywall-container">
-          <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>DEV_NETWORK_OVERRIDE</h4>
+          <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>
+            DEV_NETWORK_OVERRIDE
+          </h4>
           <label className="nwc-label">
             NETWORK
             <select
-              className="nostrstack-input"
+              className="ns-input"
               value={devNetworkOverride}
               onChange={handleDevNetworkChange}
               name="dev-network"
@@ -353,14 +382,24 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       <div className="paywall-container nwc-card">
         <div className="nwc-header">
           <h4 style={{ color: 'var(--terminal-dim)', marginBottom: 0 }}>NWC_CONNECTION</h4>
-          <span className={`nwc-status-pill ${nwcStatusTone !== 'neutral' ? `is-${nwcStatusTone}` : ''}`}>
+          <span
+            className={`nwc-status-pill ${nwcStatusTone !== 'neutral' ? `is-${nwcStatusTone}` : ''}`}
+          >
             {nwcStatusLabel}
           </span>
         </div>
-        <div className="nwc-status-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {nwcCheckStatus === 'checking' && <span className="nostrstack-spinner" style={{ width: '14px', height: '14px' }} />}
+        <div
+          className="nwc-status-row"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          {nwcCheckStatus === 'checking' && (
+            <span className="ns-spinner" style={{ width: '14px', height: '14px' }} />
+          )}
           <span className="nwc-status-text">
-            {nwcCheckMessage ?? (hasNwcConfig ? 'Wallet configured. Connect to verify.' : 'Add a wallet URI to connect.')}
+            {nwcCheckMessage ??
+              (hasNwcConfig
+                ? 'Wallet configured. Connect to verify.'
+                : 'Add a wallet URI to connect.')}
           </span>
         </div>
         {balanceSats !== null && (
@@ -373,7 +412,9 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         )}
         {nwcLastPayment && (
           <div className="nwc-last-payment">
-            <span className={`nwc-last-pill ${nwcLastPayment.status === 'success' ? 'is-success' : 'is-error'}`}>
+            <span
+              className={`nwc-last-pill ${nwcLastPayment.status === 'success' ? 'is-success' : 'is-error'}`}
+            >
               {nwcLastPayment.status === 'success' ? 'LAST_PAYMENT_OK' : 'LAST_PAYMENT_ERROR'}
             </span>
             <span className="nwc-last-message">{nwcLastPayment.message}</span>
@@ -384,7 +425,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <label className="nwc-label">
             NWC_URI
             <input
-              className="nostrstack-input"
+              className="ns-input"
               type="password"
               name="nwc-uri"
               placeholder="nostr+walletconnect://..."
@@ -395,7 +436,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <label className="nwc-label">
             RELAYS (comma or space separated)
             <input
-              className="nostrstack-input"
+              className="ns-input"
               type="text"
               name="nwc-relays"
               placeholder="wss://relay.example, wss://relay2.example"
@@ -406,7 +447,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <label className="nwc-label">
             MAX_SATS_PER_PAYMENT
             <input
-              className="nostrstack-input"
+              className="ns-input"
               type="number"
               name="nwc-max-sats"
               min="1"
@@ -435,14 +476,24 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <button
             className="action-btn"
             onClick={handleConnectNwc}
-            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
+            disabled={
+              !nwcUriTrimmed ||
+              Boolean(nwcUriError) ||
+              Boolean(nwcLimitError) ||
+              nwcCheckStatus === 'checking'
+            }
           >
             CONNECT
           </button>
           <button
             className="action-btn"
             onClick={handleCheckNwc}
-            disabled={!nwcUriTrimmed || Boolean(nwcUriError) || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
+            disabled={
+              !nwcUriTrimmed ||
+              Boolean(nwcUriError) ||
+              Boolean(nwcLimitError) ||
+              nwcCheckStatus === 'checking'
+            }
           >
             CHECK_BALANCE
           </button>

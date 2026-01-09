@@ -234,7 +234,7 @@ test.describe('/nostr/:id replies', () => {
     const loadMore = page.getByRole('button', { name: /Load more replies/i });
     await loadMore.click();
 
-    const warning = page.locator('.nostr-event-replies .nostrstack-alert--warning');
+    const warning = page.locator('.nostr-event-replies .ns-alert--warning');
     await expect(warning).toContainText('Some replies are unavailable');
     await expect(warning).toContainText('replyCursor must be a non-empty string.');
 

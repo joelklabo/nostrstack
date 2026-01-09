@@ -1,4 +1,4 @@
-import { ensureNostrstackEmbedStyles, nostrstackEmbedStyles } from './styles.js';
+import { ensureNsEmbedStyles, nsEmbedStyles } from './styles.js';
 
 export type NostrProfile = {
   pubkey: string;
@@ -11,16 +11,18 @@ export type NostrProfile = {
 
 export function renderNostrUserCard(profile: NostrProfile, target?: HTMLElement) {
   const el = target ?? document.createElement('div');
-  ensureNostrstackEmbedStyles(el.ownerDocument);
-  if (!el.closest?.('.nostrstack-theme')) el.classList.add('nostrstack-theme');
-  el.classList.add('nostrstack', 'nostrstack-user-card');
+  ensureNsEmbedStyles(el.ownerDocument);
+  if (!el.closest?.('.ns-theme')) el.classList.add('ns-theme');
+  el.classList.add('ns', 'ns-user-card');
 
   const avatar = document.createElement('div');
   avatar.className = 'user-avatar';
   if (profile.picture) {
     avatar.style.backgroundImage = `url(${profile.picture})`;
   } else {
-    avatar.textContent = (profile.display_name || profile.name || profile.pubkey || 'N').slice(0, 1).toUpperCase();
+    avatar.textContent = (profile.display_name || profile.name || profile.pubkey || 'N')
+      .slice(0, 1)
+      .toUpperCase();
   }
 
   const body = document.createElement('div');
@@ -51,4 +53,4 @@ function shortKey(pk?: string) {
 }
 
 // For SSR / manual inclusion (includes tokens + base primitives + card styles).
-export const nostrUserCardStyles = nostrstackEmbedStyles;
+export const nostrUserCardStyles = nsEmbedStyles;

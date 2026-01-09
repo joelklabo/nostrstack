@@ -1,0 +1,118 @@
+{
+  "$description": "NostrStack Semantic Effect Tokens - Shadows and Focus States",
+  "effect": {
+    "shadow": {
+      "$description": "Semantic shadow assignments",
+      "card": {
+        "$value": "{shadow.sm}",
+        "$type": "shadow",
+        "$description": "Default card shadow"
+      },
+      "cardHover": {
+        "$value": "{shadow.md}",
+        "$type": "shadow",
+        "$description": "Card hover state"
+      },
+      "dropdown": {
+        "$value": "{shadow.lg}",
+        "$type": "shadow",
+        "$description": "Dropdown menus"
+      },
+      "modal": {
+        "$value": "{shadow.xl}",
+        "$type": "shadow",
+        "$description": "Modal dialogs"
+      },
+      "tooltip": {
+        "$value": "{shadow.md}",
+        "$type": "shadow",
+        "$description": "Tooltips"
+      },
+      "button": {
+        "$value": "{shadow.xs}",
+        "$type": "shadow",
+        "$description": "Button shadow"
+      },
+      "buttonHover": {
+        "$value": "{shadow.sm}",
+        "$type": "shadow",
+        "$description": "Button hover"
+      },
+      "input": {
+        "$value": "{shadow.inner}",
+        "$type": "shadow",
+        "$description": "Input inner shadow"
+      }
+    },
+    "focus": {
+      "$description": "Focus ring styles",
+      "ring": {
+        "$value": "0 0 0 3px {color.focus.ring}",
+        "$type": "shadow",
+        "$description": "Standard focus ring"
+      },
+      "ringOffset": {
+        "$value": "0 0 0 2px {color.static.white}, 0 0 0 4px {color.focus.ring}",
+        "$type": "shadow",
+        "$description": "Focus ring with offset"
+      },
+      "ringInset": {
+        "$value": "inset 0 0 0 2px {color.focus.ring}",
+        "$type": "shadow",
+        "$description": "Inset focus ring"
+      }
+    },
+    "glow": {
+      "$description": "Glow effects",
+      "primary": {
+        "$value": "0 0 20px -5px {color.primary.default}",
+        "$type": "shadow"
+      },
+      "accent": {
+        "$value": "0 0 20px -5px {color.accent.default}",
+        "$type": "shadow"
+      },
+      "success": {
+        "$value": "0 0 15px -3px {color.success.default}",
+        "$type": "shadow"
+      },
+      "danger": {
+        "$value": "0 0 15px -3px {color.danger.default}",
+        "$type": "shadow"
+      }
+    }
+  },
+  "transition": {
+    "$description": "Common transitions",
+    "fast": {
+      "$value": "{duration.fast} {easing.easeInOut}",
+      "$type": "transition",
+      "$description": "Quick micro-interactions"
+    },
+    "normal": {
+      "$value": "{duration.normal} {easing.easeInOut}",
+      "$type": "transition",
+      "$description": "Standard transitions"
+    },
+    "slow": {
+      "$value": "{duration.slow} {easing.easeInOut}",
+      "$type": "transition",
+      "$description": "Deliberate animations"
+    },
+    "colors": {
+      "$value": "color {duration.normal} {easing.easeInOut}, background-color {duration.normal} {easing.easeInOut}, border-color {duration.normal} {easing.easeInOut}",
+      "$type": "transition",
+      "$description": "Color property transitions"
+    },
+    "transform": {
+      "$value": "transform {duration.moderate} {easing.emphasized}",
+      "$type": "transition",
+      "$description": "Transform transitions"
+    },
+    "all": {
+      "$value": "all {duration.normal} {easing.easeInOut}",
+      "$type": "transition",
+      "$description": "All properties"
+    }
+  }
+}

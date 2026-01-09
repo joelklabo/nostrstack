@@ -68,10 +68,10 @@ export function createCopyButton(opts: CopyButtonOptions) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = [
-    'nostrstack-btn',
-    opts.size === 'sm' ? 'nostrstack-btn--sm' : '',
-    'nostrstack-copybtn',
-    opts.variant === 'icon' ? 'nostrstack-copybtn--icon' : ''
+    'ns-btn',
+    opts.size === 'sm' ? 'ns-btn--sm' : '',
+    'ns-copybtn',
+    opts.variant === 'icon' ? 'ns-copybtn--icon' : ''
   ]
     .filter(Boolean)
     .join(' ');
@@ -81,17 +81,17 @@ export function createCopyButton(opts: CopyButtonOptions) {
   if (opts.ariaLabel) btn.setAttribute('aria-label', opts.ariaLabel);
 
   const bubble = document.createElement('span');
-  bubble.className = 'nostrstack-copybtn__bubble';
+  bubble.className = 'ns-copybtn__bubble';
   bubble.setAttribute('aria-hidden', 'true');
   bubble.textContent = bubbleTextFromLabel(opts.label);
 
   const icon = document.createElement('span');
-  icon.className = 'nostrstack-copybtn__icon';
+  icon.className = 'ns-copybtn__icon';
   icon.setAttribute('aria-hidden', 'true');
   icon.innerHTML = COPY_ICON;
 
   const label = document.createElement('span');
-  label.className = 'nostrstack-copybtn__label';
+  label.className = 'ns-copybtn__label';
   label.textContent = opts.label;
 
   btn.appendChild(bubble);
@@ -107,7 +107,8 @@ export function createCopyButton(opts: CopyButtonOptions) {
     btn.dataset.copyState = next;
     icon.innerHTML = next === 'copied' ? CHECK_ICON : next === 'error' ? ERROR_ICON : COPY_ICON;
     if ((opts.variant ?? 'default') !== 'icon') {
-      label.textContent = next === 'idle' ? baseLabel : next === 'copied' ? 'Copied' : 'Copy failed';
+      label.textContent =
+        next === 'idle' ? baseLabel : next === 'copied' ? 'Copied' : 'Copy failed';
     }
   };
 
@@ -124,7 +125,8 @@ export function createCopyButton(opts: CopyButtonOptions) {
       if (!value) return;
       await copyToClipboard(value);
       try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(10);
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
+          navigator.vibrate(10);
       } catch {
         /* ignore */
       }
@@ -132,7 +134,8 @@ export function createCopyButton(opts: CopyButtonOptions) {
     } catch (err) {
       console.warn('copy failed', err);
       try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate([15, 25, 15]);
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
+          navigator.vibrate([15, 25, 15]);
       } catch {
         /* ignore */
       }

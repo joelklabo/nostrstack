@@ -7,7 +7,7 @@ import { ShareWidget } from './share-widget';
 
 vi.mock('./context');
 vi.mock('@nostrstack/widgets', () => ({
-  ensureNostrstackRoot: vi.fn()
+  ensureNsRoot: vi.fn()
 }));
 vi.mock('nostr-tools/relay', () => ({
   Relay: {

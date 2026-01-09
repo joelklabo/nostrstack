@@ -70,7 +70,8 @@ pnpm --filter api seed                 # Seed demo data
 ### Packages
 
 - **packages/sdk**: Typed client for the API
-- **packages/widgets**: Browser bundle with script-tag widgets (tip, comments, share, profile, blockchain stats). Uses `data-nostrstack-*` attributes for auto-mount.
+- **packages/widgets**: Browser bundle with script-tag widgets (tip, comments, share, profile, blockchain stats). Uses `data-ns-*` attributes for auto-mount.
+- **packages/tokens**: W3C DTCG format design tokens. Single source of truth for colors, typography, spacing, shadows, radii.
 - **packages/react**: React components (SupportSection, profile, share, comments, tip feed, blockchain stats)
 - **packages/ui**: Shared UI components (Alert, Skeleton, Toast)
 - **packages/nostr**: Shared Nostr utilities (identity encoding/decoding, profile parsing, threading)
@@ -118,4 +119,4 @@ bd admin cleanup --older-than 30  # Clean old issues (NEVER without --older-than
 - Commits follow Conventional Commits
 - WCAG 2.1 Level AA accessibility standards for UI
 - Visual regression testing with Chromatic
-- Widgets use `.nostrstack-*` classes and `--nostrstack-*` CSS variables
+- Widgets use `.ns-*` classes and `--ns-*` CSS variables (from @nostrstack/tokens)

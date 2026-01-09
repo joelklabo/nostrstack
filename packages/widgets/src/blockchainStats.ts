@@ -1,4 +1,4 @@
-import { ensureNostrstackRoot } from './styles.js';
+import { ensureNsRoot } from './styles.js';
 import { isMockBase, resolveApiBaseUrl, resolveTelemetryWs } from './url-utils.js';
 
 type TelemetrySummary = {
@@ -69,19 +69,19 @@ const buildMockSummary = (): TelemetrySummary => ({
 });
 
 export function renderBlockchainStats(container: HTMLElement, opts: BlockchainStatsOptions = {}) {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-blockchain-stats');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-blockchain-stats');
   container.replaceChildren();
 
   const header = document.createElement('div');
-  header.className = 'nostrstack-blockchain-stats__header';
+  header.className = 'ns-blockchain-stats__header';
 
   const title = document.createElement('div');
-  title.className = 'nostrstack-blockchain-stats__title';
+  title.className = 'ns-blockchain-stats__title';
   title.textContent = opts.title ?? 'Blockchain';
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted nostrstack-blockchain-stats__status';
+  status.className = 'ns-status ns-status--muted ns-blockchain-stats__status';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.textContent = 'Loading…';
@@ -89,19 +89,19 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   header.append(title, status);
 
   const grid = document.createElement('div');
-  grid.className = 'nostrstack-blockchain-stats__grid';
+  grid.className = 'ns-blockchain-stats__grid';
 
   const createStat = (label: string, key: string) => {
     const stat = document.createElement('div');
-    stat.className = 'nostrstack-blockchain-stat';
+    stat.className = 'ns-blockchain-stat';
 
     const value = document.createElement('div');
-    value.className = 'nostrstack-blockchain-value';
+    value.className = 'ns-blockchain-value';
     value.dataset.stat = key;
     value.textContent = '—';
 
     const labelEl = document.createElement('div');
-    labelEl.className = 'nostrstack-blockchain-label';
+    labelEl.className = 'ns-blockchain-label';
     labelEl.textContent = label;
 
     stat.append(value, labelEl);
@@ -115,11 +115,11 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   const networkValue = createStat('Network', 'network');
 
   const actions = document.createElement('div');
-  actions.className = 'nostrstack-blockchain-actions';
+  actions.className = 'ns-blockchain-actions';
 
   const retry = document.createElement('button');
   retry.type = 'button';
-  retry.className = 'nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm';
+  retry.className = 'ns-btn ns-btn--ghost ns-btn--sm';
   retry.textContent = 'Retry';
   retry.hidden = true;
 
@@ -142,8 +142,8 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   let destroyed = false;
 
   const setStatusClass = (tone: 'muted' | 'success' | 'danger') => {
-    status.classList.remove('nostrstack-status--muted', 'nostrstack-status--success', 'nostrstack-status--danger');
-    status.classList.add(`nostrstack-status--${tone}`);
+    status.classList.remove('ns-status--muted', 'ns-status--success', 'ns-status--danger');
+    status.classList.add(`ns-status--${tone}`);
   };
 
   const renderStatus = () => {

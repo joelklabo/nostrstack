@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@nostrstack/react": "workspace:*",
+    "@nostrstack/tokens": "workspace:*",
     "@nostrstack/ui": "workspace:*",
     "@nostrstack/widgets": "workspace:*",
     "buffer": "^6.0.3",

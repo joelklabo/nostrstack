@@ -11,17 +11,27 @@ pnpm add @nostrstack/react
 ## Usage
 
 ```tsx
-import { 
-  Comments, 
-  NostrstackProvider, 
-  ShareButton, 
+import {
+  Comments,
+  NostrstackProvider,
+  ShareButton,
   TipButton,
   SupportSection,
   BlockchainStats,
   NostrProfileWidget
 } from '@nostrstack/react';
 
-export function PostWidgets({ url, title, lnAddress, itemId }: { url: string; title: string; lnAddress: string; itemId: string }) {
+export function PostWidgets({
+  url,
+  title,
+  lnAddress,
+  itemId
+}: {
+  url: string;
+  title: string;
+  lnAddress: string;
+  itemId: string;
+}) {
   return (
     <NostrstackProvider
       lnAddress={lnAddress}
@@ -30,11 +40,7 @@ export function PostWidgets({ url, title, lnAddress, itemId }: { url: string; ti
       host="your-nostrstack-api.example"
     >
       {/* High-level composed section */}
-      <SupportSection 
-        itemId={itemId}
-        shareUrl={url}
-        shareTitle={title}
-      />
+      <SupportSection itemId={itemId} shareUrl={url} shareTitle={title} />
 
       {/* Individual widgets */}
       <div className="grid">
@@ -64,7 +70,7 @@ export function PostWidgets({ url, title, lnAddress, itemId }: { url: string; ti
 
 ## Theming
 
-`NostrstackProvider` renders a wrapper with `.nostrstack-theme` and sets `--nostrstack-*` CSS variables (compatible with `@nostrstack/widgets` tokens).
+`NostrstackProvider` renders a wrapper with `.ns-theme` and sets `--ns-*` CSS variables (compatible with `@nostrstack/tokens`).
 
 ### Quick presets
 
@@ -78,21 +84,17 @@ export function PostWidgets({ url, title, lnAddress, itemId }: { url: string; ti
 
 ```tsx
 <NostrstackProvider
-  nostrstackTheme={{
+  nsTheme={{
     mode: 'light',
-    color: { primary: '#0ea5e9', accent: '#a78bfa' },
-    radius: { md: '12px', pill: '999px' }
+    color: { primary: 'oklch(0.58 0.22 250)', accent: 'oklch(0.65 0.2 290)' },
+    radius: { md: '0.5rem', full: '9999px' }
   }}
 >
   {/* widgets */}
 </NostrstackProvider>
 ```
 
-### Legacy theme props (v1)
-
-If you’re upgrading from older integrations, `theme={{ accent, text, surface, border }}` is still supported and mapped to the new tokens. Legacy `--ns-*` CSS vars are also provided as aliases.
-
 ## Helpers
 
-- `parseLnAddress(lnAddress)` → `{ username, domain }`
-- `parseRelays(csv)` → `string[]`
+- `parseLnAddress(lnAddress)` -> `{ username, domain }`
+- `parseRelays(csv)` -> `string[]`

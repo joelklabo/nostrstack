@@ -1,27 +1,23 @@
 import { createCopyButton } from './copyButton.js';
 import { renderQrCodeInto } from './qr.js';
-import {
-  ensureNostrstackEmbedStyles,
-  nostrstackEmbedStyles,
-  type NostrstackThemeMode
-} from './styles.js';
+import { ensureNsEmbedStyles, nsEmbedStyles, type NsThemeMode } from './styles.js';
 
 export type InvoicePopoverOptions = {
   mount?: HTMLElement;
-  mode?: NostrstackThemeMode;
+  mode?: NsThemeMode;
   title?: string;
   subtitle?: string;
 };
 
 export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {}) {
   const mount = opts.mount ?? document.body;
-  ensureNostrstackEmbedStyles(mount.ownerDocument);
+  ensureNsEmbedStyles(mount.ownerDocument);
 
   const overlay = document.createElement('div');
-  overlay.className = 'nostrstack nostrstack-popover-overlay';
-  if (!mount.closest?.('.nostrstack-theme')) {
-    overlay.classList.add('nostrstack-theme');
-    if (opts.mode) overlay.setAttribute('data-nostrstack-theme', opts.mode);
+  overlay.className = 'ns ns-popover-overlay';
+  if (!mount.closest?.('.ns-theme')) {
+    overlay.classList.add('ns-theme');
+    if (opts.mode) overlay.setAttribute('data-ns-theme', opts.mode);
   }
   overlay.tabIndex = -1;
   overlay.setAttribute('role', 'dialog');
@@ -29,11 +25,11 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   overlay.setAttribute('aria-label', opts.title ?? 'Invoice');
 
   const pop = document.createElement('div');
-  pop.className = 'nostrstack-popover';
+  pop.className = 'ns-popover';
   pop.addEventListener('click', (e) => e.stopPropagation());
 
   const header = document.createElement('div');
-  header.className = 'nostrstack-popover-header';
+  header.className = 'ns-popover-header';
 
   const titleWrap = document.createElement('div');
   titleWrap.style.display = 'flex';
@@ -41,16 +37,15 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   titleWrap.style.gap = '4px';
 
   const title = document.createElement('div');
-  title.className = 'nostrstack-popover-title';
+  title.className = 'ns-popover-title';
   title.textContent = opts.title ?? 'Invoice';
 
   const subtitle = document.createElement('div');
-  subtitle.className = 'nostrstack-popover-sub';
+  subtitle.className = 'ns-popover-sub';
   subtitle.textContent = opts.subtitle ?? 'Lightning (BOLT11)';
 
   const closeBtn = document.createElement('button');
-  closeBtn.className =
-    'nostrstack-btn nostrstack-btn--ghost nostrstack-btn--sm nostrstack-popover-close';
+  closeBtn.className = 'ns-btn ns-btn--ghost ns-btn--sm ns-popover-close';
   closeBtn.type = 'button';
   closeBtn.textContent = 'Close';
 
@@ -58,10 +53,10 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   header.append(titleWrap, closeBtn);
 
   const grid = document.createElement('div');
-  grid.className = 'nostrstack-popover-grid';
+  grid.className = 'ns-popover-grid';
 
   const qrWrap = document.createElement('div');
-  qrWrap.className = 'nostrstack-qr';
+  qrWrap.className = 'ns-qr';
 
   const right = document.createElement('div');
   right.style.display = 'flex';
@@ -70,7 +65,7 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
   right.style.minWidth = '240px';
 
   const actions = document.createElement('div');
-  actions.className = 'nostrstack-popover-actions';
+  actions.className = 'ns-popover-actions';
 
   const { el: copyBtn } = createCopyButton({
     label: 'Copy invoice',
@@ -80,16 +75,16 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
 
   const openWallet = document.createElement('a');
   openWallet.href = `lightning:${pr}`;
-  openWallet.className = 'nostrstack-btn nostrstack-btn--primary nostrstack-btn--sm';
+  openWallet.className = 'ns-btn ns-btn--primary ns-btn--sm';
   openWallet.textContent = 'Open in wallet';
   openWallet.rel = 'noreferrer';
 
   actions.append(copyBtn, openWallet);
 
   const invoiceBox = document.createElement('div');
-  invoiceBox.className = 'nostrstack-invoice-box';
+  invoiceBox.className = 'ns-invoice-box';
   const code = document.createElement('code');
-  code.className = 'nostrstack-code';
+  code.className = 'ns-code';
   code.textContent = pr;
   invoiceBox.appendChild(code);
 
@@ -155,4 +150,4 @@ export function renderInvoicePopover(pr: string, opts: InvoicePopoverOptions = {
 }
 
 // For SSR / manual inclusion (includes tokens + base primitives + popover styles).
-export const invoicePopoverStyles = nostrstackEmbedStyles;
+export const invoicePopoverStyles = nsEmbedStyles;

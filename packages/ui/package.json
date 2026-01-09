@@ -30,6 +30,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@nostrstack/tokens": "workspace:*"
+  },
   "peerDependencies": {
     "react": "^19.0.0-rc.1",
     "react-dom": "^19.0.0-rc.1"

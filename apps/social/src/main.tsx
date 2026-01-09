@@ -2,7 +2,7 @@ import './utils/mock-relay-init';
 import './gallery.css';
 
 import { ToastProvider } from '@nostrstack/ui';
-import { ensureNostrstackEmbedStyles } from '@nostrstack/widgets';
+import { ensureNsEmbedStyles } from '@nostrstack/widgets';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-ensureNostrstackEmbedStyles();
+ensureNsEmbedStyles();
 
 // Start cache manager for periodic cleanup and stats
 startCacheManager();

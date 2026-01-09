@@ -1,0 +1,44 @@
+{
+  "$description": "NostrStack Shadow Scale - Layered for realism",
+  "shadow": {
+    "none": {
+      "$value": "none",
+      "$type": "shadow"
+    },
+    "xs": {
+      "$value": "0 1px 2px 0 oklch(0 0 0 / 0.03)",
+      "$type": "shadow",
+      "$description": "Subtle lift"
+    },
+    "sm": {
+      "$value": "0 1px 3px 0 oklch(0 0 0 / 0.06), 0 1px 2px -1px oklch(0 0 0 / 0.06)",
+      "$type": "shadow",
+      "$description": "Small elements"
+    },
+    "md": {
+      "$value": "0 4px 6px -1px oklch(0 0 0 / 0.08), 0 2px 4px -2px oklch(0 0 0 / 0.06)",
+      "$type": "shadow",
+      "$description": "Cards, dropdowns"
+    },
+    "lg": {
+      "$value": "0 10px 15px -3px oklch(0 0 0 / 0.08), 0 4px 6px -4px oklch(0 0 0 / 0.06)",
+      "$type": "shadow",
+      "$description": "Elevated elements"
+    },
+    "xl": {
+      "$value": "0 20px 25px -5px oklch(0 0 0 / 0.08), 0 8px 10px -6px oklch(0 0 0 / 0.06)",
+      "$type": "shadow",
+      "$description": "Modals, popovers"
+    },
+    "2xl": {
+      "$value": "0 25px 50px -12px oklch(0 0 0 / 0.2)",
+      "$type": "shadow",
+      "$description": "High elevation"
+    },
+    "inner": {
+      "$value": "inset 0 2px 4px 0 oklch(0 0 0 / 0.04)",
+      "$type": "shadow",
+      "$description": "Inset shadow for inputs"
+    }
+  }
+}

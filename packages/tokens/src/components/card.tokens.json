@@ -1,0 +1,79 @@
+{
+  "$description": "Card Component Tokens",
+  "component": {
+    "card": {
+      "padding": {
+        "$value": "{space.5}",
+        "$type": "dimension"
+      },
+      "paddingSm": {
+        "$value": "{space.4}",
+        "$type": "dimension"
+      },
+      "paddingLg": {
+        "$value": "{space.6}",
+        "$type": "dimension"
+      },
+      "borderRadius": {
+        "$value": "{radius.xl}",
+        "$type": "dimension"
+      },
+      "borderWidth": {
+        "$value": "1px",
+        "$type": "dimension"
+      },
+      "gap": {
+        "$value": "{space.4}",
+        "$type": "dimension"
+      },
+      "bg": {
+        "$value": "{color.surface.default}",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "{color.border.default}",
+        "$type": "color"
+      },
+      "borderHover": {
+        "$value": "{color.border.strong}",
+        "$type": "color"
+      },
+      "shadow": {
+        "$value": "{shadow.sm}",
+        "$type": "shadow"
+      },
+      "shadowHover": {
+        "$value": "{shadow.md}",
+        "$type": "shadow"
+      },
+      "transition": {
+        "$value": "all {duration.moderate} {easing.easeInOut}",
+        "$type": "transition"
+      },
+      "header": {
+        "padding": {
+          "$value": "{space.4} {space.5}",
+          "$type": "dimension"
+        },
+        "borderBottom": {
+          "$value": "1px solid {color.border.subtle}",
+          "$type": "border"
+        }
+      },
+      "footer": {
+        "padding": {
+          "$value": "{space.4} {space.5}",
+          "$type": "dimension"
+        },
+        "borderTop": {
+          "$value": "1px solid {color.border.subtle}",
+          "$type": "border"
+        },
+        "bg": {
+          "$value": "{color.bg.subtle}",
+          "$type": "color"
+        }
+      }
+    }
+  }
+}

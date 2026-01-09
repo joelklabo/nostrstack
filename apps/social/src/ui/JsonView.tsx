@@ -33,17 +33,17 @@ export function JsonView({
   return (
     <div
       {...props}
-      className={['nostrstack-json', className].filter(Boolean).join(' ')}
-      style={{ ...style, '--nostrstack-json-max-height': maxHeightVar } as CSSProperties}
+      className={['ns-json', className].filter(Boolean).join(' ')}
+      style={{ ...style, '--ns-json-max-height': maxHeightVar } as CSSProperties}
     >
       {title ? (
-        <div className="nostrstack-json__head">
-          <strong className="nostrstack-json__title">{title}</strong>
+        <div className="ns-json__head">
+          <strong className="ns-json__title">{title}</strong>
           <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
             {collapsible ? (
               <button
                 type="button"
-                className="nostrstack-btn nostrstack-btn--sm"
+                className="ns-btn ns-btn--sm"
                 onClick={() => setCollapsed((v) => !v)}
                 aria-expanded={!isCollapsed}
               >
@@ -56,7 +56,7 @@ export function JsonView({
           </div>
         </div>
       ) : null}
-      <pre className="nostrstack-json__pre" dangerouslySetInnerHTML={{ __html: highlighted }} />
+      <pre className="ns-json__pre" dangerouslySetInnerHTML={{ __html: highlighted }} />
     </div>
   );
 }

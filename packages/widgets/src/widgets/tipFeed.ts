@@ -5,7 +5,7 @@
 import { DEFAULT_FEED_ITEMS, MAX_FEED_ITEMS, MIN_FEED_ITEMS } from '../config.js';
 import { type TipData, TipsFeedConnection } from '../core/index.js';
 import { formatRelativeTime, resolveTenantDomain } from '../helpers.js';
-import { ensureNostrstackRoot } from '../styles.js';
+import { ensureNsRoot } from '../styles.js';
 import type { TipFeedOptions } from '../types.js';
 import { resolveApiBaseUrl, resolvePayWsUrl } from '../url-utils.js';
 
@@ -24,22 +24,22 @@ function renderTipFeedRow(opts: {
   newPulse?: boolean;
 }): HTMLElement {
   const row = document.createElement('div');
-  row.className = 'nostrstack-tip-feed__row';
+  row.className = 'ns-tip-feed__row';
   if (opts.newPulse) row.dataset.pulse = 'true';
 
   const left = document.createElement('div');
-  left.className = 'nostrstack-tip-feed__icon';
+  left.className = 'ns-tip-feed__icon';
   left.textContent = '⚡';
 
   const body = document.createElement('div');
-  body.className = 'nostrstack-tip-feed__body';
+  body.className = 'ns-tip-feed__body';
 
   const title = document.createElement('div');
-  title.className = 'nostrstack-tip-feed__title';
+  title.className = 'ns-tip-feed__title';
   title.textContent = `${opts.amountSats} sats`;
 
   const sub = document.createElement('div');
-  sub.className = 'nostrstack-tip-feed__sub';
+  sub.className = 'ns-tip-feed__sub';
   const ageSecs = Math.max(0, Math.round((Date.now() - opts.createdAt.getTime()) / 1000));
   const age = formatRelativeTime(ageSecs);
   sub.textContent = `${age} ago${opts.note ? ` · ${opts.note}` : ''}`;
@@ -65,8 +65,8 @@ function renderTipFeedRow(opts: {
  * Render a tip feed widget with real-time updates
  */
 export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions): TipFeedResult {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-tip-feed');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-tip-feed');
   container.replaceChildren();
 
   const payWsUrl = resolvePayWsUrl(opts.baseURL);
@@ -84,23 +84,23 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions): Tip
 
   // Create UI elements
   const header = document.createElement('div');
-  header.className = 'nostrstack-tip-feed__header';
+  header.className = 'ns-tip-feed__header';
 
   const title = document.createElement('div');
-  title.className = 'nostrstack-tip-feed__heading';
+  title.className = 'ns-tip-feed__heading';
   title.textContent = 'Tip activity';
 
   const stats = document.createElement('div');
-  stats.className = 'nostrstack-tip-feed__stats';
+  stats.className = 'ns-tip-feed__stats';
   stats.textContent = '—';
 
   header.append(title, stats);
 
   const list = document.createElement('div');
-  list.className = 'nostrstack-tip-feed__list';
+  list.className = 'ns-tip-feed__list';
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.className = 'ns-status ns-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.textContent = 'Loading…';
@@ -114,12 +114,8 @@ export function renderTipFeed(container: HTMLElement, opts: TipFeedOptions): Tip
 
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
-    status.classList.remove(
-      'nostrstack-status--muted',
-      'nostrstack-status--success',
-      'nostrstack-status--danger'
-    );
-    status.classList.add(`nostrstack-status--${tone}`);
+    status.classList.remove('ns-status--muted', 'ns-status--success', 'ns-status--danger');
+    status.classList.add(`ns-status--${tone}`);
   };
 
   const setStats = () => {

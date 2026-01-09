@@ -1,11 +1,11 @@
 import { renderRelayBadge, updateRelayBadge } from '../relayBadge.js';
 import { connectRelays, normalizeRelayUrls, type RelayConnection } from '../relays.js';
-import { ensureNostrstackRoot } from '../styles.js';
+import { ensureNsRoot } from '../styles.js';
 import type { CommentWidgetOptions, NostrEvent } from '../types.js';
 
 export async function renderCommentWidget(container: HTMLElement, opts: CommentWidgetOptions = {}) {
-  ensureNostrstackRoot(container);
-  container.classList.add('nostrstack-card', 'nostrstack-comments');
+  ensureNsRoot(container);
+  container.classList.add('ns-card', 'ns-comments');
   container.replaceChildren();
 
   const maxItems = Math.max(1, Math.min(200, opts.maxItems ?? 50));
@@ -20,69 +20,65 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
   const threadId = opts.threadId ?? location?.href ?? 'thread';
 
   const header = document.createElement('div');
-  header.className = 'nostrstack-comments-header';
+  header.className = 'ns-comments-header';
 
   const headerText = document.createElement('div');
-  headerText.className = 'nostrstack-comments-title';
+  headerText.className = 'ns-comments-title';
   headerText.textContent = opts.headerText ?? 'Comments';
 
   const relayBadge = renderRelayBadge([]);
-  relayBadge.classList.add('nostrstack-comments-relays');
+  relayBadge.classList.add('ns-comments-relays');
 
   const notice = document.createElement('div');
-  notice.className = 'nostrstack-status nostrstack-status--muted nostrstack-comments__notice';
+  notice.className = 'ns-status ns-status--muted ns-comments__notice';
   notice.setAttribute('role', 'status');
   notice.setAttribute('aria-live', 'polite');
   notice.hidden = true;
 
   const list = document.createElement('div');
-  list.className = 'nostrstack-comments-list';
+  list.className = 'ns-comments-list';
 
   const actions = document.createElement('div');
-  actions.className = 'nostrstack-comments-actions';
+  actions.className = 'ns-comments-actions';
 
   const loadMoreBtn = document.createElement('button');
   loadMoreBtn.type = 'button';
-  loadMoreBtn.className = 'nostrstack-btn nostrstack-btn--ghost nostrstack-comments-more';
+  loadMoreBtn.className = 'ns-btn ns-btn--ghost ns-comments-more';
   loadMoreBtn.textContent = lazyConnect ? 'Load comments' : 'Load more';
 
   actions.append(loadMoreBtn);
 
   const status = document.createElement('div');
-  status.className = 'nostrstack-status nostrstack-status--muted';
+  status.className = 'ns-status ns-status--muted';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
 
   const form = document.createElement('form');
-  form.className = 'nostrstack-comments-form';
+  form.className = 'ns-comments-form';
   const textarea = document.createElement('textarea');
-  textarea.className = 'nostrstack-textarea';
+  textarea.className = 'ns-textarea';
   textarea.name = 'comment';
   textarea.placeholder = opts.placeholder ?? 'Add a comment (Nostr)';
   textarea.required = true;
   textarea.rows = 3;
   const submit = document.createElement('button');
   submit.type = 'submit';
-  submit.className = 'nostrstack-btn nostrstack-btn--primary';
+  submit.className = 'ns-btn ns-btn--primary';
   submit.textContent = 'Post';
   form.appendChild(textarea);
   form.appendChild(submit);
 
   const setStatus = (text: string, tone: 'muted' | 'success' | 'danger') => {
     status.textContent = text;
-    status.classList.remove(
-      'nostrstack-status--muted',
-      'nostrstack-status--success',
-      'nostrstack-status--danger'
-    );
-    status.classList.add(`nostrstack-status--${tone}`);
+    status.classList.remove('ns-status--muted', 'ns-status--success', 'ns-status--danger');
+    status.classList.add(`ns-status--${tone}`);
   };
 
   const setNotice = (text: string, tone: 'muted' | 'danger') => {
     notice.textContent = text;
     notice.hidden = !text;
-    notice.classList.remove('nostrstack-status--muted', 'nostrstack-status--danger');
-    notice.classList.add(`nostrstack-status--${tone}`);
+    notice.classList.remove('ns-status--muted', 'ns-status--danger');
+    notice.classList.add(`ns-status--${tone}`);
   };
 
   const setFormEnabled = (enabled: boolean) => {
@@ -142,7 +138,7 @@ export async function renderCommentWidget(container: HTMLElement, opts: CommentW
         oldestTimestamp === null ? ev.created_at : Math.min(oldestTimestamp, ev.created_at);
     }
     const row = document.createElement('div');
-    row.className = 'nostrstack-comment';
+    row.className = 'ns-comment';
     row.textContent = ev.content;
     list.appendChild(row);
     opts.onEvent?.(ev, relayUrl ?? undefined);

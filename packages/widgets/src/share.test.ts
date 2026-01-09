@@ -36,9 +36,7 @@ describe('renderShareButton', () => {
     expect(copyToClipboard).toHaveBeenCalledWith(
       expect.stringContaining('Example\nhttps://example.com')
     );
-    expect(host.querySelector('.nostrstack-status--success')?.textContent).toBe(
-      'Copied to clipboard'
-    );
+    expect(host.querySelector('.ns-status--success')?.textContent).toBe('Copied to clipboard');
   });
 
   it('uses navigator.share if available', async () => {
@@ -56,7 +54,7 @@ describe('renderShareButton', () => {
       text: expect.stringContaining('Example\nhttps://example.com'),
       url: 'https://example.com'
     });
-    expect(host.querySelector('.nostrstack-status--success')?.textContent).toBe('Shared');
+    expect(host.querySelector('.ns-status--success')?.textContent).toBe('Shared');
   });
 
   it('attempts NIP-07 share if nostr is present', async () => {
@@ -99,7 +97,7 @@ describe('renderShareButton', () => {
     expect(signEvent).toHaveBeenCalled();
     expect(mockRelay.publish).toHaveBeenCalled();
     expect(mockRelay.close).toHaveBeenCalled();
-    expect(host.querySelector('.nostrstack-status--success')?.textContent).toBe('Shared to Nostr');
+    expect(host.querySelector('.ns-status--success')?.textContent).toBe('Shared to Nostr');
   });
 
   it('resets to idle state after sharing', async () => {
@@ -114,11 +112,11 @@ describe('renderShareButton', () => {
     // Allow async share to complete (flush microtasks)
     for (let i = 0; i < 10; i++) await Promise.resolve();
 
-    expect(host.querySelector('.nostrstack-status--success')?.textContent).toBe('Shared');
+    expect(host.querySelector('.ns-status--success')?.textContent).toBe('Shared');
 
     vi.advanceTimersByTime(2000);
 
-    expect(host.querySelector('.nostrstack-status')?.textContent).toBe('');
+    expect(host.querySelector('.ns-status')?.textContent).toBe('');
     expect(host.querySelector('button')?.textContent).toBe('Share to Nostr');
 
     vi.useRealTimers();

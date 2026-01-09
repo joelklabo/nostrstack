@@ -1,0 +1,247 @@
+{
+  "$description": "NostrStack Semantic Typography Tokens",
+  "text": {
+    "body": {
+      "$description": "Body text styles",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.base}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.normal}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.normal}",
+        "$type": "number"
+      }
+    },
+    "bodySmall": {
+      "$description": "Small body text",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.sm}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.normal}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.normal}",
+        "$type": "number"
+      }
+    },
+    "label": {
+      "$description": "Form labels and small text",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.sm}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.medium}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.tight}",
+        "$type": "number"
+      }
+    },
+    "caption": {
+      "$description": "Captions and helper text",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.xs}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.normal}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.normal}",
+        "$type": "number"
+      }
+    },
+    "code": {
+      "$description": "Inline code",
+      "fontFamily": {
+        "$value": "{font.family.mono}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.sm}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.normal}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.normal}",
+        "$type": "number"
+      }
+    }
+  },
+  "heading": {
+    "display": {
+      "$description": "Large display heading",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.5xl}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.black}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.tight}",
+        "$type": "number"
+      },
+      "letterSpacing": {
+        "$value": "{font.letterSpacing.tighter}",
+        "$type": "dimension"
+      }
+    },
+    "h1": {
+      "$description": "Page title",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.4xl}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.bold}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.tight}",
+        "$type": "number"
+      },
+      "letterSpacing": {
+        "$value": "{font.letterSpacing.tight}",
+        "$type": "dimension"
+      }
+    },
+    "h2": {
+      "$description": "Section heading",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.3xl}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.bold}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.tight}",
+        "$type": "number"
+      },
+      "letterSpacing": {
+        "$value": "{font.letterSpacing.tight}",
+        "$type": "dimension"
+      }
+    },
+    "h3": {
+      "$description": "Subsection heading",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.2xl}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.semibold}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.snug}",
+        "$type": "number"
+      }
+    },
+    "h4": {
+      "$description": "Card/component heading",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.xl}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.semibold}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.snug}",
+        "$type": "number"
+      }
+    },
+    "h5": {
+      "$description": "Small heading",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.lg}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.semibold}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.snug}",
+        "$type": "number"
+      }
+    },
+    "h6": {
+      "$description": "Tiny heading",
+      "fontFamily": {
+        "$value": "{font.family.sans}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.base}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.semibold}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.snug}",
+        "$type": "number"
+      }
+    }
+  }
+}

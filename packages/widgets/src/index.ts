@@ -3,7 +3,7 @@ import { copyToClipboard } from './copyButton.js';
 import { getBrandAttr } from './helpers.js';
 import { renderNostrProfile } from './nostrProfile.js';
 import { renderShareButton } from './share.js';
-import { ensureNostrstackRoot } from './styles.js';
+import { ensureNsRoot } from './styles.js';
 import type { CommentTipWidgetOptions, NostrEvent } from './types.js';
 import { renderPayToAction } from './widgets/payToAction.js';
 import { renderTipButton } from './widgets/tipButton.js';
@@ -15,33 +15,28 @@ export { invoicePopoverStyles, renderInvoicePopover } from './invoicePopover.js'
 export { renderNostrProfile } from './nostrProfile.js';
 export { nostrUserCardStyles, renderNostrUserCard } from './nostrUserCard.js';
 export {
-  type NostrstackQrPreset,
-  nostrstackQrPresetOptions,
-  type NostrstackQrRenderOptions,
-  type NostrstackQrRenderResult,
-  type NostrstackQrStyleOptions,
-  type NostrstackQrVerifyMode,
+  type NsQrPreset,
+  nsQrPresetOptions,
+  type NsQrRenderOptions,
+  type NsQrRenderResult,
+  type NsQrStyleOptions,
+  type NsQrVerifyMode,
   renderQrCodeInto
 } from './qr.js';
 export { relayBadgeStyles, renderRelayBadge, updateRelayBadge } from './relayBadge.js';
 export { renderShareButton } from './share.js';
-export type { NostrstackTheme, NostrstackThemeMode } from './styles.js';
+export type { NsTheme, NsThemeMode } from './styles.js';
 export {
-  applyNostrstackTheme,
-  ensureNostrstackEmbedStyles,
-  ensureNostrstackRoot,
-  nostrstackComponentsCss,
-  nostrstackEmbedStyles,
-  nostrstackTokensCss,
+  applyNsTheme,
+  ensureNsEmbedStyles,
+  ensureNsRoot,
+  nsComponentsCss,
+  nsEmbedStyles,
+  nsTokensCss,
   themeToCss,
   themeToCssVars
 } from './styles.js';
-export {
-  createNostrstackBrandTheme,
-  type NostrstackBrandPreset,
-  nostrstackBrandPresets
-} from './themePresets.js';
-export { designTokens } from './tokens/designTokens.js';
+export { createNsBrandTheme, type NsBrandPreset, nsBrandPresets } from './themePresets.js';
 export { resolvePayWsUrl, resolveTelemetryWs } from './url-utils.js';
 
 // WeakMap to store widget destroy functions without polluting DOM elements
@@ -60,22 +55,22 @@ export async function renderCommentTipWidget(
   container: HTMLElement,
   opts: CommentTipWidgetOptions
 ) {
-  ensureNostrstackRoot(container);
+  ensureNsRoot(container);
   container.replaceChildren();
 
   const grid = document.createElement('div');
-  grid.className = 'nostrstack-support-grid nostrstack-comment-tip__grid';
+  grid.className = 'ns-support-grid ns-comment-tip__grid';
   grid.style.display = 'grid';
-  grid.style.gap = 'var(--nostrstack-space-4)';
+  grid.style.gap = 'var(--ns-space-4)';
   grid.style.alignItems = 'start';
   grid.style.gridTemplateColumns =
     opts.layout === 'compact' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 340px)';
 
   const left = document.createElement('div');
   const right = document.createElement('div');
-  right.className = 'nostrstack-support-sidebar';
+  right.className = 'ns-support-sidebar';
   right.style.display = 'grid';
-  right.style.gap = 'var(--nostrstack-space-3)';
+  right.style.gap = 'var(--ns-space-3)';
 
   if (opts.layout === 'compact') {
     grid.append(right, left);
@@ -96,7 +91,7 @@ export async function renderCommentTipWidget(
 }
 
 export function autoMount() {
-  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-tip]'));
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ns-tip]'));
   nodes.forEach((el) => {
     const existingDestroy = widgetDestroyMap.get(el);
     if (existingDestroy) {
@@ -142,7 +137,7 @@ export function autoMount() {
     widgetDestroyMap.set(el, btn.destroy);
   });
 
-  const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-pay]'));
+  const payNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ns-pay]'));
   payNodes.forEach((el) => {
     const existingDestroy = widgetDestroyMap.get(el);
     if (existingDestroy) {
@@ -163,9 +158,7 @@ export function autoMount() {
     widgetDestroyMap.set(el, widget.destroy);
   });
 
-  const commentNodes = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-nostrstack-comments]')
-  );
+  const commentNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ns-comments]'));
   commentNodes.forEach((el) => {
     const existingDestroy = widgetDestroyMap.get(el);
     if (existingDestroy) {
@@ -187,7 +180,7 @@ export function autoMount() {
     });
   });
 
-  const shareNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-nostrstack-share]'));
+  const shareNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ns-share]'));
   shareNodes.forEach((el) => {
     const existingDestroy = widgetDestroyMap.get(el);
     if (existingDestroy) {
@@ -202,7 +195,7 @@ export function autoMount() {
           .filter(Boolean)
       : undefined;
     const url =
-      el.dataset.nostrstackShare ??
+      el.dataset.nsShare ??
       el.dataset.url ??
       (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
     const title =
@@ -218,9 +211,7 @@ export function autoMount() {
     widgetDestroyMap.set(el, widget.destroy);
   });
 
-  const profileNodes = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-nostrstack-profile]')
-  );
+  const profileNodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ns-profile]'));
   profileNodes.forEach((el) => {
     const existingDestroy = widgetDestroyMap.get(el);
     if (existingDestroy) {
@@ -228,7 +219,7 @@ export function autoMount() {
       widgetDestroyMap.delete(el);
     }
 
-    const identifier = el.dataset.nostrstackProfile ?? el.dataset.profile ?? '';
+    const identifier = el.dataset.nsProfile ?? el.dataset.profile ?? '';
     const widget = renderNostrProfile(el, {
       identifier,
       baseURL: el.dataset.baseUrl,
@@ -239,7 +230,7 @@ export function autoMount() {
   });
 
   const blockchainNodes = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-nostrstack-blockchain]')
+    document.querySelectorAll<HTMLElement>('[data-ns-blockchain]')
   );
   blockchainNodes.forEach((el) => {
     const existingDestroy = widgetDestroyMap.get(el);
@@ -259,8 +250,8 @@ export function autoMount() {
 
 // Auto-run if window is available
 if (typeof window !== 'undefined') {
-  const w = window as unknown as { __nostrstackDisableAutoMount?: boolean };
-  if (!w.__nostrstackDisableAutoMount) {
+  const w = window as unknown as { __nsDisableAutoMount?: boolean };
+  if (!w.__nsDisableAutoMount) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', autoMount);
     } else {
@@ -452,7 +443,7 @@ export function mountShareButton(container: HTMLElement, opts: MountShareOptions
   const url =
     opts.url ??
     container.dataset.url ??
-    container.dataset.nostrstackShare ??
+    container.dataset.nsShare ??
     (typeof window !== 'undefined' ? window.location?.href ?? '' : '');
   const title =
     opts.title ??
@@ -507,7 +498,7 @@ type MountNostrProfileOptions = {
 export function mountNostrProfile(container: HTMLElement, opts: MountNostrProfileOptions = {}) {
   const identifier =
     opts.identifier ??
-    container.dataset.nostrstackProfile ??
+    container.dataset.nsProfile ??
     container.dataset.profile ??
     container.id ??
     '';
