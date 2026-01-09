@@ -624,6 +624,9 @@ importers:
       '@nostrstack/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@nostrstack/tokens':
+        specifier: workspace:*
+        version: link:../tokens
       jsqr:
         specifier: ^1.4.0
         version: 1.4.0
