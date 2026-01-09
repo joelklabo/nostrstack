@@ -22,6 +22,10 @@
     "./css/scoped": "./dist/css/tokens-scoped.css",
     "./css/components": "./dist/css/components.css",
     "./css/utilities": "./dist/css/utilities.css",
+    "./css/all": "./dist/css/all.css",
+    "./dist/css/all.css": "./dist/css/all.css",
+    "./dist/css/components.css": "./dist/css/components.css",
+    "./dist/css/utilities.css": "./dist/css/utilities.css",
     "./json": "./dist/json/tokens.json",
     "./themes/light": "./dist/css/theme-light.css",
     "./themes/dark": "./dist/css/theme-dark.css"
