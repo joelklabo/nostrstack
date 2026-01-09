@@ -36,6 +36,7 @@
     "build": "node build.js",
     "build:watch": "node build.js --watch",
     "clean": "rm -rf dist",
+    "prepare": "pnpm build",
     "lint": "echo 'No lint for tokens'",
     "test": "echo 'No tests yet' && exit 0",
     "typecheck": "echo 'No TS sources to check' && exit 0"
