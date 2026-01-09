@@ -277,13 +277,15 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       <h3>SYSTEM_SETTINGS</h3>
 
       <div className="paywall-container">
-        <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>VISUAL_THEME</h4>
+        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
+          VISUAL_THEME
+        </h4>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button
             className="action-btn"
             style={{
-              borderColor: theme === 'dark' ? 'var(--terminal-text)' : undefined,
-              color: theme === 'dark' ? 'var(--terminal-text)' : undefined
+              borderColor: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined,
+              color: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined
             }}
             onClick={() => setTheme('dark')}
           >
@@ -292,8 +294,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <button
             className="action-btn"
             style={{
-              borderColor: theme === 'light' ? 'var(--terminal-text)' : undefined,
-              color: theme === 'light' ? 'var(--terminal-text)' : undefined
+              borderColor: theme === 'light' ? 'var(--ns-color-text-default)' : undefined,
+              color: theme === 'light' ? 'var(--ns-color-text-default)' : undefined
             }}
             onClick={() => setTheme('light')}
           >
@@ -303,15 +305,17 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       </div>
 
       <div className="paywall-container">
-        <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>BRAND_PRESET</h4>
+        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
+          BRAND_PRESET
+        </h4>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map((preset) => (
             <button
               key={preset}
               className="action-btn"
               style={{
-                borderColor: brandPreset === preset ? 'var(--terminal-text)' : undefined,
-                color: brandPreset === preset ? 'var(--terminal-text)' : undefined
+                borderColor: brandPreset === preset ? 'var(--ns-color-text-default)' : undefined,
+                color: brandPreset === preset ? 'var(--ns-color-text-default)' : undefined
               }}
               onClick={() => setBrandPreset(preset as NsBrandPreset)}
             >
@@ -322,7 +326,9 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       </div>
 
       <div className="paywall-container">
-        <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>NOTIFICATIONS</h4>
+        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
+          NOTIFICATIONS
+        </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div style={{ fontSize: '0.9rem' }}>
             Status: <strong>{permission.toUpperCase()}</strong>
@@ -346,7 +352,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               </button>
             )}
             {permission === 'denied' && (
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-danger-fg)' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--ns-color-danger-default)' }}>
                 Notifications are blocked. Please enable them in your browser settings.
               </div>
             )}
@@ -356,7 +362,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
       {import.meta.env.DEV && (
         <div className="paywall-container">
-          <h4 style={{ color: 'var(--terminal-dim)', marginBottom: '0.5rem' }}>
+          <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
             DEV_NETWORK_OVERRIDE
           </h4>
           <label className="nwc-label">
@@ -373,7 +379,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               <option value="mainnet">MAINNET</option>
             </select>
           </label>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-fg-muted)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--ns-color-text-muted)' }}>
             Updates UI labels only. Does not change backend network.
           </div>
         </div>
@@ -381,7 +387,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
       <div className="paywall-container nwc-card">
         <div className="nwc-header">
-          <h4 style={{ color: 'var(--terminal-dim)', marginBottom: 0 }}>NWC_CONNECTION</h4>
+          <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: 0 }}>NWC_CONNECTION</h4>
           <span
             className={`nwc-status-pill ${nwcStatusTone !== 'neutral' ? `is-${nwcStatusTone}` : ''}`}
           >

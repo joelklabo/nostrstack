@@ -7,7 +7,7 @@
   justify-content: center;
   padding: 1.5rem;
   z-index: 2000;
-  animation: shortcuts-fade-in 0.2s ease-out;
+  animation: shortcuts-fade-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
 }
 
 .shortcuts-modal {
@@ -15,12 +15,12 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-canvas-default);
-  border: 1px solid var(--color-border-default);
+  background: var(--ns-color-bg-default);
+  border: 1px solid var(--ns-color-border-default);
   border-radius: 12px;
   box-shadow: 0 24px 64px rgb(15 23 42 / 28%);
   overflow: hidden;
-  animation: shortcuts-pop-in 0.2s ease-out;
+  animation: shortcuts-pop-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
   outline: none;
 }
 
@@ -29,14 +29,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem 1rem;
-  background: var(--color-canvas-subtle);
-  border-bottom: 1px solid var(--color-border-default);
+  background: var(--ns-color-bg-subtle);
+  border-bottom: 1px solid var(--ns-color-border-default);
 }
 
 .shortcuts-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-fg-default);
+  color: var(--ns-color-text-default);
 }
 
 .shortcuts-close {
@@ -45,7 +45,7 @@
   border-radius: 6px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--color-fg-muted);
+  color: var(--ns-color-text-muted);
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -54,8 +54,8 @@
 }
 
 .shortcuts-close:hover {
-  background: var(--color-canvas-inset);
-  color: var(--color-fg-default);
+  background: var(--ns-color-bg-muted);
+  color: var(--ns-color-text-default);
 }
 
 .shortcuts-body {
@@ -73,7 +73,7 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border-muted);
+  border-bottom: 1px solid var(--ns-color-border-strong);
 }
 
 .shortcut-item:last-child {
@@ -87,20 +87,20 @@
 }
 
 .shortcut-key {
-  font-family: var(--font-mono);
+  font-family: var(--ns-font-family-mono);
   font-size: 0.85rem;
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
-  background: var(--color-canvas-subtle);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-fg-default);
+  background: var(--ns-color-bg-subtle);
+  border: 1px solid var(--ns-color-border-default);
+  color: var(--ns-color-text-default);
   min-width: 24px;
   text-align: center;
 }
 
 .shortcut-desc {
   font-size: 0.9rem;
-  color: var(--color-fg-muted);
+  color: var(--ns-color-text-muted);
 }
 
 @keyframes shortcuts-fade-in {

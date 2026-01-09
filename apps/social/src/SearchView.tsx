@@ -254,7 +254,7 @@ export function SearchView() {
                   height: 48,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  background: 'var(--color-canvas-subtle)'
+                  background: 'var(--ns-color-bg-subtle)'
                 }}
               />
             )}
@@ -276,7 +276,7 @@ export function SearchView() {
                   <div
                     style={{
                       fontSize: '0.85rem',
-                      color: 'var(--color-fg-default)',
+                      color: 'var(--ns-color-text-default)',
                       display: '-webkit-box',
                       WebkitLineClamp: 1,
                       WebkitBoxOrient: 'vertical',
@@ -340,7 +340,7 @@ export function SearchView() {
                 style={{
                   padding: '1rem',
                   textAlign: 'center',
-                  color: 'var(--color-fg-muted)',
+                  color: 'var(--ns-color-text-muted)',
                   fontSize: '0.85rem'
                 }}
               >
@@ -350,7 +350,9 @@ export function SearchView() {
           </>
         )}
         {notesLoading && notes.length === 0 && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-fg-muted)' }}>
+          <div
+            style={{ padding: '2rem', textAlign: 'center', color: 'var(--ns-color-text-muted)' }}
+          >
             Searching for notes...
           </div>
         )}
@@ -359,7 +361,7 @@ export function SearchView() {
             style={{
               padding: '2rem',
               textAlign: 'center',
-              color: 'var(--color-fg-subtle)',
+              color: 'var(--ns-color-text-subtle)',
               fontSize: '0.9rem'
             }}
           >

@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo,type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -28,9 +28,17 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div style={{ padding: '1rem', border: '1px solid #f00', color: '#f00', background: 'rgba(255,0,0,0.1)' }}>
+        <div
+          style={{
+            padding: '1rem',
+            border: '1px solid var(--ns-color-danger-default)',
+            color: 'var(--ns-color-danger-default)',
+            background: 'var(--ns-color-danger-subtle)',
+            borderRadius: 'var(--ns-radius-md)'
+          }}
+        >
           <strong>COMPONENT CRASHED</strong>
-          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>
+          <pre style={{ fontSize: '0.8rem', overflow: 'auto', marginTop: '0.5rem' }}>
             {this.state.error?.message}
           </pre>
         </div>

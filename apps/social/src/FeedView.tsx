@@ -1,12 +1,14 @@
 import { PostEditor, useAuth, useFeed } from '@nostrstack/react';
 import { Alert, PostSkeleton } from '@nostrstack/ui';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
+import { usePostNavigation } from './hooks/usePostNavigation';
 import { useRelays } from './hooks/useRelays';
 import { filterSpam } from './nostr/spamFilter';
 import { FindFriendCard } from './ui/FindFriendCard';
+import { NewPostsIndicator } from './ui/NewPostsIndicator';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { navigateTo } from './utils/navigation';
 
@@ -22,6 +24,24 @@ export function FeedView() {
     import.meta.env.DEV;
 
   const [spamFilterEnabled, setSpamFilterEnabled] = useState(false);
+
+  // Keyboard navigation for posts
+  usePostNavigation({ enabled: true });
+
+  // Track new posts for indicator
+  const [newPosts, setNewPosts] = useState<Array<{ pubkey: string; picture?: string }>>([]);
+  const lastSeenPostId = useRef<string | null>(null);
+  const feedContainerRef = useRef<HTMLElement>(null);
+  const isScrolledDown = useRef(false);
+
+  // Track scroll position to know when to show indicator
+  useEffect(() => {
+    const handleScroll = () => {
+      isScrolledDown.current = window.scrollY > 200;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Feed mode: 'all' shows all posts, 'following' shows only from contacts
   const [feedMode, setFeedMode] = useState<'all' | 'following'>(() => {
@@ -74,6 +94,50 @@ export function FeedView() {
       return posts;
     }
   }, [posts, isMuted, spamFilterEnabled]);
+
+  // Detect new posts when scrolled down
+  useEffect(() => {
+    if (!filteredPosts.length) return;
+
+    const firstPost = filteredPosts[0];
+    if (!firstPost) return;
+
+    // Initialize last seen post
+    if (!lastSeenPostId.current) {
+      lastSeenPostId.current = firstPost.id;
+      return;
+    }
+
+    // Check if there are new posts
+    if (firstPost.id !== lastSeenPostId.current && isScrolledDown.current) {
+      // Find new posts that came before our last seen
+      const newPostsFound: Array<{ pubkey: string; picture?: string }> = [];
+      for (const post of filteredPosts) {
+        if (post.id === lastSeenPostId.current) break;
+        newPostsFound.push({ pubkey: post.pubkey });
+      }
+      if (newPostsFound.length > 0) {
+        setNewPosts((prev) => {
+          // Deduplicate by pubkey
+          const existing = new Set(prev.map((p) => p.pubkey));
+          const additions = newPostsFound.filter((p) => !existing.has(p.pubkey));
+          return [...additions, ...prev].slice(0, 10);
+        });
+      }
+    } else if (!isScrolledDown.current) {
+      // Clear new posts indicator when at top
+      setNewPosts([]);
+      lastSeenPostId.current = firstPost.id;
+    }
+  }, [filteredPosts]);
+
+  const handleScrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setNewPosts([]);
+    if (filteredPosts[0]) {
+      lastSeenPostId.current = filteredPosts[0].id;
+    }
+  }, [filteredPosts]);
 
   const handleOpenThread = useCallback((eventId: string) => {
     navigateTo(`/nostr/${eventId}`);
@@ -134,7 +198,9 @@ export function FeedView() {
   };
 
   return (
-    <main className="feed-stream" role="main" aria-label="Live feed">
+    <main className="feed-stream" role="main" aria-label="Live feed" ref={feedContainerRef}>
+      <NewPostsIndicator newPosts={newPosts} onScrollToTop={handleScrollToTop} />
+
       <header className="feed-header">
         <h2 className="feed-title">Live Feed</h2>
         <div className="feed-header__actions">

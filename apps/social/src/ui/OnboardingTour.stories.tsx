@@ -11,7 +11,7 @@ const mockSteps: OnboardingStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to NostrStack',
-    content: 'Your gateway to the decentralized social web. Let\'s take a quick tour.',
+    content: "Your gateway to the decentralized social web. Let's take a quick tour.",
     placement: 'bottom'
   },
   {
@@ -81,12 +81,15 @@ function InteractiveTour() {
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       {/* Mock UI elements for tour targets */}
       <div style={{ display: 'flex', height: '100%' }}>
-        <div className="mock-sidebar" style={{
-          width: '240px',
-          background: 'var(--color-canvas-subtle)',
-          padding: '1rem',
-          borderRight: '1px solid var(--color-border-default)'
-        }}>
+        <div
+          className="mock-sidebar"
+          style={{
+            width: '240px',
+            background: 'var(--ns-color-bg-subtle)',
+            padding: '1rem',
+            borderRight: '1px solid var(--ns-color-border-default)'
+          }}
+        >
           <h3>Sidebar</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ padding: '0.5rem 0' }}>Feed</li>
@@ -95,34 +98,43 @@ function InteractiveTour() {
             <li style={{ padding: '0.5rem 0' }}>Settings</li>
           </ul>
         </div>
-        
+
         <div style={{ flex: 1, padding: '2rem' }}>
-          <div className="mock-wallet" style={{
-            marginBottom: '2rem',
-            padding: '1rem',
-            background: 'var(--color-canvas-subtle)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border-default)'
-          }}>
+          <div
+            className="mock-wallet"
+            style={{
+              marginBottom: '2rem',
+              padding: '1rem',
+              background: 'var(--ns-color-bg-subtle)',
+              borderRadius: '8px',
+              border: '1px solid var(--ns-color-border-default)'
+            }}
+          >
             <h4>Lightning Wallet</h4>
             <button className="action-btn">Connect Wallet</button>
           </div>
 
-          <div className="mock-feed" style={{
-            padding: '1rem',
-            background: 'var(--color-canvas-subtle)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border-default)'
-          }}>
+          <div
+            className="mock-feed"
+            style={{
+              padding: '1rem',
+              background: 'var(--ns-color-bg-subtle)',
+              borderRadius: '8px',
+              border: '1px solid var(--ns-color-border-default)'
+            }}
+          >
             <h4>Live Feed</h4>
             <div style={{ height: '200px', overflow: 'auto' }}>
               {[...Array(5)].map((_, i) => (
-                <div key={i} style={{ 
-                  padding: '0.75rem', 
-                  marginBottom: '0.5rem', 
-                  background: 'var(--color-canvas-default)', 
-                  borderRadius: '4px' 
-                }}>
+                <div
+                  key={i}
+                  style={{
+                    padding: '0.75rem',
+                    marginBottom: '0.5rem',
+                    background: 'var(--ns-color-bg-default)',
+                    borderRadius: '4px'
+                  }}
+                >
                   Event {i + 1}
                 </div>
               ))}
@@ -130,11 +142,7 @@ function InteractiveTour() {
           </div>
 
           {!isActive && (
-            <button 
-              onClick={reset}
-              className="action-btn"
-              style={{ marginTop: '2rem' }}
-            >
+            <button onClick={reset} className="action-btn" style={{ marginTop: '2rem' }}>
               Restart Tour
             </button>
           )}
@@ -203,13 +211,16 @@ function WithTargetElementWrapper() {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', padding: '2rem' }}>
-      <div className="mock-sidebar" style={{
-        width: '240px',
-        background: 'var(--color-canvas-subtle)',
-        padding: '1rem',
-        borderRadius: '8px',
-        border: '1px solid var(--color-border-default)'
-      }}>
+      <div
+        className="mock-sidebar"
+        style={{
+          width: '240px',
+          background: 'var(--ns-color-bg-subtle)',
+          padding: '1rem',
+          borderRadius: '8px',
+          border: '1px solid var(--ns-color-border-default)'
+        }}
+      >
         <h3>Sidebar Navigation</h3>
       </div>
       <OnboardingTour />

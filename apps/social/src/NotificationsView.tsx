@@ -131,7 +131,9 @@ export function NotificationsView() {
   if (relaysLoading) {
     return (
       <div className="feed-stream">
-        <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)' }}>
+        <div
+          style={{ marginBottom: '1rem', borderBottom: '1px solid var(--ns-color-text-default)' }}
+        >
           {' >'} INCOMING_TRANSMISSIONS...
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -145,7 +147,7 @@ export function NotificationsView() {
 
   return (
     <div className="feed-stream">
-      <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--terminal-text)' }}>
+      <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--ns-color-text-default)' }}>
         {' >'} INCOMING_TRANSMISSIONS...
       </div>
 
@@ -157,7 +159,9 @@ export function NotificationsView() {
       })}
 
       {events.length === 0 && (
-        <div style={{ padding: '1rem', color: 'var(--terminal-dim)' }}>NO_ACTIVITY_DETECTED</div>
+        <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}>
+          NO_ACTIVITY_DETECTED
+        </div>
       )}
     </div>
   );

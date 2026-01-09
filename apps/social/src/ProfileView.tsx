@@ -266,8 +266,8 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   <button
                     className="action-btn"
                     style={{
-                      borderColor: 'var(--terminal-accent)',
-                      color: 'var(--terminal-accent)'
+                      borderColor: 'var(--ns-color-accent-default)',
+                      color: 'var(--ns-color-accent-default)'
                     }}
                     onClick={onNavigateToSettings}
                     aria-label="Edit your profile"
@@ -289,8 +289,12 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   <button
                     className="action-btn"
                     style={{
-                      borderColor: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)',
-                      color: following ? 'var(--color-danger-fg)' : 'var(--terminal-accent)'
+                      borderColor: following
+                        ? 'var(--ns-color-danger-default)'
+                        : 'var(--ns-color-accent-default)',
+                      color: following
+                        ? 'var(--ns-color-danger-default)'
+                        : 'var(--ns-color-accent-default)'
                     }}
                     onClick={handleFollowToggle}
                     disabled={contactsLoading}
@@ -301,9 +305,11 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     className="action-btn"
                     style={{
                       borderColor: muted
-                        ? 'var(--color-border-default)'
-                        : 'var(--color-border-default)',
-                      color: muted ? 'var(--color-fg-muted)' : 'var(--color-danger-fg)',
+                        ? 'var(--ns-color-border-default)'
+                        : 'var(--ns-color-border-default)',
+                      color: muted
+                        ? 'var(--ns-color-text-muted)'
+                        : 'var(--ns-color-danger-default)',
                       fontSize: '0.75rem'
                     }}
                     onClick={handleMuteToggle}

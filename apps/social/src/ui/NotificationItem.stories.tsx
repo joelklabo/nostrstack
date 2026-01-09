@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import type { Event } from 'nostr-tools';
 
-import { type NotificationGroup,NotificationItem } from './NotificationItem';
+import { type NotificationGroup, NotificationItem } from './NotificationItem';
 
 // Mock events for different notification types
 const mockReactionEvent: Event = {
@@ -36,9 +36,7 @@ const mockMentionEvent: Event = {
   pubkey: 'beef1234beef1234beef1234beef1234beef1234beef1234beef1234beef1234',
   created_at: Math.floor(Date.now() / 1000) - 900,
   kind: 1,
-  tags: [
-    ['p', 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234']
-  ],
+  tags: [['p', 'cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234cafe1234']],
   content: 'Hey @cafe1234cafe1234 check this out!',
   sig: '0000000000000000000000000000000000000000000000000000000000000000'
 };
@@ -56,7 +54,11 @@ const multipleReactionsGroup: NotificationGroup = {
   type: 'reaction',
   events: [
     mockReactionEvent,
-    { ...mockReactionEvent, id: 'reaction2', pubkey: 'beef5678beef5678beef5678beef5678beef5678beef5678beef5678beef5678' }
+    {
+      ...mockReactionEvent,
+      id: 'reaction2',
+      pubkey: 'beef5678beef5678beef5678beef5678beef5678beef5678beef5678beef5678'
+    }
   ],
   targetEventId: 'target-event-123',
   timestamp: mockReactionEvent.created_at
@@ -67,9 +69,21 @@ const manyReactionsGroup: NotificationGroup = {
   type: 'reaction',
   events: [
     mockReactionEvent,
-    { ...mockReactionEvent, id: 'reaction2', pubkey: 'beef5678beef5678beef5678beef5678beef5678beef5678beef5678beef5678' },
-    { ...mockReactionEvent, id: 'reaction3', pubkey: 'cafe9999cafe9999cafe9999cafe9999cafe9999cafe9999cafe9999cafe9999' },
-    { ...mockReactionEvent, id: 'reaction4', pubkey: 'dead9999dead9999dead9999dead9999dead9999dead9999dead9999dead9999' }
+    {
+      ...mockReactionEvent,
+      id: 'reaction2',
+      pubkey: 'beef5678beef5678beef5678beef5678beef5678beef5678beef5678beef5678'
+    },
+    {
+      ...mockReactionEvent,
+      id: 'reaction3',
+      pubkey: 'cafe9999cafe9999cafe9999cafe9999cafe9999cafe9999cafe9999cafe9999'
+    },
+    {
+      ...mockReactionEvent,
+      id: 'reaction4',
+      pubkey: 'dead9999dead9999dead9999dead9999dead9999dead9999dead9999dead9999'
+    }
   ],
   targetEventId: 'target-event-123',
   timestamp: mockReactionEvent.created_at
@@ -88,7 +102,16 @@ const multipleZapsGroup: NotificationGroup = {
   type: 'zap',
   events: [
     mockZapEvent,
-    { ...mockZapEvent, id: 'zap2', pubkey: 'beef8888beef8888beef8888beef8888beef8888beef8888beef8888beef8888', tags: [['e', 'target-event-456'], ['p', 'cafe1234'], ['amount', '100000']] }
+    {
+      ...mockZapEvent,
+      id: 'zap2',
+      pubkey: 'beef8888beef8888beef8888beef8888beef8888beef8888beef8888beef8888',
+      tags: [
+        ['e', 'target-event-456'],
+        ['p', 'cafe1234'],
+        ['amount', '100000']
+      ]
+    }
   ],
   targetEventId: 'target-event-456',
   timestamp: mockZapEvent.created_at
@@ -114,7 +137,14 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: '600px', background: 'var(--color-canvas-default)', border: '1px solid var(--color-border-default)', borderRadius: '8px' }}>
+      <div
+        style={{
+          width: '600px',
+          background: 'var(--ns-color-bg-default)',
+          border: '1px solid var(--ns-color-border-default)',
+          borderRadius: '8px'
+        }}
+      >
         <Story />
       </div>
     )
@@ -171,7 +201,14 @@ export const NoTargetEvent: Story = {
 
 export const NotificationList: Story = {
   render: () => (
-    <div style={{ width: '600px', background: 'var(--color-canvas-default)', border: '1px solid var(--color-border-default)', borderRadius: '8px' }}>
+    <div
+      style={{
+        width: '600px',
+        background: 'var(--ns-color-bg-default)',
+        border: '1px solid var(--ns-color-border-default)',
+        borderRadius: '8px'
+      }}
+    >
       <NotificationItem group={reactionGroup} />
       <NotificationItem group={zapGroup} />
       <NotificationItem group={mentionGroup} />

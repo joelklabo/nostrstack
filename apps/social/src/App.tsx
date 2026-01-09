@@ -11,6 +11,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 
 import { RelayProvider } from './context/RelayProvider';
 import { ErrorBoundary } from './ErrorBoundary';
+import { useImmersiveScroll } from './hooks/useImmersiveScroll';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './Sidebar';
 import { TelemetryBar } from './TelemetryBar';
@@ -71,6 +72,7 @@ function AppShell() {
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
+  const { isImmersive } = useImmersiveScroll({ threshold: 80, minDelta: 8 });
 
   const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), []);
   const handleMobileMenuToggle = useCallback(() => setMobileMenuOpen((prev) => !prev), []);
@@ -132,8 +134,8 @@ function AppShell() {
           justifyContent: 'center',
           alignItems: 'center',
           height: '100dvh',
-          color: 'var(--color-fg-muted)',
-          fontFamily: 'var(--font-body)'
+          color: 'var(--ns-color-text-muted)',
+          fontFamily: 'var(--ns-font-family-sans)'
         }}
       >
         Loading NostrStack...
@@ -168,7 +170,7 @@ function AppShell() {
   }
 
   return (
-    <div className="social-layout">
+    <div className={`social-layout${isImmersive ? ' is-immersive' : ''}`}>
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
@@ -211,7 +213,7 @@ function AppShell() {
                 display: 'flex',
                 justifyContent: 'center',
                 padding: '2rem',
-                color: 'var(--color-fg-muted)'
+                color: 'var(--ns-color-text-muted)'
               }}
             >
               Loading...
@@ -256,7 +258,11 @@ function AppShell() {
       </main>
       <aside className="telemetry-sidebar">
         <ErrorBoundary
-          fallback={<div style={{ padding: '1rem', color: '#666' }}>Telemetry Unavailable</div>}
+          fallback={
+            <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}>
+              Telemetry Unavailable
+            </div>
+          }
         >
           <TelemetryBar />
         </ErrorBoundary>

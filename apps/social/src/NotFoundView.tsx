@@ -25,14 +25,14 @@ export function NotFoundView() {
           fontSize: '1.5rem',
           fontWeight: 600,
           marginBottom: '0.5rem',
-          color: 'var(--color-fg-default)'
+          color: 'var(--ns-color-text-default)'
         }}
       >
         Page Not Found
       </h1>
       <p
         style={{
-          color: 'var(--color-fg-muted)',
+          color: 'var(--ns-color-text-muted)',
           marginBottom: '1.5rem',
           maxWidth: '400px'
         }}
@@ -44,8 +44,8 @@ export function NotFoundView() {
           className="action-btn"
           onClick={handleGoHome}
           style={{
-            borderColor: 'var(--terminal-accent)',
-            color: 'var(--terminal-accent)',
+            borderColor: 'var(--ns-color-accent-default)',
+            color: 'var(--ns-color-accent-default)',
             padding: '0.5rem 1.5rem'
           }}
         >
@@ -56,7 +56,7 @@ export function NotFoundView() {
         style={{
           marginTop: '2rem',
           fontSize: '0.85rem',
-          color: 'var(--color-fg-muted)'
+          color: 'var(--ns-color-text-muted)'
         }}
       >
         <p>Looking for something specific? Try:</p>

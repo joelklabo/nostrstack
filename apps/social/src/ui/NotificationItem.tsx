@@ -78,7 +78,7 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
         alignItems: 'flex-start',
         gap: '1rem',
         padding: '1rem',
-        borderBottom: '1px solid var(--color-border-muted)',
+        borderBottom: '1px solid var(--ns-color-border-strong)',
         cursor: targetId ? 'pointer' : 'default',
         transition: 'background 0.1s ease-in-out'
       }}
@@ -89,7 +89,7 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
       <div className="notification-content" style={{ flex: 1 }}>
         <div
           className="notification-text"
-          style={{ fontSize: '0.95rem', color: 'var(--color-fg-default)' }}
+          style={{ fontSize: '0.95rem', color: 'var(--ns-color-text-default)' }}
         >
           {authors.map((pk, idx) => (
             <span key={pk}>
@@ -98,7 +98,7 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
                 label={`${pk.slice(0, 8)}`}
                 style={{
                   fontWeight: 600,
-                  color: 'var(--color-fg-default)',
+                  color: 'var(--ns-color-text-default)',
                   textDecoration: 'none'
                 }}
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -112,11 +112,15 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
               and {othersCount} other{othersCount > 1 ? 's' : ''}
             </span>
           )}
-          <span style={{ color: 'var(--color-fg-muted)' }}>{renderActionText()}</span>
+          <span style={{ color: 'var(--ns-color-text-muted)' }}>{renderActionText()}</span>
         </div>
         <div
           className="notification-time"
-          style={{ fontSize: '0.75rem', color: 'var(--color-fg-subtle)', marginTop: '0.25rem' }}
+          style={{
+            fontSize: '0.75rem',
+            color: 'var(--ns-color-text-subtle)',
+            marginTop: '0.25rem'
+          }}
         >
           {new Date(group.timestamp * 1000).toLocaleString()}
         </div>

@@ -63,10 +63,10 @@ export function BitcoinNodeCard({
   const isTestnet = ['test', 'testnet', 'mutinynet', 'signet'].includes(networkRaw);
   const isRegtest = networkRaw === 'regtest';
 
-  let networkColor = 'var(--color-fg-muted)';
-  if (isMainnet) networkColor = 'var(--color-success-fg)';
-  if (isTestnet) networkColor = 'var(--color-attention-fg)';
-  if (isRegtest) networkColor = 'var(--color-accent-fg)';
+  let networkColor = 'var(--ns-color-text-muted)';
+  if (isMainnet) networkColor = 'var(--ns-color-success-default)';
+  if (isTestnet) networkColor = 'var(--ns-color-warning-default)';
+  if (isRegtest) networkColor = 'var(--ns-color-primary-default)';
 
   const networkLabel = (info.configuredNetwork ?? info.network)?.toUpperCase() || 'OFFLINE';
   const chainLabel =

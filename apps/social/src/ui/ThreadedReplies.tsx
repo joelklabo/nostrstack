@@ -22,7 +22,7 @@ function getParentId(event: Event, rootId: string): string {
   // 2. Check for explicit 'root' marker
   const rootTag = eTags.find((t) => t[3] === 'root');
   if (rootTag) return rootTag[1];
-  
+
   // 3. Positional (last e-tag is usually the parent/reply)
   // If the last e-tag is the rootId, then it's a direct reply to root.
   const lastTag = eTags[eTags.length - 1];
@@ -37,13 +37,13 @@ function buildThreadTree(events: Event[], rootId: string) {
   // Group events by their parent
   events.forEach((event) => {
     let parentId = getParentId(event, rootId);
-    
-    // If parent is not in our known list (e.g. reply to a reply we didn't fetch), 
+
+    // If parent is not in our known list (e.g. reply to a reply we didn't fetch),
     // treat it as a top-level reply to root (or maybe orphaned).
     // For better UX, let's attach orphaned replies to rootId visually, or put them in a separate bucket.
     // Here we'll just attach to root if parent is missing.
     if (!knownIds.has(parentId)) {
-       parentId = rootId;
+      parentId = rootId;
     }
 
     if (!childrenMap.has(parentId)) {
@@ -60,16 +60,16 @@ function buildThreadTree(events: Event[], rootId: string) {
   return childrenMap;
 }
 
-function ReplyNode({ 
-  event, 
-  childrenMap, 
-  depth, 
-  apiBase, 
+function ReplyNode({
+  event,
+  childrenMap,
+  depth,
+  apiBase,
   enableRegtestPay,
   path = []
-}: { 
-  event: Event; 
-  childrenMap: Map<string, Event[]>; 
+}: {
+  event: Event;
+  childrenMap: Map<string, Event[]>;
   depth: number;
   apiBase: string;
   enableRegtestPay: boolean;
@@ -82,51 +82,57 @@ function ReplyNode({
 
   // Max depth to prevent infinite indentation squishing
   const isTooDeep = depth > 5;
-  
+
   return (
-    <div className={`thread-node ${depth > 0 ? 'thread-child' : ''}`} style={{ marginLeft: isTooDeep ? 0 : (depth > 0 ? '1.5rem' : 0) }}>
+    <div
+      className={`thread-node ${depth > 0 ? 'thread-child' : ''}`}
+      style={{ marginLeft: isTooDeep ? 0 : depth > 0 ? '1.5rem' : 0 }}
+    >
       <div className="thread-content">
-         {/* Vertical line for threading if needed, or handled by CSS on thread-child */}
-         <NostrEventCard 
-            event={event} 
-            variant="compact"
-            apiBase={apiBase} 
-            enableRegtestPay={enableRegtestPay} 
-            onOpenThread={() => navigateTo(`/nostr/${event.id}`)}
-         />
-         {hasChildren && (
-             <button 
-                className="thread-collapse-btn" 
-                onClick={() => setCollapsed(!collapsed)}
-                style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--color-fg-muted)',
-                    background: 'none',
-                    border: 'none',
-                    padding: '0.25rem',
-                    cursor: 'pointer',
-                    display: 'block',
-                    marginBottom: '0.5rem'
-                }}
-             >
-                {collapsed ? `Show ${children.length} replies` : ''}
-             </button>
-         )}
+        {/* Vertical line for threading if needed, or handled by CSS on thread-child */}
+        <NostrEventCard
+          event={event}
+          variant="compact"
+          apiBase={apiBase}
+          enableRegtestPay={enableRegtestPay}
+          onOpenThread={() => navigateTo(`/nostr/${event.id}`)}
+        />
+        {hasChildren && (
+          <button
+            className="thread-collapse-btn"
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--ns-color-text-muted)',
+              background: 'none',
+              border: 'none',
+              padding: '0.25rem',
+              cursor: 'pointer',
+              display: 'block',
+              marginBottom: '0.5rem'
+            }}
+          >
+            {collapsed ? `Show ${children.length} replies` : ''}
+          </button>
+        )}
       </div>
-      
+
       {!collapsed && hasChildren && (
-        <div className="thread-children" style={{ 
-            borderLeft: isTooDeep ? 'none' : '2px solid var(--color-border-muted)',
-            paddingLeft: isTooDeep ? 0 : '0.5rem', 
+        <div
+          className="thread-children"
+          style={{
+            borderLeft: isTooDeep ? 'none' : '2px solid var(--ns-color-border-strong)',
+            paddingLeft: isTooDeep ? 0 : '0.5rem',
             marginLeft: isTooDeep ? 0 : '0.5rem'
-        }}>
+          }}
+        >
           {children.map((child) => {
             if (currentPath.includes(child.id)) return null;
             return (
-              <ReplyNode 
-                key={child.id} 
-                event={child} 
-                childrenMap={childrenMap} 
+              <ReplyNode
+                key={child.id}
+                event={child}
+                childrenMap={childrenMap}
                 depth={depth + 1}
                 apiBase={apiBase}
                 enableRegtestPay={enableRegtestPay}
@@ -140,25 +146,30 @@ function ReplyNode({
   );
 }
 
-export function ThreadedReplies({ events, rootId, apiBase, enableRegtestPay }: ThreadedRepliesProps) {
+export function ThreadedReplies({
+  events,
+  rootId,
+  apiBase,
+  enableRegtestPay
+}: ThreadedRepliesProps) {
   const childrenMap = useMemo(() => buildThreadTree(events, rootId), [events, rootId]);
   const rootReplies = childrenMap.get(rootId) || [];
 
   if (rootReplies.length === 0 && events.length > 0) {
-      // Fallback: if everything is orphaned (maybe logic issue), show all as flat?
-      // With our logic, orphaned nodes are attached to rootId, so this shouldn't happen 
-      // unless events is empty.
+    // Fallback: if everything is orphaned (maybe logic issue), show all as flat?
+    // With our logic, orphaned nodes are attached to rootId, so this shouldn't happen
+    // unless events is empty.
   }
 
   return (
     <div className="threaded-replies">
       {rootReplies.map((reply) => (
-        <ReplyNode 
-          key={reply.id} 
-          event={reply} 
-          childrenMap={childrenMap} 
-          depth={0} 
-          apiBase={apiBase} 
+        <ReplyNode
+          key={reply.id}
+          event={reply}
+          childrenMap={childrenMap}
+          depth={0}
+          apiBase={apiBase}
           enableRegtestPay={enableRegtestPay}
         />
       ))}

@@ -93,11 +93,16 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
   if (!open) return null;
 
   const shortcuts = [
-    { keys: ['j', 'k'], desc: 'Navigate posts' },
+    { keys: ['j', '↓'], desc: 'Next post' },
+    { keys: ['k', '↑'], desc: 'Previous post' },
+    { keys: ['l'], desc: 'Like focused post' },
+    { keys: ['z'], desc: 'Zap focused post' },
+    { keys: ['r'], desc: 'Reply to focused post' },
+    { keys: ['Enter'], desc: 'Open thread' },
     { keys: ['/'], desc: 'Search' },
     { keys: ['n'], desc: 'New post' },
     { keys: ['?'], desc: 'Show this help' },
-    { keys: ['Esc'], desc: 'Close modal' }
+    { keys: ['Esc'], desc: 'Close modal / Clear focus' }
   ];
 
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions -- Modal overlay/content click patterns */

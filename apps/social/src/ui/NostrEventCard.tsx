@@ -1,17 +1,14 @@
-import {
-  PaywalledContent,
-  ReactionButton,
-  ReplyModal,
-  useAuth,
-  ZapButton
-} from '@nostrstack/react';
+import { PaywalledContent, ReplyModal, useAuth, ZapButton } from '@nostrstack/react';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { memo, useCallback, useState } from 'react';
 
 import { useRepost } from '../hooks/useRepost';
+import { EmojiReactionButton } from './EmojiReactionButton';
 import { JsonView } from './JsonView';
+import { LinkPreviews } from './LinkPreview';
 import { ProfileLink } from './ProfileLink';
+import { TopZaps } from './TopZaps';
 
 const md = new MarkdownIt({
   html: false,
@@ -156,12 +153,15 @@ export const NostrEventCard = memo(function NostrEventCard({
             }
           />
         ) : (
-          renderContent()
+          <>
+            {renderContent()}
+            <LinkPreviews content={event.content} />
+          </>
         )}
       </div>
 
       <div className="ns-event-card__actions" role="group" aria-label="Post actions">
-        <ReactionButton event={event} />
+        <EmojiReactionButton event={event} />
         <ZapButton
           event={event}
           authorLightningAddress={authorLightningAddress}
@@ -211,6 +211,8 @@ export const NostrEventCard = memo(function NostrEventCard({
           <span className="icon">{showJson ? '👁️‍🗨️' : '👁️'}</span>
         </button>
       </div>
+
+      <TopZaps eventId={event.id} />
 
       {showJson && (
         <div className="ns-event-card__json">

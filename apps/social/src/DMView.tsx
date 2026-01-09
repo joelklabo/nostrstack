@@ -99,7 +99,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
             borderRadius: '50%',
             objectFit: 'cover',
             flexShrink: 0,
-            background: 'var(--color-canvas-subtle)'
+            background: 'var(--ns-color-bg-subtle)'
           }}
           loading="lazy"
         />
@@ -126,7 +126,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
             <span
               style={{
                 fontSize: '0.75rem',
-                color: 'var(--color-fg-muted)',
+                color: 'var(--ns-color-text-muted)',
                 flexShrink: 0
               }}
             >
@@ -136,7 +136,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
           <div
             style={{
               fontSize: '0.8rem',
-              color: 'var(--color-fg-muted)',
+              color: 'var(--ns-color-text-muted)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -275,8 +275,8 @@ export function DMView() {
             className="dm-new-message"
             style={{
               padding: '0.75rem',
-              borderBottom: '1px solid var(--color-border-muted)',
-              background: 'var(--color-canvas-subtle)'
+              borderBottom: '1px solid var(--ns-color-border-strong)',
+              background: 'var(--ns-color-bg-subtle)'
             }}
           >
             <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>
@@ -298,7 +298,7 @@ export function DMView() {
             {recipientError && (
               <div
                 style={{
-                  color: 'var(--color-danger-fg)',
+                  color: 'var(--ns-color-danger-default)',
                   fontSize: '0.75rem',
                   marginBottom: '0.5rem'
                 }}
@@ -323,8 +323,8 @@ export function DMView() {
                 }}
                 style={{
                   flex: 1,
-                  borderColor: 'var(--color-border-muted)',
-                  color: 'var(--color-fg-muted)'
+                  borderColor: 'var(--ns-color-border-strong)',
+                  color: 'var(--ns-color-text-muted)'
                 }}
               >
                 Cancel
@@ -351,7 +351,9 @@ export function DMView() {
             />
           ))}
           {conversations.length === 0 && !loading && (
-            <div style={{ padding: '1rem', color: 'var(--color-fg-muted)', fontStyle: 'italic' }}>
+            <div
+              style={{ padding: '1rem', color: 'var(--ns-color-text-muted)', fontStyle: 'italic' }}
+            >
               No messages yet.
             </div>
           )}
@@ -412,7 +414,7 @@ export function DMView() {
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%',
-              color: 'var(--color-fg-muted)'
+              color: 'var(--ns-color-text-muted)'
             }}
           >
             Select a conversation

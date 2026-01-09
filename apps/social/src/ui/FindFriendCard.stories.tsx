@@ -33,7 +33,7 @@ export const WithoutCallback: Story = {
 
 export const InContainer: Story = {
   render: (args) => (
-    <div style={{ width: '600px', padding: '1rem', background: 'var(--color-canvas-default)' }}>
+    <div style={{ width: '600px', padding: '1rem', background: 'var(--ns-color-bg-default)' }}>
       <FindFriendCard {...args} />
     </div>
   ),
