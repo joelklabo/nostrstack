@@ -105,13 +105,27 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
     { keys: ['Esc'], desc: 'Close modal / Clear focus' }
   ];
 
-  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions -- Modal overlay/content click patterns */
   return (
-    <div className="shortcuts-overlay" onClick={onClose}>
+    <div
+      className="shortcuts-overlay"
+      role="button"
+      tabIndex={0}
+      aria-label="Close keyboard shortcuts"
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+    >
       <div
         ref={modalRef}
         className="shortcuts-modal"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-modal-title"

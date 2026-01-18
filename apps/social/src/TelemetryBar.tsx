@@ -698,7 +698,11 @@ export function TelemetryBar() {
 
       <div className="telemetry-header">
         <span>Activity Log</span>
+        <label className="sr-only" htmlFor="telemetry-log-limit">
+          Log limit
+        </label>
         <select
+          id="telemetry-log-limit"
           className="ns-select telemetry-log-select"
           value={logLimit}
           onChange={(e) => setLogLimit(parseInt(e.target.value, 10))}

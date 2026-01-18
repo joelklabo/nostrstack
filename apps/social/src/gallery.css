@@ -461,6 +461,14 @@ body {
   color: var(--ns-color-text-muted);
 }
 
+.editor-counter__status {
+  margin-left: var(--ns-space-2);
+  font-size: var(--ns-font-size-xs);
+  font-weight: var(--ns-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .editor-counter.is-near-limit {
   color: var(--ns-color-warning-default);
 }
@@ -1203,8 +1211,8 @@ body {
 }
 
 .emoji-picker__emoji {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1702,7 +1710,6 @@ body {
   place-items: center;
   z-index: 9999;
   padding: var(--ns-space-4);
-  backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 

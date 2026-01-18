@@ -304,7 +304,11 @@ export function RelaysView() {
 
       <div className="relay-editor-section">
         <form onSubmit={handleAdd} className="relay-add-form">
+          <label className="sr-only" htmlFor="relay-url">
+            Relay URL
+          </label>
           <input
+            id="relay-url"
             type="url"
             placeholder="wss://relay.example.com"
             value={newRelayInput}

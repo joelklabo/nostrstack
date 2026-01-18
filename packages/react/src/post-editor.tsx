@@ -157,6 +157,10 @@ export function PostEditor({
           aria-label={`Character count: ${currentLength} of ${maxLength}${isOverLimit ? ', exceeds limit' : ''}`}
         >
           {currentLength} / {maxLength}
+          {isOverLimit && <span className="editor-counter__status">Over limit</span>}
+          {!isOverLimit && isNearLimit && (
+            <span className="editor-counter__status">Near limit</span>
+          )}
         </div>
         <div className="editor-actions" role="group" aria-label="Editor actions">
           {onCancel && (

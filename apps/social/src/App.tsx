@@ -194,8 +194,21 @@ function AppShell() {
       {/* Mobile overlay */}
       <div
         className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
-        onClick={handleMobileMenuClose}
-        aria-hidden="true"
+        role="button"
+        tabIndex={mobileMenuOpen ? 0 : -1}
+        aria-label="Close menu"
+        aria-hidden={!mobileMenuOpen}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          handleMobileMenuClose();
+        }}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleMobileMenuClose();
+          }
+        }}
       />
 
       <Sidebar

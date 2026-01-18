@@ -229,11 +229,26 @@ export function WalletView({
 
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Modal overlay/content click patterns */
   return (
-    <div className="ns-dialog-overlay" role="presentation" onClick={handleClose}>
+    <div
+      className="ns-dialog-overlay"
+      role="button"
+      tabIndex={0}
+      aria-label="Close withdraw dialog"
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        handleClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleClose();
+        }
+      }}
+    >
       <div
         ref={modalRef}
         className="ns-dialog"
-        onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="withdraw-title"

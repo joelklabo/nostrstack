@@ -68,11 +68,21 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
     }
   };
 
-  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- Clickable notification item */
   return (
     <div
       className="notification-item"
       onClick={handleNotificationClick}
+      role="button"
+      tabIndex={targetId ? 0 : -1}
+      aria-disabled={!targetId}
+      aria-label="Open notification"
+      onKeyDown={(event) => {
+        if (!targetId) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleNotificationClick();
+        }
+      }}
       style={{
         display: 'flex',
         alignItems: 'flex-start',

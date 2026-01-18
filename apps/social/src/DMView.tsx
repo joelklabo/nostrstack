@@ -395,7 +395,11 @@ export function DMView() {
               <div ref={messagesEndRef} />
             </div>
             <div className="dm-input-area">
+              <label className="sr-only" htmlFor="dm-message-input">
+                Message
+              </label>
               <input
+                id="dm-message-input"
                 className="dm-input"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}

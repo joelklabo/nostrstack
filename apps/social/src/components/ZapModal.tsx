@@ -63,14 +63,29 @@ export const ZapModal: React.FC<ZapModalProps> = ({
 
   if (!isOpen) return null;
 
-  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- Modal overlay/content click patterns */
   return (
-    <div className="zap-modal-overlay" onClick={onClose}>
-      <div className="zap-modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="zap-modal-overlay"
+      role="button"
+      tabIndex={0}
+      aria-label="Close zap dialog"
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+    >
+      <div className="zap-modal">
         {/* Header */}
         <div className="zap-header">
           <h2>Zap {recipientName}</h2>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} aria-label="Close zap dialog">
             &times;
           </button>
         </div>

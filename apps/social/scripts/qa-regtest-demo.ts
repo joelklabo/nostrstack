@@ -59,7 +59,7 @@ async function ensureGalleryAvailable(baseUrl: string) {
 }
 
 async function loginWithNsec(page: Page, nsec: string) {
-  await expect(page.getByText('Sign in to NostrStack')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: 'NostrStack' })).toBeVisible({ timeout: 30_000 });
   await page.getByText('Enter nsec manually').click();
   await page.getByPlaceholder('nsec1...').fill(nsec);
   await page.getByRole('button', { name: 'Sign in' }).click();
@@ -106,8 +106,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     if (!(await regtestBtn.isVisible())) {
       throw new Error('Regtest pay button missing after invoice ready.');
     }
-    await regtestBtn.click();
-    await expect(page.locator('.payment-modal')).toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 });
+    await regtestBtn.waitFor({ state: 'visible' });
+    await regtestBtn.click({ force: true });
+    await expect(page.locator('.payment-modal')).toContainText(/Payment (sent|confirmed)\./, {
+      timeout: 20_000
+    });
     // Use text-based selector for CLOSE button
     await page.locator('button:has-text("CLOSE")').first().click();
     return true;
@@ -139,7 +142,10 @@ async function tryBolt12Flow(page: Page) {
   await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20_000 });
 }
 
-async function configureNwc(page: Page, options: { uri: string; relays?: string; maxSats?: string }) {
+async function configureNwc(
+  page: Page,
+  options: { uri: string; relays?: string; maxSats?: string }
+) {
   await page.getByRole('button', { name: /Settings/i }).click();
   await page.getByLabel('NWC_URI').fill(options.uri);
   if (options.relays) {
@@ -189,6 +195,7 @@ async function main() {
     permissions: ['clipboard-read', 'clipboard-write']
   });
   const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
 
   page.on('pageerror', (err) => {
     if (tearingDown) return;
@@ -255,7 +262,10 @@ async function main() {
       throw new Error('Unable to pay a zap invoice via regtest; no zap-enabled posts found.');
     }
   } catch (err) {
-    failures.push({ kind: 'qa', detail: err instanceof Error ? err.stack || err.message : String(err) });
+    failures.push({
+      kind: 'qa',
+      detail: err instanceof Error ? err.stack || err.message : String(err)
+    });
   } finally {
     tearingDown = true;
     await context.close();
@@ -263,9 +273,15 @@ async function main() {
   }
 
   if (pageErrors.length) failures.push({ kind: 'pageerror', detail: pageErrors.join('\n') });
-  if (localRequestFailures.length) failures.push({ kind: 'requestfailed', detail: localRequestFailures.join('\n') });
-  if (localResponses404.length) failures.push({ kind: 'response:404', detail: Array.from(new Set(localResponses404)).join('\n') });
-  if (consoleErrors.length) failures.push({ kind: 'console:error', detail: consoleErrors.join('\n') });
+  if (localRequestFailures.length)
+    failures.push({ kind: 'requestfailed', detail: localRequestFailures.join('\n') });
+  if (localResponses404.length)
+    failures.push({
+      kind: 'response:404',
+      detail: Array.from(new Set(localResponses404)).join('\n')
+    });
+  if (consoleErrors.length)
+    failures.push({ kind: 'console:error', detail: consoleErrors.join('\n') });
 
   // Warnings are informative but don’t fail by default; opt-in via FAIL_ON_WARN=1.
   if (envFlag('FAIL_ON_WARN', false) && consoleWarnings.length) {
