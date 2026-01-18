@@ -168,7 +168,11 @@ export function SupportSection({
       className={tipClassName}
     />
   ) : (
-    <div className={`nostrstack-callout${tipClassName ? ` ${tipClassName}` : ''}`} role="status">
+    <div
+      className={`nostrstack-callout${tipClassName ? ` ${tipClassName}` : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       <div className="nostrstack-callout__title">Tips unavailable</div>
       <div className="nostrstack-callout__content">Provide a lightning address to enable tips.</div>
     </div>
@@ -197,7 +201,7 @@ export function SupportSection({
           className={shareClassName}
         />
       ) : (
-        <div className="nostrstack-callout" role="status">
+        <div className="nostrstack-callout" role="status" aria-live="polite">
           <div className="nostrstack-callout__title">Share unavailable</div>
           <div className="nostrstack-callout__content">
             Provide a share URL + title to enable sharing.

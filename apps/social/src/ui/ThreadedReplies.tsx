@@ -79,6 +79,7 @@ function ReplyNode({
   const children = childrenMap.get(event.id) || [];
   const hasChildren = children.length > 0;
   const currentPath = [...path, event.id];
+  const childrenId = `thread-children-${event.id}`;
 
   // Max depth to prevent infinite indentation squishing
   const isTooDeep = depth > 5;
@@ -99,20 +100,14 @@ function ReplyNode({
         />
         {hasChildren && (
           <button
+            type="button"
             className="thread-collapse-btn"
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--ns-color-text-muted)',
-              background: 'none',
-              border: 'none',
-              padding: '0.25rem',
-              cursor: 'pointer',
-              display: 'block',
-              marginBottom: '0.5rem'
-            }}
+            aria-expanded={!collapsed}
+            aria-controls={childrenId}
+            aria-label={`${collapsed ? 'Show' : 'Hide'} ${children.length} replies`}
           >
-            {collapsed ? `Show ${children.length} replies` : ''}
+            {collapsed ? `Show ${children.length} replies` : `Hide ${children.length} replies`}
           </button>
         )}
       </div>
@@ -120,6 +115,7 @@ function ReplyNode({
       {!collapsed && hasChildren && (
         <div
           className="thread-children"
+          id={childrenId}
           style={{
             borderLeft: isTooDeep ? 'none' : '2px solid var(--ns-color-border-strong)',
             paddingLeft: isTooDeep ? 0 : '0.5rem',

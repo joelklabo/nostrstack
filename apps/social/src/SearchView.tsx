@@ -10,6 +10,7 @@ import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { fetchNostrEventFromApi, SEARCH_RELAYS, searchNotes } from './nostr/api';
 import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
+import { Image } from './ui/Image';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { navigateToProfile } from './utils/navigation';
 
@@ -194,18 +195,28 @@ export function SearchView() {
         </div>
       </header>
 
-      <form className="search-card" onSubmit={handleSubmit} role="search" aria-label="Search Nostr">
+      <form
+        className="search-card"
+        onSubmit={handleSubmit}
+        role="search"
+        aria-label="Search Nostr"
+        aria-busy={status === 'validating' || status === 'resolving' || notesLoading}
+      >
         <label className="search-label" htmlFor="friend-search">
           Search query
         </label>
         <div className="search-input-row">
           <input
             id="friend-search"
+            name="query"
+            type="search"
             className="ns-input search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Keywords, npub, or name@domain"
             autoComplete="off"
+            inputMode="search"
+            enterKeyHint="search"
             aria-describedby="search-helper"
           />
           <button className="action-btn" type="submit" aria-label="Execute search">
@@ -246,9 +257,9 @@ export function SearchView() {
         <div className="search-result-card">
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
             {profilePicture && (
-              <img
+              <Image
                 src={profilePicture}
-                alt=""
+                alt={`${fetchedProfile?.display_name || fetchedProfile?.name || result.nip05 || npub || result.pubkey} avatar`}
                 style={{
                   width: 48,
                   height: 48,
@@ -319,12 +330,17 @@ export function SearchView() {
         {notes.length > 0 && (
           <>
             <h3 style={{ margin: '2rem 0 1rem', fontSize: '1.2rem' }}>Matching Notes</h3>
-            {notes.map((note) => (
-              <NostrEventCard key={note.id} event={note} />
-            ))}
+            <div className="search-notes-list" role="list">
+              {notes.map((note) => (
+                <div key={note.id} role="listitem">
+                  <NostrEventCard event={note} />
+                </div>
+              ))}
+            </div>
             {hasMore && (
               <div style={{ padding: '1.5rem', textAlign: 'center' }}>
                 <button
+                  type="button"
                   className="action-btn"
                   onClick={handleLoadMore}
                   disabled={isLoadingMore}
@@ -343,6 +359,8 @@ export function SearchView() {
                   color: 'var(--ns-color-text-muted)',
                   fontSize: '0.85rem'
                 }}
+                role="status"
+                aria-live="polite"
               >
                 End of results
               </div>
@@ -352,6 +370,8 @@ export function SearchView() {
         {notesLoading && notes.length === 0 && (
           <div
             style={{ padding: '2rem', textAlign: 'center', color: 'var(--ns-color-text-muted)' }}
+            role="status"
+            aria-live="polite"
           >
             Searching for notes...
           </div>

@@ -85,7 +85,12 @@ export const ZapModal: React.FC<ZapModalProps> = ({
         {/* Header */}
         <div className="zap-header">
           <h2>Zap {recipientName}</h2>
-          <button className="close-btn" onClick={onClose} aria-label="Close zap dialog">
+          <button
+            type="button"
+            className="close-btn"
+            onClick={onClose}
+            aria-label="Close zap dialog"
+          >
             &times;
           </button>
         </div>
@@ -96,9 +101,11 @@ export const ZapModal: React.FC<ZapModalProps> = ({
             <div className="amount-presets">
               {PRESETS.map((val) => (
                 <button
+                  type="button"
                   key={val}
                   className={`preset-btn ${amount === val ? 'active' : ''}`}
                   onClick={() => setAmount(val)}
+                  aria-pressed={amount === val}
                 >
                   ⚡ {val}
                 </button>
@@ -109,10 +116,13 @@ export const ZapModal: React.FC<ZapModalProps> = ({
               <label htmlFor="zap-amount">Custom Amount (sats)</label>
               <input
                 id="zap-amount"
+                name="zap-amount"
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
                 min="1"
+                inputMode="numeric"
+                autoComplete="off"
               />
             </div>
 
@@ -120,19 +130,27 @@ export const ZapModal: React.FC<ZapModalProps> = ({
               <label htmlFor="zap-message">Message (optional)</label>
               <input
                 id="zap-message"
+                name="zap-message"
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Great post!"
+                autoComplete="off"
               />
             </div>
 
-            {state === 'error' && <div className="error-msg">{error}</div>}
+            {state === 'error' && (
+              <div className="error-msg" role="alert">
+                {error}
+              </div>
+            )}
 
             <button
+              type="button"
               className="zap-confirm-btn"
               disabled={state === 'resolving' || state === 'paid'}
               onClick={handleZap}
+              aria-busy={state === 'resolving'}
             >
               {state === 'resolving' ? 'Generating...' : 'Zap Now ⚡'}
             </button>
@@ -141,23 +159,36 @@ export const ZapModal: React.FC<ZapModalProps> = ({
           {/* Right Column: Invoice / QR */}
           <div className="zap-qr-panel">
             {state === 'idle' || state === 'resolving' || state === 'error' ? (
-              <div className="qr-placeholder">
-                <span className="lightning-icon">⚡</span>
+              <div className="qr-placeholder" role="status" aria-live="polite">
+                <span className="lightning-icon" aria-hidden="true">
+                  ⚡
+                </span>
                 <p>Select amount to generate invoice</p>
               </div>
             ) : state === 'ready' ? (
               <div className="qr-container">
-                <QRCodeSVG value={invoice} size={200} level="L" includeMargin />
+                <QRCodeSVG
+                  value={invoice}
+                  size={200}
+                  level="L"
+                  includeMargin
+                  role="img"
+                  aria-label="Lightning invoice QR code"
+                />
                 <div className="invoice-actions">
-                  <button onClick={copyInvoice}>Copy Invoice</button>
+                  <button type="button" onClick={copyInvoice}>
+                    Copy Invoice
+                  </button>
                   <a href={`lightning:${invoice}`} className="open-wallet-btn">
                     Open Wallet
                   </a>
                 </div>
               </div>
             ) : state === 'paid' ? (
-              <div className="success-state">
-                <span className="check-icon">✅</span>
+              <div className="success-state" role="status" aria-live="polite">
+                <span className="check-icon" aria-hidden="true">
+                  ✅
+                </span>
                 <p>Payment Received!</p>
               </div>
             ) : null}

@@ -26,6 +26,128 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:where(
+    .ns-btn,
+    .action-btn,
+    .nav-item,
+    .offer-primary-btn,
+    .offer-secondary-btn,
+    .wallet-action-btn,
+    .onboarding-btn,
+    .emoji-picker__emoji,
+    .emoji-picker__category,
+    .find-friend-card__action,
+    .new-posts-indicator,
+    .shortcuts-close,
+    .ns-input,
+    .offer-input,
+    .search-input
+  ):focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
+}
+
+:where(
+    .auth-btn,
+    .feed-load-more__btn,
+    .ns-action-btn,
+    .hamburger-btn,
+    .preset-btn,
+    .zap-confirm-btn,
+    .close-btn,
+    .open-wallet-btn,
+    .dm-input,
+    .thread-collapse-btn,
+    .nostr-event-link,
+    .profile-link--with-avatar,
+    .ns-dialog__close,
+    .lnurl-auth-close,
+    .sidebar-overlay,
+    .dm-list-item,
+    .notification-item,
+    .ns-event-card,
+    .nwc-remember input,
+    .dm-input-area input,
+    .dm-input-area button,
+    .search-result-action
+  ):focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
+}
+
+.image-container {
+  display: block;
+}
+
+.image-container__img {
+  opacity: 0;
+  transition: opacity var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut);
+}
+
+.image-container[data-loaded='true'] .image-container__img,
+.image-container[data-error='true'] .image-container__img {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-container__img {
+    transition: none;
+  }
+}
+
+.dm-list-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: var(--ns-space-3);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: background-color var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut);
+}
+
+.dm-list-item:hover {
+  background: var(--ns-color-bg-subtle);
+}
+
+.dm-list-item.active,
+.dm-list-item[aria-current='true'] {
+  background: var(--ns-color-bg-muted);
+}
+
+.notification-item:hover {
+  background: var(--ns-color-bg-subtle);
+}
+
+.thread-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ns-space-1);
+  font-size: 0.75rem;
+  color: var(--ns-color-text-muted);
+  background: none;
+  border: none;
+  padding: var(--ns-space-2) var(--ns-space-2);
+  cursor: pointer;
+  margin-bottom: var(--ns-space-2);
+}
+
+.thread-collapse-btn:hover {
+  color: var(--ns-color-text-default);
+}
+
 /* ===== LAYOUT ===== */
 .social-layout {
   display: grid;
@@ -100,10 +222,13 @@ body {
   font-weight: var(--ns-font-weight-medium);
   cursor: pointer;
   text-align: left;
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
   gap: var(--ns-space-3);
   border-radius: var(--ns-radius-md);
   position: relative;
+  touch-action: manipulation;
 }
 
 .nav-item:hover {
@@ -233,8 +358,12 @@ body {
   border: 1px solid var(--ns-color-border-default);
   background: var(--ns-color-surface-default);
   cursor: pointer;
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
   color: var(--ns-color-text-muted);
+  touch-action: manipulation;
 }
 
 .wallet-action-btn:hover:not(:disabled) {
@@ -425,7 +554,10 @@ body {
   font-size: var(--ns-font-size-base);
   line-height: 1.6;
   resize: vertical;
-  transition: all var(--ns-duration-normal) var(--ns-easing-easeInOut);
+  transition:
+    border-color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-normal) var(--ns-easing-easeInOut);
 }
 
 .editor-input::placeholder {
@@ -435,6 +567,7 @@ body {
 .editor-input:focus {
   outline: none;
   border-color: var(--ns-color-primary-default);
+  box-shadow: 0 0 0 3px var(--ns-color-primary-subtle);
 }
 
 .editor-media-hint {
@@ -495,9 +628,14 @@ body {
   border: 1px solid var(--ns-color-border-default);
   background: var(--ns-color-surface-default);
   color: var(--ns-color-text-muted);
-  transition: all var(--ns-duration-normal) var(--ns-easing-easeInOut);
+  transition:
+    color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-normal) var(--ns-easing-easeInOut);
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  touch-action: manipulation;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -581,7 +719,9 @@ body {
   height: 8px;
   border-radius: 50%;
   background: var(--ns-color-text-muted);
-  transition: all var(--ns-duration-slow) var(--ns-easing-easeInOut);
+  transition:
+    background-color var(--ns-duration-slow) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-slow) var(--ns-easing-easeInOut);
 }
 
 .telemetry-status[data-status='connected'] .telemetry-status-dot {
@@ -910,7 +1050,10 @@ body {
   background: var(--ns-color-surface-default);
   border: 1px solid var(--ns-color-border-default);
   border-radius: var(--ns-radius-lg);
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
 .ns-card:hover {
@@ -1016,7 +1159,10 @@ body {
   padding: var(--ns-space-2) var(--ns-space-3);
   font-size: 0.75rem;
   border-radius: var(--ns-radius-md);
-  transition: all var(--ns-duration-normal) var(--ns-easing-easeInOut);
+  transition:
+    color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-normal) var(--ns-easing-easeInOut);
+  touch-action: manipulation;
 }
 
 .ns-action-btn .icon {
@@ -1660,7 +1806,11 @@ body {
   font-weight: var(--ns-font-weight-semibold);
   font-size: var(--ns-font-size-base);
   cursor: pointer;
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeInOut);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1668,6 +1818,7 @@ body {
   border: 1px solid var(--ns-color-border-default);
   background: var(--ns-color-surface-default);
   color: var(--ns-color-text-default);
+  touch-action: manipulation;
 }
 
 .auth-btn:hover {
@@ -1794,7 +1945,11 @@ body {
   color: var(--ns-color-text-default);
   font-family: var(--ns-font-family-sans);
   font-size: var(--ns-font-size-sm);
-  transition: all var(--ns-duration-normal) var(--ns-easing-easeInOut);
+  transition:
+    border-color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-normal) var(--ns-easing-easeInOut),
+    color var(--ns-duration-normal) var(--ns-easing-easeInOut);
 }
 
 .ns-input:focus,
@@ -1817,6 +1972,7 @@ body {
 .ns-select:focus {
   outline: none;
   border-color: var(--ns-color-primary-default);
+  box-shadow: 0 0 0 3px var(--ns-color-primary-subtle);
 }
 
 /* ===== UTILITIES ===== */
@@ -1923,7 +2079,10 @@ body {
   width: 100%;
   background: var(--ns-color-text-default);
   border-radius: 1px;
-  transition: all var(--ns-duration-slow) var(--ns-easing-easeInOut);
+  transition:
+    background-color var(--ns-duration-slow) var(--ns-easing-easeInOut),
+    transform var(--ns-duration-slow) var(--ns-easing-easeInOut),
+    opacity var(--ns-duration-slow) var(--ns-easing-easeInOut);
 }
 
 .hamburger-btn.is-open .hamburger-icon span:nth-child(1) {

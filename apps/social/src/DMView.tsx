@@ -79,20 +79,17 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
   };
 
   return (
-    <div
+    <button
+      type="button"
       className={`dm-list-item ${isActive ? 'active' : ''}`}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onClick();
-      }}
       aria-label={`Conversation with ${displayName}`}
+      aria-current={isActive ? 'true' : undefined}
     >
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
         <img
           src={avatarUrl}
-          alt=""
+          alt={`${displayName} avatar`}
           style={{
             width: '40px',
             height: '40px',
@@ -102,6 +99,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
             background: 'var(--ns-color-bg-subtle)'
           }}
           loading="lazy"
+          decoding="async"
         />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
@@ -147,7 +145,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -261,6 +259,7 @@ export function DMView() {
         >
           <span>Messages</span>
           <button
+            type="button"
             className="action-btn"
             onClick={() => setShowNewMessage(true)}
             aria-label="Start a new conversation"
@@ -285,6 +284,7 @@ export function DMView() {
             <input
               ref={newRecipientInputRef}
               className="dm-input"
+              name="recipient"
               value={newRecipient}
               onChange={(e) => {
                 setNewRecipient(e.target.value);
@@ -293,21 +293,30 @@ export function DMView() {
               onKeyDown={handleNewRecipientKeyDown}
               placeholder="Enter npub or hex pubkey..."
               aria-label="Recipient npub or pubkey"
+              aria-describedby={recipientError ? 'new-recipient-error' : undefined}
+              aria-invalid={Boolean(recipientError)}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               style={{ marginBottom: '0.5rem' }}
             />
             {recipientError && (
               <div
+                id="new-recipient-error"
                 style={{
                   color: 'var(--ns-color-danger-default)',
                   fontSize: '0.75rem',
                   marginBottom: '0.5rem'
                 }}
+                role="alert"
               >
                 {recipientError}
               </div>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
+                type="button"
                 className="action-btn"
                 onClick={handleStartNewConversation}
                 style={{ flex: 1 }}
@@ -315,6 +324,7 @@ export function DMView() {
                 Start
               </button>
               <button
+                type="button"
                 className="action-btn"
                 onClick={() => {
                   setShowNewMessage(false);
@@ -335,7 +345,7 @@ export function DMView() {
 
         <div className="dm-list">
           {loading && conversations.length === 0 && (
-            <div style={{ padding: '1rem' }}>
+            <div style={{ padding: '1rem' }} aria-hidden="true">
               <Skeleton variant="text" height={40} style={{ marginBottom: '0.5rem' }} />
               <Skeleton variant="text" height={40} style={{ marginBottom: '0.5rem' }} />
               <Skeleton variant="text" height={40} />
@@ -353,6 +363,8 @@ export function DMView() {
           {conversations.length === 0 && !loading && (
             <div
               style={{ padding: '1rem', color: 'var(--ns-color-text-muted)', fontStyle: 'italic' }}
+              role="status"
+              aria-live="polite"
             >
               No messages yet.
             </div>
@@ -365,17 +377,23 @@ export function DMView() {
           <>
             <div className="dm-header">
               <button
+                type="button"
                 className="action-btn"
                 style={{ marginRight: '0.5rem', display: 'none' }} // Visible on mobile via CSS if needed, but handled by class toggling for now
                 onClick={() => setSelectedPeer(null)}
+                aria-label="Back to conversations"
               >
                 &lt;
               </button>
               <ProfileLink pubkey={selectedPeer} />
             </div>
-            <div className="dm-messages">
+            <div className="dm-messages" role="list" aria-live="polite">
               {activeConversation?.messages.map((msg) => (
-                <div key={msg.id} className={`dm-message ${msg.isMine ? 'sent' : 'received'}`}>
+                <div
+                  key={msg.id}
+                  className={`dm-message ${msg.isMine ? 'sent' : 'received'}`}
+                  role="listitem"
+                >
                   {decryptedCache[msg.id] ?? 'Decrypting...'}
                   <div
                     style={{
@@ -401,12 +419,15 @@ export function DMView() {
               <input
                 id="dm-message-input"
                 className="dm-input"
+                name="message"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
+                autoComplete="off"
+                enterKeyHint="send"
               />
-              <button className="action-btn" onClick={handleSend}>
+              <button type="button" className="action-btn" onClick={handleSend}>
                 Send
               </button>
             </div>
@@ -420,6 +441,8 @@ export function DMView() {
               height: '100%',
               color: 'var(--ns-color-text-muted)'
             }}
+            role="status"
+            aria-live="polite"
           >
             Select a conversation
           </div>

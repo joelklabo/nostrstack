@@ -392,7 +392,9 @@ export function ShareWidget({
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <div style={{ fontWeight: 800 }}>Shares</div>
+        <div style={{ fontWeight: 800 }} role="heading" aria-level={3}>
+          Shares
+        </div>
         <div style={{ color: 'var(--ns-color-text-muted)', fontSize: 13 }}>
           <strong style={{ color: 'var(--ns-color-text)' }}>{countLabel}</strong>{' '}
           {Number(countLabel.replace('+', '')) === 1 ? 'share' : 'shares'}
@@ -419,6 +421,7 @@ export function ShareWidget({
             whiteSpace: 'nowrap'
           }}
           aria-live="polite"
+          role="status"
         >
           <span
             style={{
@@ -432,6 +435,7 @@ export function ShareWidget({
                     ? 'var(--ns-color-danger)'
                     : 'var(--ns-color-border)'
             }}
+            aria-hidden="true"
           />
           {status === 'connected'
             ? 'Realtime'
@@ -456,7 +460,11 @@ export function ShareWidget({
   );
 
   const avatarStack = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+      role="group"
+      aria-label="Recent sharers"
+    >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {avatarPubkeys.map((pk, idx) => {
           const profile = profiles[pk];
@@ -479,12 +487,15 @@ export function ShareWidget({
                 boxShadow: '0 0 0 2px color-mix(in oklab, var(--ns-color-surface) 90%, transparent)'
               }}
               aria-label={label}
+              role="img"
             >
               {pic ? (
                 <img
                   src={pic}
                   alt=""
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : (
                 <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ns-color-text)' }}>
@@ -511,13 +522,18 @@ export function ShareWidget({
               color: 'var(--ns-color-text)'
             }}
             title={`${uniqueSharers.length - avatarPubkeys.length} more`}
+            aria-label={`${uniqueSharers.length - avatarPubkeys.length} more sharers`}
           >
             +{uniqueSharers.length - avatarPubkeys.length}
           </div>
         )}
       </div>
       {!uniqueSharers.length && (
-        <div style={{ fontSize: 13, color: 'var(--ns-color-text-muted)' }}>
+        <div
+          style={{ fontSize: 13, color: 'var(--ns-color-text-muted)' }}
+          role="status"
+          aria-live="polite"
+        >
           No shares yet. Be the first.
         </div>
       )}
@@ -538,12 +554,14 @@ export function ShareWidget({
         padding: 14,
         boxShadow: 'var(--ns-shadow-md)'
       }}
+      role="region"
+      aria-label="Share activity"
     >
       {header}
       <div style={{ marginTop: 10 }}>{avatarStack}</div>
 
       {recent.length > 0 && (
-        <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+        <div style={{ marginTop: 12, display: 'grid', gap: 8 }} role="list">
           {recent.map((ev) => {
             const profile = profiles[ev.pubkey];
             const name =
@@ -551,76 +569,79 @@ export function ShareWidget({
             const pic = profile?.picture;
             const href = `https://njump.me/${ev.id}`;
             return (
-              <a
-                key={ev.id}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: 'flex',
-                  gap: 10,
-                  alignItems: 'center',
-                  padding: '8px 10px',
-                  borderRadius: 12,
-                  border: '1px solid var(--ns-color-border)',
-                  background: 'color-mix(in oklab, var(--ns-color-surface) 90%, white)',
-                  textDecoration: 'none',
-                  color: 'var(--ns-color-text)'
-                }}
-              >
-                <div
+              <div key={ev.id} role="listitem">
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
                   style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 999,
-                    overflow: 'hidden',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                    padding: '8px 10px',
+                    borderRadius: 12,
                     border: '1px solid var(--ns-color-border)',
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: 'var(--ns-color-surface)',
-                    flex: '0 0 auto'
+                    background: 'color-mix(in oklab, var(--ns-color-surface) 90%, white)',
+                    textDecoration: 'none',
+                    color: 'var(--ns-color-text)'
                   }}
-                  aria-hidden="true"
                 >
-                  {pic ? (
-                    <img
-                      src={pic}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: 12, fontWeight: 800 }}>
-                      {(profile?.display_name || profile?.name || ev.pubkey)
-                        .slice(0, 1)
-                        .toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <div style={{ minWidth: 0, display: 'grid' }}>
                   <div
                     style={{
-                      fontWeight: 800,
+                      width: 30,
+                      height: 30,
+                      borderRadius: 999,
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
+                      border: '1px solid var(--ns-color-border)',
+                      display: 'grid',
+                      placeItems: 'center',
+                      background: 'var(--ns-color-surface)',
+                      flex: '0 0 auto'
+                    }}
+                    aria-hidden="true"
+                  >
+                    {pic ? (
+                      <img
+                        src={pic}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span style={{ fontSize: 12, fontWeight: 800 }}>
+                        {(profile?.display_name || profile?.name || ev.pubkey)
+                          .slice(0, 1)
+                          .toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0, display: 'grid' }}>
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {name}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--ns-color-text-muted)' }}>
+                      {timeAgo(nowMs, ev.created_at)}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      marginLeft: 'auto',
+                      fontSize: 12,
+                      color: 'var(--ns-color-text-muted)'
                     }}
                   >
-                    {name}
+                    Open
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--ns-color-text-muted)' }}>
-                    {timeAgo(nowMs, ev.created_at)}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    fontSize: 12,
-                    color: 'var(--ns-color-text-muted)'
-                  }}
-                >
-                  Open
-                </div>
-              </a>
+                </a>
+              </div>
             );
           })}
         </div>

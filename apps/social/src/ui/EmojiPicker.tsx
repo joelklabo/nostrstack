@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useRef, useState } from 'react';
 
 // Common reaction emojis - curated set for social media reactions
 const EMOJI_CATEGORIES = {
@@ -15,6 +15,7 @@ interface EmojiPickerProps {
   onSelect: (emoji: string) => void;
   onClose: () => void;
   isOpen: boolean;
+  id?: string;
   /** Show quick reaction bar instead of full picker */
   quickMode?: boolean;
 }
@@ -23,9 +24,12 @@ export const EmojiPicker = memo(function EmojiPicker({
   onSelect,
   onClose,
   isOpen,
+  id,
   quickMode = false
 }: EmojiPickerProps) {
   const pickerRef = useRef<HTMLDivElement>(null);
+  const generatedId = useId();
+  const resolvedId = id ?? generatedId;
   const [activeCategory, setActiveCategory] = useState<keyof typeof EMOJI_CATEGORIES>('reactions');
 
   // Close on escape key
@@ -76,14 +80,23 @@ export const EmojiPicker = memo(function EmojiPicker({
   // Quick mode: just a row of common reactions
   if (quickMode) {
     return (
-      <div className="emoji-picker emoji-picker--quick" ref={pickerRef}>
+      <div
+        className="emoji-picker emoji-picker--quick"
+        ref={pickerRef}
+        role="listbox"
+        aria-label="Quick reactions"
+        aria-orientation="horizontal"
+        id={resolvedId}
+      >
         {QUICK_REACTIONS.map((emoji) => (
           <button
+            type="button"
             key={emoji}
             className="emoji-picker__emoji"
             onClick={() => handleEmojiClick(emoji)}
-            type="button"
             aria-label={`React with ${emoji}`}
+            role="option"
+            aria-selected={false}
           >
             {emoji}
           </button>
@@ -94,15 +107,22 @@ export const EmojiPicker = memo(function EmojiPicker({
 
   // Full picker with categories
   return (
-    <div className="emoji-picker" ref={pickerRef} role="dialog" aria-label="Emoji picker">
+    <div
+      className="emoji-picker"
+      ref={pickerRef}
+      role="dialog"
+      aria-label="Emoji picker"
+      id={resolvedId}
+    >
       <div className="emoji-picker__header">
         {(Object.keys(EMOJI_CATEGORIES) as (keyof typeof EMOJI_CATEGORIES)[]).map((category) => (
           <button
+            type="button"
             key={category}
             className={`emoji-picker__category ${activeCategory === category ? 'active' : ''}`}
             onClick={() => setActiveCategory(category)}
-            type="button"
             aria-pressed={activeCategory === category}
+            aria-label={`${category} emoji category`}
           >
             {category === 'reactions' && '❤️'}
             {category === 'faces' && '😀'}
@@ -111,14 +131,16 @@ export const EmojiPicker = memo(function EmojiPicker({
           </button>
         ))}
       </div>
-      <div className="emoji-picker__grid">
+      <div className="emoji-picker__grid" role="listbox" aria-label={`${activeCategory} emojis`}>
         {EMOJI_CATEGORIES[activeCategory].map((emoji) => (
           <button
+            type="button"
             key={emoji}
             className="emoji-picker__emoji"
             onClick={() => handleEmojiClick(emoji)}
-            type="button"
             aria-label={`React with ${emoji}`}
+            role="option"
+            aria-selected={false}
           >
             {emoji}
           </button>

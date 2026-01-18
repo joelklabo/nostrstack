@@ -68,6 +68,12 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
     }
   };
 
+  const authorLabel = authors.map((pk) => pk.slice(0, 8)).join(', ');
+  const othersLabel =
+    othersCount > 0 ? ` and ${othersCount} other${othersCount > 1 ? 's' : ''}` : '';
+  const actionLabel = `${authorLabel}${othersLabel}${renderActionText()}`.trim();
+  const timeId = `notification-time-${group.id}`;
+
   return (
     <div
       className="notification-item"
@@ -75,7 +81,8 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
       role="button"
       tabIndex={targetId ? 0 : -1}
       aria-disabled={!targetId}
-      aria-label="Open notification"
+      aria-label={targetId ? `Open notification: ${actionLabel}` : actionLabel}
+      aria-describedby={timeId}
       onKeyDown={(event) => {
         if (!targetId) return;
         if (event.key === 'Enter' || event.key === ' ') {
@@ -93,7 +100,11 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
         transition: 'background 0.1s ease-in-out'
       }}
     >
-      <div className="notification-icon" style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
+      <div
+        className="notification-icon"
+        style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}
+        aria-hidden="true"
+      >
         {renderIcon()}
       </div>
       <div className="notification-content" style={{ flex: 1 }}>
@@ -126,6 +137,7 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
         </div>
         <div
           className="notification-time"
+          id={timeId}
           style={{
             fontSize: '0.75rem',
             color: 'var(--ns-color-text-subtle)',

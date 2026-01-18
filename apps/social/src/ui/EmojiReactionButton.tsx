@@ -1,6 +1,6 @@
 import { useAuth } from '@nostrstack/react';
 import { type Event, type EventTemplate, SimplePool } from 'nostr-tools';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { useRelays } from '../hooks/useRelays';
 import { EmojiPicker } from './EmojiPicker';
@@ -24,6 +24,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
   const [reactedEmoji, setReactedEmoji] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const pickerId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const longPressTimer = useRef<number | null>(null);
 
@@ -122,6 +123,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
   return (
     <div className="emoji-reaction-wrapper">
       <button
+        type="button"
         ref={buttonRef}
         className={`ns-btn ns-btn--ghost ns-btn--sm ns-action-btn ${className || ''} ${hasReacted ? 'active' : ''}`}
         onClick={handleClick}
@@ -134,6 +136,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
         aria-pressed={hasReacted}
         aria-haspopup="listbox"
         aria-expanded={showPicker}
+        aria-controls={pickerId}
         title={hasReacted ? `Reacted: ${reactedEmoji}` : 'React (hold for more)'}
       >
         <span className="icon">{hasReacted && reactedEmoji ? reactedEmoji : '♡'}</span>
@@ -141,6 +144,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
       </button>
 
       <EmojiPicker
+        id={pickerId}
         isOpen={showPicker}
         onSelect={handleEmojiSelect}
         onClose={handlePickerClose}

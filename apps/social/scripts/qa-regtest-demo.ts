@@ -84,7 +84,9 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         continue;
       }
       await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      await page.getByRole('button', { name: /CLOSE/ }).first().click();
+      const closeBtn = page.getByRole('button', { name: /CLOSE/ }).first();
+      await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
+      await closeBtn.click({ force: true });
       return true;
     }
 
@@ -112,7 +114,9 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       timeout: 20_000
     });
     // Use text-based selector for CLOSE button
-    await page.locator('button:has-text("CLOSE")').first().click();
+    const closeBtn = page.locator('button:has-text("CLOSE")').first();
+    await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
+    await closeBtn.click({ force: true });
     return true;
   }
   return false;
