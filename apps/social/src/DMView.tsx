@@ -164,7 +164,13 @@ export function DMView() {
 
   useEffect(() => {
     if (activeConversation) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      messagesEndRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth'
+      });
       // Trigger decryption for new messages
       activeConversation.messages.forEach(async (msg) => {
         if (!decryptedCache[msg.id]) {

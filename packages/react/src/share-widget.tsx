@@ -573,7 +573,7 @@ export function ShareWidget({
                 <a
                   href={href}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   style={{
                     display: 'flex',
                     gap: 10,

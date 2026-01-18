@@ -75,21 +75,13 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
   const timeId = `notification-time-${group.id}`;
 
   return (
-    <div
+    <button
+      type="button"
       className="notification-item"
       onClick={handleNotificationClick}
-      role="button"
-      tabIndex={targetId ? 0 : -1}
-      aria-disabled={!targetId}
+      disabled={!targetId}
       aria-label={targetId ? `Open notification: ${actionLabel}` : actionLabel}
       aria-describedby={timeId}
-      onKeyDown={(event) => {
-        if (!targetId) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          handleNotificationClick();
-        }
-      }}
       style={{
         display: 'flex',
         alignItems: 'flex-start',
@@ -97,7 +89,12 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
         padding: '1rem',
         borderBottom: '1px solid var(--ns-color-border-strong)',
         cursor: targetId ? 'pointer' : 'default',
-        transition: 'background 0.1s ease-in-out'
+        transition: 'background 0.1s ease-in-out',
+        border: 'none',
+        background: 'transparent',
+        width: '100%',
+        textAlign: 'left',
+        font: 'inherit'
       }}
     >
       <div
@@ -147,6 +144,6 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
           {new Date(group.timestamp * 1000).toLocaleString()}
         </div>
       </div>
-    </div>
+    </button>
   );
 }

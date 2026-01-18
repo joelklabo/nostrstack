@@ -79,6 +79,19 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
       return;
     }
 
+    const isLocalDev =
+      import.meta.env.DEV &&
+      typeof window !== 'undefined' &&
+      ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    if (isLocalDev) {
+      setData({
+        url,
+        title: getDomain(url)
+      });
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     const fetchOgData = async () => {

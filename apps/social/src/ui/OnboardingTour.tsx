@@ -1,6 +1,6 @@
 import '../styles/tour.css';
 
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useOnboarding } from '../hooks/useOnboarding';
@@ -15,32 +15,42 @@ export function OnboardingTour() {
   const [spotlightStyle, setSpotlightStyle] = useState<React.CSSProperties | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
+  const focusTimeoutRef = useRef<number | null>(null);
 
   // Focus management
   useEffect(() => {
-    if (!isActive) return;
-    
+    if (!isActive) {
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
+      if (triggerRef.current && document.contains(triggerRef.current)) {
+        triggerRef.current.focus();
+      }
+      triggerRef.current = null;
+      return;
+    }
+
     // Store trigger element when tour starts
     if (!triggerRef.current) {
       triggerRef.current = document.activeElement as HTMLElement;
     }
-    
+
     // Focus first button in tour card
     const card = cardRef.current;
     if (!card) return;
-    
+
     const focusable = card.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     if (focusable) {
-      setTimeout(() => focusable.focus(), 100);
+      focusTimeoutRef.current = window.setTimeout(() => focusable.focus(), 100);
     }
-    
-    // Return focus when tour ends
+
     return () => {
-      if (!isActive && triggerRef.current && document.contains(triggerRef.current)) {
-        triggerRef.current.focus();
-        triggerRef.current = null;
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
       }
     };
   }, [isActive]);
@@ -68,13 +78,15 @@ export function OnboardingTour() {
 
   // Scroll into view
   useEffect(() => {
-    if (isActive && step.target) {
-      const el = document.querySelector(step.target);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [isActive, step]);
+    if (!isActive || !step.target) return;
+    const el = document.querySelector(step.target);
+    if (!el) return;
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
+  }, [isActive, step.target]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -122,8 +134,8 @@ export function OnboardingTour() {
         if (left + 320 > window.innerWidth - 10) left = window.innerWidth - 330;
         if (top < 10) top = 10;
         if (top + 150 > window.innerHeight - 10) {
-            top = window.innerHeight - 160;
-            if (transform) transform = undefined; // Reset transform if we clamp
+          top = window.innerHeight - 160;
+          if (transform) transform = undefined; // Reset transform if we clamp
         }
 
         setPosition({ top, left, transform });
@@ -142,8 +154,8 @@ export function OnboardingTour() {
     const raf = requestAnimationFrame(updatePosition);
     window.addEventListener('resize', updatePosition);
     return () => {
-        window.removeEventListener('resize', updatePosition);
-        cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updatePosition);
+      cancelAnimationFrame(raf);
     };
   }, [isActive, step]);
 
@@ -151,10 +163,12 @@ export function OnboardingTour() {
 
   return createPortal(
     <>
-      {!spotlightStyle && <div className="onboarding-overlay" />}
-      {spotlightStyle && <div className="onboarding-spotlight" style={spotlightStyle} />}
-      <div 
-        className="onboarding-card" 
+      {!spotlightStyle && <div className="onboarding-overlay" aria-hidden="true" />}
+      {spotlightStyle && (
+        <div className="onboarding-spotlight" style={spotlightStyle} aria-hidden="true" />
+      )}
+      <div
+        className="onboarding-card"
         style={position}
         ref={cardRef}
         role="dialog"
@@ -162,18 +176,37 @@ export function OnboardingTour() {
         aria-labelledby="tour-title"
         aria-describedby="tour-desc"
       >
-        <div id="tour-title" className="onboarding-title">{step.title}</div>
-        <div id="tour-desc" className="onboarding-content">{step.content}</div>
+        <div id="tour-title" className="onboarding-title">
+          {step.title}
+        </div>
+        <div id="tour-desc" className="onboarding-content">
+          {step.content}
+        </div>
         <div className="onboarding-actions">
-          <button className="onboarding-btn onboarding-btn-skip" onClick={skip} aria-label="Skip tour">
+          <button
+            type="button"
+            className="onboarding-btn onboarding-btn-skip"
+            onClick={skip}
+            aria-label="Skip tour"
+          >
             Skip
           </button>
           {hasPreviousStep && (
-            <button className="onboarding-btn" onClick={back} aria-label="Go to previous step">
+            <button
+              type="button"
+              className="onboarding-btn"
+              onClick={back}
+              aria-label="Go to previous step"
+            >
               Back
             </button>
           )}
-          <button className="onboarding-btn onboarding-btn-next" onClick={next} aria-label={isLastStep ? 'Finish tour' : 'Go to next step'}>
+          <button
+            type="button"
+            className="onboarding-btn onboarding-btn-next"
+            onClick={next}
+            aria-label={isLastStep ? 'Finish tour' : 'Go to next step'}
+          >
             {isLastStep ? 'Finish' : 'Next'}
           </button>
         </div>

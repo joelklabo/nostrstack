@@ -1,5 +1,5 @@
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
 import { CopyButton } from './CopyButton';
 
@@ -24,6 +24,7 @@ export function JsonView({
   ...props
 }: JsonViewProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const contentId = useId();
   const formatted = useMemo(() => formatValue(value), [value]);
   const highlighted = useMemo(() => highlightJson(formatted.text), [formatted.text]);
   const canCopy = formatted.canCopy;
@@ -46,6 +47,7 @@ export function JsonView({
                 className="ns-btn ns-btn--sm"
                 onClick={() => setCollapsed((v) => !v)}
                 aria-expanded={!isCollapsed}
+                aria-controls={contentId}
               >
                 {isCollapsed ? 'Expand' : 'Collapse'}
               </button>
@@ -56,7 +58,11 @@ export function JsonView({
           </div>
         </div>
       ) : null}
-      <pre className="ns-json__pre" dangerouslySetInnerHTML={{ __html: highlighted }} />
+      <pre
+        id={contentId}
+        className="ns-json__pre"
+        dangerouslySetInnerHTML={{ __html: highlighted }}
+      />
     </div>
   );
 }

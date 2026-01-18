@@ -2,7 +2,7 @@ import './ZapModal.css';
 
 import { QRCodeSVG } from 'qrcode.react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 interface ZapModalProps {
   isOpen: boolean;
@@ -26,6 +26,8 @@ export const ZapModal: React.FC<ZapModalProps> = ({
   const [state, setState] = useState<ZapState>('idle');
   const [invoice, setInvoice] = useState('');
   const [error, setError] = useState('');
+  const titleId = useId();
+  const descriptionId = useId();
 
   const PRESETS = [21, 50, 100, 500, 1000, 5000];
 
@@ -38,6 +40,18 @@ export const ZapModal: React.FC<ZapModalProps> = ({
       setError('');
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleZap = async () => {
     try {
@@ -81,10 +95,19 @@ export const ZapModal: React.FC<ZapModalProps> = ({
         }
       }}
     >
-      <div className="zap-modal">
+      <div
+        className="zap-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
+        <p id={descriptionId} className="sr-only">
+          Send a Lightning payment to {recipientName}. Choose an amount and generate an invoice.
+        </p>
         {/* Header */}
         <div className="zap-header">
-          <h2>Zap {recipientName}</h2>
+          <h2 id={titleId}>Zap {recipientName}</h2>
           <button
             type="button"
             className="close-btn"
