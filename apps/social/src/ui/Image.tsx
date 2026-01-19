@@ -42,13 +42,16 @@ export function Image({ src, alt, className, style, onLoad, onError, ...props }:
       aria-busy={!loaded && !error}
     >
       {!loaded && !error && (
-        <Skeleton
-          variant="rectangular"
-          width="100%"
-          height="100%"
-          style={{ position: 'absolute', inset: 0, zIndex: 1 }}
-          aria-hidden="true"
-        />
+        <>
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height="100%"
+            style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+            aria-hidden="true"
+          />
+          <span className="sr-only">Loading image</span>
+        </>
       )}
       <img
         src={src}

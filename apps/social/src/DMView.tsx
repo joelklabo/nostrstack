@@ -84,7 +84,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
       className={`dm-list-item ${isActive ? 'active' : ''}`}
       onClick={onClick}
       aria-label={`Conversation with ${displayName}`}
-      aria-current={isActive ? 'true' : undefined}
+      aria-current={isActive ? 'page' : undefined}
     >
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
         <img
@@ -368,11 +368,22 @@ export function DMView() {
           ))}
           {conversations.length === 0 && !loading && (
             <div
-              style={{ padding: '1rem', color: 'var(--ns-color-text-muted)', fontStyle: 'italic' }}
+              style={{ padding: '1rem', color: 'var(--ns-color-text-muted)', textAlign: 'center' }}
               role="status"
               aria-live="polite"
             >
-              No messages yet.
+              <p style={{ marginBottom: '0.75rem' }}>No messages yet.</p>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => setShowNewMessage(true)}
+                style={{
+                  borderColor: 'var(--ns-color-accent-default)',
+                  color: 'var(--ns-color-accent-default)'
+                }}
+              >
+                Start a conversation
+              </button>
             </div>
           )}
         </div>
@@ -384,12 +395,12 @@ export function DMView() {
             <div className="dm-header">
               <button
                 type="button"
-                className="action-btn"
-                style={{ marginRight: '0.5rem', display: 'none' }} // Visible on mobile via CSS if needed, but handled by class toggling for now
+                className="action-btn dm-back-btn"
                 onClick={() => setSelectedPeer(null)}
-                aria-label="Back to conversations"
+                aria-label="Back to conversations list"
               >
-                &lt;
+                <span aria-hidden="true">&lt;</span>
+                <span className="sr-only">Back</span>
               </button>
               <ProfileLink pubkey={selectedPeer} />
             </div>
@@ -433,7 +444,7 @@ export function DMView() {
                 autoComplete="off"
                 enterKeyHint="send"
               />
-              <button type="button" className="action-btn" onClick={handleSend}>
+              <button type="button" className="action-btn" onClick={handleSend} aria-label="Send message">
                 Send
               </button>
             </div>

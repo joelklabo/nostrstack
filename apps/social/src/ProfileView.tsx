@@ -451,6 +451,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   onClick={loadMore}
                   disabled={eventsLoading}
                   style={{ width: 'auto', minWidth: '200px' }}
+                  aria-label="Load more posts"
                 >
                   {eventsLoading ? (
                     <>

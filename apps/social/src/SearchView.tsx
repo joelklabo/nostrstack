@@ -362,7 +362,7 @@ export function SearchView() {
                 role="status"
                 aria-live="polite"
               >
-                End of results
+                No more results. Try a different search term.
               </div>
             )}
           </>

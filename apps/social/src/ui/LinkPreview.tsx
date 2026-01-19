@@ -167,6 +167,7 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
             title="YouTube video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            loading="lazy"
           />
         </div>
       </div>
@@ -175,7 +176,11 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
 
   if (loading) {
     return (
-      <div className={`link-preview link-preview--loading ${className || ''}`}>
+      <div
+        className={`link-preview link-preview--loading ${className || ''}`}
+        aria-label="Loading link preview"
+        aria-busy="true"
+      >
         <div className="link-preview__skeleton">
           <div className="link-preview__skeleton-image" />
           <div className="link-preview__skeleton-content">
