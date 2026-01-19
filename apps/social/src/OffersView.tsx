@@ -266,6 +266,7 @@ export function OffersView() {
             className="offer-primary-btn"
             onClick={handleCreateOffer}
             disabled={createStatus === 'loading'}
+            aria-busy={createStatus === 'loading'}
           >
             {createStatus === 'loading' ? 'CREATING…' : 'CREATE_OFFER'}
           </button>
@@ -366,6 +367,7 @@ export function OffersView() {
                       className="offer-secondary-btn"
                       onClick={() => handleRequestInvoice(entry)}
                       disabled={entry.invoiceStatus === 'loading'}
+                      aria-busy={entry.invoiceStatus === 'loading'}
                     >
                       {entry.invoiceStatus === 'loading' ? 'REQUESTING…' : 'REQUEST_INVOICE'}
                     </button>

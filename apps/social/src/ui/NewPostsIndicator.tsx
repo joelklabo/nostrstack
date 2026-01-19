@@ -38,13 +38,24 @@ export const NewPostsIndicator = memo(function NewPostsIndicator({
   }, [newPosts.length]);
 
   const handleClick = useCallback(() => {
-    setIsAnimatingOut(true);
-    // Wait for animation before calling callback
-    setTimeout(() => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      // Skip animation when reduced motion is preferred
       setIsVisible(false);
-      setIsAnimatingOut(false);
       onScrollToTop();
-    }, 200);
+    } else {
+      setIsAnimatingOut(true);
+      // Wait for animation before calling callback
+      setTimeout(() => {
+        setIsVisible(false);
+        setIsAnimatingOut(false);
+        onScrollToTop();
+      }, 200);
+    }
   }, [onScrollToTop]);
 
   // Handle keyboard accessibility

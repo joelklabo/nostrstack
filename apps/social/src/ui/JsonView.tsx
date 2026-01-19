@@ -61,6 +61,8 @@ export function JsonView({
       <pre
         id={contentId}
         className="ns-json__pre"
+        role="region"
+        aria-label="JSON content"
         dangerouslySetInnerHTML={{ __html: highlighted }}
       />
     </div>

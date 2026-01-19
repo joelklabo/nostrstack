@@ -280,7 +280,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
           VISUAL_THEME
         </h4>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }} role="group" aria-label="Theme selection">
           <button
             className="action-btn"
             style={{
@@ -288,6 +288,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               color: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined
             }}
             onClick={() => setTheme('dark')}
+            aria-pressed={theme === 'dark'}
+            aria-label="Switch to dark mode"
           >
             DARK_MODE
           </button>
@@ -298,6 +300,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               color: theme === 'light' ? 'var(--ns-color-text-default)' : undefined
             }}
             onClick={() => setTheme('light')}
+            aria-pressed={theme === 'light'}
+            aria-label="Switch to light mode"
           >
             LIGHT_MODE
           </button>
@@ -308,7 +312,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
           BRAND_PRESET
         </h4>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }} role="group" aria-label="Brand preset selection">
           {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map((preset) => (
             <button
               key={preset}
@@ -318,6 +322,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
                 color: brandPreset === preset ? 'var(--ns-color-text-default)' : undefined
               }}
               onClick={() => setBrandPreset(preset as NsBrandPreset)}
+              aria-pressed={brandPreset === preset}
+              aria-label={`Switch to ${preset} theme`}
             >
               {preset.toUpperCase()}
             </button>
@@ -335,7 +341,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             {permission === 'default' && (
-              <button className="action-btn" onClick={requestPermission}>
+              <button className="action-btn" onClick={requestPermission} aria-label="Enable push notifications">
                 ENABLE_NOTIFICATIONS
               </button>
             )}
@@ -347,6 +353,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
                     body: 'This is a test notification from NostrStack.'
                   })
                 }
+                aria-label="Send test notification"
               >
                 TEST_NOTIFICATION
               </button>
@@ -464,7 +471,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           </label>
         </div>
         {(nwcUriError || nwcLimitError) && (
-          <div className="nwc-error">
+          <div className="nwc-error" role="alert">
             {nwcUriError && <div>{nwcUriError}</div>}
             {nwcLimitError && <div>{nwcLimitError}</div>}
           </div>
@@ -478,7 +485,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           />
           REMEMBER_ON_THIS_DEVICE
         </label>
-        <div className="nwc-actions">
+        <div className="nwc-actions" role="group" aria-label="Wallet connection actions">
           <button
             className="action-btn"
             onClick={handleConnectNwc}
@@ -488,6 +495,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               Boolean(nwcLimitError) ||
               nwcCheckStatus === 'checking'
             }
+            aria-label="Connect to NWC wallet"
           >
             CONNECT
           </button>
@@ -500,13 +508,19 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               Boolean(nwcLimitError) ||
               nwcCheckStatus === 'checking'
             }
+            aria-label="Check wallet balance"
           >
             CHECK_BALANCE
           </button>
-          <button className="action-btn" onClick={handleClearNwc} disabled={!hasNwcConfig}>
+          <button
+            className="action-btn"
+            onClick={handleClearNwc}
+            disabled={!hasNwcConfig}
+            aria-label="Disconnect wallet"
+          >
             DISCONNECT
           </button>
-          {nwcMessage && <span className="nwc-message">{nwcMessage}</span>}
+          {nwcMessage && <span className="nwc-message" role="status" aria-live="polite">{nwcMessage}</span>}
         </div>
       </div>
     </div>

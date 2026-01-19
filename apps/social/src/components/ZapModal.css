@@ -216,6 +216,12 @@
   border-color: var(--ns-color-border-strong);
 }
 
+.invoice-actions button.copy-success {
+  background-color: var(--ns-color-success-subtle);
+  border-color: var(--ns-color-success-default);
+  color: var(--ns-color-success-default);
+}
+
 .open-wallet-btn {
   background-color: var(--ns-color-bitcoin-500);
   color: #000;

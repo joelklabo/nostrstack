@@ -132,7 +132,11 @@ export function FeedView() {
   }, [filteredPosts]);
 
   const handleScrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
     setNewPosts([]);
     if (filteredPosts[0]) {
       lastSeenPostId.current = filteredPosts[0].id;
@@ -156,13 +160,14 @@ export function FeedView() {
 
     if (posts.length === 0 && !feedLoading) {
       return (
-        <div className="feed-empty">
-          <div className="feed-empty__icon">📝</div>
+        <div className="feed-empty" role="status" aria-live="polite">
+          <div className="feed-empty__icon" aria-hidden="true">📝</div>
           <h3 className="feed-empty__title">No posts yet</h3>
           <p className="feed-empty__text">Be the first to share something with the network!</p>
           <button
             className="ns-btn ns-btn--primary"
             onClick={() => document.querySelector('textarea')?.focus()}
+            aria-label="Write your first post"
           >
             Write your first post
           </button>
@@ -198,15 +203,17 @@ export function FeedView() {
   };
 
   return (
-    <main className="feed-stream" role="main" aria-label="Live feed" ref={feedContainerRef}>
+    <section className="feed-stream" aria-label="Live feed" ref={feedContainerRef}>
       <NewPostsIndicator newPosts={newPosts} onScrollToTop={handleScrollToTop} />
 
       <header className="feed-header">
         <h2 className="feed-title">Live Feed</h2>
-        <div className="feed-header__actions">
+        <div className="feed-header__actions" role="group" aria-label="Feed filters">
           <button
             className={`ns-btn ns-btn--sm ${feedMode === 'all' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setFeedMode('all')}
+            aria-pressed={feedMode === 'all'}
+            aria-label="Show all posts"
           >
             All
           </button>
@@ -214,6 +221,8 @@ export function FeedView() {
             className={`ns-btn ns-btn--sm ${feedMode === 'following' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => pubkey && setFeedMode('following')}
             disabled={!pubkey}
+            aria-pressed={feedMode === 'following'}
+            aria-label="Show posts from people you follow"
           >
             Following
           </button>
@@ -221,8 +230,10 @@ export function FeedView() {
             className={`ns-btn ns-btn--sm ${spamFilterEnabled ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setSpamFilterEnabled(!spamFilterEnabled)}
             title="Toggle Spam Filter"
+            aria-pressed={spamFilterEnabled}
+            aria-label={spamFilterEnabled ? 'Spam filter enabled, click to disable' : 'Spam filter disabled, click to enable'}
           >
-            {spamFilterEnabled ? '🛡️ Filter ON' : '🛡️ Filter OFF'}
+            <span aria-hidden="true">🛡️</span> {spamFilterEnabled ? 'Filter ON' : 'Filter OFF'}
           </button>
         </div>
       </header>
@@ -240,6 +251,6 @@ export function FeedView() {
       )}
 
       {renderContent()}
-    </main>
+    </section>
   );
 }

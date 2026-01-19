@@ -46,7 +46,7 @@ export const TopZaps = memo(function TopZaps({ eventId, hideEmpty = true }: TopZ
   };
 
   return (
-    <div className="top-zaps" aria-label={`${zaps.length} zaps totaling ${totalAmountSats} sats`}>
+    <div className="top-zaps" role="region" aria-label={`${zaps.length} zaps totaling ${totalAmountSats} sats`}>
       <div className="top-zaps__icon" aria-hidden="true">
         ⚡
       </div>

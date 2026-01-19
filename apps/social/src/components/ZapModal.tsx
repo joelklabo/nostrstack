@@ -26,6 +26,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
   const [state, setState] = useState<ZapState>('idle');
   const [invoice, setInvoice] = useState('');
   const [error, setError] = useState('');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   const titleId = useId();
   const descriptionId = useId();
 
@@ -38,6 +39,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
       setInvoice('');
       setMessage('');
       setError('');
+      setCopyStatus('idle');
     }
   }, [isOpen]);
 
@@ -71,8 +73,14 @@ export const ZapModal: React.FC<ZapModalProps> = ({
     }
   };
 
-  const copyInvoice = () => {
-    navigator.clipboard.writeText(invoice);
+  const copyInvoice = async () => {
+    try {
+      await navigator.clipboard.writeText(invoice);
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch {
+      // Clipboard write failed, do nothing
+    }
   };
 
   if (!isOpen) return null;
@@ -190,17 +198,30 @@ export const ZapModal: React.FC<ZapModalProps> = ({
               </div>
             ) : state === 'ready' ? (
               <div className="qr-container">
-                <QRCodeSVG
-                  value={invoice}
-                  size={200}
-                  level="L"
-                  includeMargin
-                  role="img"
-                  aria-label="Lightning invoice QR code"
-                />
+                <div className="qr-code-wrapper" style={{ width: 200, height: 200 }}>
+                  <QRCodeSVG
+                    value={invoice}
+                    size={200}
+                    level="L"
+                    includeMargin
+                    role="img"
+                    aria-label="Lightning invoice QR code"
+                  />
+                </div>
                 <div className="invoice-actions">
-                  <button type="button" onClick={copyInvoice}>
-                    Copy Invoice
+                  <button
+                    type="button"
+                    onClick={copyInvoice}
+                    className={copyStatus === 'copied' ? 'copy-success' : ''}
+                    aria-label={copyStatus === 'copied' ? 'Invoice copied' : 'Copy invoice to clipboard'}
+                  >
+                    {copyStatus === 'copied' ? (
+                      <>
+                        <span aria-hidden="true">✓</span> Copied!
+                      </>
+                    ) : (
+                      'Copy Invoice'
+                    )}
                   </button>
                   <a href={`lightning:${invoice}`} className="open-wallet-btn">
                     Open Wallet

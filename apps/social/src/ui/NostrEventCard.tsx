@@ -1,4 +1,5 @@
 import { PaywalledContent, ReplyModal, useAuth, ZapButton } from '@nostrstack/react';
+import DOMPurify from 'dompurify';
 import MarkdownIt from 'markdown-it';
 import type { Event } from 'nostr-tools';
 import { memo, useCallback, useState } from 'react';
@@ -99,7 +100,7 @@ export const NostrEventCard = memo(function NostrEventCard({
     return (
       <div
         className="ns-content"
-        dangerouslySetInnerHTML={{ __html: md.render(event.content) }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(md.render(event.content)) }}
         role="article"
         aria-label="Post content"
       />
@@ -109,8 +110,6 @@ export const NostrEventCard = memo(function NostrEventCard({
   return (
     <article
       className={rootClasses}
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Keyboard navigable cards for accessibility
-      tabIndex={0}
       aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
     >
       <header className="ns-event-card__header">
