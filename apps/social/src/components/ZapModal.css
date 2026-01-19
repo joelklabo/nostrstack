@@ -98,7 +98,7 @@
 .preset-btn.active {
   background-color: var(--ns-color-bitcoin-500);
   border-color: var(--ns-color-bitcoin-500);
-  color: #000;
+  color: var(--ns-color-static-black);
 }
 
 .input-group {
@@ -130,7 +130,7 @@
 .zap-confirm-btn {
   margin-top: auto;
   background-color: var(--ns-color-bitcoin-500);
-  color: #000;
+  color: var(--ns-color-static-black);
   border: none;
   padding: var(--ns-space-4);
   border-radius: var(--ns-radius-md);
@@ -229,7 +229,7 @@
 
 .open-wallet-btn {
   background-color: var(--ns-color-bitcoin-500);
-  color: #000;
+  color: var(--ns-color-static-black);
   font-weight: var(--ns-font-weight-semibold);
   border: none;
 }

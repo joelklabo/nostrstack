@@ -1,5 +1,5 @@
 {
-  "$description": "NostrStack Semantic Color Tokens - Role-based color assignments",
+  "$description": "NostrStack Semantic Color Tokens - Role-based color assignments using Indigo primary",
   "color": {
     "bg": {
       "$description": "Background colors",
@@ -42,7 +42,7 @@
         "$description": "Elevated surface"
       },
       "overlay": {
-        "$value": "oklch(0.98 0.005 250 / 0.95)",
+        "$value": "oklch(0.98 0.004 280 / 0.95)",
         "$type": "color",
         "$description": "Modal/popover overlay"
       },
@@ -70,7 +70,7 @@
         "$description": "Emphasized borders"
       },
       "focus": {
-        "$value": "{color.blue.500}",
+        "$value": "{color.indigo.500}",
         "$type": "color",
         "$description": "Focus ring color"
       }
@@ -103,36 +103,36 @@
         "$description": "Text on dark backgrounds"
       },
       "link": {
-        "$value": "{color.blue.600}",
+        "$value": "{color.indigo.600}",
         "$type": "color",
         "$description": "Link text"
       },
       "linkHover": {
-        "$value": "{color.blue.700}",
+        "$value": "{color.indigo.700}",
         "$type": "color",
         "$description": "Link hover state"
       }
     },
     "primary": {
-      "$description": "Primary brand color",
+      "$description": "Primary brand color - Indigo",
       "default": {
-        "$value": "{color.blue.500}",
+        "$value": "{color.indigo.500}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.blue.600}",
+        "$value": "{color.indigo.600}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.blue.700}",
+        "$value": "{color.indigo.700}",
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.blue.50}",
+        "$value": "{color.indigo.50}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.blue.100}",
+        "$value": "{color.indigo.100}",
         "$type": "color"
       },
       "text": {
@@ -142,7 +142,7 @@
       }
     },
     "accent": {
-      "$description": "Accent/secondary color",
+      "$description": "Accent/secondary color - Violet",
       "default": {
         "$value": "{color.violet.500}",
         "$type": "color"
@@ -260,18 +260,41 @@
         "$type": "color"
       }
     },
-    "interactive": {
-      "$description": "Interactive element colors",
+    "bitcoin": {
+      "$description": "Bitcoin-specific colors for Lightning/BTC UI",
       "default": {
-        "$value": "{color.blue.500}",
+        "$value": "{color.bitcoin.500}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.blue.600}",
+        "$value": "{color.bitcoin.600}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.bitcoin.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.bitcoin.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.bitcoin.700}",
+        "$type": "color"
+      }
+    },
+    "interactive": {
+      "$description": "Interactive element colors",
+      "default": {
+        "$value": "{color.indigo.500}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.indigo.600}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.blue.700}",
+        "$value": "{color.indigo.700}",
         "$type": "color"
       },
       "disabled": {
@@ -282,18 +305,18 @@
     "overlay": {
       "$description": "Overlay colors for modals",
       "default": {
-        "$value": "oklch(0.15 0.02 250 / 0.6)",
+        "$value": "oklch(0.15 0.02 280 / 0.6)",
         "$type": "color"
       },
       "strong": {
-        "$value": "oklch(0.1 0.02 250 / 0.8)",
+        "$value": "oklch(0.1 0.02 280 / 0.8)",
         "$type": "color"
       }
     },
     "focus": {
       "$description": "Focus ring",
       "ring": {
-        "$value": "oklch(0.6 0.22 250 / 0.4)",
+        "$value": "oklch(0.55 0.22 280 / 0.4)",
         "$type": "color"
       }
     }

@@ -1,5 +1,5 @@
 {
-  "$description": "NostrStack Dark Theme Overrides",
+  "$description": "NostrStack Dark Theme Overrides - Indigo Primary",
   "color": {
     "bg": {
       "default": {
@@ -33,7 +33,7 @@
         "$type": "color"
       },
       "overlay": {
-        "$value": "oklch(0.15 0.02 250 / 0.95)",
+        "$value": "oklch(0.15 0.02 280 / 0.95)",
         "$type": "color"
       },
       "sunken": {
@@ -55,7 +55,7 @@
         "$type": "color"
       },
       "focus": {
-        "$value": "{color.blue.400}",
+        "$value": "{color.indigo.400}",
         "$type": "color"
       }
     },
@@ -81,33 +81,33 @@
         "$type": "color"
       },
       "link": {
-        "$value": "{color.blue.400}",
+        "$value": "{color.indigo.400}",
         "$type": "color"
       },
       "linkHover": {
-        "$value": "{color.blue.300}",
+        "$value": "{color.indigo.300}",
         "$type": "color"
       }
     },
     "primary": {
       "default": {
-        "$value": "{color.blue.400}",
+        "$value": "{color.indigo.400}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.blue.300}",
+        "$value": "{color.indigo.300}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.blue.200}",
+        "$value": "{color.indigo.200}",
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.blue.900}",
+        "$value": "{color.indigo.900}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.blue.800}",
+        "$value": "{color.indigo.800}",
         "$type": "color"
       },
       "text": {
@@ -229,17 +229,39 @@
         "$type": "color"
       }
     },
-    "interactive": {
+    "bitcoin": {
       "default": {
-        "$value": "{color.blue.400}",
+        "$value": "{color.bitcoin.400}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.blue.300}",
+        "$value": "{color.bitcoin.300}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.bitcoin.900}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.bitcoin.800}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.bitcoin.300}",
+        "$type": "color"
+      }
+    },
+    "interactive": {
+      "default": {
+        "$value": "{color.indigo.400}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.indigo.300}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.blue.200}",
+        "$value": "{color.indigo.200}",
         "$type": "color"
       },
       "disabled": {
@@ -259,7 +281,7 @@
     },
     "focus": {
       "ring": {
-        "$value": "oklch(0.68 0.2 250 / 0.5)",
+        "$value": "oklch(0.66 0.19 280 / 0.5)",
         "$type": "color"
       }
     }

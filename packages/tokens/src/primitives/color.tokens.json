@@ -1,145 +1,146 @@
 {
-  "$description": "NostrStack Color Primitives - OKLCH Color Space",
+  "$description": "NostrStack Color Primitives - Modern Indigo/Purple Theme with OKLCH",
   "color": {
     "neutral": {
-      "$description": "Neutral gray scale with subtle blue undertone",
+      "$description": "Neutral gray scale with subtle cool undertone",
       "0": {
-        "$value": "oklch(0.995 0.005 250)",
+        "$value": "oklch(0.995 0.002 280)",
         "$type": "color",
         "$description": "Pure white with minimal tint"
       },
       "50": {
-        "$value": "oklch(0.985 0.005 250)",
+        "$value": "oklch(0.985 0.004 280)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.97 0.008 250)",
+        "$value": "oklch(0.97 0.006 280)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.92 0.01 250)",
+        "$value": "oklch(0.92 0.008 280)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.87 0.012 250)",
+        "$value": "oklch(0.87 0.01 280)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.7 0.015 250)",
+        "$value": "oklch(0.7 0.012 280)",
         "$type": "color"
       },
       "500": {
-        "$value": "oklch(0.55 0.015 250)",
+        "$value": "oklch(0.55 0.012 280)",
         "$type": "color"
       },
       "600": {
-        "$value": "oklch(0.45 0.015 250)",
+        "$value": "oklch(0.45 0.012 280)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.35 0.02 250)",
+        "$value": "oklch(0.35 0.015 280)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.25 0.02 250)",
+        "$value": "oklch(0.25 0.018 280)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.18 0.02 250)",
+        "$value": "oklch(0.18 0.02 280)",
         "$type": "color"
       },
       "950": {
-        "$value": "oklch(0.12 0.02 250)",
+        "$value": "oklch(0.12 0.02 280)",
         "$type": "color"
       },
       "1000": {
-        "$value": "oklch(0.08 0.015 250)",
+        "$value": "oklch(0.08 0.015 280)",
         "$type": "color"
       }
     },
-    "blue": {
-      "$description": "Primary brand blue",
+    "indigo": {
+      "$description": "Primary brand indigo - modern, professional",
       "50": {
-        "$value": "oklch(0.97 0.02 250)",
+        "$value": "oklch(0.97 0.02 280)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.93 0.05 250)",
+        "$value": "oklch(0.93 0.05 280)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.88 0.1 250)",
+        "$value": "oklch(0.86 0.1 280)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.78 0.15 250)",
+        "$value": "oklch(0.76 0.15 280)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.68 0.2 250)",
+        "$value": "oklch(0.66 0.19 280)",
         "$type": "color"
       },
       "500": {
-        "$value": "oklch(0.58 0.22 250)",
-        "$type": "color"
+        "$value": "oklch(0.55 0.22 280)",
+        "$type": "color",
+        "$description": "Primary brand color - WCAG AA on white"
       },
       "600": {
-        "$value": "oklch(0.50 0.22 250)",
+        "$value": "oklch(0.48 0.22 280)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.42 0.2 250)",
+        "$value": "oklch(0.40 0.2 280)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.35 0.18 250)",
+        "$value": "oklch(0.32 0.17 280)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.28 0.15 250)",
+        "$value": "oklch(0.25 0.14 280)",
         "$type": "color"
       }
     },
     "violet": {
-      "$description": "Accent violet/purple",
+      "$description": "Accent violet/purple for highlights",
       "50": {
-        "$value": "oklch(0.97 0.02 290)",
+        "$value": "oklch(0.97 0.02 300)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.93 0.05 290)",
+        "$value": "oklch(0.93 0.05 300)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.88 0.1 290)",
+        "$value": "oklch(0.86 0.1 300)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.78 0.15 290)",
+        "$value": "oklch(0.76 0.15 300)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.68 0.2 290)",
+        "$value": "oklch(0.66 0.19 300)",
         "$type": "color"
       },
       "500": {
-        "$value": "oklch(0.58 0.22 290)",
+        "$value": "oklch(0.55 0.22 300)",
         "$type": "color"
       },
       "600": {
-        "$value": "oklch(0.50 0.22 290)",
+        "$value": "oklch(0.48 0.22 300)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.42 0.2 290)",
+        "$value": "oklch(0.40 0.2 300)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.35 0.18 290)",
+        "$value": "oklch(0.32 0.17 300)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.28 0.15 290)",
+        "$value": "oklch(0.25 0.14 300)",
         "$type": "color"
       }
     },
@@ -316,9 +317,46 @@
       }
     },
     "bitcoin": {
-      "$description": "Bitcoin orange for brand elements",
+      "$description": "Bitcoin orange for Bitcoin-related UI elements only",
+      "50": {
+        "$value": "oklch(0.97 0.03 55)",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "oklch(0.93 0.07 55)",
+        "$type": "color"
+      },
+      "200": {
+        "$value": "oklch(0.88 0.12 55)",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "oklch(0.82 0.15 55)",
+        "$type": "color"
+      },
+      "400": {
+        "$value": "oklch(0.77 0.17 55)",
+        "$type": "color"
+      },
       "500": {
-        "$value": "oklch(0.72 0.18 55)",
+        "$value": "#F7931A",
+        "$type": "color",
+        "$description": "Official Bitcoin orange"
+      },
+      "600": {
+        "$value": "oklch(0.65 0.17 55)",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "oklch(0.55 0.15 55)",
+        "$type": "color"
+      },
+      "800": {
+        "$value": "oklch(0.45 0.13 55)",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "oklch(0.35 0.1 55)",
         "$type": "color"
       }
     },

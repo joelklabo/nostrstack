@@ -102,7 +102,7 @@
     var(--ns-color-primary-default) 0%,
     var(--ns-color-primary-hover) 100%
   );
-  color: #fff;
+  color: var(--ns-color-static-white);
   border: none;
 }
 

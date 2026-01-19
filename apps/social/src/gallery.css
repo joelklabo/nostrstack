@@ -770,7 +770,7 @@ body {
 
 .telemetry-status-stale {
   background: var(--ns-color-warning-default);
-  color: #000;
+  color: var(--ns-color-static-black);
   padding: 0.1rem 0.3rem;
   border-radius: var(--ns-radius-sm);
   font-size: 0.55rem;
@@ -929,7 +929,7 @@ body {
 
 .ns-node-icon {
   font-size: 1rem;
-  color: #f7931a;
+  color: var(--ns-color-bitcoin-default);
 }
 
 .ns-node-badges {
@@ -1077,6 +1077,10 @@ body {
   flex-direction: column;
   padding: var(--ns-space-5);
   gap: var(--ns-space-3);
+
+  /* Optimize rendering for off-screen cards */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
 }
 
 .ns-event-card:focus {
@@ -1844,7 +1848,7 @@ body {
     var(--ns-color-primary-default) 0%,
     var(--ns-color-primary-hover) 100%
   );
-  color: #fff;
+  color: var(--ns-color-static-white);
   border: none;
   box-shadow: 0 4px 14px -2px color-mix(in oklch, var(--ns-color-primary-default) 35%, transparent);
 }
@@ -1920,7 +1924,7 @@ body {
     var(--ns-color-primary-default) 0%,
     var(--ns-color-primary-hover) 100%
   );
-  color: #fff;
+  color: var(--ns-color-static-white);
   border: none;
 }
 
@@ -2017,7 +2021,7 @@ body {
   top: 0;
   padding: var(--ns-space-2) var(--ns-space-4);
   background: var(--ns-color-primary-default);
-  color: #fff;
+  color: var(--ns-color-static-white);
   z-index: 100001;
   border-radius: 0 0 var(--ns-radius-sm) var(--ns-radius-sm);
 }

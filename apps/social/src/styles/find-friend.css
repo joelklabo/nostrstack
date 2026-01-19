@@ -57,7 +57,7 @@
 
 .find-friend-card__action:hover {
   background: var(--ns-color-primary-default);
-  color: #fff;
+  color: var(--ns-color-static-white);
 }
 
 @media (width <= 640px) {
