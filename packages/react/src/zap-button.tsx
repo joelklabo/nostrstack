@@ -250,7 +250,7 @@ export function ZapButton({
 
   const handleZap = useCallback(async () => {
     if (!pubkey) {
-      setErrorMessage('ERROR: You must be logged in to send a zap.');
+      setErrorMessage('Error: You must be logged in to send a zap.');
       setZapState('error');
       return;
     }
@@ -270,7 +270,7 @@ export function ZapButton({
     try {
       const resolvedAddress = await resolveLightningAddress();
       if (!resolvedAddress) {
-        setErrorMessage('ERROR: Author does not have a Lightning Address/LNURL.');
+        setErrorMessage('Error: Author does not have a Lightning Address/LNURL.');
         setZapState('error');
         return;
       }
@@ -388,7 +388,7 @@ export function ZapButton({
         5 * 60 * 1000
       ); // 5 minutes to pay
     } catch (err: unknown) {
-      setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
+      setErrorMessage(`Error: ${(err as Error).message || String(err)}`);
       setZapState('error');
       emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
     }

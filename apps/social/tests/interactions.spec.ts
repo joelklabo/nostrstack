@@ -41,8 +41,8 @@ test.describe('App Interactions', () => {
     // Let's publish a note first to ensure there is something.
     const editor = page.getByPlaceholder('WHAT ARE YOU HACKING ON?...');
     await editor.fill('Testing interactions');
-    await page.getByText('PUBLISH_EVENT').click();
-    await expect(page.getByText('SUCCESS: Event published to relays.')).toBeVisible({
+    await page.getByText('Publish').click();
+    await expect(page.getByText('Success: Event published to relays.')).toBeVisible({
       timeout: 10000
     });
 

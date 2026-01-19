@@ -52,7 +52,7 @@ describe('PostEditor', () => {
     });
     render(<PostEditor />);
     expect(screen.getByPlaceholderText('WHAT ARE YOU HACKING ON?...')).toBeInTheDocument();
-    expect(screen.getByText('PUBLISH_EVENT')).toBeInTheDocument();
+    expect(screen.getByText('Publish')).toBeInTheDocument();
   });
 
   it('shows access denied message when not authenticated', () => {
@@ -101,7 +101,7 @@ describe('PostEditor', () => {
     });
     expect(textarea).toHaveValue('My test post');
 
-    const publishButton = screen.getByText('PUBLISH_EVENT');
+    const publishButton = screen.getByText('Publish');
     await act(async () => {
       fireEvent.click(publishButton);
     });
@@ -114,7 +114,7 @@ describe('PostEditor', () => {
     });
 
     expect(mockSignEvent).toHaveBeenCalled();
-    expect(screen.getByText(/SUCCESS: Event published to relays./)).toBeInTheDocument();
+    expect(screen.getByText(/Success: Event published to relays./)).toBeInTheDocument();
     expect(textarea).toHaveValue(''); // Content should be cleared
   });
 
@@ -127,12 +127,12 @@ describe('PostEditor', () => {
     });
     render(<PostEditor />);
 
-    const publishButton = screen.getByText('PUBLISH_EVENT');
+    const publishButton = screen.getByText('Publish');
     await act(async () => {
       fireEvent.click(publishButton);
     });
 
-    expect(screen.getByText('ERROR: Content cannot be empty.')).toBeInTheDocument();
+    expect(screen.getByText('Error: Content cannot be empty.')).toBeInTheDocument();
     expect(mockSignEvent).not.toHaveBeenCalled();
   });
 
@@ -150,7 +150,7 @@ describe('PostEditor', () => {
       fireEvent.change(textarea, { target: { value: 'My test post' } });
     });
 
-    const publishButton = screen.getByText('PUBLISH_EVENT');
+    const publishButton = screen.getByText('Publish');
     await act(async () => {
       fireEvent.click(publishButton);
     });
@@ -158,7 +158,7 @@ describe('PostEditor', () => {
       vi.advanceTimersByTime(1); // Advance timer for setTimeout, if any
     });
 
-    expect(screen.getByText('ERROR: Failed to publish: Signing failed')).toBeInTheDocument();
+    expect(screen.getByText('Error: Failed to publish: Signing failed')).toBeInTheDocument();
     expect(mockSignEvent).toHaveBeenCalled();
   });
 
@@ -184,7 +184,7 @@ describe('PostEditor', () => {
       fireEvent.change(textarea, { target: { value: 'My test post' } });
     });
 
-    const publishButton = screen.getByText('PUBLISH_EVENT');
+    const publishButton = screen.getByText('Publish');
 
     // We can't easily test the disabled state during async execution without a controlled promise.
     // Simplifying to just check it calls the function.

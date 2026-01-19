@@ -71,7 +71,7 @@ To verify manually during development:
 
    - Confirm "STREAMING_LIVE_EVENTS..." appears.
    - Type in the "WHAT ARE YOU HACKING ON?..." box.
-   - Click "PUBLISH_EVENT".
+   - Click "Publish".
    - Confirm status updates to "Signing event..." -> "Event published".
 
 4. **Telemetry**:

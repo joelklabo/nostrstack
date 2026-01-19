@@ -118,7 +118,7 @@ describe('SendSats', () => {
       fireEvent.click(screen.getByRole('button', { name: /send 500/i }));
     });
 
-    const errors = await screen.findAllByText(/ERROR: Metadata error/);
+    const errors = await screen.findAllByText(/Error: Metadata error/);
     expect(errors.length).toBeGreaterThan(0);
     expect(mockedGetLnurlpInvoice).not.toHaveBeenCalled();
   });

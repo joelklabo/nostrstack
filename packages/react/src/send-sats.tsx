@@ -173,7 +173,7 @@ export function SendSats({
 
   const handleSend = useCallback(async () => {
     if (!senderPubkey) {
-      setErrorMessage('ERROR: You must be logged in to send sats.');
+      setErrorMessage('Error: You must be logged in to send sats.');
       setSendState('error');
       return;
     }
@@ -304,7 +304,7 @@ export function SendSats({
         5 * 60 * 1000
       );
     } catch (err: unknown) {
-      setErrorMessage(`ERROR: ${(err as Error).message || String(err)}`);
+      setErrorMessage(`Error: ${(err as Error).message || String(err)}`);
       setSendState('error');
       emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
     }

@@ -55,10 +55,10 @@ test.describe('Social App Flow', () => {
     // 3. Post a note
     await page.getByPlaceholder('WHAT ARE YOU HACKING ON?...').fill('Hello from Playwright E2E!');
     await page.screenshot({ path: resolveDocScreenshotPath('posting.png') });
-    await page.getByText('PUBLISH_EVENT').click();
+    await page.getByText('Publish').click();
 
     // 4. Check for success status
-    await expect(page.getByText(/STATUS: Signing event|SUCCESS:|ERROR:/)).toBeVisible({
+    await expect(page.getByText(/Status: Signing event|Success:|Error:/)).toBeVisible({
       timeout: 10000
     });
     await page.screenshot({ path: resolveDocScreenshotPath('post-result.png') });

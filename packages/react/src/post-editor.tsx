@@ -36,20 +36,20 @@ export function PostEditor({
 
   const handlePublish = useCallback(async () => {
     if (!pubkey) {
-      setPublishStatus('ERROR: Not authenticated. Please login.');
+      setPublishStatus('Error: Not authenticated. Please login.');
       return;
     }
     if (!content.trim()) {
-      setPublishStatus('ERROR: Content cannot be empty.');
+      setPublishStatus('Error: Content cannot be empty.');
       return;
     }
     if (isOverLimit) {
-      setPublishStatus('ERROR: Content is too long.');
+      setPublishStatus('Error: Content is too long.');
       return;
     }
 
     setIsPublishing(true);
-    setPublishStatus('STATUS: Signing event...');
+    setPublishStatus('Status: Signing event...');
 
     try {
       const tags: string[][] = [];
@@ -85,7 +85,7 @@ export function PostEditor({
       };
 
       const signedEvent = await signEvent(template);
-      setPublishStatus(`STATUS: Event signed. ID: ${signedEvent.id.slice(0, 8)}... Publishing...`);
+      setPublishStatus(`Status: Event signed. ID: ${signedEvent.id.slice(0, 8)}... Publishing...`);
 
       const relays = cfg.relays?.length
         ? cfg.relays
@@ -95,12 +95,12 @@ export function PostEditor({
       await Promise.any(pool.publish(relays, signedEvent));
       pool.close(relays);
 
-      setPublishStatus(`SUCCESS: Event published to relays.`);
+      setPublishStatus(`Success: Event published to relays.`);
       setContent('');
       onSuccess?.();
     } catch (err: unknown) {
       setPublishStatus(
-        `ERROR: Failed to publish: ${err instanceof Error ? err.message : String(err)}`
+        `Error: Failed to publish: ${err instanceof Error ? err.message : String(err)}`
       );
     } finally {
       setIsPublishing(false);
@@ -182,13 +182,13 @@ export function PostEditor({
             aria-busy={isPublishing}
             aria-disabled={isOverLimit}
           >
-            {isPublishing ? 'PUBLISHING...' : 'PUBLISH_EVENT'}
+            {isPublishing ? 'Publishing...' : 'Publish'}
           </button>
         </div>
       </div>
       {publishStatus && (
         <div
-          className={`system-msg ${publishStatus.startsWith('ERROR') ? 'error-msg' : publishStatus.startsWith('SUCCESS') ? 'success-msg' : ''}`}
+          className={`system-msg ${publishStatus.startsWith('Error') ? 'error-msg' : publishStatus.startsWith('Success') ? 'success-msg' : ''}`}
           role="status"
           aria-live="assertive"
         >
