@@ -11,6 +11,8 @@ plan.md
 verification-plan.md
 apps/social/COMPREHENSIVE_TEST_REPORT.md
 apps/social/TESTING_INFRASTRUCTURE_GUIDE.md
+apps/app/COMPREHENSIVE_TEST_REPORT.md
+apps/app/TESTING_INFRASTRUCTURE_GUIDE.md
 DESIGN_REVIEW.md
 ULTRA_DESIGN_REVIEW.md
 DESIGN_FIXES_SUMMARY.md
@@ -19,3 +21,4 @@ NEXT_TASKS_ANALYSIS.md
 GEMINI.md
 CONTRIBUTING.md
 packages/create-nostrstack-site/**
+**/test-results/**
