@@ -290,11 +290,14 @@ export function RelaysView() {
           role="status"
         >
           {summary.connecting > 0 && (
-            <span
-              className="ns-spinner"
-              style={{ width: '12px', height: '12px' }}
-              aria-hidden="true"
-            />
+            <>
+              <span
+                className="ns-spinner"
+                style={{ width: '12px', height: '12px' }}
+                aria-hidden="true"
+              />
+              <span className="sr-only">Checking relay connections</span>
+            </>
           )}
           <span>{summary.online} online</span>
           <span>{summary.errors} offline</span>
@@ -318,7 +321,7 @@ export function RelaysView() {
             title="Must start with wss:// or ws://"
             required
           />
-          <button type="submit" className="action-btn">
+          <button type="submit" className="action-btn" aria-label="Add relay to list">
             Add Relay
           </button>
         </form>
@@ -338,6 +341,23 @@ export function RelaysView() {
       </div>
 
       <div className="relay-grid">
+        {relays.length === 0 && (
+          <div
+            style={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: 'var(--ns-color-text-muted)',
+              gridColumn: '1 / -1'
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            <p style={{ marginBottom: '0.75rem' }}>No relays configured yet.</p>
+            <p style={{ fontSize: '0.9rem' }}>
+              Add your first relay to connect to the Nostr network.
+            </p>
+          </div>
+        )}
         {relays.map((relay) => {
           const info = relay.info;
           const limitations = info?.limitation;
@@ -356,7 +376,9 @@ export function RelaysView() {
                     className={`relay-status-dot ${relay.status}`}
                     role="status"
                     aria-label={`Relay status: ${relay.status}`}
-                  ></span>
+                  >
+                    <span className="relay-status-label">{relay.status.toUpperCase()}</span>
+                  </span>
                   <div>
                     <div className="relay-host">{relay.host}</div>
                     <div className="relay-url">{relay.url}</div>
@@ -366,9 +388,10 @@ export function RelaysView() {
                   {relay.isUserRelay && (
                     <button
                       className="action-btn"
-                      style={{ padding: '2px 6px', fontSize: '0.7rem', height: 'auto' }}
+                      style={{ padding: 'var(--ns-space-2) var(--ns-space-3)', fontSize: '0.7rem', minHeight: '24px' }}
                       onClick={() => removeRelay(relay.url)}
                       title="Remove from my list"
+                      aria-label={`Remove ${relay.host} from my relay list`}
                     >
                       Remove
                     </button>

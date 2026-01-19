@@ -215,7 +215,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
           <div className="profile-header">
             <Image
               src={profile?.picture || FALLBACK_AVATAR}
-              alt="Profile"
+              alt={`${profile?.display_name || profile?.name || 'User'}'s profile picture`}
               className="profile-picture"
               fallback={FALLBACK_AVATAR}
             />
@@ -233,6 +233,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                       showLightningAddress ? 'profile-badge--success' : 'profile-badge--muted'
                     }`}
                   >
+                    {showLightningAddress ? '[OK] ' : '[--] '}
                     {lightningBadgeLabel}
                   </span>
                   {followingCount != null && (
@@ -285,6 +286,8 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     width: '100%',
                     marginTop: '1rem'
                   }}
+                  role="group"
+                  aria-label="Profile actions"
                 >
                   <button
                     className="action-btn"
@@ -298,6 +301,9 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     }}
                     onClick={handleFollowToggle}
                     disabled={contactsLoading}
+                    aria-pressed={following}
+                    aria-label={following ? 'Unfollow this user' : 'Follow this user'}
+                    aria-busy={contactsLoading}
                   >
                     {contactsLoading ? 'UPDATING...' : following ? '[-] UNFOLLOW' : '[+] FOLLOW'}
                   </button>
@@ -314,6 +320,9 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     }}
                     onClick={handleMuteToggle}
                     disabled={muteLoading}
+                    aria-pressed={muted}
+                    aria-label={muted ? 'Unmute this user' : 'Mute this user'}
+                    aria-busy={muteLoading}
                   >
                     {muteLoading ? '...' : muted ? 'UNMUTE' : 'MUTE USER'}
                   </button>
@@ -353,7 +362,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                       <div className="lightning-card-body">
                         <div className="lightning-card-qr">
                           {lightningQr ? (
-                            <img src={lightningQr} alt="Lightning QR" />
+                            <img src={lightningQr} alt="Lightning QR" width={160} height={160} />
                           ) : (
                             <div className="lightning-card-qr-fallback">QR</div>
                           )}
@@ -361,13 +370,18 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                         <div className="lightning-card-details">
                           <code className="lightning-card-value">{lightningAddress}</code>
                           <div className="lightning-card-actions">
-                            <button className="action-btn" onClick={handleCopyLightning}>
+                            <button
+                              className="action-btn"
+                              onClick={handleCopyLightning}
+                              aria-label="Copy lightning address"
+                            >
                               {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
                             </button>
                             <button
                               className="action-btn"
                               onClick={handleOpenWallet}
                               disabled={!lightningUri}
+                              aria-label="Open lightning wallet"
                             >
                               OPEN_WALLET
                             </button>
@@ -410,7 +424,14 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
             ))}
           </div>
         ) : events.length === 0 ? (
-          <p className="profile-empty">No posts yet. Check back soon.</p>
+          <div className="profile-empty" role="status" aria-live="polite">
+            <p>No posts yet. Check back soon.</p>
+            {!isMe && !following && (
+              <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--ns-color-text-muted)' }}>
+                Follow them to see their posts in your feed.
+              </p>
+            )}
+          </div>
         ) : (
           <>
             {events.map((event) => (
