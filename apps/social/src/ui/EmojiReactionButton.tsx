@@ -38,7 +38,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
   const publishReaction = useCallback(
     async (emoji: string) => {
       if (!pubkey) {
-        toast({ message: 'You must be logged in to react', tone: 'warning' });
+        toast({ message: 'You must be logged in to react', tone: 'info' });
         return;
       }
       if (hasReacted || isPublishing) return;

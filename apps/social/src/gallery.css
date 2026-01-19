@@ -575,8 +575,7 @@ body {
   color: var(--ns-color-text-subtle);
 }
 
-.editor-input:focus {
-  outline: none;
+.editor-input:focus-visible {
   border-color: var(--ns-color-primary-default);
   box-shadow: 0 0 0 3px var(--ns-color-primary-subtle);
 }
@@ -1965,9 +1964,8 @@ body {
     color var(--ns-duration-normal) var(--ns-easing-easeInOut);
 }
 
-.ns-input:focus,
-.ns-textarea:focus {
-  outline: none;
+.ns-input:focus-visible,
+.ns-textarea:focus-visible {
   border-color: var(--ns-color-primary-default);
   box-shadow: 0 0 0 3px var(--ns-color-primary-subtle);
 }
@@ -1982,8 +1980,7 @@ body {
   cursor: pointer;
 }
 
-.ns-select:focus {
-  outline: none;
+.ns-select:focus-visible {
   border-color: var(--ns-color-primary-default);
   box-shadow: 0 0 0 3px var(--ns-color-primary-subtle);
 }

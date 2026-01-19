@@ -21,7 +21,6 @@
   box-shadow: 0 24px 64px rgb(15 23 42 / 28%);
   overflow: hidden;
   animation: shortcuts-pop-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
-  outline: none;
 }
 
 .shortcuts-header {
