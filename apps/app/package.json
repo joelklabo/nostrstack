@@ -28,6 +28,7 @@
     "zod": "3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.57.0",
     "@testing-library/react": "16.1.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "22.7.5",
