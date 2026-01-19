@@ -1,5 +1,6 @@
 import { SendSats, useAuth, useFeed, useNostrQuery, useProfile } from '@nostrstack/react';
 import { Alert, PostSkeleton, Skeleton } from '@nostrstack/ui';
+import type { Event } from 'nostr-tools';
 import { nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -10,6 +11,9 @@ import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
 import { Image } from './ui/Image';
 import { NostrEventCard } from './ui/NostrEventCard';
+import { VirtualizedList } from './ui/VirtualizedList';
+
+const BITCOIN_ORANGE = '#F7931A';
 
 const FALLBACK_AVATAR_SVG =
   "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='120' height='120' rx='60' fill='#21292e'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='48' fill='#ffffff'>N</text></svg>";
@@ -172,6 +176,47 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
   const tipAmount = paymentConfig.defaultSendSats ?? 500;
   const lightningBadgeLabel = showLightningAddress ? 'Lightning' : 'Lightning';
   const error = profileError || eventsError;
+
+  // Render a single post item for the virtualized list
+  const renderPostItem = useCallback(
+    (event: Event) => (
+      <NostrEventCard
+        event={event}
+        authorLightningAddress={profile?.lud16 ?? profile?.lud06}
+        apiBase={apiBase}
+        enableRegtestPay={enableRegtestPay}
+      />
+    ),
+    [profile?.lud16, profile?.lud06, apiBase, enableRegtestPay]
+  );
+
+  // Extract key for each post
+  const getPostKey = useCallback((event: Event) => event.id, []);
+
+  // Render loading indicator for virtualized list
+  const renderLoadingIndicator = useCallback(
+    () => (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <button
+          className="auth-btn"
+          onClick={loadMore}
+          disabled={eventsLoading}
+          style={{ width: 'auto', minWidth: '200px' }}
+          aria-label="Load more posts"
+        >
+          {eventsLoading ? (
+            <>
+              <span className="ns-spinner" style={{ marginRight: '0.5rem' }} aria-hidden="true" />
+              LOADING...
+            </>
+          ) : (
+            'LOAD MORE'
+          )}
+        </button>
+      </div>
+    ),
+    [loadMore, eventsLoading]
+  );
 
   return (
     <div className="profile-view">
@@ -352,43 +397,103 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
               {showLightningAddress ? (
                 <div className="profile-tip-grid">
                   <div className="profile-tip-column">
-                    <div className="lightning-card">
+                    <div className="lightning-card lightning-card--bitcoin">
+                      <div
+                        className="lightning-card-accent"
+                        style={{ background: BITCOIN_ORANGE }}
+                        aria-hidden="true"
+                      />
                       <div className="lightning-card-header">
-                        <div className="lightning-card-title">{lightningLabel}</div>
+                        <div className="lightning-card-title">
+                          <span
+                            className="lightning-card-icon"
+                            style={{ color: BITCOIN_ORANGE }}
+                            aria-hidden="true"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                            </svg>
+                          </span>
+                          {lightningLabel}
+                        </div>
                         {lightningCopyStatus === 'error' && (
-                          <span className="lightning-card-hint">Unable to copy</span>
+                          <span className="lightning-card-hint lightning-card-hint--error">
+                            Unable to copy
+                          </span>
+                        )}
+                        {lightningCopyStatus === 'copied' && (
+                          <span className="lightning-card-hint lightning-card-hint--success">
+                            Copied!
+                          </span>
                         )}
                       </div>
                       <div className="lightning-card-body">
-                        <div className="lightning-card-qr">
+                        <div className="lightning-card-qr lightning-card-qr--styled">
                           {lightningQr ? (
-                            <img
-                              src={lightningQr}
-                              alt={`QR code for ${lightningAddress}`}
-                              width={160}
-                              height={160}
-                            />
+                            <div className="lightning-card-qr-wrapper">
+                              <img
+                                src={lightningQr}
+                                alt={`QR code for ${lightningAddress}`}
+                                width={160}
+                                height={160}
+                              />
+                              <div
+                                className="lightning-card-qr-overlay"
+                                style={{ background: BITCOIN_ORANGE }}
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                  <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                                </svg>
+                              </div>
+                            </div>
                           ) : (
-                            <div className="lightning-card-qr-fallback">QR</div>
+                            <div className="lightning-card-qr-fallback">
+                              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                              </svg>
+                            </div>
                           )}
                         </div>
                         <div className="lightning-card-details">
                           <code className="lightning-card-value">{lightningAddress}</code>
                           <div className="lightning-card-actions">
                             <button
-                              className="action-btn"
+                              className={`action-btn action-btn--bitcoin ${lightningCopyStatus === 'copied' ? 'is-success' : ''}`}
                               onClick={handleCopyLightning}
                               aria-label="Copy lightning address"
+                              style={
+                                lightningCopyStatus === 'copied'
+                                  ? {
+                                      borderColor: 'var(--ns-color-success-default)',
+                                      color: 'var(--ns-color-success-default)'
+                                    }
+                                  : { borderColor: BITCOIN_ORANGE, color: BITCOIN_ORANGE }
+                              }
                             >
-                              {lightningCopyStatus === 'copied' ? 'COPIED' : 'COPY'}
+                              {lightningCopyStatus === 'copied' ? (
+                                <>
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                  >
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                  </svg>
+                                  Copied
+                                </>
+                              ) : (
+                                'Copy Address'
+                              )}
                             </button>
                             <button
                               className="action-btn"
                               onClick={handleOpenWallet}
                               disabled={!lightningUri}
                               aria-label="Open lightning wallet"
+                              style={{ borderColor: BITCOIN_ORANGE, color: BITCOIN_ORANGE }}
                             >
-                              Open in Wallet
+                              Open Wallet
                             </button>
                           </div>
                         </div>
@@ -422,8 +527,12 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
 
       <h3>Recent Posts</h3>
       <div className="user-events">
-        {eventsLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {eventsLoading && events.length === 0 ? (
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            aria-busy="true"
+            aria-label="Loading posts"
+          >
             {[1, 2, 3].map((i) => (
               <PostSkeleton key={i} />
             ))}
@@ -444,42 +553,16 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
             )}
           </div>
         ) : (
-          <>
-            {events.map((event) => (
-              <NostrEventCard
-                key={event.id}
-                event={event}
-                authorLightningAddress={profile?.lud16 ?? profile?.lud06}
-                apiBase={apiBase}
-                enableRegtestPay={enableRegtestPay}
-              />
-            ))}
-
-            {hasMore && (
-              <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <button
-                  className="auth-btn"
-                  onClick={loadMore}
-                  disabled={eventsLoading}
-                  style={{ width: 'auto', minWidth: '200px' }}
-                  aria-label="Load more posts"
-                >
-                  {eventsLoading ? (
-                    <>
-                      <span
-                        className="ns-spinner"
-                        style={{ marginRight: '0.5rem' }}
-                        aria-hidden="true"
-                      />
-                      LOADING...
-                    </>
-                  ) : (
-                    'LOAD MORE'
-                  )}
-                </button>
-              </div>
-            )}
-          </>
+          <VirtualizedList
+            items={events}
+            getItemKey={getPostKey}
+            renderItem={renderPostItem}
+            onLoadMore={hasMore ? loadMore : undefined}
+            hasMore={hasMore}
+            loading={eventsLoading}
+            renderLoadingIndicator={renderLoadingIndicator}
+            ariaLabel="User posts"
+          />
         )}
       </div>
     </div>

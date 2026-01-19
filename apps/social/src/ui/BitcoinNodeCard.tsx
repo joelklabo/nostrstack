@@ -1,5 +1,7 @@
 import { Alert } from '@nostrstack/ui';
-import { type HTMLAttributes } from 'react';
+import { type HTMLAttributes, useEffect, useState } from 'react';
+
+import { AnimatedBlockHeight, AnimatedNumber } from './AnimatedNumber';
 
 type LnbitsHealth = {
   status?: string;
@@ -32,15 +34,17 @@ type NodeInfo = {
   };
 };
 
+const BITCOIN_ORANGE = '#F7931A';
+
 function formatBytes(bytes?: number): string {
-  if (bytes === undefined || bytes === null) return '—';
+  if (bytes === undefined || bytes === null) return '--';
   const mb = bytes / 1_000_000;
   if (mb >= 10) return `${Math.round(mb)} MB`;
   return `${mb.toFixed(1)} MB`;
 }
 
 function formatAge(time?: number): string {
-  if (!time) return '—';
+  if (!time) return '--';
   const delta = Math.max(0, Math.floor(Date.now() / 1000 - time));
   if (delta < 60) return `${delta}s ago`;
   if (delta < 3600) return `${Math.floor(delta / 60)}m ago`;
@@ -49,8 +53,37 @@ function formatAge(time?: number): string {
 }
 
 function formatProgress(progress?: number): string {
-  if (progress === undefined || progress === null) return '—';
+  if (progress === undefined || progress === null) return '--';
   return `${(progress * 100).toFixed(2)}%`;
+}
+
+function useTimeSinceBlock(time?: number) {
+  const [elapsed, setElapsed] = useState<string>('--');
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!time) {
+      setElapsed('--');
+      setCountdown(null);
+      return;
+    }
+
+    const updateElapsed = () => {
+      const delta = Math.max(0, Math.floor(Date.now() / 1000 - time));
+      setElapsed(formatAge(time));
+
+      // Estimate next block (average 10 min for mainnet, varies for regtest)
+      const avgBlockTime = 600; // 10 minutes
+      const remaining = Math.max(0, avgBlockTime - delta);
+      setCountdown(remaining > 0 ? remaining : null);
+    };
+
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 1000);
+    return () => clearInterval(interval);
+  }, [time]);
+
+  return { elapsed, countdown };
 }
 
 export function BitcoinNodeCard({
@@ -75,12 +108,8 @@ export function BitcoinNodeCard({
       : null;
   const sourceLabel = info.source ? info.source.toUpperCase() : null;
 
-  const mempoolTxs = info.mempoolTxs != null ? info.mempoolTxs.toLocaleString() : '—';
-  const mempoolBytes = info.mempoolBytes != null ? formatBytes(info.mempoolBytes) : '—';
-  const mempoolValue =
-    info.mempoolTxs != null || info.mempoolBytes != null
-      ? `${mempoolTxs} tx / ${mempoolBytes}`
-      : '—';
+  const mempoolTxs = info.mempoolTxs != null ? info.mempoolTxs : null;
+  const mempoolBytes = info.mempoolBytes != null ? formatBytes(info.mempoolBytes) : '--';
 
   const syncProgress = formatProgress(info.verificationProgress);
   const blockHeaderLabel =
@@ -95,7 +124,7 @@ export function BitcoinNodeCard({
 
   const provider = info.lightning?.provider;
   const lnbitsStatus = info.lightning?.lnbits?.status;
-  let lightningLabel = provider ? `Provider: ${provider}` : 'Provider: —';
+  let lightningLabel = provider ? `Provider: ${provider}` : 'Provider: --';
   let lightningTone: 'muted' | 'success' | 'danger' = 'muted';
   if (provider === 'lnbits') {
     if (lnbitsStatus === 'ok') {
@@ -111,12 +140,28 @@ export function BitcoinNodeCard({
     }
   }
 
+  const { elapsed, countdown } = useTimeSinceBlock(info.time);
+  const hasLiveData = info.height != null && info.height > 0;
+
   return (
-    <div className={`ns-node-card ${className || ''}`} {...props}>
+    <div className={`ns-node-card ns-node-card--bitcoin ${className || ''}`} {...props}>
+      {/* Bitcoin Orange Accent Bar */}
+      <div className="ns-node-accent" style={{ background: BITCOIN_ORANGE }} aria-hidden="true" />
+
       <div className="ns-node-header">
         <div className="ns-node-title">
-          <span className="ns-node-icon">₿</span>
+          <span className="ns-node-icon ns-node-icon--bitcoin" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-1.67v-1.85c-.99-.09-1.99-.38-2.68-.74l.43-1.72c.77.35 1.74.68 2.6.68.78 0 1.23-.27 1.23-.74 0-.45-.39-.69-1.4-1.02-1.45-.46-2.51-1.14-2.51-2.52 0-1.21.86-2.16 2.33-2.46V8h1.67v1.58c.69.08 1.44.27 2.05.54l-.38 1.67c-.57-.24-1.26-.48-2-.48-.89 0-1.11.37-1.11.65 0 .38.4.6 1.56 1.05 1.68.61 2.37 1.41 2.37 2.61 0 1.23-.88 2.22-2.49 2.47z" />
+            </svg>
+          </span>
           Bitcoin Node
+          {hasLiveData && (
+            <span className="ns-node-live-indicator" title="Receiving live data">
+              <span className="ns-node-live-dot" />
+              LIVE
+            </span>
+          )}
         </div>
         <div className="ns-node-badges">
           <div
@@ -131,36 +176,87 @@ export function BitcoinNodeCard({
       {chainLabel && <div className="ns-node-subtitle">Chain: {chainLabel}</div>}
 
       <div className="ns-node-grid">
-        <div className="ns-stat">
-          <div className="ns-stat-label">Block Height</div>
-          <div className="ns-stat-value lg">{info.height?.toLocaleString() ?? '—'}</div>
+        {/* Block Height - Featured prominently */}
+        <div className="ns-stat ns-stat--featured ns-stat--full">
+          <div className="ns-stat-label">
+            <span className="ns-stat-label-icon" style={{ color: BITCOIN_ORANGE }}>
+              #
+            </span>
+            Block Height
+          </div>
+          <div className="ns-stat-value ns-stat-value--xl ns-stat-value--bitcoin">
+            {info.height != null ? <AnimatedBlockHeight value={info.height} /> : '--'}
+          </div>
         </div>
+
         <div className="ns-stat">
           <div className="ns-stat-label">Peers</div>
-          <div className="ns-stat-value">{info.connections ?? '—'}</div>
+          <div className="ns-stat-value">
+            {info.connections != null ? (
+              <AnimatedNumber value={info.connections} duration={300} />
+            ) : (
+              '--'
+            )}
+          </div>
         </div>
-        <div className="ns-stat">
-          <div className="ns-stat-label">Mempool</div>
-          <div className="ns-stat-value">{mempoolValue}</div>
-        </div>
+
         <div className="ns-stat">
           <div className="ns-stat-label">Last Block</div>
-          <div className="ns-stat-value">{formatAge(info.time)}</div>
+          <div className="ns-stat-value ns-stat-value--live">{elapsed}</div>
+          {countdown != null && countdown > 0 && (
+            <div className="ns-stat-hint">~{Math.floor(countdown / 60)}m until next</div>
+          )}
         </div>
+
+        {/* Mempool Section */}
+        <div className="ns-stat ns-stat--full">
+          <div className="ns-stat-label">
+            <span className="ns-stat-label-icon">M</span>
+            Mempool
+          </div>
+          <div className="ns-stat-value ns-stat-value--mempool">
+            {mempoolTxs != null ? (
+              <>
+                <AnimatedNumber value={mempoolTxs} duration={300} />
+                <span className="ns-stat-value-unit">tx</span>
+                <span className="ns-stat-value-sep">/</span>
+                <span className="ns-stat-value-secondary">{mempoolBytes}</span>
+              </>
+            ) : (
+              '--'
+            )}
+          </div>
+        </div>
+
         <div className="ns-stat ns-stat--full">
           <div className="ns-stat-label">Sync</div>
           <div className="ns-stat-value sm">
-            {syncValue} ({syncState})
+            {syncValue}{' '}
+            <span
+              className={`ns-sync-badge ${isSyncing ? 'ns-sync-badge--syncing' : 'ns-sync-badge--synced'}`}
+            >
+              {syncState}
+            </span>
           </div>
         </div>
+
         <div className="ns-stat ns-stat--full">
           <div className="ns-stat-label">Version</div>
           <div className="ns-stat-value sm">
-            {info.version != null ? String(info.version) : '—'}
+            {info.version != null ? String(info.version) : '--'}
           </div>
         </div>
-        <div className="ns-stat ns-stat--full">
-          <div className="ns-stat-label">Lightning</div>
+
+        {/* Lightning Section */}
+        <div className="ns-stat ns-stat--full ns-stat--lightning">
+          <div className="ns-stat-label">
+            <span className="ns-stat-label-icon ns-stat-label-icon--lightning">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+              </svg>
+            </span>
+            Lightning
+          </div>
           <div className={`ns-status ns-status--${lightningTone}`}>{lightningLabel}</div>
         </div>
       </div>
@@ -174,7 +270,7 @@ export function BitcoinNodeCard({
       {info.hash && (
         <div className="ns-hash-bar">
           <div className="ns-stat-label">Tip Hash</div>
-          <code>
+          <code className="ns-hash-value">
             {info.hash.slice(0, 12)}...{info.hash.slice(-12)}
           </code>
         </div>

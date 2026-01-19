@@ -12,6 +12,38 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
 
+function useTimeSinceUpdate(lastUpdateAt: number | null) {
+  const [timeSince, setTimeSince] = useState<string>('--');
+
+  useEffect(() => {
+    if (!lastUpdateAt) {
+      setTimeSince('--');
+      return;
+    }
+
+    const update = () => {
+      const now = Date.now();
+      const delta = Math.floor((now - lastUpdateAt) / 1000);
+
+      if (delta < 5) {
+        setTimeSince('just now');
+      } else if (delta < 60) {
+        setTimeSince(`${delta}s ago`);
+      } else if (delta < 3600) {
+        setTimeSince(`${Math.floor(delta / 60)}m ago`);
+      } else {
+        setTimeSince(`${Math.floor(delta / 3600)}h ago`);
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [lastUpdateAt]);
+
+  return timeSince;
+}
+
 type TelemetryEvent =
   | {
       type: 'block';
@@ -643,10 +675,10 @@ export function TelemetryBar() {
         : displayStatus === 'reconnecting'
           ? `Reconnecting (${Math.max(1, reconnectAttempt)}/${telemetryTiming.wsMaxAttempts})`
           : 'Offline';
-  const lastUpdateLabel = lastUpdateAt
-    ? `Updated ${new Date(lastUpdateAt).toLocaleTimeString([], { hour12: false })}`
-    : 'No updates yet';
+  const timeSinceUpdate = useTimeSinceUpdate(lastUpdateAt);
+  const lastUpdateLabel = lastUpdateAt ? `Updated ${timeSinceUpdate}` : 'No updates yet';
   const showStale = displayStatus === 'offline' && pollFailures >= 3;
+  const isRecentUpdate = lastUpdateAt && Date.now() - lastUpdateAt < 5000;
 
   return (
     <div className="telemetry-sidebar">
@@ -670,7 +702,7 @@ export function TelemetryBar() {
           <span className="telemetry-status-dot" />
           {wsStatusLabel}
         </span>
-        <span className="telemetry-status-time">
+        <span className={`telemetry-status-time ${isRecentUpdate ? 'is-recent' : ''}`}>
           {lastUpdateLabel}
           {showStale && <span className="telemetry-status-stale">Stale</span>}
         </span>

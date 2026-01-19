@@ -65,6 +65,7 @@ export function Sidebar({
       return () => clearTimeout(timeout);
     }
     prevBalanceRef.current = currentBalance;
+    return undefined;
   }, [wallet?.balance]);
 
   const apiBaseRaw =
@@ -282,15 +283,26 @@ export function Sidebar({
 
       <div className="sidebar-footer" role="region" aria-label="Wallet and system status">
         {wallet && (
-          <div className="sidebar-wallet-section">
-            <div className="sidebar-status-label">Wallet</div>
+          <div className={`sidebar-wallet-section ${isReceiving ? 'is-receiving' : ''}`}>
+            <div className="sidebar-status-label">
+              <span className="sidebar-wallet-icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                </svg>
+              </span>
+              Wallet
+              {isReceiving && <span className="sidebar-receiving-badge">Receiving</span>}
+            </div>
             <div
-              className="sidebar-wallet-balance"
+              className={`sidebar-wallet-balance ${isReceiving ? 'is-glowing' : ''}`}
               role="status"
               aria-label={`Wallet balance: ${wallet.balance?.toLocaleString() ?? 0} sats`}
             >
-              {wallet.balance?.toLocaleString() ?? 0}{' '}
-              <span className="sidebar-wallet-unit">sats</span>
+              <AnimatedSats
+                value={wallet.balance ?? 0}
+                showUnit={true}
+                unitClassName="sidebar-wallet-unit"
+              />
             </div>
             {(wallet.balance ?? 0) === 0 && (
               <div className="sidebar-wallet-empty">Your wallet is empty.</div>
