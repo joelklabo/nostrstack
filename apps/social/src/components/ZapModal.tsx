@@ -137,6 +137,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
                   className={`preset-btn ${amount === val ? 'active' : ''}`}
                   onClick={() => setAmount(val)}
                   aria-pressed={amount === val}
+                  aria-label={`Select ${val} sats`}
                 >
                   ⚡ {val}
                 </button>
@@ -213,7 +214,9 @@ export const ZapModal: React.FC<ZapModalProps> = ({
                     type="button"
                     onClick={copyInvoice}
                     className={copyStatus === 'copied' ? 'copy-success' : ''}
-                    aria-label={copyStatus === 'copied' ? 'Invoice copied' : 'Copy invoice to clipboard'}
+                    aria-label={
+                      copyStatus === 'copied' ? 'Invoice copied' : 'Copy invoice to clipboard'
+                    }
                   >
                     {copyStatus === 'copied' ? (
                       <>

@@ -172,12 +172,22 @@ export function NotificationsView() {
         Notifications
       </div>
 
-      {displayGroups.map((item) => {
-        if ('kind' in item) {
-          return <NostrEventCard key={item.id} event={item} />;
-        }
-        return <NotificationItem key={item.id} group={item} />;
-      })}
+      <div role="list" aria-label="Notifications">
+        {displayGroups.map((item) => {
+          if ('kind' in item) {
+            return (
+              <div key={item.id} role="listitem">
+                <NostrEventCard event={item} />
+              </div>
+            );
+          }
+          return (
+            <div key={item.id} role="listitem">
+              <NotificationItem group={item} />
+            </div>
+          );
+        })}
+      </div>
 
       {events.length === 0 && (
         <div

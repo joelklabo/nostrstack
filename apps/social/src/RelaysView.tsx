@@ -340,7 +340,7 @@ export function RelaysView() {
         )}
       </div>
 
-      <div className="relay-grid">
+      <div className="relay-grid" role="list">
         {relays.length === 0 && (
           <div
             style={{
@@ -369,7 +369,7 @@ export function RelaysView() {
           ].filter(Boolean) as string[];
           const hasInfo = Boolean(info);
           return (
-            <article key={relay.url} className={`relay-card relay-${relay.status}`}>
+            <article key={relay.url} className={`relay-card relay-${relay.status}`} role="listitem">
               <div className="relay-card-header">
                 <div className="relay-title">
                   <span
@@ -388,7 +388,11 @@ export function RelaysView() {
                   {relay.isUserRelay && (
                     <button
                       className="action-btn"
-                      style={{ padding: 'var(--ns-space-2) var(--ns-space-3)', fontSize: '0.7rem', minHeight: '24px' }}
+                      style={{
+                        padding: 'var(--ns-space-2) var(--ns-space-3)',
+                        fontSize: '0.7rem',
+                        minHeight: '24px'
+                      }}
                       onClick={() => removeRelay(relay.url)}
                       title="Remove from my list"
                       aria-label={`Remove ${relay.host} from my relay list`}

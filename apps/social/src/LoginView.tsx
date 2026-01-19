@@ -433,7 +433,10 @@ export function LoginView() {
                 <div className="ns-dialog__grid">
                   <div className="ns-dialog__qr">
                     {lnurlQr ? (
-                      <img src={lnurlQr} alt="LNURL-auth QR code" />
+                      <img
+                        src={lnurlQr}
+                        alt="Scan this QR code with your Lightning wallet to login"
+                      />
                     ) : (
                       <div style={{ padding: '2rem', textAlign: 'center' }}>QR_ERROR</div>
                     )}

@@ -12,7 +12,9 @@
     var(--ns-color-bg-subtle) 100%
   );
   margin-bottom: var(--ns-space-5);
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
 .find-friend-card:hover {
@@ -48,7 +50,9 @@
   border: 1px solid var(--ns-color-primary-default);
   background: transparent;
   color: var(--ns-color-primary-default);
-  transition: all var(--ns-duration-fast) var(--ns-easing-easeInOut);
+  transition:
+    background-color var(--ns-duration-fast) var(--ns-easing-easeInOut),
+    color var(--ns-duration-fast) var(--ns-easing-easeInOut);
 }
 
 .find-friend-card__action:hover {

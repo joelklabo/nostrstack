@@ -151,7 +151,9 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
 
 export function DMView() {
   const { conversations, loading, sendDM, decryptMessage } = useDMs();
+  const { get: getCached } = useCachedEvent();
   const [selectedPeer, setSelectedPeer] = useState<string | null>(null);
+  const [selectedPeerProfile, setSelectedPeerProfile] = useState<ProfileMetadata | null>(null);
   const [inputText, setInputText] = useState('');
   const [decryptedCache, setDecryptedCache] = useState<Record<string, string>>({});
   const [showNewMessage, setShowNewMessage] = useState(false);
@@ -187,6 +189,33 @@ export function DMView() {
       newRecipientInputRef.current.focus();
     }
   }, [showNewMessage]);
+
+  // Fetch selected peer's profile for aria-label
+  useEffect(() => {
+    if (!selectedPeer) {
+      setSelectedPeerProfile(null);
+      return;
+    }
+    let cancelled = false;
+    getCached({ kinds: [0], authors: [selectedPeer] })
+      .then((event) => {
+        if (cancelled || !event) return;
+        try {
+          setSelectedPeerProfile(JSON.parse(event.content) as ProfileMetadata);
+        } catch {
+          // Invalid JSON
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPeer, getCached]);
+
+  const selectedPeerDisplayName =
+    selectedPeerProfile?.display_name ||
+    selectedPeerProfile?.name ||
+    (selectedPeer ? selectedPeer.slice(0, 8) + '...' : '');
 
   const handleStartNewConversation = () => {
     setRecipientError(null);
@@ -258,7 +287,11 @@ export function DMView() {
 
   return (
     <div className="dm-layout">
-      <div className={`dm-sidebar ${selectedPeer ? 'hidden' : ''}`}>
+      <div
+        className={`dm-sidebar ${selectedPeer ? 'hidden' : ''}`}
+        role="navigation"
+        aria-label="Conversations"
+      >
         <div
           className="dm-header"
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -389,7 +422,7 @@ export function DMView() {
         </div>
       </div>
 
-      <div className={`dm-main ${!selectedPeer ? 'hidden' : ''}`}>
+      <div className={`dm-main ${!selectedPeer ? 'hidden' : ''}`} role="main" aria-label="Chat">
         {selectedPeer ? (
           <>
             <div className="dm-header">
@@ -404,7 +437,12 @@ export function DMView() {
               </button>
               <ProfileLink pubkey={selectedPeer} />
             </div>
-            <div className="dm-messages" role="list" aria-live="polite">
+            <div
+              className="dm-messages"
+              role="list"
+              aria-live="polite"
+              aria-label={`Messages with ${selectedPeerDisplayName}`}
+            >
               {activeConversation?.messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -444,7 +482,12 @@ export function DMView() {
                 autoComplete="off"
                 enterKeyHint="send"
               />
-              <button type="button" className="action-btn" onClick={handleSend} aria-label="Send message">
+              <button
+                type="button"
+                className="action-btn"
+                onClick={handleSend}
+                aria-label="Send message"
+              >
                 Send
               </button>
             </div>

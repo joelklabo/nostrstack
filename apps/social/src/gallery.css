@@ -74,6 +74,7 @@ body {
     .dm-input,
     .thread-collapse-btn,
     .nostr-event-link,
+    .profile-link,
     .profile-link--with-avatar,
     .ns-dialog__close,
     .lnurl-auth-close,
@@ -129,6 +130,10 @@ body {
 .dm-list-item.active,
 .dm-list-item[aria-current='true'] {
   background: var(--ns-color-bg-muted);
+}
+
+.notification-item {
+  transition: background-color var(--ns-duration-fast) var(--ns-easing-easeInOut);
 }
 
 .notification-item:hover {
@@ -2003,7 +2008,7 @@ body {
   padding: 0.25rem 0.5rem;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .dm-back-btn {
     display: inline-flex;
   }
@@ -2266,6 +2271,7 @@ body {
 /* Text-wrap balance for headings */
 .sidebar-title,
 .feed-title,
+.feed-empty__title,
 .login-title,
 .relay-view-title,
 .profile-name {
@@ -2339,4 +2345,11 @@ body {
 
 .relay-status-label {
   color: inherit;
+}
+
+/* Tabular numbers for consistent numeric alignment */
+.sidebar-wallet-balance,
+.ns-stat-value,
+.top-zaps__amount {
+  font-variant-numeric: tabular-nums;
 }

@@ -85,7 +85,9 @@
   border-radius: var(--ns-radius-md);
   cursor: pointer;
   font-weight: var(--ns-font-weight-semibold);
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
 .preset-btn:hover {
@@ -136,7 +138,9 @@
   font-size: var(--ns-font-size-base);
   font-weight: var(--ns-font-weight-bold);
   cursor: pointer;
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    filter var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    transform var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
 .zap-confirm-btn:hover {
@@ -202,7 +206,9 @@
   text-align: center;
   cursor: pointer;
   text-decoration: none;
-  transition: all var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  transition:
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
 .invoice-actions button {

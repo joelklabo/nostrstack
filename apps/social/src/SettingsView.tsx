@@ -274,7 +274,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
   return (
     <div className="profile-view">
-      <h3>SYSTEM_SETTINGS</h3>
+      <h3>System Settings</h3>
 
       <div className="paywall-container">
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
@@ -312,7 +312,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
           BRAND_PRESET
         </h4>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }} role="group" aria-label="Brand preset selection">
+        <div
+          style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
+          role="group"
+          aria-label="Brand preset selection"
+        >
           {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map((preset) => (
             <button
               key={preset}
@@ -341,7 +345,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             {permission === 'default' && (
-              <button className="action-btn" onClick={requestPermission} aria-label="Enable push notifications">
+              <button
+                className="action-btn"
+                onClick={requestPermission}
+                aria-label="Enable push notifications"
+              >
                 ENABLE_NOTIFICATIONS
               </button>
             )}
@@ -441,6 +449,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               className="ns-input"
               type="password"
               name="nwc-uri"
+              autoComplete="off"
               placeholder="nostr+walletconnect://..."
               value={nwcUri}
               onChange={(event) => setNwcUri(event.target.value)}
@@ -520,7 +529,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           >
             DISCONNECT
           </button>
-          {nwcMessage && <span className="nwc-message" role="status" aria-live="polite">{nwcMessage}</span>}
+          {nwcMessage && (
+            <span className="nwc-message" role="status" aria-live="polite">
+              {nwcMessage}
+            </span>
+          )}
         </div>
       </div>
     </div>

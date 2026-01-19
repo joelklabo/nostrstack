@@ -2,7 +2,7 @@ import '../styles/find-friend.css';
 
 export function FindFriendCard({ onClick }: { onClick?: () => void }) {
   return (
-    <section className="find-friend-card">
+    <section className="find-friend-card" aria-label="Find a friend to tip">
       <div className="find-friend-card__content">
         <div className="find-friend-card__title">Find a friend to tip</div>
         <div className="find-friend-card__subtitle">

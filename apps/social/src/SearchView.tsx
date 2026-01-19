@@ -311,6 +311,7 @@ export function SearchView() {
             className="action-btn search-result-action"
             type="button"
             onClick={() => navigateToProfile(result.pubkey)}
+            aria-label={`Open profile for ${fetchedProfile?.display_name || fetchedProfile?.name || result.nip05 || npub || result.pubkey}`}
           >
             Open profile
           </button>

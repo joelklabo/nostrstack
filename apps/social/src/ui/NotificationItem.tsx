@@ -89,7 +89,6 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
         padding: '1rem',
         borderBottom: '1px solid var(--ns-color-border-strong)',
         cursor: targetId ? 'pointer' : 'default',
-        transition: 'background 0.1s ease-in-out',
         border: 'none',
         background: 'transparent',
         width: '100%',

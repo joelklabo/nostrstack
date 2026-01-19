@@ -362,7 +362,12 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                       <div className="lightning-card-body">
                         <div className="lightning-card-qr">
                           {lightningQr ? (
-                            <img src={lightningQr} alt="Lightning QR" width={160} height={160} />
+                            <img
+                              src={lightningQr}
+                              alt={`QR code for ${lightningAddress}`}
+                              width={160}
+                              height={160}
+                            />
                           ) : (
                             <div className="lightning-card-qr-fallback">QR</div>
                           )}
@@ -415,7 +420,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
         </>
       )}
 
-      <h3>USER_ACTIVITY</h3>
+      <h3>Recent Posts</h3>
       <div className="user-events">
         {eventsLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -427,7 +432,13 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
           <div className="profile-empty" role="status" aria-live="polite">
             <p>No posts yet. Check back soon.</p>
             {!isMe && !following && (
-              <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--ns-color-text-muted)' }}>
+              <p
+                style={{
+                  marginTop: '0.5rem',
+                  fontSize: '0.9rem',
+                  color: 'var(--ns-color-text-muted)'
+                }}
+              >
                 Follow them to see their posts in your feed.
               </p>
             )}
