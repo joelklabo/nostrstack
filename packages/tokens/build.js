@@ -71,6 +71,14 @@ function loadTokens(patterns) {
 }
 
 /**
+ * Sanitize token name for CSS custom property names.
+ * CSS custom properties cannot contain dots (e.g., "space-0.5" must become "space-0-5").
+ */
+function sanitizeForCss(name) {
+  return name.replace(/\./g, '-');
+}
+
+/**
  * Convert DTCG format to flat token structure
  */
 function convertDtcgToFlat(obj, path = [], result = {}) {
@@ -117,6 +125,42 @@ function deepMerge(target, source) {
 }
 
 /**
+ * Resolve a single reference to a token name.
+ * Tries multiple interpretations because dots can be either path separators or part of key names.
+ * For example, "{space.2.5}" could mean:
+ *   - "space-2.5" (if "2.5" is a single key)
+ *   - "space-2-5" (if "2" and "5" are nested keys)
+ */
+function resolveReference(ref, tokens) {
+  // Strategy: try progressively replacing dots from left to right
+  // For "space.2.5", try:
+  //   1. "space-2.5" (replace only first dot)
+  //   2. "space-2-5" (replace all dots)
+  const parts = ref.split('.');
+
+  // Try joining parts with hyphens from left to right
+  // For ["space", "2", "5"], try: "space-2.5", then "space-2-5"
+  for (let i = parts.length - 1; i >= 1; i--) {
+    // Join first i parts with hyphen, keep remaining parts joined with dot
+    const left = parts.slice(0, i).join('-');
+    const right = parts.slice(i).join('.');
+    const candidate = right ? `${left}-${right}` : left;
+
+    if (tokens[candidate]) {
+      return tokens[candidate].value;
+    }
+  }
+
+  // Final fallback: replace all dots with hyphens
+  const fullReplaced = ref.replace(/\./g, '-');
+  if (tokens[fullReplaced]) {
+    return tokens[fullReplaced].value;
+  }
+
+  return null;
+}
+
+/**
  * Resolve token references in values
  */
 function resolveReferences(tokens) {
@@ -131,10 +175,9 @@ function resolveReferences(tokens) {
     for (const [_name, token] of Object.entries(tokens)) {
       if (typeof token.value === 'string' && token.value.includes('{')) {
         const resolved = token.value.replace(/\{([^}]+)\}/g, (match, ref) => {
-          // Convert reference path to token name
-          const refName = ref.replace(/\./g, '-');
-          if (tokens[refName]) {
-            return tokens[refName].value;
+          const resolvedValue = resolveReference(ref, tokens);
+          if (resolvedValue !== null) {
+            return resolvedValue;
           }
           // Reference not found, keep as is
           hasUnresolved = true;
@@ -153,7 +196,7 @@ function resolveReferences(tokens) {
  */
 function generateCSS(tokens, selector = ':root') {
   const lines = Object.entries(tokens)
-    .map(([name, token]) => `  --ns-${name}: ${token.value};`)
+    .map(([name, token]) => `  --ns-${sanitizeForCss(name)}: ${token.value};`)
     .sort();
 
   return `${selector} {\n${lines.join('\n')}\n}\n`;
@@ -164,7 +207,7 @@ function generateCSS(tokens, selector = ':root') {
  */
 function generateDarkCSS(tokens) {
   const lines = Object.entries(tokens)
-    .map(([name, token]) => `  --ns-${name}: ${token.value};`)
+    .map(([name, token]) => `  --ns-${sanitizeForCss(name)}: ${token.value};`)
     .sort();
 
   return `/* Dark theme - System preference */
@@ -277,7 +320,7 @@ function generateJSON(tokens) {
 function generateFlatJSON(tokens) {
   const result = {};
   for (const [name, token] of Object.entries(tokens)) {
-    result[`--ns-${name}`] = token.value;
+    result[`--ns-${sanitizeForCss(name)}`] = token.value;
   }
   return JSON.stringify(result, null, 2);
 }
