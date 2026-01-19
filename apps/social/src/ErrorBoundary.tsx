@@ -29,6 +29,8 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
       return (
         <div
+          role="alert"
+          aria-live="assertive"
           style={{
             padding: '1rem',
             border: '1px solid var(--ns-color-danger-default)',

@@ -1,4 +1,5 @@
 import { useAuth } from '@nostrstack/react';
+import { useToast } from '@nostrstack/ui';
 import { type Event, type EventTemplate, SimplePool } from 'nostr-tools';
 import { memo, useCallback, useId, useMemo, useRef, useState } from 'react';
 
@@ -20,6 +21,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
 }: EmojiReactionButtonProps) {
   const { pubkey, signEvent } = useAuth();
   const { relays } = useRelays();
+  const toast = useToast();
   const [hasReacted, setHasReacted] = useState(false);
   const [reactedEmoji, setReactedEmoji] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -36,7 +38,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
   const publishReaction = useCallback(
     async (emoji: string) => {
       if (!pubkey) {
-        alert('You must be logged in to react.');
+        toast({ message: 'You must be logged in to react', tone: 'warning' });
         return;
       }
       if (hasReacted || isPublishing) return;
@@ -69,7 +71,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
         setIsPublishing(false);
       }
     },
-    [pubkey, signEvent, event, relayTargets, hasReacted, isPublishing]
+    [pubkey, signEvent, event, relayTargets, hasReacted, isPublishing, toast]
   );
 
   const handleClick = useCallback(() => {

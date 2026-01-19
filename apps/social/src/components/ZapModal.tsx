@@ -2,7 +2,7 @@ import './ZapModal.css';
 
 import { QRCodeSVG } from 'qrcode.react';
 import type React from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 interface ZapModalProps {
   isOpen: boolean;
@@ -29,6 +29,8 @@ export const ZapModal: React.FC<ZapModalProps> = ({
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   const titleId = useId();
   const descriptionId = useId();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const PRESETS = [21, 50, 100, 500, 1000, 5000];
 
@@ -43,6 +45,33 @@ export const ZapModal: React.FC<ZapModalProps> = ({
     }
   }, [isOpen]);
 
+  // Store trigger element and focus first focusable element
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Store the element that had focus before modal opened
+    triggerRef.current = document.activeElement as HTMLElement;
+
+    // Focus first focusable element in modal
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusable = modal.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) {
+      focusable.focus();
+    }
+
+    // Return focus to trigger when modal closes
+    return () => {
+      if (triggerRef.current && document.contains(triggerRef.current)) {
+        triggerRef.current.focus();
+      }
+    };
+  }, [isOpen]);
+
+  // Handle Escape key
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -54,6 +83,45 @@ export const ZapModal: React.FC<ZapModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const modal = modalRef.current;
+      if (!modal) return;
+
+      const focusable = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled'));
+
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const handleZap = async () => {
     try {
@@ -104,6 +172,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
       }}
     >
       <div
+        ref={modalRef}
         className="zap-modal"
         role="dialog"
         aria-modal="true"

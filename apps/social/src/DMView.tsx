@@ -1,4 +1,4 @@
-import { Skeleton } from '@nostrstack/ui';
+import { Skeleton, useToast } from '@nostrstack/ui';
 import { nip19 } from 'nostr-tools';
 import { useEffect, useRef, useState } from 'react';
 
@@ -152,6 +152,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
 export function DMView() {
   const { conversations, loading, sendDM, decryptMessage } = useDMs();
   const { get: getCached } = useCachedEvent();
+  const toast = useToast();
   const [selectedPeer, setSelectedPeer] = useState<string | null>(null);
   const [selectedPeerProfile, setSelectedPeerProfile] = useState<ProfileMetadata | null>(null);
   const [inputText, setInputText] = useState('');
@@ -274,7 +275,7 @@ export function DMView() {
       setInputText('');
     } catch (err) {
       console.error('Failed to send DM', err);
-      alert('Failed to send message');
+      toast({ message: 'Failed to send message', tone: 'danger' });
     }
   };
 

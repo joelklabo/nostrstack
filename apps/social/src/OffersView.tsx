@@ -46,11 +46,13 @@ function formatTime(ts: number) {
 export function OffersView() {
   const cfg = useNostrstackConfig();
   const toast = useToast();
-  const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBaseRaw =
+    cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
   const apiBase = apiBaseConfig.baseUrl;
   const bolt12Enabled =
-    String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' || import.meta.env.DEV;
+    String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' ||
+    import.meta.env.DEV;
 
   const [description, setDescription] = useState('');
   const [amountMsat, setAmountMsat] = useState('');
@@ -61,7 +63,10 @@ export function OffersView() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [offers, setOffers] = useState<OfferEntry[]>([]);
 
-  const baseUrl = useMemo(() => (apiBaseConfig.isConfigured ? apiBase : ''), [apiBaseConfig.isConfigured, apiBase]);
+  const baseUrl = useMemo(
+    () => (apiBaseConfig.isConfigured ? apiBase : ''),
+    [apiBaseConfig.isConfigured, apiBase]
+  );
 
   const updateOffer = (id: string, patch: Partial<OfferEntry>) => {
     setOffers((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
@@ -270,7 +275,11 @@ export function OffersView() {
           >
             {createStatus === 'loading' ? 'CREATING…' : 'CREATE_OFFER'}
           </button>
-          {createError && <div className="offer-error">{createError}</div>}
+          {createError && (
+            <div className="offer-error" role="alert" aria-live="assertive">
+              {createError}
+            </div>
+          )}
         </div>
       </section>
 
@@ -291,7 +300,9 @@ export function OffersView() {
                   <span className="offer-tag">{formatMsat(entry.amountMsat)}</span>
                   {entry.label && <span className="offer-tag">{entry.label}</span>}
                   {entry.issuer && <span className="offer-tag">{entry.issuer}</span>}
-                  {entry.offerId && <span className="offer-tag">ID {entry.offerId.slice(0, 8)}</span>}
+                  {entry.offerId && (
+                    <span className="offer-tag">ID {entry.offerId.slice(0, 8)}</span>
+                  )}
                 </div>
               </div>
               <div className="offer-card-time">Created {formatTime(entry.createdAt)}</div>
@@ -318,7 +329,9 @@ export function OffersView() {
                 ) : (
                   <div className="offer-invoice-placeholder">
                     <div className="offer-invoice-title">Invoice</div>
-                    <p>Request an invoice for this offer. Use amount & quantity for subscriptions.</p>
+                    <p>
+                      Request an invoice for this offer. Use amount & quantity for subscriptions.
+                    </p>
                   </div>
                 )}
 
@@ -372,7 +385,9 @@ export function OffersView() {
                       {entry.invoiceStatus === 'loading' ? 'REQUESTING…' : 'REQUEST_INVOICE'}
                     </button>
                     {entry.invoiceStatus === 'error' && entry.invoiceError && (
-                      <div className="offer-error">{entry.invoiceError}</div>
+                      <div className="offer-error" role="alert" aria-live="assertive">
+                        {entry.invoiceError}
+                      </div>
                     )}
                   </div>
                 </div>
