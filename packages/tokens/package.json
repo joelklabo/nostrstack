@@ -27,7 +27,6 @@
     "./dist/css/components.css": "./dist/css/components.css",
     "./dist/css/utilities.css": "./dist/css/utilities.css",
     "./json": "./dist/json/tokens.json",
-    "./themes/light": "./dist/css/theme-light.css",
     "./themes/dark": "./dist/css/theme-dark.css"
   },
   "files": [

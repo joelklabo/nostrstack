@@ -29,6 +29,7 @@
     "packages/widgets/src/helpers.ts"
   ],
   "ignoreDependencies": [
+    "@nostrstack/tokens",
     "eslint",
     "buffer",
     "@fastify/static",
