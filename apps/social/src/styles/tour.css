@@ -1,7 +1,7 @@
 .onboarding-overlay {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 60%);
+  background: var(--ns-color-overlay-strong);
   z-index: 99999;
   transition: opacity var(--ns-duration-moderate) var(--ns-easing-ease);
   backdrop-filter: blur(4px);
@@ -9,7 +9,7 @@
 
 .onboarding-spotlight {
   position: fixed;
-  box-shadow: 0 0 0 9999px rgb(0 0 0 / 60%);
+  box-shadow: 0 0 0 9999px var(--ns-color-overlay-strong);
   border-radius: var(--ns-radius-md);
   pointer-events: none;
   z-index: 99998;
@@ -47,10 +47,10 @@
 
 .onboarding-title {
   font-weight: var(--ns-font-weight-bold);
-  font-size: 1.1rem;
+  font-size: var(--ns-font-size-lg);
   margin-bottom: var(--ns-space-2);
   color: var(--ns-color-text-default);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--ns-font-letterSpacing-tight);
 }
 
 .onboarding-content {

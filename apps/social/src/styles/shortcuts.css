@@ -1,11 +1,11 @@
 .shortcuts-overlay {
   position: fixed;
   inset: 0;
-  background: rgb(15 23 42 / 45%);
+  background: var(--ns-color-overlay-default);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: var(--ns-space-6);
   z-index: 2000;
   animation: shortcuts-fade-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
 }
@@ -17,8 +17,8 @@
   flex-direction: column;
   background: var(--ns-color-bg-default);
   border: 1px solid var(--ns-color-border-default);
-  border-radius: 12px;
-  box-shadow: 0 24px 64px rgb(15 23 42 / 28%);
+  border-radius: var(--ns-radius-xl);
+  box-shadow: var(--ns-shadow-2xl);
   overflow: hidden;
   animation: shortcuts-pop-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
 }
@@ -27,28 +27,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem 1rem;
+  padding: var(--ns-space-5) var(--ns-space-6) var(--ns-space-4);
   background: var(--ns-color-bg-subtle);
   border-bottom: 1px solid var(--ns-color-border-default);
 }
 
 .shortcuts-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--ns-font-size-base);
+  font-weight: var(--ns-font-weight-semibold);
   color: var(--ns-color-text-default);
 }
 
 .shortcuts-close {
   width: 44px;
   height: 44px;
-  border-radius: 6px;
+  border-radius: var(--ns-radius-md);
   border: 1px solid transparent;
   background: transparent;
   color: var(--ns-color-text-muted);
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-size: 1.2rem;
+  font-size: var(--ns-font-size-lg);
   line-height: 1;
 }
 
@@ -58,20 +58,20 @@
 }
 
 .shortcuts-body {
-  padding: 1.5rem;
+  padding: var(--ns-space-6);
   overflow-y: auto;
 }
 
 .shortcuts-list {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--ns-space-3);
 }
 
 .shortcut-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 0.75rem;
+  padding-bottom: var(--ns-space-3);
   border-bottom: 1px solid var(--ns-color-border-strong);
 }
 
@@ -82,23 +82,23 @@
 
 .shortcut-keys {
   display: flex;
-  gap: 0.35rem;
+  gap: var(--ns-space-1-5);
 }
 
 .shortcut-key {
   font-family: var(--ns-font-family-mono);
-  font-size: 0.85rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
+  font-size: var(--ns-font-size-sm);
+  padding: var(--ns-space-0-5) var(--ns-space-2);
+  border-radius: var(--ns-radius-md);
   background: var(--ns-color-bg-subtle);
   border: 1px solid var(--ns-color-border-default);
   color: var(--ns-color-text-default);
-  min-width: 24px;
+  min-width: var(--ns-space-6);
   text-align: center;
 }
 
 .shortcut-desc {
-  font-size: 0.9rem;
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-text-muted);
 }
 

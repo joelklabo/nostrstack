@@ -32,7 +32,7 @@
 
 .zap-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--ns-font-size-xl);
   font-weight: var(--ns-font-weight-semibold);
 }
 
@@ -40,7 +40,7 @@
   background: none;
   border: none;
   color: var(--ns-color-text-muted);
-  font-size: 1.5rem;
+  font-size: var(--ns-font-size-2xl);
   cursor: pointer;
   width: 44px;
   height: 44px;
@@ -170,7 +170,7 @@
 }
 
 .lightning-icon {
-  font-size: 3rem;
+  font-size: var(--ns-font-size-5xl);
   display: block;
   margin-bottom: var(--ns-space-4);
   color: var(--ns-color-text-subtle);
@@ -185,8 +185,8 @@
 }
 
 .qr-container svg {
-  background: white;
-  padding: 10px;
+  background: var(--ns-color-static-white);
+  padding: var(--ns-space-2-5);
   border-radius: var(--ns-radius-md);
 }
 
@@ -243,7 +243,7 @@
 }
 
 .check-icon {
-  font-size: 3rem;
+  font-size: var(--ns-font-size-5xl);
   display: block;
   margin-bottom: var(--ns-space-4);
 }

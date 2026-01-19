@@ -1,21 +1,21 @@
 .nwc-card {
   display: grid;
-  gap: 0.8rem;
+  gap: var(--ns-space-3);
 }
 
 .nwc-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--ns-space-4);
 }
 
 .nwc-status-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: var(--ns-font-size-2xs);
+  font-weight: var(--ns-font-weight-bold);
   letter-spacing: 0.08em;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  padding: var(--ns-space-0-5) var(--ns-space-2);
+  border-radius: var(--ns-radius-full);
   border: 1px solid var(--ns-color-border-strong);
   color: var(--ns-color-text-muted);
   background: var(--ns-color-bg-subtle);
@@ -23,60 +23,60 @@
 
 .nwc-status-pill.is-success {
   color: var(--ns-color-success-default);
-  border-color: rgb(26 127 55 / 40%);
-  background: rgb(26 127 55 / 8%);
+  border-color: color-mix(in oklch, var(--ns-color-success-default) 40%, transparent);
+  background: color-mix(in oklch, var(--ns-color-success-default) 8%, transparent);
 }
 
 .nwc-status-pill.is-error {
   color: var(--ns-color-danger-default);
-  border-color: rgb(218 54 51 / 40%);
-  background: rgb(218 54 51 / 8%);
+  border-color: color-mix(in oklch, var(--ns-color-danger-default) 40%, transparent);
+  background: color-mix(in oklch, var(--ns-color-danger-default) 8%, transparent);
 }
 
 .nwc-status-pill.is-pending {
   color: var(--ns-color-primary-default);
-  border-color: rgb(59 130 246 / 45%);
-  background: rgb(59 130 246 / 8%);
+  border-color: color-mix(in oklch, var(--ns-color-primary-default) 45%, transparent);
+  background: color-mix(in oklch, var(--ns-color-primary-default) 8%, transparent);
 }
 
 .nwc-status-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
+  gap: var(--ns-space-2);
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-text-muted);
 }
 
 .nwc-balance {
-  font-size: 0.85rem;
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-text-default);
-  font-weight: 600;
+  font-weight: var(--ns-font-weight-semibold);
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--ns-space-2);
 }
 
 .nwc-balance-msat {
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: var(--ns-font-size-xs);
+  font-weight: var(--ns-font-weight-medium);
   color: var(--ns-color-text-muted);
 }
 
 .nwc-last-payment {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.75rem;
+  gap: var(--ns-space-2);
+  font-size: var(--ns-font-size-xs);
   color: var(--ns-color-text-muted);
   align-items: center;
 }
 
 .nwc-last-pill {
-  font-size: 0.6rem;
-  font-weight: 700;
+  font-size: var(--ns-font-size-2xs);
+  font-weight: var(--ns-font-weight-bold);
   letter-spacing: 0.08em;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
+  padding: var(--ns-space-0-5) var(--ns-space-1-5);
+  border-radius: var(--ns-radius-full);
   border: 1px solid var(--ns-color-border-strong);
   color: var(--ns-color-text-muted);
   background: var(--ns-color-bg-subtle);
@@ -84,55 +84,55 @@
 
 .nwc-last-pill.is-success {
   color: var(--ns-color-success-default);
-  border-color: rgb(26 127 55 / 40%);
-  background: rgb(26 127 55 / 8%);
+  border-color: color-mix(in oklch, var(--ns-color-success-default) 40%, transparent);
+  background: color-mix(in oklch, var(--ns-color-success-default) 8%, transparent);
 }
 
 .nwc-last-pill.is-error {
   color: var(--ns-color-danger-default);
-  border-color: rgb(218 54 51 / 40%);
-  background: rgb(218 54 51 / 8%);
+  border-color: color-mix(in oklch, var(--ns-color-danger-default) 40%, transparent);
+  background: color-mix(in oklch, var(--ns-color-danger-default) 8%, transparent);
 }
 
 .nwc-last-time {
-  font-size: 0.68rem;
+  font-size: var(--ns-font-size-2xs);
   color: var(--ns-color-text-muted);
 }
 
 .nwc-form {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--ns-space-3);
   max-width: 560px;
 }
 
 .nwc-label {
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.85rem;
+  gap: var(--ns-space-1-5);
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-text-muted);
 }
 
 .nwc-error {
-  font-size: 0.8rem;
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-danger-default);
 }
 
 .nwc-remember {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
+  gap: var(--ns-space-2);
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-text-muted);
 }
 
 .nwc-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--ns-space-2);
   flex-wrap: wrap;
   align-items: center;
 }
 
 .nwc-message {
-  font-size: 0.8rem;
+  font-size: var(--ns-font-size-sm);
   color: var(--ns-color-text-muted);
 }

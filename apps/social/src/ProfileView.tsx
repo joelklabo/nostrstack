@@ -13,10 +13,12 @@ import { Image } from './ui/Image';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { VirtualizedList } from './ui/VirtualizedList';
 
-const BITCOIN_ORANGE = '#F7931A';
+// Use CSS custom property for Bitcoin orange color - see gallery.css for --ns-color-bitcoin-default
+const BITCOIN_ORANGE = 'var(--ns-color-bitcoin-default)';
 
+// Fallback avatar uses neutral colors from design tokens
 const FALLBACK_AVATAR_SVG =
-  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='120' height='120' rx='60' fill='#21292e'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='48' fill='#ffffff'>N</text></svg>";
+  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='120' height='120' rx='60' fill='oklch(0.18 0.02 280)'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='48' fill='white'>N</text></svg>";
 const FALLBACK_AVATAR = `data:image/svg+xml;utf8,${encodeURIComponent(FALLBACK_AVATAR_SVG)}`;
 
 interface ProfileMetadata {

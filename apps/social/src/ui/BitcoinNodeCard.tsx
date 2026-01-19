@@ -34,7 +34,8 @@ type NodeInfo = {
   };
 };
 
-const BITCOIN_ORANGE = '#F7931A';
+// Use CSS custom property for Bitcoin orange color - see gallery.css for --ns-color-bitcoin-default
+const BITCOIN_ORANGE = 'var(--ns-color-bitcoin-default)';
 
 function formatBytes(bytes?: number): string {
   if (bytes === undefined || bytes === null) return '--';

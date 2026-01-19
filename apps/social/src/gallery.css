@@ -10,10 +10,10 @@
 :root {
   --header-height: 64px;
 
-  /* Bitcoin orange accent color */
-  --ns-color-bitcoin: #f7931a;
-  --ns-color-bitcoin-glow: rgb(247 147 26 / 40%);
-  --ns-color-bitcoin-subtle: rgb(247 147 26 / 10%);
+  /* Bitcoin orange accent color - use tokens where available */
+  --ns-color-bitcoin: var(--ns-color-bitcoin-default);
+  --ns-color-bitcoin-glow: color-mix(in oklch, var(--ns-color-bitcoin-default) 40%, transparent);
+  --ns-color-bitcoin-subtle: color-mix(in oklch, var(--ns-color-bitcoin-default) 10%, transparent);
 }
 
 /* ===== BASE STYLES ===== */
@@ -2174,7 +2174,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 50%);
+  background: var(--ns-color-overlay-default);
   z-index: 9999;
   opacity: 0;
   transition: opacity var(--ns-duration-slow) var(--ns-easing-easeInOut);
@@ -2816,7 +2816,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
+  box-shadow: var(--ns-shadow-md);
 }
 
 .lightning-card-qr-fallback {
