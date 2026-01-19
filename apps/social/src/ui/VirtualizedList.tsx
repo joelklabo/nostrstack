@@ -149,5 +149,3 @@ export function VirtualizedList<T>({
     </div>
   );
 }
-
-export default VirtualizedList;
