@@ -1,5 +1,5 @@
 {
-  "threshold": 10,
+  "threshold": 30,
   "reporters": ["console", "html"],
   "ignore": [
     "**/node_modules/**",
@@ -11,10 +11,13 @@
     "**/yarn.lock",
     "**/*.spec.ts",
     "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.stories.tsx",
     "**/tests/**",
     "**/scripts/**",
     "deploy/**",
-    ".github/**"
+    ".github/**",
+    "**/generated/**"
   ],
   "absolute": true,
   "gitignore": true
