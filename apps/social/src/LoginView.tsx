@@ -455,17 +455,26 @@ export function LoginView() {
                       Scan with a Lightning wallet that supports LNURL-auth.
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <button className="ns-btn ns-btn--sm" onClick={handleCopyLnurl}>
+                      <button
+                        className="ns-btn ns-btn--sm"
+                        onClick={handleCopyLnurl}
+                        aria-label="Copy LNURL to clipboard"
+                      >
                         {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
                       </button>
                       <button
                         className="ns-btn ns-btn--primary ns-btn--sm"
                         onClick={handleOpenWallet}
+                        aria-label="Open lightning wallet"
                       >
                         OPEN WALLET
                       </button>
                       {showRetry && (
-                        <button className="ns-btn ns-btn--sm" onClick={openLnurlModal}>
+                        <button
+                          className="ns-btn ns-btn--sm"
+                          onClick={openLnurlModal}
+                          aria-label="Retry lightning login"
+                        >
                           RETRY
                         </button>
                       )}

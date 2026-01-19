@@ -162,7 +162,7 @@ function AppShell() {
           onMobileClose={handleMobileMenuClose}
           onOpenHelp={() => setHelpOpen(true)}
         />
-        <main className="feed-container" role="main" id="main-content">
+        <main className="feed-container" id="main-content">
           <NotFoundView />
         </main>
       </div>
@@ -218,7 +218,7 @@ function AppShell() {
         onMobileClose={handleMobileMenuClose}
         onOpenHelp={() => setHelpOpen(true)}
       />
-      <main className="feed-container" role="main" id="main-content">
+      <main className="feed-container" id="main-content">
         <Suspense
           fallback={
             <div

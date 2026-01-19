@@ -9,7 +9,12 @@ export function FindFriendCard({ onClick }: { onClick?: () => void }) {
           Paste an npub, nprofile, or NIP-05 address to jump to their profile.
         </div>
       </div>
-      <button className="find-friend-card__action" type="button" onClick={onClick}>
+      <button
+        className="find-friend-card__action"
+        type="button"
+        onClick={onClick}
+        aria-label="Find a friend to tip"
+      >
         Find friend
       </button>
     </section>

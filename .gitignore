@@ -35,3 +35,7 @@ gha-creds-*.json
 *storybook.log
 storybook-static
 test-results
+
+# Syncthing temp files
+.syncthing*.tmp
+*.syncthing*.tmp

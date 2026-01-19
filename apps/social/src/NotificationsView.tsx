@@ -137,7 +137,11 @@ export function NotificationsView() {
         >
           Loading notifications...
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }} role="status" aria-live="polite">
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '0' }}
+          role="status"
+          aria-live="polite"
+        >
           <span className="sr-only">Loading notifications...</span>
           {[1, 2, 3, 4, 5].map((i) => (
             <NotificationSkeleton key={i} />
@@ -148,14 +152,23 @@ export function NotificationsView() {
   }
 
   return (
-    <section className="feed-stream" aria-label="Notifications" role="region">
+    <section className="feed-stream" aria-label="Notifications">
       <h2
         className="sr-only"
-        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)'
+        }}
       >
         Notifications
       </h2>
-      <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--ns-color-text-default)' }} aria-hidden="true">
+      <div
+        style={{ marginBottom: '1rem', borderBottom: '1px solid var(--ns-color-text-default)' }}
+        aria-hidden="true"
+      >
         Notifications
       </div>
 
@@ -167,7 +180,11 @@ export function NotificationsView() {
       })}
 
       {events.length === 0 && (
-        <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }} role="status" aria-live="polite">
+        <div
+          style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}
+          role="status"
+          aria-live="polite"
+        >
           No notifications yet. Interactions with your posts will appear here.
         </div>
       )}
