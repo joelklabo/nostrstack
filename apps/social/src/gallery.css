@@ -3,6 +3,9 @@
 @import '@nostrstack/tokens/dist/css/components.css';
 @import '@nostrstack/tokens/dist/css/utilities.css';
 
+/* Import professional animations */
+@import './styles/animations.css';
+
 /* App-specific variables */
 :root {
   --header-height: 64px;

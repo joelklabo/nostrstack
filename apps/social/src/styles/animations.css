@@ -1,0 +1,594 @@
+/* ===== PROFESSIONAL ANIMATIONS ===== */
+
+/* Follows animation principles:
+   - Uses only transform and opacity (compositor properties)
+   - Respects prefers-reduced-motion
+   - Uses natural easing curves
+   - Keeps durations under 300ms for interactions
+*/
+
+/* --- Animation CSS Variables --- */
+:root {
+  --ns-stagger-delay: 50ms;
+  --ns-animation-duration-fast: 150ms;
+  --ns-animation-duration-normal: 200ms;
+  --ns-animation-duration-moderate: 250ms;
+}
+
+/* --- Core Keyframes --- */
+@keyframes ns-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ns-fade-out-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes ns-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+}
+
+@keyframes ns-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ns-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+/* --- Micro-interaction Keyframes --- */
+@keyframes ns-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes ns-heart-bounce {
+  0% {
+    transform: scale(1);
+  }
+
+  15% {
+    transform: scale(1.25);
+  }
+
+  30% {
+    transform: scale(0.95);
+  }
+
+  45% {
+    transform: scale(1.1);
+  }
+
+  60%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ns-checkmark-draw {
+  0% {
+    stroke-dashoffset: 24;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ns-zap-flash {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  25% {
+    transform: scale(1.2);
+    filter: brightness(1.5);
+  }
+
+  50% {
+    transform: scale(0.9);
+    filter: brightness(1.2);
+  }
+
+  75% {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes ns-pulse-attention {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: var(--ns-shadow-lg);
+  }
+
+  50% {
+    transform: translateX(-50%) scale(1.02);
+    box-shadow:
+      var(--ns-shadow-xl),
+      0 0 20px color-mix(in oklch, var(--ns-color-primary-default) 40%, transparent);
+  }
+}
+
+/* --- Loading Keyframes --- */
+@keyframes ns-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ===== ENTRANCE ANIMATIONS ===== */
+
+/* Feed items fade in and slide up with stagger */
+.feed-stream .ns-card {
+  animation: ns-fade-in-up var(--ns-animation-duration-normal, 200ms)
+    var(--ns-easing-easeOut, ease-out) both;
+}
+
+.feed-stream .ns-card:nth-child(1) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 0);
+}
+.feed-stream .ns-card:nth-child(2) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 1);
+}
+.feed-stream .ns-card:nth-child(3) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 2);
+}
+.feed-stream .ns-card:nth-child(4) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 3);
+}
+.feed-stream .ns-card:nth-child(5) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 4);
+}
+.feed-stream .ns-card:nth-child(6) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 5);
+}
+.feed-stream .ns-card:nth-child(7) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 6);
+}
+.feed-stream .ns-card:nth-child(8) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 7);
+}
+.feed-stream .ns-card:nth-child(9) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 8);
+}
+.feed-stream .ns-card:nth-child(10) {
+  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 9);
+}
+
+/* Card hover lift effect */
+.ns-card {
+  transition:
+    border-color var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease-in-out),
+    box-shadow var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease-in-out),
+    transform var(--ns-duration-fast, 150ms) var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Exit animation for filtered/removed posts */
+.ns-card.is-exiting {
+  animation: ns-fade-out-up var(--ns-animation-duration-fast, 150ms)
+    var(--ns-easing-easeIn, ease-in) forwards;
+}
+
+/* ===== INTERACTION ANIMATIONS ===== */
+
+/* Button press - scale(0.97) on active */
+.ns-btn:active:not(:disabled),
+.action-btn:active:not(:disabled),
+.auth-btn:active:not(:disabled),
+.wallet-action-btn:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 50ms;
+}
+
+/* Button hover lift */
+.ns-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ns-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px color-mix(in oklch, var(--ns-color-primary-default) 40%, transparent);
+}
+
+.ns-btn--primary:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: 0 1px 4px -1px color-mix(in oklch, var(--ns-color-primary-default) 30%, transparent);
+}
+
+/* Action button hover animations */
+.ns-action-btn {
+  transition:
+    color var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease-in-out),
+    background-color var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease-in-out),
+    transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-action-btn .icon {
+  transition: transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-action-btn:hover .icon {
+  transform: scale(1.1);
+}
+
+.ns-action-btn:active {
+  transform: scale(0.97);
+}
+
+/* Focus ring animation */
+.ns-btn:focus-visible,
+.action-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ns-color-bg-default),
+    0 0 0 4px var(--ns-color-primary-default);
+}
+
+/* Toggle switch smooth slide */
+.ns-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--ns-color-bg-muted);
+  border-radius: var(--ns-radius-full);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--ns-duration-fast, 150ms)
+    var(--ns-easing-easeInOut, ease-in-out);
+}
+
+.ns-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: var(--ns-color-surface-default);
+  border-radius: 50%;
+  box-shadow: var(--ns-shadow-sm);
+  transition: transform var(--ns-duration-fast, 150ms) var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-toggle[aria-checked='true'],
+.ns-toggle.is-on {
+  background: var(--ns-color-primary-default);
+}
+
+.ns-toggle[aria-checked='true']::after,
+.ns-toggle.is-on::after {
+  transform: translateX(20px);
+}
+
+/* ===== LOADING ANIMATIONS ===== */
+
+/* Skeleton shimmer effect */
+.ns-skeleton {
+  background: var(--ns-color-bg-muted);
+  border-radius: var(--ns-radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.ns-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--ns-color-surface-default) 50%, transparent) 50%,
+    transparent 100%
+  );
+  animation: ns-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Spinner sizes */
+.ns-spinner--sm {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-width: 1.5px;
+}
+
+.ns-spinner--lg {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 2.5px;
+}
+
+/* Progress bar */
+.ns-progress {
+  height: 4px;
+  background: var(--ns-color-bg-muted);
+  border-radius: var(--ns-radius-full);
+  overflow: hidden;
+}
+
+.ns-progress__bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--ns-color-primary-default) 0%,
+    var(--ns-color-primary-hover) 100%
+  );
+  border-radius: var(--ns-radius-full);
+  transition: width 300ms var(--ns-easing-easeOut, ease-out);
+}
+
+/* Link preview skeleton shimmer */
+.link-preview__skeleton-image,
+.link-preview__skeleton-title,
+.link-preview__skeleton-desc {
+  position: relative;
+  overflow: hidden;
+}
+
+.link-preview__skeleton-image::after,
+.link-preview__skeleton-title::after,
+.link-preview__skeleton-desc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--ns-color-surface-default) 50%, transparent) 50%,
+    transparent 100%
+  );
+  animation: ns-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ===== EXIT ANIMATIONS ===== */
+
+/* Modal overlay and dialog exit */
+.ns-dialog-overlay {
+  animation: ns-fade-in var(--ns-animation-duration-fast, 150ms) var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-dialog-overlay.is-closing {
+  animation: ns-fade-in var(--ns-animation-duration-fast, 150ms) var(--ns-easing-easeIn, ease-in)
+    reverse forwards;
+}
+
+.ns-dialog.is-closing {
+  animation: ns-pop-out var(--ns-animation-duration-fast, 150ms) var(--ns-easing-easeIn, ease-in)
+    forwards;
+}
+
+/* Close button rotation */
+.ns-dialog__close {
+  transition:
+    transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeOut, ease-out),
+    background-color var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease-in-out);
+}
+
+.ns-dialog__close:hover {
+  transform: rotate(90deg);
+}
+
+/* Toast animations */
+.ns-toast {
+  animation: ns-slide-in-right var(--ns-animation-duration-normal, 200ms)
+    var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-toast.is-exiting {
+  animation: ns-slide-out-right var(--ns-animation-duration-fast, 150ms)
+    var(--ns-easing-easeIn, ease-in) forwards;
+}
+
+/* ===== MICRO-INTERACTIONS ===== */
+
+/* Heart/like button bounce */
+.ns-action-btn.is-liked .icon,
+.ns-action-btn[data-liked='true'] .icon {
+  animation: ns-heart-bounce 400ms var(--ns-easing-bounce, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+/* Zap button lightning flash */
+.zap-button:hover .icon,
+.zap-button:hover .zap-icon {
+  animation: ns-zap-flash 600ms var(--ns-easing-easeOut, ease-out);
+}
+
+.zap-button.zapped .icon,
+.zap-button[data-zapped='true'] .icon {
+  animation: ns-zap-flash 500ms var(--ns-easing-bounce, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+/* Copy button checkmark animation */
+.ns-copybtn {
+  position: relative;
+}
+
+.ns-copybtn__icon {
+  display: inline-flex;
+  transition: transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-copybtn[data-copy-state='copied'] .ns-copybtn__icon {
+  color: var(--ns-color-success-default);
+  animation: ns-bounce 300ms var(--ns-easing-bounce, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+.ns-copybtn[data-copy-state='copied'] .ns-copybtn__icon svg path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: ns-checkmark-draw 300ms var(--ns-easing-easeOut, ease-out) forwards;
+}
+
+.ns-copybtn[data-copy-state='error'] .ns-copybtn__icon {
+  color: var(--ns-color-danger-default);
+}
+
+/* Copy button toast bubble */
+.ns-copybtn__bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--ns-color-surface-overlay, var(--ns-color-surface-default));
+  color: var(--ns-color-text-default);
+  padding: var(--ns-space-1) var(--ns-space-2);
+  border-radius: var(--ns-radius-sm);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--ns-duration-fast, 100ms) var(--ns-easing-easeOut, ease-out),
+    transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeOut, ease-out);
+  box-shadow: var(--ns-shadow-md);
+}
+
+.ns-copybtn[data-copy-state='copied'] .ns-copybtn__bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== NEW POSTS INDICATOR ENHANCEMENTS ===== */
+
+/* Add pulse effect to draw attention */
+.new-posts-indicator {
+  animation:
+    new-posts-slide-in var(--ns-duration-moderate) var(--ns-easing-bounce),
+    ns-pulse-attention 2s ease-in-out 0.5s infinite;
+}
+
+.new-posts-indicator:hover {
+  animation: none;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* ===== IMMERSIVE SCROLL SMOOTH TRANSITIONS ===== */
+
+/* Smooth header hide/show */
+.feed-header {
+  transition:
+    transform 300ms var(--ns-easing-easeInOut, ease-in-out),
+    opacity 250ms var(--ns-easing-easeInOut, ease-in-out),
+    max-height 300ms var(--ns-easing-easeInOut, ease-in-out),
+    margin-bottom 300ms var(--ns-easing-easeInOut, ease-in-out);
+}
+
+.feed-editor {
+  transition:
+    max-height 300ms var(--ns-easing-easeInOut, ease-in-out),
+    opacity 250ms var(--ns-easing-easeInOut, ease-in-out),
+    margin 300ms var(--ns-easing-easeInOut, ease-in-out);
+}
+
+/* ===== REDUCED MOTION SUPPORT ===== */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable all custom animations */
+  .feed-stream .ns-card,
+  .ns-card.is-exiting,
+  .ns-dialog-overlay,
+  .ns-dialog-overlay.is-closing,
+  .ns-dialog.is-closing,
+  .ns-toast,
+  .ns-toast.is-exiting,
+  .ns-action-btn.is-liked .icon,
+  .ns-action-btn[data-liked='true'] .icon,
+  .zap-button:hover .icon,
+  .zap-button:hover .zap-icon,
+  .zap-button.zapped .icon,
+  .zap-button[data-zapped='true'] .icon,
+  .ns-copybtn[data-copy-state='copied'] .ns-copybtn__icon,
+  .ns-copybtn[data-copy-state='copied'] .ns-copybtn__icon svg path,
+  .new-posts-indicator,
+  .ns-skeleton::after,
+  .link-preview__skeleton-image::after,
+  .link-preview__skeleton-title::after,
+  .link-preview__skeleton-desc::after {
+    animation: none;
+  }
+
+  /* Disable hover transforms */
+  .ns-card:hover,
+  .ns-btn:hover:not(:disabled),
+  .ns-btn--primary:hover:not(:disabled),
+  .ns-action-btn:hover .icon,
+  .ns-dialog__close:hover,
+  .new-posts-indicator:hover {
+    transform: none;
+  }
+
+  /* Disable button press transforms */
+  .ns-btn:active:not(:disabled),
+  .action-btn:active:not(:disabled),
+  .auth-btn:active:not(:disabled),
+  .wallet-action-btn:active:not(:disabled),
+  .ns-action-btn:active {
+    transform: none;
+  }
+
+  /* Keep essential state indicators but remove animation */
+  .ns-toggle::after,
+  .ns-toggle[aria-checked='true']::after,
+  .ns-toggle.is-on::after {
+    transition: none;
+  }
+}
