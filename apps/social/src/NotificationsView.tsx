@@ -1,7 +1,7 @@
 import { useAuth, useStats } from '@nostrstack/react';
 import { NotificationSkeleton } from '@nostrstack/ui';
 import { type Event, type Filter } from 'nostr-tools';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveEvents } from './cache/eventCache';
 import { useMuteList } from './hooks/useMuteList';
@@ -9,6 +9,9 @@ import { useRelays } from './hooks/useRelays';
 import { useSimplePool } from './hooks/useSimplePool';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
+import { VirtualizedList } from './ui/VirtualizedList';
+
+type NotificationDisplayItem = NotificationGroup | Event;
 
 export function NotificationsView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
@@ -128,6 +131,27 @@ export function NotificationsView() {
     });
   }, [events, isMuted]);
 
+  // Render a notification item for the virtualized list
+  const renderNotificationItem = useCallback((item: NotificationDisplayItem) => {
+    if ('kind' in item) {
+      return (
+        <div role="listitem">
+          <NostrEventCard event={item} />
+        </div>
+      );
+    }
+    return (
+      <div role="listitem">
+        <NotificationItem group={item} />
+      </div>
+    );
+  }, []);
+
+  // Extract key for each notification item
+  const getNotificationKey = useCallback((item: NotificationDisplayItem) => {
+    return item.id;
+  }, []);
+
   if (relaysLoading) {
     return (
       <section className="feed-stream" aria-label="Notifications loading" aria-busy={true}>
@@ -172,22 +196,14 @@ export function NotificationsView() {
         Notifications
       </div>
 
-      <div role="list" aria-label="Notifications">
-        {displayGroups.map((item) => {
-          if ('kind' in item) {
-            return (
-              <div key={item.id} role="listitem">
-                <NostrEventCard event={item} />
-              </div>
-            );
-          }
-          return (
-            <div key={item.id} role="listitem">
-              <NotificationItem group={item} />
-            </div>
-          );
-        })}
-      </div>
+      {displayGroups.length > 0 ? (
+        <VirtualizedList
+          items={displayGroups}
+          getItemKey={getNotificationKey}
+          renderItem={renderNotificationItem}
+          ariaLabel="Notifications list"
+        />
+      ) : null}
 
       {events.length === 0 && (
         <div

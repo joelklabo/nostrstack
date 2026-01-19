@@ -20,6 +20,7 @@
     "@nostrstack/tokens": "workspace:*",
     "@nostrstack/ui": "workspace:*",
     "@nostrstack/widgets": "workspace:*",
+    "@types/react-window": "^2.0.0",
     "buffer": "^6.0.3",
     "dompurify": "^3.3.1",
     "linkify-it": "^5.0.0",
@@ -29,6 +30,7 @@
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0-rc.1",
     "react-dom": "^19.0.0-rc.1",
+    "react-window": "^2.2.5",
     "web-vitals": "^5.1.0",
     "zod": "3.24.1"
   },
