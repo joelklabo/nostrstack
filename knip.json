@@ -30,6 +30,10 @@
   ],
   "ignoreDependencies": [
     "@nostrstack/tokens",
+    "@testing-library/react",
+    "chokidar",
+    "style-dictionary",
+    "vitest",
     "eslint",
     "buffer",
     "@fastify/static",

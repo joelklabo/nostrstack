@@ -14,7 +14,7 @@
         "default": "./dist/js/tokens.js"
       },
       "require": {
-        "types": "./dist/js/tokens.d.ts",
+        "types": "./dist/js/tokens.d.cts",
         "default": "./dist/js/tokens.cjs"
       }
     },

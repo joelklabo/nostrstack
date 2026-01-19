@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#00bcd4"/>
+      <stop offset="1" stop-color="#7c4dff"/>
+    </linearGradient>
+  </defs>
+  <!-- Maskable icon needs safe zone - larger background, centered icon -->
+  <rect width="512" height="512" fill="url(#g)"/>
+  <path d="M296 102 180 270h84l-38 140 122-184h-88z" fill="white"/>
+</svg>

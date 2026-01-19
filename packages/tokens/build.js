@@ -306,6 +306,7 @@ writeFileSync(join(__dirname, 'dist/css/tokens.css'), tokensCss);
 writeFileSync(join(__dirname, 'dist/css/tokens-scoped.css'), tokensScopedCss);
 writeFileSync(join(__dirname, 'dist/js/tokens.js'), tokensJs);
 writeFileSync(join(__dirname, 'dist/js/tokens.d.ts'), tokensDts);
+writeFileSync(join(__dirname, 'dist/js/tokens.d.cts'), tokensDts);
 writeFileSync(join(__dirname, 'dist/json/tokens.json'), tokensJson);
 writeFileSync(join(__dirname, 'dist/json/tokens-flat.json'), tokensFlatJson);
 

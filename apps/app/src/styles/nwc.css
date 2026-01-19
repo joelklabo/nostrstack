@@ -1,0 +1,138 @@
+.nwc-card {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.nwc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nwc-status-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--ns-color-border-strong);
+  color: var(--ns-color-text-muted);
+  background: var(--ns-color-bg-subtle);
+}
+
+.nwc-status-pill.is-success {
+  color: var(--ns-color-success-default);
+  border-color: rgb(26 127 55 / 40%);
+  background: rgb(26 127 55 / 8%);
+}
+
+.nwc-status-pill.is-error {
+  color: var(--ns-color-danger-default);
+  border-color: rgb(218 54 51 / 40%);
+  background: rgb(218 54 51 / 8%);
+}
+
+.nwc-status-pill.is-pending {
+  color: var(--ns-color-primary-default);
+  border-color: rgb(59 130 246 / 45%);
+  background: rgb(59 130 246 / 8%);
+}
+
+.nwc-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ns-color-text-muted);
+}
+
+.nwc-balance {
+  font-size: 0.85rem;
+  color: var(--ns-color-text-default);
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nwc-balance-msat {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ns-color-text-muted);
+}
+
+.nwc-last-payment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ns-color-text-muted);
+  align-items: center;
+}
+
+.nwc-last-pill {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--ns-color-border-strong);
+  color: var(--ns-color-text-muted);
+  background: var(--ns-color-bg-subtle);
+}
+
+.nwc-last-pill.is-success {
+  color: var(--ns-color-success-default);
+  border-color: rgb(26 127 55 / 40%);
+  background: rgb(26 127 55 / 8%);
+}
+
+.nwc-last-pill.is-error {
+  color: var(--ns-color-danger-default);
+  border-color: rgb(218 54 51 / 40%);
+  background: rgb(218 54 51 / 8%);
+}
+
+.nwc-last-time {
+  font-size: 0.68rem;
+  color: var(--ns-color-text-muted);
+}
+
+.nwc-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 560px;
+}
+
+.nwc-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ns-color-text-muted);
+}
+
+.nwc-error {
+  font-size: 0.8rem;
+  color: var(--ns-color-danger-default);
+}
+
+.nwc-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ns-color-text-muted);
+}
+
+.nwc-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.nwc-message {
+  font-size: 0.8rem;
+  color: var(--ns-color-text-muted);
+}

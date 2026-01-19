@@ -1,0 +1,144 @@
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 45%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 2000;
+  animation: shortcuts-fade-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
+}
+
+.shortcuts-modal {
+  width: min(500px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ns-color-bg-default);
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgb(15 23 42 / 28%);
+  overflow: hidden;
+  animation: shortcuts-pop-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
+  outline: none;
+}
+
+.shortcuts-modal:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 3px;
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 1rem;
+  background: var(--ns-color-bg-subtle);
+  border-bottom: 1px solid var(--ns-color-border-default);
+}
+
+.shortcuts-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ns-color-text-default);
+}
+
+.shortcuts-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ns-color-text-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+.shortcuts-close:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
+}
+
+.shortcuts-close:hover {
+  background: var(--ns-color-bg-muted);
+  color: var(--ns-color-text-default);
+}
+
+.shortcuts-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.shortcuts-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ns-color-border-strong);
+}
+
+.shortcut-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.shortcut-key {
+  font-family: var(--ns-font-family-mono);
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: var(--ns-color-bg-subtle);
+  border: 1px solid var(--ns-color-border-default);
+  color: var(--ns-color-text-default);
+  min-width: 24px;
+  text-align: center;
+}
+
+.shortcut-desc {
+  font-size: 0.9rem;
+  color: var(--ns-color-text-muted);
+}
+
+@keyframes shortcuts-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shortcuts-pop-in {
+  from {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shortcuts-overlay,
+  .shortcuts-modal {
+    animation: none;
+  }
+}
