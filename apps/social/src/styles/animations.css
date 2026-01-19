@@ -185,30 +185,39 @@
 .feed-stream .ns-card:nth-child(1) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 0);
 }
+
 .feed-stream .ns-card:nth-child(2) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 1);
 }
+
 .feed-stream .ns-card:nth-child(3) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 2);
 }
+
 .feed-stream .ns-card:nth-child(4) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 3);
 }
+
 .feed-stream .ns-card:nth-child(5) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 4);
 }
+
 .feed-stream .ns-card:nth-child(6) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 5);
 }
+
 .feed-stream .ns-card:nth-child(7) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 6);
 }
+
 .feed-stream .ns-card:nth-child(8) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 7);
 }
+
 .feed-stream .ns-card:nth-child(9) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 8);
 }
+
 .feed-stream .ns-card:nth-child(10) {
   animation-delay: calc(var(--ns-stagger-delay, 50ms) * 9);
 }
