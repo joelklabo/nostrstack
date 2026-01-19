@@ -124,7 +124,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
 
   const npub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
   const lightningAddress = profile?.lud16 ?? profile?.lud06;
-  const lightningLabel = profile?.lud16 ? 'LIGHTNING_ADDRESS' : 'LNURL';
+  const lightningLabel = profile?.lud16 ? 'Lightning Address' : 'LNURL';
   const lightningUri = useMemo(() => {
     if (!lightningAddress) return null;
     const trimmed = lightningAddress.trim();
@@ -170,7 +170,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
   const showSendSats = paymentConfig.enableProfilePay && showLightningAddress;
   const showLightningCallout = !profileLoading && !showLightningAddress;
   const tipAmount = paymentConfig.defaultSendSats ?? 500;
-  const lightningBadgeLabel = showLightningAddress ? 'Lightning ready' : 'Lightning missing';
+  const lightningBadgeLabel = showLightningAddress ? 'Lightning' : 'Lightning';
   const error = profileError || eventsError;
 
   return (
@@ -222,7 +222,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
             <div className="profile-info">
               <div className="profile-title-row">
                 <h2 className="profile-name">
-                  {profile?.display_name || profile?.name || 'UNKNOWN_USER'}
+                  {profile?.display_name || profile?.name || 'Anonymous'}
                 </h2>
                 <div className="profile-badges">
                   {profile?.nip05 && (
@@ -233,7 +233,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                       showLightningAddress ? 'profile-badge--success' : 'profile-badge--muted'
                     }`}
                   >
-                    {showLightningAddress ? '[OK] ' : '[--] '}
+                    {showLightningAddress ? '✓ ' : '✗ '}
                     {lightningBadgeLabel}
                   </span>
                   {followingCount != null && (
@@ -273,7 +273,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     onClick={onNavigateToSettings}
                     aria-label="Edit your profile"
                   >
-                    [✎] EDIT PROFILE
+                    Edit Profile
                   </button>
                 </div>
               )}
@@ -305,7 +305,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     aria-label={following ? 'Unfollow this user' : 'Follow this user'}
                     aria-busy={contactsLoading}
                   >
-                    {contactsLoading ? 'UPDATING...' : following ? '[-] UNFOLLOW' : '[+] FOLLOW'}
+                    {contactsLoading ? 'Updating...' : following ? 'Following' : 'Follow'}
                   </button>
                   <button
                     className="action-btn"
@@ -356,7 +356,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                       <div className="lightning-card-header">
                         <div className="lightning-card-title">{lightningLabel}</div>
                         {lightningCopyStatus === 'error' && (
-                          <span className="lightning-card-hint">COPY_FAILED</span>
+                          <span className="lightning-card-hint">Unable to copy</span>
                         )}
                       </div>
                       <div className="lightning-card-body">
@@ -388,7 +388,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                               disabled={!lightningUri}
                               aria-label="Open lightning wallet"
                             >
-                              OPEN_WALLET
+                              Open in Wallet
                             </button>
                           </div>
                         </div>

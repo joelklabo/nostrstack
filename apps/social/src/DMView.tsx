@@ -59,7 +59,7 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
 
     decryptMessage(lastMessage)
       .then((text) => setLastMessagePreview(text.slice(0, 50) + (text.length > 50 ? '...' : '')))
-      .catch(() => setLastMessagePreview('[Unable to decrypt]'));
+      .catch(() => setLastMessagePreview('Could not decrypt message'));
   }, [conversation.messages, decryptMessage]);
 
   const displayName =

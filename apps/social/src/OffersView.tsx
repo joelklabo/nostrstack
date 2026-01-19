@@ -273,7 +273,7 @@ export function OffersView() {
             disabled={createStatus === 'loading'}
             aria-busy={createStatus === 'loading'}
           >
-            {createStatus === 'loading' ? 'CREATING…' : 'CREATE_OFFER'}
+            {createStatus === 'loading' ? 'Creating...' : 'Create Offer'}
           </button>
           {createError && (
             <div className="offer-error" role="alert" aria-live="assertive">
@@ -382,7 +382,7 @@ export function OffersView() {
                       disabled={entry.invoiceStatus === 'loading'}
                       aria-busy={entry.invoiceStatus === 'loading'}
                     >
-                      {entry.invoiceStatus === 'loading' ? 'REQUESTING…' : 'REQUEST_INVOICE'}
+                      {entry.invoiceStatus === 'loading' ? 'Requesting...' : 'Request Invoice'}
                     </button>
                     {entry.invoiceStatus === 'error' && entry.invoiceError && (
                       <div className="offer-error" role="alert" aria-live="assertive">

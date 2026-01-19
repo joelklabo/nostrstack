@@ -334,7 +334,7 @@ export function RelaysView() {
               disabled={isSaving}
               style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
             >
-              {isSaving ? 'Publishing...' : 'Save to Nostr (Kind 10002)'}
+              {isSaving ? 'Publishing...' : 'Publish Relay List'}
             </button>
           </div>
         )}
@@ -407,7 +407,7 @@ export function RelaysView() {
               </div>
 
               <div className="relay-meta">
-                <span>{info?.name ?? 'Unknown relay'}</span>
+                <span>{info?.name ?? relay.host}</span>
                 {relay.lastChecked && (
                   <span>
                     Checked {new Date(relay.lastChecked).toLocaleTimeString([], { hour12: false })}

@@ -399,7 +399,7 @@ export function WalletView({
                     disabled={!canWithdraw}
                     aria-label="Copy LNURL to clipboard"
                   >
-                    {copyState === 'copied' ? 'COPIED' : 'COPY LNURL'}
+                    {copyState === 'copied' ? 'Copied' : 'Copy Address'}
                   </button>
                   <button
                     className="ns-btn ns-btn--primary ns-btn--sm"
@@ -407,7 +407,7 @@ export function WalletView({
                     disabled={!canWithdraw}
                     aria-label="Open Lightning wallet"
                   >
-                    OPEN WALLET
+                    Open in Wallet
                   </button>
                 </div>
                 {copyState === 'error' && (

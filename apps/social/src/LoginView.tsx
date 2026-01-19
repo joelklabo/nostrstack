@@ -438,7 +438,7 @@ export function LoginView() {
                         alt="Scan this QR code with your Lightning wallet to login"
                       />
                     ) : (
-                      <div style={{ padding: '2rem', textAlign: 'center' }}>QR_ERROR</div>
+                      <div style={{ padding: '2rem', textAlign: 'center' }}>QR unavailable</div>
                     )}
                   </div>
                   <div style={{ display: 'grid', gap: '1rem' }}>

@@ -277,9 +277,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       <h3>System Settings</h3>
 
       <div className="paywall-container">
-        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
-          VISUAL_THEME
-        </h4>
+        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>Appearance</h4>
         <div style={{ display: 'flex', gap: '1rem' }} role="group" aria-label="Theme selection">
           <button
             className="action-btn"
@@ -291,7 +289,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             aria-pressed={theme === 'dark'}
             aria-label="Switch to dark mode"
           >
-            DARK_MODE
+            Dark
           </button>
           <button
             className="action-btn"
@@ -303,15 +301,13 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             aria-pressed={theme === 'light'}
             aria-label="Switch to light mode"
           >
-            LIGHT_MODE
+            Light
           </button>
         </div>
       </div>
 
       <div className="paywall-container">
-        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
-          BRAND_PRESET
-        </h4>
+        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>Color Theme</h4>
         <div
           style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
           role="group"
@@ -337,7 +333,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
       <div className="paywall-container">
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
-          NOTIFICATIONS
+          Notifications
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div style={{ fontSize: '0.9rem' }}>
@@ -350,7 +346,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
                 onClick={requestPermission}
                 aria-label="Enable push notifications"
               >
-                ENABLE_NOTIFICATIONS
+                Enable Notifications
               </button>
             )}
             {permission === 'granted' && (
@@ -363,7 +359,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
                 }
                 aria-label="Send test notification"
               >
-                TEST_NOTIFICATION
+                Send Test
               </button>
             )}
             {permission === 'denied' && (
@@ -378,7 +374,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
       {import.meta.env.DEV && (
         <div className="paywall-container">
           <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
-            DEV_NETWORK_OVERRIDE
+            Network (Dev)
           </h4>
           <label className="nwc-label">
             NETWORK
@@ -402,7 +398,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
       <div className="paywall-container nwc-card">
         <div className="nwc-header">
-          <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: 0 }}>NWC_CONNECTION</h4>
+          <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: 0 }}>Wallet Connect</h4>
           <span
             className={`nwc-status-pill ${nwcStatusTone !== 'neutral' ? `is-${nwcStatusTone}` : ''}`}
           >
@@ -436,7 +432,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             <span
               className={`nwc-last-pill ${nwcLastPayment.status === 'success' ? 'is-success' : 'is-error'}`}
             >
-              {nwcLastPayment.status === 'success' ? 'LAST_PAYMENT_OK' : 'LAST_PAYMENT_ERROR'}
+              {nwcLastPayment.status === 'success' ? 'Last: Success' : 'Last: Failed'}
             </span>
             <span className="nwc-last-message">{nwcLastPayment.message}</span>
             <span className="nwc-last-time">{new Date(nwcLastPayment.ts).toLocaleString()}</span>
@@ -444,7 +440,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         )}
         <div className="nwc-form">
           <label className="nwc-label">
-            NWC_URI
+            Connection String
             <input
               className="ns-input"
               type="password"
@@ -467,7 +463,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             />
           </label>
           <label className="nwc-label">
-            MAX_SATS_PER_PAYMENT
+            Max Payment
             <input
               className="ns-input"
               type="number"
@@ -492,7 +488,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             checked={persistNwc}
             onChange={(event) => setPersistNwc(event.target.checked)}
           />
-          REMEMBER_ON_THIS_DEVICE
+          Remember on this device
         </label>
         <div className="nwc-actions" role="group" aria-label="Wallet connection actions">
           <button
@@ -506,7 +502,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             }
             aria-label="Connect to NWC wallet"
           >
-            CONNECT
+            Connect
           </button>
           <button
             className="action-btn"
@@ -519,7 +515,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             }
             aria-label="Check wallet balance"
           >
-            CHECK_BALANCE
+            Check Balance
           </button>
           <button
             className="action-btn"
@@ -527,7 +523,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             disabled={!hasNwcConfig}
             aria-label="Disconnect wallet"
           >
-            DISCONNECT
+            Disconnect
           </button>
           {nwcMessage && (
             <span className="nwc-message" role="status" aria-live="polite">

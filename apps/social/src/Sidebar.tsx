@@ -1,8 +1,9 @@
 import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
+import { AnimatedSats } from './ui/AnimatedNumber';
 import { resolveApiBase } from './utils/api-base';
 import { navigateTo } from './utils/navigation';
 import { WalletView } from './WalletView';
@@ -51,6 +52,20 @@ export function Sidebar({
   const [isFunding, setIsFunding] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
+  const [isReceiving, setIsReceiving] = useState(false);
+  const prevBalanceRef = useRef(wallet?.balance ?? 0);
+
+  // Detect balance increases for "receiving" animation
+  useEffect(() => {
+    const currentBalance = wallet?.balance ?? 0;
+    if (currentBalance > prevBalanceRef.current) {
+      setIsReceiving(true);
+      const timeout = setTimeout(() => setIsReceiving(false), 2000);
+      prevBalanceRef.current = currentBalance;
+      return () => clearTimeout(timeout);
+    }
+    prevBalanceRef.current = currentBalance;
+  }, [wallet?.balance]);
 
   const apiBaseRaw =
     cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -291,7 +306,7 @@ export function Sidebar({
                   aria-busy={isFunding}
                 >
                   {!apiBaseConfig.isConfigured ? (
-                    'REGTEST_CONFIG_REQUIRED'
+                    'Configuration needed'
                   ) : isFunding ? (
                     <>
                       <span className="ns-spinner" style={{ width: '12px', height: '12px' }} />

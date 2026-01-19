@@ -1,5 +1,6 @@
 import { PostEditor, useAuth, useFeed } from '@nostrstack/react';
 import { Alert, PostSkeleton } from '@nostrstack/ui';
+import type { Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useContactList } from './hooks/useContactList';
@@ -10,6 +11,7 @@ import { filterSpam } from './nostr/spamFilter';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { NewPostsIndicator } from './ui/NewPostsIndicator';
 import { NostrEventCard } from './ui/NostrEventCard';
+import { VirtualizedList } from './ui/VirtualizedList';
 import { navigateTo } from './utils/navigation';
 
 export function FeedView() {
@@ -147,10 +149,42 @@ export function FeedView() {
     navigateTo(`/nostr/${eventId}`);
   }, []);
 
+  // Render a single post item for the virtualized list
+  const renderPostItem = useCallback(
+    (post: Event, _index: number) => (
+      <NostrEventCard
+        event={post}
+        apiBase={apiBase}
+        enableRegtestPay={enableRegtestPay}
+        onOpenThread={handleOpenThread}
+      />
+    ),
+    [apiBase, enableRegtestPay, handleOpenThread]
+  );
+
+  // Extract key for each post
+  const getPostKey = useCallback((post: Event) => post.id, []);
+
+  // Render loading indicator for virtualized list
+  const renderLoadingIndicator = useCallback(
+    () => (
+      <div className="feed-load-more">
+        <button
+          className="ns-btn ns-btn--primary feed-load-more__btn"
+          onClick={loadMore}
+          disabled={feedLoading}
+        >
+          {feedLoading ? 'Loading more...' : 'Load more posts'}
+        </button>
+      </div>
+    ),
+    [loadMore, feedLoading]
+  );
+
   const renderContent = () => {
     if (relaysLoading || (feedLoading && posts.length === 0)) {
       return (
-        <div className="feed-loading">
+        <div className="feed-loading" aria-busy="true" aria-label="Loading posts">
           {[1, 2, 3].map((i) => (
             <PostSkeleton key={i} />
           ))}
@@ -161,7 +195,9 @@ export function FeedView() {
     if (posts.length === 0 && !feedLoading) {
       return (
         <div className="feed-empty" role="status" aria-live="polite">
-          <div className="feed-empty__icon" aria-hidden="true">📝</div>
+          <div className="feed-empty__icon" aria-hidden="true">
+            📝
+          </div>
           <h3 className="feed-empty__title">No posts yet</h3>
           <p className="feed-empty__text">Be the first to share something with the network!</p>
           <button
@@ -175,30 +211,18 @@ export function FeedView() {
       );
     }
 
+    // Use virtualized rendering for large lists
     return (
-      <>
-        {filteredPosts.map((post) => (
-          <NostrEventCard
-            key={post.id}
-            event={post}
-            apiBase={apiBase}
-            enableRegtestPay={enableRegtestPay}
-            onOpenThread={handleOpenThread}
-          />
-        ))}
-
-        {hasMore && (
-          <div className="feed-load-more">
-            <button
-              className="ns-btn ns-btn--primary feed-load-more__btn"
-              onClick={loadMore}
-              disabled={feedLoading}
-            >
-              {feedLoading ? 'Loading more...' : 'Load more posts'}
-            </button>
-          </div>
-        )}
-      </>
+      <VirtualizedList
+        items={filteredPosts}
+        getItemKey={getPostKey}
+        renderItem={renderPostItem}
+        onLoadMore={hasMore ? loadMore : undefined}
+        hasMore={hasMore}
+        loading={feedLoading}
+        renderLoadingIndicator={renderLoadingIndicator}
+        ariaLabel="Feed posts"
+      />
     );
   };
 
@@ -231,9 +255,14 @@ export function FeedView() {
             onClick={() => setSpamFilterEnabled(!spamFilterEnabled)}
             title="Toggle Spam Filter"
             aria-pressed={spamFilterEnabled}
-            aria-label={spamFilterEnabled ? 'Spam filter enabled, click to disable' : 'Spam filter disabled, click to enable'}
+            aria-label={
+              spamFilterEnabled
+                ? 'Spam filter enabled, click to disable'
+                : 'Spam filter disabled, click to enable'
+            }
           >
-            <span aria-hidden="true">🛡️</span> {spamFilterEnabled ? 'Filter ON' : 'Filter OFF'}
+            <span aria-hidden="true">🛡️</span>{' '}
+            {spamFilterEnabled ? 'Spam Filter: On' : 'Spam Filter: Off'}
           </button>
         </div>
       </header>

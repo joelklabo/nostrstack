@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
             borderRadius: 'var(--ns-radius-md)'
           }}
         >
-          <strong>COMPONENT CRASHED</strong>
+          <strong>Something went wrong</strong>
           <pre style={{ fontSize: '0.8rem', overflow: 'auto', marginTop: '0.5rem' }}>
             {this.state.error?.message}
           </pre>
