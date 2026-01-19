@@ -108,10 +108,7 @@ export const NostrEventCard = memo(function NostrEventCard({
   };
 
   return (
-    <article
-      className={rootClasses}
-      aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
-    >
+    <article className={rootClasses} aria-label={`Post by ${event.pubkey.slice(0, 8)}`}>
       <header className="ns-event-card__header">
         <div className="ns-event-card__meta">
           <ProfileLink
@@ -205,9 +202,14 @@ export const NostrEventCard = memo(function NostrEventCard({
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
           onClick={() => setShowJson(!showJson)}
           style={{ marginLeft: 'auto' }}
-          aria-label={showJson ? 'Hide source' : 'View source'}
+          aria-label={showJson ? 'Hide event source JSON' : 'View event source JSON'}
+          aria-expanded={showJson}
+          title={showJson ? 'Hide source' : 'View source'}
         >
-          <span className="icon">{showJson ? '👁️‍🗨️' : '👁️'}</span>
+          <span className="icon" aria-hidden="true">
+            {showJson ? '👁️‍🗨️' : '👁️'}
+          </span>
+          <span className="sr-only">{showJson ? 'Hide source' : 'View source'}</span>
         </button>
       </div>
 

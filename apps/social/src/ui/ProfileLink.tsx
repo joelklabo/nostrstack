@@ -83,6 +83,7 @@ export function ProfileLink({
       onClick={handleClick}
       title={title ?? displayName}
       style={style}
+      aria-label={avatarOnly ? `View ${displayName}'s profile` : undefined}
     >
       {(showAvatar || avatarOnly) && (
         <Image

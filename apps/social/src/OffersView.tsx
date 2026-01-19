@@ -198,10 +198,12 @@ export function OffersView() {
         </div>
       </div>
 
-      <section className="offer-create-card">
+      <section className="offer-create-card" aria-labelledby="create-offer-title">
         <div className="offer-card-header">
           <div>
-            <div className="offer-card-title">Create a new offer</div>
+            <div id="create-offer-title" className="offer-card-title">
+              Create a new offer
+            </div>
             <div className="offer-card-meta">
               <span>{formatMsat(parseOptionalInt(amountMsat))}</span>
               {expiresIn.trim() && <span>Expires in {expiresIn.trim()}s</span>}
@@ -265,13 +267,16 @@ export function OffersView() {
           </label>
         </div>
 
-        <div className="offer-actions">
+        <div className="offer-actions" role="group" aria-label="Offer creation actions">
           <button
             type="button"
             className="offer-primary-btn"
             onClick={handleCreateOffer}
             disabled={createStatus === 'loading'}
             aria-busy={createStatus === 'loading'}
+            aria-label={
+              createStatus === 'loading' ? 'Creating BOLT12 offer' : 'Create new BOLT12 offer'
+            }
           >
             {createStatus === 'loading' ? 'Creating...' : 'Create Offer'}
           </button>
@@ -283,7 +288,7 @@ export function OffersView() {
         </div>
       </section>
 
-      <section className="offer-list">
+      <section className="offer-list" aria-label="Created offers">
         {offers.length === 0 && (
           <div className="offer-empty">
             <h3>No offers yet</h3>
@@ -374,13 +379,18 @@ export function OffersView() {
                       />
                     </label>
                   </div>
-                  <div className="offer-actions">
+                  <div className="offer-actions" role="group" aria-label="Invoice request actions">
                     <button
                       type="button"
                       className="offer-secondary-btn"
                       onClick={() => handleRequestInvoice(entry)}
                       disabled={entry.invoiceStatus === 'loading'}
                       aria-busy={entry.invoiceStatus === 'loading'}
+                      aria-label={
+                        entry.invoiceStatus === 'loading'
+                          ? `Requesting invoice for ${entry.description}`
+                          : `Request invoice for ${entry.description}`
+                      }
                     >
                       {entry.invoiceStatus === 'loading' ? 'Requesting...' : 'Request Invoice'}
                     </button>

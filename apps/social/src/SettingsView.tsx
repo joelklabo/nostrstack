@@ -438,10 +438,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             <span className="nwc-last-time">{new Date(nwcLastPayment.ts).toLocaleString()}</span>
           </div>
         )}
-        <div className="nwc-form">
-          <label className="nwc-label">
+        <div className="nwc-form" role="group" aria-label="NWC connection settings">
+          <label className="nwc-label" htmlFor="nwc-uri-input">
             Connection String
             <input
+              id="nwc-uri-input"
               className="ns-input"
               type="password"
               name="nwc-uri"
@@ -449,11 +450,14 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               placeholder="nostr+walletconnect://..."
               value={nwcUri}
               onChange={(event) => setNwcUri(event.target.value)}
+              aria-describedby={nwcUriError ? 'nwc-uri-error' : undefined}
+              aria-invalid={Boolean(nwcUriError)}
             />
           </label>
-          <label className="nwc-label">
+          <label className="nwc-label" htmlFor="nwc-relays-input">
             RELAYS (comma or space separated)
             <input
+              id="nwc-relays-input"
               className="ns-input"
               type="text"
               name="nwc-relays"
@@ -462,9 +466,10 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               onChange={(event) => setNwcRelays(event.target.value)}
             />
           </label>
-          <label className="nwc-label">
+          <label className="nwc-label" htmlFor="nwc-max-sats-input">
             Max Payment
             <input
+              id="nwc-max-sats-input"
               className="ns-input"
               type="number"
               name="nwc-max-sats"
@@ -472,17 +477,20 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
               placeholder="e.g. 5000"
               value={nwcMaxSats}
               onChange={(event) => setNwcMaxSats(event.target.value)}
+              aria-describedby={nwcLimitError ? 'nwc-limit-error' : undefined}
+              aria-invalid={Boolean(nwcLimitError)}
             />
           </label>
         </div>
         {(nwcUriError || nwcLimitError) && (
-          <div className="nwc-error" role="alert">
-            {nwcUriError && <div>{nwcUriError}</div>}
-            {nwcLimitError && <div>{nwcLimitError}</div>}
+          <div className="nwc-error" role="alert" aria-live="assertive">
+            {nwcUriError && <div id="nwc-uri-error">{nwcUriError}</div>}
+            {nwcLimitError && <div id="nwc-limit-error">{nwcLimitError}</div>}
           </div>
         )}
-        <label className="nwc-remember">
+        <label className="nwc-remember" htmlFor="nwc-remember-checkbox">
           <input
+            id="nwc-remember-checkbox"
             type="checkbox"
             name="nwc-remember"
             checked={persistNwc}
