@@ -62,8 +62,15 @@ function DMListItem({ conversation, isActive, onClick, decryptMessage }: DMListI
       .catch(() => setLastMessagePreview('Could not decrypt message'));
   }, [conversation.messages, decryptMessage]);
 
-  const displayName =
-    profile?.display_name || profile?.name || conversation.peer.slice(0, 8) + '...';
+  const npubFallback = (() => {
+    try {
+      const npub = nip19.npubEncode(conversation.peer);
+      return `${npub.slice(0, 8)}...${npub.slice(-4)}`;
+    } catch {
+      return `${conversation.peer.slice(0, 8)}...`;
+    }
+  })();
+  const displayName = profile?.display_name || profile?.name || npubFallback;
   const avatarUrl =
     profile?.picture || `https://api.dicebear.com/7.x/identicon/svg?seed=${conversation.peer}`;
 
@@ -213,10 +220,17 @@ export function DMView() {
     };
   }, [selectedPeer, getCached]);
 
-  const selectedPeerDisplayName =
-    selectedPeerProfile?.display_name ||
-    selectedPeerProfile?.name ||
-    (selectedPeer ? selectedPeer.slice(0, 8) + '...' : '');
+  const selectedPeerDisplayName = (() => {
+    if (selectedPeerProfile?.display_name) return selectedPeerProfile.display_name;
+    if (selectedPeerProfile?.name) return selectedPeerProfile.name;
+    if (!selectedPeer) return '';
+    try {
+      const npub = nip19.npubEncode(selectedPeer);
+      return `${npub.slice(0, 8)}...${npub.slice(-4)}`;
+    } catch {
+      return `${selectedPeer.slice(0, 8)}...`;
+    }
+  })();
 
   const handleStartNewConversation = () => {
     setRecipientError(null);

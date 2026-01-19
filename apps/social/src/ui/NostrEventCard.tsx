@@ -18,6 +18,37 @@ const md = new MarkdownIt({
   typographer: true
 });
 
+/** Human-readable labels for Nostr event kinds */
+const EVENT_KIND_LABELS: Record<number, string> = {
+  0: 'Profile',
+  1: 'Note',
+  3: 'Contacts',
+  4: 'DM',
+  5: 'Delete',
+  6: 'Repost',
+  7: 'Reaction',
+  8: 'Badge Award',
+  9: 'Chat',
+  10: 'Group Chat',
+  40: 'Channel',
+  41: 'Channel Metadata',
+  42: 'Channel Message',
+  1984: 'Report',
+  9735: 'Zap',
+  10000: 'Mute List',
+  10001: 'Pin List',
+  10002: 'Relay List',
+  30000: 'Profile Badges',
+  30008: 'Badge Definition',
+  30009: 'Badge Award',
+  30023: 'Article',
+  30078: 'App Data'
+};
+
+function getKindLabel(kind: number): string {
+  return EVENT_KIND_LABELS[kind] ?? `Kind ${kind}`;
+}
+
 type NostrEventCardProps = {
   event: Event;
   variant?: 'hero' | 'compact' | 'feed';
@@ -128,7 +159,11 @@ export const NostrEventCard = memo(function NostrEventCard({
           </time>
         </div>
 
-        {variant !== 'compact' && <div className="ns-badge">Kind {event.kind}</div>}
+        {variant !== 'compact' && (
+          <div className="ns-badge" title={`Nostr event kind ${event.kind}`}>
+            {getKindLabel(event.kind)}
+          </div>
+        )}
       </header>
 
       <div className="ns-event-card__body">

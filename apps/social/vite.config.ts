@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   const useReactSrc = command === 'serve';
+  const useHttps = process.env.USE_HTTPS !== 'false';
   return {
     plugins: [
       react({
@@ -15,7 +16,7 @@ export default defineConfig(({ command }) => {
           compact: true
         }
       }),
-      basicSsl()
+      ...(useHttps ? [basicSsl()] : [])
     ],
     server: {
       port: 4173,
@@ -30,7 +31,7 @@ export default defineConfig(({ command }) => {
       // Deno doesn't have it, and Node polyfills it in browser builds.
       // Provide a shim here.
       'process.env': {},
-      'global': {},
+      global: {},
       'global.Buffer': 'globalThis.Buffer' // Vite 5.x needs explicit global
     },
     resolve: {

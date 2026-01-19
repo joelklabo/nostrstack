@@ -1,5 +1,5 @@
 {
-  "$description": "NostrStack Semantic Color Tokens - Role-based color assignments using Indigo primary",
+  "$description": "NostrStack Semantic Color Tokens - Role-based color assignments using Teal primary",
   "color": {
     "bg": {
       "$description": "Background colors",
@@ -70,7 +70,7 @@
         "$description": "Emphasized borders"
       },
       "focus": {
-        "$value": "{color.indigo.500}",
+        "$value": "{color.teal.500}",
         "$type": "color",
         "$description": "Focus ring color"
       }
@@ -103,36 +103,36 @@
         "$description": "Text on dark backgrounds"
       },
       "link": {
-        "$value": "{color.indigo.600}",
+        "$value": "{color.teal.600}",
         "$type": "color",
         "$description": "Link text"
       },
       "linkHover": {
-        "$value": "{color.indigo.700}",
+        "$value": "{color.teal.700}",
         "$type": "color",
         "$description": "Link hover state"
       }
     },
     "primary": {
-      "$description": "Primary brand color - Indigo",
+      "$description": "Primary brand color - Teal",
       "default": {
-        "$value": "{color.indigo.500}",
+        "$value": "{color.teal.500}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.indigo.600}",
+        "$value": "{color.teal.600}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.indigo.700}",
+        "$value": "{color.teal.700}",
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.indigo.50}",
+        "$value": "{color.teal.50}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.indigo.100}",
+        "$value": "{color.teal.100}",
         "$type": "color"
       },
       "text": {
@@ -142,25 +142,25 @@
       }
     },
     "accent": {
-      "$description": "Accent/secondary color - Violet",
+      "$description": "Accent/secondary color - Cyan",
       "default": {
-        "$value": "{color.violet.500}",
+        "$value": "{color.cyan.500}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.violet.600}",
+        "$value": "{color.cyan.600}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.violet.700}",
+        "$value": "{color.cyan.700}",
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.violet.50}",
+        "$value": "{color.cyan.50}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.violet.100}",
+        "$value": "{color.cyan.100}",
         "$type": "color"
       },
       "text": {
@@ -286,15 +286,15 @@
     "interactive": {
       "$description": "Interactive element colors",
       "default": {
-        "$value": "{color.indigo.500}",
+        "$value": "{color.teal.500}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.indigo.600}",
+        "$value": "{color.teal.600}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.indigo.700}",
+        "$value": "{color.teal.700}",
         "$type": "color"
       },
       "disabled": {
@@ -316,7 +316,7 @@
     "focus": {
       "$description": "Focus ring",
       "ring": {
-        "$value": "oklch(0.55 0.22 280 / 0.4)",
+        "$value": "oklch(0.60 0.15 185 / 0.4)",
         "$type": "color"
       }
     }

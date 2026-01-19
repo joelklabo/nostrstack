@@ -5,6 +5,7 @@ import { type NsBrandPreset } from '@nostrstack/widgets';
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { CelebrationSettings } from './ui/CelebrationSettings';
 
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
 const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
@@ -369,6 +370,10 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             )}
           </div>
         </div>
+      </div>
+
+      <div className="paywall-container">
+        <CelebrationSettings />
       </div>
 
       {import.meta.env.DEV && (

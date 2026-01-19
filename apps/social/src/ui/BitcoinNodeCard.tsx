@@ -186,7 +186,11 @@ export function BitcoinNodeCard({
             Block Height
           </div>
           <div className="ns-stat-value ns-stat-value--xl ns-stat-value--bitcoin">
-            {info.height != null ? <AnimatedBlockHeight value={info.height} /> : '--'}
+            {info.height != null ? (
+              <AnimatedBlockHeight value={info.height} enableCelebration />
+            ) : (
+              '--'
+            )}
           </div>
         </div>
 

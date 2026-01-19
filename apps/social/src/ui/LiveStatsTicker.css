@@ -1,0 +1,383 @@
+/* ============================================
+   LIVE STATS TICKER - Animated Network Stats
+   ============================================ */
+
+/* ===== CONTAINER ===== */
+.live-stats-ticker {
+  --ticker-bg: var(--ns-color-surface-default);
+  --ticker-border: var(--ns-color-border-default);
+  --ticker-label: var(--ns-color-text-muted);
+  --ticker-value: var(--ns-color-text-default);
+  --ticker-accent: var(--ns-color-bitcoin-default);
+  --ticker-pulse-glow: var(--ns-color-bitcoin-default);
+  --ticker-recent-color: var(--ns-color-success-default);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-3);
+  padding: var(--ns-space-4);
+  background: var(--ticker-bg);
+  border: 1px solid var(--ticker-border);
+  border-radius: var(--ns-radius-lg);
+  font-family: var(--ns-font-family-sans);
+}
+
+.live-stats-ticker--compact {
+  padding: var(--ns-space-3);
+  gap: var(--ns-space-2);
+}
+
+/* ===== HEADER ===== */
+.live-stats-ticker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.live-stats-ticker__title {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+  font-size: var(--ns-font-size-sm);
+  font-weight: var(--ns-font-weight-semibold);
+  color: var(--ticker-label);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-stats-ticker__live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ticker-recent-color);
+  animation: live-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 4px var(--ticker-recent-color);
+  }
+
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 12px var(--ticker-recent-color);
+  }
+}
+
+/* ===== STATS GRID ===== */
+.live-stats-ticker__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ns-space-3);
+}
+
+.live-stats-ticker--compact .live-stats-ticker__grid {
+  gap: var(--ns-space-2);
+}
+
+/* Single column on very narrow containers */
+@container (max-width: 280px) {
+  .live-stats-ticker__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== INDIVIDUAL STAT ===== */
+.live-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-1);
+  padding: var(--ns-space-2);
+  background: var(--ns-color-bg-subtle);
+  border-radius: var(--ns-radius-md);
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.live-stat.is-pulsing {
+  animation: stat-pulse 0.6s ease-out;
+}
+
+@keyframes stat-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--ticker-pulse-glow) 40%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 16px 4px color-mix(in oklch, var(--ticker-pulse-glow) 30%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Block height gets special treatment - spans full width */
+.live-stat--block-height {
+  grid-column: 1 / -1;
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-bg-subtle) 0%,
+    color-mix(in oklch, var(--ticker-accent) 5%, var(--ns-color-bg-subtle)) 100%
+  );
+  border: 1px solid color-mix(in oklch, var(--ticker-accent) 20%, var(--ns-color-border-default));
+}
+
+.live-stat--block-height .live-stat__value {
+  font-size: 1.5rem;
+  font-weight: var(--ns-font-weight-black);
+  color: var(--ticker-accent);
+}
+
+/* ===== STAT LABEL ===== */
+.live-stat__label {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-1);
+  font-size: var(--ns-font-size-xs);
+  font-weight: var(--ns-font-weight-medium);
+  color: var(--ticker-label);
+}
+
+.live-stat__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ticker-accent);
+  opacity: 0.8;
+}
+
+/* ===== STAT VALUE ===== */
+.live-stat__value {
+  font-size: var(--ns-font-size-lg);
+  font-weight: var(--ns-font-weight-bold);
+  color: var(--ticker-value);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.live-stat__value--time {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+}
+
+.live-stat__badge {
+  font-size: var(--ns-font-size-2xs);
+  font-weight: var(--ns-font-weight-bold);
+  color: var(--ticker-recent-color);
+  background: color-mix(in oklch, var(--ticker-recent-color) 15%, transparent);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--ns-radius-full);
+  animation: badge-bounce 0.5s ease-out;
+}
+
+@keyframes badge-bounce {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Time stat gets green accent when recent */
+.live-stat--time.is-recent {
+  background: color-mix(in oklch, var(--ticker-recent-color) 8%, var(--ns-color-bg-subtle));
+  border: 1px solid color-mix(in oklch, var(--ticker-recent-color) 30%, transparent);
+}
+
+.live-stat--time.is-recent .live-stat__value {
+  color: var(--ticker-recent-color);
+}
+
+/* ============================================
+   ODOMETER DIGIT ANIMATION
+   ============================================ */
+
+.odometer-display {
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.odometer-digit {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+
+.odometer-digit.is-number {
+  min-width: 0.6em;
+  text-align: center;
+}
+
+.odometer-digit.is-separator {
+  min-width: 0.3em;
+}
+
+.odometer-digit__track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s var(--ns-easing-easeOut);
+}
+
+.odometer-digit.is-flipping .odometer-digit__track {
+  animation: digit-flip 0.3s var(--ns-easing-easeOut) forwards;
+}
+
+.odometer-digit__prev,
+.odometer-digit__current {
+  display: block;
+}
+
+.odometer-digit__prev {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+@keyframes digit-flip {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+/* Alternative: Rolling/slot machine effect */
+.odometer-digit.is-number.is-flipping .odometer-digit__current {
+  animation: digit-roll-in 0.3s var(--ns-easing-bounce) forwards;
+}
+
+@keyframes digit-roll-in {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translateY(-5%);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Glow effect on digit change */
+.odometer-digit.is-number.is-flipping {
+  animation: digit-glow 0.4s ease-out;
+}
+
+@keyframes digit-glow {
+  0% {
+    text-shadow: 0 0 8px var(--ticker-accent);
+  }
+
+  100% {
+    text-shadow: none;
+  }
+}
+
+/* ============================================
+   DARK THEME SUPPORT
+   ============================================ */
+
+[data-theme='dark'] .live-stats-ticker,
+.dark .live-stats-ticker {
+  --ticker-bg: var(--ns-color-surface-default);
+  --ticker-border: var(--ns-color-border-default);
+  --ticker-label: var(--ns-color-text-muted);
+  --ticker-value: var(--ns-color-text-default);
+}
+
+@media (prefers-color-scheme: dark) {
+  .live-stats-ticker:not([data-theme='light']) {
+    --ticker-bg: var(--ns-color-surface-default);
+    --ticker-border: var(--ns-color-border-default);
+    --ticker-label: var(--ns-color-text-muted);
+    --ticker-value: var(--ns-color-text-default);
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .live-stats-ticker__live-dot {
+    animation: none;
+    opacity: 1;
+  }
+
+  .live-stat.is-pulsing {
+    animation: none;
+  }
+
+  .live-stat__badge {
+    animation: none;
+  }
+
+  .odometer-digit.is-flipping .odometer-digit__track,
+  .odometer-digit.is-number.is-flipping .odometer-digit__current,
+  .odometer-digit.is-number.is-flipping {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ============================================
+   COMPACT VARIANT ADJUSTMENTS
+   ============================================ */
+
+.live-stats-ticker--compact .live-stat {
+  padding: var(--ns-space-1-5);
+}
+
+.live-stats-ticker--compact .live-stat__label {
+  font-size: 0.65rem;
+}
+
+.live-stats-ticker--compact .live-stat__value {
+  font-size: var(--ns-font-size-base);
+}
+
+.live-stats-ticker--compact .live-stat--block-height .live-stat__value {
+  font-size: var(--ns-font-size-xl);
+}
+
+/* ============================================
+   SIDEBAR WIDTH OPTIMIZATION
+   ============================================ */
+
+/* For sidebar use (typically 200-280px) */
+.sidebar .live-stats-ticker,
+.live-stats-ticker--sidebar {
+  padding: var(--ns-space-3);
+}
+
+.sidebar .live-stats-ticker__grid,
+.live-stats-ticker--sidebar .live-stats-ticker__grid {
+  grid-template-columns: 1fr;
+  gap: var(--ns-space-2);
+}
+
+.sidebar .live-stat--block-height,
+.live-stats-ticker--sidebar .live-stat--block-height {
+  grid-column: 1;
+}

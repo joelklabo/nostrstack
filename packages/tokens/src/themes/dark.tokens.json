@@ -1,5 +1,5 @@
 {
-  "$description": "NostrStack Dark Theme Overrides - Indigo Primary",
+  "$description": "NostrStack Dark Theme Overrides - Teal Primary",
   "color": {
     "bg": {
       "default": {
@@ -55,7 +55,7 @@
         "$type": "color"
       },
       "focus": {
-        "$value": "{color.indigo.400}",
+        "$value": "{color.teal.400}",
         "$type": "color"
       }
     },
@@ -81,33 +81,33 @@
         "$type": "color"
       },
       "link": {
-        "$value": "{color.indigo.400}",
+        "$value": "{color.teal.400}",
         "$type": "color"
       },
       "linkHover": {
-        "$value": "{color.indigo.300}",
+        "$value": "{color.teal.300}",
         "$type": "color"
       }
     },
     "primary": {
       "default": {
-        "$value": "{color.indigo.400}",
+        "$value": "{color.teal.400}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.indigo.300}",
+        "$value": "{color.teal.300}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.indigo.200}",
+        "$value": "{color.teal.200}",
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.indigo.900}",
+        "$value": "{color.teal.900}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.indigo.800}",
+        "$value": "{color.teal.800}",
         "$type": "color"
       },
       "text": {
@@ -117,23 +117,23 @@
     },
     "accent": {
       "default": {
-        "$value": "{color.violet.400}",
+        "$value": "{color.cyan.400}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.violet.300}",
+        "$value": "{color.cyan.300}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.violet.200}",
+        "$value": "{color.cyan.200}",
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.violet.900}",
+        "$value": "{color.cyan.900}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.violet.800}",
+        "$value": "{color.cyan.800}",
         "$type": "color"
       },
       "text": {
@@ -253,15 +253,15 @@
     },
     "interactive": {
       "default": {
-        "$value": "{color.indigo.400}",
+        "$value": "{color.teal.400}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.indigo.300}",
+        "$value": "{color.teal.300}",
         "$type": "color"
       },
       "active": {
-        "$value": "{color.indigo.200}",
+        "$value": "{color.teal.200}",
         "$type": "color"
       },
       "disabled": {
@@ -281,7 +281,7 @@
     },
     "focus": {
       "ring": {
-        "$value": "oklch(0.66 0.19 280 / 0.5)",
+        "$value": "oklch(0.68 0.15 185 / 0.5)",
         "$type": "color"
       }
     }

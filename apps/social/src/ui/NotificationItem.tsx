@@ -10,7 +10,18 @@ export type NotificationGroup = {
   events: Event[];
   targetEventId?: string;
   timestamp: number;
+  isRead?: boolean;
 };
+
+function getRelativeTime(timestamp: number): string {
+  const now = Date.now() / 1000;
+  const diff = now - timestamp;
+  if (diff < 60) return 'now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+  return new Date(timestamp * 1000).toLocaleDateString();
+}
 
 export function NotificationItem({ group }: { group: NotificationGroup }) {
   const targetId =
@@ -74,75 +85,48 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
   const actionLabel = `${authorLabel}${othersLabel}${renderActionText()}`.trim();
   const timeId = `notification-time-${group.id}`;
 
+  const isRead = group.isRead ?? false;
+
   return (
     <button
       type="button"
-      className="notification-item"
+      className={`notification-item notification-item--compact ${isRead ? 'notification-item--read' : 'notification-item--unread'}`}
       onClick={handleNotificationClick}
       disabled={!targetId}
       aria-label={targetId ? `Open notification: ${actionLabel}` : actionLabel}
       aria-describedby={timeId}
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '1rem',
-        padding: '1rem',
-        borderBottom: '1px solid var(--ns-color-border-strong)',
-        cursor: targetId ? 'pointer' : 'default',
-        border: 'none',
-        background: 'transparent',
-        width: '100%',
-        textAlign: 'left',
-        font: 'inherit'
-      }}
     >
-      <div
-        className="notification-icon"
-        style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}
-        aria-hidden="true"
-      >
+      {!isRead && <span className="notification-unread-dot" aria-label="Unread" />}
+      <span className="notification-icon" aria-hidden="true">
         {renderIcon()}
-      </div>
-      <div className="notification-content" style={{ flex: 1 }}>
-        <div
-          className="notification-text"
-          style={{ fontSize: '0.95rem', color: 'var(--ns-color-text-default)' }}
-        >
-          {authors.map((pk, idx) => (
-            <span key={pk}>
-              <ProfileLink
-                pubkey={pk}
-                label={`${pk.slice(0, 8)}`}
-                style={{
-                  fontWeight: 600,
-                  color: 'var(--ns-color-text-default)',
-                  textDecoration: 'none'
-                }}
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              />
-              {idx < authors.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-          {othersCount > 0 && (
-            <span>
-              {' '}
-              and {othersCount} other{othersCount > 1 ? 's' : ''}
-            </span>
-          )}
-          <span style={{ color: 'var(--ns-color-text-muted)' }}>{renderActionText()}</span>
-        </div>
-        <div
-          className="notification-time"
-          id={timeId}
-          style={{
-            fontSize: '0.75rem',
-            color: 'var(--ns-color-text-subtle)',
-            marginTop: '0.25rem'
-          }}
-        >
-          {new Date(group.timestamp * 1000).toLocaleString()}
-        </div>
-      </div>
+      </span>
+      <span className="notification-content">
+        {authors.map((pk, idx) => (
+          <span key={pk}>
+            <ProfileLink
+              pubkey={pk}
+              label={`${pk.slice(0, 8)}`}
+              className="notification-author"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            />
+            {idx < authors.length - 1 ? ', ' : ''}
+          </span>
+        ))}
+        {othersCount > 0 && (
+          <span className="notification-others">
+            {' '}
+            and {othersCount} other{othersCount > 1 ? 's' : ''}
+          </span>
+        )}
+        <span className="notification-action">{renderActionText()}</span>
+      </span>
+      <time
+        className="notification-time"
+        id={timeId}
+        dateTime={new Date(group.timestamp * 1000).toISOString()}
+      >
+        {getRelativeTime(group.timestamp)}
+      </time>
     </button>
   );
 }

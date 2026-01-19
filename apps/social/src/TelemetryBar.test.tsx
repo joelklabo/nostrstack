@@ -18,6 +18,25 @@ vi.mock('@nostrstack/react', () => ({
   })
 }));
 
+vi.mock('./hooks/useRelays', () => ({
+  useRelays: () => ({
+    relays: ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'],
+    userRelays: [],
+    isLoading: false,
+    error: null,
+    addRelay: vi.fn(),
+    removeRelay: vi.fn(),
+    saveRelays: vi.fn()
+  })
+}));
+
+// Mock ResizeObserver for VirtualizedList
+class MockResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
   static CONNECTING = 0;
@@ -44,7 +63,7 @@ class MockWebSocket {
 
   removeEventListener(type: string, listener: EventListenerOrEventListenerObject) {
     if (type === 'open') {
-      this.openListeners = this.openListeners.filter(current => current !== listener);
+      this.openListeners = this.openListeners.filter((current) => current !== listener);
     }
   }
 
@@ -60,7 +79,7 @@ class MockWebSocket {
   triggerOpen() {
     this.readyState = MockWebSocket.OPEN;
     this.onopen?.();
-    this.openListeners.forEach(listener => listener());
+    this.openListeners.forEach((listener) => listener());
   }
 
   triggerClose(event: Partial<CloseEvent> = {}) {
@@ -70,6 +89,7 @@ class MockWebSocket {
 }
 
 const originalWebSocket = globalThis.WebSocket;
+const originalResizeObserver = globalThis.ResizeObserver;
 
 const getLatestSocket = () => {
   const socket = MockWebSocket.instances.at(-1);
@@ -78,13 +98,16 @@ const getLatestSocket = () => {
 };
 
 const getStatusElement = () => {
-  const element = document.querySelector('.telemetry-status');
-  if (!element) throw new Error('Expected telemetry status element to be present');
+  // Look for the new ConnectionStatus component's element
+  const element = document.querySelector('.ns-conn');
+  if (!element) throw new Error('Expected connection status element to be present');
   return element as HTMLElement;
 };
 
 const expectStatus = (status: string) => {
-  expect(getStatusElement().dataset.status).toBe(status);
+  const element = getStatusElement();
+  // ConnectionStatus uses a class like ns-conn--connected, ns-conn--offline, etc.
+  expect(element.className).toContain(`ns-conn--${status}`);
 };
 
 const advanceTimers = async (ms: number) => {
@@ -98,7 +121,9 @@ beforeEach(() => {
   vi.useFakeTimers();
   MockWebSocket.instances = [];
   globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
-  delete (window as typeof window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown }).__NOSTRSTACK_TELEMETRY_TIMING__;
+  globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+  delete (window as typeof window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown })
+    .__NOSTRSTACK_TELEMETRY_TIMING__;
 });
 
 afterEach(() => {
@@ -106,7 +131,11 @@ afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
   globalThis.WebSocket = originalWebSocket;
-  delete (window as typeof window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown }).__NOSTRSTACK_TELEMETRY_TIMING__;
+  if (originalResizeObserver) {
+    globalThis.ResizeObserver = originalResizeObserver;
+  }
+  delete (window as typeof window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown })
+    .__NOSTRSTACK_TELEMETRY_TIMING__;
 });
 
 describe('TelemetryBar', () => {
@@ -176,8 +205,9 @@ describe('TelemetryBar', () => {
     ['zero', 0],
     ['negative', -200]
   ])('disables dwell when statusDwellMs is %s', async (_label, dwellMs) => {
-    (window as typeof window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown })
-      .__NOSTRSTACK_TELEMETRY_TIMING__ = { statusDwellMs: dwellMs };
+    (
+      window as typeof window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown }
+    ).__NOSTRSTACK_TELEMETRY_TIMING__ = { statusDwellMs: dwellMs };
 
     render(<TelemetryBar />);
     const socket = getLatestSocket();

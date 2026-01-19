@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import {
+  BlockCelebration,
+  type BlockCelebrationPreferences,
+  useBlockCelebrationPreferences
+} from './BlockCelebration';
 
 interface AnimatedNumberProps {
   value: number;
@@ -133,30 +139,96 @@ export function AnimatedSats({
 interface AnimatedBlockHeightProps {
   value: number;
   className?: string;
+  /** Enable the new celebration effect (glow-pulse or confetti) */
+  enableCelebration?: boolean;
+  /** Override celebration preferences (uses stored preferences by default) */
+  celebrationPreferences?: BlockCelebrationPreferences;
+}
+
+/**
+ * Check if user prefers reduced motion
+ */
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (event: MediaQueryListEvent) => setPrefersReducedMotion(event.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  return prefersReducedMotion;
 }
 
 /**
  * AnimatedBlockHeight - Special animation for Bitcoin block height
  * Shows a dramatic effect when new blocks are mined
+ *
+ * Now supports two celebration modes:
+ * - Legacy: Simple "NEW" badge with glow (default, backward compatible)
+ * - Celebration: Enhanced glow-pulse or confetti effect (opt-in via enableCelebration)
  */
-export function AnimatedBlockHeight({ value, className = '' }: AnimatedBlockHeightProps) {
+export function AnimatedBlockHeight({
+  value,
+  className = '',
+  enableCelebration = false,
+  celebrationPreferences: overridePrefs
+}: AnimatedBlockHeightProps) {
   const [isNewBlock, setIsNewBlock] = useState(false);
+  const [isCelebrating, setIsCelebrating] = useState(false);
   const previousValue = useRef(value);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [storedPrefs] = useBlockCelebrationPreferences();
+  const prefs = overridePrefs ?? storedPrefs;
+
+  const handleCelebrationComplete = useCallback(() => {
+    setIsCelebrating(false);
+  }, []);
 
   useEffect(() => {
     if (value > previousValue.current) {
+      // New block detected
       setIsNewBlock(true);
+
+      // Trigger celebration if enabled and animations are on
+      if (enableCelebration && prefs.animationEnabled && !prefersReducedMotion) {
+        setIsCelebrating(true);
+      }
+
       const timeout = setTimeout(() => setIsNewBlock(false), 1500);
       previousValue.current = value;
       return () => clearTimeout(timeout);
     }
     previousValue.current = value;
     return undefined;
-  }, [value]);
+  }, [value, enableCelebration, prefs.animationEnabled, prefersReducedMotion]);
+
+  // Determine which animation mode to use
+  const showLegacyAnimation = isNewBlock && !enableCelebration;
+  const showCelebration = isCelebrating && enableCelebration && prefs.animationEnabled;
 
   return (
-    <span className={`animated-block-height ${isNewBlock ? 'is-new-block' : ''} ${className}`}>
+    <span
+      className={`animated-block-height ${showLegacyAnimation ? 'is-new-block' : ''} ${showCelebration ? 'is-celebrating' : ''} ${className}`}
+    >
       <AnimatedNumber value={value} duration={800} className="animated-block-height__value" />
+      {showCelebration && (
+        <BlockCelebration
+          isActive={isCelebrating}
+          style={prefs.style}
+          soundEnabled={prefs.soundEnabled}
+          onComplete={handleCelebrationComplete}
+        />
+      )}
     </span>
   );
 }
+
+// Re-export celebration components for convenience
+export type { BlockCelebrationPreferences, CelebrationStyle } from './BlockCelebration';
+export { CelebratingBlockHeight } from './BlockCelebration';

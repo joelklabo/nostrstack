@@ -316,6 +316,54 @@
         "$type": "color"
       }
     },
+    "teal": {
+      "$description": "Primary brand teal - fresh, modern",
+      "50": {
+        "$value": "oklch(0.97 0.02 185)",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "oklch(0.93 0.05 185)",
+        "$type": "color"
+      },
+      "200": {
+        "$value": "oklch(0.86 0.1 185)",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "oklch(0.76 0.13 185)",
+        "$type": "color"
+      },
+      "400": {
+        "$value": "oklch(0.68 0.15 185)",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "oklch(0.60 0.15 185)",
+        "$type": "color",
+        "$description": "Primary brand color - WCAG AA on white"
+      },
+      "600": {
+        "$value": "oklch(0.52 0.14 185)",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "oklch(0.44 0.12 185)",
+        "$type": "color"
+      },
+      "800": {
+        "$value": "oklch(0.36 0.1 185)",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "oklch(0.28 0.08 185)",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "oklch(0.20 0.06 185)",
+        "$type": "color"
+      }
+    },
     "bitcoin": {
       "$description": "Bitcoin orange for Bitcoin-related UI elements only",
       "50": {

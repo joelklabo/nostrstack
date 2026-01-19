@@ -7,42 +7,15 @@ import {
   subscribeTelemetry,
   useBitcoinStatus
 } from '@nostrstack/react';
-import { Alert } from '@nostrstack/ui';
+import { Alert, Skeleton } from '@nostrstack/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useRelays } from './hooks/useRelays';
+import { type ActivityEvent, type ActivityEventType, ActivityLog } from './ui/ActivityLog';
 import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
-
-function useTimeSinceUpdate(lastUpdateAt: number | null) {
-  const [timeSince, setTimeSince] = useState<string>('--');
-
-  useEffect(() => {
-    if (!lastUpdateAt) {
-      setTimeSince('--');
-      return;
-    }
-
-    const update = () => {
-      const now = Date.now();
-      const delta = Math.floor((now - lastUpdateAt) / 1000);
-
-      if (delta < 5) {
-        setTimeSince('just now');
-      } else if (delta < 60) {
-        setTimeSince(`${delta}s ago`);
-      } else if (delta < 3600) {
-        setTimeSince(`${Math.floor(delta / 60)}m ago`);
-      } else {
-        setTimeSince(`${Math.floor(delta / 3600)}h ago`);
-      }
-    };
-
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [lastUpdateAt]);
-
-  return timeSince;
-}
+import { type BlockData, BlockNotification } from './ui/BlockNotification';
+import { type ConnectionState, ConnectionStatus, type NetworkType } from './ui/ConnectionStatus';
+import { LiveStatsTicker, type NetworkStats } from './ui/LiveStatsTicker';
 
 type TelemetryEvent =
   | {
@@ -276,12 +249,43 @@ function computeBackoffMs(attempt: number, timing: TelemetryTiming) {
   return applyJitter(capped, timing.wsJitter);
 }
 
+/** Convert log entry to ActivityEvent format */
+function logToActivityEvent(log: LogEntry, index: number): ActivityEvent {
+  let type: ActivityEventType = 'info';
+  const msgLower = log.message.toLowerCase();
+
+  if (msgLower.includes('block')) {
+    type = 'block';
+  } else if (
+    msgLower.includes('zap') ||
+    msgLower.includes('payment sent') ||
+    msgLower.includes('send sats')
+  ) {
+    type = 'payment_sent';
+  } else if (msgLower.includes('received') || msgLower.includes('tip')) {
+    type = 'payment_received';
+  } else if (msgLower.includes('connect') && !msgLower.includes('disconnect')) {
+    type = 'connection';
+  } else if (msgLower.includes('disconnect') || msgLower.includes('offline')) {
+    type = 'disconnection';
+  } else if (log.level === 'error') {
+    type = 'error';
+  } else if (log.level === 'warn') {
+    type = 'warning';
+  }
+
+  return {
+    id: `log-${log.ts}-${index}`,
+    type,
+    timestamp: log.ts,
+    title: log.message,
+    isNew: Date.now() - log.ts < 5000
+  };
+}
+
+const LOG_LIMIT = 100;
+
 export function TelemetryBar() {
-  const [logLimit, setLogLimit] = useState(() => {
-    if (typeof window === 'undefined') return 50;
-    const saved = window.localStorage.getItem('nostrstack.telemetry.logLimit');
-    return saved ? parseInt(saved, 10) : 50;
-  });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [nodeState, setNodeState] = useState<NodeState | null>(null);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
@@ -291,7 +295,10 @@ export function TelemetryBar() {
   const [lastUpdateAt, setLastUpdateAt] = useState<number | null>(null);
   const [offlineReason, setOfflineReason] = useState<string | null>(null);
   const [pollFailures, setPollFailures] = useState(0);
+  const [latestBlock, setLatestBlock] = useState<BlockData | null>(null);
+  const [showBlockNotification, setShowBlockNotification] = useState(false);
   const { status, error: statusError, isLoading: statusLoading, refresh } = useBitcoinStatus();
+  const { relays: activeRelays, isLoading: relaysLoading } = useRelays();
 
   const lastStatusErrorRef = useRef<string | null>(null);
   const pollFailuresRef = useRef(0);
@@ -300,26 +307,16 @@ export function TelemetryBar() {
   const statusDwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const telemetryTiming = useMemo(resolveTelemetryTiming, []);
 
-  const appendLog = useCallback(
-    (entry: LogEntry) => {
-      setLogs((prev) => {
-        const next = [...prev, entry];
-        return next.slice(-logLimit);
-      });
-    },
-    [logLimit]
-  );
+  const appendLog = useCallback((entry: LogEntry) => {
+    setLogs((prev) => {
+      const next = [...prev, entry];
+      return next.slice(-LOG_LIMIT);
+    });
+  }, []);
 
   const mergeNodeState = useCallback((next: Partial<NodeState>) => {
     setNodeState((prev) => ({ ...prev, ...next }));
   }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('nostrstack.telemetry.logLimit', String(logLimit));
-    }
-    setLogs((prev) => prev.slice(-logLimit));
-  }, [logLimit]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') return;
@@ -553,6 +550,15 @@ export function TelemetryBar() {
               initialBlockDownload: msg.initialBlockDownload ?? prev?.initialBlockDownload
             }));
             setLastUpdateAt(msg.time * 1000);
+            // Update latest block for notification
+            setLatestBlock({
+              height: msg.height,
+              time: msg.time,
+              txCount: msg.txs,
+              size: msg.size,
+              hash: msg.hash
+            });
+            setShowBlockNotification(true);
             appendLog({
               ts: msg.time * 1000,
               level: 'info',
@@ -667,21 +673,63 @@ export function TelemetryBar() {
   const nodeInfoWithConfig = nodeInfo ? { ...nodeInfo, configuredNetwork } : null;
   const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
   const reconnectAttempt = Math.min(Math.max(wsAttempt, 0), telemetryTiming.wsMaxAttempts);
-  const wsStatusLabel =
+
+  // Map wsStatus to ConnectionState
+  const connectionState: ConnectionState =
     displayStatus === 'connected'
-      ? 'Connected'
+      ? 'connected'
       : displayStatus === 'connecting'
-        ? 'Connecting'
+        ? 'connecting'
         : displayStatus === 'reconnecting'
-          ? `Reconnecting (${Math.max(1, reconnectAttempt)}/${telemetryTiming.wsMaxAttempts})`
-          : 'Offline';
-  const timeSinceUpdate = useTimeSinceUpdate(lastUpdateAt);
-  const lastUpdateLabel = lastUpdateAt ? `Updated ${timeSinceUpdate}` : 'No updates yet';
-  const showStale = displayStatus === 'offline' && pollFailures >= 3;
-  const isRecentUpdate = lastUpdateAt && Date.now() - lastUpdateAt < 5000;
+          ? 'reconnecting'
+          : 'offline';
+
+  // Map network to NetworkType
+  const networkType: NetworkType = [
+    'mainnet',
+    'testnet',
+    'mutinynet',
+    'signet',
+    'regtest'
+  ].includes(configuredNetwork.toLowerCase())
+    ? (configuredNetwork.toLowerCase() as NetworkType)
+    : 'unknown';
+
+  // Build network stats for LiveStatsTicker
+  const networkStats: NetworkStats | null = nodeInfoWithConfig
+    ? {
+        blockHeight: nodeInfoWithConfig.height ?? 0,
+        lastBlockTime: nodeInfoWithConfig.time
+      }
+    : null;
+
+  // Convert logs to ActivityEvents
+  const activityEvents = useMemo(
+    () => logs.map((log, index) => logToActivityEvent(log, index)),
+    [logs]
+  );
+
+  const handleRetry = useCallback(() => {
+    refresh();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('online'));
+    }
+  }, [refresh]);
 
   return (
     <div className="telemetry-sidebar">
+      {/* Block Notification - appears when new block is found */}
+      {showBlockNotification && latestBlock && (
+        <BlockNotification
+          block={latestBlock}
+          onDismiss={() => setShowBlockNotification(false)}
+          autoDismiss
+          autoDismissDelay={8000}
+          className="telemetry-block-notification"
+        />
+      )}
+
+      {/* Alerts */}
       {statusError && (
         <Alert tone="danger" title="Bitcoin status unavailable">
           {statusError}
@@ -697,66 +745,63 @@ export function TelemetryBar() {
           Real sats and payments are live.
         </Alert>
       )}
-      <div className="telemetry-status-row" role="status" aria-live="polite">
-        <span className="telemetry-status" data-status={displayStatus}>
-          <span className="telemetry-status-dot" />
-          {wsStatusLabel}
-        </span>
-        <span className={`telemetry-status-time ${isRecentUpdate ? 'is-recent' : ''}`}>
-          {lastUpdateLabel}
-          {showStale && <span className="telemetry-status-stale">Stale</span>}
-        </span>
-      </div>
-      {displayStatus === 'offline' && offlineReason && (
-        <div className="telemetry-status-note">Offline reason: {offlineReason}</div>
+
+      {/* Connection Status - new enhanced component */}
+      <ConnectionStatus
+        state={connectionState}
+        network={networkType}
+        lastSyncAt={lastUpdateAt}
+        reconnectAttempt={reconnectAttempt}
+        maxReconnectAttempts={telemetryTiming.wsMaxAttempts}
+        errorMessage={offlineReason}
+        onRetry={handleRetry}
+      />
+
+      {/* Live Network Stats - animated ticker */}
+      {networkStats && networkStats.blockHeight > 0 && (
+        <LiveStatsTicker stats={networkStats} compact className="telemetry-live-stats" />
       )}
+
+      {/* Bitcoin Node Card with detailed info */}
       {nodeInfoWithConfig && (
         <div className="telemetry-node-section">
           <BitcoinNodeCard info={nodeInfoWithConfig} />
         </div>
       )}
 
-      <div className="telemetry-relays">
-        <div className="telemetry-relays-title">Monitored Relays</div>
+      {/* Connected Relays */}
+      <div className="telemetry-relays" aria-label="Connected relays">
+        <div className="telemetry-relays-title">
+          Connected Relays
+          <span className="telemetry-relay-count">
+            {relaysLoading ? '...' : activeRelays.length}
+          </span>
+        </div>
         <div className="telemetry-relays-list">
-          {['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'].map((relay) => (
-            <div key={relay} className="telemetry-relay-item">
-              <div className="telemetry-relay-dot" />
-              {relay.replace('wss://', '')}
+          {relaysLoading ? (
+            <div style={{ padding: '0.5rem' }}>
+              <Skeleton variant="text" height={16} style={{ marginBottom: '0.25rem' }} />
+              <Skeleton variant="text" height={16} style={{ marginBottom: '0.25rem' }} />
+              <Skeleton variant="text" height={16} />
             </div>
-          ))}
+          ) : activeRelays.length === 0 ? (
+            <div className="telemetry-relays-empty">No relays connected</div>
+          ) : (
+            activeRelays.slice(0, 5).map((relay) => (
+              <div key={relay} className="telemetry-relay-item">
+                <div className="telemetry-relay-dot telemetry-relay-dot--connected" />
+                {relay.replace(/^wss?:\/\//, '')}
+              </div>
+            ))
+          )}
+          {activeRelays.length > 5 && (
+            <div className="telemetry-relay-more">+{activeRelays.length - 5} more</div>
+          )}
         </div>
       </div>
 
-      <div className="telemetry-header">
-        <span>Activity Log</span>
-        <label className="sr-only" htmlFor="telemetry-log-limit">
-          Log limit
-        </label>
-        <select
-          id="telemetry-log-limit"
-          className="ns-select telemetry-log-select"
-          value={logLimit}
-          onChange={(e) => setLogLimit(parseInt(e.target.value, 10))}
-          title="Max log entries"
-        >
-          <option value="20">20 lines</option>
-          <option value="50">50 lines</option>
-          <option value="100">100 lines</option>
-          <option value="500">500 lines</option>
-        </select>
-      </div>
-      <div className="telemetry-log">
-        {logs.length === 0 && <div className="telemetry-log-empty">No recent activity...</div>}
-        {logs.map((log, i) => (
-          <div key={i} className={`telemetry-log-entry is-${log.level}`}>
-            <span className="telemetry-log-time">
-              {new Date(log.ts).toLocaleTimeString([], { hour12: false })}
-            </span>
-            <span className="telemetry-log-message">{log.message}</span>
-          </div>
-        ))}
-      </div>
+      {/* Activity Log - enhanced with virtualization and micro-interactions */}
+      <ActivityLog events={activityEvents} maxEvents={LOG_LIMIT} height={300} />
     </div>
   );
 }

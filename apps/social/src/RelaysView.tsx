@@ -155,6 +155,12 @@ function fetchRelayInfoCached(url: string, signal: AbortSignal) {
   return promise;
 }
 
+type SortOption = 'name' | 'latency' | 'status';
+type FilterOption = 'all' | 'online' | 'error' | 'connecting';
+
+const SORT_STORAGE_KEY = 'nostrstack.relays.sort';
+const FILTER_STORAGE_KEY = 'nostrstack.relays.filter';
+
 export function RelaysView() {
   const {
     relays: activeRelays,
@@ -166,6 +172,14 @@ export function RelaysView() {
   } = useRelays();
   const [newRelayInput, setNewRelayInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    if (typeof window === 'undefined') return 'name';
+    return (localStorage.getItem(SORT_STORAGE_KEY) as SortOption) || 'name';
+  });
+  const [filterBy, setFilterBy] = useState<FilterOption>(() => {
+    if (typeof window === 'undefined') return 'all';
+    return (localStorage.getItem(FILTER_STORAGE_KEY) as FilterOption) || 'all';
+  });
 
   // We want to show detailed stats for ALL active relays
   const [relays, setRelays] = useState<RelayState[]>(() =>
@@ -271,6 +285,48 @@ export function RelaysView() {
     return { total, online, errors, connecting };
   }, [relays]);
 
+  // Persist sort/filter preferences
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SORT_STORAGE_KEY, sortBy);
+    }
+  }, [sortBy]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(FILTER_STORAGE_KEY, filterBy);
+    }
+  }, [filterBy]);
+
+  // Filter and sort relays
+  const displayRelays = useMemo(() => {
+    let filtered = relays;
+
+    // Apply filter
+    if (filterBy !== 'all') {
+      filtered = relays.filter((r) => r.status === filterBy);
+    }
+
+    // Apply sort
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'latency':
+          // Online relays first, then by latency (lower is better)
+          if (a.status === 'online' && b.status !== 'online') return -1;
+          if (b.status === 'online' && a.status !== 'online') return 1;
+          return (a.latencyMs ?? Infinity) - (b.latencyMs ?? Infinity);
+        case 'status': {
+          // Order: online, connecting, idle, error
+          const statusOrder = { online: 0, connecting: 1, idle: 2, error: 3 };
+          return statusOrder[a.status] - statusOrder[b.status];
+        }
+        case 'name':
+        default:
+          return a.host.localeCompare(b.host);
+      }
+    });
+  }, [relays, sortBy, filterBy]);
+
   return (
     <div className="relay-view">
       {contextError && (
@@ -326,8 +382,41 @@ export function RelaysView() {
           </button>
         </form>
 
-        {userRelays.length > 0 && (
-          <div className="relay-actions-bar">
+        <div className="relay-controls">
+          <div className="relay-filter-sort">
+            <label htmlFor="relay-filter" className="sr-only">
+              Filter relays
+            </label>
+            <select
+              id="relay-filter"
+              className="ns-select"
+              value={filterBy}
+              onChange={(e) => setFilterBy(e.target.value as FilterOption)}
+              aria-label="Filter relays by status"
+            >
+              <option value="all">All ({summary.total})</option>
+              <option value="online">Online ({summary.online})</option>
+              <option value="error">Offline ({summary.errors})</option>
+              <option value="connecting">Connecting ({summary.connecting})</option>
+            </select>
+
+            <label htmlFor="relay-sort" className="sr-only">
+              Sort relays
+            </label>
+            <select
+              id="relay-sort"
+              className="ns-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              aria-label="Sort relays"
+            >
+              <option value="name">Sort by Name</option>
+              <option value="latency">Sort by Latency</option>
+              <option value="status">Sort by Status</option>
+            </select>
+          </div>
+
+          {userRelays.length > 0 && (
             <button
               className="auth-btn"
               onClick={handleSave}
@@ -336,12 +425,12 @@ export function RelaysView() {
             >
               {isSaving ? 'Publishing...' : 'Publish Relay List'}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="relay-grid" role="list">
-        {relays.length === 0 && (
+        {displayRelays.length === 0 && (
           <div
             style={{
               padding: '2rem',
@@ -352,13 +441,19 @@ export function RelaysView() {
             role="status"
             aria-live="polite"
           >
-            <p style={{ marginBottom: '0.75rem' }}>No relays configured yet.</p>
-            <p style={{ fontSize: '0.9rem' }}>
-              Add your first relay to connect to the Nostr network.
-            </p>
+            {relays.length === 0 ? (
+              <>
+                <p style={{ marginBottom: '0.75rem' }}>No relays configured yet.</p>
+                <p style={{ fontSize: '0.9rem' }}>
+                  Add your first relay to connect to the Nostr network.
+                </p>
+              </>
+            ) : (
+              <p>No relays match the current filter.</p>
+            )}
           </div>
         )}
-        {relays.map((relay) => {
+        {displayRelays.map((relay) => {
           const info = relay.info;
           const limitations = info?.limitation;
           const nips = info?.supported_nips ?? [];
@@ -369,116 +464,114 @@ export function RelaysView() {
           ].filter(Boolean) as string[];
           const hasInfo = Boolean(info);
           return (
-            <article key={relay.url} className={`relay-card relay-${relay.status}`} role="listitem">
-              <div className="relay-card-header">
-                <div className="relay-title">
-                  <span
-                    className={`relay-status-dot ${relay.status}`}
-                    role="status"
-                    aria-label={`Relay status: ${relay.status}`}
+            <details
+              key={relay.url}
+              className={`relay-card relay-card--collapsible relay-${relay.status}`}
+              role="listitem"
+            >
+              <summary className="relay-card-summary">
+                <span
+                  className={`relay-status-dot ${relay.status}`}
+                  role="status"
+                  aria-label={`Relay status: ${relay.status}`}
+                />
+                <span className="relay-summary-info">
+                  <span className="relay-host">{relay.host}</span>
+                  <span className="relay-latency">
+                    {relay.status === 'online' ? `${relay.latencyMs ?? 0} ms` : relay.status}
+                  </span>
+                </span>
+                {relay.isUserRelay && (
+                  <button
+                    className="action-btn relay-remove-btn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeRelay(relay.url);
+                    }}
+                    title="Remove from my list"
+                    aria-label={`Remove ${relay.host} from my relay list`}
                   >
-                    <span className="relay-status-label">{relay.status.toUpperCase()}</span>
-                  </span>
-                  <div>
-                    <div className="relay-host">{relay.host}</div>
-                    <div className="relay-url">{relay.url}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {relay.isUserRelay && (
-                    <button
-                      className="action-btn"
-                      style={{
-                        padding: 'var(--ns-space-2) var(--ns-space-3)',
-                        fontSize: '0.7rem',
-                        minHeight: '24px'
-                      }}
-                      onClick={() => removeRelay(relay.url)}
-                      title="Remove from my list"
-                      aria-label={`Remove ${relay.host} from my relay list`}
-                    >
-                      Remove
-                    </button>
+                    Remove
+                  </button>
+                )}
+              </summary>
+
+              <div className="relay-card-content">
+                <div className="relay-meta">
+                  <span className="relay-url">{relay.url}</span>
+                  {relay.lastChecked && (
+                    <span>
+                      Checked{' '}
+                      {new Date(relay.lastChecked).toLocaleTimeString([], { hour12: false })}
+                    </span>
                   )}
-                  <div className="relay-latency">
-                    {relay.status === 'online' ? `${relay.latencyMs ?? 0} ms` : '—'}
+                </div>
+
+                <div className="relay-kv-grid">
+                  <div className="relay-kv">
+                    <span>Software</span>
+                    <strong>{formatSoftware(info?.software, info?.version)}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Pubkey</span>
+                    <strong>{info?.pubkey ? `${info.pubkey.slice(0, 10)}…` : '—'}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Connections</span>
+                    <strong>{formatNumber(info?.limitation?.max_subscriptions)}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Max Msg</span>
+                    <strong>{formatBytes(info?.limitation?.max_message_length)}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Filters</span>
+                    <strong>{formatNumber(info?.limitation?.max_filters)}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Retention</span>
+                    <strong>{formatRetention(info?.retention)}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Admission</span>
+                    <strong>{summarizeFee(info?.fees?.admission)}</strong>
+                  </div>
+                  <div className="relay-kv">
+                    <span>Publish</span>
+                    <strong>{summarizeFee(info?.fees?.publication)}</strong>
                   </div>
                 </div>
+
+                <div className="relay-badges">
+                  {flags.map((flag) => (
+                    <span key={flag} className="relay-badge relay-badge--flag">
+                      {flag}
+                    </span>
+                  ))}
+                  {!flags.length && <span className="relay-badge relay-badge--flag">OPEN</span>}
+                  {nips.slice(0, 8).map((nip) => (
+                    <span key={nip} className="relay-badge">
+                      NIP-{nip}
+                    </span>
+                  ))}
+                  {nips.length > 8 && (
+                    <span className="relay-badge relay-badge--muted">+{nips.length - 8}</span>
+                  )}
+                </div>
+
+                {info?.description && <p className="relay-description">{info.description}</p>}
+
+                {(!hasInfo && relay.infoError) || relay.error ? (
+                  <Alert
+                    tone="danger"
+                    style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', marginTop: 'auto' }}
+                  >
+                    {relay.infoError && <div>NIP-11: {relay.infoError}</div>}
+                    {relay.error && <div>WS: {relay.error}</div>}
+                  </Alert>
+                ) : null}
               </div>
-
-              <div className="relay-meta">
-                <span>{info?.name ?? relay.host}</span>
-                {relay.lastChecked && (
-                  <span>
-                    Checked {new Date(relay.lastChecked).toLocaleTimeString([], { hour12: false })}
-                  </span>
-                )}
-              </div>
-
-              <div className="relay-kv-grid">
-                <div className="relay-kv">
-                  <span>Software</span>
-                  <strong>{formatSoftware(info?.software, info?.version)}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Pubkey</span>
-                  <strong>{info?.pubkey ? `${info.pubkey.slice(0, 10)}…` : '—'}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Connections</span>
-                  <strong>{formatNumber(info?.limitation?.max_subscriptions)}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Max Msg</span>
-                  <strong>{formatBytes(info?.limitation?.max_message_length)}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Filters</span>
-                  <strong>{formatNumber(info?.limitation?.max_filters)}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Retention</span>
-                  <strong>{formatRetention(info?.retention)}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Admission</span>
-                  <strong>{summarizeFee(info?.fees?.admission)}</strong>
-                </div>
-                <div className="relay-kv">
-                  <span>Publish</span>
-                  <strong>{summarizeFee(info?.fees?.publication)}</strong>
-                </div>
-              </div>
-
-              <div className="relay-badges">
-                {flags.map((flag) => (
-                  <span key={flag} className="relay-badge relay-badge--flag">
-                    {flag}
-                  </span>
-                ))}
-                {!flags.length && <span className="relay-badge relay-badge--flag">OPEN</span>}
-                {nips.slice(0, 8).map((nip) => (
-                  <span key={nip} className="relay-badge">
-                    NIP-{nip}
-                  </span>
-                ))}
-                {nips.length > 8 && (
-                  <span className="relay-badge relay-badge--muted">+{nips.length - 8}</span>
-                )}
-              </div>
-
-              {info?.description && <p className="relay-description">{info.description}</p>}
-
-              {(!hasInfo && relay.infoError) || relay.error ? (
-                <Alert
-                  tone="danger"
-                  style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', marginTop: 'auto' }}
-                >
-                  {relay.infoError && <div>NIP-11: {relay.infoError}</div>}
-                  {relay.error && <div>WS: {relay.error}</div>}
-                </Alert>
-              ) : null}
-            </article>
+            </details>
           );
         })}
       </div>

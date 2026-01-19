@@ -1,0 +1,413 @@
+/* ===== BLOCK CELEBRATION ANIMATIONS ===== */
+
+/*
+ * Two celebration styles for new Bitcoin blocks:
+ * 1. Glow Pulse - Radial glow with expanding rings
+ * 2. Confetti - Bitcoin-orange particle burst
+ *
+ * Design principles:
+ * - Duration: 2-3 seconds max
+ * - Non-disruptive: overlays only the block height area
+ * - Respects prefers-reduced-motion
+ * - Works in both light and dark themes
+ */
+
+/* ===== BASE CELEBRATION CONTAINER ===== */
+.block-celebration {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* ===== APPROACH 1: GLOW PULSE ===== */
+
+/*
+ * Radial glow emanating from center with expanding rings.
+ * Creates a warm, Bitcoin-orange celebration effect.
+ * Three concentric rings pulse outward with staggered timing.
+ */
+
+.block-celebration--glow-pulse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Core glow at center */
+.block-glow-core {
+  position: absolute;
+  width: 60%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--ns-color-bitcoin-glow) 0%, transparent 70%);
+  animation: glow-core-pulse 2.5s ease-out forwards;
+}
+
+/* Expanding glow rings */
+.block-glow-ring {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--ns-color-bitcoin-default);
+  opacity: 0;
+  animation: glow-ring-expand 2s ease-out forwards;
+}
+
+.block-glow-ring--1 {
+  animation-delay: 0ms;
+}
+
+.block-glow-ring--2 {
+  animation-delay: 200ms;
+}
+
+.block-glow-ring--3 {
+  animation-delay: 400ms;
+}
+
+@keyframes glow-core-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+
+  20% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  60% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes glow-ring-expand {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+    border-width: 3px;
+  }
+
+  30% {
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(15);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* ===== APPROACH 2: CONFETTI BURST ===== */
+
+/*
+ * Bitcoin-orange confetti particles burst from center.
+ * Particles spread outward with rotation and gravity.
+ * Shimmer trail adds extra visual delight.
+ */
+
+.block-celebration--confetti {
+  background: transparent;
+}
+
+.block-confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  will-change: transform, opacity;
+  box-shadow: 0 0 4px currentcolor;
+}
+
+/* Shimmer trail effect */
+.block-celebration-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--ns-color-bitcoin-subtle) 50%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 1.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* ===== CELEBRATING BLOCK HEIGHT WRAPPER ===== */
+
+.celebrating-block-height {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.celebrating-block-height__value {
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.3s var(--ns-easing-easeOut, ease-out);
+}
+
+/* Number flip animation */
+.celebrating-block-height.is-flipping .celebrating-block-height__value {
+  animation: number-flip 0.6s var(--ns-easing-bounce, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+@keyframes number-flip {
+  0% {
+    transform: rotateX(0deg) scale(1);
+  }
+
+  25% {
+    transform: rotateX(-20deg) scale(0.95);
+  }
+
+  50% {
+    transform: rotateX(0deg) scale(1.05);
+    color: var(--ns-color-bitcoin-default);
+  }
+
+  75% {
+    transform: rotateX(10deg) scale(1.02);
+  }
+
+  100% {
+    transform: rotateX(0deg) scale(1);
+  }
+}
+
+/* Celebrating state - adds glow to the number */
+.celebrating-block-height.is-celebrating .celebrating-block-height__value {
+  color: var(--ns-color-bitcoin-default);
+  text-shadow:
+    0 0 10px var(--ns-color-bitcoin-glow),
+    0 0 20px var(--ns-color-bitcoin-glow),
+    0 0 30px var(--ns-color-bitcoin-subtle);
+  animation: celebrating-text 2.5s ease-out forwards;
+}
+
+@keyframes celebrating-text {
+  0% {
+    color: var(--ns-color-bitcoin-default);
+    text-shadow:
+      0 0 10px var(--ns-color-bitcoin-glow),
+      0 0 20px var(--ns-color-bitcoin-glow),
+      0 0 30px var(--ns-color-bitcoin-subtle);
+  }
+
+  60% {
+    color: var(--ns-color-bitcoin-default);
+    text-shadow:
+      0 0 5px var(--ns-color-bitcoin-glow),
+      0 0 10px var(--ns-color-bitcoin-subtle);
+  }
+
+  100% {
+    color: var(--ns-color-text-default);
+    text-shadow: none;
+  }
+}
+
+/* ===== CELEBRATION SETTINGS TOGGLE ===== */
+
+.celebration-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-3);
+}
+
+.celebration-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ns-space-3);
+}
+
+.celebration-setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-1);
+}
+
+.celebration-setting-label span:first-child {
+  font-weight: var(--ns-font-weight-medium);
+  color: var(--ns-color-text-default);
+}
+
+.celebration-setting-label span:last-child {
+  font-size: 0.8rem;
+  color: var(--ns-color-text-muted);
+}
+
+/* Sound toggle with speaker icon */
+.celebration-sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+  padding: var(--ns-space-2) var(--ns-space-3);
+  background: var(--ns-color-bg-subtle);
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: var(--ns-radius-md);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.celebration-sound-toggle:hover {
+  background: var(--ns-color-bg-muted);
+}
+
+.celebration-sound-toggle[data-enabled='true'] {
+  background: color-mix(in oklch, var(--ns-color-bitcoin-default) 10%, var(--ns-color-bg-subtle));
+  border-color: var(--ns-color-bitcoin-default);
+}
+
+.celebration-sound-toggle .sound-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--ns-color-text-muted);
+  transition: color 0.15s ease;
+}
+
+.celebration-sound-toggle[data-enabled='true'] .sound-icon {
+  color: var(--ns-color-bitcoin-default);
+}
+
+/* Style selector buttons */
+.celebration-style-selector {
+  display: flex;
+  gap: var(--ns-space-2);
+  flex-wrap: wrap;
+}
+
+.celebration-style-btn {
+  padding: var(--ns-space-2) var(--ns-space-3);
+  background: var(--ns-color-surface-default);
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: var(--ns-radius-md);
+  color: var(--ns-color-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.celebration-style-btn:hover {
+  background: var(--ns-color-bg-subtle);
+  color: var(--ns-color-text-default);
+}
+
+.celebration-style-btn[aria-pressed='true'] {
+  background: color-mix(
+    in oklch,
+    var(--ns-color-bitcoin-default) 10%,
+    var(--ns-color-surface-default)
+  );
+  border-color: var(--ns-color-bitcoin-default);
+  color: var(--ns-color-bitcoin-default);
+  font-weight: var(--ns-font-weight-medium);
+}
+
+/* Preview button */
+.celebration-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+  padding: var(--ns-space-2) var(--ns-space-3);
+  background: var(--ns-color-bitcoin-default);
+  border: none;
+  border-radius: var(--ns-radius-md);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: var(--ns-font-weight-medium);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.celebration-preview-btn:hover {
+  background: color-mix(in oklch, var(--ns-color-bitcoin-default) 90%, black);
+}
+
+.celebration-preview-btn:active {
+  transform: scale(0.97);
+}
+
+.celebration-preview-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== REDUCED MOTION SUPPORT ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .block-celebration,
+  .block-glow-core,
+  .block-glow-ring,
+  .block-confetti-particle,
+  .block-celebration-shimmer,
+  .celebrating-block-height.is-flipping .celebrating-block-height__value,
+  .celebrating-block-height.is-celebrating .celebrating-block-height__value {
+    animation: none !important;
+  }
+
+  /* For reduced motion, show a simple static indicator instead */
+  .celebrating-block-height.is-celebrating .celebrating-block-height__value {
+    color: var(--ns-color-bitcoin-default);
+    text-shadow: none;
+  }
+}
+
+/* ===== DARK THEME ADJUSTMENTS ===== */
+
+[data-theme='dark'] .block-glow-core {
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--ns-color-bitcoin-default) 50%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+[data-theme='dark'] .block-confetti-particle {
+  box-shadow: 0 0 6px currentcolor;
+}
+
+/* ===== LIGHT THEME ADJUSTMENTS ===== */
+
+[data-theme='light'] .block-glow-ring {
+  border-color: color-mix(in oklch, var(--ns-color-bitcoin-default) 80%, black);
+}
+
+[data-theme='light'] .celebrating-block-height.is-celebrating .celebrating-block-height__value {
+  text-shadow:
+    0 0 8px color-mix(in oklch, var(--ns-color-bitcoin-default) 60%, transparent),
+    0 0 16px color-mix(in oklch, var(--ns-color-bitcoin-default) 40%, transparent);
+}

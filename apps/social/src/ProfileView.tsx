@@ -230,13 +230,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
       {profileLoading ? (
         <div style={{ padding: '0' }}>
           <div className="profile-header">
-            <Skeleton
-              variant="circular"
-              width={120}
-              height={120}
-              className="profile-picture"
-              style={{ border: 'none' }}
-            />
+            <Skeleton variant="circular" className="profile-picture" style={{ border: 'none' }} />
             <div className="profile-info" style={{ width: '100%', maxWidth: '600px' }}>
               <div className="profile-title-row">
                 <Skeleton variant="text" width={200} height={32} />

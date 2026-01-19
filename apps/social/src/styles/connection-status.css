@@ -1,0 +1,442 @@
+/**
+ * Connection Status Component Styles
+ * ===================================
+ *
+ * A status indicator component for Bitcoin telemetry connection state.
+ *
+ * States:
+ * - connected:    Green dot with glow, stable
+ * - connecting:   Amber dot with pulse animation
+ * - reconnecting: Amber dot with pulse + attempt counter
+ * - offline:      Red dot, shows retry button
+ * - error:        Red dot with error message + retry button
+ *
+ * Network colors:
+ * - mainnet:   Success green (real money warning)
+ * - testnet:   Warning amber
+ * - mutinynet: Warning amber
+ * - signet:    Warning amber
+ * - regtest:   Primary teal (local dev)
+ */
+
+/* ============================================================================
+   Base Container
+   ============================================================================ */
+
+.ns-conn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-2);
+  padding: var(--ns-space-3);
+  background: var(--ns-color-surface-default);
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: var(--ns-radius-md);
+  font-size: var(--ns-font-size-sm);
+  transition:
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+}
+
+/* State-based border accents */
+.ns-conn--connected {
+  border-color: var(--ns-color-success-default);
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default) 0%,
+    color-mix(in oklch, var(--ns-color-success-subtle) 30%, var(--ns-color-surface-default)) 100%
+  );
+}
+
+.ns-conn--error,
+.ns-conn--offline {
+  border-color: var(--ns-color-danger-default);
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default) 0%,
+    color-mix(in oklch, var(--ns-color-danger-subtle) 30%, var(--ns-color-surface-default)) 100%
+  );
+}
+
+.ns-conn--connecting,
+.ns-conn--reconnecting {
+  border-color: var(--ns-color-warning-default);
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default) 0%,
+    color-mix(in oklch, var(--ns-color-warning-subtle) 20%, var(--ns-color-surface-default)) 100%
+  );
+}
+
+/* Compact variant */
+.ns-conn--compact {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--ns-space-2);
+  padding: var(--ns-space-1) var(--ns-space-2);
+  background: transparent;
+  border: none;
+}
+
+/* ============================================================================
+   Header Row
+   ============================================================================ */
+
+.ns-conn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ns-space-2);
+}
+
+.ns-conn-status {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+}
+
+.ns-conn-label {
+  font-weight: var(--ns-font-weight-medium);
+  color: var(--ns-color-text-default);
+}
+
+/* ============================================================================
+   Status Dot
+   ============================================================================ */
+
+.ns-conn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ns-color-text-muted);
+  transition: background-color var(--ns-duration-fast) var(--ns-easing-easeInOut);
+}
+
+/* Connected: green with glow */
+.ns-conn-dot--connected {
+  background: var(--ns-color-success-default);
+  box-shadow:
+    0 0 0 2px color-mix(in oklch, var(--ns-color-success-default) 20%, transparent),
+    0 0 8px var(--ns-color-success-default);
+  animation: ns-conn-glow 2s ease-in-out infinite;
+}
+
+/* Connecting/Reconnecting: amber with pulse */
+.ns-conn-dot--connecting,
+.ns-conn-dot--reconnecting {
+  background: var(--ns-color-warning-default);
+  box-shadow: 0 0 6px var(--ns-color-warning-default);
+  animation: ns-conn-pulse 1.5s ease-in-out infinite;
+}
+
+/* Offline: red, static */
+.ns-conn-dot--offline {
+  background: var(--ns-color-danger-default);
+  box-shadow: none;
+}
+
+/* Error: red with subtle pulse */
+.ns-conn-dot--error {
+  background: var(--ns-color-danger-default);
+  box-shadow: 0 0 6px var(--ns-color-danger-default);
+  animation: ns-conn-error-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   Network Badge
+   ============================================================================ */
+
+.ns-conn-network {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ns-space-1);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--ns-radius-sm);
+  font-size: 0.65rem;
+  font-weight: var(--ns-font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--ns-color-bg-muted);
+  border: 1px solid var(--ns-color-border-default);
+  color: var(--ns-color-text-muted);
+  transition:
+    background-color var(--ns-duration-fast) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-fast) var(--ns-easing-easeInOut),
+    color var(--ns-duration-fast) var(--ns-easing-easeInOut);
+}
+
+.ns-conn-network-icon {
+  flex-shrink: 0;
+}
+
+/* Mainnet: Green with warning styling */
+.ns-conn-network--mainnet {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--ns-color-success-default) 15%, transparent) 0%,
+    color-mix(in oklch, var(--ns-color-success-default) 5%, transparent) 100%
+  );
+  border-color: var(--ns-color-success-default);
+  color: var(--ns-color-success-default);
+  box-shadow: 0 0 8px color-mix(in oklch, var(--ns-color-success-default) 30%, transparent);
+}
+
+/* Testnet variants: Amber/warning */
+.ns-conn-network--testnet,
+.ns-conn-network--mutinynet,
+.ns-conn-network--signet {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--ns-color-warning-default) 15%, transparent) 0%,
+    color-mix(in oklch, var(--ns-color-warning-default) 5%, transparent) 100%
+  );
+  border-color: var(--ns-color-warning-default);
+  color: var(--ns-color-warning-text);
+}
+
+/* Regtest: Primary teal (dev mode) */
+.ns-conn-network--regtest {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--ns-color-primary-default) 15%, transparent) 0%,
+    color-mix(in oklch, var(--ns-color-primary-default) 5%, transparent) 100%
+  );
+  border-color: var(--ns-color-primary-default);
+  color: var(--ns-color-primary-default);
+}
+
+/* Unknown: muted */
+.ns-conn-network--unknown {
+  background: var(--ns-color-bg-muted);
+  border-color: var(--ns-color-border-default);
+  color: var(--ns-color-text-muted);
+}
+
+/* ============================================================================
+   Sync Time Row
+   ============================================================================ */
+
+.ns-conn-sync {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-1);
+  font-size: 0.7rem;
+  color: var(--ns-color-text-subtle);
+}
+
+.ns-conn-sync-label {
+  color: var(--ns-color-text-muted);
+}
+
+.ns-conn-sync-time {
+  font-weight: var(--ns-font-weight-medium);
+  transition: color var(--ns-duration-fast) var(--ns-easing-easeInOut);
+}
+
+/* Recent update highlight */
+.ns-conn-sync-time--recent {
+  color: var(--ns-color-success-default);
+  font-weight: var(--ns-font-weight-semibold);
+}
+
+/* ============================================================================
+   Error Message
+   ============================================================================ */
+
+.ns-conn-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ns-space-2);
+  padding: var(--ns-space-2);
+  background: var(--ns-color-danger-subtle);
+  border-radius: var(--ns-radius-sm);
+  color: var(--ns-color-danger-text);
+  font-size: 0.75rem;
+  animation: ns-conn-fade-in var(--ns-animation-duration-normal) var(--ns-easing-easeOut);
+}
+
+.ns-conn-error-icon {
+  flex-shrink: 0;
+  color: var(--ns-color-danger-default);
+  margin-top: 1px;
+}
+
+.ns-conn-error-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   Retry Button
+   ============================================================================ */
+
+.ns-conn-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ns-space-1);
+  padding: var(--ns-space-2) var(--ns-space-3);
+  background: var(--ns-color-surface-default);
+  border: 1px solid var(--ns-color-border-strong);
+  border-radius: var(--ns-radius-sm);
+  font-size: 0.75rem;
+  font-weight: var(--ns-font-weight-medium);
+  color: var(--ns-color-text-default);
+  cursor: pointer;
+  transition:
+    background-color var(--ns-duration-fast) var(--ns-easing-easeInOut),
+    border-color var(--ns-duration-fast) var(--ns-easing-easeInOut),
+    transform var(--ns-duration-fast) var(--ns-easing-easeOut);
+}
+
+.ns-conn-retry:hover:not(:disabled) {
+  background: var(--ns-color-bg-muted);
+  border-color: var(--ns-color-primary-default);
+  color: var(--ns-color-primary-default);
+}
+
+.ns-conn-retry:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ns-conn-retry:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ns-conn-retry:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
+}
+
+.ns-conn-retry-icon {
+  transition: transform var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+}
+
+.ns-conn-retry:hover:not(:disabled) .ns-conn-retry-icon {
+  transform: rotate(-45deg);
+}
+
+/* ============================================================================
+   Animations
+   ============================================================================ */
+
+/* Subtle glow for connected state */
+@keyframes ns-conn-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px color-mix(in oklch, var(--ns-color-success-default) 20%, transparent),
+      0 0 8px var(--ns-color-success-default);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklch, var(--ns-color-success-default) 15%, transparent),
+      0 0 12px var(--ns-color-success-default);
+  }
+}
+
+/* Pulse for connecting/reconnecting */
+@keyframes ns-conn-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+
+/* Error state pulse */
+@keyframes ns-conn-error-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--ns-color-danger-default);
+  }
+
+  50% {
+    box-shadow: 0 0 10px var(--ns-color-danger-default);
+  }
+}
+
+/* Fade in for error messages */
+@keyframes ns-conn-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   Reduced Motion
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ns-conn-dot--connected,
+  .ns-conn-dot--connecting,
+  .ns-conn-dot--reconnecting,
+  .ns-conn-dot--error {
+    animation: none;
+  }
+
+  .ns-conn-retry:active:not(:disabled) {
+    transform: none;
+  }
+
+  .ns-conn-retry:hover:not(:disabled) .ns-conn-retry-icon {
+    transform: none;
+  }
+
+  .ns-conn-error {
+    animation: none;
+  }
+}
+
+/* ============================================================================
+   Dark Mode Support (via data attribute or class)
+   ============================================================================ */
+
+[data-theme='dark'] .ns-conn,
+.dark .ns-conn {
+  background: var(--ns-color-surface-default);
+}
+
+[data-theme='dark'] .ns-conn--connected,
+.dark .ns-conn--connected {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default) 0%,
+    color-mix(in oklch, var(--ns-color-success-default) 10%, var(--ns-color-surface-default)) 100%
+  );
+}
+
+[data-theme='dark'] .ns-conn--error,
+[data-theme='dark'] .ns-conn--offline,
+.dark .ns-conn--error,
+.dark .ns-conn--offline {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default) 0%,
+    color-mix(in oklch, var(--ns-color-danger-default) 10%, var(--ns-color-surface-default)) 100%
+  );
+}
+
+[data-theme='dark'] .ns-conn--connecting,
+[data-theme='dark'] .ns-conn--reconnecting,
+.dark .ns-conn--connecting,
+.dark .ns-conn--reconnecting {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default) 0%,
+    color-mix(in oklch, var(--ns-color-warning-default) 8%, var(--ns-color-surface-default)) 100%
+  );
+}

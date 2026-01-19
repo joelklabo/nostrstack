@@ -1,0 +1,571 @@
+/* ===== BLOCK NOTIFICATION COMPONENT ===== */
+
+/*
+ * A real-time Bitcoin block notification with heartbeat/pulse animation.
+ * Uses design tokens from @nostrstack/tokens.
+ * Respects prefers-reduced-motion.
+ */
+
+/* === Main Container with CSS Custom Properties === */
+.block-notification {
+  /* CSS Custom Properties */
+  --bn-pulse-intensity: var(--pulse-intensity, 1);
+  --bn-pulse-speed: var(--pulse-speed, 2s);
+  --bn-bitcoin-orange: var(--ns-color-bitcoin-default, #f7931a);
+  --bn-bitcoin-glow: color-mix(in oklch, var(--bn-bitcoin-orange) 40%, transparent);
+  --bn-bitcoin-subtle: color-mix(in oklch, var(--bn-bitcoin-orange) 8%, transparent);
+
+  /* Container styles */
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ns-space-3, 12px);
+  padding: var(--ns-space-4, 16px);
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default, #fff) 0%,
+    var(--bn-bitcoin-subtle) 100%
+  );
+  border: 1px solid
+    color-mix(in oklch, var(--bn-bitcoin-orange) 25%, var(--ns-color-border-default, #e5e7eb));
+  border-radius: var(--ns-radius-lg, 12px);
+  box-shadow: var(--ns-shadow-md, 0 4px 6px -1px rgb(0 0 0 / 10%));
+  overflow: hidden;
+  transition:
+    transform var(--ns-duration-moderate, 200ms) var(--ns-easing-easeOut, ease-out),
+    box-shadow var(--ns-duration-moderate, 200ms) var(--ns-easing-easeOut, ease-out);
+}
+
+/* New block entrance animation */
+.block-notification.is-new {
+  animation: block-notification-enter 0.5s var(--ns-easing-emphasized, cubic-bezier(0.25, 0, 0, 1));
+}
+
+@keyframes block-notification-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === Pulse Rings (Heartbeat Effect) === */
+.block-notification__pulse {
+  position: absolute;
+  top: 50%;
+  left: var(--ns-space-4, 16px);
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.block-notification__pulse-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--bn-bitcoin-orange);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.block-notification__pulse-ring--1 {
+  animation: pulse-ring var(--bn-pulse-speed) ease-out infinite;
+  animation-delay: 0s;
+}
+
+.block-notification__pulse-ring--2 {
+  animation: pulse-ring var(--bn-pulse-speed) ease-out infinite;
+  animation-delay: calc(var(--bn-pulse-speed) / 3);
+}
+
+.block-notification__pulse-ring--3 {
+  animation: pulse-ring var(--bn-pulse-speed) ease-out infinite;
+  animation-delay: calc(var(--bn-pulse-speed) * 2 / 3);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: calc(0.6 * var(--bn-pulse-intensity, 1));
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* === Bitcoin Icon === */
+.block-notification__icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    135deg,
+    var(--bn-bitcoin-orange),
+    color-mix(in oklch, var(--bn-bitcoin-orange) 80%, #ff6b00)
+  );
+  border-radius: 50%;
+  color: white;
+  box-shadow: 0 2px 8px var(--bn-bitcoin-glow);
+}
+
+.block-notification__bitcoin-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Icon pulse on new block */
+.block-notification.is-new .block-notification__icon {
+  animation: icon-heartbeat 0.6s var(--ns-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+@keyframes icon-heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.15);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* === Content === */
+.block-notification__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-1, 4px);
+}
+
+.block-notification__header {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2, 8px);
+}
+
+.block-notification__label {
+  font-size: var(--ns-font-size-xs, 0.75rem);
+  font-weight: var(--ns-font-weight-semibold, 600);
+  color: var(--ns-color-text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.block-notification__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1em 0.5em;
+  font-size: 0.6rem;
+  font-weight: var(--ns-font-weight-bold, 700);
+  color: white;
+  background: var(--bn-bitcoin-orange);
+  border-radius: var(--ns-radius-sm, 4px);
+  animation: badge-pop 0.4s var(--ns-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+@keyframes badge-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === Block Height === */
+.block-notification__height {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ns-space-1, 4px);
+}
+
+.block-notification__height-value {
+  font-size: var(--ns-font-size-xl, 1.25rem);
+  font-weight: var(--ns-font-weight-bold, 700);
+  font-family: var(--ns-font-family-mono, ui-monospace, monospace);
+  color: var(--bn-bitcoin-orange);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Number roll animation on new block */
+.block-notification.is-new .block-notification__height-value {
+  animation: height-glow 1.5s ease-out;
+}
+
+@keyframes height-glow {
+  0% {
+    text-shadow: 0 0 20px var(--bn-bitcoin-glow);
+  }
+
+  100% {
+    text-shadow: none;
+  }
+}
+
+/* === Stats Grid === */
+.block-notification__stats {
+  display: flex;
+  gap: var(--ns-space-4, 16px);
+  margin-top: var(--ns-space-1, 4px);
+}
+
+.block-notification__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.block-notification__stat-label {
+  font-size: 0.6rem;
+  font-weight: var(--ns-font-weight-medium, 500);
+  color: var(--ns-color-text-subtle, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.block-notification__stat-value {
+  font-size: var(--ns-font-size-sm, 0.875rem);
+  font-weight: var(--ns-font-weight-semibold, 600);
+  font-family: var(--ns-font-family-mono, ui-monospace, monospace);
+  color: var(--ns-color-text-default, #111827);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Hash Preview === */
+.block-notification__hash {
+  margin-top: var(--ns-space-1, 4px);
+}
+
+.block-notification__hash code {
+  font-size: 0.65rem;
+  font-family: var(--ns-font-family-mono, ui-monospace, monospace);
+  color: var(--ns-color-text-subtle, #9ca3af);
+  background: var(--ns-color-bg-subtle, #f9fafb);
+  padding: 0.15em 0.4em;
+  border-radius: var(--ns-radius-sm, 4px);
+}
+
+/* === Heartbeat Line === */
+.block-notification__heartbeat {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  overflow: hidden;
+  opacity: calc(0.4 * var(--bn-pulse-intensity, 1));
+}
+
+.block-notification__heartbeat-line {
+  width: 100%;
+  height: 100%;
+  color: var(--bn-bitcoin-orange);
+}
+
+.block-notification.is-new .block-notification__heartbeat-line path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: heartbeat-draw 1s ease-out forwards;
+}
+
+@keyframes heartbeat-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* === Dismiss Button === */
+.block-notification__dismiss {
+  position: absolute;
+  top: var(--ns-space-2, 8px);
+  right: var(--ns-space-2, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--ns-radius-sm, 4px);
+  background: transparent;
+  color: var(--ns-color-text-subtle, #9ca3af);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut, ease-in-out),
+    background-color var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut, ease-in-out),
+    color var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut, ease-in-out);
+}
+
+.block-notification:hover .block-notification__dismiss,
+.block-notification__dismiss:focus-visible {
+  opacity: 1;
+}
+
+.block-notification__dismiss:hover {
+  background: var(--ns-color-bg-muted, #f3f4f6);
+  color: var(--ns-color-text-default, #111827);
+}
+
+.block-notification__dismiss:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default, #0d9488);
+  outline-offset: 2px;
+}
+
+/* ===== INLINE VARIANT ===== */
+.block-notification-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ns-space-2, 8px);
+  padding: var(--ns-space-2, 8px) var(--ns-space-3, 12px);
+  background: var(--ns-color-bg-subtle, #f9fafb);
+  border: 1px solid var(--ns-color-border-default, #e5e7eb);
+  border-radius: var(--ns-radius-md, 8px);
+  transition:
+    background-color var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut, ease-in-out),
+    border-color var(--ns-duration-fast, 150ms) var(--ns-easing-easeInOut, ease-in-out);
+}
+
+.block-notification-inline.is-new {
+  background: color-mix(
+    in oklch,
+    var(--ns-color-bitcoin-default, #f7931a) 8%,
+    var(--ns-color-bg-subtle, #f9fafb)
+  );
+  border-color: color-mix(
+    in oklch,
+    var(--ns-color-bitcoin-default, #f7931a) 30%,
+    var(--ns-color-border-default, #e5e7eb)
+  );
+}
+
+.block-notification-inline__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--ns-color-bitcoin-default, #f7931a);
+}
+
+.block-notification-inline__pulse {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--ns-color-bitcoin-default, #f7931a);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.block-notification-inline.is-new .block-notification-inline__pulse {
+  animation: inline-pulse 1.5s ease-out;
+}
+
+@keyframes inline-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.block-notification-inline.is-new .block-notification-inline__icon svg {
+  animation: inline-icon-pop 0.4s var(--ns-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+@keyframes inline-icon-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.block-notification-inline__content {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ns-space-2, 8px);
+}
+
+.block-notification-inline__height {
+  font-size: var(--ns-font-size-sm, 0.875rem);
+  font-weight: var(--ns-font-weight-bold, 700);
+  font-family: var(--ns-font-family-mono, ui-monospace, monospace);
+  color: var(--ns-color-bitcoin-default, #f7931a);
+  font-variant-numeric: tabular-nums;
+}
+
+.block-notification-inline.is-new .block-notification-inline__height {
+  animation: inline-height-flash 1s ease-out;
+}
+
+@keyframes inline-height-flash {
+  0% {
+    text-shadow: 0 0 10px
+      color-mix(in oklch, var(--ns-color-bitcoin-default, #f7931a) 50%, transparent);
+  }
+
+  100% {
+    text-shadow: none;
+  }
+}
+
+.block-notification-inline__time {
+  font-size: var(--ns-font-size-xs, 0.75rem);
+  color: var(--ns-color-text-muted, #6b7280);
+  font-family: var(--ns-font-family-mono, ui-monospace, monospace);
+}
+
+.block-notification-inline__badge {
+  display: inline-flex;
+  padding: 0.1em 0.4em;
+  font-size: 0.55rem;
+  font-weight: var(--ns-font-weight-bold, 700);
+  color: white;
+  background: var(--ns-color-bitcoin-default, #f7931a);
+  border-radius: var(--ns-radius-sm, 4px);
+  animation: badge-pop 0.4s var(--ns-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+/* ===== DARK THEME SUPPORT ===== */
+:root.dark .block-notification,
+[data-theme='dark'] .block-notification {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-surface-default, #1f2937) 0%,
+    color-mix(in oklch, var(--bn-bitcoin-orange) 10%, var(--ns-color-surface-default, #1f2937)) 100%
+  );
+}
+
+:root.dark .block-notification__stat-value,
+[data-theme='dark'] .block-notification__stat-value {
+  color: var(--ns-color-text-default, #f9fafb);
+}
+
+:root.dark .block-notification__hash code,
+[data-theme='dark'] .block-notification__hash code {
+  background: var(--ns-color-bg-muted, #374151);
+}
+
+:root.dark .block-notification-inline,
+[data-theme='dark'] .block-notification-inline {
+  background: var(--ns-color-bg-muted, #374151);
+}
+
+:root.dark .block-notification-inline.is-new,
+[data-theme='dark'] .block-notification-inline.is-new {
+  background: color-mix(
+    in oklch,
+    var(--ns-color-bitcoin-default, #f7931a) 12%,
+    var(--ns-color-bg-muted, #374151)
+  );
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .block-notification,
+  .block-notification.is-new,
+  .block-notification__pulse-ring,
+  .block-notification__icon,
+  .block-notification.is-new .block-notification__icon,
+  .block-notification__badge,
+  .block-notification__height-value,
+  .block-notification.is-new .block-notification__height-value,
+  .block-notification__heartbeat-line path,
+  .block-notification.is-new .block-notification__heartbeat-line path,
+  .block-notification-inline.is-new,
+  .block-notification-inline__pulse,
+  .block-notification-inline.is-new .block-notification-inline__pulse,
+  .block-notification-inline.is-new .block-notification-inline__icon svg,
+  .block-notification-inline.is-new .block-notification-inline__height,
+  .block-notification-inline__badge {
+    animation: none;
+  }
+
+  .block-notification__pulse {
+    display: none;
+  }
+
+  .block-notification__heartbeat {
+    opacity: 0.3;
+  }
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+@media (forced-colors: active) {
+  .block-notification {
+    border: 2px solid CanvasText;
+  }
+
+  .block-notification__icon {
+    background: CanvasText;
+    color: Canvas;
+  }
+
+  .block-notification__badge {
+    background: CanvasText;
+    color: Canvas;
+  }
+
+  .block-notification__dismiss:focus-visible {
+    outline: 2px solid CanvasText;
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (width <= 480px) {
+  .block-notification {
+    padding: var(--ns-space-3, 12px);
+    gap: var(--ns-space-2, 8px);
+  }
+
+  .block-notification__icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .block-notification__bitcoin-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .block-notification__height-value {
+    font-size: var(--ns-font-size-lg, 1.125rem);
+  }
+
+  .block-notification__stats {
+    flex-wrap: wrap;
+    gap: var(--ns-space-2, 8px) var(--ns-space-3, 12px);
+  }
+}

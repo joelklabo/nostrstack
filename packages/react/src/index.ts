@@ -18,6 +18,12 @@ export {
 export { useProfile, type UseProfileResult } from './hooks/useProfile';
 export { useThread } from './hooks/useThread';
 export { useZaps, type UseZapsResult } from './hooks/useZaps';
+export {
+  type CongestionLevel,
+  type MempoolData,
+  MempoolVisualization,
+  type MempoolVisualizationProps
+} from './mempool-visualization';
 export { type NostrProfileProps, NostrProfileWidget } from './nostr-profile';
 export {
   type NwcBalanceResult,
