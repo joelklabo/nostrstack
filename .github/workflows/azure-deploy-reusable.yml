@@ -53,6 +53,8 @@ on:
         required: false
       AZURE_LOG_ANALYTICS_KEY:
         required: false
+      NOSTR_KEY:
+        required: false
 
 env:
   REGISTRY: ghcr.io
@@ -187,3 +189,13 @@ jobs:
           echo "Testing health endpoint at: https://$fqdn/health"
           curl -sf "https://$fqdn/health"
           echo "✅ Health check passed"
+
+      - name: Post deploy note to Nostr
+        if: ${{ success() && inputs.environment == 'production' && secrets.NOSTR_KEY != '' }}
+        uses: theborakompanioni/nostr-action@d924057c9374edbab5ec565f2b4f7cd66b4a90d3
+        with:
+          key: ${{ secrets.NOSTR_KEY }}
+          relays: |
+            wss://relay.damus.io
+            wss://nos.lol
+          content: '✅🚀 nostrstack successfully deployed 🎉⚡'
