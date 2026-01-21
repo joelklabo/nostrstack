@@ -191,10 +191,12 @@ jobs:
           echo "✅ Health check passed"
 
       - name: Post deploy note to Nostr
-        if: ${{ success() && inputs.environment == 'production' && secrets.NOSTR_KEY != '' }}
+        if: ${{ success() && inputs.environment == 'production' && env.NOSTR_KEY != '' }}
         uses: theborakompanioni/nostr-action@d924057c9374edbab5ec565f2b4f7cd66b4a90d3
+        env:
+          NOSTR_KEY: ${{ secrets.NOSTR_KEY }}
         with:
-          key: ${{ secrets.NOSTR_KEY }}
+          key: ${{ env.NOSTR_KEY }}
           relays: |
             wss://relay.damus.io
             wss://nos.lol
