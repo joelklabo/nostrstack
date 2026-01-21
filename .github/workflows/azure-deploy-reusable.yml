@@ -190,14 +190,25 @@ jobs:
           curl -sf "https://$fqdn/health"
           echo "✅ Health check passed"
 
-      - name: Post deploy note to Nostr
+      - name: Post deploy note to Nostr (relay.damus.io)
         if: ${{ success() && inputs.environment == 'production' && env.NOSTR_KEY != '' }}
+        continue-on-error: true
+        id: nostr_primary
         uses: theborakompanioni/nostr-action@d924057c9374edbab5ec565f2b4f7cd66b4a90d3
         env:
           NOSTR_KEY: ${{ secrets.NOSTR_KEY }}
         with:
           key: ${{ env.NOSTR_KEY }}
-          relays: |
-            wss://relay.damus.io
-            wss://nos.lol
+          relay: wss://relay.damus.io
+          content: '✅🚀 nostrstack successfully deployed 🎉⚡'
+
+      - name: Post deploy note to Nostr (nos.lol fallback)
+        if: ${{ success() && inputs.environment == 'production' && env.NOSTR_KEY != '' && steps.nostr_primary.outcome == 'failure' }}
+        continue-on-error: true
+        uses: theborakompanioni/nostr-action@d924057c9374edbab5ec565f2b4f7cd66b4a90d3
+        env:
+          NOSTR_KEY: ${{ secrets.NOSTR_KEY }}
+        with:
+          key: ${{ env.NOSTR_KEY }}
+          relay: wss://nos.lol
           content: '✅🚀 nostrstack successfully deployed 🎉⚡'
