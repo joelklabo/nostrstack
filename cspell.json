@@ -601,6 +601,7 @@
     "**/*.stories.tsx",
     "**/openapi.json",
     "**/*.d.ts",
-    "gemini-conversation-*.json"
+    "gemini-conversation-*.json",
+    "audit-ci.json"
   ]
 }
