@@ -414,5 +414,3 @@ export function BlockNotificationInline({ block, className = '' }: BlockNotifica
     </div>
   );
 }
-
-export default BlockNotification;

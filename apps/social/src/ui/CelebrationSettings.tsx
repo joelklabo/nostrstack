@@ -231,5 +231,3 @@ export function CelebrationSettings() {
     </div>
   );
 }
-
-export default CelebrationSettings;

@@ -358,5 +358,3 @@ export function CelebratingBlockHeight({
     </span>
   );
 }
-
-export default BlockCelebration;

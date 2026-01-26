@@ -434,5 +434,3 @@ export function useConnectionStatus(
     [state, attempt, error, connect, disconnect, setConnected, setError, retry]
   );
 }
-
-export default ConnectionStatus;

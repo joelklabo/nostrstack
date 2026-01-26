@@ -599,5 +599,3 @@ export function MempoolVisualization({
     </div>
   );
 }
-
-export default MempoolVisualization;

@@ -221,7 +221,7 @@ function formatTimeSince(timestamp: number): string {
  * Partial loading state wrapper.
  * Shows skeleton for specific sections while others have loaded.
  */
-export function PartialLoadingWrapper({
+function PartialLoadingWrapper({
   isLoading,
   skeleton,
   children
