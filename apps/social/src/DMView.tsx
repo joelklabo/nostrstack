@@ -1,6 +1,6 @@
 import { Skeleton, useToast } from '@nostrstack/ui';
 import { nip19 } from 'nostr-tools';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useCachedEvent } from './hooks/useCachedEvent';
 import { type Conversation, type DMMessage, useDMs } from './hooks/useDMs';
@@ -169,8 +169,35 @@ export function DMView() {
   const [recipientError, setRecipientError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const newRecipientInputRef = useRef<HTMLInputElement>(null);
+  // Track which messages are currently being decrypted to prevent redundant attempts
+  const decryptingRef = useRef<Set<string>>(new Set());
+  // Ref to access decryptedCache without adding it to dependencies
+  const decryptedCacheRef = useRef<Record<string, string>>({});
+  decryptedCacheRef.current = decryptedCache;
 
   const activeConversation = conversations.find((c) => c.peer === selectedPeer);
+
+  // Memoized function to decrypt a single message
+  const decryptAndCache = useCallback(
+    async (msg: DMMessage) => {
+      // Skip if already decrypted or currently decrypting
+      if (decryptedCacheRef.current[msg.id] || decryptingRef.current.has(msg.id)) {
+        return;
+      }
+
+      // Mark as decrypting
+      decryptingRef.current.add(msg.id);
+
+      try {
+        const text = await decryptMessage(msg);
+        setDecryptedCache((prev) => ({ ...prev, [msg.id]: text }));
+      } finally {
+        // Remove from decrypting set
+        decryptingRef.current.delete(msg.id);
+      }
+    },
+    [decryptMessage]
+  );
 
   useEffect(() => {
     if (activeConversation) {
@@ -182,14 +209,11 @@ export function DMView() {
         behavior: prefersReducedMotion ? 'auto' : 'smooth'
       });
       // Trigger decryption for new messages
-      activeConversation.messages.forEach(async (msg) => {
-        if (!decryptedCache[msg.id]) {
-          const text = await decryptMessage(msg);
-          setDecryptedCache((prev) => ({ ...prev, [msg.id]: text }));
-        }
+      activeConversation.messages.forEach((msg) => {
+        decryptAndCache(msg);
       });
     }
-  }, [activeConversation, decryptMessage, decryptedCache]);
+  }, [activeConversation, decryptAndCache]);
 
   // Focus new recipient input when modal opens
   useEffect(() => {

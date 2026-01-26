@@ -117,26 +117,125 @@
   }
 }
 
-/* Block height gets special treatment - spans full width */
+/* Block height gets PREMIUM treatment - dramatic Bitcoin display */
 
-/* Uses bitcoin orange because it displays actual Bitcoin block height data */
+/* Uses bitcoin orange with glow because it displays actual Bitcoin block height data */
 .live-stat--block-height {
+  --block-bitcoin-glow: color-mix(in oklch, var(--ns-color-bitcoin-default) 50%, transparent);
+
+  position: relative;
   grid-column: 1 / -1;
+  overflow: hidden;
   background: linear-gradient(
     135deg,
     var(--ns-color-bg-subtle) 0%,
-    color-mix(in oklch, var(--ns-color-bitcoin-default) 5%, var(--ns-color-bg-subtle)) 100%
+    color-mix(in oklch, var(--ns-color-bitcoin-default) 8%, var(--ns-color-bg-subtle)) 50%,
+    var(--ns-color-bg-subtle) 100%
   );
   border: 1px solid
-    color-mix(in oklch, var(--ns-color-bitcoin-default) 20%, var(--ns-color-border-default));
+    color-mix(in oklch, var(--ns-color-bitcoin-default) 25%, var(--ns-color-border-default));
+  border-radius: var(--ns-radius-lg);
+  padding: var(--ns-space-4);
+  transition:
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeOut),
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeOut);
+}
+
+/* Ambient glow effect behind block height */
+.live-stat--block-height::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklch, var(--ns-color-bitcoin-default) 12%, transparent) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  animation: block-ambient-glow 4s ease-in-out infinite;
+}
+
+@keyframes block-ambient-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+/* Hover state with enhanced glow */
+.live-stat--block-height:hover {
+  border-color: color-mix(
+    in oklch,
+    var(--ns-color-bitcoin-default) 40%,
+    var(--ns-color-border-default)
+  );
+  box-shadow: 0 4px 24px -8px var(--block-bitcoin-glow);
 }
 
 .live-stat--block-height .live-stat__value {
-  font-size: 1.5rem;
+  position: relative;
+  z-index: 1;
+  font-size: 1.75rem;
   font-weight: var(--ns-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 
-  /* Bitcoin block height value uses bitcoin orange */
+  /* Bitcoin block height value uses bitcoin orange with GLOW */
   color: var(--ns-color-bitcoin-default);
+  text-shadow: 0 0 20px var(--block-bitcoin-glow);
+}
+
+/* Dramatic pulse on value change */
+.live-stat--block-height.is-pulsing {
+  animation: block-height-celebration 0.8s var(--ns-easing-bounce);
+}
+
+@keyframes block-height-celebration {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--block-bitcoin-glow);
+  }
+
+  25% {
+    transform: scale(1.02);
+    box-shadow: 0 0 24px 6px var(--block-bitcoin-glow);
+  }
+
+  50% {
+    transform: scale(0.99);
+    box-shadow: 0 0 32px 10px var(--block-bitcoin-glow);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Block icon gets Bitcoin orange treatment */
+.live-stat--block-height .live-stat__icon {
+  color: var(--ns-color-bitcoin-default);
+  opacity: 1;
+}
+
+/* Label styling */
+.live-stat--block-height .live-stat__label {
+  position: relative;
+  z-index: 1;
+  color: var(--ns-color-text-muted);
+  font-weight: var(--ns-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* ===== STAT LABEL ===== */
@@ -164,12 +263,18 @@
   color: var(--ticker-value);
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+
+  /* CLS FIX: Fixed height prevents layout shifts during number updates */
+  min-height: 1.4em;
 }
 
 .live-stat__value--time {
   display: flex;
   align-items: center;
   gap: var(--ns-space-2);
+
+  /* CLS FIX: Reserve space for badge even when hidden */
+  min-height: 1.5em;
 }
 
 .live-stat__badge {
@@ -179,7 +284,10 @@
   background: color-mix(in oklch, var(--ticker-recent-color) 15%, transparent);
   padding: 0.1rem 0.4rem;
   border-radius: var(--ns-radius-full);
-  animation: badge-bounce 0.5s ease-out;
+
+  /* CLS FIX: Removed animation that causes layout shift; use opacity instead */
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
 }
 
 @keyframes badge-bounce {
@@ -215,6 +323,9 @@
 .odometer-display {
   display: inline-flex;
   overflow: hidden;
+
+  /* CLS FIX: Use tabular-nums to ensure consistent digit widths */
+  font-variant-numeric: tabular-nums;
 }
 
 .odometer-digit {
@@ -224,7 +335,9 @@
 }
 
 .odometer-digit.is-number {
-  min-width: 0.6em;
+  /* CLS FIX: Fixed width for digits prevents layout shifts during animation */
+  width: 0.65em;
+  min-width: 0.65em;
   text-align: center;
 }
 
@@ -313,12 +426,31 @@
   --ticker-value: var(--ns-color-text-default);
 }
 
+/* Enhanced glow in dark mode */
+[data-theme='dark'] .live-stat--block-height,
+.dark .live-stat--block-height {
+  --block-bitcoin-glow: color-mix(in oklch, var(--ns-color-bitcoin-default) 60%, transparent);
+}
+
+[data-theme='dark'] .live-stat--block-height .live-stat__value,
+.dark .live-stat--block-height .live-stat__value {
+  text-shadow: 0 0 30px var(--block-bitcoin-glow);
+}
+
 @media (prefers-color-scheme: dark) {
   .live-stats-ticker:not([data-theme='light']) {
     --ticker-bg: var(--ns-color-surface-default);
     --ticker-border: var(--ns-color-border-default);
     --ticker-label: var(--ns-color-text-muted);
     --ticker-value: var(--ns-color-text-default);
+  }
+
+  .live-stat--block-height:not([data-theme='light']) {
+    --block-bitcoin-glow: color-mix(in oklch, var(--ns-color-bitcoin-default) 60%, transparent);
+  }
+
+  .live-stat--block-height:not([data-theme='light']) .live-stat__value {
+    text-shadow: 0 0 30px var(--block-bitcoin-glow);
   }
 }
 
@@ -345,6 +477,16 @@
   .odometer-digit.is-number.is-flipping {
     animation: none;
     transform: none;
+  }
+
+  /* Disable block height ambient glow animation */
+  .live-stat--block-height::before {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  .live-stat--block-height.is-pulsing {
+    animation: none;
   }
 }
 

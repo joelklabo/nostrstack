@@ -35,6 +35,10 @@
   transition:
     border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+
+  /* CLS FIX: Reserve consistent height to prevent layout shifts during state changes */
+  min-height: 100px;
+  contain: layout style;
 }
 
 /* State-based border accents */
@@ -97,6 +101,9 @@
 .ns-conn-label {
   font-weight: var(--ns-font-weight-medium);
   color: var(--ns-color-text-default);
+
+  /* CLS FIX: Fixed width to prevent shifts when status text changes */
+  min-width: 120px;
 }
 
 /* ============================================================================
@@ -252,7 +259,14 @@
   border-radius: var(--ns-radius-sm);
   color: var(--ns-color-danger-text);
   font-size: 0.75rem;
-  animation: ns-conn-fade-in var(--ns-animation-duration-normal) var(--ns-easing-easeOut);
+
+  /* CLS FIX: Removed entry animation that causes layout shift */
+}
+
+/* CLS FIX: Reserve space for error message area even when hidden */
+.ns-conn--offline .ns-conn-error,
+.ns-conn--error .ns-conn-error {
+  min-height: 32px;
 }
 
 .ns-conn-error-icon {

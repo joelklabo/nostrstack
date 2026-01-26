@@ -9,6 +9,12 @@
 /* Import connection status component styles */
 @import './styles/connection-status.css';
 
+/* Import premium button styles */
+@import './styles/premium-buttons.css';
+
+/* Import dark luxury theme styles */
+@import './styles/dark-luxury.css';
+
 /* App-specific variables */
 :root {
   --header-height: 64px;
@@ -331,11 +337,25 @@ body {
 }
 
 /* ===== LAYOUT ===== */
+
+/*
+ * Spatial composition using golden ratio-inspired proportions
+ * Sidebar: ~280px (substantial navigation)
+ * Feed: flexible with generous max-width (the HERO)
+ * Telemetry: ~320px (room for data visualization)
+ */
 .social-layout {
   display: grid;
-  grid-template-columns: 260px 1fr 300px;
+  grid-template-columns: 280px 1fr 320px;
   min-height: 100dvh;
   background: var(--ns-color-bg-default);
+
+  /* Subtle texture for depth */
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    color-mix(in oklch, var(--ns-color-primary-subtle) 15%, transparent) 0%,
+    transparent 70%
+  );
 }
 
 /* ===== SIDEBAR NAVIGATION ===== */
@@ -344,22 +364,41 @@ body {
   top: 0;
   height: 100dvh;
   overflow-y: auto;
-  border-right: 1px solid var(--ns-color-border-default);
+
+  /* Elegant divider - subtle shadow instead of harsh line */
+  border-right: none;
+  box-shadow:
+    1px 0 0 0 var(--ns-color-border-default),
+    4px 0 16px -4px color-mix(in oklch, var(--ns-color-shadow-default) 8%, transparent);
   background: linear-gradient(
     180deg,
     var(--ns-color-surface-default) 0%,
-    var(--ns-color-bg-subtle) 100%
+    color-mix(in oklch, var(--ns-color-bg-subtle) 80%, var(--ns-color-surface-default)) 100%
   );
   display: flex;
   flex-direction: column;
-  padding: var(--ns-space-5) 0;
-  padding-top: env(safe-area-inset-top, var(--ns-space-5));
+
+  /* Generous vertical rhythm */
+  padding: var(--ns-space-6) 0;
+  padding-top: env(safe-area-inset-top, var(--ns-space-6));
 }
 
 .sidebar-header {
-  padding: 0 var(--ns-space-5) var(--ns-space-5);
-  margin-bottom: var(--ns-space-3);
-  border-bottom: 1px solid var(--ns-color-border-default);
+  padding: 0 var(--ns-space-6) var(--ns-space-5);
+  margin-bottom: var(--ns-space-4);
+
+  /* Elegant divider with gradient fade */
+  border-bottom: none;
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--ns-color-border-default) 20%,
+    var(--ns-color-border-default) 80%,
+    transparent
+  );
+  background-size: 100% 1px;
+  background-position: bottom;
+  background-repeat: no-repeat;
 }
 
 .sidebar-title {
@@ -367,16 +406,33 @@ body {
   align-items: center;
   gap: var(--ns-space-2);
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: var(--ns-font-weight-black);
   letter-spacing: -0.03em;
+
+  /* Premium gradient with shimmer */
   background: linear-gradient(
     135deg,
     var(--ns-color-primary-default) 0%,
+    color-mix(in oklch, var(--ns-color-primary-default) 80%, var(--ns-color-accent-default)) 50%,
     var(--ns-color-accent-default) 100%
   );
+  background-size: 200% 200%;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+
+  /* Removed infinite animation for performance */
+}
+
+@keyframes sidebar-title-shimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .sidebar-title .version-badge {
@@ -396,7 +452,7 @@ body {
   display: flex;
   align-items: center;
   width: calc(100% - var(--ns-space-4));
-  margin: 2px var(--ns-space-2);
+  margin: 3px var(--ns-space-2);
   padding: var(--ns-space-3) var(--ns-space-4);
   border: none;
   background: transparent;
@@ -406,25 +462,46 @@ body {
   cursor: pointer;
   text-align: left;
   transition:
-    color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
-    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+    color var(--ns-duration-moderate) var(--ns-easing-easeOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeOut),
+    transform var(--ns-duration-fast) var(--ns-easing-easeOut),
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeOut);
   gap: var(--ns-space-3);
   border-radius: var(--ns-radius-md);
   position: relative;
   touch-action: manipulation;
+  overflow: hidden;
 }
 
 .nav-item:hover {
-  background-color: var(--ns-color-bg-muted);
+  background-color: color-mix(in oklch, var(--ns-color-bg-muted) 80%, transparent);
   color: var(--ns-color-text-default);
+  transform: translateX(3px);
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--ns-color-primary-default) 15%, transparent);
+}
+
+.nav-item:active {
+  transform: scale(0.98) translateX(0);
 }
 
 .nav-item.active {
   color: var(--ns-color-primary-default);
-  background: linear-gradient(90deg, var(--ns-color-primary-subtle) 0%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--ns-color-primary-subtle) 70%, transparent) 0%,
+    color-mix(in oklch, var(--ns-color-primary-subtle) 20%, transparent) 60%,
+    transparent 100%
+  );
   font-weight: var(--ns-font-weight-semibold);
+  box-shadow: inset 0 0 24px color-mix(in oklch, var(--ns-color-primary-default) 6%, transparent);
 }
 
+/* Glowing active indicator */
 .nav-item.active::before {
   content: '';
   position: absolute;
@@ -432,9 +509,27 @@ body {
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 60%;
+  height: 65%;
   background: var(--ns-color-primary-default);
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 8px 2px color-mix(in oklch, var(--ns-color-primary-default) 50%, transparent);
+
+  /* Removed infinite glow animation for performance */
+}
+
+@keyframes active-indicator-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px 2px color-mix(in oklch, var(--ns-color-primary-default) 50%, transparent),
+      0 0 16px 4px color-mix(in oklch, var(--ns-color-primary-default) 25%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 12px 3px color-mix(in oklch, var(--ns-color-primary-default) 65%, transparent),
+      0 0 24px 6px color-mix(in oklch, var(--ns-color-primary-default) 35%, transparent);
+  }
 }
 
 /* Sidebar Footer */
@@ -467,19 +562,44 @@ body {
 .sidebar-network-badge {
   display: inline-flex;
   padding: 0.2rem 0.5rem;
-  border-radius: var(--ns-radius-sm);
+  border-radius: var(--ns-radius-full);
   font-size: 0.6rem;
   font-weight: var(--ns-font-weight-bold);
   letter-spacing: 0.04em;
   background: var(--ns-color-surface-default);
   border: 1px solid var(--ns-color-border-default);
   color: var(--ns-color-text-muted);
+  transition:
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeOut),
+    transform var(--ns-duration-fast) var(--ns-easing-easeOut);
+}
+
+.sidebar-network-badge:hover {
+  transform: scale(1.02);
 }
 
 .sidebar-network-badge.is-regtest {
-  background: linear-gradient(135deg, var(--ns-color-primary-subtle), transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--ns-color-primary-subtle) 60%, transparent),
+    transparent
+  );
   color: var(--ns-color-primary-default);
-  border-color: var(--ns-color-primary-default);
+  border-color: color-mix(in oklch, var(--ns-color-primary-default) 60%, transparent);
+  box-shadow: 0 0 8px color-mix(in oklch, var(--ns-color-primary-default) 15%, transparent);
+
+  /* Removed infinite pulse animation for performance */
+}
+
+@keyframes network-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px color-mix(in oklch, var(--ns-color-primary-default) 15%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 12px color-mix(in oklch, var(--ns-color-primary-default) 25%, transparent);
+  }
 }
 
 .sidebar-network-badge.is-mutinynet {
@@ -563,26 +683,63 @@ body {
 /* Sidebar Wallet Section */
 .sidebar-wallet-section {
   margin-bottom: var(--ns-space-4);
+  padding: var(--ns-space-3);
+  border-radius: var(--ns-radius-md);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--ns-color-surface-default) 80%, transparent) 0%,
+    color-mix(in oklch, var(--ns-color-bg-subtle) 60%, transparent) 100%
+  );
+  border: 1px solid color-mix(in oklch, var(--ns-color-border-default) 40%, transparent);
+  transition:
+    box-shadow var(--ns-duration-moderate) var(--ns-easing-easeOut),
+    border-color var(--ns-duration-moderate) var(--ns-easing-easeOut);
+}
+
+/* Bitcoin glow when wallet has balance */
+.sidebar-wallet-section.has-balance {
+  border-color: color-mix(in oklch, var(--ns-color-bitcoin, #f7931a) 30%, transparent);
+  box-shadow:
+    0 0 16px -4px color-mix(in oklch, var(--ns-color-bitcoin, #f7931a) 15%, transparent),
+    inset 0 1px 0 0 color-mix(in oklch, var(--ns-color-static-white) 5%, transparent);
 }
 
 .sidebar-wallet-balance {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: var(--ns-font-weight-bold);
   color: var(--ns-color-text-default);
   font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: var(--ns-space-1);
+}
+
+/* Bitcoin color for balance when wallet has funds */
+.sidebar-wallet-section.has-balance .sidebar-wallet-balance {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-bitcoin, #f7931a) 0%,
+    color-mix(in oklch, var(--ns-color-bitcoin, #f7931a) 80%, var(--ns-color-warning-default)) 100%
+  );
+  background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sidebar-wallet-unit {
   font-size: 0.75rem;
   opacity: 0.6;
   font-weight: var(--ns-font-weight-medium);
+  -webkit-text-fill-color: initial;
+  color: var(--ns-color-text-muted);
 }
 
 .sidebar-wallet-empty {
   font-size: 0.72rem;
-  color: var(--ns-color-warning-default);
+  color: var(--ns-color-text-muted);
   margin-top: var(--ns-space-1);
   font-style: italic;
+  opacity: 0.8;
 }
 
 .sidebar-network-section {
@@ -604,19 +761,37 @@ body {
 }
 
 /* ===== MAIN CONTENT AREA ===== */
+
+/*
+ * Feed is the HERO - central focus with generous breathing room
+ * Content is comfortably contained without feeling cramped
+ */
 .feed-container {
   min-width: 0;
-  padding: var(--ns-space-5);
+
+  /* Generous padding - let content breathe */
+  padding: var(--ns-space-6) var(--ns-space-8);
   background: var(--ns-color-bg-default);
   overflow-y: auto;
+
+  /* Subtle inset shadow for depth */
+  box-shadow:
+    inset 2px 0 8px -4px color-mix(in oklch, var(--ns-color-shadow-default) 5%, transparent),
+    inset -2px 0 8px -4px color-mix(in oklch, var(--ns-color-shadow-default) 5%, transparent);
+
+  /* CLS FIX: Isolate layout calculations to this container */
+  contain: layout style;
 }
 
 .feed-stream {
-  max-width: 640px;
+  /* Optimal reading width - generous but focused */
+  max-width: 680px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--ns-space-4);
+
+  /* Consistent vertical rhythm */
+  gap: var(--ns-space-5);
 }
 
 .feed-header {
@@ -660,6 +835,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--ns-space-4);
+
+  /* CLS FIX: Reserve space for loading state to match loaded content */
+  min-height: 600px;
 }
 
 .feed-empty {
@@ -861,21 +1039,37 @@ body {
 }
 
 /* ===== TELEMETRY SIDEBAR ===== */
+
+/*
+ * Telemetry supports the feed - room for data visualization
+ * Elegant separation without competing for attention
+ */
 .telemetry-sidebar {
-  border-left: 1px solid var(--ns-color-border-default);
+  /* Elegant divider with subtle shadow */
+  border-left: none;
+  box-shadow:
+    -1px 0 0 0 var(--ns-color-border-default),
+    -4px 0 16px -4px color-mix(in oklch, var(--ns-color-shadow-default) 8%, transparent);
   background: linear-gradient(
     180deg,
     var(--ns-color-surface-default) 0%,
-    var(--ns-color-bg-subtle) 100%
+    color-mix(in oklch, var(--ns-color-bg-subtle) 85%, var(--ns-color-surface-default)) 100%
   );
-  padding: var(--ns-space-5);
+
+  /* Generous padding for data to breathe */
+  padding: var(--ns-space-6);
   height: 100dvh;
   position: sticky;
   top: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--ns-space-4);
+
+  /* Consistent vertical rhythm */
+  gap: var(--ns-space-5);
+
+  /* CLS FIX: Use contain to isolate layout calculations */
+  contain: layout style;
 }
 
 .telemetry-status-row {
@@ -1019,6 +1213,9 @@ body {
   background: var(--ns-color-bg-subtle);
   border-radius: var(--ns-radius-md);
   border: 1px solid var(--ns-color-border-default);
+
+  /* CLS FIX: Reserve minimum height for relays section */
+  min-height: 120px;
 }
 
 .telemetry-relays-title {
@@ -1056,6 +1253,9 @@ body {
 
 .telemetry-node-section {
   margin-bottom: var(--ns-space-4);
+
+  /* CLS FIX: Reserve minimum height for node card section */
+  min-height: 280px;
 }
 
 .telemetry-log-select {
@@ -1114,6 +1314,10 @@ body {
   background: var(--ns-color-bg-muted);
   border-radius: var(--ns-radius-full);
   margin-left: var(--ns-space-2);
+
+  /* CLS FIX: Fixed minimum width prevents layout shift when count changes */
+  min-width: 2em;
+  text-align: center;
   font-weight: var(--ns-font-weight-normal);
 }
 
@@ -1222,6 +1426,9 @@ body {
   font-weight: var(--ns-font-weight-semibold);
   color: var(--ns-color-text-default);
   font-family: var(--ns-font-family-mono);
+
+  /* CLS FIX: Fixed minimum height prevents layout shifts during number updates */
+  min-height: 1.4em;
 }
 
 .ns-stat-value.lg {
@@ -1340,10 +1547,7 @@ body {
   transform: scale(0.995);
 }
 
-/* Dramatic reveal for first card */
-.feed-stream .ns-event-card:first-child {
-  animation: ns-dramatic-reveal 500ms var(--ns-easing-easeOut) both;
-}
+/* First card - no animation (causes CLS) */
 
 /* Action button icon wiggle on hover */
 .ns-action-btn:hover .icon {
@@ -2282,7 +2486,10 @@ body {
   font-size: var(--ns-font-size-sm);
   font-weight: var(--ns-font-weight-semibold);
   cursor: pointer;
-  transition: var(--ns-transition-all);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
   border: 1px solid transparent;
   background: var(--ns-color-surface-default);
   color: var(--ns-color-text-default);
@@ -2549,9 +2756,34 @@ body {
 }
 
 /* ===== RESPONSIVE ===== */
+
+/*
+ * Breakpoint strategy:
+ * - > 1200px: Full 3-column layout with all elements
+ * - 1024-1200px: Condensed 3-column (narrower sidebars)
+ * - 768-1024px: Elegant 2-column (sidebar + feed)
+ * - < 768px: Focused single column with slide-out nav
+ */
+
+/* Large tablets and small desktops - condensed 3-column */
+@media (width <= 1200px) and (width > 1024px) {
+  .social-layout {
+    grid-template-columns: 260px 1fr 280px;
+  }
+
+  .feed-container {
+    padding: var(--ns-space-5) var(--ns-space-6);
+  }
+
+  .telemetry-sidebar {
+    padding: var(--ns-space-5);
+  }
+}
+
+/* Tablet - elegant 2-column layout */
 @media (width <= 1024px) {
   .social-layout {
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 260px 1fr;
   }
 
   .telemetry-sidebar {
@@ -2559,13 +2791,28 @@ body {
   }
 
   .feed-container {
-    padding: var(--ns-space-4);
+    /* More breathing room when telemetry is hidden */
+    padding: var(--ns-space-5) var(--ns-space-6);
+  }
+
+  .feed-stream {
+    /* Slightly wider when we have more space */
+    max-width: 720px;
+  }
+
+  .sidebar-nav {
+    /* Slightly narrower sidebar for tablet */
+    padding: var(--ns-space-5) 0;
   }
 }
 
+/* Mobile - focused single column */
 @media (width <= 768px) {
   .social-layout {
     grid-template-columns: 1fr;
+
+    /* Remove background gradient on mobile for cleaner look */
+    background-image: none;
   }
 
   .hamburger-btn {
@@ -2580,11 +2827,15 @@ body {
     position: fixed;
     left: 0;
     top: 0;
-    width: 280px;
+    width: 300px;
+    max-width: 85vw;
     transform: translateX(-100%);
     transition: transform var(--ns-duration-slow) var(--ns-easing-easeInOut);
     z-index: 10000;
     background: var(--ns-color-surface-default);
+
+    /* Stronger shadow for floating nav */
+    box-shadow: 4px 0 24px -4px color-mix(in oklch, var(--ns-color-shadow-default) 25%, transparent);
   }
 
   .sidebar-nav.is-open {
@@ -2592,8 +2843,17 @@ body {
   }
 
   .feed-container {
+    /* Comfortable mobile padding */
     padding: var(--ns-space-4);
     padding-top: calc(var(--ns-space-4) + 60px);
+
+    /* Remove inset shadows on mobile */
+    box-shadow: none;
+  }
+
+  .feed-stream {
+    /* Full width on mobile */
+    max-width: 100%;
   }
 
   .feed-header {
@@ -2684,25 +2944,25 @@ body {
 /* Telemetry sidebar collapses on immersive mode (desktop only) */
 @media (width > 1024px) {
   .telemetry-sidebar {
+    /* GPU-accelerated transitions: transform + opacity only */
     transition:
-      width var(--ns-duration-slow) var(--ns-easing-easeInOut),
-      opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut),
-      padding var(--ns-duration-slow) var(--ns-easing-easeInOut);
-    overflow: hidden;
+      transform var(--ns-duration-slow) var(--ns-easing-easeInOut),
+      opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+
+    /* Enable hardware acceleration */
+    will-change: transform, opacity;
   }
 
   .social-layout.is-immersive .telemetry-sidebar {
-    width: 0;
-    min-width: 0;
-    padding: 0;
+    /* Slide out to the right instead of collapsing width */
+    transform: translateX(100%);
     opacity: 0;
     pointer-events: none;
   }
 
-  /* Expand main content when telemetry hidden */
-  .social-layout.is-immersive {
-    grid-template-columns: 260px 1fr 0;
-  }
+  /* Grid structure stays stable - no column change needed */
+
+  /* The sidebar slides out within its fixed-width column */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3365,7 +3625,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--ns-space-1);
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .action-btn--bitcoin:hover:not(:disabled) {
@@ -3923,7 +4185,9 @@ body {
   border: 1px solid var(--ns-color-warning-default);
   border-radius: var(--ns-radius-sm);
   cursor: pointer;
-  transition: all var(--ns-duration-fast) var(--ns-easing-easeOut);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .telemetry-stale-retry:hover {

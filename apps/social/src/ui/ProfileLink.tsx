@@ -1,5 +1,5 @@
 import { useProfile } from '@nostrstack/react';
-import { type CSSProperties, type MouseEvent, useCallback, useMemo } from 'react';
+import { type CSSProperties, memo, type MouseEvent, useCallback, useMemo } from 'react';
 
 import { buildProfilePath, navigateTo } from '../utils/navigation';
 import { Image } from './Image';
@@ -34,7 +34,7 @@ type ProfileLinkProps = {
   avatarSize?: AvatarSize;
 };
 
-export function ProfileLink({
+export const ProfileLink = memo(function ProfileLink({
   pubkey,
   label,
   className,
@@ -102,4 +102,4 @@ export function ProfileLink({
       {!avatarOnly && <span className="profile-link__name">{displayName}</span>}
     </a>
   );
-}
+});

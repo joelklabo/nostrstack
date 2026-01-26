@@ -88,6 +88,32 @@
   }
 }
 
+/* Status pulse - for live indicators */
+@keyframes ns-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+/* Celebration glow pulse - violet themed */
+@keyframes ns-celebration-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--ns-color-celebration-glow, oklch(66% 0.18 290deg / 40%));
+  }
+
+  50% {
+    box-shadow: 0 0 20px 5px var(--ns-color-celebration-glow, oklch(66% 0.18 290deg / 30%));
+  }
+}
+
 @keyframes ns-heart-bounce {
   0% {
     transform: scale(1);
@@ -124,27 +150,22 @@
 @keyframes ns-zap-flash {
   0% {
     transform: scale(1);
-    filter: brightness(1);
   }
 
   25% {
     transform: scale(1.2);
-    filter: brightness(1.5);
   }
 
   50% {
     transform: scale(0.9);
-    filter: brightness(1.2);
   }
 
   75% {
     transform: scale(1.05);
-    filter: brightness(1.1);
   }
 
   100% {
     transform: scale(1);
-    filter: brightness(1);
   }
 }
 
@@ -176,62 +197,16 @@
 
 /* ===== ENTRANCE ANIMATIONS ===== */
 
-/* Feed items fade in and slide up with stagger */
-.feed-stream .ns-card {
-  animation: ns-fade-in-up var(--ns-animation-duration-normal, 200ms)
-    var(--ns-easing-easeOut, ease-out) both;
-}
+/* Feed animations REMOVED - cause CLS during data updates */
 
-.feed-stream .ns-card:nth-child(1) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 0);
-}
-
-.feed-stream .ns-card:nth-child(2) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 1);
-}
-
-.feed-stream .ns-card:nth-child(3) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 2);
-}
-
-.feed-stream .ns-card:nth-child(4) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 3);
-}
-
-.feed-stream .ns-card:nth-child(5) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 4);
-}
-
-.feed-stream .ns-card:nth-child(6) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 5);
-}
-
-.feed-stream .ns-card:nth-child(7) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 6);
-}
-
-.feed-stream .ns-card:nth-child(8) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 7);
-}
-
-.feed-stream .ns-card:nth-child(9) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 8);
-}
-
-.feed-stream .ns-card:nth-child(10) {
-  animation-delay: calc(var(--ns-stagger-delay, 50ms) * 9);
-}
-
-/* Card hover lift effect */
+/* Card hover - border only, NO transform (causes CLS) */
 .ns-card {
-  transition:
-    border-color var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease-in-out),
-    box-shadow var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease-in-out),
-    transform var(--ns-duration-fast, 150ms) var(--ns-easing-easeOut, ease-out);
+  transition: border-color var(--ns-duration-moderate, 200ms)
+    var(--ns-easing-easeInOut, ease-in-out);
 }
 
 .ns-card:hover {
-  transform: translateY(-2px);
+  border-color: var(--ns-color-primary-default);
 }
 
 /* Exit animation for filtered/removed posts */
@@ -517,6 +492,20 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* ===== STATUS INDICATORS ===== */
+
+/* Live/active status pulse */
+.is-live,
+.is-pulsing,
+[data-status='live'] {
+  animation: ns-status-pulse 2s ease-in-out infinite;
+}
+
+/* Celebration state - violet glow */
+.is-celebrating {
+  animation: ns-celebration-glow 2s ease-in-out infinite;
+}
+
 /* ===== NEW POSTS INDICATOR ENHANCEMENTS ===== */
 
 /* Add pulse effect to draw attention */
@@ -533,20 +522,12 @@
 
 /* ===== IMMERSIVE SCROLL SMOOTH TRANSITIONS ===== */
 
-/* Smooth header hide/show */
-.feed-header {
-  transition:
-    transform 300ms var(--ns-easing-easeInOut, ease-in-out),
-    opacity 250ms var(--ns-easing-easeInOut, ease-in-out),
-    max-height 300ms var(--ns-easing-easeInOut, ease-in-out),
-    margin-bottom 300ms var(--ns-easing-easeInOut, ease-in-out);
-}
+/* Note: .feed-header base styles including animation are defined in ORCHESTRATED PAGE LOAD CLASSES section */
 
 .feed-editor {
   transition:
-    max-height 300ms var(--ns-easing-easeInOut, ease-in-out),
-    opacity 250ms var(--ns-easing-easeInOut, ease-in-out),
-    margin 300ms var(--ns-easing-easeInOut, ease-in-out);
+    transform 300ms ease-in-out,
+    opacity 250ms ease-in-out;
 }
 
 /* ===== REDUCED MOTION SUPPORT ===== */
@@ -571,7 +552,30 @@
   .ns-skeleton::after,
   .link-preview__skeleton-image::after,
   .link-preview__skeleton-title::after,
-  .link-preview__skeleton-desc::after {
+  .link-preview__skeleton-desc::after,
+  .is-live,
+  .is-pulsing,
+  [data-status="live"],
+  .is-celebrating,
+  /* Premium action button animations */
+  .ns-action-btn[aria-label*="Reply"]:hover .icon,
+  .ns-action-btn[aria-label*="reply"]:hover .icon,
+  .ns-action-btn[aria-label*="thread"]:hover .icon,
+  .ns-action-btn[aria-label*="Thread"]:hover .icon,
+  .ns-action-btn[aria-label*="Repost"]:hover .icon,
+  .ns-action-btn[aria-label*="repost"]:hover .icon,
+  .ns-action-btn[aria-label*="Reposted"] .icon,
+  .ns-action-btn[aria-label*="Zap"]:hover .icon,
+  .ns-action-btn[aria-label*="zap"]:hover .icon,
+  .ns-action-btn[aria-label*="like"]:hover .icon,
+  .ns-action-btn[aria-label*="Like"]:hover .icon,
+  .ns-action-btn.just-activated,
+  .ns-action-btn.just-activated::after,
+  .zap-button.zapped,
+  .ns-action-btn.zapped,
+  /* Primary button shimmer */
+  .ns-btn--primary::before,
+  .ns-btn--primary:hover:not(:disabled)::before {
     animation: none;
   }
 
@@ -579,7 +583,9 @@
   .ns-card:hover,
   .ns-btn:hover:not(:disabled),
   .ns-btn--primary:hover:not(:disabled),
+  .ns-btn--ghost:hover:not(:disabled),
   .ns-action-btn:hover .icon,
+  .ns-action-btn:hover,
   .ns-dialog__close:hover,
   .new-posts-indicator:hover {
     transform: none;
@@ -587,10 +593,13 @@
 
   /* Disable button press transforms */
   .ns-btn:active:not(:disabled),
+  .ns-btn--primary:active:not(:disabled),
+  .ns-btn--ghost:active:not(:disabled),
   .action-btn:active:not(:disabled),
   .auth-btn:active:not(:disabled),
   .wallet-action-btn:active:not(:disabled),
-  .ns-action-btn:active {
+  .ns-action-btn:active,
+  .ns-action-btn:active .icon {
     transform: none;
   }
 
@@ -599,5 +608,637 @@
   .ns-toggle[aria-checked='true']::after,
   .ns-toggle.is-on::after {
     transition: none;
+  }
+
+  /* Keep visual state changes but without animation */
+  .ns-action-btn.active,
+  .ns-action-btn.zapped,
+  .zap-button.zapped {
+    animation: none;
+  }
+}
+
+/* ===== DRAMATIC ANIMATIONS ===== */
+
+/* Dramatic reveal for first card - NO SCALE (causes CLS) */
+@keyframes ns-dramatic-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Icon wiggle on hover */
+@keyframes ns-icon-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1.1);
+  }
+  25% {
+    transform: rotate(-8deg) scale(1.15);
+  }
+  75% {
+    transform: rotate(8deg) scale(1.15);
+  }
+}
+
+/* Success burst effect */
+@keyframes ns-success-burst {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--ns-color-primary-subtle);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px transparent;
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ===== PREMIUM ACTION BUTTON ANIMATIONS ===== */
+
+/* Reply bubble wiggle */
+@keyframes ns-reply-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-12deg) scale(1.1);
+  }
+  40% {
+    transform: rotate(10deg) scale(1.15);
+  }
+  60% {
+    transform: rotate(-6deg) scale(1.1);
+  }
+  80% {
+    transform: rotate(4deg) scale(1.05);
+  }
+}
+
+/* Thread unravel animation */
+@keyframes ns-thread-unravel {
+  0% {
+    transform: scaleY(1) rotate(0deg);
+  }
+  30% {
+    transform: scaleY(1.2) rotate(-5deg);
+  }
+  60% {
+    transform: scaleY(0.9) rotate(3deg);
+  }
+  100% {
+    transform: scaleY(1) rotate(0deg);
+  }
+}
+
+/* Repost spin animation */
+@keyframes ns-repost-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Repost success bounce spin */
+@keyframes ns-repost-success {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.3);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Lightning strike effect for zap - simplified, no filter */
+@keyframes ns-lightning-strike {
+  0% {
+    transform: scale(1);
+  }
+
+  25% {
+    transform: scale(1.3);
+  }
+
+  50% {
+    transform: scale(0.9);
+  }
+
+  75% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Zap golden glow pulse */
+@keyframes ns-zap-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--ns-color-zap-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 16px 4px var(--ns-color-zap-glow);
+  }
+}
+
+/* Heart fill animation */
+@keyframes ns-heart-fill {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+
+  25% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(0.9);
+  }
+
+  75% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Success checkmark with burst */
+@keyframes ns-checkmark-burst {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  40% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+
+  60% {
+    transform: scale(0.9);
+  }
+
+  80% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Particle burst for success states */
+@keyframes ns-particle-burst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Primary button shimmer */
+@keyframes ns-shimmer-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+/* Button lift glow */
+@keyframes ns-lift-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 12px -2px color-mix(in oklch, var(--ns-color-primary-default) 30%, transparent),
+      0 0 0 0 var(--ns-color-primary-subtle);
+  }
+
+  50% {
+    box-shadow:
+      0 8px 20px -2px color-mix(in oklch, var(--ns-color-primary-default) 40%, transparent),
+      0 0 20px 2px var(--ns-color-primary-subtle);
+  }
+}
+
+/* Elegant spinner */
+@keyframes ns-elegant-spin {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.6;
+  }
+}
+
+/* Ghost button border glow */
+@keyframes ns-ghost-border-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--ns-color-border-default);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px var(--ns-color-primary-default),
+      0 0 12px 0 var(--ns-color-primary-subtle);
+  }
+}
+
+/* ===== ORCHESTRATED PAGE LOAD ANIMATIONS ===== */
+
+/* Sidebar slide in from left - orchestrated at 0ms */
+@keyframes ns-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Telemetry sidebar slide in from right - orchestrated at 300ms */
+@keyframes ns-slide-in-right-orchestrated {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Feed header fade down - orchestrated at 100ms */
+@keyframes ns-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced dramatic reveal for first card - NO BLUR for performance */
+@keyframes ns-hero-card-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered card entrance - for subsequent cards */
+@keyframes ns-card-stagger-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* New post smooth slide from top */
+@keyframes ns-new-post-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.96);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(6px) scale(1.01);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Scroll reveal for cards entering viewport */
+@keyframes ns-scroll-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card hover shadow bloom */
+@keyframes ns-hover-shadow-bloom {
+  from {
+    box-shadow: var(--ns-shadow-sm);
+    transform: translateY(0);
+  }
+
+  to {
+    box-shadow:
+      0 12px 40px -12px color-mix(in oklch, var(--ns-color-text-default) 18%, transparent),
+      0 4px 16px -4px color-mix(in oklch, var(--ns-color-primary-default) 12%, transparent);
+    transform: translateY(-4px);
+  }
+}
+
+/* Button press with satisfying micro-bounce */
+@keyframes ns-btn-micro-bounce {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(0.94);
+  }
+
+  70% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Like/reaction burst with radial particles */
+@keyframes ns-like-particle-burst {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  30% {
+    transform: scale(1.4);
+  }
+
+  50% {
+    transform: scale(0.85);
+  }
+
+  70% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Zap lightning burst - simplified, no filter */
+@keyframes ns-zap-lightning-burst {
+  0% {
+    transform: scale(1);
+  }
+
+  20% {
+    transform: scale(1.4);
+  }
+
+  40% {
+    transform: scale(0.9);
+  }
+
+  60% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Glow pulse for highlighted/featured elements */
+@keyframes ns-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 transparent,
+      var(--ns-shadow-sm);
+  }
+
+  50% {
+    box-shadow:
+      0 0 24px 6px color-mix(in oklch, var(--ns-color-primary-default) 20%, transparent),
+      var(--ns-shadow-md);
+  }
+}
+
+/* Parallax-lite subtle float for header elements */
+@keyframes ns-parallax-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* ===== ORCHESTRATED PAGE LOAD CLASSES ===== */
+
+/* Apply simple entrance to sidebar */
+.sidebar-nav {
+  animation: ns-fade-in-up 250ms ease-out both;
+}
+
+/* Disable sidebar animation at mobile breakpoint to prevent transform conflict */
+@media (width <= 768px) {
+  .sidebar-nav {
+    animation: none;
+  }
+}
+
+/* Apply orchestrated entrance to feed header + immersive scroll transitions */
+.feed-header {
+  animation: ns-fade-down 300ms ease-out both;
+  animation-delay: 50ms;
+
+  /* Immersive scroll transitions */
+  transition:
+    transform 250ms ease-in-out,
+    opacity 200ms ease-in-out;
+}
+
+/* Apply simple entrance to telemetry sidebar */
+.telemetry-sidebar {
+  animation: ns-fade-in-up 250ms ease-out both;
+}
+
+/* Card entrance removed - causes CLS during feed updates */
+
+/* .feed-stream .ns-event-card - no animation */
+
+/* New post entering feed */
+.ns-event-card.is-new-post {
+  animation: ns-new-post-slide-in 500ms var(--ns-easing-emphasized, cubic-bezier(0.2, 0, 0, 1)) both;
+}
+
+/* Card hover - border only, no transform (causes CLS) */
+.ns-event-card {
+  transition: border-color 150ms ease-out;
+}
+
+.ns-event-card:hover {
+  border-color: var(--ns-color-primary-default);
+}
+
+/* Enhanced button press with micro-bounce */
+.ns-btn--primary:active:not(:disabled),
+.ns-btn--secondary:active:not(:disabled) {
+  animation: ns-btn-micro-bounce 200ms
+    var(--ns-easing-bounce, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+/* Enhanced like button burst */
+.ns-action-btn--like.just-activated .icon,
+.ns-action-btn[data-action='like'].just-activated .icon {
+  animation: ns-like-particle-burst 500ms
+    var(--ns-easing-bounce, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+/* Enhanced zap button burst */
+.ns-action-btn--zap.just-activated .icon,
+.ns-action-btn[data-action='zap'].just-activated .icon,
+.zap-button.just-zapped .icon {
+  animation: ns-zap-lightning-burst 600ms var(--ns-easing-easeOut, ease-out);
+}
+
+/* Highlighted cards - subtle border, NO infinite animation */
+.ns-event-card--featured,
+.ns-event-card.is-highlighted {
+  border-color: var(--ns-color-primary-default);
+}
+
+/* Removed infinite parallax animation for performance */
+
+/* ===== NAVIGATION ITEM INTERACTIONS ===== */
+
+/* Enhanced nav-item transitions */
+.nav-item {
+  transition:
+    color var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease-in-out),
+    background-color var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease-in-out),
+    transform 100ms var(--ns-easing-easeOut, ease-out);
+}
+
+/* Nav item icon animation on hover */
+.nav-item .nav-icon {
+  transition: transform 200ms var(--ns-easing-easeOut, ease-out);
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.15);
+}
+
+/* Nav item press animation */
+.nav-item:active {
+  transform: scale(0.97);
+  transition-duration: 50ms;
+}
+
+/* ===== REDUCED MOTION: ORCHESTRATED ANIMATIONS ===== */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-nav,
+  .feed-header,
+  .telemetry-sidebar,
+  .feed-stream .ns-event-card:first-child,
+  .feed-stream .ns-event-card:nth-child(2),
+  .feed-stream .ns-event-card:nth-child(3),
+  .feed-stream .ns-event-card:nth-child(4),
+  .feed-stream .ns-event-card:nth-child(5),
+  .feed-stream .ns-event-card:nth-child(6),
+  .feed-stream .ns-event-card:nth-child(7),
+  .feed-stream .ns-event-card:nth-child(8),
+  .feed-stream .ns-event-card:nth-child(9),
+  .feed-stream .ns-event-card:nth-child(10),
+  .feed-stream .ns-event-card:nth-child(n + 11),
+  .ns-event-card.is-new-post,
+  .ns-event-card--featured,
+  .ns-event-card.is-highlighted,
+  .sidebar-title,
+  .ns-btn--primary:active:not(:disabled),
+  .ns-btn--secondary:active:not(:disabled),
+  .ns-action-btn--like.just-activated .icon,
+  .ns-action-btn[data-action='like'].just-activated .icon,
+  .ns-action-btn--zap.just-activated .icon,
+  .ns-action-btn[data-action='zap'].just-activated .icon,
+  .zap-button.just-zapped .icon {
+    animation: none;
+  }
+
+  .ns-event-card:hover {
+    transform: none;
+    box-shadow: var(--ns-shadow-md);
+  }
+
+  .nav-item:active,
+  .nav-item:hover .nav-icon {
+    transform: none;
   }
 }

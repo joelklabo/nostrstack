@@ -28,6 +28,10 @@
   border-radius: var(--ns-radius-lg);
   border: 1px solid var(--ns-color-border-default);
   overflow: hidden;
+
+  /* CLS FIX: Reserve minimum height and use content-visibility for performance */
+  min-height: 300px;
+  contain: layout style;
 }
 
 /* --- Header --- */
@@ -141,14 +145,15 @@
   position: relative;
   cursor: default;
 
-  /* Slide-in animation */
-  animation: ns-activity-slide-in var(--activity-animation-duration) ease-out both;
-  animation-delay: var(--animation-delay, 0ms);
+  /* CLS FIX: Fixed minimum height to prevent layout shifts when items are added */
+  min-height: var(--activity-item-height);
 
-  /* Smooth transitions for hover */
-  transition:
-    background-color 150ms ease,
-    transform 150ms ease;
+  /* CLS FIX: Use content-visibility for virtualized performance */
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--activity-item-height);
+
+  /* Smooth transitions for hover only - no layout-affecting animations */
+  transition: background-color 150ms ease;
 }
 
 .ns-activity-item[tabindex='0'] {
@@ -159,9 +164,7 @@
   background: var(--ns-color-bg-subtle);
 }
 
-.ns-activity-item[tabindex='0']:hover {
-  transform: translateX(4px);
-}
+/* Removed transform on hover - causes CLS */
 
 .ns-activity-item:focus-visible {
   outline: none;
@@ -183,11 +186,9 @@
   }
 }
 
-/* New item highlight pulse */
+/* New item highlight - no animation, just border */
 .ns-activity-item.is-new {
-  animation:
-    ns-activity-slide-in var(--activity-animation-duration) ease-out both,
-    ns-activity-highlight 2s ease-out 0.3s;
+  border-left: 3px solid var(--ns-color-primary-default);
 }
 
 @keyframes ns-activity-highlight {
@@ -304,7 +305,7 @@
   color: var(--activity-color-info);
 }
 
-/* Unread dot */
+/* Unread dot - no animation */
 .ns-activity-unread-dot {
   position: absolute;
   top: -2px;
@@ -314,7 +315,6 @@
   background: var(--ns-color-primary-default);
   border: 2px solid var(--ns-color-surface-default);
   border-radius: 50%;
-  animation: ns-activity-dot-pulse 2s ease-in-out infinite;
 }
 
 @keyframes ns-activity-dot-pulse {
@@ -560,15 +560,19 @@
   100% {
     transform: translateX(0);
   }
+
   20% {
     transform: translateX(-4px);
   }
+
   40% {
     transform: translateX(4px);
   }
+
   60% {
     transform: translateX(-3px);
   }
+
   80% {
     transform: translateX(3px);
   }

@@ -1,6 +1,6 @@
 import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import { useWallet } from './hooks/useWallet';
 import { AnimatedSats } from './ui/AnimatedNumber';
@@ -36,7 +36,7 @@ interface SidebarProps {
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
   currentView,
   setCurrentView,
   mobileOpen,
@@ -283,7 +283,9 @@ export function Sidebar({
 
       <div className="sidebar-footer" role="region" aria-label="Wallet and system status">
         {wallet && (
-          <div className={`sidebar-wallet-section ${isReceiving ? 'is-receiving' : ''}`}>
+          <div
+            className={`sidebar-wallet-section ${isReceiving ? 'is-receiving' : ''} ${(wallet.balance ?? 0) > 0 ? 'has-balance' : ''}`}
+          >
             <div className="sidebar-status-label">
               <span className="sidebar-wallet-icon" aria-hidden="true">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -378,4 +380,4 @@ export function Sidebar({
       )}
     </nav>
   );
-}
+});

@@ -1,3 +1,6 @@
+// Premium telemetry styles - glowing Bitcoin data visualization
+import './ui/TelemetryPremium.css';
+
 import {
   type BitcoinStatus,
   type PaymentFailureReason,
@@ -284,6 +287,8 @@ function logToActivityEvent(log: LogEntry, index: number): ActivityEvent {
 }
 
 const LOG_LIMIT = 100;
+// CLS FIX: Batch log updates to reduce layout recalculations
+const LOG_BATCH_INTERVAL_MS = 100;
 
 export function TelemetryBar() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -307,12 +312,43 @@ export function TelemetryBar() {
   const statusDwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const telemetryTiming = useMemo(resolveTelemetryTiming, []);
 
-  const appendLog = useCallback((entry: LogEntry) => {
+  // CLS FIX: Batch log entries to reduce DOM updates and layout shifts
+  const pendingLogsRef = useRef<LogEntry[]>([]);
+  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushLogs = useCallback(() => {
+    if (pendingLogsRef.current.length === 0) return;
+    const entries = pendingLogsRef.current;
+    pendingLogsRef.current = [];
     setLogs((prev) => {
-      const next = [...prev, entry];
+      const next = [...prev, ...entries];
       return next.slice(-LOG_LIMIT);
     });
   }, []);
+
+  const appendLog = useCallback(
+    (entry: LogEntry) => {
+      pendingLogsRef.current.push(entry);
+      // Batch updates to reduce layout recalculations
+      if (!batchTimeoutRef.current) {
+        batchTimeoutRef.current = setTimeout(() => {
+          batchTimeoutRef.current = null;
+          flushLogs();
+        }, LOG_BATCH_INTERVAL_MS);
+      }
+    },
+    [flushLogs]
+  );
+
+  // Cleanup batch timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+        flushLogs();
+      }
+    };
+  }, [flushLogs]);
 
   const mergeNodeState = useCallback((next: Partial<NodeState>) => {
     setNodeState((prev) => ({ ...prev, ...next }));
