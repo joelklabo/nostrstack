@@ -35,6 +35,11 @@
   /* Zap colors - violet-tinted to distinguish from bitcoin */
   --ns-color-zap: var(--ns-color-zap-default, oklch(55% 0.22 300deg));
   --ns-color-zap-glow: var(--ns-color-zap-glow, oklch(66% 0.18 290deg / 40%));
+
+  /* Semantic tip/lightning colors - use primary, not bitcoin */
+  --ns-color-tip-accent: var(--ns-color-primary-default);
+  --ns-color-tip-subtle: var(--ns-color-primary-subtle);
+  --ns-color-zap-accent: var(--ns-color-primary-default);
 }
 
 /* ===== BASE STYLES ===== */
@@ -4120,14 +4125,15 @@ body {
   justify-content: center;
 }
 
-/* Inline error variant */
+/* Inline error variant - subtle left-border style */
 .ns-telemetry-error-inline {
   display: flex;
   align-items: center;
   gap: var(--ns-space-2);
   padding: var(--ns-space-2) var(--ns-space-3);
-  background: color-mix(in oklch, var(--ns-color-danger-default) 8%, transparent);
-  border: 1px solid color-mix(in oklch, var(--ns-color-danger-default) 20%, transparent);
+  background: var(--ns-color-bg-subtle);
+  border: 1px solid var(--ns-color-border-default);
+  border-left: 3px solid var(--ns-color-danger-default);
   border-radius: var(--ns-radius-md);
   font-size: var(--ns-font-size-xs);
 }
@@ -4141,7 +4147,7 @@ body {
 
 .ns-telemetry-error-inline__text {
   flex: 1;
-  color: var(--ns-color-danger-text);
+  color: var(--ns-color-text-default);
   font-weight: var(--ns-font-weight-medium);
 }
 
@@ -4161,7 +4167,7 @@ body {
 }
 
 .ns-telemetry-error-inline__retry:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--ns-color-danger-default) 15%, transparent);
+  background: var(--ns-color-bg-muted);
 }
 
 .ns-telemetry-error-inline__retry:disabled {

@@ -15,6 +15,10 @@
   --bn-bitcoin-glow: color-mix(in oklch, var(--bn-bitcoin-orange) 40%, transparent);
   --bn-bitcoin-subtle: color-mix(in oklch, var(--bn-bitcoin-orange) 8%, transparent);
 
+  /* Primary teal for UI chrome (not bitcoin data) */
+  --bn-primary: var(--ns-color-primary-default, #0d9488);
+  --bn-primary-subtle: color-mix(in oklch, var(--bn-primary) 8%, transparent);
+
   /* Container styles */
   position: relative;
   display: flex;
@@ -24,10 +28,9 @@
   background: linear-gradient(
     135deg,
     var(--ns-color-surface-default, #fff) 0%,
-    var(--bn-bitcoin-subtle) 100%
+    var(--bn-primary-subtle) 100%
   );
-  border: 1px solid
-    color-mix(in oklch, var(--bn-bitcoin-orange) 25%, var(--ns-color-border-default, #e5e7eb));
+  border: 1px solid var(--ns-color-border-default, #e5e7eb);
   border-radius: var(--ns-radius-lg, 12px);
   box-shadow: var(--ns-shadow-md, 0 4px 6px -1px rgb(0 0 0 / 10%));
   overflow: hidden;
@@ -67,7 +70,7 @@
 .block-notification__pulse-ring {
   position: absolute;
   inset: 0;
-  border: 2px solid var(--bn-bitcoin-orange);
+  border: 2px solid var(--bn-primary);
   border-radius: 50%;
   opacity: 0;
 }
@@ -111,12 +114,12 @@
   flex-shrink: 0;
   background: linear-gradient(
     135deg,
-    var(--bn-bitcoin-orange),
-    color-mix(in oklch, var(--bn-bitcoin-orange) 80%, #ff6b00)
+    var(--bn-primary),
+    color-mix(in oklch, var(--bn-primary) 80%, var(--ns-color-primary-hover, #0f766e))
   );
   border-radius: 50%;
   color: white;
-  box-shadow: 0 2px 8px var(--bn-bitcoin-glow);
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--bn-primary) 40%, transparent);
 }
 
 .block-notification__bitcoin-icon {
@@ -133,15 +136,19 @@
   0% {
     transform: scale(1);
   }
+
   25% {
     transform: scale(1.15);
   }
+
   50% {
     transform: scale(0.95);
   }
+
   75% {
     transform: scale(1.05);
   }
+
   100% {
     transform: scale(1);
   }
@@ -177,7 +184,7 @@
   font-size: 0.6rem;
   font-weight: var(--ns-font-weight-bold, 700);
   color: white;
-  background: var(--bn-bitcoin-orange);
+  background: var(--bn-primary);
   border-radius: var(--ns-radius-sm, 4px);
   animation: badge-pop 0.4s var(--ns-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
@@ -282,7 +289,7 @@
 .block-notification__heartbeat-line {
   width: 100%;
   height: 100%;
-  color: var(--bn-bitcoin-orange);
+  color: var(--bn-primary);
 }
 
 .block-notification.is-new .block-notification__heartbeat-line path {
@@ -352,12 +359,12 @@
 .block-notification-inline.is-new {
   background: color-mix(
     in oklch,
-    var(--ns-color-bitcoin-default, #f7931a) 8%,
+    var(--ns-color-primary-default, #0d9488) 8%,
     var(--ns-color-bg-subtle, #f9fafb)
   );
   border-color: color-mix(
     in oklch,
-    var(--ns-color-bitcoin-default, #f7931a) 30%,
+    var(--ns-color-primary-default, #0d9488) 30%,
     var(--ns-color-border-default, #e5e7eb)
   );
 }
@@ -369,13 +376,13 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  color: var(--ns-color-bitcoin-default, #f7931a);
+  color: var(--ns-color-primary-default, #0d9488);
 }
 
 .block-notification-inline__pulse {
   position: absolute;
   inset: -4px;
-  border: 2px solid var(--ns-color-bitcoin-default, #f7931a);
+  border: 2px solid var(--ns-color-primary-default, #0d9488);
   border-radius: 50%;
   opacity: 0;
 }
@@ -404,9 +411,11 @@
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.2);
   }
+
   100% {
     transform: scale(1);
   }
@@ -453,7 +462,7 @@
   font-size: 0.55rem;
   font-weight: var(--ns-font-weight-bold, 700);
   color: white;
-  background: var(--ns-color-bitcoin-default, #f7931a);
+  background: var(--ns-color-primary-default, #0d9488);
   border-radius: var(--ns-radius-sm, 4px);
   animation: badge-pop 0.4s var(--ns-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
@@ -464,7 +473,7 @@
   background: linear-gradient(
     135deg,
     var(--ns-color-surface-default, #1f2937) 0%,
-    color-mix(in oklch, var(--bn-bitcoin-orange) 10%, var(--ns-color-surface-default, #1f2937)) 100%
+    color-mix(in oklch, var(--bn-primary) 10%, var(--ns-color-surface-default, #1f2937)) 100%
   );
 }
 
@@ -487,7 +496,7 @@
 [data-theme='dark'] .block-notification-inline.is-new {
   background: color-mix(
     in oklch,
-    var(--ns-color-bitcoin-default, #f7931a) 12%,
+    var(--ns-color-primary-default, #0d9488) 12%,
     var(--ns-color-bg-muted, #374151)
   );
 }
