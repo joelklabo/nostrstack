@@ -14,7 +14,11 @@ import { NostrEventCard } from './ui/NostrEventCard';
 import { VirtualizedList } from './ui/VirtualizedList';
 import { navigateTo } from './utils/navigation';
 
-export function FeedView() {
+interface FeedViewProps {
+  isImmersive?: boolean;
+}
+
+export function FeedView({ isImmersive }: FeedViewProps) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const { isMuted } = useMuteList();
   const { contacts, loading: contactsLoading } = useContactList();
@@ -230,7 +234,11 @@ export function FeedView() {
     <section className="feed-stream" aria-label="Live feed" ref={feedContainerRef}>
       <NewPostsIndicator newPosts={newPosts} onScrollToTop={handleScrollToTop} />
 
-      <header className="feed-header">
+      <header
+        className="feed-header"
+        inert={isImmersive || undefined}
+        aria-hidden={isImmersive || undefined}
+      >
         <h2 className="feed-title">Live Feed</h2>
         <div className="feed-header__actions" role="group" aria-label="Feed filters">
           <button
@@ -267,7 +275,11 @@ export function FeedView() {
         </div>
       </header>
 
-      <div className="feed-editor">
+      <div
+        className="feed-editor"
+        inert={isImmersive || undefined}
+        aria-hidden={isImmersive || undefined}
+      >
         <PostEditor />
       </div>
 
