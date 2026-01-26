@@ -51,7 +51,7 @@ describe('PostEditor', () => {
       error: null
     });
     render(<PostEditor />);
-    expect(screen.getByPlaceholderText('WHAT ARE YOU HACKING ON?...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Share something with the network...')).toBeInTheDocument();
     expect(screen.getByText('Publish')).toBeInTheDocument();
   });
 
@@ -64,7 +64,9 @@ describe('PostEditor', () => {
     });
     render(<PostEditor />);
     expect(screen.getByText('ACCESS_DENIED: User not authenticated.')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('WHAT ARE YOU HACKING ON?...')).not.toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText('Share something with the network...')
+    ).not.toBeInTheDocument();
   });
 
   it('shows error from auth when not authenticated', () => {
@@ -95,7 +97,7 @@ describe('PostEditor', () => {
     });
     render(<PostEditor />);
 
-    const textarea = screen.getByPlaceholderText('WHAT ARE YOU HACKING ON?...');
+    const textarea = screen.getByPlaceholderText('Share something with the network...');
     act(() => {
       fireEvent.change(textarea, { target: { value: 'My test post' } });
     });
@@ -145,7 +147,7 @@ describe('PostEditor', () => {
     });
     render(<PostEditor />);
 
-    const textarea = screen.getByPlaceholderText('WHAT ARE YOU HACKING ON?...');
+    const textarea = screen.getByPlaceholderText('Share something with the network...');
     act(() => {
       fireEvent.change(textarea, { target: { value: 'My test post' } });
     });
@@ -179,7 +181,7 @@ describe('PostEditor', () => {
     });
     render(<PostEditor />);
 
-    const textarea = screen.getByPlaceholderText('WHAT ARE YOU HACKING ON?...');
+    const textarea = screen.getByPlaceholderText('Share something with the network...');
     act(() => {
       fireEvent.change(textarea, { target: { value: 'My test post' } });
     });

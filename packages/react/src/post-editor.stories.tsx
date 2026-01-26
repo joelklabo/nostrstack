@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import type { Event, EventTemplate } from 'nostr-tools';
 import type React from 'react';
 
-import type { AuthContextType} from './auth';
+import type { AuthContextType } from './auth';
 import { AuthProvider } from './auth';
 import { NostrstackProvider } from './context';
 import { PostEditor } from './post-editor';
@@ -103,7 +103,7 @@ type Story = StoryObj<typeof meta>;
 
 export const NewPost: Story = {
   args: {
-    placeholder: 'WHAT ARE YOU HACKING ON?...',
+    placeholder: 'Share something with the network...',
     onSuccess: () => {},
     onCancel: () => {},
     autoFocus: false,
@@ -132,7 +132,7 @@ export const CustomPlaceholder: Story = {
 
 export const WithAutoFocus: Story = {
   args: {
-    placeholder: 'WHAT ARE YOU HACKING ON?...',
+    placeholder: 'Share something with the network...',
     autoFocus: true,
     onSuccess: () => {},
     loggedIn: true
@@ -141,7 +141,7 @@ export const WithAutoFocus: Story = {
 
 export const NotAuthenticated: Story = {
   args: {
-    placeholder: 'WHAT ARE YOU HACKING ON?...',
+    placeholder: 'Share something with the network...',
     onSuccess: () => {},
     loggedIn: false
   }
@@ -149,7 +149,7 @@ export const NotAuthenticated: Story = {
 
 export const AuthenticationError: Story = {
   args: {
-    placeholder: 'WHAT ARE YOU HACKING ON?...',
+    placeholder: 'Share something with the network...',
     onSuccess: () => {},
     loggedIn: false,
     authError: true
@@ -167,7 +167,7 @@ export const WithCancelButton: Story = {
 
 export const NoCancelButton: Story = {
   args: {
-    placeholder: 'WHAT ARE YOU HACKING ON?...',
+    placeholder: 'Share something with the network...',
     onSuccess: () => {},
     onCancel: undefined,
     loggedIn: true
