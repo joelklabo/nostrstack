@@ -1,4 +1,4 @@
-import './LiveStatsTicker.css';
+import './live-stats-ticker.css';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 

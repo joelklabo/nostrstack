@@ -1,4 +1,4 @@
-import './BlockCelebration.css';
+import './block-celebration.css';
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { useCallback, useState } from 'react';

@@ -1,4 +1,4 @@
-import './ActivityLog.css';
+import './activity-log.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

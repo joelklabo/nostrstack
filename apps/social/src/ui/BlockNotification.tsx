@@ -1,4 +1,4 @@
-import './BlockNotification.css';
+import './block-notification.css';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 

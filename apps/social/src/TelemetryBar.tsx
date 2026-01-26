@@ -1,5 +1,5 @@
 // Premium telemetry styles - glowing Bitcoin data visualization
-import './ui/TelemetryPremium.css';
+import './ui/telemetry-premium.css';
 
 import {
   type BitcoinStatus,

@@ -1,4 +1,4 @@
-import './BlockCelebration.css';
+import './block-celebration.css';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
