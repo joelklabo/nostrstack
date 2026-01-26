@@ -275,7 +275,7 @@ interface ActivityItemProps {
 function ActivityItem({ event, isUnread, onClick, animationDelay = 0 }: ActivityItemProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [relativeTime, setRelativeTime] = useState(() => formatRelativeTime(event.timestamp));
-  const itemRef = useRef<HTMLDivElement>(null);
+  const itemRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
   const { label } = getEventIcon(event.type);
 
   // Update relative time periodically
@@ -350,7 +350,13 @@ function ActivityItem({ event, isUnread, onClick, animationDelay = 0 }: Activity
   }
 
   return (
-    <div ref={itemRef} className={className} style={style} role="listitem" aria-label={ariaLabel}>
+    <div
+      ref={itemRef as React.RefObject<HTMLDivElement | null>}
+      className={className}
+      style={style}
+      role="listitem"
+      aria-label={ariaLabel}
+    >
       {content}
     </div>
   );
