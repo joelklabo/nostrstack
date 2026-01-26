@@ -5,15 +5,14 @@ const config: StorybookConfig = {
   addons: [
     '@storybook/addon-onboarding',
     '@storybook/addon-essentials',
-    '@chromatic-com/storybook',
     '@storybook/addon-a11y',
-    '@storybook/addon-vitest',
+    '@storybook/addon-vitest'
   ],
   framework: {
     name: '@storybook/react-vite',
-    options: {},
+    options: {}
   },
-  docs: {},
+  docs: {}
 };
 
 export default config;

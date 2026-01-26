@@ -118,5 +118,4 @@ bd admin cleanup --older-than 30  # Clean old issues (NEVER without --older-than
 
 - Commits follow Conventional Commits
 - WCAG 2.1 Level AA accessibility standards for UI
-- Visual regression testing with Chromatic
 - Widgets use `.ns-*` classes and `--ns-*` CSS variables (from @nostrstack/tokens)

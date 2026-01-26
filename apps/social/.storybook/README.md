@@ -38,20 +38,6 @@ pnpm build-storybook
 
 The static build is output to `apps/social/storybook-static/`.
 
-## Visual Regression Testing
-
-We use [Chromatic](https://www.chromatic.com/) for automated visual regression testing:
-
-1. **Automatic**: Chromatic runs on every push that modifies UI files (`.tsx`, `.css`, `.stories.tsx`)
-2. **Review**: Visual diffs are available in the Chromatic UI (linked in PR checks)
-3. **Baseline updates**: Changes on `main` are auto-accepted; PR changes require manual review/approval
-
-### Configuration
-
-- **Workflow**: `.github/workflows/chromatic.yml`
-- **Stories pattern**: `../src/**/*.stories.@(js|jsx|ts|tsx)`
-- **Chromatic project token**: Stored in GitHub repository secrets (`CHROMATIC_PROJECT_TOKEN`)
-
 ## Writing Stories
 
 Stories follow the CSF 3.0 (Component Story Format) standard. Example:
@@ -135,7 +121,6 @@ The following Storybook addons are configured:
 
 - **@storybook/addon-essentials**: Core addons (controls, actions, viewport, backgrounds, etc.)
 - **@storybook/addon-a11y**: Accessibility testing (WCAG compliance checks)
-- **@chromatic-com/storybook**: Chromatic integration for visual regression testing
 - **@storybook/addon-vitest**: In-browser component testing with Vitest
 - **@storybook/addon-onboarding**: First-time user onboarding guide
 
@@ -176,5 +161,4 @@ export const Default: Story = {
 
 - [Storybook Documentation](https://storybook.js.org/docs)
 - [CSF 3.0 Format](https://storybook.js.org/docs/writing-stories/introduction)
-- [Chromatic Documentation](https://www.chromatic.com/docs/)
 - [Accessibility Addon](https://storybook.js.org/addons/@storybook/addon-a11y)
