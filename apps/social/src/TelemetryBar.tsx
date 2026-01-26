@@ -77,13 +77,13 @@ interface LogEntry {
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 const DEFAULT_TELEMETRY_TIMING: TelemetryTiming = {
-  wsBaseDelayMs: 1000,
-  wsMaxDelayMs: 30_000,
-  wsMaxAttempts: 8,
-  wsJitter: 0.2,
-  offlinePollBaseMs: 30_000,
-  offlinePollMaxMs: 60_000,
-  offlinePollJitter: 0.2,
+  wsBaseDelayMs: 2000,
+  wsMaxDelayMs: 60_000,
+  wsMaxAttempts: 5,
+  wsJitter: 0.3,
+  offlinePollBaseMs: 60_000,
+  offlinePollMaxMs: 120_000,
+  offlinePollJitter: 0.3,
   statusDwellMs: 400
 };
 const AUTH_CLOSE_CODES = new Set([4001, 4003, 4401, 4403]);
@@ -495,6 +495,7 @@ export function TelemetryBar() {
     let cancelled = false;
     let attempt = 0;
     let offlineLogged = false;
+    let disconnectLogged = false;
 
     const clearRetry = () => {
       if (retryTimeout) clearTimeout(retryTimeout);
@@ -555,6 +556,7 @@ export function TelemetryBar() {
         }
         attempt = 0;
         offlineLogged = false;
+        disconnectLogged = false;
         setWsAttempt(0);
         setWsStatus('connected');
         setOfflineReason(null);
@@ -636,11 +638,15 @@ export function TelemetryBar() {
         attempt = nextAttempt;
         setWsAttempt(nextAttempt);
         setWsStatus('reconnecting');
-        appendLog({
-          ts: Date.now(),
-          level: 'warn',
-          message: `Disconnected from telemetry. Reconnecting in ${Math.round(delay / 1000)}s.`
-        });
+        // Only log disconnect once to avoid flooding activity log
+        if (!disconnectLogged) {
+          appendLog({
+            ts: Date.now(),
+            level: 'warn',
+            message: 'Disconnected from telemetry. Reconnecting...'
+          });
+          disconnectLogged = true;
+        }
         retryTimeout = setTimeout(connect, delay);
       };
     };
@@ -648,6 +654,7 @@ export function TelemetryBar() {
     const handleOnline = () => {
       if (cancelled) return;
       offlineLogged = false;
+      disconnectLogged = false;
       clearPoll();
       attempt = 0;
       connect();
