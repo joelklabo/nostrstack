@@ -26,7 +26,7 @@
     "lint:attw": "pnpm --filter \"./packages/**\" --filter \"!create-nostrstack-site\" --filter \"!test-utils\" -r exec attw --pack . --ignore-rules no-resolution",
     "lint:sh": "shellcheck scripts/*.sh",
     "lint:secrets": "secretlint \"**\"",
-    "lint:audit": "audit-ci --moderate",
+    "lint:audit": "audit-ci --config audit-ci.json",
     "lint:dep": "depcruise --config .dependency-cruiser.cjs apps packages",
     "lint:deps": "syncpack list-mismatches",
     "test": "pnpm -r test",

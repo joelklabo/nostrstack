@@ -1,0 +1,8 @@
+{
+  "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
+  "moderate": true,
+  "allowlist": ["GHSA-xxjr-mmjv-4gpg"],
+  "comments": {
+    "GHSA-xxjr-mmjv-4gpg": "Lodash prototype pollution in _.unset/_.omit - transitive dep of secretlint. Dev-only, low risk. Waiting for secretlint update."
+  }
+}
