@@ -60,7 +60,10 @@ function RowComponent<T>({
   const itemKey = getItemKey(item, index);
 
   return (
-    <div style={style} data-virtualized-item={itemKey}>
+    <div
+      style={{ ...style, paddingBottom: 'var(--ns-space-4, 16px)' }}
+      data-virtualized-item={itemKey}
+    >
       {renderItem(item, index)}
     </div>
   );

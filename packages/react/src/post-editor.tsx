@@ -132,7 +132,7 @@ export function PostEditor({
         className="terminal-input editor-input"
         id="post-editor"
         name="post"
-        placeholder={placeholder ?? 'WHAT ARE YOU HACKING ON?...'}
+        placeholder={placeholder ?? 'Share something with the network...'}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={isPublishing}

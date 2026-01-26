@@ -239,15 +239,71 @@
         "$type": "color"
       },
       "subtle": {
-        "$value": "{color.bitcoin.900}",
+        "$value": "{color.bitcoin.950}",
         "$type": "color"
       },
       "muted": {
-        "$value": "{color.bitcoin.800}",
+        "$value": "{color.bitcoin.900}",
         "$type": "color"
       },
       "text": {
         "$value": "{color.bitcoin.300}",
+        "$type": "color"
+      },
+      "accent": {
+        "$value": "{color.bitcoin.400}",
+        "$type": "color"
+      },
+      "emphasis": {
+        "$value": "{color.bitcoin.400}",
+        "$type": "color"
+      }
+    },
+    "zap": {
+      "default": {
+        "$value": "{color.violet.400}",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "{color.violet.300}",
+        "$type": "color"
+      },
+      "subtle": {
+        "$value": "{color.violet.900}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.violet.800}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.violet.300}",
+        "$type": "color"
+      },
+      "glow": {
+        "$value": "oklch(0.66 0.18 290 / 0.5)",
+        "$type": "color"
+      }
+    },
+    "celebration": {
+      "primary": {
+        "$value": "{color.celebration.violet}",
+        "$type": "color"
+      },
+      "secondary": {
+        "$value": "{color.celebration.cyan}",
+        "$type": "color"
+      },
+      "tertiary": {
+        "$value": "{color.celebration.teal}",
+        "$type": "color"
+      },
+      "accent": {
+        "$value": "{color.celebration.pink}",
+        "$type": "color"
+      },
+      "glow": {
+        "$value": "oklch(0.66 0.18 290 / 0.4)",
         "$type": "color"
       }
     },

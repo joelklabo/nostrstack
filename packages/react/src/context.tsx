@@ -111,7 +111,9 @@ export function NostrstackProvider({
   }, []);
   const baseTheme: NsTheme = {
     color: {
-      primary: legacy.accent ?? '#f59e0b',
+      // Use teal as default primary (matches design tokens)
+      // oklch(0.60 0.15 185) = approximately #0d9488
+      primary: legacy.accent ?? '#0d9488',
       text: legacy.text ?? '#0f172a',
       surface: legacy.surface ?? '#f8fafc',
       border: legacy.border ?? '#e2e8f0'

@@ -1,8 +1,8 @@
 {
-  "$description": "NostrStack Semantic Typography Tokens",
+  "$description": "NostrStack Semantic Typography - Editorial meets Crypto",
   "text": {
     "body": {
-      "$description": "Body text styles",
+      "$description": "Body text styles - Plus Jakarta Sans for readability",
       "fontFamily": {
         "$value": "{font.family.sans}",
         "$type": "fontFamily"
@@ -16,7 +16,7 @@
         "$type": "fontWeight"
       },
       "lineHeight": {
-        "$value": "{font.lineHeight.normal}",
+        "$value": "{font.lineHeight.relaxed}",
         "$type": "number"
       }
     },
@@ -40,7 +40,7 @@
       }
     },
     "label": {
-      "$description": "Form labels and small text",
+      "$description": "Form labels - slightly bolder",
       "fontFamily": {
         "$value": "{font.family.sans}",
         "$type": "fontFamily"
@@ -50,7 +50,7 @@
         "$type": "dimension"
       },
       "fontWeight": {
-        "$value": "{font.weight.medium}",
+        "$value": "{font.weight.semibold}",
         "$type": "fontWeight"
       },
       "lineHeight": {
@@ -78,7 +78,7 @@
       }
     },
     "code": {
-      "$description": "Inline code",
+      "$description": "Inline code and Bitcoin amounts - JetBrains Mono",
       "fontFamily": {
         "$value": "{font.family.mono}",
         "$type": "fontFamily"
@@ -88,7 +88,7 @@
         "$type": "dimension"
       },
       "fontWeight": {
-        "$value": "{font.weight.normal}",
+        "$value": "{font.weight.medium}",
         "$type": "fontWeight"
       },
       "lineHeight": {
@@ -98,10 +98,33 @@
     }
   },
   "heading": {
-    "display": {
-      "$description": "Large display heading",
+    "hero": {
+      "$description": "Hero heading - maximum impact with Syne",
       "fontFamily": {
-        "$value": "{font.family.sans}",
+        "$value": "{font.family.display}",
+        "$type": "fontFamily"
+      },
+      "fontSize": {
+        "$value": "{font.size.6xl}",
+        "$type": "dimension"
+      },
+      "fontWeight": {
+        "$value": "{font.weight.black}",
+        "$type": "fontWeight"
+      },
+      "lineHeight": {
+        "$value": "{font.lineHeight.none}",
+        "$type": "number"
+      },
+      "letterSpacing": {
+        "$value": "{font.letterSpacing.tightest}",
+        "$type": "dimension"
+      }
+    },
+    "display": {
+      "$description": "Large display heading - bold Syne",
+      "fontFamily": {
+        "$value": "{font.family.display}",
         "$type": "fontFamily"
       },
       "fontSize": {
@@ -113,18 +136,18 @@
         "$type": "fontWeight"
       },
       "lineHeight": {
-        "$value": "{font.lineHeight.tight}",
+        "$value": "{font.lineHeight.none}",
         "$type": "number"
       },
       "letterSpacing": {
-        "$value": "{font.letterSpacing.tighter}",
+        "$value": "{font.letterSpacing.tightest}",
         "$type": "dimension"
       }
     },
     "h1": {
-      "$description": "Page title",
+      "$description": "Page title - dramatic Syne",
       "fontFamily": {
-        "$value": "{font.family.sans}",
+        "$value": "{font.family.display}",
         "$type": "fontFamily"
       },
       "fontSize": {
@@ -140,14 +163,14 @@
         "$type": "number"
       },
       "letterSpacing": {
-        "$value": "{font.letterSpacing.tight}",
+        "$value": "{font.letterSpacing.tighter}",
         "$type": "dimension"
       }
     },
     "h2": {
-      "$description": "Section heading",
+      "$description": "Section heading - bold Syne",
       "fontFamily": {
-        "$value": "{font.family.sans}",
+        "$value": "{font.family.display}",
         "$type": "fontFamily"
       },
       "fontSize": {
@@ -168,9 +191,9 @@
       }
     },
     "h3": {
-      "$description": "Subsection heading",
+      "$description": "Subsection heading - semibold Syne",
       "fontFamily": {
-        "$value": "{font.family.sans}",
+        "$value": "{font.family.display}",
         "$type": "fontFamily"
       },
       "fontSize": {
@@ -184,10 +207,14 @@
       "lineHeight": {
         "$value": "{font.lineHeight.snug}",
         "$type": "number"
+      },
+      "letterSpacing": {
+        "$value": "{font.letterSpacing.tight}",
+        "$type": "dimension"
       }
     },
     "h4": {
-      "$description": "Card/component heading",
+      "$description": "Card/component heading - Plus Jakarta for hierarchy transition",
       "fontFamily": {
         "$value": "{font.family.sans}",
         "$type": "fontFamily"
@@ -197,7 +224,7 @@
         "$type": "dimension"
       },
       "fontWeight": {
-        "$value": "{font.weight.semibold}",
+        "$value": "{font.weight.bold}",
         "$type": "fontWeight"
       },
       "lineHeight": {

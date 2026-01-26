@@ -114,17 +114,18 @@
       }
     },
     "primary": {
-      "$description": "Primary brand color - Teal",
+      "$description": "Primary brand color - Luminous Teal",
       "default": {
         "$value": "{color.teal.500}",
         "$type": "color"
       },
       "hover": {
-        "$value": "{color.teal.600}",
-        "$type": "color"
+        "$value": "{color.teal.400}",
+        "$type": "color",
+        "$description": "Brighter on hover for dark mode"
       },
       "active": {
-        "$value": "{color.teal.700}",
+        "$value": "{color.teal.600}",
         "$type": "color"
       },
       "subtle": {
@@ -139,6 +140,11 @@
         "$value": "{color.static.white}",
         "$type": "color",
         "$description": "Text on primary background"
+      },
+      "glow": {
+        "$value": "{color.teal.glow}",
+        "$type": "color",
+        "$description": "Glow effect for primary buttons and accents"
       }
     },
     "accent": {
@@ -261,26 +267,103 @@
       }
     },
     "bitcoin": {
-      "$description": "Bitcoin-specific colors for Lightning/BTC UI",
+      "$description": "Bitcoin-specific colors for Lightning/BTC UI - bold and vibrant",
       "default": {
         "$value": "{color.bitcoin.500}",
-        "$type": "color"
+        "$type": "color",
+        "$description": "Official bitcoin orange - bold and eye-catching"
       },
       "hover": {
-        "$value": "{color.bitcoin.600}",
-        "$type": "color"
+        "$value": "{color.bitcoin.400}",
+        "$type": "color",
+        "$description": "Brighter on hover"
       },
       "subtle": {
         "$value": "{color.bitcoin.50}",
-        "$type": "color"
+        "$type": "color",
+        "$description": "Subtle tint for backgrounds"
       },
       "muted": {
         "$value": "{color.bitcoin.100}",
         "$type": "color"
       },
       "text": {
-        "$value": "{color.bitcoin.700}",
+        "$value": "{color.bitcoin.600}",
         "$type": "color"
+      },
+      "accent": {
+        "$value": "{color.bitcoin.400}",
+        "$type": "color",
+        "$description": "Vibrant bitcoin accent"
+      },
+      "emphasis": {
+        "$value": "{color.bitcoin.500}",
+        "$type": "color",
+        "$description": "Full saturation for emphasis"
+      },
+      "glow": {
+        "$value": "{color.bitcoin.glow}",
+        "$type": "color",
+        "$description": "Intense glow for zap animations and celebrations"
+      }
+    },
+    "zap": {
+      "$description": "Zap/Lightning colors - luminous violet for special moments",
+      "default": {
+        "$value": "{color.violet.500}",
+        "$type": "color",
+        "$description": "Primary zap color - luminous"
+      },
+      "hover": {
+        "$value": "{color.violet.400}",
+        "$type": "color",
+        "$description": "Brighter on hover"
+      },
+      "subtle": {
+        "$value": "{color.violet.50}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.violet.100}",
+        "$type": "color"
+      },
+      "text": {
+        "$value": "{color.violet.600}",
+        "$type": "color"
+      },
+      "glow": {
+        "$value": "{color.violet.glow}",
+        "$type": "color",
+        "$description": "Intense glow effect for zap animations"
+      },
+      "intense": {
+        "$value": "{color.violet.400}",
+        "$type": "color",
+        "$description": "High luminosity for dark backgrounds"
+      }
+    },
+    "celebration": {
+      "$description": "Celebration/confetti colors - violet/cyan/teal palette",
+      "primary": {
+        "$value": "{color.celebration.violet}",
+        "$type": "color"
+      },
+      "secondary": {
+        "$value": "{color.celebration.cyan}",
+        "$type": "color"
+      },
+      "tertiary": {
+        "$value": "{color.celebration.teal}",
+        "$type": "color"
+      },
+      "accent": {
+        "$value": "{color.celebration.pink}",
+        "$type": "color"
+      },
+      "glow": {
+        "$value": "oklch(0.66 0.18 290 / 0.3)",
+        "$type": "color",
+        "$description": "Glow effect for celebrations"
       }
     },
     "interactive": {

@@ -102,46 +102,53 @@
       }
     },
     "violet": {
-      "$description": "Accent violet/purple for highlights",
+      "$description": "Accent violet/purple for special moments and celebrations",
       "50": {
-        "$value": "oklch(0.97 0.02 300)",
+        "$value": "oklch(0.97 0.03 300)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.93 0.05 300)",
+        "$value": "oklch(0.93 0.06 300)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.86 0.1 300)",
+        "$value": "oklch(0.86 0.12 300)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.76 0.15 300)",
+        "$value": "oklch(0.78 0.18 300)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.66 0.19 300)",
-        "$type": "color"
+        "$value": "oklch(0.70 0.22 300)",
+        "$type": "color",
+        "$description": "Luminous violet for dark backgrounds"
       },
       "500": {
-        "$value": "oklch(0.55 0.22 300)",
-        "$type": "color"
+        "$value": "oklch(0.62 0.24 300)",
+        "$type": "color",
+        "$description": "Enhanced violet with more chroma"
       },
       "600": {
-        "$value": "oklch(0.48 0.22 300)",
+        "$value": "oklch(0.54 0.24 300)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.40 0.2 300)",
+        "$value": "oklch(0.45 0.22 300)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.32 0.17 300)",
+        "$value": "oklch(0.36 0.18 300)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.25 0.14 300)",
+        "$value": "oklch(0.28 0.15 300)",
         "$type": "color"
+      },
+      "glow": {
+        "$value": "oklch(0.70 0.24 300 / 0.5)",
+        "$type": "color",
+        "$description": "Glow effect for violet accents"
       }
     },
     "green": {
@@ -188,88 +195,91 @@
       }
     },
     "amber": {
-      "$description": "Warning/attention amber",
+      "$description": "Warning/attention gold (shifted to pure gold hue 95 for better contrast)",
       "50": {
-        "$value": "oklch(0.97 0.03 85)",
+        "$value": "oklch(0.97 0.03 95)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.93 0.08 85)",
+        "$value": "oklch(0.93 0.08 95)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.88 0.12 85)",
+        "$value": "oklch(0.88 0.12 95)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.82 0.16 75)",
+        "$value": "oklch(0.82 0.14 95)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.78 0.18 65)",
+        "$value": "oklch(0.78 0.15 95)",
         "$type": "color"
       },
       "500": {
-        "$value": "oklch(0.75 0.18 55)",
-        "$type": "color"
+        "$value": "oklch(0.75 0.15 95)",
+        "$type": "color",
+        "$description": "Pure gold for warnings - WCAG AA compliant"
       },
       "600": {
-        "$value": "oklch(0.68 0.17 50)",
+        "$value": "oklch(0.65 0.14 95)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.58 0.15 45)",
-        "$type": "color"
+        "$value": "oklch(0.55 0.13 95)",
+        "$type": "color",
+        "$description": "Use for text on light backgrounds"
       },
       "800": {
-        "$value": "oklch(0.48 0.13 45)",
-        "$type": "color"
+        "$value": "oklch(0.45 0.11 95)",
+        "$type": "color",
+        "$description": "High contrast gold for text"
       },
       "900": {
-        "$value": "oklch(0.38 0.1 45)",
+        "$value": "oklch(0.35 0.09 95)",
         "$type": "color"
       }
     },
     "red": {
-      "$description": "Error/danger red",
+      "$description": "Error/danger red - softened for less harsh appearance",
       "50": {
-        "$value": "oklch(0.97 0.015 25)",
+        "$value": "oklch(0.97 0.01 25)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.93 0.04 25)",
+        "$value": "oklch(0.94 0.025 25)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.88 0.08 25)",
+        "$value": "oklch(0.90 0.05 25)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.78 0.14 25)",
+        "$value": "oklch(0.82 0.08 25)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.68 0.18 25)",
+        "$value": "oklch(0.72 0.12 25)",
         "$type": "color"
       },
       "500": {
-        "$value": "oklch(0.58 0.2 25)",
+        "$value": "oklch(0.62 0.14 25)",
         "$type": "color"
       },
       "600": {
-        "$value": "oklch(0.52 0.2 25)",
+        "$value": "oklch(0.55 0.14 25)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.45 0.18 25)",
+        "$value": "oklch(0.48 0.12 25)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.38 0.15 25)",
+        "$value": "oklch(0.40 0.10 25)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.30 0.12 25)",
+        "$value": "oklch(0.32 0.08 25)",
         "$type": "color"
       }
     },
@@ -317,95 +327,191 @@
       }
     },
     "teal": {
-      "$description": "Primary brand teal - fresh, modern",
+      "$description": "Primary brand teal - luminous, vibrant for dark luxury theme",
       "50": {
-        "$value": "oklch(0.97 0.02 185)",
+        "$value": "oklch(0.97 0.03 185)",
         "$type": "color"
       },
       "100": {
-        "$value": "oklch(0.93 0.05 185)",
+        "$value": "oklch(0.93 0.06 185)",
         "$type": "color"
       },
       "200": {
-        "$value": "oklch(0.86 0.1 185)",
+        "$value": "oklch(0.86 0.12 185)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.76 0.13 185)",
+        "$value": "oklch(0.78 0.16 185)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.68 0.15 185)",
-        "$type": "color"
+        "$value": "oklch(0.72 0.18 185)",
+        "$type": "color",
+        "$description": "Luminous teal for dark backgrounds"
       },
       "500": {
-        "$value": "oklch(0.60 0.15 185)",
+        "$value": "oklch(0.65 0.18 185)",
         "$type": "color",
-        "$description": "Primary brand color - WCAG AA on white"
+        "$description": "Primary brand color - enhanced luminosity"
       },
       "600": {
-        "$value": "oklch(0.52 0.14 185)",
+        "$value": "oklch(0.55 0.16 185)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.44 0.12 185)",
+        "$value": "oklch(0.46 0.14 185)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.36 0.1 185)",
+        "$value": "oklch(0.38 0.12 185)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.28 0.08 185)",
+        "$value": "oklch(0.30 0.10 185)",
         "$type": "color"
       },
       "950": {
-        "$value": "oklch(0.20 0.06 185)",
+        "$value": "oklch(0.22 0.08 185)",
         "$type": "color"
+      },
+      "glow": {
+        "$value": "oklch(0.72 0.18 185 / 0.5)",
+        "$type": "color",
+        "$description": "Glow effect for teal accents"
       }
     },
     "bitcoin": {
-      "$description": "Bitcoin orange for Bitcoin-related UI elements only",
+      "$description": "Bitcoin orange - vibrant and punchy for zaps and sats",
       "50": {
         "$value": "oklch(0.97 0.03 55)",
-        "$type": "color"
+        "$type": "color",
+        "$description": "Subtle bitcoin tint for backgrounds"
       },
       "100": {
-        "$value": "oklch(0.93 0.07 55)",
-        "$type": "color"
+        "$value": "oklch(0.94 0.06 55)",
+        "$type": "color",
+        "$description": "Subtle bitcoin background"
       },
       "200": {
-        "$value": "oklch(0.88 0.12 55)",
+        "$value": "oklch(0.90 0.10 55)",
         "$type": "color"
       },
       "300": {
-        "$value": "oklch(0.82 0.15 55)",
+        "$value": "oklch(0.84 0.14 55)",
         "$type": "color"
       },
       "400": {
-        "$value": "oklch(0.77 0.17 55)",
-        "$type": "color"
+        "$value": "oklch(0.78 0.17 55)",
+        "$type": "color",
+        "$description": "Vibrant bitcoin accent"
       },
       "500": {
         "$value": "#F7931A",
         "$type": "color",
-        "$description": "Official Bitcoin orange"
+        "$description": "Official Bitcoin orange - bright and bold"
       },
       "600": {
-        "$value": "oklch(0.65 0.17 55)",
+        "$value": "oklch(0.68 0.18 55)",
         "$type": "color"
       },
       "700": {
-        "$value": "oklch(0.55 0.15 55)",
+        "$value": "oklch(0.58 0.16 55)",
         "$type": "color"
       },
       "800": {
-        "$value": "oklch(0.45 0.13 55)",
+        "$value": "oklch(0.48 0.14 55)",
         "$type": "color"
       },
       "900": {
-        "$value": "oklch(0.35 0.1 55)",
+        "$value": "oklch(0.38 0.12 55)",
         "$type": "color"
+      },
+      "950": {
+        "$value": "oklch(0.28 0.10 55)",
+        "$type": "color",
+        "$description": "Deep bitcoin for dark mode backgrounds"
+      },
+      "glow": {
+        "$value": "oklch(0.78 0.20 55 / 0.6)",
+        "$type": "color",
+        "$description": "Intense glow for bitcoin/zap animations"
+      }
+    },
+    "celebration": {
+      "$description": "Celebration colors for animations - violet/cyan/teal palette (no orange)",
+      "violet": {
+        "$value": "oklch(0.66 0.18 290)",
+        "$type": "color",
+        "$description": "Primary celebration color"
+      },
+      "cyan": {
+        "$value": "oklch(0.65 0.15 210)",
+        "$type": "color",
+        "$description": "Secondary celebration color"
+      },
+      "teal": {
+        "$value": "oklch(0.60 0.15 185)",
+        "$type": "color",
+        "$description": "Tertiary celebration color"
+      },
+      "pink": {
+        "$value": "oklch(0.70 0.16 340)",
+        "$type": "color",
+        "$description": "Accent celebration color"
+      }
+    },
+    "spark": {
+      "$description": "Warm accent for moments of delight - coral/salmon tone",
+      "400": {
+        "$value": "oklch(0.72 0.16 25)",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "oklch(0.65 0.18 25)",
+        "$type": "color",
+        "$description": "Primary spark accent"
+      },
+      "600": {
+        "$value": "oklch(0.58 0.18 25)",
+        "$type": "color"
+      }
+    },
+    "dark": {
+      "$description": "Rich dark tones for luxury dark mode - not flat black but deep with subtle color",
+      "base": {
+        "$value": "oklch(0.12 0.015 280)",
+        "$type": "color",
+        "$description": "Deep rich black with subtle blue undertone"
+      },
+      "elevated": {
+        "$value": "oklch(0.16 0.018 280)",
+        "$type": "color",
+        "$description": "Elevated surface - slightly lighter"
+      },
+      "raised": {
+        "$value": "oklch(0.20 0.02 280)",
+        "$type": "color",
+        "$description": "Raised surface for cards and modals"
+      },
+      "highlight": {
+        "$value": "oklch(0.25 0.022 280)",
+        "$type": "color",
+        "$description": "Highlighted/hover state"
+      },
+      "muted": {
+        "$value": "oklch(0.30 0.02 280)",
+        "$type": "color",
+        "$description": "Muted surface for less emphasis"
+      },
+      "border": {
+        "$value": "oklch(0.28 0.025 280 / 0.5)",
+        "$type": "color",
+        "$description": "Subtle border for dark mode"
+      },
+      "borderStrong": {
+        "$value": "oklch(0.35 0.03 280 / 0.6)",
+        "$type": "color",
+        "$description": "Strong border for emphasis"
       }
     },
     "static": {

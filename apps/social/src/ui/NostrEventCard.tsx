@@ -138,8 +138,42 @@ export const NostrEventCard = memo(function NostrEventCard({
     );
   };
 
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      // Don't navigate if clicking on action buttons, links, or interactive elements
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('.ns-event-card__actions') ||
+        target.closest('a') ||
+        target.closest('button') ||
+        target.closest('.ns-event-card__json')
+      ) {
+        return;
+      }
+      onOpenThread?.(event.id);
+    },
+    [event.id, onOpenThread]
+  );
+
   return (
-    <article className={rootClasses} aria-label={`Post by ${event.pubkey.slice(0, 8)}`}>
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Intentional clickable card pattern
+    <article
+      className={rootClasses}
+      aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
+      onClick={onOpenThread ? handleCardClick : undefined}
+      role={onOpenThread ? 'button' : undefined}
+      tabIndex={onOpenThread ? 0 : undefined}
+      onKeyDown={
+        onOpenThread
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenThread(event.id);
+              }
+            }
+          : undefined
+      }
+    >
       <header className="ns-event-card__header">
         <div className="ns-event-card__meta">
           <ProfileLink
@@ -206,7 +240,9 @@ export const NostrEventCard = memo(function NostrEventCard({
           onClick={() => setIsReplying(true)}
           aria-label="Reply to this post"
         >
-          <span className="icon">💬</span>
+          <span className="icon" aria-hidden="true">
+            💬
+          </span>
           <span className="label">Reply</span>
         </button>
         {onOpenThread && (
@@ -215,7 +251,9 @@ export const NostrEventCard = memo(function NostrEventCard({
             onClick={() => onOpenThread(event.id)}
             aria-label="View thread"
           >
-            <span className="icon">🧵</span>
+            <span className="icon" aria-hidden="true">
+              🧵
+            </span>
             <span className="label">Thread</span>
           </button>
         )}
@@ -226,7 +264,9 @@ export const NostrEventCard = memo(function NostrEventCard({
             disabled={repostLoading || isReposted}
             aria-label={isReposted ? 'Reposted' : 'Repost this post'}
           >
-            <span className="icon">↻</span>
+            <span className="icon" aria-hidden="true">
+              ↻
+            </span>
             <span className="label">
               {repostLoading ? '...' : isReposted ? 'Reposted' : 'Repost'}
             </span>

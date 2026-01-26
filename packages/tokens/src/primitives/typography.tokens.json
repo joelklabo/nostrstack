@@ -1,14 +1,21 @@
 {
-  "$description": "NostrStack Typography Primitives",
+  "$description": "NostrStack Typography Primitives - Editorial meets Crypto",
   "font": {
     "family": {
+      "display": {
+        "$value": "Syne, 'Space Grotesk', system-ui, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Bold, geometric display font for dramatic headings"
+      },
       "sans": {
-        "$value": "'Inter Variable', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        "$type": "fontFamily"
+        "$value": "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Clean, modern body font with character"
       },
       "mono": {
-        "$value": "'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
-        "$type": "fontFamily"
+        "$value": "'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+        "$type": "fontFamily",
+        "$description": "Crisp monospace for Bitcoin amounts, hashes, and code"
       }
     },
     "size": {
@@ -38,29 +45,34 @@
         "$description": "18px - Large body"
       },
       "xl": {
-        "$value": "1.25rem",
+        "$value": "1.375rem",
         "$type": "dimension",
-        "$description": "20px - H4"
+        "$description": "22px - H4"
       },
       "2xl": {
-        "$value": "1.5rem",
+        "$value": "1.75rem",
         "$type": "dimension",
-        "$description": "24px - H3"
+        "$description": "28px - H3"
       },
       "3xl": {
-        "$value": "1.875rem",
-        "$type": "dimension",
-        "$description": "30px - H2"
-      },
-      "4xl": {
         "$value": "2.25rem",
         "$type": "dimension",
-        "$description": "36px - H1"
+        "$description": "36px - H2"
       },
-      "5xl": {
+      "4xl": {
         "$value": "3rem",
         "$type": "dimension",
-        "$description": "48px - Display"
+        "$description": "48px - H1"
+      },
+      "5xl": {
+        "$value": "3.75rem",
+        "$type": "dimension",
+        "$description": "60px - Display"
+      },
+      "6xl": {
+        "$value": "4.5rem",
+        "$type": "dimension",
+        "$description": "72px - Hero"
       }
     },
     "weight": {
@@ -112,6 +124,11 @@
       }
     },
     "letterSpacing": {
+      "tightest": {
+        "$value": "-0.075em",
+        "$type": "dimension",
+        "$description": "Extra tight for large display text"
+      },
       "tighter": {
         "$value": "-0.05em",
         "$type": "dimension"
