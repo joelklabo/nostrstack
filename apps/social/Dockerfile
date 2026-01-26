@@ -8,7 +8,9 @@ COPY . /usr/src/app
 WORKDIR /usr/src/app
 RUN pnpm install --frozen-lockfile
 ARG VITE_API_BASE_URL
+ARG VITE_NETWORK=mainnet
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_NETWORK=$VITE_NETWORK
 RUN pnpm --filter social build
 
 FROM nginx:alpine

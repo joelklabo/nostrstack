@@ -56,6 +56,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           build-args: |
             VITE_API_BASE_URL=${{ env.API_URL }}
+            VITE_NETWORK=mainnet
 
       - name: Azure login
         uses: azure/login@v2

@@ -65,10 +65,27 @@ function getNostrRouteId(pathname: string) {
   }
 }
 
+const THEME_STORAGE_KEY = 'nostrstack.theme';
+
+function getInitialTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light';
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  // Respect system preference
+  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+  return 'light';
+}
+
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
   const [brandPreset, setBrandPreset] = useState<NsBrandPreset>('default');
+
+  // Wrap setTheme to persist to localStorage
+  const setTheme = useCallback((newTheme: 'light' | 'dark') => {
+    setThemeState(newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  }, []);
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
@@ -245,7 +262,7 @@ function AppShell() {
             />
           ) : (
             <>
-              {currentView === 'feed' && <FeedView />}
+              {currentView === 'feed' && <FeedView isImmersive={isImmersive} />}
               {currentView === 'search' && <SearchView />}
               {currentView === 'profile' && pubkey && (
                 <ProfileView
@@ -269,7 +286,11 @@ function AppShell() {
           )}
         </Suspense>
       </main>
-      <aside className="telemetry-sidebar">
+      <aside
+        className="telemetry-sidebar"
+        inert={isImmersive || undefined}
+        aria-hidden={isImmersive || undefined}
+      >
         <ErrorBoundary
           fallback={
             <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}>
