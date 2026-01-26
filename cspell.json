@@ -559,7 +559,17 @@
     "noninteractive",
     "serviceworker",
     "SSOT",
-    "sparklines"
+    "sparklines",
+    "Fraunces",
+    "morphism",
+    "MORPHISM",
+    "tabindex",
+    "prefs",
+    "Prefs",
+    "retryable",
+    "hashrate",
+    "Hashrate",
+    "Grotesk"
   ],
   "ignoreRegExpList": [
     "/nsec1[0-9a-z]{20,}/g",
