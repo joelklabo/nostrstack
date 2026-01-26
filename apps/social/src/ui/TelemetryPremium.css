@@ -1,0 +1,101 @@
+/* ===== TELEMETRY SIDEBAR - Simplified for Performance ===== */
+
+/* Premium color tokens */
+.telemetry-sidebar {
+  --telemetry-bitcoin-glow: color-mix(in oklch, var(--ns-color-bitcoin-default) 30%, transparent);
+
+  border-left: 1px solid var(--ns-color-border-default);
+  background: var(--ns-color-surface-default);
+}
+
+/* Bitcoin status section */
+.telemetry-bitcoin-status {
+  background: var(--ns-color-bg-subtle);
+  border-radius: var(--ns-radius-lg);
+  padding: var(--ns-space-4);
+  margin-bottom: var(--ns-space-4);
+}
+
+/* Block height display */
+.telemetry-block-height {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ns-color-bitcoin-default);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Connection status indicator */
+.telemetry-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+}
+
+.telemetry-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ns-color-success-default);
+}
+
+.telemetry-status-dot.connecting {
+  background: var(--ns-color-warning-default);
+}
+
+.telemetry-status-dot.error {
+  background: var(--ns-color-danger-default);
+}
+
+/* Relay list */
+.telemetry-relays {
+  background: var(--ns-color-bg-subtle);
+  border-radius: var(--ns-radius-lg);
+  padding: var(--ns-space-3);
+}
+
+.telemetry-relay-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+  padding: var(--ns-space-2) 0;
+  font-size: 0.875rem;
+  color: var(--ns-color-text-muted);
+}
+
+.telemetry-relay-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ns-color-success-default);
+  flex-shrink: 0;
+}
+
+/* Activity log section */
+.telemetry-activity {
+  background: var(--ns-color-bg-subtle);
+  border-radius: var(--ns-radius-lg);
+  padding: var(--ns-space-3);
+}
+
+/* Simple loading spinner - only animation kept */
+.telemetry-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--ns-color-border-default);
+  border-top-color: var(--ns-color-primary-default);
+  border-radius: 50%;
+  animation: telemetry-spin 0.8s linear infinite;
+}
+
+@keyframes telemetry-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-spinner {
+    animation: none;
+  }
+}
