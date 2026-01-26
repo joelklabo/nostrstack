@@ -13,8 +13,9 @@ import { Image } from './ui/Image';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { VirtualizedList } from './ui/VirtualizedList';
 
-// Use CSS custom property for Bitcoin orange color - see gallery.css for --ns-color-bitcoin-default
-const BITCOIN_ORANGE = 'var(--ns-color-bitcoin-default)';
+// Use CSS custom property for primary teal color for general UI accents
+// Bitcoin orange should only be used for actual Bitcoin data (block heights, sats amounts)
+const PRIMARY_TEAL = 'var(--ns-color-primary-default)';
 
 // Fallback avatar uses neutral colors from design tokens
 const FALLBACK_AVATAR_SVG =
@@ -396,14 +397,14 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     <div className="lightning-card lightning-card--bitcoin">
                       <div
                         className="lightning-card-accent"
-                        style={{ background: BITCOIN_ORANGE }}
+                        style={{ background: PRIMARY_TEAL }}
                         aria-hidden="true"
                       />
                       <div className="lightning-card-header">
                         <div className="lightning-card-title">
                           <span
                             className="lightning-card-icon"
-                            style={{ color: BITCOIN_ORANGE }}
+                            style={{ color: PRIMARY_TEAL }}
                             aria-hidden="true"
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -435,7 +436,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                               />
                               <div
                                 className="lightning-card-qr-overlay"
-                                style={{ background: BITCOIN_ORANGE }}
+                                style={{ background: PRIMARY_TEAL }}
                               >
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                                   <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
@@ -463,7 +464,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                                       borderColor: 'var(--ns-color-success-default)',
                                       color: 'var(--ns-color-success-default)'
                                     }
-                                  : { borderColor: BITCOIN_ORANGE, color: BITCOIN_ORANGE }
+                                  : { borderColor: PRIMARY_TEAL, color: PRIMARY_TEAL }
                               }
                             >
                               {lightningCopyStatus === 'copied' ? (
@@ -487,7 +488,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                               onClick={handleOpenWallet}
                               disabled={!lightningUri}
                               aria-label="Open lightning wallet"
-                              style={{ borderColor: BITCOIN_ORANGE, color: BITCOIN_ORANGE }}
+                              style={{ borderColor: PRIMARY_TEAL, color: PRIMARY_TEAL }}
                             >
                               Open Wallet
                             </button>

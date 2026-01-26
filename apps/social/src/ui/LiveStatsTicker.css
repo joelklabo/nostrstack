@@ -8,8 +8,10 @@
   --ticker-border: var(--ns-color-border-default);
   --ticker-label: var(--ns-color-text-muted);
   --ticker-value: var(--ns-color-text-default);
-  --ticker-accent: var(--ns-color-bitcoin-default);
-  --ticker-pulse-glow: var(--ns-color-bitcoin-default);
+
+  /* General UI accent uses primary teal; block height values use bitcoin orange directly */
+  --ticker-accent: var(--ns-color-primary-default);
+  --ticker-pulse-glow: var(--ns-color-primary-default);
   --ticker-recent-color: var(--ns-color-success-default);
 
   display: flex;
@@ -116,20 +118,25 @@
 }
 
 /* Block height gets special treatment - spans full width */
+
+/* Uses bitcoin orange because it displays actual Bitcoin block height data */
 .live-stat--block-height {
   grid-column: 1 / -1;
   background: linear-gradient(
     135deg,
     var(--ns-color-bg-subtle) 0%,
-    color-mix(in oklch, var(--ticker-accent) 5%, var(--ns-color-bg-subtle)) 100%
+    color-mix(in oklch, var(--ns-color-bitcoin-default) 5%, var(--ns-color-bg-subtle)) 100%
   );
-  border: 1px solid color-mix(in oklch, var(--ticker-accent) 20%, var(--ns-color-border-default));
+  border: 1px solid
+    color-mix(in oklch, var(--ns-color-bitcoin-default) 20%, var(--ns-color-border-default));
 }
 
 .live-stat--block-height .live-stat__value {
   font-size: 1.5rem;
   font-weight: var(--ns-font-weight-black);
-  color: var(--ticker-accent);
+
+  /* Bitcoin block height value uses bitcoin orange */
+  color: var(--ns-color-bitcoin-default);
 }
 
 /* ===== STAT LABEL ===== */

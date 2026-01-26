@@ -270,9 +270,9 @@ export const LiveUpdates: Story = {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: '1px solid #f7931a',
-              background: '#fff8f0',
-              color: '#f7931a',
+              border: '1px solid var(--ns-color-bitcoin-default, #f7931a)',
+              background: 'color-mix(in oklch, var(--ns-color-bitcoin-default, #f7931a) 8%, white)',
+              color: 'var(--ns-color-bitcoin-default, #f7931a)',
               cursor: 'pointer',
               fontWeight: 600
             }}
