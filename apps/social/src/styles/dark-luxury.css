@@ -1,0 +1,401 @@
+/**
+ * DARK LUXURY CRYPTO THEME
+ *
+ * Rich dark backgrounds, luminous accents, glass-morphism effects
+ * Makes the teal GLOW, Bitcoin orange POP, and adds atmospheric depth
+ */
+
+/* ===== ENHANCED COLOR VARIABLES ===== */
+:root {
+  /* Rich dark backgrounds with depth - not flat black */
+  --ns-dark-base: oklch(12% 0.015 280deg);
+  --ns-dark-elevated: oklch(16% 0.018 280deg);
+  --ns-dark-raised: oklch(20% 0.02 280deg);
+  --ns-dark-highlight: oklch(25% 0.022 280deg);
+  --ns-dark-muted: oklch(30% 0.02 280deg);
+
+  /* Luminous teal - primary with GLOW */
+  --ns-teal-glow: oklch(72% 0.18 185deg / 50%);
+  --ns-teal-intense: oklch(72% 0.18 185deg);
+
+  /* Bitcoin orange that POPS - for zaps and sats */
+  --ns-bitcoin-glow: oklch(78% 0.2 55deg / 60%);
+  --ns-bitcoin-intense: oklch(78% 0.17 55deg);
+
+  /* Violet for special moments */
+  --ns-violet-glow: oklch(70% 0.24 300deg / 50%);
+  --ns-violet-intense: oklch(70% 0.22 300deg);
+
+  /* Enhanced celebration colors */
+  --ns-color-celebration-primary: oklch(70% 0.22 300deg);
+  --ns-color-celebration-secondary: oklch(68% 0.18 210deg);
+  --ns-color-celebration-tertiary: oklch(65% 0.18 185deg);
+  --ns-color-celebration-accent: oklch(72% 0.18 340deg);
+  --ns-color-celebration-glow: oklch(70% 0.22 300deg / 40%);
+
+  /* Enhanced zap colors - luminous violet */
+  --ns-color-zap: oklch(62% 0.24 300deg);
+  --ns-color-zap-glow: var(--ns-violet-glow);
+
+  /* Glass-morphism effects */
+  --ns-glass-bg: oklch(98% 0.004 280deg / 80%);
+  --ns-glass-border: oklch(90% 0.01 280deg / 30%);
+  --ns-glass-blur: 12px;
+
+  /* Gradient angles for atmospheric depth */
+  --ns-gradient-angle: 145deg;
+}
+
+/* ===== GLOWING PRIMARY BUTTON ===== */
+.ns-btn--glow,
+.action-btn--primary {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-primary-default) 0%,
+    color-mix(in oklch, var(--ns-color-primary-default) 80%, var(--ns-violet-intense)) 100%
+  );
+  color: var(--ns-color-static-white, #fff);
+  border: 1px solid transparent;
+  box-shadow:
+    0 4px 16px var(--ns-teal-glow),
+    0 0 0 1px color-mix(in oklch, var(--ns-teal-intense) 30%, transparent),
+    inset 0 1px 0 oklch(100% 0 0deg / 20%);
+  text-shadow: 0 1px 2px oklch(0% 0 0deg / 30%);
+}
+
+.ns-btn--glow:hover,
+.action-btn--primary:hover {
+  box-shadow:
+    0 6px 24px var(--ns-teal-glow),
+    0 0 32px color-mix(in oklch, var(--ns-teal-glow) 50%, transparent),
+    0 0 0 1px var(--ns-teal-intense),
+    inset 0 1px 0 oklch(100% 0 0deg / 25%);
+  transform: translateY(-2px);
+}
+
+/* ===== BITCOIN/ZAP GLOWING BUTTON ===== */
+.ns-btn--bitcoin,
+.action-btn--bitcoin {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-bitcoin-default, #f7931a) 0%,
+    var(--ns-bitcoin-intense) 100%
+  );
+  color: var(--ns-color-static-white, #fff);
+  border: 1px solid transparent;
+  box-shadow:
+    0 4px 16px var(--ns-bitcoin-glow),
+    0 0 0 1px color-mix(in oklch, var(--ns-bitcoin-intense) 30%, transparent),
+    inset 0 1px 0 oklch(100% 0 0deg / 20%);
+  text-shadow: 0 1px 2px oklch(0% 0 0deg / 30%);
+}
+
+.ns-btn--bitcoin:hover,
+.action-btn--bitcoin:hover {
+  box-shadow:
+    0 6px 24px var(--ns-bitcoin-glow),
+    0 0 32px color-mix(in oklch, var(--ns-bitcoin-glow) 60%, transparent),
+    0 0 0 1px var(--ns-bitcoin-intense),
+    inset 0 1px 0 oklch(100% 0 0deg / 25%);
+  transform: translateY(-2px);
+}
+
+/* ===== VIOLET/CELEBRATION GLOWING BUTTON ===== */
+.ns-btn--violet,
+.action-btn--violet {
+  background: linear-gradient(
+    135deg,
+    var(--ns-violet-intense) 0%,
+    color-mix(in oklch, var(--ns-violet-intense) 80%, var(--ns-color-primary-default)) 100%
+  );
+  color: var(--ns-color-static-white, #fff);
+  border: 1px solid transparent;
+  box-shadow:
+    0 4px 16px var(--ns-violet-glow),
+    0 0 0 1px color-mix(in oklch, var(--ns-violet-intense) 30%, transparent),
+    inset 0 1px 0 oklch(100% 0 0deg / 20%);
+  text-shadow: 0 1px 2px oklch(0% 0 0deg / 30%);
+}
+
+.ns-btn--violet:hover,
+.action-btn--violet:hover {
+  box-shadow:
+    0 6px 24px var(--ns-violet-glow),
+    0 0 32px color-mix(in oklch, var(--ns-violet-glow) 50%, transparent),
+    0 0 0 1px var(--ns-violet-intense),
+    inset 0 1px 0 oklch(100% 0 0deg / 25%);
+  transform: translateY(-2px);
+}
+
+/* ===== GLASS-MORPHISM CARD ===== */
+.ns-card--glass {
+  background: var(--ns-glass-bg);
+  backdrop-filter: blur(var(--ns-glass-blur));
+  backdrop-filter: blur(var(--ns-glass-blur));
+  border: 1px solid var(--ns-glass-border);
+  box-shadow:
+    0 8px 32px oklch(0% 0 0deg / 10%),
+    inset 0 1px 0 oklch(100% 0 0deg / 8%);
+}
+
+.ns-card--glass:hover {
+  border-color: color-mix(in oklch, var(--ns-teal-intense) 40%, var(--ns-glass-border));
+  box-shadow:
+    0 12px 40px oklch(0% 0 0deg / 15%),
+    0 0 24px var(--ns-teal-glow),
+    inset 0 1px 0 oklch(100% 0 0deg / 12%);
+}
+
+/* ===== GLOWING STATUS INDICATOR ===== */
+.ns-status--glow::before {
+  box-shadow:
+    0 0 8px currentcolor,
+    0 0 16px currentcolor;
+  animation: ns-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ns-glow-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow:
+      0 0 8px currentcolor,
+      0 0 16px currentcolor;
+  }
+
+  50% {
+    opacity: 0.7;
+    box-shadow:
+      0 0 12px currentcolor,
+      0 0 24px currentcolor;
+  }
+}
+
+/* ===== LUMINOUS TEXT ===== */
+.ns-text--glow {
+  text-shadow: 0 0 8px currentcolor;
+}
+
+.ns-text--glow-teal {
+  color: var(--ns-teal-intense);
+  text-shadow: 0 0 12px var(--ns-teal-glow);
+}
+
+.ns-text--glow-bitcoin {
+  color: var(--ns-bitcoin-intense);
+  text-shadow: 0 0 12px var(--ns-bitcoin-glow);
+}
+
+.ns-text--glow-violet {
+  color: var(--ns-violet-intense);
+  text-shadow: 0 0 12px var(--ns-violet-glow);
+}
+
+/* ===== ATMOSPHERIC DEPTH SECTIONS ===== */
+.ns-section--depth {
+  position: relative;
+}
+
+.ns-section--depth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 100% 100% at 50% 0%,
+    color-mix(in oklch, var(--ns-teal-glow) 15%, transparent) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ===== GLOWING BORDERS ===== */
+.ns-border--glow {
+  border: 1px solid color-mix(in oklch, var(--ns-teal-intense) 40%, transparent);
+  box-shadow: 0 0 16px var(--ns-teal-glow);
+}
+
+.ns-border--glow-bitcoin {
+  border: 1px solid color-mix(in oklch, var(--ns-bitcoin-intense) 40%, transparent);
+  box-shadow: 0 0 16px var(--ns-bitcoin-glow);
+}
+
+.ns-border--glow-violet {
+  border: 1px solid color-mix(in oklch, var(--ns-violet-intense) 40%, transparent);
+  box-shadow: 0 0 16px var(--ns-violet-glow);
+}
+
+/* ===== ENHANCED TOP ZAPS SECTION ===== */
+.top-zaps {
+  /* Glowing zap highlight - override default */
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--ns-bitcoin-glow) 20%, transparent) 0%,
+    color-mix(in oklch, var(--ns-violet-glow) 15%, transparent) 100%
+  ) !important;
+  border: 1px solid color-mix(in oklch, var(--ns-bitcoin-intense) 20%, transparent);
+  box-shadow: 0 0 12px color-mix(in oklch, var(--ns-bitcoin-glow) 30%, transparent);
+}
+
+.top-zaps__icon {
+  color: var(--ns-bitcoin-intense) !important;
+  filter: drop-shadow(0 0 4px var(--ns-bitcoin-glow));
+}
+
+.top-zaps__zapper .profile-link__avatar {
+  border-color: var(--ns-bitcoin-intense) !important;
+  box-shadow: 0 0 8px var(--ns-bitcoin-glow) !important;
+}
+
+/* ===== ENHANCED SIDEBAR TITLE ===== */
+.sidebar-title {
+  /* Luminous gradient text */
+  background: linear-gradient(
+    135deg,
+    var(--ns-teal-intense) 0%,
+    var(--ns-violet-intense) 50%,
+    var(--ns-teal-intense) 100%
+  ) !important;
+  background-size: 200% 100%;
+  filter: drop-shadow(0 0 8px var(--ns-teal-glow));
+}
+
+/* ===== ENHANCED NAV ITEM ACTIVE STATE ===== */
+.nav-item.active {
+  color: var(--ns-teal-intense) !important;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--ns-teal-glow) 30%, transparent) 0%,
+    transparent 100%
+  ) !important;
+  text-shadow: 0 0 8px var(--ns-teal-glow);
+}
+
+.nav-item.active::before {
+  background: var(--ns-teal-intense) !important;
+  box-shadow: 0 0 12px var(--ns-teal-glow) !important;
+}
+
+/* ===== ENHANCED ACTION BUTTON HOVER ===== */
+.action-btn:hover:not(:disabled) {
+  background: color-mix(
+    in oklch,
+    var(--ns-color-primary-default) 10%,
+    var(--ns-color-surface-default, #fff)
+  );
+  border-color: var(--ns-color-primary-default);
+  color: var(--ns-color-primary-default);
+  box-shadow: 0 0 16px var(--ns-teal-glow);
+  transform: translateY(-1px);
+}
+
+/* ===== ENHANCED CARD HOVER ===== */
+
+/* Simplified - no box-shadow glow (GPU heavy) */
+
+/* ===== SIDEBAR SIMPLE BACKGROUND ===== */
+
+/* Removed backdrop-filter for performance */
+
+/* ===== ZAP ANIMATION GLOW ===== */
+@keyframes ns-zap-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px var(--ns-bitcoin-glow);
+  }
+
+  50% {
+    box-shadow:
+      0 0 24px var(--ns-bitcoin-glow),
+      0 0 48px var(--ns-violet-glow);
+  }
+}
+
+.ns-zap-animation {
+  animation: ns-zap-glow 0.6s ease-out;
+}
+
+/* ===== BITCOIN SATS DISPLAY GLOW ===== */
+.ns-sats-amount,
+.top-zaps__amount {
+  color: var(--ns-bitcoin-intense);
+  text-shadow: 0 0 6px var(--ns-bitcoin-glow);
+}
+
+/* ===== SIMPLIFIED CARD DESIGN (Performance Optimized) ===== */
+
+/* Base card - simple solid background, NO transform (causes CLS) */
+.ns-card,
+.ns-event-card {
+  border: 1px solid var(--ns-color-border-default);
+  box-shadow: var(--ns-shadow-sm);
+  transition: border-color 0.2s ease-out;
+}
+
+/* Simple hover - border only, no transform */
+.ns-card:hover,
+.ns-event-card:hover {
+  border-color: var(--ns-color-primary-default);
+}
+
+/* Active/pressed state - opacity only */
+.ns-event-card:active {
+  opacity: 0.95;
+}
+
+/* ===== HERO CARD VARIANT - Simple elevated style ===== */
+.ns-event-card--hero {
+  box-shadow: var(--ns-shadow-lg);
+}
+
+.ns-event-card--hero:hover {
+  border-color: var(--ns-color-primary-default);
+}
+
+/* ===== ZAPPED CARD STATE - Subtle highlight ===== */
+.ns-event-card.is-zapped,
+.ns-event-card--zapped {
+  border-color: var(--ns-color-bitcoin-default);
+}
+
+/* ===== PROFILE LINK - Author name prominence ===== */
+.ns-event-card .ns-profile-link,
+.ns-event-card .profile-link {
+  font-weight: 700;
+  color: var(--ns-color-text-default);
+  letter-spacing: -0.01em;
+  transition: color 0.2s var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-event-card .ns-profile-link:hover,
+.ns-event-card .profile-link:hover {
+  color: var(--ns-teal-intense);
+  text-shadow: 0 0 12px var(--ns-teal-glow);
+}
+
+/* ===== TIMESTAMP - Elegant and subtle ===== */
+.ns-event-card .ns-timestamp,
+.ns-event-card .timestamp {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.6;
+  transition: opacity 0.2s var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-event-card:hover .ns-timestamp,
+.ns-event-card:hover .timestamp {
+  opacity: 1;
+}
+
+/* ===== ACTION BAR - Smooth reveal ===== */
+.ns-event-card__actions {
+  opacity: 0.7;
+  transition: opacity 0.25s var(--ns-easing-easeOut, ease-out);
+}
+
+.ns-event-card:hover .ns-event-card__actions {
+  opacity: 1;
+}
+
+/* Animations moved to animations.css to avoid conflicts */

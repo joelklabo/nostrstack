@@ -1,0 +1,302 @@
+/* ===== PREMIUM ACTION BUTTONS ===== */
+
+/* Delightful interactions that feel amazing */
+
+/* Override base action button styles for premium feel */
+.ns-action-btn {
+  border: none;
+  background: transparent;
+  color: var(--ns-color-text-muted);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    color 180ms var(--ns-easing-easeOut),
+    background-color 180ms var(--ns-easing-easeOut),
+    transform 120ms var(--ns-easing-easeOut),
+    box-shadow 200ms var(--ns-easing-easeOut);
+}
+
+/* Subtle background glow on hover */
+.ns-action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at center, var(--ns-color-primary-subtle) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 200ms var(--ns-easing-easeOut);
+  pointer-events: none;
+}
+
+.ns-action-btn:hover::before {
+  opacity: 0.6;
+}
+
+.ns-action-btn .icon {
+  display: inline-flex;
+  transition:
+    transform 200ms var(--ns-easing-easeOut),
+    filter 200ms var(--ns-easing-easeOut);
+  will-change: transform;
+}
+
+.ns-action-btn .label {
+  transition: color 180ms var(--ns-easing-easeOut);
+}
+
+.ns-action-btn:hover {
+  color: var(--ns-color-text-default);
+}
+
+.ns-action-btn:hover .icon {
+  transform: scale(1.15);
+}
+
+.ns-action-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ns-color-bg-default),
+    0 0 0 4px var(--ns-color-primary-default);
+}
+
+/* Satisfying press feedback */
+.ns-action-btn:active {
+  transform: scale(0.92);
+  transition-duration: 50ms;
+}
+
+.ns-action-btn:active .icon {
+  transform: scale(0.95);
+}
+
+.ns-action-btn:disabled {
+  opacity: 0.4;
+}
+
+/* Active/selected state with glow */
+.ns-action-btn.active {
+  box-shadow: 0 0 12px -2px var(--ns-color-primary-subtle);
+}
+
+.ns-action-btn.active .icon {
+  filter: drop-shadow(0 0 4px var(--ns-color-primary-default));
+}
+
+/* ===== REPLY BUTTON - Wiggle animation ===== */
+.ns-action-btn[aria-label*='Reply']:hover .icon,
+.ns-action-btn[aria-label*='reply']:hover .icon {
+  animation: ns-reply-wiggle 500ms var(--ns-easing-easeOut);
+}
+
+/* ===== THREAD BUTTON - Unravel animation ===== */
+.ns-action-btn[aria-label*='thread']:hover .icon,
+.ns-action-btn[aria-label*='Thread']:hover .icon {
+  animation: ns-thread-unravel 400ms var(--ns-easing-easeOut);
+}
+
+/* ===== REPOST BUTTON - Spin animation ===== */
+.ns-action-btn[aria-label*='Repost']:hover .icon,
+.ns-action-btn[aria-label*='repost']:hover .icon {
+  animation: ns-repost-spin 600ms var(--ns-easing-easeOut);
+}
+
+.ns-action-btn[aria-label*='Reposted'] .icon {
+  animation: ns-repost-success 500ms var(--ns-easing-bounce);
+  color: var(--ns-color-success-default);
+}
+
+/* ===== ZAP BUTTON - Lightning strike effect ===== */
+.zap-button,
+.ns-action-btn[aria-label*='Zap'],
+.ns-action-btn[aria-label*='zap'] {
+  --zap-color: var(--ns-color-zap, oklch(55% 0.22 300deg));
+}
+
+.zap-button:hover,
+.ns-action-btn[aria-label*='Zap']:hover,
+.ns-action-btn[aria-label*='zap']:hover {
+  color: var(--zap-color);
+  background: color-mix(in oklch, var(--zap-color) 10%, transparent);
+}
+
+.zap-button:hover .icon,
+.zap-button:hover .zap-icon,
+.ns-action-btn[aria-label*='Zap']:hover .icon {
+  animation: ns-lightning-strike 600ms var(--ns-easing-easeOut);
+  filter: drop-shadow(0 0 6px var(--zap-color));
+}
+
+/* Zapped state with violet glow */
+.zap-button.zapped,
+.ns-action-btn.zapped {
+  color: var(--zap-color);
+  background: color-mix(in oklch, var(--zap-color) 15%, transparent);
+  animation: ns-zap-glow 2s ease-in-out infinite;
+}
+
+.zap-button.zapped .icon,
+.zap-button.zapped .zap-icon {
+  filter: drop-shadow(0 0 8px var(--zap-color));
+}
+
+/* ===== LIKE/HEART BUTTON - Fill animation ===== */
+.ns-action-btn[aria-label*='like']:hover .icon,
+.ns-action-btn[aria-label*='Like']:hover .icon {
+  color: var(--ns-color-danger-default);
+  animation: ns-heart-fill 400ms var(--ns-easing-bounce);
+}
+
+.ns-action-btn.is-liked .icon,
+.ns-action-btn[data-liked='true'] .icon {
+  color: var(--ns-color-danger-default);
+  animation: ns-heart-fill 500ms var(--ns-easing-bounce);
+  filter: drop-shadow(0 0 6px var(--ns-color-danger-default));
+}
+
+/* ===== SUCCESS STATE - Burst effect ===== */
+.ns-action-btn.just-activated {
+  animation: ns-success-burst 350ms var(--ns-easing-easeOut);
+}
+
+.ns-action-btn.just-activated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ns-color-primary-default);
+  animation: ns-particle-burst 400ms var(--ns-easing-easeOut) forwards;
+  pointer-events: none;
+}
+
+/* ===== PRIMARY BUTTON - Shimmer effect ===== */
+.ns-btn--primary {
+  background: linear-gradient(
+    135deg,
+    var(--ns-color-primary-default) 0%,
+    var(--ns-color-primary-hover) 50%,
+    var(--ns-color-primary-default) 100%
+  );
+  background-size: 200% 100%;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 150ms var(--ns-easing-easeOut),
+    box-shadow 200ms var(--ns-easing-easeOut),
+    background-position 300ms var(--ns-easing-easeOut);
+}
+
+/* Shimmer overlay on hover */
+.ns-btn--primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    color-mix(in oklch, white 25%, transparent) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  transition: transform 0s;
+  pointer-events: none;
+}
+
+.ns-btn--primary:hover:not(:disabled)::before {
+  animation: ns-shimmer-sweep 600ms var(--ns-easing-easeOut);
+}
+
+.ns-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px -4px color-mix(in oklch, var(--ns-color-primary-default) 50%, transparent),
+    0 0 24px -4px color-mix(in oklch, var(--ns-color-primary-default) 30%, transparent);
+  background-position: 100% 0;
+}
+
+.ns-btn--primary:active:not(:disabled) {
+  transform: scale(0.96) translateY(0);
+  box-shadow: 0 2px 8px -2px color-mix(in oklch, var(--ns-color-primary-default) 40%, transparent);
+  transition-duration: 50ms;
+}
+
+.ns-btn--primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ns-color-bg-default),
+    0 0 0 4px var(--ns-color-primary-default),
+    0 4px 12px -2px color-mix(in oklch, var(--ns-color-primary-default) 30%, transparent);
+}
+
+/* ===== GHOST BUTTON - Subtle glow focus ===== */
+.ns-btn--ghost {
+  position: relative;
+  transition:
+    color 180ms var(--ns-easing-easeOut),
+    background-color 180ms var(--ns-easing-easeOut),
+    border-color 180ms var(--ns-easing-easeOut),
+    box-shadow 200ms var(--ns-easing-easeOut),
+    transform 120ms var(--ns-easing-easeOut);
+}
+
+.ns-btn--ghost:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ns-btn--ghost:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 50ms;
+}
+
+.ns-btn--ghost:focus-visible {
+  outline: none;
+  border-color: var(--ns-color-primary-default);
+  box-shadow:
+    0 0 0 2px var(--ns-color-bg-default),
+    0 0 12px 0 var(--ns-color-primary-subtle);
+}
+
+/* ===== LOADING STATE - Elegant spinner ===== */
+.ns-btn.is-loading::after {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid color-mix(in oklch, currentcolor 30%, transparent);
+  border-top-color: currentcolor;
+  animation: ns-elegant-spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.ns-btn--primary.is-loading::after {
+  border-color: color-mix(in oklch, white 30%, transparent);
+  border-top-color: white;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .ns-action-btn:hover .icon,
+  .ns-action-btn[aria-label*='Reply']:hover .icon,
+  .ns-action-btn[aria-label*='thread']:hover .icon,
+  .ns-action-btn[aria-label*='Repost']:hover .icon,
+  .ns-action-btn[aria-label*='Reposted'] .icon,
+  .ns-action-btn[aria-label*='Zap']:hover .icon,
+  .ns-action-btn[aria-label*='like']:hover .icon,
+  .ns-action-btn.is-liked .icon,
+  .ns-action-btn.just-activated,
+  .ns-action-btn.just-activated::after,
+  .zap-button:hover .icon,
+  .zap-button.zapped,
+  .ns-action-btn.zapped,
+  .ns-btn--primary::before,
+  .ns-btn--primary:hover:not(:disabled)::before {
+    animation: none;
+  }
+
+  .ns-action-btn:hover,
+  .ns-action-btn:active,
+  .ns-action-btn:active .icon,
+  .ns-btn--primary:hover:not(:disabled),
+  .ns-btn--primary:active:not(:disabled),
+  .ns-btn--ghost:hover:not(:disabled),
+  .ns-btn--ghost:active:not(:disabled) {
+    transform: none;
+  }
+}
