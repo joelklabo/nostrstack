@@ -220,8 +220,9 @@ function formatTimeSince(timestamp: number): string {
 /**
  * Partial loading state wrapper.
  * Shows skeleton for specific sections while others have loaded.
+ * Prefixed with underscore to indicate intentionally unused (for future use).
  */
-function PartialLoadingWrapper({
+function _PartialLoadingWrapper({
   isLoading,
   skeleton,
   children
