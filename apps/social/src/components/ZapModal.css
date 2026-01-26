@@ -96,9 +96,9 @@
 }
 
 .preset-btn.active {
-  background-color: var(--ns-color-bitcoin-500);
-  border-color: var(--ns-color-bitcoin-500);
-  color: var(--ns-color-static-black);
+  background-color: var(--ns-color-primary-default);
+  border-color: var(--ns-color-primary-default);
+  color: var(--ns-color-static-white);
 }
 
 .input-group {
@@ -123,14 +123,14 @@
 }
 
 .input-group input:focus-visible {
-  border-color: var(--ns-color-bitcoin-500);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ns-color-bitcoin-500) 30%, transparent);
+  border-color: var(--ns-color-primary-default);
+  box-shadow: 0 0 0 3px var(--ns-color-focus-ring);
 }
 
 .zap-confirm-btn {
   margin-top: auto;
-  background-color: var(--ns-color-bitcoin-500);
-  color: var(--ns-color-static-black);
+  background-color: var(--ns-color-primary-default);
+  color: var(--ns-color-static-white);
   border: none;
   padding: var(--ns-space-4);
   border-radius: var(--ns-radius-md);
@@ -138,12 +138,12 @@
   font-weight: var(--ns-font-weight-bold);
   cursor: pointer;
   transition:
-    filter var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     transform var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
 .zap-confirm-btn:hover {
-  filter: brightness(0.9);
+  background-color: var(--ns-color-primary-hover);
   transform: translateY(-1px);
 }
 
@@ -228,14 +228,14 @@
 }
 
 .open-wallet-btn {
-  background-color: var(--ns-color-bitcoin-500);
-  color: var(--ns-color-static-black);
+  background-color: var(--ns-color-primary-default);
+  color: var(--ns-color-static-white);
   font-weight: var(--ns-font-weight-semibold);
   border: none;
 }
 
 .open-wallet-btn:hover {
-  filter: brightness(0.9);
+  background-color: var(--ns-color-primary-hover);
 }
 
 .success-state {

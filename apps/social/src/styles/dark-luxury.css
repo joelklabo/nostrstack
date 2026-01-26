@@ -131,7 +131,6 @@
 .ns-card--glass {
   background: var(--ns-glass-bg);
   backdrop-filter: blur(var(--ns-glass-blur));
-  backdrop-filter: blur(var(--ns-glass-blur));
   border: 1px solid var(--ns-glass-border);
   box-shadow:
     0 8px 32px oklch(0% 0 0deg / 10%),

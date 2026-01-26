@@ -2,14 +2,15 @@
 
 /*
  * Two celebration styles for new Bitcoin blocks:
- * 1. Glow Pulse - Radial glow with expanding rings
- * 2. Confetti - Bitcoin-orange particle burst
+ * 1. Glow Pulse - Radial glow with expanding rings (violet-tinted)
+ * 2. Confetti - Violet/cyan/teal particle burst
  *
  * Design principles:
  * - Duration: 2-3 seconds max
  * - Non-disruptive: overlays only the block height area
  * - Respects prefers-reduced-motion
  * - Works in both light and dark themes
+ * - Uses celebration palette (violet/cyan/teal) - not bitcoin orange
  */
 
 /* ===== BASE CELEBRATION CONTAINER ===== */
@@ -25,7 +26,7 @@
 
 /*
  * Radial glow emanating from center with expanding rings.
- * Creates a warm, Bitcoin-orange celebration effect.
+ * Creates a vibrant violet celebration effect.
  * Three concentric rings pulse outward with staggered timing.
  */
 
@@ -35,23 +36,27 @@
   justify-content: center;
 }
 
-/* Core glow at center */
+/* Core glow at center - violet celebration color */
 .block-glow-core {
   position: absolute;
   width: 60%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--ns-color-bitcoin-glow) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    var(--ns-color-celebration-glow, oklch(66% 0.18 290deg / 40%)) 0%,
+    transparent 70%
+  );
   animation: glow-core-pulse 2.5s ease-out forwards;
 }
 
-/* Expanding glow rings */
+/* Expanding glow rings - violet */
 .block-glow-ring {
   position: absolute;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid var(--ns-color-bitcoin-default);
+  border: 2px solid var(--ns-color-celebration-primary, oklch(66% 0.18 290deg));
   opacity: 0;
   animation: glow-ring-expand 2s ease-out forwards;
 }
@@ -111,9 +116,10 @@
 /* ===== APPROACH 2: CONFETTI BURST ===== */
 
 /*
- * Bitcoin-orange confetti particles burst from center.
+ * Violet/cyan/teal confetti particles burst from center.
  * Particles spread outward with rotation and gravity.
  * Shimmer trail adds extra visual delight.
+ * No orange - uses celebration palette for visual distinction.
  */
 
 .block-celebration--confetti {
@@ -129,14 +135,31 @@
   box-shadow: 0 0 4px currentcolor;
 }
 
-/* Shimmer trail effect */
+/* Confetti color variants - violet/cyan/teal/pink palette */
+.block-confetti-particle:nth-child(4n + 1) {
+  color: var(--ns-color-celebration-primary, oklch(66% 0.18 290deg));
+}
+
+.block-confetti-particle:nth-child(4n + 2) {
+  color: var(--ns-color-celebration-secondary, oklch(65% 0.15 210deg));
+}
+
+.block-confetti-particle:nth-child(4n + 3) {
+  color: var(--ns-color-celebration-tertiary, oklch(60% 0.15 185deg));
+}
+
+.block-confetti-particle:nth-child(4n) {
+  color: var(--ns-color-celebration-accent, oklch(70% 0.16 340deg));
+}
+
+/* Shimmer trail effect - violet tinted */
 .block-celebration-shimmer {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--ns-color-bitcoin-subtle) 50%,
+    var(--ns-color-celebration-glow, oklch(66% 0.18 290deg / 30%)) 50%,
     transparent 100%
   );
   animation: shimmer-sweep 1.5s ease-out forwards;
@@ -283,8 +306,13 @@
 }
 
 .celebration-sound-toggle[data-enabled='true'] {
-  background: color-mix(in oklch, var(--ns-color-bitcoin-default) 10%, var(--ns-color-bg-subtle));
-  border-color: var(--ns-color-bitcoin-default);
+  background: color-mix(in oklch, var(--ns-color-primary-default) 10%, var(--ns-color-bg-subtle));
+  border-color: var(--ns-color-primary-default);
+}
+
+.celebration-sound-toggle:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
 }
 
 .celebration-sound-toggle .sound-icon {
@@ -295,7 +323,7 @@
 }
 
 .celebration-sound-toggle[data-enabled='true'] .sound-icon {
-  color: var(--ns-color-bitcoin-default);
+  color: var(--ns-color-primary-default);
 }
 
 /* Style selector buttons */
@@ -327,12 +355,17 @@
 .celebration-style-btn[aria-pressed='true'] {
   background: color-mix(
     in oklch,
-    var(--ns-color-bitcoin-default) 10%,
+    var(--ns-color-primary-default) 10%,
     var(--ns-color-surface-default)
   );
-  border-color: var(--ns-color-bitcoin-default);
-  color: var(--ns-color-bitcoin-default);
+  border-color: var(--ns-color-primary-default);
+  color: var(--ns-color-primary-default);
   font-weight: var(--ns-font-weight-medium);
+}
+
+.celebration-style-btn:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
 }
 
 /* Preview button */
@@ -341,7 +374,7 @@
   align-items: center;
   gap: var(--ns-space-2);
   padding: var(--ns-space-2) var(--ns-space-3);
-  background: var(--ns-color-bitcoin-default);
+  background: var(--ns-color-primary-default);
   border: none;
   border-radius: var(--ns-radius-md);
   color: white;
@@ -354,7 +387,7 @@
 }
 
 .celebration-preview-btn:hover {
-  background: color-mix(in oklch, var(--ns-color-bitcoin-default) 90%, black);
+  background: var(--ns-color-primary-hover);
 }
 
 .celebration-preview-btn:active {
@@ -364,6 +397,11 @@
 .celebration-preview-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.celebration-preview-btn:focus-visible {
+  outline: 2px solid var(--ns-color-static-white);
+  outline-offset: 2px;
 }
 
 /* ===== REDUCED MOTION SUPPORT ===== */
@@ -391,7 +429,7 @@
 [data-theme='dark'] .block-glow-core {
   background: radial-gradient(
     circle,
-    color-mix(in oklch, var(--ns-color-bitcoin-default) 50%, transparent) 0%,
+    var(--ns-color-celebration-glow, oklch(66% 0.18 290deg / 50%)) 0%,
     transparent 70%
   );
 }
@@ -403,9 +441,10 @@
 /* ===== LIGHT THEME ADJUSTMENTS ===== */
 
 [data-theme='light'] .block-glow-ring {
-  border-color: color-mix(in oklch, var(--ns-color-bitcoin-default) 80%, black);
+  border-color: var(--ns-color-celebration-primary, oklch(66% 0.18 290deg));
 }
 
+/* Note: Bitcoin text glow remains orange since it represents the actual Bitcoin block */
 [data-theme='light'] .celebrating-block-height.is-celebrating .celebrating-block-height__value {
   text-shadow:
     0 0 8px color-mix(in oklch, var(--ns-color-bitcoin-default) 60%, transparent),

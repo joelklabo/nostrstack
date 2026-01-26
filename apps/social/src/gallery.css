@@ -722,7 +722,6 @@ body {
     color-mix(in oklch, var(--ns-color-bitcoin, #f7931a) 80%, var(--ns-color-warning-default)) 100%
   );
   background-clip: text;
-  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
