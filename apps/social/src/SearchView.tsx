@@ -385,6 +385,8 @@ export function SearchView() {
               color: 'var(--ns-color-text-subtle)',
               fontSize: '0.9rem'
             }}
+            role="status"
+            aria-live="polite"
           >
             {notesError}
           </div>

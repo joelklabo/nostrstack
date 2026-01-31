@@ -43,6 +43,7 @@ export function NotFoundView() {
         <button
           className="action-btn"
           onClick={handleGoHome}
+          type="button"
           style={{
             borderColor: 'var(--ns-color-accent-default)',
             color: 'var(--ns-color-accent-default)',
@@ -60,10 +61,10 @@ export function NotFoundView() {
         }}
       >
         <p>Looking for something specific? Try:</p>
-        <ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}>
-          <li>• Use the search to find users</li>
-          <li>• Check your messages and notifications</li>
-          <li>• Browse the feed for new content</li>
+        <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
+          <li>Use the search to find users</li>
+          <li>Check your messages and notifications</li>
+          <li>Browse the feed for new content</li>
         </ul>
       </div>
     </div>

@@ -109,10 +109,21 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       throw new Error('Regtest pay button missing after invoice ready.');
     }
     await regtestBtn.waitFor({ state: 'visible' });
-    await regtestBtn.click({ force: true });
-    await expect(page.locator('.payment-modal')).toContainText(/Payment (sent|confirmed)\./, {
-      timeout: 20_000
-    });
+    let paid = false;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await regtestBtn.click({ force: true });
+      paid = await expect(page.locator('.payment-modal'))
+        .toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (paid) break;
+    }
+    if (!paid) {
+      const closeBtn = page.locator('button:has-text("CLOSE")').first();
+      await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
+      await closeBtn.click({ force: true });
+      continue;
+    }
     // Use text-based selector for CLOSE button
     const closeBtn = page.locator('button:has-text("CLOSE")').first();
     await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });

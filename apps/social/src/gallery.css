@@ -1248,6 +1248,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--ns-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .telemetry-node-section {

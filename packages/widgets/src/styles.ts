@@ -207,6 +207,8 @@ export function ensureNsEmbedStyles(
   doc: Document | undefined = typeof document !== 'undefined' ? document : undefined
 ) {
   if (!doc?.head) return;
+  const userAgent = doc.defaultView?.navigator?.userAgent ?? '';
+  if (userAgent.toLowerCase().includes('jsdom')) return;
   if (doc.getElementById(STYLE_ID)) return;
   const style = doc.createElement('style');
   style.id = STYLE_ID;

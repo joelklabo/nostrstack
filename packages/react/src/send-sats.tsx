@@ -368,6 +368,7 @@ export function SendSats({
         throw new Error(text || `HTTP ${res.status}`);
       }
       emitPaymentTelemetry('payment_sent', { method: 'regtest' });
+      setStatusUrl(null);
       setSendState('paid');
     } catch (err: unknown) {
       setRegtestError(err instanceof Error ? err.message : 'Regtest pay failed.');

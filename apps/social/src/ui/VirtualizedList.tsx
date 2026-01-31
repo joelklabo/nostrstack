@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement } from 'react';
+import type { AriaAttributes, AriaRole, CSSProperties, ReactElement } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { List, type RowComponentProps, useDynamicRowHeight } from 'react-window';
 
@@ -28,6 +28,16 @@ interface VirtualizedListProps<T> {
   renderLoadingIndicator?: () => React.ReactNode;
   /** Accessibility label for the list */
   ariaLabel?: string;
+  /** Accessibility role for the list container */
+  role?: AriaRole;
+  /** Accessibility role for each item wrapper */
+  itemRole?: AriaRole;
+  /** Live region politeness for dynamic updates */
+  ariaLive?: AriaAttributes['aria-live'];
+  /** Live region relevance for dynamic updates */
+  ariaRelevant?: AriaAttributes['aria-relevant'];
+  /** Live region atomic setting */
+  ariaAtomic?: AriaAttributes['aria-atomic'];
 }
 
 interface RowProps<T> {
@@ -36,6 +46,7 @@ interface RowProps<T> {
   getItemKey: (item: T, index: number) => string;
   hasMore?: boolean;
   renderLoadingIndicator?: () => React.ReactNode;
+  itemRole?: AriaRole;
 }
 
 // Row component that renders individual items
@@ -46,7 +57,8 @@ function RowComponent<T>({
   renderItem,
   getItemKey,
   hasMore,
-  renderLoadingIndicator
+  renderLoadingIndicator,
+  itemRole
 }: RowComponentProps<RowProps<T>>): ReactElement | null {
   // Check if this is the loading indicator row
   if (index >= items.length) {
@@ -63,6 +75,9 @@ function RowComponent<T>({
     <div
       style={{ ...style, paddingBottom: 'var(--ns-space-4, 16px)' }}
       data-virtualized-item={itemKey}
+      role={itemRole}
+      aria-posinset={itemRole ? index + 1 : undefined}
+      aria-setsize={itemRole ? items.length : undefined}
     >
       {renderItem(item, index)}
     </div>
@@ -78,7 +93,12 @@ export function VirtualizedList<T>({
   hasMore,
   loading,
   renderLoadingIndicator,
-  ariaLabel
+  ariaLabel,
+  role = 'feed',
+  itemRole,
+  ariaLive,
+  ariaRelevant,
+  ariaAtomic
 }: VirtualizedListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
@@ -121,12 +141,16 @@ export function VirtualizedList<T>({
   );
 
   // Row props passed to row component
+  const resolvedItemRole =
+    itemRole ?? (role === 'list' ? 'listitem' : role === 'feed' ? 'article' : undefined);
+
   const rowProps: RowProps<T> = {
     items,
     renderItem,
     getItemKey,
     hasMore,
-    renderLoadingIndicator
+    renderLoadingIndicator,
+    itemRole: resolvedItemRole
   };
 
   // Total item count including potential loading indicator
@@ -138,7 +162,15 @@ export function VirtualizedList<T>({
   };
 
   return (
-    <div ref={containerRef} role="feed" aria-label={ariaLabel} aria-busy={loading}>
+    <div
+      ref={containerRef}
+      role={role}
+      aria-label={ariaLabel}
+      aria-busy={loading}
+      aria-live={ariaLive}
+      aria-relevant={ariaRelevant}
+      aria-atomic={ariaAtomic}
+    >
       <List
         rowComponent={RowComponent as typeof RowComponent<T>}
         rowCount={rowCount}

@@ -308,7 +308,7 @@ function ActivityItem({ event, isUnread, onClick, animationDelay = 0 }: Activity
 
       <div className="ns-activity-icon" data-type={event.type}>
         <ActivityIcon type={event.type} />
-        {isUnread && <span className="ns-activity-unread-dot" aria-label="Unread" />}
+        {isUnread && <span className="ns-activity-unread-dot" aria-hidden="true" />}
       </div>
 
       <div className="ns-activity-content">
@@ -354,7 +354,6 @@ function ActivityItem({ event, isUnread, onClick, animationDelay = 0 }: Activity
       ref={itemRef as React.RefObject<HTMLDivElement | null>}
       className={className}
       style={style}
-      role="listitem"
       aria-label={ariaLabel}
     >
       {content}
@@ -464,6 +463,10 @@ export function ActivityLog({
           hasMore={hasMore}
           renderLoadingIndicator={renderLoadingIndicator}
           ariaLabel="Activity log"
+          role="log"
+          itemRole="article"
+          ariaLive="polite"
+          ariaRelevant="additions"
         />
       )}
     </div>

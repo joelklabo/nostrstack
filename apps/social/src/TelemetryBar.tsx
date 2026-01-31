@@ -820,27 +820,34 @@ export function TelemetryBar() {
             {relaysLoading ? '...' : activeRelays.length}
           </span>
         </div>
-        <div className="telemetry-relays-list">
+        <ul
+          className="telemetry-relays-list"
+          aria-live={relaysLoading ? 'polite' : undefined}
+          aria-busy={relaysLoading}
+        >
           {relaysLoading ? (
-            <div style={{ padding: '0.5rem' }}>
+            <li style={{ padding: '0.5rem' }} aria-hidden="true">
               <Skeleton variant="text" height={16} style={{ marginBottom: '0.25rem' }} />
               <Skeleton variant="text" height={16} style={{ marginBottom: '0.25rem' }} />
               <Skeleton variant="text" height={16} />
-            </div>
+            </li>
           ) : activeRelays.length === 0 ? (
-            <div className="telemetry-relays-empty">No relays connected</div>
+            <li className="telemetry-relays-empty">No relays connected</li>
           ) : (
             activeRelays.slice(0, 5).map((relay) => (
-              <div key={relay} className="telemetry-relay-item">
-                <div className="telemetry-relay-dot telemetry-relay-dot--connected" />
+              <li key={relay} className="telemetry-relay-item">
+                <span
+                  className="telemetry-relay-dot telemetry-relay-dot--connected"
+                  aria-hidden="true"
+                />
                 {relay.replace(/^wss?:\/\//, '')}
-              </div>
+              </li>
             ))
           )}
           {activeRelays.length > 5 && (
-            <div className="telemetry-relay-more">+{activeRelays.length - 5} more</div>
+            <li className="telemetry-relay-more">+{activeRelays.length - 5} more</li>
           )}
-        </div>
+        </ul>
       </div>
 
       {/* Activity Log - enhanced with virtualization and micro-interactions */}

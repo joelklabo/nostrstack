@@ -120,7 +120,11 @@ export const NostrEventCard = memo(function NostrEventCard({
           </div>
           <div className="ns-callout__content">
             <p style={{ margin: '0 0 0.5rem' }}>{contentWarningReason}</p>
-            <button className="ns-btn ns-btn--sm" onClick={() => setShowContent(true)}>
+            <button
+              type="button"
+              className="ns-btn ns-btn--sm"
+              onClick={() => setShowContent(true)}
+            >
               Show Content
             </button>
           </div>
@@ -237,6 +241,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         />
         <button
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
+          type="button"
           onClick={() => setIsReplying(true)}
           aria-label="Reply to this post"
         >
@@ -248,6 +253,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         {onOpenThread && (
           <button
             className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
+            type="button"
             onClick={() => onOpenThread(event.id)}
             aria-label="View thread"
           >
@@ -260,6 +266,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         {pubkey && (
           <button
             className={`ns-btn ns-btn--ghost ns-btn--sm ns-action-btn ${isReposted ? 'active' : ''}`}
+            type="button"
             onClick={handleRepost}
             disabled={repostLoading || isReposted}
             aria-label={isReposted ? 'Reposted' : 'Repost this post'}
@@ -275,6 +282,7 @@ export const NostrEventCard = memo(function NostrEventCard({
 
         <button
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
+          type="button"
           onClick={() => setShowJson(!showJson)}
           style={{ marginLeft: 'auto' }}
           aria-label={showJson ? 'Hide event source JSON' : 'View event source JSON'}

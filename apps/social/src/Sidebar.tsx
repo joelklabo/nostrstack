@@ -210,6 +210,7 @@ export const Sidebar = memo(function Sidebar({
 
       <div className="sidebar-nav-items">
         <button
+          type="button"
           className={`nav-item ${currentView === 'feed' ? 'active' : ''}`}
           onClick={() => handleNavigate('feed')}
           aria-current={currentView === 'feed' ? 'page' : undefined}
@@ -217,6 +218,7 @@ export const Sidebar = memo(function Sidebar({
           Feed
         </button>
         <button
+          type="button"
           className={`nav-item ${currentView === 'search' ? 'active' : ''}`}
           onClick={() => handleNavigate('search')}
           aria-current={currentView === 'search' ? 'page' : undefined}
@@ -224,6 +226,7 @@ export const Sidebar = memo(function Sidebar({
           Find friend
         </button>
         <button
+          type="button"
           className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
           onClick={() => handleNavigate('profile')}
           aria-current={currentView === 'profile' ? 'page' : undefined}
@@ -231,6 +234,7 @@ export const Sidebar = memo(function Sidebar({
           Profile
         </button>
         <button
+          type="button"
           className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
           onClick={() => handleNavigate('notifications')}
           aria-current={currentView === 'notifications' ? 'page' : undefined}
@@ -238,6 +242,7 @@ export const Sidebar = memo(function Sidebar({
           Notifications
         </button>
         <button
+          type="button"
           className={`nav-item ${currentView === 'messages' ? 'active' : ''}`}
           onClick={() => handleNavigate('messages')}
           aria-current={currentView === 'messages' ? 'page' : undefined}
@@ -245,6 +250,7 @@ export const Sidebar = memo(function Sidebar({
           Messages
         </button>
         <button
+          type="button"
           className={`nav-item ${currentView === 'relays' ? 'active' : ''}`}
           onClick={() => handleNavigate('relays')}
           aria-current={currentView === 'relays' ? 'page' : undefined}
@@ -253,6 +259,7 @@ export const Sidebar = memo(function Sidebar({
         </button>
         {bolt12Enabled && (
           <button
+            type="button"
             className={`nav-item ${currentView === 'offers' ? 'active' : ''}`}
             onClick={() => handleNavigate('offers')}
             aria-current={currentView === 'offers' ? 'page' : undefined}
@@ -261,6 +268,7 @@ export const Sidebar = memo(function Sidebar({
           </button>
         )}
         <button
+          type="button"
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
           onClick={() => handleNavigate('settings')}
           aria-current={currentView === 'settings' ? 'page' : undefined}
@@ -269,6 +277,7 @@ export const Sidebar = memo(function Sidebar({
         </button>
         {onOpenHelp && (
           <button
+            type="button"
             className="nav-item"
             onClick={() => {
               onOpenHelp();
@@ -363,7 +372,7 @@ export const Sidebar = memo(function Sidebar({
           </div>
         </div>
 
-        <button className="nav-item nav-item--danger" onClick={logout}>
+        <button type="button" className="nav-item nav-item--danger" onClick={logout}>
           Log out
         </button>
       </div>

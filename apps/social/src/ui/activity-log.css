@@ -201,6 +201,25 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .ns-activity-item {
+    animation: none;
+    transition: none;
+  }
+
+  .ns-activity-item.is-new {
+    animation: none;
+  }
+
+  .ns-activity-item[tabindex='0']:hover {
+    transform: none;
+  }
+
+  .ns-activity-particle {
+    animation: none;
+  }
+}
+
 /* Unread indicator styling */
 .ns-activity-item.is-unread {
   background: var(--ns-color-bg-subtle);
