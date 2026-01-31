@@ -47,7 +47,7 @@
         "$type": "shadow"
       },
       "transition": {
-        "$value": "all {duration.moderate} {easing.easeInOut}",
+        "$value": "border-color {duration.moderate} {easing.easeInOut}, box-shadow {duration.moderate} {easing.easeInOut}",
         "$type": "transition"
       },
       "header": {

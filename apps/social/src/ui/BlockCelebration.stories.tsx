@@ -103,6 +103,7 @@ function CelebrationDemo({ initialStyle }: { initialStyle: CelebrationStyle }) {
 
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         <button
+          type="button"
           onClick={triggerCelebration}
           disabled={isActive}
           style={{
@@ -213,6 +214,7 @@ function BlockHeightDemo() {
 
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         <button
+          type="button"
           onClick={mineBlock}
           style={{
             padding: '0.75rem 1.5rem',

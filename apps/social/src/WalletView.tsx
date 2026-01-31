@@ -303,6 +303,7 @@ export function WalletView({
             </div>
           </div>
           <button
+            type="button"
             className="ns-dialog__close"
             onClick={handleClose}
             aria-label="Close withdraw dialog"
@@ -394,6 +395,7 @@ export function WalletView({
                   aria-label="Withdrawal actions"
                 >
                   <button
+                    type="button"
                     className="ns-btn ns-btn--sm"
                     onClick={handleCopy}
                     disabled={!canWithdraw}
@@ -402,6 +404,7 @@ export function WalletView({
                     {copyState === 'copied' ? 'Copied' : 'Copy Address'}
                   </button>
                   <button
+                    type="button"
                     className="ns-btn ns-btn--primary ns-btn--sm"
                     onClick={handleOpenWallet}
                     disabled={!canWithdraw}

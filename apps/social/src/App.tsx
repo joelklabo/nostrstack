@@ -196,6 +196,7 @@ function AppShell() {
 
       {/* Mobile hamburger button */}
       <button
+        type="button"
         className={`hamburger-btn${mobileMenuOpen ? ' is-open' : ''}`}
         onClick={handleMobileMenuToggle}
         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}

@@ -201,6 +201,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
     () => (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <button
+          type="button"
           className="auth-btn"
           onClick={loadMore}
           disabled={eventsLoading}
@@ -307,6 +308,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   }}
                 >
                   <button
+                    type="button"
                     className="action-btn"
                     style={{
                       borderColor: 'var(--ns-color-accent-default)',
@@ -332,6 +334,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   aria-label="Profile actions"
                 >
                   <button
+                    type="button"
                     className="action-btn"
                     style={{
                       borderColor: following
@@ -350,6 +353,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     {contactsLoading ? 'Updating...' : following ? 'Following' : 'Follow'}
                   </button>
                   <button
+                    type="button"
                     className="action-btn"
                     style={{
                       borderColor: muted
@@ -455,6 +459,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                           <code className="lightning-card-value">{lightningAddress}</code>
                           <div className="lightning-card-actions">
                             <button
+                              type="button"
                               className={`action-btn action-btn--bitcoin ${lightningCopyStatus === 'copied' ? 'is-success' : ''}`}
                               onClick={handleCopyLightning}
                               aria-label="Copy lightning address"
@@ -484,6 +489,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                               )}
                             </button>
                             <button
+                              type="button"
                               className="action-btn"
                               onClick={handleOpenWallet}
                               disabled={!lightningUri}

@@ -111,7 +111,9 @@ function InteractiveTour() {
             }}
           >
             <h4>Lightning Wallet</h4>
-            <button className="action-btn">Connect Wallet</button>
+            <button type="button" className="action-btn">
+              Connect Wallet
+            </button>
           </div>
 
           <div
@@ -142,7 +144,12 @@ function InteractiveTour() {
           </div>
 
           {!isActive && (
-            <button onClick={reset} className="action-btn" style={{ marginTop: '2rem' }}>
+            <button
+              type="button"
+              onClick={reset}
+              className="action-btn"
+              style={{ marginTop: '2rem' }}
+            >
               Restart Tour
             </button>
           )}

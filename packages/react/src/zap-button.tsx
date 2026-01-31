@@ -632,6 +632,7 @@ export function ZapButton({
   return (
     <>
       <button
+        type="button"
         ref={triggerRef}
         className={`action-btn zap-btn ${className ?? ''}`}
         style={style}

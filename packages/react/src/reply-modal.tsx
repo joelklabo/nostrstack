@@ -84,6 +84,7 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
         >
           <h3 style={{ margin: 0, fontSize: '1rem' }}>Reply to note</h3>
           <button
+            type="button"
             onClick={handleClose}
             className="action-btn"
             aria-label="Close reply modal"

@@ -165,6 +165,7 @@ export function PostEditor({
         <div className="editor-actions" role="group" aria-label="Editor actions">
           {onCancel && (
             <button
+              type="button"
               className="action-btn"
               onClick={onCancel}
               disabled={isPublishing}
@@ -175,6 +176,7 @@ export function PostEditor({
             </button>
           )}
           <button
+            type="button"
             className="auth-btn"
             onClick={handlePublish}
             disabled={isPublishing || isOverLimit}

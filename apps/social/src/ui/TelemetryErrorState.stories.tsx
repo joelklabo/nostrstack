@@ -296,15 +296,24 @@ function InteractiveDemo() {
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button
+            type="button"
             className="ns-btn ns-btn--sm"
             onClick={() => simulateError('network-unreachable')}
           >
             Simulate Network Error
           </button>
-          <button className="ns-btn ns-btn--sm" onClick={() => simulateError('api-down')}>
+          <button
+            type="button"
+            className="ns-btn ns-btn--sm"
+            onClick={() => simulateError('api-down')}
+          >
             Simulate API Down
           </button>
-          <button className="ns-btn ns-btn--sm" onClick={() => simulateError('timeout')}>
+          <button
+            type="button"
+            className="ns-btn ns-btn--sm"
+            onClick={() => simulateError('timeout')}
+          >
             Simulate Timeout
           </button>
         </div>

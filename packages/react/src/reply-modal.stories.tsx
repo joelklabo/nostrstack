@@ -3,7 +3,7 @@ import type { Event, EventTemplate } from 'nostr-tools';
 import type React from 'react';
 import { useState } from 'react';
 
-import type { AuthContextType} from './auth';
+import type { AuthContextType } from './auth';
 import { AuthProvider } from './auth';
 import { NostrstackProvider } from './context';
 import { ReplyModal } from './reply-modal';
@@ -90,7 +90,7 @@ function InteractiveReplyModal(args: { parentEvent: Event; onClose: () => void }
 
   return (
     <div>
-      <button className="action-btn" onClick={() => setIsOpen(true)}>
+      <button type="button" className="action-btn" onClick={() => setIsOpen(true)}>
         Open Reply Modal
       </button>
       <ReplyModal isOpen={isOpen} onClose={handleClose} parentEvent={args.parentEvent} />

@@ -582,9 +582,18 @@ function generateComponentCSS() {
   font-family: inherit;
   line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   user-select: none;
   white-space: nowrap;
-  transition: all var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease);
+  transition: var(
+    --ns-component-button-transition,
+    color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    background-color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    border-color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    box-shadow var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease)
+  );
 
   /* Default variant */
   background: var(--ns-btn-bg, var(--ns-color-surface-default));
@@ -666,7 +675,11 @@ function generateComponentCSS() {
   border: 1px solid var(--ns-card-border, var(--ns-color-border-default));
   border-radius: var(--ns-card-borderRadius, var(--ns-radius-xl));
   box-shadow: var(--ns-card-shadow, var(--ns-shadow-sm));
-  transition: all var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease);
+  transition: var(
+    --ns-component-card-transition,
+    border-color var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease),
+    box-shadow var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease)
+  );
   overflow: hidden;
 }
 
@@ -704,7 +717,13 @@ function generateComponentCSS() {
   font-family: inherit;
   font-size: var(--ns-font-size-sm);
   line-height: 1.5;
-  transition: all var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease);
+  transition: var(
+    --ns-component-input-transition,
+    color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    background-color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    border-color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    box-shadow var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease)
+  );
 }
 
 .ns-input::placeholder,
@@ -941,7 +960,9 @@ function generateComponentCSS() {
   color: var(--ns-color-text-muted);
   cursor: pointer;
   border-radius: var(--ns-radius-md);
-  transition: all var(--ns-duration-fast, 100ms);
+  transition:
+    color var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease),
+    background-color var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease);
 }
 
 .ns-modal__close:hover {

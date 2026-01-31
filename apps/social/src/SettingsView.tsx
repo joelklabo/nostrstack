@@ -281,6 +281,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>Appearance</h4>
         <div style={{ display: 'flex', gap: '1rem' }} role="group" aria-label="Theme selection">
           <button
+            type="button"
             className="action-btn"
             style={{
               borderColor: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined,
@@ -293,6 +294,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             Dark
           </button>
           <button
+            type="button"
             className="action-btn"
             style={{
               borderColor: theme === 'light' ? 'var(--ns-color-text-default)' : undefined,
@@ -316,6 +318,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         >
           {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map((preset) => (
             <button
+              type="button"
               key={preset}
               className="action-btn"
               style={{
@@ -343,6 +346,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
           <div style={{ display: 'flex', gap: '1rem' }}>
             {permission === 'default' && (
               <button
+                type="button"
                 className="action-btn"
                 onClick={requestPermission}
                 aria-label="Enable push notifications"
@@ -352,6 +356,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             )}
             {permission === 'granted' && (
               <button
+                type="button"
                 className="action-btn"
                 onClick={() =>
                   sendLocalNotification('Test Notification', {
@@ -505,6 +510,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         </label>
         <div className="nwc-actions" role="group" aria-label="Wallet connection actions">
           <button
+            type="button"
             className="action-btn"
             onClick={handleConnectNwc}
             disabled={
@@ -518,6 +524,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             Connect
           </button>
           <button
+            type="button"
             className="action-btn"
             onClick={handleCheckNwc}
             disabled={
@@ -531,6 +538,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             Check Balance
           </button>
           <button
+            type="button"
             className="action-btn"
             onClick={handleClearNwc}
             disabled={!hasNwcConfig}

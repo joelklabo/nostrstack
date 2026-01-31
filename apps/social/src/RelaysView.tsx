@@ -418,6 +418,7 @@ export function RelaysView() {
 
           {userRelays.length > 0 && (
             <button
+              type="button"
               className="auth-btn"
               onClick={handleSave}
               disabled={isSaving}
@@ -483,6 +484,7 @@ export function RelaysView() {
                 </span>
                 {relay.isUserRelay && (
                   <button
+                    type="button"
                     className="action-btn relay-remove-btn"
                     onClick={(e) => {
                       e.preventDefault();

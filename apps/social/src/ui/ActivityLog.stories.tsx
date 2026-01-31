@@ -244,6 +244,7 @@ export const LiveUpdates: Story = {
       <div>
         <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
           <button
+            type="button"
             onClick={addRandomEvent}
             style={{
               padding: '8px 16px',
@@ -256,6 +257,7 @@ export const LiveUpdates: Story = {
             Add Random Event
           </button>
           <button
+            type="button"
             onClick={() => {
               const blockEvent: ActivityEvent = {
                 id: `block-${Date.now()}`,

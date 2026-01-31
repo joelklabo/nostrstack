@@ -174,6 +174,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     () => (
       <div className="feed-load-more">
         <button
+          type="button"
           className="ns-btn ns-btn--primary feed-load-more__btn"
           onClick={loadMore}
           disabled={feedLoading}
@@ -205,6 +206,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
           <h3 className="feed-empty__title">No posts yet</h3>
           <p className="feed-empty__text">Be the first to share something with the network!</p>
           <button
+            type="button"
             className="ns-btn ns-btn--primary"
             onClick={() => document.querySelector('textarea')?.focus()}
             aria-label="Write your first post"
@@ -242,6 +244,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
         <h2 className="feed-title">Live Feed</h2>
         <div className="feed-header__actions" role="group" aria-label="Feed filters">
           <button
+            type="button"
             className={`ns-btn ns-btn--sm ${feedMode === 'all' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setFeedMode('all')}
             aria-pressed={feedMode === 'all'}
@@ -250,6 +253,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
             All
           </button>
           <button
+            type="button"
             className={`ns-btn ns-btn--sm ${feedMode === 'following' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => pubkey && setFeedMode('following')}
             disabled={!pubkey}
@@ -259,6 +263,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
             Following
           </button>
           <button
+            type="button"
             className={`ns-btn ns-btn--sm ${spamFilterEnabled ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setSpamFilterEnabled(!spamFilterEnabled)}
             title="Toggle Spam Filter"

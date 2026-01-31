@@ -135,6 +135,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
             Keyboard Shortcuts
           </div>
           <button
+            type="button"
             className="shortcuts-close"
             onClick={onClose}
             aria-label="Close keyboard shortcuts"

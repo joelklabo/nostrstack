@@ -99,7 +99,9 @@ const styles = `
   border-radius: var(--ns-radius-xl, 1rem);
   box-shadow: var(--ns-shadow-sm, 0 1px 3px 0 oklch(0 0 0 / 0.06));
   font-family: var(--ns-font-family-sans, system-ui, sans-serif);
-  transition: all var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease);
+  transition:
+    border-color var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease),
+    box-shadow var(--ns-duration-moderate, 200ms) var(--ns-easing-easeInOut, ease);
 }
 
 .ns-mempool:hover {
@@ -128,7 +130,9 @@ const styles = `
   border-radius: var(--ns-radius-full, 9999px);
   font-size: var(--ns-font-size-xs, 0.75rem);
   font-weight: var(--ns-font-weight-medium, 500);
-  transition: all var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease);
+  transition:
+    background-color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease),
+    color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease);
 }
 
 .ns-mempool__status--low {
@@ -268,7 +272,7 @@ const styles = `
   padding: var(--ns-space-2, 0.5rem);
   background: var(--ns-color-bg-subtle, oklch(0.985 0.004 280));
   border-radius: var(--ns-radius-md, 0.5rem);
-  transition: all var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease);
+  transition: background-color var(--ns-duration-normal, 150ms) var(--ns-easing-easeInOut, ease);
   cursor: default;
   position: relative;
 }
@@ -308,7 +312,7 @@ const styles = `
   position: absolute;
   bottom: 100%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(4px);
   padding: var(--ns-space-1-5, 0.375rem) var(--ns-space-2, 0.5rem);
   background: var(--ns-color-bg-inverse, oklch(0.18 0.02 280));
   color: var(--ns-color-text-inverse, #ffffff);
@@ -317,7 +321,9 @@ const styles = `
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: all var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease);
+  transition:
+    opacity var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease),
+    transform var(--ns-duration-fast, 100ms) var(--ns-easing-easeInOut, ease);
   pointer-events: none;
   z-index: 10;
   margin-bottom: var(--ns-space-1, 0.25rem);
@@ -336,6 +342,7 @@ const styles = `
 .ns-mempool__fee-bar:hover .ns-mempool__tooltip {
   opacity: 1;
   visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Loading state */
@@ -524,7 +531,7 @@ export function MempoolVisualization({
     .join(' ');
 
   return (
-    <div className={containerClass} role="region" aria-label="Mempool status">
+    <div className={containerClass} role="region" aria-label="Mempool status" aria-busy={isLoading}>
       {/* Header */}
       <div className="ns-mempool__header">
         <span className="ns-mempool__title">Mempool</span>

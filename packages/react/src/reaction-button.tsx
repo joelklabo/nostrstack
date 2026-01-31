@@ -11,18 +11,9 @@ interface ReactionButtonProps {
   style?: React.CSSProperties;
 }
 
-const RELAYS = [
-  'wss://relay.damus.io',
-  'wss://relay.snort.social',
-  'wss://nos.lol'
-];
+const RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 
-export function ReactionButton({
-  event,
-  relays,
-  className,
-  style
-}: ReactionButtonProps) {
+export function ReactionButton({ event, relays, className, style }: ReactionButtonProps) {
   const { pubkey, signEvent } = useAuth();
   const cfg = useNostrstackConfig();
   const [hasReacted, setHasReacted] = useState(false);
@@ -56,11 +47,11 @@ export function ReactionButton({
           ['e', event.id],
           ['p', event.pubkey]
         ],
-        content: '+',
+        content: '+'
       };
-      
+
       const signedReaction = await signEvent(reactionEventTemplate);
-      
+
       const pool = new SimplePool();
       await Promise.any(pool.publish(relayTargets, signedReaction));
       pool.close(relayTargets);
@@ -73,15 +64,16 @@ export function ReactionButton({
   }, [pubkey, signEvent, event, relayTargets, hasReacted, isPublishing]);
 
   return (
-    <button 
-      className={`action-btn reaction-btn ${className ?? ''} ${hasReacted ? 'active' : ''}`} 
+    <button
+      type="button"
+      className={`action-btn reaction-btn ${className ?? ''} ${hasReacted ? 'active' : ''}`}
       style={{
         ...style,
         color: hasReacted ? '#cf222e' : undefined,
         borderColor: hasReacted ? 'rgba(207, 34, 46, 0.4)' : undefined,
         background: hasReacted ? 'rgba(207, 34, 46, 0.08)' : undefined
       }}
-      onClick={handleReaction} 
+      onClick={handleReaction}
       disabled={isPublishing || hasReacted}
       aria-label={hasReacted ? 'Liked' : 'Like this note'}
       aria-pressed={hasReacted}

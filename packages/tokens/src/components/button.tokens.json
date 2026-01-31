@@ -69,7 +69,7 @@
         "$type": "dimension"
       },
       "transition": {
-        "$value": "all {duration.normal} {easing.easeInOut}",
+        "$value": "color {duration.normal} {easing.easeInOut}, background-color {duration.normal} {easing.easeInOut}, border-color {duration.normal} {easing.easeInOut}, box-shadow {duration.normal} {easing.easeInOut}, transform {duration.fast} {easing.easeInOut}",
         "$type": "transition"
       },
       "default": {

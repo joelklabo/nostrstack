@@ -301,6 +301,7 @@ export function LoginView() {
         {mode === 'menu' && (
           <div className="auth-options" role="group" aria-label="Authentication methods">
             <button
+              type="button"
               className="auth-btn auth-btn--primary"
               onClick={() => loginWithNip07()}
               aria-label="Sign in with Nostr browser extension"
@@ -309,6 +310,7 @@ export function LoginView() {
             </button>
             {enableLnurlAuth && (
               <button
+                type="button"
                 className="auth-btn auth-btn--secondary"
                 onClick={openLnurlModal}
                 aria-label="Login using Lightning wallet"
@@ -317,6 +319,7 @@ export function LoginView() {
               </button>
             )}
             <button
+              type="button"
               className="auth-btn auth-btn--outline"
               onClick={() => setMode('nsec')}
               aria-label="Enter private key manually"
@@ -350,6 +353,7 @@ export function LoginView() {
             </div>
             <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
               <button
+                type="button"
                 className="auth-btn auth-btn--primary"
                 onClick={() => loginWithNsec(nsec).catch(() => {})}
                 aria-label="Sign in with private key"
@@ -357,6 +361,7 @@ export function LoginView() {
                 Sign in
               </button>
               <button
+                type="button"
                 className="auth-btn auth-btn--secondary"
                 onClick={() => setMode('menu')}
                 aria-label="Cancel and go back"
@@ -388,6 +393,7 @@ export function LoginView() {
                 </div>
               </div>
               <button
+                type="button"
                 className="lnurl-auth-close"
                 style={{
                   fontSize: '1.5rem',
@@ -459,6 +465,7 @@ export function LoginView() {
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <button
+                        type="button"
                         className="ns-btn ns-btn--sm"
                         onClick={handleCopyLnurl}
                         aria-label="Copy LNURL to clipboard"
@@ -466,6 +473,7 @@ export function LoginView() {
                         {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
                       </button>
                       <button
+                        type="button"
                         className="ns-btn ns-btn--primary ns-btn--sm"
                         onClick={handleOpenWallet}
                         aria-label="Open lightning wallet"
@@ -474,6 +482,7 @@ export function LoginView() {
                       </button>
                       {showRetry && (
                         <button
+                          type="button"
                           className="ns-btn ns-btn--sm"
                           onClick={openLnurlModal}
                           aria-label="Retry lightning login"
