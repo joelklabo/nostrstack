@@ -45,7 +45,7 @@
     "fastify-plugin": "4.5.1",
     "fastify-type-provider-zod": "2.1.0",
     "jose": "5.9.2",
-    "nostr-tools": "^2.18.2",
+    "nostr-tools": "workspace:*",
     "pino": "8.19.0",
     "pino-pretty": "11.2.2",
     "prom-client": "15.0.0",

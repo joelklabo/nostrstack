@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { Relay } from 'nostr-tools/relay';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,13 +36,17 @@ describe('ShareWidget', () => {
     cleanup();
   });
 
-  it('renders correctly', () => {
-    render(<ShareWidget itemId="item1" url="https://example.com" title="Example" />);
+  it('renders correctly', async () => {
+    await act(async () => {
+      render(<ShareWidget itemId="item1" url="https://example.com" title="Example" />);
+    });
     expect(screen.getByText('Shares')).toBeTruthy();
   });
 
   it('connects to relays on mount', async () => {
-    render(<ShareWidget itemId="item1" url="https://example.com" title="Example" />);
+    await act(async () => {
+      render(<ShareWidget itemId="item1" url="https://example.com" title="Example" />);
+    });
     await waitFor(() => {
       expect(Relay.connect).toHaveBeenCalledWith('wss://relay.example.com');
     });

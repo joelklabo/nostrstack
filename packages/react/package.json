@@ -38,7 +38,7 @@
     "@scure/base": "^1.2.6",
     "@nostrstack/widgets": "workspace:*",
     "buffer": "^6.0.3",
-    "nostr-tools": "^2.18.2",
+    "nostr-tools": "workspace:*",
     "qrcode.react": "^4.2.0"
   },
   "devDependencies": {

@@ -1,0 +1,102 @@
+{
+  "name": "nostr-tools",
+  "version": "2.18.2",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./dist/utils.d.ts",
+        "default": "./dist/utils.js"
+      },
+      "require": {
+        "types": "./dist/utils.d.cts",
+        "default": "./dist/utils.cjs"
+      }
+    },
+    "./nip04": {
+      "import": {
+        "types": "./dist/nip04.d.ts",
+        "default": "./dist/nip04.js"
+      },
+      "require": {
+        "types": "./dist/nip04.d.cts",
+        "default": "./dist/nip04.cjs"
+      }
+    },
+    "./nip44": {
+      "import": {
+        "types": "./dist/nip44.d.ts",
+        "default": "./dist/nip44.js"
+      },
+      "require": {
+        "types": "./dist/nip44.d.cts",
+        "default": "./dist/nip44.cjs"
+      }
+    },
+    "./pool": {
+      "import": {
+        "types": "./dist/pool.d.ts",
+        "default": "./dist/pool.js"
+      },
+      "require": {
+        "types": "./dist/pool.d.cts",
+        "default": "./dist/pool.cjs"
+      }
+    },
+    "./relay": {
+      "import": {
+        "types": "./dist/relay.d.ts",
+        "default": "./dist/relay.js"
+      },
+      "require": {
+        "types": "./dist/relay.d.cts",
+        "default": "./dist/relay.cjs"
+      }
+    },
+    "./pure": {
+      "import": {
+        "types": "./dist/pure.d.ts",
+        "default": "./dist/pure.js"
+      },
+      "require": {
+        "types": "./dist/pure.d.cts",
+        "default": "./dist/pure.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts src/utils.ts src/nip04.ts src/nip44.ts src/pool.ts src/relay.ts src/pure.ts --dts --format esm,cjs",
+    "prepare": "pnpm build",
+    "prepack": "pnpm build",
+    "lint": "eslint \"src/**/*.ts\" --max-warnings=0 --no-error-on-unmatched-pattern",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rust-nostr/nostr-sdk": "^0.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.5",
+    "tsup": "8.5.1",
+    "typescript": "5.6.2",
+    "vitest": "2.1.9"
+  }
+}

@@ -172,8 +172,8 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
       nostr-tools:
-        specifier: ^2.18.2
-        version: 2.18.2(typescript@5.6.2)
+        specifier: workspace:*
+        version: link:../../packages/nostr-tools
       pino:
         specifier: 8.19.0
         version: 8.19.0
@@ -232,6 +232,100 @@ importers:
       wait-on:
         specifier: ^9.0.3
         version: 9.0.3
+
+  apps/app:
+    dependencies:
+      '@nostrstack/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@nostrstack/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
+      '@nostrstack/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@nostrstack/widgets':
+        specifier: workspace:*
+        version: link:../../packages/widgets
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
+      linkify-it:
+        specifier: ^5.0.0
+        version: 5.0.0
+      markdown-it:
+        specifier: ^14.1.0
+        version: 14.1.0
+      nostr-tools:
+        specifier: workspace:*
+        version: link:../../packages/nostr-tools
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
+      qrcode.react:
+        specifier: ^4.2.0
+        version: 4.2.0(react@19.2.3)
+      react:
+        specifier: ^19.0.0-rc.1
+        version: 19.2.3
+      react-dom:
+        specifier: ^19.0.0-rc.1
+        version: 19.2.3(react@19.2.3)
+      web-vitals:
+        specifier: ^5.1.0
+        version: 5.1.0
+      zod:
+        specifier: 3.24.1
+        version: 3.24.1
+    devDependencies:
+      '@playwright/test':
+        specifier: 1.57.0
+        version: 1.57.0
+      '@testing-library/react':
+        specifier: 16.1.0
+        version: 16.1.0(@testing-library/dom@10.4.1)(@types/react-dom@19.0.1)(@types/react@19.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@types/markdown-it':
+        specifier: ^14.1.2
+        version: 14.1.2
+      '@types/node':
+        specifier: 22.7.5
+        version: 22.7.5
+      '@types/qrcode':
+        specifier: ^1.5.6
+        version: 1.5.6
+      '@types/react':
+        specifier: 19.0.1
+        version: 19.0.1
+      '@types/react-dom':
+        specifier: 19.0.1
+        version: 19.0.1
+      '@vitejs/plugin-basic-ssl':
+        specifier: 1.2.0
+        version: 1.2.0(vite@5.4.21(@types/node@22.7.5))
+      '@vitejs/plugin-react':
+        specifier: 5.1.0
+        version: 5.1.0(vite@5.4.21(@types/node@22.7.5))
+      '@vitest/coverage-v8':
+        specifier: 2.1.9
+        version: 2.1.9(@vitest/browser@2.1.9)(vitest@2.1.9)
+      axe-core:
+        specifier: ^4.11.0
+        version: 4.11.0
+      eslint:
+        specifier: 8.57.0
+        version: 8.57.0
+      jsdom:
+        specifier: 24.1.0
+        version: 24.1.0
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vite:
+        specifier: 5.4.21
+        version: 5.4.21(@types/node@22.7.5)
+      vitest:
+        specifier: 2.1.9
+        version: 2.1.9(@types/node@22.7.5)(@vitest/browser@2.1.9)(jsdom@24.1.0)(msw@2.12.7(@types/node@22.7.5)(typescript@5.6.2))
 
   apps/docs:
     dependencies:
@@ -297,8 +391,8 @@ importers:
         specifier: ^14.1.0
         version: 14.1.0
       nostr-tools:
-        specifier: ^2.18.2
-        version: 2.18.2(typescript@5.6.2)
+        specifier: workspace:*
+        version: link:../../packages/nostr-tools
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -324,6 +418,9 @@ importers:
       '@axe-core/playwright':
         specifier: ^4.11.0
         version: 4.11.0(playwright-core@1.57.0)
+      '@chromatic-com/storybook':
+        specifier: ^4.1.3
+        version: 4.1.3(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
       '@playwright/test':
         specifier: 1.57.0
         version: 1.57.0
@@ -444,8 +541,27 @@ importers:
   packages/nostr:
     dependencies:
       nostr-tools:
-        specifier: ^2.18.2
-        version: 2.18.2(typescript@5.6.2)
+        specifier: workspace:*
+        version: link:../nostr-tools
+    devDependencies:
+      '@types/node':
+        specifier: 22.7.5
+        version: 22.7.5
+      tsup:
+        specifier: 8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.6.2)(yaml@2.8.2)
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: 2.1.9
+        version: 2.1.9(@types/node@22.7.5)(@vitest/browser@2.1.9)(jsdom@24.1.0)(msw@2.12.7(@types/node@22.7.5)(typescript@5.6.2))
+
+  packages/nostr-tools:
+    dependencies:
+      '@rust-nostr/nostr-sdk':
+        specifier: ^0.44.0
+        version: 0.44.0
     devDependencies:
       '@types/node':
         specifier: 22.7.5
@@ -472,8 +588,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       nostr-tools:
-        specifier: ^2.18.2
-        version: 2.18.2(typescript@5.6.2)
+        specifier: workspace:*
+        version: link:../nostr-tools
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.2.3)
@@ -549,8 +665,8 @@ importers:
   packages/test-utils:
     dependencies:
       nostr-tools:
-        specifier: ^2.18.2
-        version: 2.18.2(typescript@5.6.2)
+        specifier: workspace:*
+        version: link:../nostr-tools
       vitest:
         specifier: 2.1.9
         version: 2.1.9(@types/node@22.7.5)(@vitest/browser@2.1.9)(jsdom@24.1.0)(msw@2.12.7(@types/node@22.7.5)(typescript@5.6.2))
@@ -927,6 +1043,15 @@ packages:
       {
         integrity: sha512-8kGE2P+HjfY8FglaOiW+y8qxcaQAfAhVML+i66XJR3YX5FtyDqn6Txctr3K2FrbxLKixRRYYBWMbuGciOhYNDg==
       }
+
+  '@chromatic-com/storybook@4.1.3':
+    resolution:
+      {
+        integrity: sha512-hc0HO9GAV9pxqDE6fTVOV5KeLpTiCfV8Jrpk5ogKLiIgeq2C+NPjpt74YnrZTjiK8E19fYcMP+2WY9ZtX7zHmw==
+      }
+    engines: { node: '>=20.0.0', yarn: '>=1.22.18' }
+    peerDependencies:
+      storybook: ^0.0.0-0 || ^9.0.0 || ^9.1.0-0 || ^9.2.0-0 || ^10.0.0-0 || ^10.1.0-0 || ^10.2.0-0 || ^10.3.0-0
 
   '@colors/colors@1.5.0':
     resolution:
@@ -2305,22 +2430,10 @@ packages:
       }
     engines: { node: '>=18' }
 
-  '@noble/ciphers@0.5.3':
+  '@neoconfetti/react@1.0.0':
     resolution:
       {
-        integrity: sha512-B0+6IIHiqEs3BPMT0hcRmHvEj2QHOLu+uwt+tqDDeVd0oyVzh7BPrDcPjRnV1PV/5LaknXJJQvOuRGR0zQJz+w==
-      }
-
-  '@noble/curves@1.1.0':
-    resolution:
-      {
-        integrity: sha512-091oBExgENk/kGj3AZmtBDMpxQPDtxQABR2B9lb1JbVTs6ytdzZNwvhxQ4MWasRNEzlbEH8jCWFCwhF/Obj5AA==
-      }
-
-  '@noble/curves@1.2.0':
-    resolution:
-      {
-        integrity: sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==
+        integrity: sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==
       }
 
   '@noble/curves@1.9.7':
@@ -2329,20 +2442,6 @@ packages:
         integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==
       }
     engines: { node: ^14.21.3 || >=16 }
-
-  '@noble/hashes@1.3.1':
-    resolution:
-      {
-        integrity: sha512-EbqwksQwz9xDRGfDST86whPBgM65E0OH/pCgqW0GBVzO22bNE+NuIbeTb714+IfSjU3aRk47EUvXIb5bTsenKA==
-      }
-    engines: { node: '>= 16' }
-
-  '@noble/hashes@1.3.2':
-    resolution:
-      {
-        integrity: sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==
-      }
-    engines: { node: '>= 16' }
 
   '@noble/hashes@1.8.0':
     resolution:
@@ -3425,28 +3524,17 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scure/base@1.1.1':
+  '@rust-nostr/nostr-sdk@0.44.0':
     resolution:
       {
-        integrity: sha512-ZxOhsSyxYwLJj3pLZCefNitxsj093tb2vq90mp2txoYeBqbcjDjqFhyM8eUjq/uFm6zJ+mUuqxlS2FkuSY1MTA==
+        integrity: sha512-MvXbLW3bQGgWLKbqv3AMwC1VtZ08MRsWwIf0dzXhhZw8QkfwfKMZlnJaKlQGdv5r/QtQXW3kDFsO5jHC2vhovw==
       }
+    engines: { node: '>= 10' }
 
   '@scure/base@1.2.6':
     resolution:
       {
         integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==
-      }
-
-  '@scure/bip32@1.3.1':
-    resolution:
-      {
-        integrity: sha512-osvveYtyzdEVbt3OfwwXFr4P2iVBL5u1Q3q4ONBfDY/UpOuXmOlbgwc1xECEboY8wIays8Yt6onaWMUdUbfl0A==
-      }
-
-  '@scure/bip39@1.2.1':
-    resolution:
-      {
-        integrity: sha512-Z3/Fsz1yr904dduJD0NpiyRHhRYHdcnyh73FZWiV+/qhWi83wNJ3NWolYqCEN+ZWsUz2TWwajJggcRE9r1zUYg==
       }
 
   '@secretlint/config-creator@11.2.5':
@@ -5164,6 +5252,21 @@ packages:
       }
     engines: { node: '>= 14.16.0' }
 
+  chromatic@13.3.4:
+    resolution:
+      {
+        integrity: sha512-TR5rvyH0ESXobBB3bV8jc87AEAFQC7/n+Eb4XWhJz6hW3YNxIQPVjcbgLv+a4oKHEl1dUBueWSoIQsOVGTd+RQ==
+      }
+    hasBin: true
+    peerDependencies:
+      '@chromatic-com/cypress': ^0.*.* || ^1.0.0
+      '@chromatic-com/playwright': ^0.*.* || ^1.0.0
+    peerDependenciesMeta:
+      '@chromatic-com/cypress':
+        optional: true
+      '@chromatic-com/playwright':
+        optional: true
+
   chrome-devtools-mcp@0.12.1:
     resolution:
       {
@@ -6612,6 +6715,13 @@ packages:
         integrity: sha512-YPcTBDV+2Tm0VqjybVd32MHdlEGAtuxS3VAYsumFokDSMG+ROT5wawGlnHDoz7bfMcMDt9hxuXvXwoKUx2fkOg==
       }
     engines: { node: '>=4' }
+
+  filesize@10.1.6:
+    resolution:
+      {
+        integrity: sha512-sJslQKU2uM33qH5nqewAwVB2QgR6w1aMNsYUp3aN5rMRyXEwJGmZvaWzeJFNTOXWlHQyBFCWrdj3fV/fsTOX8w==
+      }
+    engines: { node: '>= 10.4.0' }
 
   fill-range@7.1.1:
     resolution:
@@ -8906,23 +9016,6 @@ packages:
       }
     engines: { node: '>=0.10.0' }
 
-  nostr-tools@2.18.2:
-    resolution:
-      {
-        integrity: sha512-lUCJQd9YZG3kEvxV5Zgm7qUkBpaeuvFrtqBz4TJLAxHzUn2pE7nmZZRDQmNzp5neEw20tQS3jR16o7XzzF8ncg==
-      }
-    peerDependencies:
-      typescript: '>=5.0.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  nostr-wasm@0.1.0:
-    resolution:
-      {
-        integrity: sha512-78BTryCLcLYv96ONU8Ws3Q1JzjlAt+43pWQhIl86xZmWeegYCNLPml7yQ+gG3vR6V5h4XGj+TxO+SS5dsThQIA==
-      }
-
   npm-package-arg@12.0.2:
     resolution:
       {
@@ -9168,6 +9261,12 @@ packages:
     resolution:
       {
         integrity: sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA==
+      }
+
+  pako@2.1.0:
+    resolution:
+      {
+        integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==
       }
 
   parent-module@1.0.1:
@@ -12423,6 +12522,18 @@ snapshots:
       hashery: 1.3.0
       keyv: 5.5.5
 
+  '@chromatic-com/storybook@4.1.3(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))':
+    dependencies:
+      '@neoconfetti/react': 1.0.0
+      chromatic: 13.3.4
+      filesize: 10.1.6
+      jsonfile: 6.2.0
+      storybook: 10.1.11(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      strip-ansi: 7.1.2
+    transitivePeerDependencies:
+      - '@chromatic-com/cypress'
+      - '@chromatic-com/playwright'
+
   '@colors/colors@1.5.0':
     optional: true
 
@@ -13220,23 +13331,11 @@ snapshots:
       outvariant: 1.4.3
       strict-event-emitter: 0.5.1
 
-  '@noble/ciphers@0.5.3': {}
-
-  '@noble/curves@1.1.0':
-    dependencies:
-      '@noble/hashes': 1.3.1
-
-  '@noble/curves@1.2.0':
-    dependencies:
-      '@noble/hashes': 1.3.2
+  '@neoconfetti/react@1.0.0': {}
 
   '@noble/curves@1.9.7':
     dependencies:
       '@noble/hashes': 1.8.0
-
-  '@noble/hashes@1.3.1': {}
-
-  '@noble/hashes@1.3.2': {}
 
   '@noble/hashes@1.8.0': {}
 
@@ -14089,20 +14188,15 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.53.5':
     optional: true
 
-  '@scure/base@1.1.1': {}
+  '@rust-nostr/nostr-sdk@0.44.0':
+    dependencies:
+      pako: 2.1.0
+      ws: 8.18.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@scure/base@1.2.6': {}
-
-  '@scure/bip32@1.3.1':
-    dependencies:
-      '@noble/curves': 1.1.0
-      '@noble/hashes': 1.3.2
-      '@scure/base': 1.1.1
-
-  '@scure/bip39@1.2.1':
-    dependencies:
-      '@noble/hashes': 1.3.2
-      '@scure/base': 1.1.1
 
   '@secretlint/config-creator@11.2.5':
     dependencies:
@@ -15319,6 +15413,8 @@ snapshots:
     dependencies:
       readdirp: 4.1.2
 
+  chromatic@13.3.4: {}
+
   chrome-devtools-mcp@0.12.1: {}
 
   ci-info@3.9.0: {}
@@ -16424,6 +16520,8 @@ snapshots:
   file-type@5.2.0: {}
 
   file-type@6.2.0: {}
+
+  filesize@10.1.6: {}
 
   fill-range@7.1.1:
     dependencies:
@@ -17867,20 +17965,6 @@ snapshots:
 
   normalize-path@3.0.0: {}
 
-  nostr-tools@2.18.2(typescript@5.6.2):
-    dependencies:
-      '@noble/ciphers': 0.5.3
-      '@noble/curves': 1.2.0
-      '@noble/hashes': 1.3.1
-      '@scure/base': 1.1.1
-      '@scure/bip32': 1.3.1
-      '@scure/bip39': 1.2.1
-      nostr-wasm: 0.1.0
-    optionalDependencies:
-      typescript: 5.6.2
-
-  nostr-wasm@0.1.0: {}
-
   npm-package-arg@12.0.2:
     dependencies:
       hosted-git-info: 8.1.0
@@ -18045,6 +18129,8 @@ snapshots:
   package-json-from-dist@1.0.1: {}
 
   package-manager-detector@1.6.0: {}
+
+  pako@2.1.0: {}
 
   parent-module@1.0.1:
     dependencies:
