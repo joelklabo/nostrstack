@@ -15,7 +15,7 @@ The kit includes the following widgets:
 
 ## Integration Options
 
-### 1. React (Blog-kit)
+### 1. React (SDK)
 
 If you are using React, install `@nostrstack/react`:
 
@@ -30,7 +30,7 @@ import { NostrstackProvider } from '@nostrstack/react';
 
 function App({ children }) {
   return (
-    <NostrstackProvider 
+    <NostrstackProvider
       lnAddress="alice@example.com"
       relays={['wss://relay.damus.io', 'wss://nos.lol']}
     >
@@ -50,7 +50,7 @@ function Post({ id, title }) {
     <article>
       <h1>{title}</h1>
       {/* ... content ... */}
-      <SupportSection 
+      <SupportSection
         itemId={id}
         title="Support this post"
         layout="full" // or "compact"
@@ -71,15 +71,13 @@ For static sites (Hugo, Jekyll, 11ty, etc.), include the `@nostrstack/widgets` s
 Add data attributes to any container to mount a widget:
 
 #### Support Grid (Tips + Comments)
+
 ```html
-<div 
-  data-nostrstack-comment-tip="post-123"
-  data-tip-username="alice"
-  data-host="example.com"
-></div>
+<div data-nostrstack-comment-tip="post-123" data-tip-username="alice" data-host="example.com"></div>
 ```
 
 #### Individual Widgets
+
 ```html
 <!-- Tip Widget -->
 <div data-nostrstack-tip data-tip-username="alice" data-item-id="post-123"></div>
@@ -96,13 +94,13 @@ Add data attributes to any container to mount a widget:
 
 ## Configuration
 
-| Attribute / Prop | Description | Default |
-| --- | --- | --- |
-| `itemId` | Unique ID for the post/page | URL path |
-| `lnAddress` | Lightning address for tips | Config default |
-| `relays` | List of Nostr relays | Config default |
-| `layout` | `full` or `compact` | `full` |
-| `baseUrl` | API base URL for telemetry | `https://localhost:3001` |
+| Attribute / Prop | Description                 | Default                  |
+| ---------------- | --------------------------- | ------------------------ |
+| `itemId`         | Unique ID for the post/page | URL path                 |
+| `lnAddress`      | Lightning address for tips  | Config default           |
+| `relays`         | List of Nostr relays        | Config default           |
+| `layout`         | `full` or `compact`         | `full`                   |
+| `baseUrl`        | API base URL for telemetry  | `https://localhost:3001` |
 
 ## CSP & CORS Guidance
 
@@ -115,6 +113,7 @@ To allow the widgets to function correctly, ensure your Content Security Policy 
 ## Privacy & Telemetry
 
 The Blockchain Stats and Tip Feed widgets use a telemetry API to fetch real-time data. This API is privacy-preserving:
+
 - No visitor IP addresses are logged.
 - No tracking cookies are set.
 - Telemetry is limited to public blockchain data and voluntary payment notifications.

@@ -27,7 +27,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 1. **Accessibility**: Only 49 aria-\* attributes across entire codebase
 2. **Test Coverage**: Only 2 data-testid attributes (limits test robustness)
-3. **Blog-Kit Tests**: 6 test files vs 40 components (15% coverage)
+3. **React SDK Tests**: 6 test files vs 40 components (15% coverage)
 4. **Embed Package Tests**: Still missing tests for `renderCommentWidget`, `relayBadge`, `share`, `blockchainStats`.
 5. **Performance**: No formal performance testing or monitoring
 6. **API Documentation**: Missing OpenAPI/Swagger comprehensive docs
@@ -45,15 +45,15 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 **Effort:** 1-2 days
 **Details:**
 
-- Extract `renderCommentWidget` from `packages/embed/src/index.ts` to `packages/embed/src/widgets/commentWidget.ts`.
-- Create unit tests: `packages/embed/src/widgets/commentWidget.test.ts`.
+- Extract `renderCommentWidget` from `packages/widgets/src/index.ts` to `packages/widgets/src/widgets/commentWidget.ts`.
+- Create unit tests: `packages/widgets/src/widgets/commentWidget.test.ts`.
 - This finishes the modularization epic, leaving `index.ts` as a clean entry point.
 
 **Deliverables:**
 
-- `packages/embed/src/widgets/commentWidget.ts`
-- `packages/embed/src/widgets/commentWidget.test.ts`
-- Clean `packages/embed/src/index.ts`
+- `packages/widgets/src/widgets/commentWidget.ts`
+- `packages/widgets/src/widgets/commentWidget.test.ts`
+- Clean `packages/widgets/src/index.ts`
 - BD Issue: `embed-modularization-complete`
 
 ---
@@ -73,9 +73,9 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 **Files to Update:**
 
-- `packages/blog-kit/src/ui/*.tsx` (PaymentModal, SendSats, ReactionButton)
+- `packages/react/src/ui/*.tsx` (PaymentModal, SendSats, ReactionButton)
 - `apps/gallery/src/*.tsx` (FeedView, SearchView, Sidebar)
-- `packages/embed/src/*.ts` (invoicePopover, relayBadge, share)
+- `packages/widgets/src/*.ts` (invoicePopover, relayBadge, share)
 
 **Deliverables:**
 
@@ -85,7 +85,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 ---
 
-#### 3. **Comprehensive Unit Test Coverage for Blog-Kit**
+#### 3. **Comprehensive Unit Test Coverage for React SDK**
 
 **Impact:** High (reduces regression risk for most-used package)  
 **Effort:** 2-3 days  
@@ -111,9 +111,9 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 **Deliverables:**
 
-- 10+ new test files in `packages/blog-kit/src/`
+- 10+ new test files in `packages/react/src/`
 - Coverage report showing >80% line/branch coverage
-- BD Issue: `blog-kit-test-coverage` with sub-issues per component
+- BD Issue: `react-sdk-test-coverage` with sub-issues per component
 
 ---
 
@@ -139,7 +139,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 **Deliverables:**
 
-- New test files in `packages/embed/src/`
+- New test files in `packages/widgets/src/`
 - E2E embed test in gallery: `apps/gallery/tests/embed-widgets.spec.ts`
 - BD Issue: `embed-test-coverage-final`
 
@@ -156,7 +156,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 - Current: Components fetch data directly using `SimplePool` or `fetch`.
 - Goal: Abstract into reusable React hooks for caching, deduping, and background updates.
 - Pattern: Similar to `tanstack-query` but for Nostr events.
-- Create `packages/blog-kit/src/hooks/useNostrQuery.ts` (or `useNostrEvents`).
+- Create `packages/react/src/hooks/useNostrQuery.ts` (or `useNostrEvents`).
 
 **New Hooks:**
 
@@ -167,7 +167,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 **Deliverables:**
 
-- `packages/blog-kit/src/hooks/*.ts`
+- `packages/react/src/hooks/*.ts`
 - Refactor `PostList`, `ProfileView`, `ThreadView` to use hooks.
 - BD Issue: `nostr-data-hooks`
 
@@ -179,7 +179,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 **Effort:** 1 day
 **Details:**
 
-- `packages/embed/src/index.ts` has repetitive "mount if not mounted, store destroy function" logic.
+- `packages/widgets/src/index.ts` has repetitive "mount if not mounted, store destroy function" logic.
 - Create a `WidgetManager` class or helper to handle:
   - Auto-mounting based on data attributes.
   - Tracking active instances.
@@ -188,7 +188,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 
 **Deliverables:**
 
-- `packages/embed/src/core/widgetManager.ts`
+- `packages/widgets/src/core/widgetManager.ts`
 - Update `index.ts` to use it.
 - BD Issue: `embed-widget-manager`
 
@@ -291,9 +291,9 @@ From `docs/dependencies.md`:
 
 ---
 
-### Sprint 2 (Week 2): Blog-Kit Quality & Data
+### Sprint 2 (Week 2): React SDK Quality & Data
 
-4. **Comprehensive Unit Test Coverage for Blog-Kit** (3 days)
+4. **Comprehensive Unit Test Coverage for React SDK** (3 days)
 5. **Nostr Data Abstraction (Hooks)** (2 days)
 
 **Outcome:** Robust React library with clean data fetching patterns.

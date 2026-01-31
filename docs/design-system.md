@@ -1,6 +1,7 @@
 # nostrstack design system
 
 nostrstack UI is token-driven so it can inherit the host site’s look while staying consistent across:
+
 - `@nostrstack/widgets` (DOM widgets + global CSS)
 - `@nostrstack/react` (React wrappers around embed)
 - `apps/gallery` (demo + QA harness)
@@ -8,10 +9,12 @@ nostrstack UI is token-driven so it can inherit the host site’s look while sta
 ## Tokens (single source of truth)
 
 The base design tokens are CSS custom properties defined in `@nostrstack/widgets`:
+
 - Selector: `.nostrstack-theme` (and `[data-nostrstack-theme="dark"]` for dark mode)
 - Prefix: `--nostrstack-*`
 
 Key groups (non-exhaustive):
+
 - Color roles: `--nostrstack-color-primary`, `--nostrstack-color-accent`, `--nostrstack-color-bg`, `--nostrstack-color-surface*`, `--nostrstack-color-border*`, `--nostrstack-color-text*`
 - Radius: `--nostrstack-radius-sm|md|lg|pill`
 - Shadow: `--nostrstack-shadow-sm|md|lg|glow|focus`
@@ -35,6 +38,7 @@ Add a wrapper and set variables:
 ### 2) Programmatic theme (embed helpers)
 
 `@nostrstack/widgets` exports helpers that generate the CSS vars:
+
 - `themeToCssVars(theme)` → object of `--nostrstack-*` vars
 - `themeToCss(theme, selector)` → CSS text for light/dark selectors
 - `applyNostrstackTheme(el, theme)` → sets vars directly on an element
@@ -43,21 +47,25 @@ Add a wrapper and set variables:
 ## Recommended adoption strategy
 
 ### Embed
+
 - Ensure a `.nostrstack-theme` ancestor exists (widgets do this via `ensureNostrstackRoot()`).
 - Avoid hard-coded colors in widgets; use roles (e.g. `--nostrstack-color-text-muted`).
 
-### Blog-kit
+### React SDK
+
 - `NostrstackProvider` provides `.nostrstack-theme` and sets `--nostrstack-*` vars.
 - Prefer `brandPreset` + `themeMode` for quick adoption, and `nostrstackTheme` for full control.
 - Legacy theme support: `theme={{ accent, text, surface, border }}` maps to the new token set and also provides legacy `--ns-*` aliases.
 
 ### Gallery
+
 - Treat as the “canary” UI: if a token is missing or a component style regresses, gallery should reveal it quickly.
 - Prefer using `.nostrstack-*` classes from `@nostrstack/widgets` (buttons, inputs, popovers) so the demo stays representative.
 
 ## Motion presets
 
 Guidelines:
+
 - Default interactions: 120–180ms (`--nostrstack-motion-fast|base`) with `--nostrstack-motion-ease-standard`.
 - Emphasized entrances: `--nostrstack-motion-enter` with `--nostrstack-motion-ease-emphasized`.
 - Keep distances small (`--nostrstack-motion-distance-short`) to avoid “floaty” UI.
@@ -66,6 +74,7 @@ Guidelines:
 ## Primitives
 
 Provided by `@nostrstack/widgets` CSS (no JS required):
+
 - Buttons: `.nostrstack-btn`, `.nostrstack-btn--primary|--ghost|--sm`
 - Inputs: `.nostrstack-input`, `.nostrstack-textarea`, `.nostrstack-select`
 - Surfaces: `.nostrstack-card`
@@ -74,6 +83,7 @@ Provided by `@nostrstack/widgets` CSS (no JS required):
 ## Personal Site Kit components (planned)
 
 Suggested class names for new widgets:
+
 - Support section: `.nostrstack-support-section`, `.nostrstack-support-header`, `.nostrstack-support-grid`, `.nostrstack-support-sidebar`
 - Tip activity feed: `.nostrstack-tip-feed`, `.nostrstack-tip-feed-item`, `.nostrstack-tip-feed-amount`, `.nostrstack-tip-feed-time`
 - Share button: `.nostrstack-share`, `.nostrstack-share-button`, `.nostrstack-share-status`
@@ -81,4 +91,5 @@ Suggested class names for new widgets:
 - Blockchain stats: `.nostrstack-blockchain-stats`, `.nostrstack-blockchain-stat`, `.nostrstack-blockchain-value`, `.nostrstack-blockchain-label`
 
 Status helpers (already available):
+
 - `.nostrstack-status` with `--muted|--success|--danger`
