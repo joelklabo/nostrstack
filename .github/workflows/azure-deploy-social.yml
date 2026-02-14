@@ -14,8 +14,10 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-social
   API_URL: https://api.nostrstack.com
-  NOSTRSTACK_TIP_LNADDR: '' # Set to enable Support Nostrstack tip button (e.g., tip@nostrstack.com)
-  NOSTRSTACK_TIP_PUBKEY: '' # Alternative to LNADDR for tipping
+  # Set these in GitHub environment secrets: NOSTRSTACK_TIP_LNADDR or NOSTRSTACK_TIP_PUBKEY
+  # Example: tip@nostrstack.com or npub1... (hex pubkey)
+  NOSTRSTACK_TIP_LNADDR: ${{ secrets.NOSTRSTACK_TIP_LNADDR }}
+  NOSTRSTACK_TIP_PUBKEY: ${{ secrets.NOSTRSTACK_TIP_PUBKEY }}
 
 jobs:
   deploy:
