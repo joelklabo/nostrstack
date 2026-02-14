@@ -46,7 +46,7 @@ test.describe('Social App Flow', () => {
     }
 
     // 2. Verify Feed View & Screenshot
-    await expect(page.getByText('NostrStack')).toBeVisible(); // Sidebar
+    await expect(page.locator('.ns-brand').getByText('NostrStack')).toBeVisible(); // Sidebar brand
     await page.screenshot({ path: resolveDocScreenshotPath('feed.png') });
 
     await expect(page.getByText('Live Feed')).toBeVisible(); // Feed
