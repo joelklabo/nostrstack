@@ -4,11 +4,21 @@ export type PaymentConfig = {
   presetSendSats: number[];
 };
 
+export type SupportConfig = {
+  tipPubkey: string | null;
+  tipLnaddr: string | null;
+  enabled: boolean;
+};
+
 const DEFAULT_SEND_SATS = 500;
 const DEFAULT_PRESETS = [21, 100, 500];
 
 function parseBoolean(raw?: string | null): boolean {
-  return String(raw ?? '').trim().toLowerCase() === 'true';
+  return (
+    String(raw ?? '')
+      .trim()
+      .toLowerCase() === 'true'
+  );
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
@@ -28,7 +38,9 @@ function parsePresetList(raw: string | undefined, fallback: number[]): number[] 
   return Array.from(new Set(entries));
 }
 
-export function resolvePaymentConfig(env: Record<string, string | undefined> = import.meta.env): PaymentConfig {
+export function resolvePaymentConfig(
+  env: Record<string, string | undefined> = import.meta.env
+): PaymentConfig {
   const enableProfilePay = parseBoolean(env.VITE_ENABLE_PROFILE_PAY);
   const defaultSendSats = parsePositiveInt(env.VITE_SEND_SATS_DEFAULT, DEFAULT_SEND_SATS);
   const presetSendSats = parsePresetList(env.VITE_SEND_SATS_PRESETS, DEFAULT_PRESETS);
@@ -39,4 +51,18 @@ export function resolvePaymentConfig(env: Record<string, string | undefined> = i
   };
 }
 
+export function resolveSupportConfig(
+  env: Record<string, string | undefined> = import.meta.env
+): SupportConfig {
+  const tipPubkey = (env.VITE_NOSTRSTACK_TIP_PUBKEY || '').trim() || null;
+  const tipLnaddr = (env.VITE_NOSTRSTACK_TIP_LNADDR || '').trim() || null;
+  const enabled = Boolean(tipPubkey || tipLnaddr);
+  return {
+    tipPubkey,
+    tipLnaddr,
+    enabled
+  };
+}
+
 export const paymentConfig = resolvePaymentConfig();
+export const supportConfig = resolveSupportConfig();

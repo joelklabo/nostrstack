@@ -1,7 +1,14 @@
-import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/react';
+import {
+  SendSats,
+  useAuth,
+  useBitcoinStatus,
+  useNostrstackConfig,
+  useStats
+} from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
 import { memo, useEffect, useRef, useState } from 'react';
 
+import { supportConfig } from './config/payments';
 import { useWallet } from './hooks/useWallet';
 import { AnimatedSats } from './ui/AnimatedNumber';
 import { resolveApiBase } from './utils/api-base';
@@ -53,6 +60,7 @@ export const Sidebar = memo(function Sidebar({
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const prevBalanceRef = useRef(wallet?.balance ?? 0);
 
   // Detect balance increases for "receiving" animation
@@ -275,6 +283,16 @@ export const Sidebar = memo(function Sidebar({
         >
           Settings
         </button>
+        {supportConfig.enabled && (
+          <button
+            type="button"
+            className="nav-item"
+            onClick={() => setSupportOpen(true)}
+            aria-label="Support Nostrstack"
+          >
+            Support
+          </button>
+        )}
         {onOpenHelp && (
           <button
             type="button"
@@ -386,6 +404,36 @@ export const Sidebar = memo(function Sidebar({
           apiConfigured={apiBaseConfig.isConfigured}
           withdrawEnabled={withdrawEnabled}
         />
+      )}
+
+      {supportOpen && supportConfig.enabled && (
+        <dialog open={supportOpen} className="support-modal" aria-labelledby="support-modal-title">
+          <div className="support-modal-inner">
+            <h2 id="support-modal-title" className="support-modal-title">
+              Support Nostrstack
+            </h2>
+            <p className="support-modal-subtitle">
+              Help keep Nostrstack running! Your support helps cover hosting costs and keeps the
+              lights on.
+            </p>
+            <SendSats
+              pubkey={supportConfig.tipPubkey || ''}
+              lightningAddress={supportConfig.tipLnaddr}
+              defaultAmountSats={500}
+              presetAmountsSats={[100, 500, 1000, 5000]}
+              notePlaceholder="Say thanks (optional)"
+              enableRegtestPay={regtestFundEnabled}
+            />
+            <button
+              type="button"
+              className="support-modal-close"
+              onClick={() => setSupportOpen(false)}
+              aria-label="Close support modal"
+            >
+              Close
+            </button>
+          </div>
+        </dialog>
       )}
     </nav>
   );
