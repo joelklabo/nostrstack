@@ -283,16 +283,14 @@ export const Sidebar = memo(function Sidebar({
         >
           Settings
         </button>
-        {supportConfig.enabled && (
-          <button
-            type="button"
-            className="nav-item"
-            onClick={() => setSupportOpen(true)}
-            aria-label="Support Nostrstack"
-          >
-            Support
-          </button>
-        )}
+        <button
+          type="button"
+          className="nav-item"
+          onClick={() => setSupportOpen(true)}
+          aria-label="Support Nostrstack"
+        >
+          Support
+        </button>
         {onOpenHelp && (
           <button
             type="button"
@@ -406,7 +404,7 @@ export const Sidebar = memo(function Sidebar({
         />
       )}
 
-      {supportOpen && supportConfig.enabled && (
+      {supportOpen && (
         <dialog open={supportOpen} className="support-modal" aria-labelledby="support-modal-title">
           <div className="support-modal-inner">
             <h2 id="support-modal-title" className="support-modal-title">
@@ -416,14 +414,27 @@ export const Sidebar = memo(function Sidebar({
               Help keep Nostrstack running! Your support helps cover hosting costs and keeps the
               lights on.
             </p>
-            <SendSats
-              pubkey={supportConfig.tipPubkey || ''}
-              lightningAddress={supportConfig.tipLnaddr}
-              defaultAmountSats={500}
-              presetAmountsSats={[100, 500, 1000, 5000]}
-              notePlaceholder="Say thanks (optional)"
-              enableRegtestPay={regtestFundEnabled}
-            />
+            {supportConfig.enabled ? (
+              <SendSats
+                pubkey={supportConfig.tipPubkey || ''}
+                lightningAddress={supportConfig.tipLnaddr}
+                defaultAmountSats={500}
+                presetAmountsSats={[100, 500, 1000, 5000]}
+                notePlaceholder="Say thanks (optional)"
+                enableRegtestPay={regtestFundEnabled}
+              />
+            ) : (
+              <div className="ns-callout">
+                <div className="ns-callout__title">Support Coming Soon</div>
+                <div className="ns-callout__content">
+                  <p>The ability to send sats to support Nostrstack is being set up.</p>
+                  <p>
+                    To enable this feature, configure <code>VITE_NOSTRSTACK_TIP_PUBKEY</code> or{' '}
+                    <code>VITE_NOSTRSTACK_TIP_LNADDR</code> in your environment.
+                  </p>
+                </div>
+              </div>
+            )}
             <button
               type="button"
               className="support-modal-close"
