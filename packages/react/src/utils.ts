@@ -1,7 +1,9 @@
 import { nip19 } from 'nostr-tools';
 import { bytesToHex, hexToBytes, normalizeURL } from 'nostr-tools/utils';
 
-export function parseLnAddress(value?: string | null): { username: string; domain?: string } | null {
+export function parseLnAddress(
+  value?: string | null
+): { username: string; domain?: string } | null {
   if (!value) return null;
   const parts = value.split('@');
   if (parts.length === 1) {
@@ -15,10 +17,14 @@ export function parseLnAddress(value?: string | null): { username: string; domai
 
 export function parseRelays(raw?: string | null): string[] {
   if (!raw) return [];
-  return raw
+  const relays = raw
     .split(/[,\n]/)
     .map((r) => r.trim())
     .filter(Boolean);
+  if (relays.length === 1 && relays[0].toLowerCase() === 'mock') {
+    return [];
+  }
+  return relays;
 }
 
 export type ParsedNwcUri = {
