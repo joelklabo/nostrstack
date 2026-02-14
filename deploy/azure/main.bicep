@@ -177,6 +177,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               { name: 'NODE_ENV', value: 'production' }
               { name: 'LOG_LEVEL', value: 'info' }
               { name: 'OTEL_ENABLED', value: string(otelEnabled) }
+              { name: 'TELEMETRY_PROVIDER', value: 'esplora' }
+              { name: 'TELEMETRY_ESPLORA_URL', value: 'https://blockstream.info/api' }
+              { name: 'BITCOIN_NETWORK', value: 'mainnet' }
             ],
             useOtel ? [ { name: 'OTEL_EXPORTER_OTLP_ENDPOINT', value: otelEndpoint } ] : [],
             (useOtel && !empty(otelHeaders)) ? [ { name: 'OTEL_EXPORTER_OTLP_HEADERS', secretRef: 'otel-headers' } ] : []
