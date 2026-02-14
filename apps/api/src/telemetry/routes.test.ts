@@ -98,8 +98,8 @@ describe('/api/bitcoin/status', () => {
     });
 
     const res = await app.inject({ url: '/api/bitcoin/status' });
-    expect(res.statusCode).toBe(502);
+    expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.error).toBe('bitcoin_status_unavailable');
+    expect(body.source).toBe('mock');
   });
 });

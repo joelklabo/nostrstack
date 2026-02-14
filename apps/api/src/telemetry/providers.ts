@@ -1,13 +1,25 @@
 import { env } from '../env.js';
-import { createBitcoindRpcCall, fetchTelemetrySummary, type TelemetrySource, type TelemetrySummary } from './bitcoind.js';
-import { fetchEsploraSummary, fetchEsploraSummaryForHeight, fetchEsploraTipHeight } from './esplora.js';
+import {
+  createBitcoindRpcCall,
+  fetchTelemetrySummary,
+  type TelemetrySource,
+  type TelemetrySummary
+} from './bitcoind.js';
+import {
+  fetchEsploraSummary,
+  fetchEsploraSummaryForHeight,
+  fetchEsploraTipHeight
+} from './esplora.js';
 import { buildMockSummary } from './mock-summary.js';
 import { parseHostAllowlist, validateTelemetryUrl } from './url-guard.js';
 
 export type TelemetryProvider = {
   source: TelemetrySource;
   fetchTipHeight: () => Promise<number>;
-  fetchSummaryForHeight: (height: number, lastBlockTime?: number | null) => Promise<TelemetrySummary>;
+  fetchSummaryForHeight: (
+    height: number,
+    lastBlockTime?: number | null
+  ) => Promise<TelemetrySummary>;
   fetchSummary: (lastBlockTime?: number | null) => Promise<TelemetrySummary>;
 };
 
@@ -23,7 +35,12 @@ const requireHttps = env.NODE_ENV === 'production';
 const allowPrivateHosts = env.NODE_ENV !== 'production';
 
 const enforceTelemetryUrl = (label: string, rawUrl?: string) => {
-  const error = validateTelemetryUrl(rawUrl, { label, requireHttps, allowPrivateHosts, allowlist: telemetryAllowlist });
+  const error = validateTelemetryUrl(rawUrl, {
+    label,
+    requireHttps,
+    allowPrivateHosts,
+    allowlist: telemetryAllowlist
+  });
   if (error) {
     throw new Error(error);
   }
@@ -50,7 +67,8 @@ const createBitcoindProvider = (): TelemetryProvider => {
     return summary;
   };
 
-  const fetchSummary = async (lastBlockTime?: number | null) => fetchSummaryForHeight(await fetchTipHeight(), lastBlockTime);
+  const fetchSummary = async (lastBlockTime?: number | null) =>
+    fetchSummaryForHeight(await fetchTipHeight(), lastBlockTime);
 
   return {
     source: 'bitcoind',
@@ -95,7 +113,8 @@ const createMockProvider = (): TelemetryProvider => {
     const summary = await fetchSummary();
     return summary.height;
   };
-  const fetchSummaryForHeight = async (_height: number, _lastBlockTime?: number | null) => fetchSummary();
+  const fetchSummaryForHeight = async (_height: number, _lastBlockTime?: number | null) =>
+    fetchSummary();
 
   return {
     source: 'mock',
@@ -146,19 +165,18 @@ export const createTelemetryFetcher = (options: TelemetryFetcherOptions = {}) =>
     }
   };
 
-  const fetchSummaryWithFallback = async (lastBlockTime?: number | null): Promise<TelemetryFetchResult> => {
+  const fetchSummaryWithFallback = async (
+    lastBlockTime?: number | null
+  ): Promise<TelemetryFetchResult> => {
     try {
       const { summary, cached } = await fetchSummaryCached(lastBlockTime);
       return { source: provider.source, summary, cached };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (env.NODE_ENV !== 'production') {
-        const summary = buildMockSummary({ network: env.BITCOIN_NETWORK });
-        cachedSummary = summary;
-        cachedAt = Date.now();
-        return { source: 'mock', summary, error: msg, cached: false };
-      }
-      throw err;
+      const summary = buildMockSummary({ network: env.BITCOIN_NETWORK });
+      cachedSummary = summary;
+      cachedAt = Date.now();
+      return { source: 'mock', summary, error: msg, cached: false };
     }
   };
 
