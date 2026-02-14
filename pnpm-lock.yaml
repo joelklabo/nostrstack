@@ -233,100 +233,6 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
 
-  apps/app:
-    dependencies:
-      '@nostrstack/react':
-        specifier: workspace:*
-        version: link:../../packages/react
-      '@nostrstack/tokens':
-        specifier: workspace:*
-        version: link:../../packages/tokens
-      '@nostrstack/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@nostrstack/widgets':
-        specifier: workspace:*
-        version: link:../../packages/widgets
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
-      linkify-it:
-        specifier: ^5.0.0
-        version: 5.0.0
-      markdown-it:
-        specifier: ^14.1.0
-        version: 14.1.0
-      nostr-tools:
-        specifier: workspace:*
-        version: link:../../packages/nostr-tools
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
-      qrcode.react:
-        specifier: ^4.2.0
-        version: 4.2.0(react@19.2.3)
-      react:
-        specifier: ^19.0.0-rc.1
-        version: 19.2.3
-      react-dom:
-        specifier: ^19.0.0-rc.1
-        version: 19.2.3(react@19.2.3)
-      web-vitals:
-        specifier: ^5.1.0
-        version: 5.1.0
-      zod:
-        specifier: 3.24.1
-        version: 3.24.1
-    devDependencies:
-      '@playwright/test':
-        specifier: 1.57.0
-        version: 1.57.0
-      '@testing-library/react':
-        specifier: 16.1.0
-        version: 16.1.0(@testing-library/dom@10.4.1)(@types/react-dom@19.0.1)(@types/react@19.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@types/markdown-it':
-        specifier: ^14.1.2
-        version: 14.1.2
-      '@types/node':
-        specifier: 22.7.5
-        version: 22.7.5
-      '@types/qrcode':
-        specifier: ^1.5.6
-        version: 1.5.6
-      '@types/react':
-        specifier: 19.0.1
-        version: 19.0.1
-      '@types/react-dom':
-        specifier: 19.0.1
-        version: 19.0.1
-      '@vitejs/plugin-basic-ssl':
-        specifier: 1.2.0
-        version: 1.2.0(vite@5.4.21(@types/node@22.7.5))
-      '@vitejs/plugin-react':
-        specifier: 5.1.0
-        version: 5.1.0(vite@5.4.21(@types/node@22.7.5))
-      '@vitest/coverage-v8':
-        specifier: 2.1.9
-        version: 2.1.9(@vitest/browser@2.1.9)(vitest@2.1.9)
-      axe-core:
-        specifier: ^4.11.0
-        version: 4.11.0
-      eslint:
-        specifier: 8.57.0
-        version: 8.57.0
-      jsdom:
-        specifier: 24.1.0
-        version: 24.1.0
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
-      vite:
-        specifier: 5.4.21
-        version: 5.4.21(@types/node@22.7.5)
-      vitest:
-        specifier: 2.1.9
-        version: 2.1.9(@types/node@22.7.5)(@vitest/browser@2.1.9)(jsdom@24.1.0)(msw@2.12.7(@types/node@22.7.5)(typescript@5.6.2))
-
   apps/docs:
     dependencies:
       '@nostrstack/react':
@@ -418,9 +324,6 @@ importers:
       '@axe-core/playwright':
         specifier: ^4.11.0
         version: 4.11.0(playwright-core@1.57.0)
-      '@chromatic-com/storybook':
-        specifier: ^4.1.3
-        version: 4.1.3(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
       '@playwright/test':
         specifier: 1.57.0
         version: 1.57.0
@@ -1043,15 +946,6 @@ packages:
       {
         integrity: sha512-8kGE2P+HjfY8FglaOiW+y8qxcaQAfAhVML+i66XJR3YX5FtyDqn6Txctr3K2FrbxLKixRRYYBWMbuGciOhYNDg==
       }
-
-  '@chromatic-com/storybook@4.1.3':
-    resolution:
-      {
-        integrity: sha512-hc0HO9GAV9pxqDE6fTVOV5KeLpTiCfV8Jrpk5ogKLiIgeq2C+NPjpt74YnrZTjiK8E19fYcMP+2WY9ZtX7zHmw==
-      }
-    engines: { node: '>=20.0.0', yarn: '>=1.22.18' }
-    peerDependencies:
-      storybook: ^0.0.0-0 || ^9.0.0 || ^9.1.0-0 || ^9.2.0-0 || ^10.0.0-0 || ^10.1.0-0 || ^10.2.0-0 || ^10.3.0-0
 
   '@colors/colors@1.5.0':
     resolution:
@@ -2429,12 +2323,6 @@ packages:
         integrity: sha512-EFd6cVbHsgLa6wa4RljGj6Wk75qoHxUSyc5asLyyPSyuhIcdS2Q3Phw6ImS1q+CkALthJRShiYfKANcQMuMqsQ==
       }
     engines: { node: '>=18' }
-
-  '@neoconfetti/react@1.0.0':
-    resolution:
-      {
-        integrity: sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==
-      }
 
   '@noble/curves@1.9.7':
     resolution:
@@ -5252,21 +5140,6 @@ packages:
       }
     engines: { node: '>= 14.16.0' }
 
-  chromatic@13.3.4:
-    resolution:
-      {
-        integrity: sha512-TR5rvyH0ESXobBB3bV8jc87AEAFQC7/n+Eb4XWhJz6hW3YNxIQPVjcbgLv+a4oKHEl1dUBueWSoIQsOVGTd+RQ==
-      }
-    hasBin: true
-    peerDependencies:
-      '@chromatic-com/cypress': ^0.*.* || ^1.0.0
-      '@chromatic-com/playwright': ^0.*.* || ^1.0.0
-    peerDependenciesMeta:
-      '@chromatic-com/cypress':
-        optional: true
-      '@chromatic-com/playwright':
-        optional: true
-
   chrome-devtools-mcp@0.12.1:
     resolution:
       {
@@ -6715,13 +6588,6 @@ packages:
         integrity: sha512-YPcTBDV+2Tm0VqjybVd32MHdlEGAtuxS3VAYsumFokDSMG+ROT5wawGlnHDoz7bfMcMDt9hxuXvXwoKUx2fkOg==
       }
     engines: { node: '>=4' }
-
-  filesize@10.1.6:
-    resolution:
-      {
-        integrity: sha512-sJslQKU2uM33qH5nqewAwVB2QgR6w1aMNsYUp3aN5rMRyXEwJGmZvaWzeJFNTOXWlHQyBFCWrdj3fV/fsTOX8w==
-      }
-    engines: { node: '>= 10.4.0' }
 
   fill-range@7.1.1:
     resolution:
@@ -12522,18 +12388,6 @@ snapshots:
       hashery: 1.3.0
       keyv: 5.5.5
 
-  '@chromatic-com/storybook@4.1.3(storybook@10.1.11(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))':
-    dependencies:
-      '@neoconfetti/react': 1.0.0
-      chromatic: 13.3.4
-      filesize: 10.1.6
-      jsonfile: 6.2.0
-      storybook: 10.1.11(@testing-library/dom@10.4.1)(prettier@3.7.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      strip-ansi: 7.1.2
-    transitivePeerDependencies:
-      - '@chromatic-com/cypress'
-      - '@chromatic-com/playwright'
-
   '@colors/colors@1.5.0':
     optional: true
 
@@ -13330,8 +13184,6 @@ snapshots:
       is-node-process: 1.2.0
       outvariant: 1.4.3
       strict-event-emitter: 0.5.1
-
-  '@neoconfetti/react@1.0.0': {}
 
   '@noble/curves@1.9.7':
     dependencies:
@@ -15413,8 +15265,6 @@ snapshots:
     dependencies:
       readdirp: 4.1.2
 
-  chromatic@13.3.4: {}
-
   chrome-devtools-mcp@0.12.1: {}
 
   ci-info@3.9.0: {}
@@ -16520,8 +16370,6 @@ snapshots:
   file-type@5.2.0: {}
 
   file-type@6.2.0: {}
-
-  filesize@10.1.6: {}
 
   fill-range@7.1.1:
     dependencies:
