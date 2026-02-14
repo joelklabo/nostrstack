@@ -1,6 +1,12 @@
 import { nip04Decrypt, nip04Encrypt, PublicKey } from '@rust-nostr/nostr-sdk';
 
 import { ensureSdk, toRustSecretKey } from './internal.js';
+import {
+  decrypt as nip44Decrypt,
+  encrypt as nip44Encrypt,
+  generateConversationKey,
+  getConversationKey
+} from './nip44.js';
 
 export function encrypt(secretKey: Uint8Array, pubkey: string, plaintext: string): string {
   ensureSdk();
@@ -22,5 +28,8 @@ export const nip04 = {
 };
 
 export const nip44 = {
-  // Placeholder - not yet implemented
+  getConversationKey,
+  encrypt: nip44Encrypt,
+  decrypt: nip44Decrypt,
+  generateConversationKey
 };
