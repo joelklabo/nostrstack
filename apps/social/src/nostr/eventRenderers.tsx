@@ -161,70 +161,78 @@ const VIDEO_EXTENSIONS = /\.(mp4|mov|webm)$/i;
 
 function renderContentWithLinks(content: string) {
   if (!content) return <span>No content for this event.</span>;
-  const parts = content.split(LINK_RE);
+  const lines = content.split('\n');
   return (
     <>
-      {parts.map((part, idx) => {
-        if (!part) return null;
-        if (part.toLowerCase().startsWith('nostr:')) {
-          const id = part.slice(6);
-          try {
-            const decoded = nip19.decode(id.toLowerCase());
-            if (!['note', 'nevent', 'npub', 'nprofile', 'naddr'].includes(decoded.type)) {
-              return <span key={`text-${idx}`}>{part}</span>;
-            }
-          } catch {
-            return <span key={`text-${idx}`}>{part}</span>;
-          }
-          return (
-            <a
-              key={`nostr-${idx}`}
-              href={`/nostr/${encodeURIComponent(id)}`}
-              className="nostr-event-link"
-            >
-              {part}
-            </a>
-          );
-        }
-        if (part.startsWith('http://') || part.startsWith('https://')) {
-          try {
-            const url = new URL(part);
-            if (IMAGE_EXTENSIONS.test(url.pathname)) {
-              return (
-                <div key={`media-${idx}`} className="nostr-media-container">
-                  <img
-                    src={part}
-                    alt="Embedded content"
-                    loading="lazy"
-                    className="nostr-media-img"
-                  />
-                </div>
-              );
-            }
-            if (VIDEO_EXTENSIONS.test(url.pathname)) {
-              return (
-                <div key={`media-${idx}`} className="nostr-media-container">
-                  {/* eslint-disable-next-line jsx-a11y/media-has-caption -- User-generated content may not have captions */}
-                  <video src={part} controls className="nostr-media-video" />
-                </div>
-              );
-            }
-          } catch {
-            // ignore invalid URL
-          }
-          return (
-            <a
-              key={`http-${idx}`}
-              href={part}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="nostr-event-link"
-            >
-              {part}
-            </a>
-          );
-        }
-        return <span key={`text-${idx}`}>{part}</span>;
+      {lines.map((line, lineIdx) => {
+        const parts = line.split(LINK_RE);
+        return (
+          <span key={`line-${lineIdx}`}>
+            {parts.map((part, idx) => {
+              if (!part) return null;
+              if (part.toLowerCase().startsWith('nostr:')) {
+                const id = part.slice(6);
+                try {
+                  const decoded = nip19.decode(id.toLowerCase());
+                  if (!['note', 'nevent', 'npub', 'nprofile', 'naddr'].includes(decoded.type)) {
+                    return <span key={`text-${lineIdx}-${idx}`}>{part}</span>;
+                  }
+                } catch {
+                  return <span key={`text-${lineIdx}-${idx}`}>{part}</span>;
+                }
+                return (
+                  <a
+                    key={`nostr-${lineIdx}-${idx}`}
+                    href={`/nostr/${encodeURIComponent(id)}`}
+                    className="nostr-event-link"
+                  >
+                    {part}
+                  </a>
+                );
+              }
+              if (part.startsWith('http://') || part.startsWith('https://')) {
+                try {
+                  const url = new URL(part);
+                  if (IMAGE_EXTENSIONS.test(url.pathname)) {
+                    return (
+                      <div key={`media-${lineIdx}-${idx}`} className="nostr-media-container">
+                        <img
+                          src={part}
+                          alt="Embedded content"
+                          loading="lazy"
+                          className="nostr-media-img"
+                        />
+                      </div>
+                    );
+                  }
+                  if (VIDEO_EXTENSIONS.test(url.pathname)) {
+                    return (
+                      <div key={`media-${lineIdx}-${idx}`} className="nostr-media-container">
+                        {/* eslint-disable-next-line jsx-a11y/media-has-caption -- User-generated content may not have captions */}
+                        <video src={part} controls className="nostr-media-video" />
+                      </div>
+                    );
+                  }
+                } catch {
+                  // ignore invalid URL
+                }
+                return (
+                  <a
+                    key={`http-${lineIdx}-${idx}`}
+                    href={part}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="nostr-event-link"
+                  >
+                    {part}
+                  </a>
+                );
+              }
+              return <span key={`text-${lineIdx}-${idx}`}>{part}</span>;
+            })}
+            {lineIdx < lines.length - 1 && <br key={`br-${lineIdx}`} />}
+          </span>
+        );
       })}
     </>
   );
