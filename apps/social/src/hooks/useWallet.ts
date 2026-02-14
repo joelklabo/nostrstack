@@ -44,12 +44,19 @@ export type WalletState = {
   wallet: WalletData | null;
   isConnecting: boolean;
   error: string | null;
+  retry: () => void;
 };
 
 export function useWallet(): WalletState {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const retry = () => {
+    setError(null);
+    setRetryCount((c) => c + 1);
+  };
 
   useEffect(() => {
     const wsUrl = resolveWalletWs(import.meta.env.VITE_API_BASE_URL);
@@ -103,7 +110,7 @@ export function useWallet(): WalletState {
       globalThis.clearTimeout(timer);
       safeClose(ws);
     };
-  }, []);
+  }, [retryCount]);
 
-  return { wallet, isConnecting, error };
+  return { wallet, isConnecting, error, retry };
 }

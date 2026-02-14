@@ -54,7 +54,12 @@ export const Sidebar = memo(function Sidebar({
   const { logout } = useAuth();
   const cfg = useNostrstackConfig();
   const { status, refresh } = useBitcoinStatus();
-  const { wallet, isConnecting: walletConnecting, error: walletError } = useWallet();
+  const {
+    wallet,
+    isConnecting: walletConnecting,
+    error: walletError,
+    retry: walletRetry
+  } = useWallet();
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -335,6 +340,9 @@ export const Sidebar = memo(function Sidebar({
             <div className="sidebar-wallet-empty">
               <p>Wallet unavailable</p>
               <p className="sidebar-wallet-hint">{walletError}</p>
+              <button type="button" className="wallet-action-btn" onClick={walletRetry}>
+                Retry
+              </button>
             </div>
           </div>
         )}
