@@ -5,6 +5,7 @@ import type { Event } from 'nostr-tools';
 import { memo, useCallback, useState } from 'react';
 
 import { useRepost } from '../hooks/useRepost';
+import { buildNoteLink } from '../utils/navigation';
 import { EmojiReactionButton } from './EmojiReactionButton';
 import { JsonView } from './JsonView';
 import { LinkPreviews } from './LinkPreview';
@@ -72,6 +73,7 @@ export const NostrEventCard = memo(function NostrEventCard({
   const [isZapped, setIsZapped] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [isReposted, setIsReposted] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const { repost, loading: repostLoading } = useRepost();
   const { pubkey } = useAuth();
 
@@ -80,6 +82,17 @@ export const NostrEventCard = memo(function NostrEventCard({
     const success = await repost(event);
     if (success) setIsReposted(true);
   }, [repost, event, repostLoading, isReposted]);
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      const link = buildNoteLink(event.id);
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (e) {
+      console.warn('Failed to copy link', e);
+    }
+  }, [event.id]);
 
   const contentWarningTag = event.tags.find(
     (t) => t[0] === 'content-warning' || t[0] === 'sensitive'
@@ -279,6 +292,18 @@ export const NostrEventCard = memo(function NostrEventCard({
             </span>
           </button>
         )}
+        <button
+          className={`ns-btn ns-btn--ghost ns-btn--sm ns-action-btn ${linkCopied ? 'active' : ''}`}
+          type="button"
+          onClick={handleCopyLink}
+          aria-label={linkCopied ? 'Link copied' : 'Copy link to post'}
+          title={linkCopied ? 'Link copied!' : 'Copy link'}
+        >
+          <span className="icon" aria-hidden="true">
+            {linkCopied ? '✓' : '🔗'}
+          </span>
+          <span className="label">{linkCopied ? 'Copied' : 'Link'}</span>
+        </button>
 
         <button
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"

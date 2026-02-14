@@ -53,6 +53,14 @@ export function buildProfilePath(pubkey: string): string {
   }
 }
 
+export function buildNoteLink(eventId: string): string {
+  try {
+    return `${window.location.origin}/nostr/${nip19.noteEncode(eventId)}`;
+  } catch {
+    return `${window.location.origin}/nostr/${eventId}`;
+  }
+}
+
 export function navigateTo(path: string): void {
   if (typeof window === 'undefined') return;
   if (window.location.pathname === path) return;
