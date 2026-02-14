@@ -17,6 +17,18 @@
     box-shadow var(--ns-duration-moderate) var(--ns-easing-easeInOut);
 }
 
+.support-card--dev {
+  border-style: dashed;
+  border-color: var(--ns-color-text-muted);
+  background: var(--ns-color-bg-subtle);
+  opacity: 0.7;
+}
+
+.support-card--dev:hover {
+  border-color: var(--ns-color-text-default);
+  box-shadow: none;
+}
+
 .support-card:hover {
   border-color: var(--ns-color-warning);
   box-shadow:

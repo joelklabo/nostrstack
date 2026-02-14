@@ -9,8 +9,26 @@ export function SupportCard() {
   const [dismissed, setDismissed] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
 
-  if (dismissed || !supportConfig.enabled) {
+  const isDev = import.meta.env.DEV;
+
+  if (dismissed || (!supportConfig.enabled && !isDev)) {
     return null;
+  }
+
+  if (isDev && !supportConfig.enabled) {
+    return (
+      <section className="support-card support-card--dev" aria-label="Support Nostrstack">
+        <div className="support-card__content">
+          <div className="support-card__icon" aria-hidden="true">
+            ⚡
+          </div>
+          <div className="support-card__title">Support Nostrstack</div>
+          <div className="support-card__subtitle">
+            Set VITE_NOSTRSTACK_TIP_PUBKEY or VITE_NOSTRSTACK_TIP_LNADDR in .env to enable tips
+          </div>
+        </div>
+      </section>
+    );
   }
 
   const regtestFundEnabled =
