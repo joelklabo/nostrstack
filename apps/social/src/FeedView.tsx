@@ -242,7 +242,22 @@ export function FeedView({ isImmersive }: FeedViewProps) {
         inert={isImmersive || undefined}
         aria-hidden={isImmersive || undefined}
       >
-        <h2 className="feed-title">Live Feed</h2>
+        <h2 className="feed-title">
+          Live Feed
+          {!relaysLoading && (
+            <span
+              className="feed-relay-status"
+              title={`${relayList.length} relay${relayList.length !== 1 ? 's' : ''} connected`}
+              aria-label={`${relayList.length} relays connected`}
+            >
+              <span
+                className={`feed-relay-dot ${relayList.length > 0 ? 'feed-relay-dot--online' : 'feed-relay-dot--offline'}`}
+                aria-hidden="true"
+              />
+              {relayList.length}
+            </span>
+          )}
+        </h2>
         <div className="feed-header__actions" role="group" aria-label="Feed filters">
           <button
             type="button"
