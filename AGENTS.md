@@ -1,6 +1,6 @@
 # YOUR JOB
 
-1. Ask `bd ready` what to do
+1. Check GitHub issues for pending tasks
 2. Mark the issue `in_progress`
 3. Work on it
    - Run `pnpm dev:logs` (or tail `.logs/dev/*.log`) so API + gallery logs are visible while reproducing/fixing.
@@ -15,10 +15,7 @@
 
 ## Safety & Maintenance
 
-- **Beads Cleanup:** `bd admin cleanup` (and the deprecated `bd cleanup`) defaults to deleting **ALL** closed issues.
-  - **NEVER** run `bd admin cleanup` or `bd cleanup` without flags.
-  - **ALWAYS** use `--older-than 30` (or similar duration) to preserve recent history/context.
-  - Example: `bd admin cleanup --older-than 30`
+- Use GitHub Issues for task tracking
 
 ## IMPORTANT
 
@@ -26,16 +23,9 @@
 - ALWAYS create new issues/epics if you come across something in the course of your work that should be fixed or improved.
 - NEVER give me a summary, or a status report. Just do "Your Job" (See above)
 
-## NOTE
-
-- If you ever see this error, run `bd doctor` for next steps:
-    "⚠️  WARNING: JSONL file hash mismatch detected (bd-160)
-     This indicates JSONL and export hashes are out of sync.
-     Clearing export hashes to force full re-export."
-
 ## VALID STOP REASONS
 
-- stop reasons: `bd ready` (no tasks), unrecoverable error after retries.
+- stop reasons: no tasks, unrecoverable error after retries.
 
 ## INVALID STOP REASONS
 
@@ -54,7 +44,6 @@
 
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```

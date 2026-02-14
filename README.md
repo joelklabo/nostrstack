@@ -80,7 +80,7 @@ Find friend + tip flow:
 - Use `pnpm dev:network -- --network regtest|mutinynet|mainnet` to load `.env.network.*` profiles (sets BITCOIN_NETWORK/VITE_NETWORK + telemetry provider defaults).
 - For mutinynet/mainnet, set `LN_BITS_URL` + `LN_BITS_API_KEY` and a matching `TELEMETRY_ESPLORA_URL` (`MAINNET_DEMO_OK=true` required for mainnet).
 
-See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.
+See `AGENTS.md` for workflow conventions.
 
 ### Embeddable comments + tips
 
@@ -91,8 +91,8 @@ See `AGENTS.md` for workflow conventions. Tasks and status: `pnpm exec bd list`.
     data-nostrstack-comment-tip="thread-or-slug"
     data-tip-username="alice"
     data-tip-item-id="post-123"
-    data-tip-show-feed="false">
-  </div>
+    data-tip-show-feed="false"
+  ></div>
   ```
 
 Use `data-relays` to override relays, `data-tip-preset-amounts-sats` for presets, and `data-base-url`/`data-host` to point at your API/tenant.

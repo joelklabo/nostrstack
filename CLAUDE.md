@@ -104,16 +104,6 @@ Tenant resolved from host header or `domain` param. User entries store lightning
 - `USE_HTTPS`, `HTTPS_CERT`, `HTTPS_KEY`: HTTPS for local dev
 - `VITE_ENABLE_PROFILE_PAY=true`: Enable profile pay feature
 
-## Beads Task Management
-
-The project uses Beads (`bd`) for task tracking:
-
-```bash
-pnpm exec bd list            # List tasks
-pnpm exec bd ready           # Get next task
-bd admin cleanup --older-than 30  # Clean old issues (NEVER without --older-than)
-```
-
 ## Conventions
 
 - Commits follow Conventional Commits
