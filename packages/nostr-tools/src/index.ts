@@ -1,3 +1,4 @@
+export { nip04, nip44 } from './nip04.js';
 export { SimplePool } from './pool.js';
 export {
   finalizeEvent,

@@ -1,6 +1,8 @@
 import { SimplePool, type SubscribeManyOptions } from './pool.js';
 import type { Event, Filter, Subscription } from './types.js';
 
+export type { Subscription } from './types.js';
+
 export type RelaySub = {
   on: (event: 'event' | 'eose' | 'notice', handler: (payload?: Event) => void) => RelaySub;
   close: () => void;

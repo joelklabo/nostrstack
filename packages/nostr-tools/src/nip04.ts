@@ -15,3 +15,12 @@ export function decrypt(secretKey: Uint8Array, pubkey: string, ciphertext: strin
   const pk = PublicKey.parse(pubkey);
   return nip04Decrypt(sk, pk, ciphertext);
 }
+
+export const nip04 = {
+  encrypt,
+  decrypt
+};
+
+export const nip44 = {
+  // Placeholder - not yet implemented
+};

@@ -8,7 +8,7 @@ export type Event = {
   sig: string;
 };
 
-export type EventTemplate = Omit<Event, 'id' | 'sig'>;
+export type EventTemplate = Omit<Event, 'id' | 'pubkey' | 'sig'>;
 
 export type Filter = {
   ids?: string[];
