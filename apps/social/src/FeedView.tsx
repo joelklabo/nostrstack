@@ -11,6 +11,7 @@ import { filterSpam } from './nostr/spamFilter';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { NewPostsIndicator } from './ui/NewPostsIndicator';
 import { NostrEventCard } from './ui/NostrEventCard';
+import { SupportCard } from './ui/SupportCard';
 import { VirtualizedList } from './ui/VirtualizedList';
 import { navigateTo } from './utils/navigation';
 
@@ -289,6 +290,8 @@ export function FeedView({ isImmersive }: FeedViewProps) {
       </div>
 
       <FindFriendCard onClick={() => navigateTo('/search')} />
+
+      <SupportCard />
 
       {feedError && (
         <Alert tone="danger" style={{ marginBottom: '1.5rem' }}>
