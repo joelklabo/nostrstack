@@ -15,9 +15,6 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
         version: 0.18.2
-      '@beads/bd':
-        specifier: ^0.43.0
-        version: 0.43.0
       '@commitlint/cli':
         specifier: ^20.2.0
         version: 20.2.0(@types/node@22.7.5)(typescript@5.6.2)
@@ -894,16 +891,6 @@ packages:
       {
         integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
       }
-
-  '@beads/bd@0.43.0':
-    resolution:
-      {
-        integrity: sha512-9zr8522Z5Fv1kosmBjlgfLtYLC1FLLSyCaPAfd8ZCK/URPvoQgrLMLkMgKMlIH2fEFPmkcFtX0F+BBfHfiifdg==
-      }
-    engines: { node: '>=14.0.0' }
-    cpu: [x64, arm64]
-    os: [darwin, linux, win32]
-    hasBin: true
 
   '@borewit/text-codec@0.1.1':
     resolution:
@@ -12344,8 +12331,6 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@0.2.3': {}
-
-  '@beads/bd@0.43.0': {}
 
   '@borewit/text-codec@0.1.1': {}
 
