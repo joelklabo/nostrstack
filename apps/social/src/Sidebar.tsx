@@ -54,7 +54,7 @@ export const Sidebar = memo(function Sidebar({
   const { logout } = useAuth();
   const cfg = useNostrstackConfig();
   const { status, refresh } = useBitcoinStatus();
-  const wallet = useWallet();
+  const { wallet, isConnecting: walletConnecting, error: walletError } = useWallet();
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -307,7 +307,38 @@ export const Sidebar = memo(function Sidebar({
       </div>
 
       <div className="sidebar-footer" role="region" aria-label="Wallet and system status">
-        {wallet && (
+        {walletConnecting && (
+          <div className="sidebar-wallet-section">
+            <div className="sidebar-status-label">
+              <span className="sidebar-wallet-icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                </svg>
+              </span>
+              Wallet
+            </div>
+            <div className="sidebar-wallet-empty">
+              <p>Connecting to wallet...</p>
+            </div>
+          </div>
+        )}
+        {walletError && !walletConnecting && (
+          <div className="sidebar-wallet-section">
+            <div className="sidebar-status-label">
+              <span className="sidebar-wallet-icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                </svg>
+              </span>
+              Wallet
+            </div>
+            <div className="sidebar-wallet-empty">
+              <p>Wallet unavailable</p>
+              <p className="sidebar-wallet-hint">{walletError}</p>
+            </div>
+          </div>
+        )}
+        {wallet && !walletConnecting && (
           <div
             className={`sidebar-wallet-section ${isReceiving ? 'is-receiving' : ''} ${(wallet.balance ?? 0) > 0 ? 'has-balance' : ''}`}
           >

@@ -40,18 +40,48 @@ export type WalletData = {
   balance?: number;
 };
 
-export function useWallet() {
+export type WalletState = {
+  wallet: WalletData | null;
+  isConnecting: boolean;
+  error: string | null;
+};
+
+export function useWallet(): WalletState {
   const [wallet, setWallet] = useState<WalletData | null>(null);
-  
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const wsUrl = resolveWalletWs(import.meta.env.VITE_API_BASE_URL);
-    if (!wsUrl) return;
+    if (!wsUrl) {
+      setIsConnecting(false);
+      setError('No wallet URL configured');
+      return;
+    }
 
     let ws: WebSocket | null = null;
     let cancelled = false;
     const timer = globalThis.setTimeout(() => {
       if (cancelled) return;
       ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        if (cancelled) return;
+        setIsConnecting(false);
+        setError(null);
+      };
+
+      ws.onerror = () => {
+        if (cancelled) return;
+        setError('Failed to connect to wallet');
+        setIsConnecting(false);
+      };
+
+      ws.onclose = () => {
+        if (cancelled) return;
+        setIsConnecting(false);
+      };
+
       ws.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
@@ -74,6 +104,6 @@ export function useWallet() {
       safeClose(ws);
     };
   }, []);
-  
-  return wallet;
+
+  return { wallet, isConnecting, error };
 }
