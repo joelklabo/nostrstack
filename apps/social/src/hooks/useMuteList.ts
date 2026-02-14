@@ -63,7 +63,11 @@ export function useMuteList() {
       };
 
       const signed = await signEvent(template);
-      await Promise.any(pool.publish(relays, signed));
+      try {
+        await Promise.any(pool.publish(relays, signed));
+      } catch {
+        console.warn('[MuteList] Failed to publish mute list to all relays');
+      }
       saveEvent(signed).catch(console.warn);
       setMuteEvent(signed);
       setMuted(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
@@ -85,7 +89,11 @@ export function useMuteList() {
       };
 
       const signed = await signEvent(template);
-      await Promise.any(pool.publish(relays, signed));
+      try {
+        await Promise.any(pool.publish(relays, signed));
+      } catch {
+        console.warn('[MuteList] Failed to publish unmute to all relays');
+      }
       saveEvent(signed).catch(console.warn);
       setMuteEvent(signed);
       setMuted(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));

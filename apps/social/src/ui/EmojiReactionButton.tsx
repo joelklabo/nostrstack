@@ -61,7 +61,11 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
         const signedReaction = await signEvent(reactionEventTemplate);
 
         const pool = new SimplePool();
-        await Promise.any(pool.publish(relayTargets, signedReaction));
+        try {
+          await Promise.any(pool.publish(relayTargets, signedReaction));
+        } catch {
+          console.warn('[Reaction] Failed to publish to all relays');
+        }
         pool.close(relayTargets);
       } catch (err) {
         console.error('Failed to publish reaction:', err);

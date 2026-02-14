@@ -112,7 +112,11 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         : ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 
       const pool = new SimplePool();
-      await Promise.any(pool.publish(relays, signedEvent));
+      try {
+        await Promise.any(pool.publish(relays, signedEvent));
+      } catch {
+        console.warn('[Settings] Failed to publish profile to all relays');
+      }
       pool.close(relays);
 
       setProfileStatus('success');

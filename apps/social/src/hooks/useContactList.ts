@@ -60,7 +60,11 @@ export function useContactList() {
       };
 
       const signed = await signEvent(template);
-      await Promise.any(pool.publish(relays, signed));
+      try {
+        await Promise.any(pool.publish(relays, signed));
+      } catch {
+        console.warn('[ContactList] Failed to publish contact list to all relays');
+      }
       saveEvent(signed).catch(console.warn);
       setContactEvent(signed);
       setContacts(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
@@ -82,7 +86,11 @@ export function useContactList() {
       };
 
       const signed = await signEvent(template);
-      await Promise.any(pool.publish(relays, signed));
+      try {
+        await Promise.any(pool.publish(relays, signed));
+      } catch {
+        console.warn('[ContactList] Failed to publish unfollow to all relays');
+      }
       saveEvent(signed).catch(console.warn);
       setContactEvent(signed);
       setContacts(newTags.filter((t) => t[0] === 'p').map((t) => t[1]));
