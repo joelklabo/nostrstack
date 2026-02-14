@@ -398,3 +398,14 @@
 }
 
 /* Animations moved to animations.css to avoid conflicts */
+
+/* ===== REDUCED MOTION SUPPORT ===== */
+@media (prefers-reduced-motion: reduce) {
+  .ns-icon--glow {
+    animation: none;
+  }
+
+  .ns-zap-animation {
+    animation: none;
+  }
+}
