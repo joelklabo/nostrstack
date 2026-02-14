@@ -741,6 +741,17 @@ body {
   opacity: 0.8;
 }
 
+.sidebar-wallet-empty p {
+  margin: 0;
+}
+
+.sidebar-wallet-hint {
+  font-size: 0.68rem;
+  color: var(--ns-color-accent-default);
+  margin-top: var(--ns-space-1);
+  font-style: normal;
+}
+
 .sidebar-network-section {
   margin-bottom: var(--ns-space-4);
 }

@@ -332,7 +332,12 @@ export const Sidebar = memo(function Sidebar({
               />
             </div>
             {(wallet.balance ?? 0) === 0 && (
-              <div className="sidebar-wallet-empty">Your wallet is empty.</div>
+              <div className="sidebar-wallet-empty">
+                <p>Your wallet is empty.</p>
+                <p className="sidebar-wallet-hint">
+                  Receive sats via Lightning address or zap to get started!
+                </p>
+              </div>
             )}
             <div className="sidebar-network-meta">{wallet.name || 'LNbits'}</div>
             {showRegtestActions && (
