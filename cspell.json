@@ -347,6 +347,7 @@
     "zapinvoice",
     "lnurlw",
     "millisats",
+    "Millis",
     "getblockhash",
     "getblock",
     "getmempoolinfo",
