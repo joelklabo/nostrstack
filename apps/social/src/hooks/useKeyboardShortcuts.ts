@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 
-export type View = 'feed' | 'search' | 'profile' | 'notifications' | 'messages' | 'relays' | 'offers' | 'settings';
+export type View =
+  | 'feed'
+  | 'search'
+  | 'profile'
+  | 'notifications'
+  | 'messages'
+  | 'relays'
+  | 'offers'
+  | 'settings';
 
 interface KeyboardShortcutsOptions {
   currentView: View;
@@ -16,9 +24,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
       // Skip if typing in input/textarea
       const target = event.target as HTMLElement;
       const isInputField =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable;
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       if (isInputField && event.key !== 'Escape') {
         // Allow escape to work even in input fields
@@ -27,12 +33,12 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
       switch (event.key) {
         case 'j':
-          // Navigate to next post (TODO: implement post navigation)
+          // Post navigation handled by usePostNavigation hook
           event.preventDefault();
           break;
 
         case 'k':
-          // Navigate to previous post (TODO: implement post navigation)
+          // Post navigation handled by usePostNavigation hook
           if (event.metaKey || event.ctrlKey) {
             // Cmd+K or Ctrl+K for search
             event.preventDefault();

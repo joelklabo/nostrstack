@@ -414,10 +414,10 @@ export const Sidebar = memo(function Sidebar({
               Help keep Nostrstack running! Your support helps cover hosting costs and keeps the
               lights on.
             </p>
-            {supportConfig.enabled ? (
+            {supportConfig.enabled || regtestFundEnabled ? (
               <SendSats
                 pubkey={supportConfig.tipPubkey || ''}
-                lightningAddress={supportConfig.tipLnaddr}
+                lightningAddress={supportConfig.enabled ? supportConfig.tipLnaddr : undefined}
                 defaultAmountSats={500}
                 presetAmountsSats={[100, 500, 1000, 5000]}
                 notePlaceholder="Say thanks (optional)"
