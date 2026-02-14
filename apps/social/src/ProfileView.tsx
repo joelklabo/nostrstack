@@ -9,6 +9,7 @@ import { paymentConfig } from './config/payments';
 import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
 import { useRelays } from './hooks/useRelays';
+import { CopyButton } from './ui/CopyButton';
 import { Image } from './ui/Image';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { VirtualizedList } from './ui/VirtualizedList';
@@ -286,7 +287,16 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                   )}
                 </div>
               </div>
-              <code className="profile-pubkey">{npub}</code>
+              <div className="profile-pubkey-row">
+                <code className="profile-pubkey">{npub}</code>
+                <CopyButton
+                  text={npub}
+                  label="Copy npub"
+                  size="sm"
+                  variant="icon"
+                  ariaLabel="Copy npub to clipboard"
+                />
+              </div>
               {profile?.nip05 && <p className="profile-nip05">NIP-05: {profile.nip05}</p>}
               {profile?.about && <p className="profile-about">{profile.about}</p>}
               {profile?.website && (

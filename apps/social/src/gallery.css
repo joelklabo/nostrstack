@@ -3874,17 +3874,23 @@ body {
   border-color: var(--ns-color-border-default);
 }
 
+.profile-pubkey-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+}
+
 .profile-pubkey {
   display: block;
   font-family: var(--ns-font-family-mono);
   font-size: var(--ns-font-size-xs);
   color: var(--ns-color-text-subtle);
   word-break: break-all;
-  margin-bottom: var(--ns-space-2);
   padding: var(--ns-space-2);
   background: var(--ns-color-bg-subtle);
   border-radius: var(--ns-radius-sm);
   border: 1px solid var(--ns-color-border-default);
+  flex: 1;
 }
 
 .profile-nip05 {
