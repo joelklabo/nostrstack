@@ -13,9 +13,17 @@ PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
 GALLERY_PORT="${GALLERY_PORT:-4173}"
 
+# Default to staging LNbits on Azure
+LN_BITS_URL="${LN_BITS_URL:-https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io}"
+LN_BITS_API_KEY="${LN_BITS_API_KEY:-}"
+if [[ -z "$LN_BITS_API_KEY" ]]; then
+  LN_BITS_API_KEY="$(az keyvault secret show --vault-name satoshis-kv-west --name lnbits-api-key --query value -o tsv 2>/dev/null)" || true
+fi
+TELEMETRY_ESPLORA_URL="${TELEMETRY_ESPLORA_URL:-https://mutinynet.com/api}"
+
 require() { [[ -n "${!1:-}" ]] || { echo "Missing env $1" >&2; exit 1; }; }
 require LN_BITS_URL
-require LN_BITS_API_KEY
+[[ -n "$LN_BITS_API_KEY" ]] || { echo "Missing LN_BITS_API_KEY - set it or ensure az keyvault access" >&2; exit 1; }
 require TELEMETRY_ESPLORA_URL
 export TELEMETRY_PROVIDER="${TELEMETRY_PROVIDER:-esplora}"
 export VITE_NOSTRSTACK_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
@@ -44,6 +52,9 @@ echo "  API base:            http://localhost:${API_PORT}"
 echo "  Gallery:             http://localhost:${GALLERY_PORT}"
 echo "  Relays:              ${VITE_NOSTRSTACK_RELAYS}"
 
+# Default tip address for Support Nostrstack
+VITE_NOSTRSTACK_TIP_LNADDR="${VITE_NOSTRSTACK_TIP_LNADDR:-alice@localhost}"
+
 env \
   BITCOIN_NETWORK=mutinynet \
   VITE_NETWORK=mutinynet \
@@ -62,6 +73,7 @@ env \
   VITE_LNBITS_ADMIN_KEY="$LN_BITS_API_KEY" \
   VITE_NOSTRSTACK_RELAYS="$VITE_NOSTRSTACK_RELAYS" \
   VITE_ENABLE_TEST_SIGNER="$VITE_ENABLE_TEST_SIGNER" \
+  VITE_NOSTRSTACK_TIP_LNADDR="$VITE_NOSTRSTACK_TIP_LNADDR" \
   pnpm exec concurrently -k -n api,social \
     "pnpm --filter api dev" \
     "pnpm --filter social dev -- --host --port ${GALLERY_PORT}"
