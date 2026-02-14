@@ -53,10 +53,10 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
   const [profileNip05, setProfileNip05] = useState('');
   const [profileLud16, setProfileLud16] = useState('');
   const [profileWebsite, setProfileWebsite] = useState('');
-  const [_profileStatus, setProfileStatus] = useState<'idle' | 'saving' | 'success' | 'error'>(
+  const [profileStatus, setProfileStatus] = useState<'idle' | 'saving' | 'success' | 'error'>(
     'idle'
   );
-  const [_profileError, setProfileError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profileEvent?.content) {
