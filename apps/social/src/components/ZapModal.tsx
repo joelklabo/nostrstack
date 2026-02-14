@@ -130,7 +130,6 @@ export const ZapModal: React.FC<ZapModalProps> = ({
       const pr = await onZap(amount, message);
       setInvoice(pr);
       setState('ready');
-      // In a real app, here we would start polling for payment success
     } catch (e: unknown) {
       if (e instanceof Error) {
         setError(e.message);
