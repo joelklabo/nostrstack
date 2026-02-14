@@ -14,6 +14,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-social
   API_URL: https://api.nostrstack.com
+  NOSTRSTACK_TIP_LNADDR: '' # Set to enable Support Nostrstack tip button (e.g., tip@nostrstack.com)
+  NOSTRSTACK_TIP_PUBKEY: '' # Alternative to LNADDR for tipping
 
 jobs:
   deploy:
@@ -57,6 +59,8 @@ jobs:
           build-args: |
             VITE_API_BASE_URL=${{ env.API_URL }}
             VITE_NETWORK=mainnet
+            VITE_NOSTRSTACK_TIP_LNADDR=${{ env.NOSTRSTACK_TIP_LNADDR }}
+            VITE_NOSTRSTACK_TIP_PUBKEY=${{ env.NOSTRSTACK_TIP_PUBKEY }}
 
       - name: Azure login
         uses: azure/login@v2

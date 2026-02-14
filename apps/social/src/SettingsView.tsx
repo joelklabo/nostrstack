@@ -1,10 +1,12 @@
 import './styles/nwc.css';
 
-import { NwcClient } from '@nostrstack/react';
+import { NwcClient, useAuth, useProfile } from '@nostrstack/react';
 import { type NsBrandPreset } from '@nostrstack/widgets';
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { SimplePool } from 'nostr-tools';
+import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { useRelays } from './hooks/useRelays';
 import { CelebrationSettings } from './ui/CelebrationSettings';
 
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
@@ -39,6 +41,100 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: SettingsViewProps) {
+  const { pubkey, signEvent } = useAuth();
+  const { relays: relayList } = useRelays();
+  const { profile: profileEvent } = useProfile(pubkey ?? '', { enabled: !!pubkey });
+
+  const [profileName, setProfileName] = useState('');
+  const [profileDisplayName, setProfileDisplayName] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
+  const [profileBanner, setProfileBanner] = useState('');
+  const [profileAbout, setProfileAbout] = useState('');
+  const [profileNip05, setProfileNip05] = useState('');
+  const [profileLud16, setProfileLud16] = useState('');
+  const [profileWebsite, setProfileWebsite] = useState('');
+  const [_profileStatus, setProfileStatus] = useState<'idle' | 'saving' | 'success' | 'error'>(
+    'idle'
+  );
+  const [_profileError, setProfileError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profileEvent?.content) {
+      try {
+        const content = JSON.parse(profileEvent.content);
+        setProfileName(content.name ?? '');
+        setProfileDisplayName(content.display_name ?? '');
+        setProfilePicture(content.picture ?? '');
+        setProfileBanner(content.banner ?? '');
+        setProfileAbout(content.about ?? '');
+        setProfileNip05(content.nip05 ?? '');
+        setProfileLud16(content.lud16 ?? '');
+        setProfileWebsite(content.website ?? '');
+      } catch {
+        // ignore parse errors
+      }
+    }
+  }, [profileEvent]);
+
+  const handlePublishProfile = useCallback(async () => {
+    if (!pubkey || !signEvent) {
+      setProfileError('Not authenticated');
+      setProfileStatus('error');
+      return;
+    }
+
+    setProfileStatus('saving');
+    setProfileError(null);
+
+    try {
+      const content = {
+        name: profileName || undefined,
+        display_name: profileDisplayName || undefined,
+        picture: profilePicture || undefined,
+        banner: profileBanner || undefined,
+        about: profileAbout || undefined,
+        nip05: profileNip05 || undefined,
+        lud16: profileLud16 || undefined,
+        website: profileWebsite || undefined
+      };
+
+      const template = {
+        kind: 0,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [],
+        content: JSON.stringify(content)
+      };
+
+      const signedEvent = await signEvent(template);
+
+      const relays = relayList?.length
+        ? relayList
+        : ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
+
+      const pool = new SimplePool();
+      await Promise.any(pool.publish(relays, signedEvent));
+      pool.close(relays);
+
+      setProfileStatus('success');
+      window.setTimeout(() => setProfileStatus('idle'), 2000);
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Failed to publish profile');
+      setProfileStatus('error');
+    }
+  }, [
+    pubkey,
+    signEvent,
+    relayList,
+    profileName,
+    profileDisplayName,
+    profilePicture,
+    profileBanner,
+    profileAbout,
+    profileNip05,
+    profileLud16,
+    profileWebsite
+  ]);
+
   const [nwcUri, setNwcUri] = useState('');
   const [nwcRelays, setNwcRelays] = useState('');
   const [nwcMaxSats, setNwcMaxSats] = useState('');
@@ -275,6 +371,144 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
   return (
     <div className="profile-view">
+      {pubkey && (
+        <div className="paywall-container">
+          <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>Profile</h4>
+          <p
+            style={{
+              fontSize: '0.85rem',
+              color: 'var(--ns-color-text-muted)',
+              marginBottom: '1rem'
+            }}
+          >
+            Update your profile information. This will be published to the Nostr network.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <label className="nwc-label" htmlFor="profile-name">
+              Name
+              <input
+                id="profile-name"
+                className="ns-input"
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                placeholder="Display name"
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-display-name">
+              Display Name
+              <input
+                id="profile-display-name"
+                className="ns-input"
+                type="text"
+                value={profileDisplayName}
+                onChange={(e) => setProfileDisplayName(e.target.value)}
+                placeholder="Your display name"
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-picture">
+              Avatar URL
+              <input
+                id="profile-picture"
+                className="ns-input"
+                type="url"
+                value={profilePicture}
+                onChange={(e) => setProfilePicture(e.target.value)}
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-banner">
+              Banner URL
+              <input
+                id="profile-banner"
+                className="ns-input"
+                type="url"
+                value={profileBanner}
+                onChange={(e) => setProfileBanner(e.target.value)}
+                placeholder="https://example.com/banner.jpg"
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-about">
+              Bio
+              <textarea
+                id="profile-about"
+                className="ns-input"
+                value={profileAbout}
+                onChange={(e) => setProfileAbout(e.target.value)}
+                placeholder="Tell us about yourself..."
+                rows={3}
+                style={{ resize: 'vertical' }}
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-nip05">
+              NIP-05 Identifier
+              <input
+                id="profile-nip05"
+                className="ns-input"
+                type="email"
+                value={profileNip05}
+                onChange={(e) => setProfileNip05(e.target.value)}
+                placeholder="you@domain.com"
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-lud16">
+              Lightning Address
+              <input
+                id="profile-lud16"
+                className="ns-input"
+                type="email"
+                value={profileLud16}
+                onChange={(e) => setProfileLud16(e.target.value)}
+                placeholder="you@lightning.address"
+              />
+            </label>
+            <label className="nwc-label" htmlFor="profile-website">
+              Website
+              <input
+                id="profile-website"
+                className="ns-input"
+                type="url"
+                value={profileWebsite}
+                onChange={(e) => setProfileWebsite(e.target.value)}
+                placeholder="https://yourwebsite.com"
+              />
+            </label>
+          </div>
+          {profileError && (
+            <div
+              style={{
+                color: 'var(--ns-color-danger-default)',
+                marginTop: '0.5rem',
+                fontSize: '0.9rem'
+              }}
+            >
+              {profileError}
+            </div>
+          )}
+          {profileStatus === 'success' && (
+            <div
+              style={{
+                color: 'var(--ns-color-success-default)',
+                marginTop: '0.5rem',
+                fontSize: '0.9rem'
+              }}
+            >
+              Profile published successfully!
+            </div>
+          )}
+          <button
+            type="button"
+            className="action-btn"
+            style={{ marginTop: '1rem' }}
+            onClick={handlePublishProfile}
+            disabled={profileStatus === 'saving'}
+            aria-label="Publish profile"
+          >
+            {profileStatus === 'saving' ? 'Publishing...' : 'Publish Profile'}
+          </button>
+        </div>
+      )}
+
       <h3>System Settings</h3>
 
       <div className="paywall-container">
