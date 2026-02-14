@@ -302,7 +302,7 @@
         "$description": "Full saturation for emphasis"
       },
       "glow": {
-        "$value": "{color.bitcoin.glow}",
+        "$value": "{color.bitcoin.400}",
         "$type": "color",
         "$description": "Intense glow for zap animations and celebrations"
       }
