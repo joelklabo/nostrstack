@@ -65,7 +65,6 @@
     "@types/pino-pretty",
     "@types/sinon",
     "wait-on",
-    "@beads/bd",
     "@commitlint/cli",
     "@secretlint/secretlint-rule-preset-recommend",
     "chrome-devtools-mcp",
