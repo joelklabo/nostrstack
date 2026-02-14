@@ -16,6 +16,12 @@ export function SupportCard() {
   }
 
   if (isDev && !supportConfig.enabled) {
+    const handleCopyEnv = async () => {
+      const text = `# Add to your .env to enable SupportCard
+VITE_NOSTRSTACK_TIP_PUBKEY=your-npub-here
+VITE_NOSTRSTACK_TIP_LNADDR=your@lightning.address`;
+      await navigator.clipboard.writeText(text);
+    };
     return (
       <section className="support-card support-card--dev" aria-label="Support Nostrstack">
         <div className="support-card__content">
@@ -26,6 +32,16 @@ export function SupportCard() {
           <div className="support-card__subtitle">
             Set VITE_NOSTRSTACK_TIP_PUBKEY or VITE_NOSTRSTACK_TIP_LNADDR in .env to enable tips
           </div>
+        </div>
+        <div className="support-card__actions">
+          <button
+            className="support-card__action ns-btn ns-btn--ghost"
+            type="button"
+            onClick={handleCopyEnv}
+            aria-label="Copy env template to clipboard"
+          >
+            Copy env template
+          </button>
         </div>
       </section>
     );
