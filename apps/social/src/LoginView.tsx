@@ -23,9 +23,10 @@ const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 90000;
 
 export function LoginView() {
-  const { loginWithNip07, loginWithNsec, loginWithLnurl, error } = useAuth();
+  const { loginWithNip07, loginWithNsec, loginWithLnurl, error: authError } = useAuth();
   const cfg = useNostrstackConfig();
   const [nsec, setNsec] = useState('');
+  const [nsecError, setNsecError] = useState<string | null>(null);
   const [mode, setMode] = useState<'menu' | 'nsec' | 'guest'>('menu');
   const [lnurlModalOpen, setLnurlModalOpen] = useState(false);
   const [lnurlRequest, setLnurlRequest] = useState<LnurlAuthRequest | null>(null);
@@ -298,6 +299,12 @@ export function LoginView() {
           </Alert>
         )}
 
+        {(authError || nsecError) && (
+          <Alert tone="danger" role="alert">
+            {nsecError ?? authError}
+          </Alert>
+        )}
+
         {mode === 'menu' && (
           <div className="auth-options" role="group" aria-label="Authentication methods">
             <button
@@ -366,7 +373,18 @@ export function LoginView() {
               <button
                 type="button"
                 className="auth-btn auth-btn--primary"
-                onClick={() => loginWithNsec(nsec).catch(() => {})}
+                onClick={async () => {
+                  if (!nsec.trim()) {
+                    setNsecError('Please enter a private key');
+                    return;
+                  }
+                  setNsecError(null);
+                  try {
+                    await loginWithNsec(nsec);
+                  } catch (err) {
+                    setNsecError(err instanceof Error ? err.message : 'Invalid private key');
+                  }
+                }}
                 aria-label="Sign in with private key"
               >
                 Sign in
