@@ -168,10 +168,10 @@ test.describe('Social App Flow', () => {
       }
     }
 
-    // Click VIEW_SRC on the first post
-    const viewSource = page.getByText('View Source').first();
+    // Click VIEW_SRC on the first post - use regex to match case-insensitively
+    const viewSource = page.getByText(/View Source/i).first();
     const hasPost = await viewSource
-      .waitFor({ state: 'visible', timeout: 5000 })
+      .waitFor({ state: 'visible', timeout: 10000 })
       .then(() => true)
       .catch(() => false);
     if (!hasPost) {
@@ -180,15 +180,18 @@ test.describe('Social App Flow', () => {
     }
     // Use force:true to bypass onboarding overlay if it intercepts clicks
     await viewSource.click({ force: true });
-    // Wait for JSON view to appear (contains "Event ID:")
-    await page.waitForTimeout(500);
+    // Wait longer for JSON view to appear (relays may be slow)
+    await page.waitForTimeout(1500);
     // Expect JSON view to appear (contains "EVENT_ID:")
-    await expect(page.locator('.ns-json')).toBeVisible();
+    await expect(page.locator('.ns-json')).toBeVisible({ timeout: 10000 });
 
     // Toggle back (HIDE_SRC)
-    await page.getByText('Hide Source').first().click();
-    await page.waitForTimeout(300);
-    await expect(page.locator('.ns-json')).not.toBeVisible();
+    await page
+      .getByText(/Hide Source/i)
+      .first()
+      .click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('.ns-json')).not.toBeVisible({ timeout: 5000 });
 
     // Click REPLY (no-op but should not crash)
     await page.getByText('Reply').first().click();
