@@ -58,8 +58,8 @@ jobs:
           VITE_ENABLE_TEST_SIGNER: 'true'
           VITE_TEST_SIGNER_SK: 0000000000000000000000000000000000000000000000000000000000000001
         run: |
-          if [ -n "${{ github.inputs.test_filter }}" ]; then
-            pnpm exec playwright test "${{ github.inputs.test_filter }}" --project=chromium --reporter=line
+          if [ -n "${{ github.event.inputs.test_filter }}" ]; then
+            pnpm exec playwright test "${{ github.event.inputs.test_filter }}" --project=chromium --reporter=line
           else
             pnpm exec playwright test --project=chromium --reporter=line
           fi
