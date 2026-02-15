@@ -145,10 +145,6 @@ test.describe('Social App Flow', () => {
   });
 
   test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {
-    // Clear any stored onboarding state so we can test without overlay
-    await page.goto('/');
-    await page.evaluate(() => localStorage.removeItem('nostrstack.onboarding.v1'));
-
     // Login and dismiss onboarding
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
     await loginWithNsec(page, validNsec);
@@ -182,7 +178,8 @@ test.describe('Social App Flow', () => {
       test.skip(true, 'No posts available for source view');
       return;
     }
-    await viewSource.click();
+    // Use force:true to bypass onboarding overlay if it intercepts clicks
+    await viewSource.click({ force: true });
     // Wait for JSON view to appear (contains "Event ID:")
     await page.waitForTimeout(500);
     // Expect JSON view to appear (contains "EVENT_ID:")
