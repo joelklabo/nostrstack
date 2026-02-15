@@ -206,6 +206,7 @@ jobs:
           ADMIN_API_KEY: test-admin
           OP_NODE_API_KEY: test-key
           OP_NODE_WEBHOOK_SECRET: whsec_test
+          USE_HTTPS: 'false'
         run: |
           pnpm exec prisma generate
           pnpm exec playwright test
