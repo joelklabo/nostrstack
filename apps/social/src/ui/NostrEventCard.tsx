@@ -174,73 +174,76 @@ export const NostrEventCard = memo(function NostrEventCard({
   );
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Intentional clickable card pattern
-    <article
-      className={rootClasses}
-      aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
-      onClick={onOpenThread ? handleCardClick : undefined}
-      role={onOpenThread ? 'button' : undefined}
-      tabIndex={onOpenThread ? 0 : undefined}
-      onKeyDown={
-        onOpenThread
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onOpenThread(event.id);
+    <article className={rootClasses} aria-label={`Post by ${event.pubkey.slice(0, 8)}`}>
+      <div
+        className="ns-event-card__body-wrapper"
+        role={onOpenThread ? 'button' : undefined}
+        tabIndex={onOpenThread ? 0 : undefined}
+        onClick={onOpenThread ? handleCardClick : undefined}
+        onKeyDown={
+          onOpenThread
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenThread(event.id);
+                }
               }
-            }
-          : undefined
-      }
-    >
-      <header className="ns-event-card__header">
-        <div className="ns-event-card__meta">
-          <ProfileLink
-            pubkey={event.pubkey}
-            label={`${event.pubkey.slice(0, 8)}...`}
-            title={event.pubkey}
-            className="ns-profile-link"
-          />
-          <span className="ns-separator" aria-hidden="true">
-            •
-          </span>
-          <time className="ns-timestamp" dateTime={new Date(event.created_at * 1000).toISOString()}>
-            {new Date(event.created_at * 1000).toLocaleTimeString([], {
-              hour: 'numeric',
-              minute: '2-digit'
-            })}
-          </time>
-        </div>
-
-        {variant !== 'compact' && (
-          <div className="ns-badge" title={`Nostr event kind ${event.kind}`}>
-            {getKindLabel(event.kind)}
+            : undefined
+        }
+      >
+        <header className="ns-event-card__header">
+          <div className="ns-event-card__meta">
+            <ProfileLink
+              pubkey={event.pubkey}
+              label={`${event.pubkey.slice(0, 8)}...`}
+              title={event.pubkey}
+              className="ns-profile-link"
+            />
+            <span className="ns-separator" aria-hidden="true">
+              •
+            </span>
+            <time
+              className="ns-timestamp"
+              dateTime={new Date(event.created_at * 1000).toISOString()}
+            >
+              {new Date(event.created_at * 1000).toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
+            </time>
           </div>
-        )}
-      </header>
 
-      <div className="ns-event-card__body">
-        {isPaywalled ? (
-          <PaywalledContent
-            itemId={paywallItemId}
-            amountSats={paywallAmount}
-            apiBase={apiBase ?? 'http://localhost:3001'}
-            host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
-            unlockedContent={renderContent()}
-            lockedContent={
-              <div className="ns-callout">
-                <div className="ns-callout__title">Premium Content</div>
-                <div className="ns-callout__content">
-                  This content requires a payment of {paywallAmount} sats.
+          {variant !== 'compact' && (
+            <div className="ns-badge" title={`Nostr event kind ${event.kind}`}>
+              {getKindLabel(event.kind)}
+            </div>
+          )}
+        </header>
+
+        <div className="ns-event-card__body">
+          {isPaywalled ? (
+            <PaywalledContent
+              itemId={paywallItemId}
+              amountSats={paywallAmount}
+              apiBase={apiBase ?? 'http://localhost:3001'}
+              host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
+              unlockedContent={renderContent()}
+              lockedContent={
+                <div className="ns-callout">
+                  <div className="ns-callout__title">Premium Content</div>
+                  <div className="ns-callout__content">
+                    This content requires a payment of {paywallAmount} sats.
+                  </div>
                 </div>
-              </div>
-            }
-          />
-        ) : (
-          <>
-            {renderContent()}
-            <LinkPreviews content={event.content} />
-          </>
-        )}
+              }
+            />
+          ) : (
+            <>
+              {renderContent()}
+              <LinkPreviews content={event.content} />
+            </>
+          )}
+        </div>
       </div>
 
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}

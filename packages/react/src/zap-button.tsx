@@ -635,8 +635,11 @@ export function ZapButton({
         type="button"
         ref={triggerRef}
         className={`action-btn zap-btn ${className ?? ''}`}
-        style={style}
-        onClick={handleZap}
+        style={{ ...style, pointerEvents: 'auto' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleZap();
+        }}
         disabled={zapState !== 'idle'}
         aria-label={
           zapState === 'idle'
