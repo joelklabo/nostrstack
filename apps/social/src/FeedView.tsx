@@ -57,12 +57,26 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     return saved === 'following' ? 'following' : 'all';
   });
 
+  // Sort mode: 'latest' shows newest first, 'chronological' shows oldest first
+  const [sortMode] = useState<'latest' | 'chronological'>(() => {
+    if (typeof window === 'undefined') return 'latest';
+    const saved = localStorage.getItem('nostrstack.sortMode');
+    return saved === 'chronological' ? 'chronological' : 'latest';
+  });
+
   // Persist feed mode to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('nostrstack.feedMode', feedMode);
     }
   }, [feedMode]);
+
+  // Persist sort mode to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nostrstack.sortMode', sortMode);
+    }
+  }, [sortMode]);
 
   // Determine feed parameters
   const isFollowingMode = feedMode === 'following';
@@ -83,7 +97,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     limit: 20
   });
 
-  // Memoize filtered posts with safety checks
+  // Memoize filtered posts with safety checks and sorting
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
     try {
@@ -95,12 +109,17 @@ export function FeedView({ isImmersive }: FeedViewProps) {
           return true; // Don't crash if mute check fails
         }
       });
-      return spamFilterEnabled ? filterSpam(filtered) : filtered;
+      const result = spamFilterEnabled ? filterSpam(filtered) : filtered;
+      // Sort posts based on sort mode
+      if (sortMode === 'latest') {
+        return result.sort((a, b) => b.created_at - a.created_at);
+      }
+      return result; // chronological - return as-is from relay
     } catch (e) {
       console.error('Filter error', e);
       return posts;
     }
-  }, [posts, isMuted, spamFilterEnabled]);
+  }, [posts, isMuted, spamFilterEnabled, sortMode]);
 
   // Detect new posts when scrolled down
   useEffect(() => {
@@ -285,6 +304,19 @@ export function FeedView({ isImmersive }: FeedViewProps) {
             aria-label="Search posts and profiles"
           >
             <span aria-hidden="true">🔍</span> Search
+          </button>
+          <button
+            type="button"
+            className={`ns-btn ns-btn--sm ${sortMode === 'latest' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
+            onClick={() => setSortMode(sortMode === 'latest' ? 'chronological' : 'latest')}
+            aria-pressed={sortMode === 'latest'}
+            aria-label={
+              sortMode === 'latest'
+                ? 'Showing latest posts, click for chronological'
+                : 'Showing chronological, click for latest'
+            }
+          >
+            {sortMode === 'latest' ? 'Latest' : 'Chronological'}
           </button>
           <button
             type="button"
