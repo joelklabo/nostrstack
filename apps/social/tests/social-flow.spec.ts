@@ -168,8 +168,8 @@ test.describe('Social App Flow', () => {
       }
     }
 
-    // Click VIEW_SRC on the first post - use regex to match case-insensitively
-    const viewSource = page.getByText(/View Source/i).first();
+    // Click VIEW_SRC on the first post - use aria-label for more reliable matching
+    const viewSource = page.getByRole('button', { name: /View event source JSON/i }).first();
     const hasPost = await viewSource
       .waitFor({ state: 'visible', timeout: 10000 })
       .then(() => true)
@@ -187,7 +187,7 @@ test.describe('Social App Flow', () => {
 
     // Toggle back (HIDE_SRC)
     await page
-      .getByText(/Hide Source/i)
+      .getByRole('button', { name: /Hide event source JSON/i })
       .first()
       .click();
     await page.waitForTimeout(500);
