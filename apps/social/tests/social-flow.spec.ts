@@ -123,7 +123,7 @@ test.describe('Social App Flow', () => {
     await loginWithNsec(page, validNsec);
 
     // Click Profile
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await page.getByRole('button', { name: 'Profile', exact: true }).click();
 
     // Check Profile View
     await expect(page.locator('.profile-view')).toBeVisible({ timeout: 10000 });
