@@ -43,7 +43,6 @@
   ],
   "ignoreDependencies": [
     "@nostrstack/tokens",
-    "@testing-library/react",
     "chokidar",
     "style-dictionary",
     "vitest",
@@ -93,6 +92,8 @@
   ],
   "ignoreExportsUsedInFile": true,
   "ignoreExports": {
+    "packages/nostr-tools/src/nip04.ts": ["encrypt", "decrypt"],
+    "packages/nostr-tools/src/pool.ts": ["useWebSocketImplementation"],
     "apps/api/src/nostr/nostr-client.ts": ["PublishTemplate", "PublishInput"],
     "apps/api/src/providers/index.ts": ["LightningProvider"],
     "apps/api/src/providers/opennode.ts": ["CreateChargeInput"],
@@ -132,6 +133,11 @@
     "packages/*": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/nostr-tools": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreExportsUsedInFile": true
     },
     "packages/nostr": {
       "entry": ["src/index.ts", "src/testing.ts"],

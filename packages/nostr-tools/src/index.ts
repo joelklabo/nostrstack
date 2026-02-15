@@ -1,5 +1,5 @@
-export { nip04, nip44 } from './nip04.js';
-export { SimplePool } from './pool.js';
+export { decrypt, encrypt, nip04, nip44 } from './nip04.js';
+export { SimplePool, useWebSocketImplementation } from './pool.js';
 export {
   finalizeEvent,
   generateSecretKey,

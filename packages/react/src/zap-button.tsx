@@ -640,7 +640,7 @@ export function ZapButton({
         disabled={zapState !== 'idle'}
         aria-label={
           zapState === 'idle'
-            ? `Send ${amountSats} sats as zap`
+            ? `Zap ${event.content.slice(0, 50)}${event.content.length > 50 ? '...' : ''}`
             : zapState === 'paid'
               ? 'Zap sent successfully'
               : 'Sending zap'
