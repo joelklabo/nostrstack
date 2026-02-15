@@ -1,6 +1,6 @@
 import '../styles/tour.css';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useOnboarding } from '../hooks/useOnboarding';
@@ -167,19 +167,28 @@ export function OnboardingTour() {
     }
   };
 
+  if (!isActive) return null;
+
   return createPortal(
     <>
-      {!spotlightStyle && (
-        <div
-          className="onboarding-overlay"
-          aria-hidden="true"
-          onClick={handleOverlayClick}
-          style={{ cursor: 'pointer' }}
-        />
-      )}
+      <div
+        className="onboarding-overlay"
+        aria-hidden="true"
+        onClick={handleOverlayClick}
+        style={{ cursor: 'pointer' }}
+      />
       {spotlightStyle && (
         <div className="onboarding-spotlight" style={spotlightStyle} aria-hidden="true" />
       )}
+      <button
+        type="button"
+        className="onboarding-dismiss"
+        onClick={skip}
+        aria-label="Dismiss tour"
+        title="Press Escape to dismiss"
+      >
+        ×
+      </button>
       <div
         className="onboarding-card"
         style={position}

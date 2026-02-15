@@ -7,6 +7,31 @@
   backdrop-filter: blur(4px);
 }
 
+.onboarding-dismiss {
+  position: fixed;
+  top: var(--ns-space-4);
+  right: var(--ns-space-4);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ns-color-surface-default);
+  color: var(--ns-color-text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--ns-duration-fast) var(--ns-easing-easeInOut);
+  box-shadow: var(--ns-shadow-md);
+}
+
+.onboarding-dismiss:hover {
+  background: var(--ns-color-bg-subtle);
+  color: var(--ns-color-text-default);
+}
+
 .onboarding-spotlight {
   position: fixed;
   box-shadow: 0 0 0 9999px var(--ns-color-overlay-strong);
