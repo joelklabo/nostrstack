@@ -26,7 +26,11 @@ function formatBolt12Error(err: unknown): Bolt12ErrorResult {
   if (err instanceof Error) {
     const message = err.message.toLowerCase();
     if (message.includes('not configured')) {
-      return { status: 503, error: 'bolt12_provider_unconfigured', message: 'BOLT12 provider is not configured.' };
+      return {
+        status: 503,
+        error: 'bolt12_provider_unconfigured',
+        message: 'BOLT12 provider is not configured.'
+      };
     }
     if (message.includes('response missing')) {
       return {
@@ -36,7 +40,11 @@ function formatBolt12Error(err: unknown): Bolt12ErrorResult {
       };
     }
     if (message.includes('provider request failed')) {
-      return { status: 502, error: 'bolt12_provider_failed', message: 'BOLT12 provider request failed.' };
+      return {
+        status: 502,
+        error: 'bolt12_provider_failed',
+        message: 'BOLT12 provider request failed.'
+      };
     }
   }
   return { status: 500, error: 'bolt12_failed', message: 'BOLT12 request failed.' };
@@ -75,124 +83,115 @@ export async function registerBolt12Routes(app: FastifyInstance) {
 
   const assertBolt12Guardrails = () => {
     if (env.NODE_ENV === 'production' && env.BOLT12_PROVIDER === 'mock') {
-      throw new Bolt12GuardrailError('bolt12_provider_disallowed', 'Mock provider is not allowed in production.');
+      throw new Bolt12GuardrailError(
+        'bolt12_provider_disallowed',
+        'Mock provider is not allowed in production.'
+      );
     }
     if (env.NODE_ENV === 'production' && env.BOLT12_REST_URL?.startsWith('http://')) {
-      throw new Bolt12GuardrailError('bolt12_provider_insecure', 'BOLT12 provider must use https in production.');
+      throw new Bolt12GuardrailError(
+        'bolt12_provider_insecure',
+        'BOLT12 provider must use https in production.'
+      );
     }
   };
 
-  app.post('/api/bolt12/offers', {
-    schema: {
-      body: {
-        type: 'object',
-        properties: {
-          description: { type: 'string' },
-          amountMsat: { type: 'integer', minimum: 1 },
-          label: { type: 'string' },
-          issuer: { type: 'string' },
-          expiresIn: { type: 'integer', minimum: 1 }
-        },
-        required: ['description'],
-        additionalProperties: false
-      },
-      response: {
-        201: {
+  app.post(
+    '/api/bolt12/offers',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          properties: {
+            description: { type: 'string' },
+            amountMsat: { type: 'integer', minimum: 1 },
+            label: { type: 'string' },
+            issuer: { type: 'string' },
+            expiresIn: { type: 'integer', minimum: 1 }
+          },
+          required: ['description'],
+          additionalProperties: false
+        }
+      }
+    },
+    async (request, reply) => {
+      if (!env.ENABLE_BOLT12) {
+        return reply.code(404).send({ status: 'disabled' });
+      }
+      const body = request.body as {
+        description: string;
+        amountMsat?: number;
+        label?: string;
+        issuer?: string;
+        expiresIn?: number;
+      };
+      try {
+        assertBolt12Guardrails();
+        const input = validateBolt12OfferInput(
+          {
+            description: body.description,
+            amountMsat: body.amountMsat,
+            label: body.label,
+            issuer: body.issuer,
+            expiresIn: body.expiresIn
+          },
+          limits
+        );
+        const offer = await createBolt12Offer(provider, input);
+        return reply.code(201).send(offer);
+      } catch (err) {
+        const formatted = formatBolt12Error(err);
+        request.log.warn({ err }, 'bolt12 offer creation failed');
+        return reply.code(400).send({ error: formatted.error, message: formatted.message });
+      }
+    }
+  );
+
+  app.post(
+    '/api/bolt12/invoices',
+    {
+      schema: {
+        body: {
           type: 'object',
           properties: {
             offer: { type: 'string' },
-            offerId: { type: 'string' },
-            label: { type: 'string' },
-            issuer: { type: 'string' }
+            amountMsat: { type: 'integer', minimum: 1 },
+            quantity: { type: 'integer', minimum: 1 },
+            payerNote: { type: 'string' }
           },
-          additionalProperties: true
+          required: ['offer'],
+          additionalProperties: false
         }
       }
-    }
-  }, async (request, reply) => {
-    if (!env.ENABLE_BOLT12) {
-      return reply.code(404).send({ status: 'disabled' });
-    }
-    const body = request.body as {
-      description: string;
-      amountMsat?: number;
-      label?: string;
-      issuer?: string;
-      expiresIn?: number;
-    };
-    try {
-      assertBolt12Guardrails();
-      const input = validateBolt12OfferInput(
-        {
-          description: body.description,
-          amountMsat: body.amountMsat,
-          label: body.label,
-          issuer: body.issuer,
-          expiresIn: body.expiresIn
-        },
-        limits
-      );
-      const offer = await createBolt12Offer(provider, input);
-      return reply.code(201).send(offer);
-    } catch (err) {
-      const { status, error, message } = formatBolt12Error(err);
-      request.log.warn({ err }, 'bolt12 offer creation failed');
-      return reply.code(status).send({ error, message });
-    }
-  });
-
-  app.post('/api/bolt12/invoices', {
-    schema: {
-      body: {
-        type: 'object',
-        properties: {
-          offer: { type: 'string' },
-          amountMsat: { type: 'integer', minimum: 1 },
-          quantity: { type: 'integer', minimum: 1 },
-          payerNote: { type: 'string' }
-        },
-        required: ['offer'],
-        additionalProperties: false
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            invoice: { type: 'string' },
-            paymentHash: { type: 'string' },
-            amountMsat: { type: 'integer' }
+    },
+    async (request, reply) => {
+      if (!env.ENABLE_BOLT12) {
+        return reply.code(404).send({ status: 'disabled' });
+      }
+      const body = request.body as {
+        offer: string;
+        amountMsat?: number;
+        quantity?: number;
+        payerNote?: string;
+      };
+      try {
+        assertBolt12Guardrails();
+        const input = validateBolt12InvoiceInput(
+          {
+            offer: body.offer,
+            amountMsat: body.amountMsat,
+            quantity: body.quantity,
+            payerNote: body.payerNote
           },
-          additionalProperties: true
-        }
+          limits
+        );
+        const invoice = await fetchBolt12Invoice(provider, input);
+        return reply.send(invoice);
+      } catch (err) {
+        const formatted = formatBolt12Error(err);
+        request.log.warn({ err }, 'bolt12 invoice fetch failed');
+        return reply.code(400).send({ error: formatted.error, message: formatted.message });
       }
     }
-  }, async (request, reply) => {
-    if (!env.ENABLE_BOLT12) {
-      return reply.code(404).send({ status: 'disabled' });
-    }
-    const body = request.body as {
-      offer: string;
-      amountMsat?: number;
-      quantity?: number;
-      payerNote?: string;
-    };
-    try {
-      assertBolt12Guardrails();
-      const input = validateBolt12InvoiceInput(
-        {
-          offer: body.offer,
-          amountMsat: body.amountMsat,
-          quantity: body.quantity,
-          payerNote: body.payerNote
-        },
-        limits
-      );
-      const invoice = await fetchBolt12Invoice(provider, input);
-      return reply.send(invoice);
-    } catch (err) {
-      const { status, error, message } = formatBolt12Error(err);
-      request.log.warn({ err }, 'bolt12 invoice fetch failed');
-      return reply.code(status).send({ error, message });
-    }
-  });
+  );
 }
