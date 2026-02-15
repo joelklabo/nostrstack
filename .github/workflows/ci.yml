@@ -56,6 +56,9 @@ jobs:
       - name: Lint (Markdown)
         run: pnpm lint:md
 
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
       - name: Lint (Shell Scripts)
         run: pnpm lint:sh
 
