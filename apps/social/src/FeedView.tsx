@@ -58,7 +58,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
   });
 
   // Sort mode: 'latest' shows newest first, 'chronological' shows oldest first
-  const [sortMode] = useState<'latest' | 'chronological'>(() => {
+  const [sortMode, setSortMode] = useState<'latest' | 'chronological'>(() => {
     if (typeof window === 'undefined') return 'latest';
     const saved = localStorage.getItem('nostrstack.sortMode');
     return saved === 'chronological' ? 'chronological' : 'latest';
