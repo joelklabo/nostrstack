@@ -172,6 +172,14 @@ export function PaymentModal({
           >
             ×
           </button>
+          <button
+            className="payment-action"
+            type="button"
+            onClick={onClose}
+            aria-label="Close payment dialog"
+          >
+            CLOSE
+          </button>
         </header>
         <div className="payment-body">
           {visibleStatuses.map((item, index) => (

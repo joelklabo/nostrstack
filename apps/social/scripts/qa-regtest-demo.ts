@@ -80,11 +80,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .then(() => true)
         .catch(() => false);
       if (!nwcPaid) {
-        await page.getByRole('button', { name: /CLOSE/ }).first().click();
+        await page.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
         continue;
       }
       await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      const closeBtn = page.getByRole('button', { name: /CLOSE/ }).first();
+      const closeBtn = page.locator('button:has-text("CLOSE")').first();
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       return true;
@@ -96,7 +96,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       .then(() => true)
       .catch(() => false);
     if (!invoiceReady) {
-      await page.getByRole('button', { name: /CLOSE/ }).first().click();
+      await page.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
       continue;
     }
     await expect(page.locator('.payment-qr')).toBeVisible();
