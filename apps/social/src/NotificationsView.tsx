@@ -123,8 +123,8 @@ export function NotificationsView() {
       groups.push(event);
     });
 
-    // Sort groups/events by timestamp descending
-    return groups.sort((a, b) => {
+    // Sort groups/events by timestamp descending - use spread to avoid mutating
+    return [...groups].sort((a, b) => {
       const tsA = 'created_at' in a ? a.created_at : a.timestamp;
       const tsB = 'created_at' in b ? b.created_at : b.timestamp;
       return tsB - tsA;
