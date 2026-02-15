@@ -111,17 +111,17 @@ export function useDMs() {
 
     const convs: Conversation[] = [];
     map.forEach((msgs, peer) => {
-      // Sort messages by time
-      msgs.sort((a, b) => a.created_at - b.created_at);
+      // Sort messages by time - use spread to avoid mutating original
+      const sortedMsgs = [...msgs].sort((a, b) => a.created_at - b.created_at);
       convs.push({
         peer,
-        messages: msgs,
-        lastMessageAt: msgs[msgs.length - 1].created_at
+        messages: sortedMsgs,
+        lastMessageAt: sortedMsgs[sortedMsgs.length - 1].created_at
       });
     });
 
-    // Sort conversations by last message
-    return convs.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
+    // Sort conversations by last message - use spread to avoid mutating
+    return [...convs].sort((a, b) => b.lastMessageAt - a.lastMessageAt);
   }, [messages, pubkey]);
 
   const sendDM = useCallback(
