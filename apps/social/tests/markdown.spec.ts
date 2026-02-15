@@ -16,7 +16,7 @@ test.describe('Markdown rendering', () => {
     const markdownText = 'Hello **bold** and *italic* and [link](https://example.com)';
 
     // Post a note with markdown
-    const editor = page.getByPlaceholder('WHAT ARE YOU HACKING ON?...');
+    const editor = page.getByPlaceholder('Share something with the network...');
     await editor.fill(markdownText);
     await page.getByText('Publish').click();
 
@@ -44,7 +44,7 @@ test.describe('Markdown rendering', () => {
   test('preserves newlines and autolinks', async ({ page }) => {
     const textWithNewlines = 'Line 1\nLine 2\n\nhttps://google.com';
 
-    const editor = page.getByPlaceholder('WHAT ARE YOU HACKING ON?...');
+    const editor = page.getByPlaceholder('Share something with the network...');
     await editor.fill(textWithNewlines);
     await page.getByText('Publish').click();
 

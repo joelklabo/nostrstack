@@ -50,10 +50,12 @@ test.describe('Social App Flow', () => {
     await page.screenshot({ path: resolveDocScreenshotPath('feed.png') });
 
     await expect(page.getByText('Live Feed')).toBeVisible(); // Feed
-    await expect(page.getByPlaceholder('WHAT ARE YOU HACKING ON?...')).toBeVisible(); // Post Editor
+    await expect(page.getByPlaceholder('Share something with the network...')).toBeVisible(); // Post Editor
 
     // 3. Post a note
-    await page.getByPlaceholder('WHAT ARE YOU HACKING ON?...').fill('Hello from Playwright E2E!');
+    await page
+      .getByPlaceholder('Share something with the network...')
+      .fill('Hello from Playwright E2E!');
     await page.screenshot({ path: resolveDocScreenshotPath('posting.png') });
     await page.getByText('Publish').click();
 

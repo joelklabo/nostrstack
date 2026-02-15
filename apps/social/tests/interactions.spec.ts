@@ -39,7 +39,7 @@ test.describe('App Interactions', () => {
     // We expect at least one post if using mock relays or if real relays have data.
     // If not, we can publish one?
     // Let's publish a note first to ensure there is something.
-    const editor = page.getByPlaceholder('WHAT ARE YOU HACKING ON?...');
+    const editor = page.getByPlaceholder('Share something with the network...');
     await editor.fill('Testing interactions');
     await page.getByText('Publish').click();
     await expect(page.getByText('Success: Event published to relays.')).toBeVisible({
