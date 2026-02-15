@@ -314,7 +314,12 @@ export default function App() {
     import.meta.env.DEV;
   const relays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
   const envZapAddress =
-    (import.meta.env.VITE_ZAP_LNURL ?? import.meta.env.VITE_ZAP_ADDRESS ?? '').trim() || undefined;
+    (
+      import.meta.env.VITE_ZAP_LNURL ??
+      import.meta.env.VITE_ZAP_ADDRESS ??
+      import.meta.env.VITE_NOSTRSTACK_TIP_LNADDR ??
+      ''
+    ).trim() || undefined;
   const apiBaseForLnurl =
     apiBaseConfig.baseUrl || (/^https?:\/\//i.test(apiBase) ? apiBase.replace(/\/$/, '') : '');
   const demoLnurlAddress =
