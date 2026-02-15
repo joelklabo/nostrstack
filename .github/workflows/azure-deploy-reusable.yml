@@ -59,6 +59,8 @@ on:
         required: false
       LN_BITS_API_KEY:
         required: false
+      GHCR_TOKEN:
+        required: false
 
 env:
   REGISTRY: ghcr.io
