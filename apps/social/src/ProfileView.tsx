@@ -175,8 +175,8 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
   }, [lightningUri]);
 
   const showLightningAddress = Boolean(lightningAddress);
-  const showSendSats = paymentConfig.enableProfilePay && showLightningAddress;
-  const showLightningCallout = !profileLoading && !showLightningAddress;
+  const showSendSats = paymentConfig.enableProfilePay && (showLightningAddress || pubkey);
+  const showLightningCallout = !profileLoading && !showLightningAddress && !showSendSats;
   const tipAmount = paymentConfig.defaultSendSats ?? 500;
   const lightningBadgeLabel = showLightningAddress ? 'Lightning' : 'Lightning';
   const error = profileError || eventsError;
@@ -528,8 +528,9 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                 <div className="profile-tip-empty">
                   <div className="profile-tip-empty-title">Tipping is currently unavailable</div>
                   <div className="profile-tip-empty-body">
-                    This user hasn&apos;t linked a Lightning address to their profile yet. Once they
-                    do, you&apos;ll be able to send them sats and zaps directly!
+                    {!paymentConfig.enableProfilePay
+                      ? 'Tipping is not enabled on this instance.'
+                      : "This user hasn't linked a Lightning address to their profile yet. Once they do, you'll be able to send them sats and zaps directly."}
                   </div>
                 </div>
               )}
