@@ -55,12 +55,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Container App
+      - name: Deploy Bicep (temp)
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          az containerapp update \
-            -n nostrstack-api \
+          az deployment group create \
             -g nostrstack-rg \
-            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --registry-username ${{ github.actor }} \
-            --registry-password ${{ secrets.GITHUB_TOKEN }} \
-            --registry-server ${{ env.REGISTRY }}
+            -f deploy/azure/main.bicep \
+            -p containerImage="$IMAGE" \
+            -p adminApiKey="${{ secrets.ADMIN_API_KEY }}" \
+            -p registryServer="${{ env.REGISTRY }}" \
+            -p registryUsername="$REGISTRY_USERNAME" \
+            -p registryPassword="$REGISTRY_PASSWORD" \
+            -p appName="nostrstack-api" \
+            -p envName="nostrstack-env"
