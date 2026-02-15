@@ -243,7 +243,14 @@ export const NostrEventCard = memo(function NostrEventCard({
         )}
       </div>
 
-      <div className="ns-event-card__actions" role="group" aria-label="Post actions">
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      <div
+        className="ns-event-card__actions"
+        role="group"
+        aria-label="Post actions"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         <EmojiReactionButton event={event} />
         <div className="zap-button-group">
           <div className="zap-amount-selector" role="radiogroup" aria-label="Zap amount">
