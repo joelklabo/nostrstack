@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'apps/api/**'
+      - 'deploy/**'
       - '.github/workflows/azure-deploy.yml'
 
 jobs:
