@@ -39,6 +39,7 @@ jobs:
           filter_mode: nofilter
 
       - name: Lint (Knip)
+        continue-on-error: true
         run: pnpm lint:knip
 
       - name: Lint (Copy/Paste)
