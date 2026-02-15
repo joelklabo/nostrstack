@@ -80,6 +80,10 @@ function AppShell() {
   const { pubkey, isLoading } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
   const [brandPreset, setBrandPreset] = useState<NsBrandPreset>('default');
+  const [isGuest, _setIsGuest] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('nostrstack.guest') === 'true';
+  });
 
   // Wrap setTheme to persist to localStorage
   const setTheme = useCallback((newTheme: 'light' | 'dark') => {
@@ -160,7 +164,7 @@ function AppShell() {
     );
   }
 
-  if (!pubkey) {
+  if (!pubkey && !isGuest) {
     return (
       <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
         <LoginView />

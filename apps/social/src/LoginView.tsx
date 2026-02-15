@@ -26,7 +26,7 @@ export function LoginView() {
   const { loginWithNip07, loginWithNsec, loginWithLnurl, error } = useAuth();
   const cfg = useNostrstackConfig();
   const [nsec, setNsec] = useState('');
-  const [mode, setMode] = useState<'menu' | 'nsec'>('menu');
+  const [mode, setMode] = useState<'menu' | 'nsec' | 'guest'>('menu');
   const [lnurlModalOpen, setLnurlModalOpen] = useState(false);
   const [lnurlRequest, setLnurlRequest] = useState<LnurlAuthRequest | null>(null);
   const [lnurlStatus, setLnurlStatus] = useState<LnurlAuthStatus>('idle');
@@ -325,6 +325,17 @@ export function LoginView() {
               aria-label="Enter private key manually"
             >
               Enter nsec manually
+            </button>
+            <button
+              type="button"
+              className="auth-btn auth-btn--ghost"
+              onClick={() => {
+                localStorage.setItem('nostrstack.guest', 'true');
+                window.location.reload();
+              }}
+              aria-label="Browse as guest"
+            >
+              Browse as Guest
             </button>
           </div>
         )}

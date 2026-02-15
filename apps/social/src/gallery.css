@@ -2537,6 +2537,18 @@ body {
   color: var(--ns-color-text-default);
 }
 
+.auth-btn--ghost {
+  border: none;
+  background: transparent;
+  color: var(--ns-color-text-muted);
+  font-size: 0.9rem;
+}
+
+.auth-btn--ghost:hover {
+  color: var(--ns-color-text-default);
+  text-decoration: underline;
+}
+
 /* ===== DIALOGS & MODALS ===== */
 .ns-dialog-overlay {
   position: fixed;
