@@ -174,7 +174,7 @@ export async function buildServer() {
   await server.register(helmet, { global: true });
   await server.register(formbody);
   await server.register(rateLimit, {
-    max: 60,
+    max: 120,
     timeWindow: '1 minute',
     keyGenerator: (req) => {
       const host =
@@ -182,6 +182,15 @@ export async function buildServer() {
       const tenant = host.split(':')[0].toLowerCase();
       const route = req.routeOptions?.url || req.raw.url || 'unknown';
       return `${tenant}:${route}`;
+    },
+    allowList: (req) => {
+      // Exempt WebSocket upgrade requests from rate limiting
+      const upgrade = (req.headers.upgrade ?? '').toLowerCase();
+      if (upgrade === 'websocket') return true;
+      // Exempt health/status endpoints
+      const url = req.raw.url ?? '';
+      if (url === '/health' || url === '/ready' || url === '/metrics') return true;
+      return false;
     }
   });
   await server.addHook('onRequest', requestIdHook);

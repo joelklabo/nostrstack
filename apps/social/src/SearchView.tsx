@@ -20,9 +20,14 @@ export function SearchView() {
     cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const { relays: relayList } = useRelays();
   const pool = useSimplePool();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('q') ?? '';
+  });
   const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
   const pendingSearchRef = useRef<string | null>(null);
+  const initialSearchDone = useRef(false);
 
   const [fetchedProfile, setFetchedProfile] = useState<ProfileMeta | null>(null);
   const [notes, setNotes] = useState<Event[]>([]);
@@ -133,6 +138,17 @@ export function SearchView() {
     },
     [query, resolveNow, handleNotesSearch]
   );
+
+  // Auto-execute search if loaded with a ?q= query parameter
+  useEffect(() => {
+    if (initialSearchDone.current) return;
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    initialSearchDone.current = true;
+    pendingSearchRef.current = trimmed;
+    void resolveNow(trimmed);
+    void handleNotesSearch(trimmed);
+  }, [query, resolveNow, handleNotesSearch]);
 
   useEffect(() => {
     const pending = pendingSearchRef.current;

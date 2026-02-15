@@ -37,13 +37,19 @@
   --ns-color-zap: oklch(62% 0.24 300deg);
   --ns-color-zap-glow: var(--ns-violet-glow);
 
-  /* Glass-morphism effects */
+  /* Glass-morphism effects (light mode defaults) */
   --ns-glass-bg: oklch(98% 0.004 280deg / 80%);
   --ns-glass-border: oklch(90% 0.01 280deg / 30%);
   --ns-glass-blur: 12px;
 
   /* Gradient angles for atmospheric depth */
   --ns-gradient-angle: 145deg;
+}
+
+/* Dark mode overrides for glass-morphism and depth variables */
+[data-theme='dark'] {
+  --ns-glass-bg: oklch(16% 0.018 280deg / 75%);
+  --ns-glass-border: oklch(25% 0.02 280deg / 40%);
 }
 
 /* ===== GLOWING PRIMARY BUTTON ===== */

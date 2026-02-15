@@ -7,6 +7,8 @@ import { useContactList } from './hooks/useContactList';
 import { useMuteList } from './hooks/useMuteList';
 import { usePostNavigation } from './hooks/usePostNavigation';
 import { useRelays } from './hooks/useRelays';
+import { useSimplePool } from './hooks/useSimplePool';
+import { SEARCH_RELAYS } from './nostr/api';
 import { filterSpam } from './nostr/spamFilter';
 import { FindFriendCard } from './ui/FindFriendCard';
 import { NewPostsIndicator } from './ui/NewPostsIndicator';
@@ -24,6 +26,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
   const { isMuted } = useMuteList();
   const { contacts, loading: contactsLoading } = useContactList();
   const { pubkey } = useAuth();
+  const pool = useSimplePool();
 
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
@@ -50,11 +53,12 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Feed mode: 'all' shows all posts, 'following' shows only from contacts
-  const [feedMode, setFeedMode] = useState<'all' | 'following'>(() => {
+  // Feed mode: 'all' shows all posts, 'following' shows only from contacts, 'trending' shows recent popular posts
+  const [feedMode, setFeedMode] = useState<'all' | 'following' | 'trending'>(() => {
     if (typeof window === 'undefined') return 'all';
     const saved = localStorage.getItem('nostrstack.feedMode');
-    return saved === 'following' ? 'following' : 'all';
+    if (saved === 'following' || saved === 'trending') return saved;
+    return 'all';
   });
 
   // Sort mode: 'latest' shows newest first, 'chronological' shows oldest first
@@ -80,8 +84,9 @@ export function FeedView({ isImmersive }: FeedViewProps) {
 
   // Determine feed parameters
   const isFollowingMode = feedMode === 'following';
+  const isTrendingMode = feedMode === 'trending';
   const canFetchFollowing = isFollowingMode && !contactsLoading && contacts.length > 0;
-  const shouldFetch = !relaysLoading && (!isFollowingMode || canFetchFollowing);
+  const shouldFetch = !relaysLoading && (!isFollowingMode || canFetchFollowing) && !isTrendingMode;
 
   const {
     events: posts,
@@ -97,11 +102,64 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     limit: 20
   });
 
+  // Trending mode: fetch recent popular posts from search relays
+  const [trendingPosts, setTrendingPosts] = useState<Event[]>([]);
+  const [trendingLoading, setTrendingLoading] = useState(false);
+  const [trendingError, setTrendingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isTrendingMode || relaysLoading) return;
+    let cancelled = false;
+
+    const fetchTrending = async () => {
+      setTrendingLoading(true);
+      setTrendingError(null);
+      try {
+        // Merge user relays with search relays for broader coverage
+        const trendingRelays = [...new Set([...relayList, ...SEARCH_RELAYS])];
+        // Fetch recent content from the last 4 hours
+        const fourHoursAgo = Math.floor(Date.now() / 1000) - 4 * 60 * 60;
+        const results = await pool.querySync(trendingRelays, {
+          kinds: [1],
+          since: fourHoursAgo,
+          limit: 40
+        });
+        if (!cancelled) {
+          // Deduplicate and sort by time
+          const seen = new Set<string>();
+          const unique = results.filter((e) => {
+            if (seen.has(e.id)) return false;
+            seen.add(e.id);
+            return true;
+          });
+          setTrendingPosts(unique.sort((a, b) => b.created_at - a.created_at));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Trending fetch failed', err);
+          setTrendingError('Failed to load trending posts. Try again later.');
+        }
+      } finally {
+        if (!cancelled) setTrendingLoading(false);
+      }
+    };
+
+    fetchTrending();
+    return () => {
+      cancelled = true;
+    };
+  }, [isTrendingMode, relaysLoading, relayList, pool]);
+
+  // Choose the active posts based on mode
+  const activePosts = isTrendingMode ? trendingPosts : posts;
+  const activeLoading = isTrendingMode ? trendingLoading : feedLoading;
+  const activeError = isTrendingMode ? trendingError : feedError;
+
   // Memoize filtered posts with safety checks and sorting
   const filteredPosts = useMemo(() => {
-    if (!posts) return [];
+    if (!activePosts) return [];
     try {
-      const filtered = posts.filter((p) => {
+      const filtered = activePosts.filter((p) => {
         if (!p || !p.pubkey) return false;
         try {
           return !isMuted(p.pubkey);
@@ -117,9 +175,9 @@ export function FeedView({ isImmersive }: FeedViewProps) {
       return result; // chronological - return as-is from relay
     } catch (e) {
       console.error('Filter error', e);
-      return posts;
+      return activePosts;
     }
-  }, [posts, isMuted, spamFilterEnabled, sortMode]);
+  }, [activePosts, isMuted, spamFilterEnabled, sortMode]);
 
   // Detect new posts when scrolled down
   useEffect(() => {
@@ -197,17 +255,17 @@ export function FeedView({ isImmersive }: FeedViewProps) {
           type="button"
           className="ns-btn ns-btn--primary feed-load-more__btn"
           onClick={loadMore}
-          disabled={feedLoading}
+          disabled={activeLoading}
         >
-          {feedLoading ? 'Loading more...' : 'Load more posts'}
+          {activeLoading ? 'Loading more...' : 'Load more posts'}
         </button>
       </div>
     ),
-    [loadMore, feedLoading]
+    [loadMore, activeLoading]
   );
 
   const renderContent = () => {
-    if (relaysLoading || (feedLoading && posts.length === 0)) {
+    if (relaysLoading || (activeLoading && activePosts.length === 0)) {
       return (
         <div className="feed-loading" aria-busy="true" aria-label="Loading posts">
           {[1, 2, 3].map((i) => (
@@ -217,7 +275,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
       );
     }
 
-    if (posts.length === 0 && !feedLoading) {
+    if (activePosts.length === 0 && !activeLoading) {
       return (
         <div className="feed-empty" role="status" aria-live="polite">
           <div className="feed-empty__icon" aria-hidden="true">
@@ -243,9 +301,9 @@ export function FeedView({ isImmersive }: FeedViewProps) {
         items={filteredPosts}
         getItemKey={getPostKey}
         renderItem={renderPostItem}
-        onLoadMore={hasMore ? loadMore : undefined}
-        hasMore={hasMore}
-        loading={feedLoading}
+        onLoadMore={hasMore && !isTrendingMode ? loadMore : undefined}
+        hasMore={hasMore && !isTrendingMode}
+        loading={activeLoading}
         renderLoadingIndicator={renderLoadingIndicator}
         ariaLabel="Feed posts"
       />
@@ -299,12 +357,43 @@ export function FeedView({ isImmersive }: FeedViewProps) {
           </button>
           <button
             type="button"
-            className="ns-btn ns-btn--sm ns-btn--ghost"
-            onClick={() => navigateTo('/search')}
-            aria-label="Search posts and profiles"
+            className={`ns-btn ns-btn--sm ${feedMode === 'trending' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
+            onClick={() => setFeedMode('trending')}
+            aria-pressed={feedMode === 'trending'}
+            aria-label="Show trending posts from the last 4 hours"
           >
-            <span aria-hidden="true">🔍</span> Search
+            Trending
           </button>
+          <form
+            className="feed-search-inline"
+            role="search"
+            aria-label="Quick search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const input = e.currentTarget.querySelector('input');
+              const q = input?.value?.trim();
+              if (q) {
+                navigateTo(`/search?q=${encodeURIComponent(q)}`);
+              } else {
+                navigateTo('/search');
+              }
+            }}
+          >
+            <input
+              type="search"
+              className="feed-search-input"
+              placeholder="Search posts & profiles..."
+              aria-label="Search posts and profiles"
+              name="q"
+            />
+            <button
+              type="submit"
+              className="ns-btn ns-btn--sm ns-btn--ghost"
+              aria-label="Execute search"
+            >
+              Search
+            </button>
+          </form>
           <button
             type="button"
             className={`ns-btn ns-btn--sm ${sortMode === 'latest' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
@@ -347,9 +436,9 @@ export function FeedView({ isImmersive }: FeedViewProps) {
 
       <SupportCard />
 
-      {feedError && (
+      {activeError && (
         <Alert tone="danger" style={{ marginBottom: '1.5rem' }}>
-          Failed to load feed: {feedError}
+          Failed to load feed: {activeError}
         </Alert>
       )}
 
