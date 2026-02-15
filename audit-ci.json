@@ -1,8 +1,16 @@
 {
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "moderate": true,
-  "allowlist": ["GHSA-xxjr-mmjv-4gpg"],
+  "allowlist": [
+    "GHSA-xxjr-mmjv-4gpg",
+    "GHSA-7h2j-956f-4vf2",
+    "GHSA-43fc-jf86-j433",
+    "GHSA-38c4-r59v-3vqw"
+  ],
   "comments": {
-    "GHSA-xxjr-mmjv-4gpg": "Lodash prototype pollution in _.unset/_.omit - transitive dep of secretlint. Dev-only, low risk. Waiting for secretlint update."
+    "GHSA-xxjr-mmjv-4gpg": "Lodash prototype pollution in _.unset/_.omit - transitive dep of secretlint. Dev-only, low risk. Waiting for secretlint update.",
+    "GHSA-7h2j-956f-4vf2": "brace-expansion DoS - transitive dep of markdownlint-cli. Dev-only, low risk.",
+    "GHSA-43fc-jf86-j433": "axios DoS via __proto__ - transitive dep of wait-on. Dev-only, waiting for wait-on update.",
+    "GHSA-38c4-r59v-3vqw": "markdown-it ReDoS - waiting for app-dependencies update."
   }
 }
