@@ -3,9 +3,9 @@ param containerImage string
 @secure()
 param adminApiKey string
 @secure()
-param opNodeApiKey string
+param opNodeApiKey string = ''
 @secure()
-param opNodeWebhookSecret string
+param opNodeWebhookSecret string = ''
 param postgresSku string = 'Standard_B1ms'
 param postgresStorageGb int = 32
 param appName string = 'nostrstack-api'
