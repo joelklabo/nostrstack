@@ -293,12 +293,6 @@ export function LoginView() {
           <p className="login-subtitle">Connect your identity to get started</p>
         </div>
 
-        {error && (
-          <Alert tone="danger" role="alert">
-            {error}
-          </Alert>
-        )}
-
         {(authError || nsecError) && (
           <Alert tone="danger" role="alert">
             {nsecError ?? authError}
