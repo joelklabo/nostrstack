@@ -59,10 +59,12 @@ on:
         required: false
       LN_BITS_API_KEY:
         required: false
+      ACR_PASSWORD:
+        required: false
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-api
+  REGISTRY: nostrstackreg.azurecr.io
+  IMAGE_NAME: nostrstack-api
 
 jobs:
   deploy:
@@ -112,12 +114,12 @@ jobs:
           if [ -z "$tag" ]; then tag="${GITHUB_SHA}"; fi
           echo "IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}" >> "$GITHUB_OUTPUT"
 
-      - name: Login to GHCR
+      - name: Login to ACR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: nostrstackreg
+          password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -147,8 +149,8 @@ jobs:
           ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
           OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
           OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USERNAME: nostrstackreg
+          REGISTRY_PASSWORD: ${{ secrets.ACR_PASSWORD }}
           LOG_WS_ID: ${{ secrets.AZURE_LOG_ANALYTICS_ID }}
           LOG_WS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
           LN_BITS_URL: ${{ secrets.LN_BITS_URL }}
