@@ -145,6 +145,10 @@ test.describe('Social App Flow', () => {
   });
 
   test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {
+    // Clear any stored onboarding state so we can test without overlay
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('nostrstack.onboarding.v1'));
+
     // Login and dismiss onboarding
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
     await loginWithNsec(page, validNsec);
@@ -159,10 +163,13 @@ test.describe('Social App Flow', () => {
     await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
 
     // Dismiss onboarding overlay if it appears before interacting with posts
-    const skipBtn = page.getByRole('button', { name: 'Skip' });
-    if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await skipBtn.click();
-      await page.waitForTimeout(300);
+    const overlay = page.locator('.onboarding-overlay');
+    if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const skipBtn = page.getByRole('button', { name: 'Skip' });
+      if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await skipBtn.click();
+        await page.waitForTimeout(300);
+      }
     }
 
     // Click VIEW_SRC on the first post
