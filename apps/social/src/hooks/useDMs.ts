@@ -88,6 +88,7 @@ export function useDMs() {
       } catch {
         /* ignore */
       }
+      setLoading(false);
     };
   }, [pubkey, relays, pool]);
 
