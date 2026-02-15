@@ -122,8 +122,8 @@ test.describe('Social App Flow', () => {
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
     await loginWithNsec(page, validNsec);
 
-    // Click Profile
-    await page.getByRole('button', { name: 'Profile', exact: true }).click();
+    // Click Profile - use nav-item class to be specific
+    await page.locator('.nav-item', { hasText: 'Profile' }).click();
 
     // Check Profile View
     await expect(page.locator('.profile-view')).toBeVisible({ timeout: 10000 });
