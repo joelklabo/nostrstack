@@ -140,6 +140,7 @@ body {
     .hamburger-btn,
     .preset-btn,
     .zap-confirm-btn,
+    .zap-amount-btn,
     .close-btn,
     .payment-close,
     .open-wallet-btn,
@@ -1790,6 +1791,47 @@ body {
   .ns-action-btn .icon {
     font-size: 1.25rem;
   }
+}
+
+.zap-button-group {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-1);
+}
+
+.zap-amount-selector {
+  display: flex;
+  gap: 2px;
+  background: var(--ns-color-bg-subtle, oklch(97% 0.01 280deg));
+  border-radius: var(--ns-radius-sm);
+  padding: 2px;
+}
+
+.zap-amount-btn {
+  padding: 4px 8px;
+  font-size: var(--ns-font-size-xs, 0.75rem);
+  font-weight: var(--ns-font-weight-medium, 500);
+  background: transparent;
+  border: none;
+  border-radius: var(--ns-radius-sm, 4px);
+  color: var(--ns-color-text-muted, oklch(55% 0.02 280deg));
+  cursor: pointer;
+  transition: all var(--ns-motion-duration-fast, 150ms) var(--ns-motion-ease-default, ease);
+}
+
+.zap-amount-btn:hover {
+  background: var(--ns-color-bg-emphasis, oklch(92% 0.01 280deg));
+  color: var(--ns-color-text-default, oklch(20% 0.02 280deg));
+}
+
+.zap-amount-btn.active {
+  background: var(--ns-color-primary-default, oklch(65% 0.15 210deg));
+  color: var(--ns-color-primary-text, #fff);
+}
+
+.zap-amount-btn:focus-visible {
+  outline: 2px solid var(--ns-color-primary-default);
+  outline-offset: 2px;
 }
 
 /* ===== TOP ZAPS ===== */

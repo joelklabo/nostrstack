@@ -74,6 +74,7 @@ export const NostrEventCard = memo(function NostrEventCard({
   const [isReplying, setIsReplying] = useState(false);
   const [isReposted, setIsReposted] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [zapAmount, setZapAmount] = useState(21);
   const { repost, loading: repostLoading } = useRepost();
   const { pubkey } = useAuth();
 
@@ -244,14 +245,31 @@ export const NostrEventCard = memo(function NostrEventCard({
 
       <div className="ns-event-card__actions" role="group" aria-label="Post actions">
         <EmojiReactionButton event={event} />
-        <ZapButton
-          event={event}
-          authorLightningAddress={authorLightningAddress}
-          apiBase={apiBase}
-          enableRegtestPay={enableRegtestPay}
-          onZapSuccess={() => setIsZapped(true)}
-          className={isZapped ? 'zapped' : ''}
-        />
+        <div className="zap-button-group">
+          <div className="zap-amount-selector" role="radiogroup" aria-label="Zap amount">
+            {[21, 50, 100, 500].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                className={`zap-amount-btn ${zapAmount === amount ? 'active' : ''}`}
+                onClick={() => setZapAmount(amount)}
+                aria-pressed={zapAmount === amount}
+                title={`Zap ${amount} sats`}
+              >
+                {amount}
+              </button>
+            ))}
+          </div>
+          <ZapButton
+            event={event}
+            authorLightningAddress={authorLightningAddress}
+            apiBase={apiBase}
+            enableRegtestPay={enableRegtestPay}
+            amountSats={zapAmount}
+            onZapSuccess={() => setIsZapped(true)}
+            className={isZapped ? 'zapped' : ''}
+          />
+        </div>
         <button
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
           type="button"

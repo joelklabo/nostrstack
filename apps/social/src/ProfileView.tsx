@@ -53,6 +53,7 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>(
     'idle'
   );
+  const [zapAmount, setZapAmount] = useState(21);
 
   const { isFollowing, follow, unfollow, loading: contactsLoading } = useContactList();
   const { isMuted, mute, unmute, loading: muteLoading } = useMuteList();
@@ -313,13 +314,33 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     {lightningBadgeLabel}
                   </span>
                   {zapEvent && lightningAddress && (
-                    <ZapButton
-                      event={zapEvent}
-                      authorLightningAddress={lightningAddress}
-                      amountSats={21}
-                      message="Zap from profile"
-                      className="profile-zap-btn"
-                    />
+                    <div className="zap-button-group">
+                      <div
+                        className="zap-amount-selector"
+                        role="radiogroup"
+                        aria-label="Zap amount"
+                      >
+                        {[21, 50, 100, 500].map((amount) => (
+                          <button
+                            key={amount}
+                            type="button"
+                            className={`zap-amount-btn ${zapAmount === amount ? 'active' : ''}`}
+                            onClick={() => setZapAmount(amount)}
+                            aria-pressed={zapAmount === amount}
+                            title={`Zap ${amount} sats`}
+                          >
+                            {amount}
+                          </button>
+                        ))}
+                      </div>
+                      <ZapButton
+                        event={zapEvent}
+                        authorLightningAddress={lightningAddress}
+                        amountSats={zapAmount}
+                        message="Zap from profile"
+                        className="profile-zap-btn"
+                      />
+                    </div>
                   )}
                   {followingCount != null && (
                     <span className="profile-badge profile-badge--muted">
