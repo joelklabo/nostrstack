@@ -142,7 +142,9 @@ export async function registerBolt12Routes(app: FastifyInstance) {
       } catch (err) {
         const formatted = formatBolt12Error(err);
         request.log.warn({ err }, 'bolt12 offer creation failed');
-        return reply.code(400).send({ error: formatted.error, message: formatted.message });
+        return reply
+          .code(formatted.status)
+          .send({ error: formatted.error, message: formatted.message });
       }
     }
   );
@@ -190,7 +192,9 @@ export async function registerBolt12Routes(app: FastifyInstance) {
       } catch (err) {
         const formatted = formatBolt12Error(err);
         request.log.warn({ err }, 'bolt12 invoice fetch failed');
-        return reply.code(400).send({ error: formatted.error, message: formatted.message });
+        return reply
+          .code(formatted.status)
+          .send({ error: formatted.error, message: formatted.message });
       }
     }
   );
