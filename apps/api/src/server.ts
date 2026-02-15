@@ -279,16 +279,19 @@ export async function buildServer() {
   });
 
   server.setErrorHandler((err, req, reply) => {
+    const error = err as Error & { statusCode?: number; code?: string };
     const status =
-      err.statusCode && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : 500;
+      error.statusCode && error.statusCode >= 400 && error.statusCode < 600
+        ? error.statusCode
+        : 500;
     if (status >= 500) {
-      req.log.error({ err, status }, 'request errored');
+      req.log.error({ err: error, status }, 'request errored');
     } else {
-      req.log.warn({ err, status }, 'request failed');
+      req.log.warn({ err: error, status }, 'request failed');
     }
     const body: Record<string, unknown> = {
-      error: err.code || 'internal_error',
-      message: env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
+      error: error.code || 'internal_error',
+      message: env.NODE_ENV === 'development' ? error.message : 'Internal Server Error',
       requestId: req.id
     };
     return reply.status(status).send(body);
