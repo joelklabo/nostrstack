@@ -174,8 +174,8 @@ export async function buildServer() {
   await server.register(helmet, { global: true });
   await server.register(formbody);
   await server.register(rateLimit, {
-    max: 60,
-    timeWindow: '1 minute',
+    max: env.RATE_LIMIT_MAX,
+    timeWindow: env.RATE_LIMIT_TIME_WINDOW,
     keyGenerator: (req) => {
       const host =
         (req.headers['x-forwarded-host'] as string | undefined) || req.headers.host || 'unknown';
