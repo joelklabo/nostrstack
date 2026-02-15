@@ -56,7 +56,7 @@ type NodeState = TelemetrySnapshot & {
   lightning?: BitcoinStatus['lightning'];
 };
 
-type WsStatus = 'connecting' | 'connected' | 'reconnecting' | 'offline';
+type WsStatus = 'connecting' | 'connected' | 'reconnecting' | 'offline' | 'error';
 
 type TelemetryTiming = {
   wsBaseDelayMs: number;
@@ -616,6 +616,8 @@ export function TelemetryBar() {
 
       ws.onerror = () => {
         appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' });
+        setWsStatus('error');
+        setOfflineReason('Connection error');
       };
 
       ws.onclose = (event) => {
@@ -725,7 +727,9 @@ export function TelemetryBar() {
         ? 'connecting'
         : displayStatus === 'reconnecting'
           ? 'reconnecting'
-          : 'offline';
+          : displayStatus === 'error'
+            ? 'error'
+            : 'offline';
 
   // Map network to NetworkType
   const networkType: NetworkType = [
