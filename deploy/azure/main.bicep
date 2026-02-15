@@ -198,8 +198,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               { name: 'TELEMETRY_PROVIDER', value: 'esplora' }
               { name: 'TELEMETRY_ESPLORA_URL', value: 'https://blockstream.info/api' }
               { name: 'BITCOIN_NETWORK', value: 'mainnet' }
-              { name: 'LIGHTNING_PROVIDER', value: 'lnbits' }
             ],
+            (!empty(lnbitsUrl)) ? [ { name: 'LIGHTNING_PROVIDER', value: 'lnbits' } ] : [],
             (!empty(lnbitsUrl)) ? [ { name: 'LN_BITS_URL', secretRef: 'lnbits-url' } ] : [],
             (!empty(lnbitsApiKey)) ? [ { name: 'LN_BITS_API_KEY', secretRef: 'lnbits-api-key' } ] : [],
             useOtel ? [ { name: 'OTEL_EXPORTER_OTLP_ENDPOINT', value: otelEndpoint } ] : [],
