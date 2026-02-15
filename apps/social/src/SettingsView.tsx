@@ -575,6 +575,23 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
 
       <div className="paywall-container">
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
+          Onboarding Tour
+        </h4>
+        <button
+          type="button"
+          className="action-btn"
+          onClick={() => {
+            localStorage.removeItem('nostrstack.onboarding.v1');
+            window.location.reload();
+          }}
+          aria-label="Restart onboarding tour"
+        >
+          Restart Tour
+        </button>
+      </div>
+
+      <div className="paywall-container">
+        <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>
           Notifications
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

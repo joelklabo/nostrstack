@@ -161,9 +161,22 @@ export function OnboardingTour() {
 
   if (!isActive) return null;
 
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      skip();
+    }
+  };
+
   return createPortal(
     <>
-      {!spotlightStyle && <div className="onboarding-overlay" aria-hidden="true" />}
+      {!spotlightStyle && (
+        <div
+          className="onboarding-overlay"
+          aria-hidden="true"
+          onClick={handleOverlayClick}
+          style={{ cursor: 'pointer' }}
+        />
+      )}
       {spotlightStyle && (
         <div className="onboarding-spotlight" style={spotlightStyle} aria-hidden="true" />
       )}
