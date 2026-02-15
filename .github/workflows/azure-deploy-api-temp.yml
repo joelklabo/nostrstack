@@ -60,6 +60,8 @@ jobs:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           REGISTRY_USERNAME: ${{ github.actor }}
           REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}
+          OP_NODE_WEBHOOK_SECRET: ${{ secrets.OP_NODE_WEBHOOK_SECRET }}
         run: |
           az deployment group create \
             -g nostrstack-rg \
@@ -70,4 +72,6 @@ jobs:
             -p registryUsername="$REGISTRY_USERNAME" \
             -p registryPassword="$REGISTRY_PASSWORD" \
             -p appName="nostrstack-api" \
-            -p envName="nostrstack-env"
+            -p envName="nostrstack-env" \
+            -p opNodeApiKey="${OP_NODE_API_KEY:-}" \
+            -p opNodeWebhookSecret="${OP_NODE_WEBHOOK_SECRET:-}"
