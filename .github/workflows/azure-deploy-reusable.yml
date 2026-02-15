@@ -55,6 +55,10 @@ on:
         required: false
       NOSTR_KEY:
         required: false
+      LN_BITS_URL:
+        required: false
+      LN_BITS_API_KEY:
+        required: false
 
 env:
   REGISTRY: ghcr.io
@@ -147,6 +151,8 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           LOG_WS_ID: ${{ secrets.AZURE_LOG_ANALYTICS_ID }}
           LOG_WS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
+          LN_BITS_URL: ${{ secrets.LN_BITS_URL }}
+          LN_BITS_API_KEY: ${{ secrets.LN_BITS_API_KEY }}
         run: |
           params=(
             -g "${{ inputs.azure_rg }}"
@@ -160,6 +166,14 @@ jobs:
             -p registryUsername="$REGISTRY_USERNAME"
             -p registryPassword="$REGISTRY_PASSWORD"
           )
+
+          # Add LNbits parameters if provided
+          if [ -n "$LN_BITS_URL" ]; then
+            params+=(-p lnbitsUrl="$LN_BITS_URL")
+          fi
+          if [ -n "$LN_BITS_API_KEY" ]; then
+            params+=(-p lnbitsApiKey="$LN_BITS_API_KEY")
+          fi
 
           # Add staging-specific parameters
           if [ "${{ inputs.environment }}" = "staging" ]; then
@@ -189,4 +203,3 @@ jobs:
           echo "Testing health endpoint at: https://$fqdn/health"
           curl -sf "https://$fqdn/health"
           echo "✅ Health check passed"
-

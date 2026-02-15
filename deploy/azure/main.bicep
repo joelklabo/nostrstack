@@ -16,6 +16,10 @@ param registryServer string = ''
 param registryUsername string = ''
 @secure()
 param registryPassword string = ''
+@secure()
+param lnbitsUrl string = ''
+@secure()
+param lnbitsApiKey string = ''
 param otelEnabled bool = false
 param otelEndpoint string = ''
 @secure()
@@ -127,6 +131,18 @@ resource secretOtelHeaders 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (
   properties: { value: otelHeaders }
 }
 
+resource secretLnbitsUrl 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(lnbitsUrl)) {
+  parent: kv
+  name: 'lnbits-url'
+  properties: { value: lnbitsUrl }
+}
+
+resource secretLnbitsApiKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(lnbitsApiKey)) {
+  parent: kv
+  name: 'lnbits-api-key'
+  properties: { value: lnbitsApiKey }
+}
+
 resource env 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: envName
   location: location
@@ -151,7 +167,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           { name: 'op-node-webhook-secret', value: opNodeWebhookSecret }
         ],
         useRegistry ? [ { name: 'registry-password', value: registryPassword } ] : [],
-        (useOtel && !empty(otelHeaders)) ? [ { name: 'otel-headers', value: otelHeaders } ] : []
+        (useOtel && !empty(otelHeaders)) ? [ { name: 'otel-headers', value: otelHeaders } ] : [],
+        (!empty(lnbitsUrl)) ? [ { name: 'lnbits-url', value: lnbitsUrl } ] : [],
+        (!empty(lnbitsApiKey)) ? [ { name: 'lnbits-api-key', value: lnbitsApiKey } ] : []
       )
       registries: useRegistry ? [
         {
@@ -180,7 +198,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               { name: 'TELEMETRY_PROVIDER', value: 'esplora' }
               { name: 'TELEMETRY_ESPLORA_URL', value: 'https://blockstream.info/api' }
               { name: 'BITCOIN_NETWORK', value: 'mainnet' }
+              { name: 'LIGHTNING_PROVIDER', value: 'lnbits' }
             ],
+            (!empty(lnbitsUrl)) ? [ { name: 'LN_BITS_URL', secretRef: 'lnbits-url' } ] : [],
+            (!empty(lnbitsApiKey)) ? [ { name: 'LN_BITS_API_KEY', secretRef: 'lnbits-api-key' } ] : [],
             useOtel ? [ { name: 'OTEL_EXPORTER_OTLP_ENDPOINT', value: otelEndpoint } ] : [],
             (useOtel && !empty(otelHeaders)) ? [ { name: 'OTEL_EXPORTER_OTLP_HEADERS', secretRef: 'otel-headers' } ] : []
           )
