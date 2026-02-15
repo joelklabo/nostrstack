@@ -110,9 +110,9 @@ export function FeedView({ isImmersive }: FeedViewProps) {
         }
       });
       const result = spamFilterEnabled ? filterSpam(filtered) : filtered;
-      // Sort posts based on sort mode
+      // Sort posts based on sort mode - use spread to avoid mutating original array
       if (sortMode === 'latest') {
-        return result.sort((a, b) => b.created_at - a.created_at);
+        return [...result].sort((a, b) => b.created_at - a.created_at);
       }
       return result; // chronological - return as-is from relay
     } catch (e) {
