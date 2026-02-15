@@ -169,9 +169,13 @@ test.describe('Social App Flow', () => {
     }
 
     // Click VIEW_SRC on the first post - use aria-label for more reliable matching
-    const viewSource = page.getByRole('button', { name: /View event source JSON/i }).first();
+    // First wait for the button to be attached to DOM (not just visible)
+    const viewSource = page
+      .locator('.ns-action-btn')
+      .filter({ has: page.getByRole('button', { name: /View event source JSON/i }) })
+      .first();
     const hasPost = await viewSource
-      .waitFor({ state: 'visible', timeout: 10000 })
+      .waitFor({ state: 'attached', timeout: 10000 })
       .then(() => true)
       .catch(() => false);
     if (!hasPost) {
@@ -180,14 +184,18 @@ test.describe('Social App Flow', () => {
     }
     // Use force:true to bypass onboarding overlay if it intercepts clicks
     await viewSource.click({ force: true });
-    // Wait longer for JSON view to appear (relays may be slow)
-    await page.waitForTimeout(1500);
-    // Expect JSON view to appear (contains "EVENT_ID:")
-    await expect(page.locator('.ns-json')).toBeVisible({ timeout: 10000 });
+    // Wait for state change and re-render
+    await page.waitForTimeout(2000);
+    // Wait for JSON view to be attached to DOM first, then check visibility
+    const jsonView = page.locator('.ns-json');
+    await jsonView.waitFor({ state: 'attached', timeout: 10000 });
+    // Now check visibility
+    await expect(jsonView).toBeVisible({ timeout: 5000 });
 
     // Toggle back (HIDE_SRC)
     await page
-      .getByRole('button', { name: /Hide event source JSON/i })
+      .locator('.ns-action-btn')
+      .filter({ has: page.getByRole('button', { name: /Hide event source JSON/i }) })
       .first()
       .click();
     await page.waitForTimeout(500);
