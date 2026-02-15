@@ -1,4 +1,11 @@
-import { SendSats, useAuth, useFeed, useNostrQuery, useProfile } from '@nostrstack/react';
+import {
+  SendSats,
+  useAuth,
+  useFeed,
+  useNostrQuery,
+  useProfile,
+  ZapButton
+} from '@nostrstack/react';
 import { Alert, PostSkeleton, Skeleton } from '@nostrstack/ui';
 import type { Event } from 'nostr-tools';
 import { nip19 } from 'nostr-tools';
@@ -131,6 +138,31 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
   }, [contactEvents]);
 
   const npub = useMemo(() => nip19.npubEncode(pubkey), [pubkey]);
+  const zapEvent = useMemo(() => {
+    if (!profile) return null;
+    return {
+      id: pubkey,
+      pubkey,
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 0,
+      tags: [
+        ['lud16', profile.lud16 ?? ''],
+        ['lud06', profile.lud06 ?? ''],
+        ...(profile.nip05 ? [['nip05', profile.nip05]] : [])
+      ],
+      content: JSON.stringify({
+        name: profile.name,
+        display_name: profile.display_name,
+        picture: profile.picture,
+        about: profile.about,
+        nip05: profile.nip05,
+        lud16: profile.lud16,
+        lud06: profile.lud06,
+        website: profile.website
+      }),
+      sig: ''
+    } as Event;
+  }, [profile, pubkey]);
   const lightningAddress = profile?.lud16 ?? profile?.lud06;
   const lightningLabel = profile?.lud16 ? 'Lightning Address' : 'LNURL';
   const lightningUri = useMemo(() => {
@@ -280,6 +312,15 @@ export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) 
                     {showLightningAddress ? '✓ ' : '✗ '}
                     {lightningBadgeLabel}
                   </span>
+                  {zapEvent && lightningAddress && (
+                    <ZapButton
+                      event={zapEvent}
+                      authorLightningAddress={lightningAddress}
+                      amountSats={21}
+                      message="Zap from profile"
+                      className="profile-zap-btn"
+                    />
+                  )}
                   {followingCount != null && (
                     <span className="profile-badge profile-badge--muted">
                       Following: {followingCount}
