@@ -66,16 +66,21 @@ function buildResolvedEvent(id: string, relays: string[]) {
 describe('/api/nostr/event security', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
   });
 
   afterAll(async () => {
-    await server.close();
+    if (server) {
+      await server.close();
+    }
   });
 
   beforeEach(() => {
