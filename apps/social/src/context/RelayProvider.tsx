@@ -64,6 +64,7 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    let cancelled = false;
     setIsLoading(true);
     const pool = new SimplePool();
     const filter: Filter = { kinds: [10002], authors: [pubkey] };
@@ -72,6 +73,7 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     pool
       .get(bootstrapRelays, filter)
       .then((event) => {
+        if (cancelled) return;
         if (event) {
           const parsed = event.tags
             .filter((t) => t[0] === 'r')
@@ -87,10 +89,12 @@ export function RelayProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch((err) => {
+        if (cancelled) return;
         console.warn('Failed to fetch Kind 10002:', err);
         // Silent fail, fall back to defaults
       })
       .finally(() => {
+        if (cancelled) return;
         setIsLoading(false);
         try {
           pool.close(bootstrapRelays);
@@ -100,7 +104,7 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       });
 
     return () => {
-      // Cleanup pool if needed, though get() is one-off
+      cancelled = true;
     };
   }, [pubkey, bootstrapRelays]);
 
