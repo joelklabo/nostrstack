@@ -71,7 +71,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
   await zapButtons.first().waitFor({ state: 'visible', timeout: 20_000 });
   const total = await zapButtons.count();
   for (let i = 0; i < Math.min(total, 5); i += 1) {
-    await zapButtons.nth(i).click();
+    await zapButtons.nth(i).dispatchEvent('click');
     await expect(page.locator('.payment-modal')).toBeVisible();
     if (mode === 'nwc') {
       const nwcPaid = await page
