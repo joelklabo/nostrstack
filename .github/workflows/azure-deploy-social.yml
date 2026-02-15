@@ -13,7 +13,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-social
-  API_URL: https://api.nostrstack.com
+  API_URL: https://nostrstack-api.delightfulpond-8c3c9242.westus3.azurecontainerapps.io
   # Set these in GitHub environment secrets: NOSTRSTACK_TIP_LNADDR or NOSTRSTACK_TIP_PUBKEY
   # Example: tip@nostrstack.com or npub1... (hex pubkey)
   NOSTRSTACK_TIP_LNADDR: ${{ secrets.NOSTRSTACK_TIP_LNADDR }}
