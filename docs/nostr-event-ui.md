@@ -1,9 +1,11 @@
 # Nostr Event Landing UI: Wireframe + States
 
 ## Purpose
+
 Define the layout hierarchy, responsive behavior, UI states, and accessibility guidance for the `/nostr/:id` landing page.
 
 ## Layout Hierarchy (Desktop)
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ Header                                                         │
@@ -46,7 +48,9 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 ```
 
 ## Responsive Behavior
+
 - **≤ 768px**:
+
   - Header stacks vertically; Back to App becomes full-width button.
   - Metadata card becomes a single column with labels above values.
   - Event details stack in a single column.
@@ -63,17 +67,21 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
   - Reply indentation caps at depth 2 with a compact depth badge (e.g., “↳ 3”).
 
 ## UI States
+
 - **Loading**
+
   - Show “Fetching event data…” text.
   - Keep metadata visible with status `LOADING`.
   - Skeleton blocks for event details/content.
 
 - **Error**
+
   - Show a prominent error banner with reason.
   - Provide a retry affordance (refresh or re-fetch button).
   - Keep target/relay metadata visible for troubleshooting.
 
 - **Empty / Not Found**
+
   - Similar to error but with softer tone (“Event not found”).
   - Suggest checking the event id and relay configuration.
 
@@ -82,6 +90,7 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
   - Show placeholders for missing previews (e.g., “Reference unavailable”).
 
 ### Replies States
+
 - **Loading**: Show skeleton or spinner for reply list; keep count placeholder.
 - **Empty**: Show “No replies yet” with guidance to check relays.
 - **Error**: Show error banner in replies section with retry affordance.
@@ -89,6 +98,7 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 - **Orphaned**: Render reply with “Parent unavailable” subtitle and optional jump-to-id link.
 
 ## Reference Previews Guidance
+
 - Group by type: Root, Reply, Mention, Quote, Addressable, Profiles.
 - Cap previews (default 4–6 per group) with “View more” link if overflow.
 - Each preview card should show:
@@ -98,6 +108,7 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
   - Optional profile avatar (if available)
 
 ## Accessibility Notes
+
 - Ensure **keyboard focus** on:
   - Copy buttons, reference chips, and preview cards.
   - Back to App link/button.
@@ -107,6 +118,7 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 - Preserve readable line lengths for long content (max ~70–80 chars per line).
 
 ## Edge Case Handling
+
 - **Very long IDs/content**: truncate with ellipsis and show full value on copy.
 - **No tags**: show “No tags” placeholder.
 - **Missing author profile**: render event without profile card.
@@ -117,4 +129,5 @@ Define the layout hierarchy, responsive behavior, UI states, and accessibility g
 - **Mixed reply kinds**: render non-text replies (reactions/zaps) as compact chips or skip with a note.
 
 ## Standing Note
-While working on this UI, **always** look for refactoring opportunities, bugs, or improvements and create new bd tasks as they surface.
+
+While working on this UI, **always** look for refactoring opportunities, bugs, or improvements.
