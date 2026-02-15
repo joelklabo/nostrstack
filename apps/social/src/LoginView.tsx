@@ -1,5 +1,6 @@
 import { resolveApiBase, useAuth, useNostrstackConfig } from '@nostrstack/react';
 import { Alert } from '@nostrstack/ui';
+import { generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -34,6 +35,7 @@ export function LoginView() {
   const [lnurlError, setLnurlError] = useState<string | null>(null);
   const [lnurlQr, setLnurlQr] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [throwawayKey, setThrowawayKey] = useState<{ nsec: string; npub: string } | null>(null);
   const enableLnurlAuth =
     String(import.meta.env.VITE_ENABLE_LNURL_AUTH ?? '').toLowerCase() === 'true';
   const lnurlModalRef = useRef<HTMLDivElement>(null);
@@ -192,6 +194,25 @@ export function LoginView() {
     if (!lnurlRequest?.lnurl) return;
     window.location.href = `lightning:${lnurlRequest.lnurl}`;
   }, [lnurlRequest]);
+
+  const handleCreateThrowawayKey = useCallback(() => {
+    const secretKey = generateSecretKey();
+    const publicKey = getPublicKey(secretKey);
+    const nsec = nip19.nsecEncode(secretKey);
+    const npub = nip19.npubEncode(publicKey);
+    setThrowawayKey({ nsec, npub });
+  }, []);
+
+  const handleUseThrowawayKey = useCallback(async () => {
+    if (!throwawayKey) return;
+    setNsec(throwawayKey.nsec);
+    setThrowawayKey(null);
+    try {
+      await loginWithNsec(throwawayKey.nsec);
+    } catch (err) {
+      setNsecError(err instanceof Error ? err.message : 'Invalid private key');
+    }
+  }, [throwawayKey, loginWithNsec]);
 
   useEffect(() => {
     if (!lnurlRequest?.lnurl) {
@@ -392,6 +413,65 @@ export function LoginView() {
                 Cancel
               </button>
             </div>
+
+            {!throwawayKey && (
+              <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="auth-btn auth-btn--ghost"
+                  onClick={handleCreateThrowawayKey}
+                  style={{ fontSize: '0.85rem' }}
+                  aria-label="Create throwaway key"
+                >
+                  Create throwaway key
+                </button>
+              </div>
+            )}
+
+            {throwawayKey && (
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '0.75rem',
+                  padding: '1rem',
+                  background: 'var(--ns-color-bg-subtle)',
+                  borderRadius: '8px'
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>
+                  Throwaway Key Created
+                </div>
+                <div style={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>
+                  <strong>npub:</strong> {throwawayKey.npub.slice(0, 20)}...
+                </div>
+                <Alert tone="warning" style={{ fontSize: '0.8rem' }}>
+                  Save this key! It only exists in your browser and cannot be recovered.
+                </Alert>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="auth-btn auth-btn--primary"
+                    onClick={handleUseThrowawayKey}
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+                    aria-label="Use this key"
+                  >
+                    Use this key
+                  </button>
+                  <button
+                    type="button"
+                    className="auth-btn auth-btn--secondary"
+                    onClick={() => {
+                      setThrowawayKey(null);
+                      setNsec('');
+                    }}
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+                    aria-label="Cancel throwaway key"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
