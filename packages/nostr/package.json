@@ -41,7 +41,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "nostr-tools": "workspace:*"
+    "nostr-tools": "2.18.2"
   },
   "devDependencies": {
     "@types/node": "22.7.5",
