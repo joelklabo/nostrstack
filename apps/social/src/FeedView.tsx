@@ -280,6 +280,14 @@ export function FeedView({ isImmersive }: FeedViewProps) {
           </button>
           <button
             type="button"
+            className="ns-btn ns-btn--sm ns-btn--ghost"
+            onClick={() => navigateTo('/search')}
+            aria-label="Search posts and profiles"
+          >
+            <span aria-hidden="true">🔍</span> Search
+          </button>
+          <button
+            type="button"
             className={`ns-btn ns-btn--sm ${spamFilterEnabled ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
             onClick={() => setSpamFilterEnabled(!spamFilterEnabled)}
             title="Toggle Spam Filter"
@@ -290,8 +298,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
                 : 'Spam filter disabled, click to enable'
             }
           >
-            <span aria-hidden="true">🛡️</span>{' '}
-            {spamFilterEnabled ? 'Spam Filter: On' : 'Spam Filter: Off'}
+            <span aria-hidden="true">🛡️</span> {spamFilterEnabled ? 'On' : 'Off'}
           </button>
         </div>
       </header>
