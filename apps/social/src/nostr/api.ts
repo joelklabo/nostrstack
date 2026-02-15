@@ -64,10 +64,10 @@ export function getDefaultRelays(raw?: string | null): string[] {
   const parsed = parseRelays(raw);
   const base = parsed.length ? parsed : DEFAULT_RELAYS;
   const normalized = normalizeRelayList(base);
-  
+
   // Filter out unhealthy relays
-  const filtered = normalized.filter(url => relayMonitor.isHealthy(url));
-  
+  const filtered = normalized.filter((url) => relayMonitor.isHealthy(url));
+
   return filtered.length ? filtered : normalized;
 }
 
@@ -118,6 +118,9 @@ function buildNostrEventUrl(
 }
 
 function parseApiError(bodyText: string, status: number) {
+  if (status === 429) {
+    return 'Rate limited. Please wait a moment and try again.';
+  }
   let message = bodyText || `HTTP ${status}`;
   if (bodyText) {
     try {
@@ -130,7 +133,9 @@ function parseApiError(bodyText: string, status: number) {
   return message;
 }
 
-export async function fetchNostrEventFromApi(options: FetchOptions): Promise<ApiNostrEventResponse> {
+export async function fetchNostrEventFromApi(
+  options: FetchOptions
+): Promise<ApiNostrEventResponse> {
   const url = buildNostrEventUrl(options.baseUrl, options.id, {
     relays: options.relays,
     limitRefs: options.limitRefs,
@@ -158,9 +163,9 @@ export async function fetchNostrEventFromApi(options: FetchOptions): Promise<Api
 }
 
 export async function searchNotes(
-  pool: SimplePool, 
-  relays: string[], 
-  query: string, 
+  pool: SimplePool,
+  relays: string[],
+  query: string,
   limit = 20,
   until?: number
 ): Promise<Event[]> {
@@ -168,7 +173,7 @@ export async function searchNotes(
     const filter: { kinds: number[]; search: string; limit: number; until?: number } = {
       kinds: [1],
       search: query,
-      limit,
+      limit
     };
     if (until) {
       filter.until = until;
