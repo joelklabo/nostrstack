@@ -340,9 +340,11 @@ export const Sidebar = memo(function Sidebar({
             <div className="sidebar-wallet-empty">
               <p>Wallet unavailable</p>
               <p className="sidebar-wallet-hint">{walletError}</p>
-              <button type="button" className="wallet-action-btn" onClick={walletRetry}>
-                Retry
-              </button>
+              {walletError !== 'No wallet URL configured' && (
+                <button type="button" className="wallet-action-btn" onClick={walletRetry}>
+                  Retry
+                </button>
+              )}
             </div>
           </div>
         )}
