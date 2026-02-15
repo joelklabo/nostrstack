@@ -4,15 +4,20 @@ export type UseFeedOptions = UseNostrQueryOptions & {
   authors?: string[];
   kinds?: number[];
   search?: string; // For future NIP-50 support
+  since?: number; // For time-filtered feeds (e.g., trending)
 };
 
 export function useFeed(options: UseFeedOptions = {}) {
-  const { authors, kinds = [1], ...queryOptions } = options;
+  const { authors, kinds = [1], since, ...queryOptions } = options;
 
-  const filter = {
+  const filter: Record<string, unknown> = {
     kinds,
     ...(authors ? { authors } : {})
   };
 
-  return useNostrQuery([filter], queryOptions);
+  if (since) {
+    filter.since = since;
+  }
+
+  return useNostrQuery([filter as never], queryOptions);
 }

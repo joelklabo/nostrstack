@@ -50,11 +50,12 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Feed mode: 'all' shows all posts, 'following' shows only from contacts
-  const [feedMode, setFeedMode] = useState<'all' | 'following'>(() => {
+  // Feed mode: 'all' shows all posts, 'following' shows only from contacts, 'trending' shows recent popular
+  const [feedMode, setFeedMode] = useState<'all' | 'following' | 'trending'>(() => {
     if (typeof window === 'undefined') return 'all';
     const saved = localStorage.getItem('nostrstack.feedMode');
-    return saved === 'following' ? 'following' : 'all';
+    if (saved === 'following' || saved === 'trending') return saved;
+    return 'all';
   });
 
   // Sort mode: 'latest' shows newest first, 'chronological' shows oldest first
@@ -80,8 +81,15 @@ export function FeedView({ isImmersive }: FeedViewProps) {
 
   // Determine feed parameters
   const isFollowingMode = feedMode === 'following';
+  const isTrendingMode = feedMode === 'trending';
   const canFetchFollowing = isFollowingMode && !contactsLoading && contacts.length > 0;
   const shouldFetch = !relaysLoading && (!isFollowingMode || canFetchFollowing);
+
+  // Calculate 'since' for trending mode - last 4 hours
+  const trendingSince = useMemo(() => {
+    if (!isTrendingMode) return undefined;
+    return Math.floor(Date.now() / 1000) - 4 * 60 * 60; // 4 hours ago
+  }, [isTrendingMode]);
 
   const {
     events: posts,
@@ -94,6 +102,7 @@ export function FeedView({ isImmersive }: FeedViewProps) {
     relays: relayList,
     kinds: [1],
     authors: isFollowingMode ? contacts : undefined,
+    since: trendingSince,
     limit: 20
   });
 
@@ -296,6 +305,15 @@ export function FeedView({ isImmersive }: FeedViewProps) {
             aria-label="Show posts from people you follow"
           >
             Following
+          </button>
+          <button
+            type="button"
+            className={`ns-btn ns-btn--sm ${feedMode === 'trending' ? 'ns-btn--primary' : 'ns-btn--ghost'}`}
+            onClick={() => setFeedMode('trending')}
+            aria-pressed={feedMode === 'trending'}
+            aria-label="Show trending posts from last 4 hours"
+          >
+            Trending 4h
           </button>
           <button
             type="button"

@@ -60,4 +60,7 @@ jobs:
           az containerapp update \
             -n nostrstack-api \
             -g nostrstack-rg \
-            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --registry-username ${{ github.actor }} \
+            --registry-password ${{ secrets.GITHUB_TOKEN }} \
+            --registry-server ${{ env.REGISTRY }}
