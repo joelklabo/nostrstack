@@ -14,6 +14,10 @@ on:
       - 'deploy/**'
       - '.github/workflows/azure-deploy.yml'
 
+concurrency:
+  group: azure-production-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy-push:
     if: ${{ github.event_name == 'push' }}

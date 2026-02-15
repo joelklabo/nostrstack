@@ -10,6 +10,10 @@ on:
     paths:
       - '.github/workflows/azure-deploy-staging.yml'
 
+concurrency:
+  group: azure-staging-deploy
+  cancel-in-progress: true
+
 jobs:
   meta:
     if: ${{ github.event_name == 'push' }}
