@@ -157,6 +157,14 @@ test.describe('Social App Flow', () => {
     // Verify Post Actions
     // Wait for at least one post
     await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+
+    // Dismiss onboarding overlay if it appears before interacting with posts
+    const skipBtn = page.getByRole('button', { name: 'Skip' });
+    if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await skipBtn.click();
+      await page.waitForTimeout(300);
+    }
+
     // Click VIEW_SRC on the first post
     const viewSource = page.getByText('View Source').first();
     const hasPost = await viewSource
