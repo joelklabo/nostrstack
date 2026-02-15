@@ -96,3 +96,4 @@ See `AGENTS.md` for workflow conventions.
   ```
 
 Use `data-relays` to override relays, `data-tip-preset-amounts-sats` for presets, and `data-base-url`/`data-host` to point at your API/tenant.
+nostrstack-run 1771142197
