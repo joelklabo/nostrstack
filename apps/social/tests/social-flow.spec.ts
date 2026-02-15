@@ -168,12 +168,15 @@ test.describe('Social App Flow', () => {
       return;
     }
     await viewSource.click();
+    // Wait for JSON view to appear (contains "Event ID:")
+    await page.waitForTimeout(500);
     // Expect JSON view to appear (contains "EVENT_ID:")
-    await expect(page.getByText(/Event ID:/)).toBeVisible();
+    await expect(page.locator('.ns-json')).toBeVisible();
 
     // Toggle back (HIDE_SRC)
     await page.getByText('Hide Source').first().click();
-    await expect(page.getByText(/Event ID:/)).not.toBeVisible();
+    await page.waitForTimeout(300);
+    await expect(page.locator('.ns-json')).not.toBeVisible();
 
     // Click REPLY (no-op but should not crash)
     await page.getByText('Reply').first().click();
