@@ -283,7 +283,10 @@ async function fetchReplies({
 
   const fetchStart = Date.now();
   try {
-    const events = await withTimeout(pool.querySync(relays, filter, { maxWait: timeoutMs }), timeoutMs);
+    const events = await withTimeout(
+      pool.querySync(relays, filter, { maxWait: timeoutMs }),
+      timeoutMs
+    );
     const duration = (Date.now() - fetchStart) / 1000;
     const deduped = new Map<string, Event>();
 
@@ -314,12 +317,13 @@ async function fetchReplies({
 
     const hasMore = filtered.length > replyLimit;
     const pageReplies = hasMore ? filtered.slice(-replyLimit) : filtered;
-    const nextCursor = hasMore && pageReplies.length > 0
-      ? encodeReplyCursor({
-        createdAt: pageReplies[0].created_at,
-        id: pageReplies[0].id
-      })
-      : null;
+    const nextCursor =
+      hasMore && pageReplies.length > 0
+        ? encodeReplyCursor({
+            createdAt: pageReplies[0].created_at,
+            id: pageReplies[0].id
+          })
+        : null;
 
     nostrReplyFetchDuration.labels('success').observe(duration);
     nostrReplyFetchCounter.labels(pageReplies.length > 0 ? 'success' : 'empty').inc();
@@ -363,11 +367,19 @@ async function fetchEventByTarget(
   );
 }
 
-async function fetchAuthorProfile(pool: SimplePool, pubkey: string, relays: string[], timeoutMs: number) {
+async function fetchAuthorProfile(
+  pool: SimplePool,
+  pubkey: string,
+  relays: string[],
+  timeoutMs: number
+) {
   return withTimeout(pool.get(relays, { kinds: [0], authors: [pubkey] }), timeoutMs);
 }
 
-export async function resolveNostrEvent(rawId: string, options: ResolveOptions = {}): Promise<ResolvedEvent> {
+export async function resolveNostrEvent(
+  rawId: string,
+  options: ResolveOptions = {}
+): Promise<ResolvedEvent> {
   const prisma = options.prisma;
   let relays: string[] = [];
   let pool: SimplePool | null = null;
@@ -458,10 +470,12 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
         throw new Error('invalid_event');
       }
 
-      const profileEvent = event.kind === 0
-        ? event
-        : await fetchAuthorProfile(activePool, event.pubkey, relays, timeoutMs);
-      const verifiedProfileEvent = profileEvent && isVerifiedEvent(profileEvent) ? profileEvent : null;
+      const profileEvent =
+        event.kind === 0
+          ? event
+          : await fetchAuthorProfile(activePool, event.pubkey, relays, timeoutMs);
+      const verifiedProfileEvent =
+        profileEvent && isVerifiedEvent(profileEvent) ? profileEvent : null;
       const authorProfile = parseProfileContent(verifiedProfileEvent?.content);
       const references = extractReferences(event, options.referenceLimit);
       const ttlSeconds = options.cacheTtlSeconds ?? 0;
@@ -470,7 +484,12 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
         const fetchedAt = new Date();
         await storeCachedEvent(prisma, { event, relays, fetchedAt, ttlSeconds, target });
         if (verifiedProfileEvent && verifiedProfileEvent.id !== event.id) {
-          await storeCachedEvent(prisma, { event: verifiedProfileEvent, relays, fetchedAt, ttlSeconds });
+          await storeCachedEvent(prisma, {
+            event: verifiedProfileEvent,
+            relays,
+            fetchedAt,
+            ttlSeconds
+          });
         }
       }
 
@@ -487,7 +506,8 @@ export async function resolveNostrEvent(rawId: string, options: ResolveOptions =
       };
     }
 
-    const shouldFetchReplies = options.replyLimit != null || options.replyCursor != null;
+    const shouldFetchReplies =
+      (options.replyLimit != null && options.replyLimit > 0) || options.replyCursor != null;
     if (shouldFetchReplies) {
       const requestedLimit = options.replyLimit ?? options.replyMaxLimit;
       if (requestedLimit == null || !Number.isFinite(requestedLimit) || requestedLimit <= 0) {

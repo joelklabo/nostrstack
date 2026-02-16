@@ -394,6 +394,58 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       }
     };
 
+    const loadEventReplies = async (eventId: string, relays: string[]) => {
+      let replyError: string | null = null;
+
+      try {
+        const replyResult = await withTimeout(
+          fetchNostrEventFromApi({
+            baseUrl: apiBase,
+            id: rawId,
+            relays,
+            replyLimit: REPLY_PAGE_LIMIT,
+            replyTimeoutMs: REQUEST_TIMEOUT_MS
+          }),
+          REQUEST_TIMEOUT_MS
+        );
+
+        if (replyResult.replies === undefined) {
+          throw new Error('Replies missing from API response.');
+        }
+
+        if (cancelled) return;
+        setState((prev) => {
+          if (prev.status !== 'ready' || prev.event?.id !== eventId) return prev;
+          return {
+            ...prev,
+            replies: {
+              status: 'ready',
+              items: normalizeReplies(replyResult.replies ?? []),
+              hasMore: replyResult.replyPage?.hasMore ?? false,
+              nextCursor: replyResult.replyPage?.nextCursor ?? null,
+              isLoadingMore: false,
+              source: 'api'
+            },
+            apiError: undefined
+          };
+        });
+        return;
+      } catch (err) {
+        replyError = err instanceof Error ? err.message : String(err);
+      }
+
+      const relayReplies = await fetchRepliesFromRelays(eventId, relays);
+      if (cancelled) return;
+      setState((prev) => {
+        if (prev.status !== 'ready' || prev.event?.id !== eventId) return prev;
+        return {
+          ...prev,
+          replies: relayReplies,
+          apiError: relayReplies.status === 'ready' ? undefined : replyError ?? undefined
+        };
+      });
+    };
+
     const load = async () => {
       setState({
         status: 'loading',
@@ -415,49 +467,18 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       try {
         if (apiBaseConfig.isConfigured) {
           try {
-            let apiResult = await withTimeout(
+            const apiResult = await withTimeout(
               fetchNostrEventFromApi({
                 baseUrl: apiBase,
                 id: rawId,
                 relays: relayList,
-                replyLimit: repliesEnabled ? REPLY_PAGE_LIMIT : undefined,
-                replyTimeoutMs: repliesEnabled ? REQUEST_TIMEOUT_MS : undefined
+                replyLimit: repliesEnabled ? 0 : undefined
               }),
               REQUEST_TIMEOUT_MS
             );
 
-            if (!apiResult.replies && repliesEnabled) {
-              try {
-                apiResult = await withTimeout(
-                  fetchNostrEventFromApi({
-                    baseUrl: apiBase,
-                    id: rawId,
-                    relays: relayList
-                  }),
-                  REQUEST_TIMEOUT_MS
-                );
-              } catch {
-                // keep original response when metadata-only response contains replies.
-              }
-            }
-
             if (cancelled) return;
             const relays = apiResult.target?.relays?.length ? apiResult.target.relays : relayList;
-
-            let repliesState = repliesEnabled
-              ? {
-                  status: 'ready' as const,
-                  items: normalizeReplies(apiResult.replies ?? []),
-                  hasMore: apiResult.replyPage?.hasMore ?? false,
-                  nextCursor: apiResult.replyPage?.nextCursor ?? null,
-                  isLoadingMore: false,
-                  source: 'api' as const
-                }
-              : EMPTY_REPLIES_STATE;
-
-            if (repliesEnabled && apiResult.replies === undefined) {
-              repliesState = await fetchRepliesFromRelays(apiResult.event.id, relays);
-            }
 
             setState({
               status: 'ready',
@@ -467,60 +488,18 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
               authorProfile: apiResult.author?.profile ?? null,
               authorPubkey: apiResult.author?.pubkey ?? apiResult.event.pubkey,
               targetLabel: apiResult.target?.input ?? rawId,
-              replies: repliesState,
+              replies: repliesEnabled
+                ? { ...EMPTY_REPLIES_STATE, status: 'loading' }
+                : EMPTY_REPLIES_STATE,
               apiError: undefined
             });
+
+            if (repliesEnabled) {
+              void loadEventReplies(apiResult.event.id, relays);
+            }
             return;
           } catch (err) {
-            if (repliesEnabled) {
-              try {
-                const fallbackApiResult = await withTimeout(
-                  fetchNostrEventFromApi({
-                    baseUrl: apiBase,
-                    id: rawId,
-                    relays: relayList
-                  }),
-                  REQUEST_TIMEOUT_MS
-                );
-                if (cancelled) return;
-
-                const relays = fallbackApiResult.target?.relays?.length
-                  ? fallbackApiResult.target.relays
-                  : relayList;
-                let fallbackRepliesState: RepliesState = {
-                  status: 'ready',
-                  items: normalizeReplies(fallbackApiResult.replies ?? []),
-                  hasMore: fallbackApiResult.replyPage?.hasMore ?? false,
-                  nextCursor: fallbackApiResult.replyPage?.nextCursor ?? null,
-                  isLoadingMore: false,
-                  source: 'api'
-                };
-
-                if (fallbackApiResult.replies === undefined) {
-                  fallbackRepliesState = await fetchRepliesFromRelays(
-                    fallbackApiResult.event.id,
-                    relays
-                  );
-                }
-
-                setState({
-                  status: 'ready',
-                  relays,
-                  event: fallbackApiResult.event,
-                  references: fallbackApiResult.references,
-                  authorProfile: fallbackApiResult.author?.profile ?? null,
-                  authorPubkey: fallbackApiResult.author?.pubkey ?? fallbackApiResult.event.pubkey,
-                  targetLabel: fallbackApiResult.target?.input ?? rawId,
-                  replies: fallbackRepliesState,
-                  apiError: undefined
-                });
-                return;
-              } catch (fallbackErr) {
-                apiError = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
-              }
-            } else {
-              apiError = err instanceof Error ? err.message : String(err);
-            }
+            apiError = err instanceof Error ? err.message : String(err);
           }
         }
 

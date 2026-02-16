@@ -31,10 +31,10 @@ function parseRelays(raw?: string) {
   return { relays, invalid };
 }
 
-function parseIntParam(value?: string) {
+function parseIntParam(value?: string, allowZero = false) {
   if (!value) return undefined;
   const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  if (!Number.isFinite(parsed) || (!allowZero && parsed <= 0) || parsed < 0) return null;
   return Math.floor(parsed);
 }
 
@@ -50,10 +50,7 @@ type NostrEventRoute = {
 };
 
 export async function registerNostrEventRoute(app: FastifyInstance) {
-  const handler = async (
-    request: FastifyRequest<NostrEventRoute>,
-    reply: FastifyReply
-  ) => {
+  const handler = async (request: FastifyRequest<NostrEventRoute>, reply: FastifyReply) => {
     const id = request.params.id;
     const limitRefs = parseIntParam(request.query.limitRefs);
     if (request.query.limitRefs && limitRefs == null) {
@@ -73,11 +70,11 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
       });
     }
 
-    const replyLimit = parseIntParam(request.query.replyLimit);
+    const replyLimit = parseIntParam(request.query.replyLimit, true);
     if (request.query.replyLimit && replyLimit == null) {
       return reply.code(400).send({
         error: 'invalid_reply_limit',
-        message: 'replyLimit must be a positive integer.',
+        message: 'replyLimit must be a non-negative integer.',
         requestId: request.id
       });
     }
@@ -111,10 +108,7 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
     const defaultRelays = parseRelays(env.NOSTR_RELAYS);
     const relays = defaultRelays.relays.length ? defaultRelays.relays : DEFAULT_RELAYS;
     const replyMaxLimit = env.NOSTR_EVENT_REPLY_MAX_LIMIT;
-    const resolvedReplyLimit = Math.min(
-      replyLimit ?? env.NOSTR_EVENT_REPLY_LIMIT,
-      replyMaxLimit
-    );
+    const resolvedReplyLimit = Math.min(replyLimit ?? env.NOSTR_EVENT_REPLY_LIMIT, replyMaxLimit);
     const replyTimeoutMs = timeoutMs ?? env.NOSTR_EVENT_REPLY_TIMEOUT_MS;
 
     try {
@@ -294,27 +288,52 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
       },
       400: {
         type: 'object',
-        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' }, invalidRelays: { type: 'array', items: { type: 'string' } } }
+        properties: {
+          error: { type: 'string' },
+          message: { type: 'string' },
+          requestId: { type: 'string' },
+          invalidRelays: { type: 'array', items: { type: 'string' } }
+        }
       },
       404: {
         type: 'object',
-        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+        properties: {
+          error: { type: 'string' },
+          message: { type: 'string' },
+          requestId: { type: 'string' }
+        }
       },
       422: {
         type: 'object',
-        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+        properties: {
+          error: { type: 'string' },
+          message: { type: 'string' },
+          requestId: { type: 'string' }
+        }
       },
       500: {
         type: 'object',
-        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+        properties: {
+          error: { type: 'string' },
+          message: { type: 'string' },
+          requestId: { type: 'string' }
+        }
       },
       503: {
         type: 'object',
-        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+        properties: {
+          error: { type: 'string' },
+          message: { type: 'string' },
+          requestId: { type: 'string' }
+        }
       },
       504: {
         type: 'object',
-        properties: { error: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' } }
+        properties: {
+          error: { type: 'string' },
+          message: { type: 'string' },
+          requestId: { type: 'string' }
+        }
       }
     }
   };

@@ -83,10 +83,10 @@ function buildResolvedEvent(
     references: baseReferences,
     ...(options.includeReplies
       ? {
-        replyThreadId: options.replyThreadId ?? id,
-        replies: options.replies ?? [baseReply],
-        replyPage: options.replyPage ?? { hasMore: false, nextCursor: null }
-      }
+          replyThreadId: options.replyThreadId ?? id,
+          replies: options.replies ?? [baseReply],
+          replyPage: options.replyPage ?? { hasMore: false, nextCursor: null }
+        }
       : {})
   };
 }
@@ -94,10 +94,13 @@ function buildResolvedEvent(
 describe('/api/nostr/event', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
   });
@@ -175,17 +178,13 @@ describe('/api/nostr/event', () => {
     expect(call?.[1]?.replyLimit).toBe(50);
   });
 
-  it('rejects invalid reply limits', async () => {
+  it('allows zero replyLimit to fetch metadata only', async () => {
     const res = await server.inject({
       url: `/api/nostr/event/${baseEventId}?replyLimit=0`
     });
-    expect(res.statusCode).toBe(400);
-    expect(res.json()).toEqual({
-      error: 'invalid_reply_limit',
-      message: 'replyLimit must be a positive integer.',
-      requestId: expect.any(String)
-    });
-    expect(resolveMock).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const call = resolveMock.mock.calls[0];
+    expect(call?.[1]?.replyLimit).toBe(0);
   });
 
   it('rejects invalid reply cursors', async () => {
@@ -202,7 +201,9 @@ describe('/api/nostr/event', () => {
   });
 
   it('returns replies when resolver includes reply data', async () => {
-    resolveMock.mockResolvedValueOnce(buildResolvedEvent(baseEventId, ['wss://relay.one'], { includeReplies: true }));
+    resolveMock.mockResolvedValueOnce(
+      buildResolvedEvent(baseEventId, ['wss://relay.one'], { includeReplies: true })
+    );
     const res = await server.inject({
       url: `/api/nostr/event/${baseEventId}?replyLimit=5`
     });
