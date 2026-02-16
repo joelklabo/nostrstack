@@ -1,0 +1,9 @@
+- main [ref=e4]:
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - heading "Sign in to NostrStack" [level=1] [ref=e11]
+      - paragraph [ref=e12]: Connect your identity to get started
+    - group "Authentication methods" [ref=e13]:
+      - button "Sign in with Nostr browser extension" [active] [ref=e14] [cursor=pointer]: Sign in with Extension
+      - button "Enter private key manually" [ref=e15] [cursor=pointer]: Enter nsec manually
+      - button "Browse as guest" [ref=e16] [cursor=pointer]: Browse as Guest
