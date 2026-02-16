@@ -3193,9 +3193,9 @@ button:disabled {
 
   .sidebar-overlay {
     display: block;
-    left: min(300px, 85vw);
-    width: calc(100% - min(300px, 85vw));
-    max-width: calc(100% - min(300px, 85vw));
+    left: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .sidebar-nav {
@@ -3297,7 +3297,7 @@ button:disabled {
 .social-layout.is-immersive .hamburger-btn {
   transform: translateY(-100%);
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .social-layout.is-immersive .feed-header {

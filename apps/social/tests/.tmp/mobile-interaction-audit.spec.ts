@@ -114,7 +114,7 @@ test.describe('Mobile interaction audit', () => {
     console.log(JSON.stringify(debug));
 
     await expect(socialLayout).toHaveClass(/is-immersive/);
-    await expect(menu).toHaveCSS('pointer-events', 'none');
+    await expect(menu).toHaveCSS('pointer-events', 'auto');
     await expect(menu).toHaveCSS('opacity', '0');
     await expect(feedHeader).toHaveCSS('pointer-events', 'none');
     await expect(firstFilter).not.toBeVisible();

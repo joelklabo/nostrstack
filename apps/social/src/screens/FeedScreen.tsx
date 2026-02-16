@@ -316,11 +316,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
     <section className="feed-stream" aria-label="Live feed">
       <NewPostsIndicator newPosts={newPosts} onScrollToTop={handleScrollToTop} />
 
-      <header
-        className="feed-header"
-        inert={isImmersive || undefined}
-        aria-hidden={isImmersive || undefined}
-      >
+      <header className="feed-header" aria-hidden={isImmersive ? 'true' : undefined}>
         <h2 className="feed-title">
           Live Feed
           {!relaysLoading && (
@@ -404,11 +400,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         </div>
       </header>
 
-      <div
-        className="feed-editor"
-        inert={isImmersive || undefined}
-        aria-hidden={isImmersive || undefined}
-      >
+      <div className="feed-editor" aria-hidden={isImmersive ? 'true' : undefined}>
         <PostEditor />
       </div>
 

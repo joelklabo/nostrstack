@@ -386,7 +386,14 @@ export const Sidebar = memo(function Sidebar({
           </div>
         </div>
 
-        <button type="button" className="nav-item nav-item--danger" onClick={logout}>
+        <button
+          type="button"
+          className="nav-item nav-item--danger"
+          onClick={() => {
+            onMobileClose?.();
+            logout();
+          }}
+        >
           Log out
         </button>
       </div>
