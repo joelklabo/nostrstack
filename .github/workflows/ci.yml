@@ -21,33 +21,45 @@ jobs:
         include:
           - name: Lint (GitHub Actions Workflows)
             tool: actionlint
+            allow_failure: false
+            command: echo "skip actionlint command step"
           - name: Lint (Knip)
             command: pnpm lint:knip
             allow_failure: true
           - name: Lint (Copy/Paste)
             command: pnpm lint:cpd
+            allow_failure: false
           - name: Lint (File Naming)
             command: pnpm lint:ls
+            allow_failure: false
           - name: Lint (Spell Check)
             command: pnpm lint:spell
+            allow_failure: false
           - name: Lint (CSS)
             command: pnpm lint:css
+            allow_failure: false
           - name: Lint (Markdown)
             command: pnpm lint:md
+            allow_failure: false
           - name: Lint (Shell Scripts)
             command: pnpm lint:sh
             install_shellcheck: true
+            allow_failure: false
           - name: Lint (Secrets)
             command: pnpm lint:secrets
+            allow_failure: false
           - name: Lint (Audit)
             command: pnpm lint:audit
+            allow_failure: false
           - name: Lint (Dependencies)
             command: pnpm lint:deps
+            allow_failure: false
           - name: Lint (Architecture)
             command: pnpm lint:dep
+            allow_failure: false
     permissions:
       contents: read
-    continue-on-error: ${{ matrix.allow_failure }}
+    continue-on-error: ${{ matrix.allow_failure == true }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,7 +78,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: ${{ matrix.name }}
-        if: matrix.command
+        if: matrix.command != ''
         run: ${{ matrix.command }}
 
   typecheck:
