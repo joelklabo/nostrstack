@@ -1,3 +1,4 @@
+import type * as nostrReact from '@nostrstack/react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,15 +9,19 @@ const { refreshSpy, subscribeSpy } = vi.hoisted(() => ({
   subscribeSpy: vi.fn(() => () => {})
 }));
 
-vi.mock('@nostrstack/react', () => ({
-  subscribeTelemetry: subscribeSpy,
-  useBitcoinStatus: () => ({
-    status: null,
-    error: null,
-    isLoading: false,
-    refresh: refreshSpy
-  })
-}));
+vi.mock('@nostrstack/react', async () => {
+  const actual = (await vi.importActual('@nostrstack/react')) as typeof nostrReact;
+  return {
+    ...actual,
+    subscribeTelemetry: subscribeSpy,
+    useBitcoinStatus: () => ({
+      status: null,
+      error: null,
+      isLoading: false,
+      refresh: refreshSpy
+    })
+  };
+});
 
 vi.mock('../hooks/useRelays', () => ({
   useRelays: () => ({
