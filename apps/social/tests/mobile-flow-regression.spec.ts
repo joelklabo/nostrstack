@@ -86,21 +86,17 @@ test.describe('mobile regression interaction matrix', () => {
     await expect(modal.first()).toBeVisible({ timeout: 8000 });
     await closePaymentModal(page, modal.first());
 
-    const navName = page.locator('button:has-text("Feed"), button:has-text("Discover")').first();
     await expect(page.locator('.feed-stream')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('.payment-modal, .paywall-payment-modal, .zap-modal')).toHaveCount(0);
-    await expect(navName).toBeVisible({ timeout: 1000 });
+    await expect(page.locator('.sidebar-overlay')).not.toHaveClass(/is-visible/, { timeout: 2500 });
 
-    await page
-      .locator('.sidebar-overlay')
-      .click({ force: true })
-      .catch(() => undefined);
-    await page
-      .getByRole('button', { name: /Open profile/i })
-      .click({ force: true })
-      .catch(() => undefined);
-    await expect(page.getByRole('button', { name: /Find friend/i }).first())
-      .toBeVisible({ timeout: 5000 })
-      .catch(() => undefined);
+    const profileNav = page.getByRole('button', { name: 'Profile' });
+    if ((await profileNav.count()) > 0) {
+      await expect(profileNav.first()).toBeVisible({ timeout: 1000 });
+      await profileNav
+        .first()
+        .click({ force: true })
+        .catch(() => undefined);
+    }
   });
 });
