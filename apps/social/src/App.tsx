@@ -97,6 +97,8 @@ function buildApiBaseFallback(): ApiBaseResolution {
   return resolveGalleryApiBase({ apiBase: LOCAL_API_BASE_FALLBACK });
 }
 
+const FALLBACK_API_BASE = resolveGalleryApiBase({ apiBase: LOCAL_API_BASE_FALLBACK });
+
 function isBrandPreset(value: string | null): value is NsBrandPreset {
   return value !== null && (BRAND_PRESET_LIST as readonly string[]).includes(value);
 }
@@ -609,6 +611,7 @@ export default function App() {
   const [isResolvingLocalApiBase, setIsResolvingLocalApiBase] = useState(() =>
     isLocalApiBase(apiBaseConfig)
   );
+  const [localApiCheckFailed, setLocalApiCheckFailed] = useState(false);
   const initialLocalApiConfig = useRef<ApiBaseResolution | null>(
     isLocalApiBase(apiBaseConfig) ? apiBaseConfig : null
   );
@@ -617,6 +620,7 @@ export default function App() {
     if (initialLocalApiConfig.current) {
       setResolvedApiBaseConfig(initialLocalApiConfig.current);
       setIsResolvingLocalApiBase(true);
+      setLocalApiCheckFailed(false);
     }
   }, []);
 
@@ -631,31 +635,38 @@ export default function App() {
     const controller = new AbortController();
     let isMounted = true;
     const timeout = window.setTimeout(() => controller.abort(), LOCAL_API_TIMEOUT_MS);
-    const probe = async () => {
+
+    const checkApiHealth = async (url: string): Promise<boolean> => {
       try {
-        const response = await fetch(`${resolvedApiBaseConfig.baseUrl}/api/health`, {
-          signal: controller.signal
-        });
-        if (!response.ok) {
-          if (isMounted) {
-            setResolvedApiBaseConfig((current) =>
-              isLocalApiBase(current) ? buildApiBaseFallback() : current
-            );
-          }
-        }
+        const response = await fetch(`${url}/api/health`, { signal: controller.signal });
+        return response.ok;
       } catch {
-        if (isMounted) {
+        return false;
+      }
+    };
+
+    const probe = async () => {
+      const localApiWorks = await checkApiHealth(resolvedApiBaseConfig.baseUrl);
+
+      if (!localApiWorks && isMounted) {
+        const fallbackWorks = await checkApiHealth(FALLBACK_API_BASE.baseUrl);
+
+        if (fallbackWorks) {
+          setResolvedApiBaseConfig(FALLBACK_API_BASE);
+        } else {
+          setLocalApiCheckFailed(true);
           setResolvedApiBaseConfig((current) =>
             isLocalApiBase(current) ? buildApiBaseFallback() : current
           );
         }
-      } finally {
-        clearTimeout(timeout);
-        if (isMounted) {
-          setIsResolvingLocalApiBase(false);
-        }
+      }
+
+      clearTimeout(timeout);
+      if (isMounted) {
+        setIsResolvingLocalApiBase(false);
       }
     };
+
     void probe();
     return () => {
       isMounted = false;
@@ -664,10 +675,14 @@ export default function App() {
     };
   }, [resolvedApiBaseConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const apiBase = resolvedApiBaseConfig.baseUrl;
-  if (isResolvingLocalApiBase) {
+  if (isResolvingLocalApiBase || localApiCheckFailed) {
     return (
       <LoadingFallback
-        message="Checking API availability..."
+        message={
+          localApiCheckFailed
+            ? 'API unavailable on localhost:3001 and /api'
+            : 'Checking API availability...'
+        }
         includeRetry
         onRetry={retryLocalApiHealthCheck}
       />

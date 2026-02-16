@@ -44,6 +44,74 @@ ndev_port_in_use() {
   return 1
 }
 
+ndev_port_has_owner() {
+  local port="$1"
+  local pid=""
+
+  if command -v lsof >/dev/null 2>&1; then
+    pid="$(lsof -iTCP:"$port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
+    if [[ -n "$pid" ]]; then
+      return 0
+    fi
+  fi
+
+  if command -v ss >/dev/null 2>&1; then
+    if ss -ltnp 2>/dev/null | awk -v p=":${port}" '$4 ~ p && $6 ~ /pid=/ {found=1} END {exit !found}'; then
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+ndev_force_kill_port() {
+  local port="$1"
+  local pid=""
+
+  if command -v lsof >/dev/null 2>&1; then
+    pid="$(lsof -iTCP:"$port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
+    if [[ -n "$pid" ]] && ndev_pid_alive "$pid" 2>/dev/null; then
+      echo "Force killing PID $pid on port $port"
+      kill -9 "$pid" 2>/dev/null || true
+      sleep 1
+      if ! ndev_port_in_use "$port"; then
+        return 0
+      fi
+    fi
+  fi
+
+  if command -v fuser >/dev/null 2>&1; then
+    pid="$(fuser -n tcp "$port" 2>/dev/null | grep -oE '[0-9]+' | head -1 || true)"
+    if [[ -n "$pid" ]] && ndev_pid_alive "$pid" 2>/dev/null; then
+      echo "Force killing PID $pid on port $port (via fuser)"
+      kill -9 "$pid" 2>/dev/null || true
+      sleep 1
+      if ! ndev_port_in_use "$port"; then
+        return 0
+      fi
+    fi
+  fi
+
+  if command -v ss >/dev/null 2>&1; then
+    pid="$(ss -ltnp 2>/dev/null | awk -v p=":${port}" '$4 ~ p {for(i=6;i<=NF;i++) if($i~"pid=") {split($i,a,"="); print a[2]; exit}}')"
+    if [[ -n "$pid" ]] && ndev_pid_alive "$pid" 2>/dev/null; then
+      echo "Force killing PID $pid on port $port (via ss)"
+      kill -9 "$pid" 2>/dev/null || true
+      sleep 1
+      if ! ndev_port_in_use "$port"; then
+        return 0
+      fi
+    fi
+  fi
+
+  if ndev_port_in_use "$port"; then
+    echo "Port $port is in use but has no identifiable owner process - may be stale socket"
+    return 1
+  fi
+
+  return 0
+}
+
 ndev_cleanup_stale_session_file() {
   local file="$1"
   local pid
@@ -138,9 +206,40 @@ ndev_claim_slot() {
 
   api_port=$((NOSTRDEV_BASE_API_PORT + slot))
   social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
+  
   if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-    ndev_unlock_slot "$slot"
-    return 1
+    local api_has_owner social_has_owner
+    api_has_owner=0
+    social_has_owner=0
+    ndev_port_has_owner "$api_port" && api_has_owner=1
+    ndev_port_has_owner "$social_port" && social_has_owner=1
+    
+    if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
+      if [[ "$api_has_owner" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free port $api_port"
+        ndev_force_kill_port "$api_port" || true
+      elif ndev_port_in_use "$api_port"; then
+        echo "Port $api_port has no owning process (stale socket) - skipping slot $slot"
+      fi
+      if [[ "$social_has_owner" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
+        ndev_force_kill_port "$social_port" || true
+      elif ndev_port_in_use "$social_port"; then
+        echo "Port $social_port has no owning process (stale socket) - skipping slot $slot"
+      fi
+      sleep 1
+    fi
+    
+    if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+      if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
+        echo "Skipping slot $slot: port $api_port has stale socket with no process owner"
+      fi
+      if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
+        echo "Skipping slot $slot: port $social_port has stale socket with no process owner"
+      fi
+      ndev_unlock_slot "$slot"
+      return 1
+    fi
   fi
 
   ndev_write_session_file "$slot" "$api_port" "$social_port"
@@ -156,12 +255,21 @@ ndev_claim_session() {
     local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
     local social_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_SOCIAL_PORT}"
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-      local pid owner_file
-      echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
-      pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
-      owner_file="$(ndev_slot_file "0")"
-      [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $api_port)" >&2
-      return 1
+      if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free ports $api_port and $social_port"
+        ndev_force_kill_port "$api_port" || true
+        ndev_force_kill_port "$social_port" || true
+        sleep 1
+      fi
+      if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+        local pid owner_file
+        echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
+        pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
+        owner_file="$(ndev_slot_file "0")"
+        [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $api_port)" >&2
+        return 1
+      fi
+      echo "Successfully freed ports"
     fi
     ndev_write_session_file "manual-$$" "$api_port" "$social_port"
     return 0
