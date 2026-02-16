@@ -37,6 +37,8 @@ interface VirtualizedListProps<T> {
   itemRole?: AriaRole;
   /** Cache key used by dynamic row-height measurements */
   rowHeightCacheKey?: string;
+  /** Optional fixed/heuristic row height for predictable virtualized sizing */
+  rowHeight?: number | ((index: number, item: T | undefined) => number);
   /** Live region politeness for dynamic updates */
   ariaLive?: AriaAttributes['aria-live'];
   /** Live region relevance for dynamic updates */
@@ -110,6 +112,7 @@ export function VirtualizedList<T>({
   ariaLabel,
   role = 'feed',
   itemRole,
+  rowHeight,
   rowHeightCacheKey,
   ariaLive,
   ariaRelevant,
@@ -146,6 +149,18 @@ export function VirtualizedList<T>({
     defaultRowHeight: DEFAULT_ITEM_HEIGHT,
     key: resolvedRowHeightCacheKey
   });
+
+  const resolvedRowHeight = useMemo(() => {
+    if (typeof rowHeight === 'number') {
+      return rowHeight;
+    }
+
+    if (typeof rowHeight === 'function') {
+      return (index: number) => rowHeight(index, items[index]);
+    }
+
+    return dynamicRowHeight;
+  }, [dynamicRowHeight, rowHeight, items]);
 
   // Update container height based on viewport and anchor changes
   useEffect(() => {
@@ -251,7 +266,7 @@ export function VirtualizedList<T>({
       <List
         rowComponent={RowComponent as typeof RowComponent<T>}
         rowCount={rowCount}
-        rowHeight={dynamicRowHeight}
+        rowHeight={resolvedRowHeight}
         rowProps={rowProps}
         defaultHeight={containerHeight}
         overscanCount={OVERSCAN_COUNT}

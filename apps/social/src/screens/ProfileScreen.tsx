@@ -21,6 +21,7 @@ import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
 import { resolveRuntimeApiBase } from '../utils/api-base';
+import { estimatePostRowHeight } from '../utils/feed-layout';
 
 // Use CSS custom property for primary teal color for general UI accents
 // Bitcoin orange should only be used for actual Bitcoin data (block heights, sats amounts)
@@ -632,6 +633,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
         ) : (
           <VirtualizedList
             items={events}
+            rowHeight={(index) => estimatePostRowHeight(events[index])}
             rowHeightCacheKey="profile-screen-posts-v1"
             getItemKey={getPostKey}
             renderItem={renderPostItem}

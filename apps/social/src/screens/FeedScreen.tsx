@@ -14,6 +14,7 @@ import { NostrEventCard } from '../ui/NostrEventCard';
 import { SupportCard } from '../ui/SupportCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
 import { resolveRuntimeApiBase } from '../utils/api-base';
+import { estimatePostRowHeight } from '../utils/feed-layout';
 import { navigateTo } from '../utils/navigation';
 
 interface FeedScreenProps {
@@ -285,6 +286,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         items={filteredPosts}
         getItemKey={getPostKey}
         renderItem={renderPostItem}
+        rowHeight={(index) => estimatePostRowHeight(filteredPosts[index])}
         rowHeightCacheKey="feed-screen-posts-v1"
         onLoadMore={hasMore ? loadMore : undefined}
         hasMore={hasMore}
