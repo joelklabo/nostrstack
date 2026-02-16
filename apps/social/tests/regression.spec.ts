@@ -80,9 +80,7 @@ test.describe('Issue #2: Feed Stability', () => {
     const cards = feedCards(page);
     const skeletons = feedSkeletons(page);
     const feedStream = page.locator('.feed-stream');
-    const visibleFeed = feedStream.locator(
-      '[data-testid="social-event-card"], [class*="skeleton"]'
-    );
+    const visibleFeed = cards.or(skeletons);
     await expect(heading).toBeVisible({ timeout: 10000 });
     await expect(visibleFeed).toBeVisible({ timeout: 8000 });
 
@@ -167,7 +165,9 @@ test.describe('Issue #1: Onboarding Layout', () => {
     await expect(onboardingCard).toBeVisible({ timeout: 5000 });
 
     const nextBtn = page.getByRole('button', { name: /Next|Go to next step/i });
-    const currentTitle = await page.locator('#tour-title, [data-testid="onboarding-title"]').textContent();
+    const currentTitle = await page
+      .locator('#tour-title, [data-testid="onboarding-title"]')
+      .textContent();
     await nextBtn.click();
 
     const changedTitle = page.locator('#tour-title, [data-testid="onboarding-title"]');

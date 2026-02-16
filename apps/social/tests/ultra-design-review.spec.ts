@@ -38,7 +38,7 @@ test.describe('Ultra Review: Visual Design Consistency', () => {
         navItemActive: document.querySelector('.nav-item.active'),
         navItemInactive: document.querySelector('.nav-item:not(.active)'),
         feedTitle: document.querySelector('h2'),
-        postContent: document.querySelector('[data-testid=\"social-event-content\"]'),
+        postContent: document.querySelector('[data-testid="social-event-content"]'),
         actionButton: document.querySelector('.action-btn')
       };
 
@@ -223,7 +223,7 @@ test.describe('Ultra Review: Component States & Edge Cases', () => {
       if (!main) return false;
 
       const text = main.textContent || '';
-      const hasPosts = document.querySelectorAll('[data-testid=\"social-event-card\"]').length > 0;
+      const hasPosts = document.querySelectorAll('[data-testid="social-event-card"]').length > 0;
       const hasEmptyState = text.includes('No posts') || text.includes('first post');
 
       return hasPosts || hasEmptyState || text.trim().length > 0;
@@ -249,7 +249,9 @@ test.describe('Ultra Review: Component States & Edge Cases', () => {
 
     // Check text overflow handling
     const textOverflow = await page.evaluate(() => {
-      const postContents = Array.from(document.querySelectorAll('[data-testid=\"social-event-content\"]'));
+      const postContents = Array.from(
+        document.querySelectorAll('[data-testid="social-event-content"]')
+      );
       return postContents.map((el) => {
         const styles = window.getComputedStyle(el);
         return {
@@ -300,7 +302,7 @@ test.describe('Ultra Review: Typography Scale in Practice', () => {
 
     // Check that text content doesn't exceed optimal line length (45-75 chars)
     const lineLengths = await page.evaluate(() => {
-      const posts = Array.from(document.querySelectorAll('[data-testid=\"social-event-content\"]'));
+      const posts = Array.from(document.querySelectorAll('[data-testid="social-event-content"]'));
       return posts.map((post) => {
         const width = post.getBoundingClientRect().width;
         const fontSize = parseFloat(window.getComputedStyle(post).fontSize);
@@ -326,8 +328,8 @@ test.describe('Ultra Review: Typography Scale in Practice', () => {
     const fontSizes = await page.evaluate(() => {
       const h1 = document.querySelector('h1');
       const h2 = document.querySelector('h2');
-      const body = document.querySelector('[data-testid=\"social-event-content\"]');
-      const small = document.querySelector('[data-testid=\"social-event-header\"]');
+      const body = document.querySelector('[data-testid="social-event-content"]');
+      const small = document.querySelector('[data-testid="social-event-header"]');
 
       return {
         h1: h1 ? parseFloat(window.getComputedStyle(h1).fontSize) : null,
@@ -353,7 +355,7 @@ test.describe('Ultra Review: Typography Scale in Practice', () => {
     await loginWithNsec(page);
 
     const lineHeights = await page.evaluate(() => {
-      const body = document.querySelector('[data-testid=\"social-event-content\"] p');
+      const body = document.querySelector('[data-testid="social-event-content"] p');
       const nav = document.querySelector('.nav-item');
 
       return {
@@ -567,7 +569,7 @@ test.describe('Ultra Review: Spacing Consistency Across Breakpoints', () => {
 
       const spacing = await page.evaluate(() => {
         const main = document.querySelector('main');
-        const cards = Array.from(document.querySelectorAll('[data-testid=\"social-event-card\"]'));
+        const cards = Array.from(document.querySelectorAll('[data-testid="social-event-card"]'));
 
         if (!main) return null;
 
