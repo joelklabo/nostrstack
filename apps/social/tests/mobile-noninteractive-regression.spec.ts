@@ -1,0 +1,89 @@
+import { expect, test } from '@playwright/test';
+
+import {
+  dismissOnboardingTourIfOpen,
+  dispatchTelemetryWsState,
+  ensureZapPostAvailable,
+  loginWithNsec
+} from './helpers.ts';
+
+const mobileViewport = { width: 390, height: 844 };
+
+test.describe('Mobile non-interactive regression sweep', () => {
+  test('feed card action buttons remain hittable during scroll', async ({ page }) => {
+    page.setViewportSize(mobileViewport);
+    await loginWithNsec(page);
+    await dismissOnboardingTourIfOpen(page);
+    await ensureZapPostAvailable(page, { fallbackText: 'Mobile interaction seed post' });
+
+    const post = page.locator('[data-testid="social-event-card"]').first();
+    await expect(post).toBeVisible({ timeout: 12000 });
+
+    for (let batch = 0; batch < 3; batch++) {
+      const actionButtons = post.locator('[data-testid="social-event-actions"] button:visible');
+      const actionCount = await actionButtons.count();
+      expect(actionCount).toBeGreaterThan(0);
+      const targetCount = Math.min(actionCount, 8);
+
+      for (let i = 0; i < targetCount; i++) {
+        const action = actionButtons.nth(i);
+        await action.scrollIntoViewIfNeeded();
+        await expect(action, `action ${i}`).toBeVisible({ timeout: 4000 });
+
+        if (!(await action.isEnabled().catch(() => false))) continue;
+        const box = await action.boundingBox();
+        expect(box, `action ${i} should have layout box`).toBeTruthy();
+        expect(box!.width).toBeGreaterThan(24);
+        if (await action.getAttribute('class').then((value) => value?.includes('ns-action-btn'))) {
+          expect(box!.height).toBeGreaterThanOrEqual(44);
+          expect(box!.width).toBeGreaterThanOrEqual(44);
+        } else {
+          expect(box!.height).toBeGreaterThan(20);
+          expect(box!.width).toBeGreaterThan(20);
+        }
+
+        const pointerEvents = await action.evaluate(
+          (node) => window.getComputedStyle(node).pointerEvents
+        );
+        expect(pointerEvents).not.toBe('none');
+
+        await action.click({ force: true, timeout: 1000, trial: true });
+      }
+
+      await page.mouse.wheel(0, 280);
+      await page.waitForTimeout(200);
+    }
+  });
+
+  test('right rail controls are not blocked by overlay state', async ({ page }) => {
+    page.setViewportSize({ width: 1280, height: 900 });
+    await loginWithNsec(page);
+    await dismissOnboardingTourIfOpen(page);
+
+    await expect(page.locator('.telemetry-sidebar')).toBeVisible({ timeout: 10000 });
+    await dispatchTelemetryWsState(page, {
+      status: 'offline',
+      attempt: 3,
+      offlineReason: 'QA overlay check'
+    });
+
+    const retryButton = page.locator('.telemetry-sidebar .ns-conn-retry');
+    await expect(retryButton).toBeVisible({ timeout: 8000 });
+    await expect(retryButton).toBeEnabled();
+    const pointerEvents = await retryButton.evaluate(
+      (element) => window.getComputedStyle(element).pointerEvents
+    );
+    expect(pointerEvents).not.toBe('none');
+    await retryButton.click({ force: true, timeout: 1000, trial: true });
+
+    const telemetryButtons = page.locator('.telemetry-sidebar button');
+    const telemetryButtonCount = await telemetryButtons.count();
+    for (let i = 0; i < Math.min(telemetryButtonCount, 8); i++) {
+      const button = telemetryButtons.nth(i);
+      if (await button.isVisible().catch(() => false)) {
+        await button.scrollIntoViewIfNeeded();
+        await button.click({ force: true, timeout: 1000, trial: true });
+      }
+    }
+  });
+});

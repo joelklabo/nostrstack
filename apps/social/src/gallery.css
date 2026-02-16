@@ -3271,6 +3271,13 @@ button:disabled {
     gap: var(--ns-space-1);
   }
 
+  .ns-event-card__actions .ns-action-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: var(--ns-space-2);
+    justify-content: center;
+  }
+
   .ns-event-card__actions .action-btn {
     padding: var(--ns-space-2);
     font-size: var(--ns-font-size-xs);
@@ -3285,6 +3292,12 @@ button:disabled {
 
   .ns-event-card__actions .action-btn {
     min-width: 36px;
+    justify-content: center;
+  }
+
+  .ns-event-card__actions .ns-action-btn {
+    min-width: 36px;
+    min-height: 36px;
     justify-content: center;
   }
 }
