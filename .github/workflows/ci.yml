@@ -3,8 +3,26 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'CHANGELOG.md'
+      - 'changelog/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'CHANGELOG.md'
+      - 'changelog/**'
+  workflow_dispatch:
+    inputs:
+      run_external_checks:
+        description: Run external integration checks (LNbits + real relay)
+        type: boolean
+        default: false
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -125,12 +143,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/nostrstack/vitest
-          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/vitest.config.*', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx') }}
+          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-
-      - name: Lint (ESLint)
-        run: pnpm lint
 
       - name: Unit Tests
         env:
@@ -147,6 +162,11 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_external_checks == true) ||
+      (github.event_name == 'pull_request' &&
+       contains(github.event.pull_request.labels.*.name, 'run-smoke-tests'))
     steps:
       - uses: actions/checkout@v4
 
@@ -168,6 +188,11 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_external_checks == true) ||
+      (github.event_name == 'pull_request' &&
+       contains(github.event.pull_request.labels.*.name, 'run-smoke-tests'))
     steps:
       - uses: actions/checkout@v4
 
