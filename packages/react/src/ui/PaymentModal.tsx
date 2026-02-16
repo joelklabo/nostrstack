@@ -165,14 +165,6 @@ export function PaymentModal({
             {subtitle && <div className="payment-subtitle">{subtitle}</div>}
           </div>
           <button
-            className="payment-close"
-            type="button"
-            aria-label="Close payment dialog"
-            onClick={onClose}
-          >
-            ×
-          </button>
-          <button
             className="payment-action"
             type="button"
             onClick={onClose}
