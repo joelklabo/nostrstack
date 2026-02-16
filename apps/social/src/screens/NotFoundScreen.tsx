@@ -1,6 +1,6 @@
-import { navigateTo } from './utils/navigation';
+import { navigateTo } from '../utils/navigation';
 
-export function NotFoundView() {
+export function NotFoundScreen() {
   const handleGoHome = () => {
     navigateTo('/');
     window.location.reload(); // Force refresh to reset app state

@@ -18,7 +18,7 @@ vi.mock('@nostrstack/react', () => ({
   })
 }));
 
-vi.mock('./hooks/useRelays', () => ({
+vi.mock('../hooks/useRelays', () => ({
   useRelays: () => ({
     relays: ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'],
     userRelays: [],

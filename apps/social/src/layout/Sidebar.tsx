@@ -2,11 +2,11 @@ import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostr
 import { useToast } from '@nostrstack/ui';
 import { memo, useEffect, useRef, useState } from 'react';
 
-import { useWallet } from './hooks/useWallet';
-import { AnimatedSats } from './ui/AnimatedNumber';
-import { resolveApiBase } from './utils/api-base';
-import { navigateTo } from './utils/navigation';
-import { WalletView } from './WalletView';
+import { WalletView } from '../features/wallet/WalletView';
+import { useWallet } from '../hooks/useWallet';
+import { AnimatedSats } from '../ui/AnimatedNumber';
+import { resolveApiBase } from '../utils/api-base';
+import { navigateTo } from '../utils/navigation';
 
 interface SidebarProps {
   currentView: 'feed' | 'search' | 'profile' | 'settings';

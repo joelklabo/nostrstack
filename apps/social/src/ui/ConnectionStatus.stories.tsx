@@ -1,4 +1,4 @@
-import '../styles/connection-status.css';
+import '../styles/base/connection-status.css';
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';

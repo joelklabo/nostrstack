@@ -3,23 +3,23 @@ import { Alert, PostSkeleton } from '@nostrstack/ui';
 import type { Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useContactList } from './hooks/useContactList';
-import { useMuteList } from './hooks/useMuteList';
-import { usePostNavigation } from './hooks/usePostNavigation';
-import { useRelays } from './hooks/useRelays';
-import { filterSpam } from './nostr/spamFilter';
-import { FindFriendCard } from './ui/FindFriendCard';
-import { NewPostsIndicator } from './ui/NewPostsIndicator';
-import { NostrEventCard } from './ui/NostrEventCard';
-import { SupportCard } from './ui/SupportCard';
-import { VirtualizedList } from './ui/VirtualizedList';
-import { navigateTo } from './utils/navigation';
+import { useContactList } from '../hooks/useContactList';
+import { useMuteList } from '../hooks/useMuteList';
+import { usePostNavigation } from '../hooks/usePostNavigation';
+import { useRelays } from '../hooks/useRelays';
+import { filterSpam } from '../nostr/spamFilter';
+import { FindFriendCard } from '../ui/FindFriendCard';
+import { NewPostsIndicator } from '../ui/NewPostsIndicator';
+import { NostrEventCard } from '../ui/NostrEventCard';
+import { SupportCard } from '../ui/SupportCard';
+import { VirtualizedList } from '../ui/VirtualizedList';
+import { navigateTo } from '../utils/navigation';
 
-interface FeedViewProps {
+interface FeedScreenProps {
   isImmersive?: boolean;
 }
 
-export function FeedView({ isImmersive }: FeedViewProps) {
+export function FeedScreen({ isImmersive }: FeedScreenProps) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const { isMuted } = useMuteList();
   const { contacts, loading: contactsLoading } = useContactList();

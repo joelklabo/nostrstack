@@ -1,20 +1,20 @@
-import './styles/search-view.css';
+import '../styles/components/search-view.css';
 
 import { emitTelemetryEvent, useNostrstackConfig } from '@nostrstack/react';
 import { Alert } from '@nostrstack/ui';
 import { type Event, nip19 } from 'nostr-tools';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useIdentityResolver } from './hooks/useIdentityResolver';
-import { useRelays } from './hooks/useRelays';
-import { useSimplePool } from './hooks/useSimplePool';
-import { fetchNostrEventFromApi, SEARCH_RELAYS, searchNotes } from './nostr/api';
-import { type ProfileMeta, safeExternalUrl } from './nostr/eventRenderers';
-import { Image } from './ui/Image';
-import { NostrEventCard } from './ui/NostrEventCard';
-import { navigateToProfile } from './utils/navigation';
+import { useIdentityResolver } from '../hooks/useIdentityResolver';
+import { useRelays } from '../hooks/useRelays';
+import { useSimplePool } from '../hooks/useSimplePool';
+import { fetchNostrEventFromApi, SEARCH_RELAYS, searchNotes } from '../nostr/api';
+import { type ProfileMeta, safeExternalUrl } from '../nostr/eventRenderers';
+import { Image } from '../ui/Image';
+import { NostrEventCard } from '../ui/NostrEventCard';
+import { navigateToProfile } from '../utils/navigation';
 
-export function SearchView() {
+export function SearchScreen() {
   const cfg = useNostrstackConfig();
   const apiBase =
     cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';

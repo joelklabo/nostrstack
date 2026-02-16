@@ -1,5 +1,5 @@
 // Premium telemetry styles - glowing Bitcoin data visualization
-import './ui/telemetry-premium.css';
+import '../ui/telemetry-premium.css';
 
 import {
   type BitcoinStatus,
@@ -13,12 +13,12 @@ import {
 import { Alert, Skeleton } from '@nostrstack/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useRelays } from './hooks/useRelays';
-import { type ActivityEvent, type ActivityEventType, ActivityLog } from './ui/ActivityLog';
-import { BitcoinNodeCard } from './ui/BitcoinNodeCard';
-import { type BlockData, BlockNotification } from './ui/BlockNotification';
-import { type ConnectionState, ConnectionStatus, type NetworkType } from './ui/ConnectionStatus';
-import { LiveStatsTicker, type NetworkStats } from './ui/LiveStatsTicker';
+import { useRelays } from '../hooks/useRelays';
+import { type ActivityEvent, type ActivityEventType, ActivityLog } from '../ui/ActivityLog';
+import { BitcoinNodeCard } from '../ui/BitcoinNodeCard';
+import { type BlockData, BlockNotification } from '../ui/BlockNotification';
+import { type ConnectionState, ConnectionStatus, type NetworkType } from '../ui/ConnectionStatus';
+import { LiveStatsTicker, type NetworkStats } from '../ui/LiveStatsTicker';
 
 type TelemetryEvent =
   | {

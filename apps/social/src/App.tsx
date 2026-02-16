@@ -10,28 +10,36 @@ import { applyNsTheme, createNsBrandTheme, type NsBrandPreset } from '@nostrstac
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
-import { ErrorBoundary } from './ErrorBoundary';
 import { useImmersiveScroll } from './hooks/useImmersiveScroll';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
-import { Sidebar } from './Sidebar';
-import { TelemetryBar } from './TelemetryBar';
+import { Sidebar } from './layout/Sidebar';
+import { TelemetryBar } from './layout/TelemetryBar';
+import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
-const FeedView = lazy(() => import('./FeedView').then((m) => ({ default: m.FeedView })));
-const LoginView = lazy(() => import('./LoginView').then((m) => ({ default: m.LoginView })));
-const NostrEventView = lazy(() =>
-  import('./NostrEventView').then((m) => ({ default: m.NostrEventView }))
+const FeedScreen = lazy(() =>
+  import('./screens/FeedScreen').then((m) => ({ default: m.FeedScreen }))
 );
-const NotFoundView = lazy(() =>
-  import('./NotFoundView').then((m) => ({ default: m.NotFoundView }))
+const LoginScreen = lazy(() =>
+  import('./screens/LoginScreen').then((m) => ({ default: m.LoginScreen }))
 );
-const ProfileView = lazy(() => import('./ProfileView').then((m) => ({ default: m.ProfileView })));
-const SearchView = lazy(() => import('./SearchView').then((m) => ({ default: m.SearchView })));
-const SettingsView = lazy(() =>
-  import('./SettingsView').then((m) => ({ default: m.SettingsView }))
+const EventDetailScreen = lazy(() =>
+  import('./screens/EventDetailScreen').then((m) => ({ default: m.EventDetailScreen }))
+);
+const NotFoundScreen = lazy(() =>
+  import('./screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen }))
+);
+const ProfileScreen = lazy(() =>
+  import('./screens/ProfileScreen').then((m) => ({ default: m.ProfileScreen }))
+);
+const SearchScreen = lazy(() =>
+  import('./screens/SearchScreen').then((m) => ({ default: m.SearchScreen }))
+);
+const SettingsScreen = lazy(() =>
+  import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
 );
 
 function usePathname() {
@@ -162,7 +170,7 @@ function AppShell() {
   if (nostrRouteId) {
     return (
       <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
-        <NostrEventView rawId={nostrRouteId} />
+        <EventDetailScreen rawId={nostrRouteId} />
       </Suspense>
     );
   }
@@ -187,7 +195,7 @@ function AppShell() {
   if (!pubkey && !isGuest) {
     return (
       <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
-        <LoginView />
+        <LoginScreen />
       </Suspense>
     );
   }
@@ -204,7 +212,7 @@ function AppShell() {
           onOpenHelp={() => setHelpOpen(true)}
         />
         <main className="feed-container" id="main-content">
-          <NotFoundView />
+          <NotFoundScreen />
         </main>
       </div>
     );
@@ -275,22 +283,22 @@ function AppShell() {
             </Alert>
           )}
           {profileRoutePubkey ? (
-            <ProfileView
+            <ProfileScreen
               pubkey={profileRoutePubkey}
               onNavigateToSettings={() => setCurrentView('settings')}
             />
           ) : (
             <>
-              {currentView === 'feed' && <FeedView isImmersive={isImmersive} />}
-              {currentView === 'search' && <SearchView />}
+              {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
+              {currentView === 'search' && <SearchScreen />}
               {currentView === 'profile' && pubkey && (
-                <ProfileView
+                <ProfileScreen
                   pubkey={pubkey}
                   onNavigateToSettings={() => setCurrentView('settings')}
                 />
               )}
               {currentView === 'settings' && (
-                <SettingsView
+                <SettingsScreen
                   theme={theme}
                   setTheme={setTheme}
                   brandPreset={brandPreset}

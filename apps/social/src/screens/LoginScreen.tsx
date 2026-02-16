@@ -23,7 +23,7 @@ type LnurlAuthStatus =
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 90000;
 
-export function LoginView() {
+export function LoginScreen() {
   const { loginWithNip07, loginWithNsec, loginWithLnurl, error: authError } = useAuth();
   const cfg = useNostrstackConfig();
   const [nsec, setNsec] = useState('');

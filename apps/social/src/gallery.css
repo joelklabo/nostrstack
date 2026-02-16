@@ -4,16 +4,16 @@
 @import '@nostrstack/tokens/dist/css/utilities.css';
 
 /* Import professional animations */
-@import './styles/animations.css';
+@import './styles/base/animations.css';
 
 /* Import connection status component styles */
-@import './styles/connection-status.css';
+@import './styles/base/connection-status.css';
 
 /* Import premium button styles */
-@import './styles/premium-buttons.css';
+@import './styles/base/premium-buttons.css';
 
 /* Import dark luxury theme styles */
-@import './styles/dark-luxury.css';
+@import './styles/base/dark-luxury.css';
 
 /* App-specific variables */
 :root {

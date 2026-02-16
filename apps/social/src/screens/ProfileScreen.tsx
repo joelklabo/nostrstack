@@ -12,14 +12,14 @@ import { nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { paymentConfig } from './config/payments';
-import { useContactList } from './hooks/useContactList';
-import { useMuteList } from './hooks/useMuteList';
-import { useRelays } from './hooks/useRelays';
-import { CopyButton } from './ui/CopyButton';
-import { Image } from './ui/Image';
-import { NostrEventCard } from './ui/NostrEventCard';
-import { VirtualizedList } from './ui/VirtualizedList';
+import { paymentConfig } from '../config/payments';
+import { useContactList } from '../hooks/useContactList';
+import { useMuteList } from '../hooks/useMuteList';
+import { useRelays } from '../hooks/useRelays';
+import { CopyButton } from '../ui/CopyButton';
+import { Image } from '../ui/Image';
+import { NostrEventCard } from '../ui/NostrEventCard';
+import { VirtualizedList } from '../ui/VirtualizedList';
 
 // Use CSS custom property for primary teal color for general UI accents
 // Bitcoin orange should only be used for actual Bitcoin data (block heights, sats amounts)
@@ -41,12 +41,12 @@ interface ProfileMetadata {
   website?: string;
 }
 
-interface ProfileViewProps {
+interface ProfileScreenProps {
   pubkey: string;
   onNavigateToSettings?: () => void;
 }
 
-export function ProfileView({ pubkey, onNavigateToSettings }: ProfileViewProps) {
+export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenProps) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   // const [retryCount, setRetryCount] = useState(0);
   const [lightningQr, setLightningQr] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-import '../styles/support-card.css';
+import '../styles/components/support-card.css';
 
 import { SendSats } from '@nostrstack/react';
 import { useEffect, useRef, useState } from 'react';

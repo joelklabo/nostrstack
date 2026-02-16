@@ -1,13 +1,13 @@
-import './styles/nwc.css';
+import '../styles/components/nwc.css';
 
 import { NwcClient, useAuth, useProfile } from '@nostrstack/react';
 import { type NsBrandPreset } from '@nostrstack/widgets';
 import { SimplePool } from 'nostr-tools';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { usePushNotifications } from './hooks/usePushNotifications';
-import { useRelays } from './hooks/useRelays';
-import { CelebrationSettings } from './ui/CelebrationSettings';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useRelays } from '../hooks/useRelays';
+import { CelebrationSettings } from '../ui/CelebrationSettings';
 
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
 const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
@@ -33,14 +33,19 @@ function readLastPayment(): NwcLastPayment | null {
   }
 }
 
-interface SettingsViewProps {
+interface SettingsScreenProps {
   theme: 'light' | 'dark';
   setTheme: (t: 'light' | 'dark') => void;
   brandPreset: NsBrandPreset;
   setBrandPreset: (p: NsBrandPreset) => void;
 }
 
-export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: SettingsViewProps) {
+export function SettingsScreen({
+  theme,
+  setTheme,
+  brandPreset,
+  setBrandPreset
+}: SettingsScreenProps) {
   const { pubkey, signEvent } = useAuth();
   const { relays: relayList } = useRelays();
   const { profile: profileEvent } = useProfile(pubkey ?? '', { enabled: !!pubkey });

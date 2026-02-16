@@ -4,19 +4,19 @@ import { type Event, nip19 } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
-import { fetchNostrEventFromApi } from './nostr/api';
+import { fetchNostrEventFromApi } from '../nostr/api';
 import {
   type EventReferences,
   extractEventReferences,
   parseProfileContent,
   type ProfileMeta
-} from './nostr/eventRenderers';
-import { ReferencePreview } from './nostr/ReferencePreview';
-import { CopyButton } from './ui/CopyButton';
-import { JsonView } from './ui/JsonView';
-import { NostrEventCard } from './ui/NostrEventCard';
-import { ThreadedReplies } from './ui/ThreadedReplies';
-import { resolveGalleryApiBase } from './utils/api-base';
+} from '../nostr/eventRenderers';
+import { ReferencePreview } from '../nostr/ReferencePreview';
+import { CopyButton } from '../ui/CopyButton';
+import { JsonView } from '../ui/JsonView';
+import { NostrEventCard } from '../ui/NostrEventCard';
+import { ThreadedReplies } from '../ui/ThreadedReplies';
+import { resolveGalleryApiBase } from '../utils/api-base';
 
 type Target =
   | { type: 'event'; id: string; relays: string[] }
@@ -195,7 +195,7 @@ function mergeReplies(existing: Event[], incoming: Event[]) {
   return normalizeReplies([...existing, ...incoming]);
 }
 
-export function NostrEventView({ rawId }: { rawId: string }) {
+export function EventDetailScreen({ rawId }: { rawId: string }) {
   const [state, setState] = useState<LoadState>({
     status: 'idle',
     relays: [],

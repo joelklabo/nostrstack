@@ -1,4 +1,4 @@
-import '../styles/find-friend.css';
+import '../styles/components/find-friend.css';
 
 export function FindFriendCard({ onClick }: { onClick?: () => void }) {
   return (

@@ -1,4 +1,4 @@
-import '../styles/tour.css';
+import '../styles/base/tour.css';
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';

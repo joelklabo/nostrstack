@@ -1,4 +1,4 @@
-import '../styles/find-friend.css';
+import '../styles/components/find-friend.css';
 
 import type { Meta, StoryObj } from '@storybook/react';
 
