@@ -1,7 +1,8 @@
 import '../styles/components/nwc.css';
 
 import { NwcClient, useAuth, useProfile } from '@nostrstack/react';
-import { type NsBrandPreset } from '@nostrstack/widgets';
+import { useToast } from '@nostrstack/ui';
+import { nsBrandPresets, type NsBrandPreset } from '@nostrstack/widgets';
 import { SimplePool } from 'nostr-tools';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -46,6 +47,7 @@ export function SettingsScreen({
   brandPreset,
   setBrandPreset
 }: SettingsScreenProps) {
+  const toast = useToast();
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
   const { pubkey, signEvent } = useAuth();
   const { relays: relayList } = useRelays();
@@ -63,6 +65,25 @@ export function SettingsScreen({
     'idle'
   );
   const [profileError, setProfileError] = useState<string | null>(null);
+
+  const handleThemeToggle = useCallback(() => {
+    setTheme(nextTheme);
+    toast({
+      message: `Theme set to ${nextTheme}.`,
+      tone: 'success'
+    });
+  }, [nextTheme, setTheme, toast]);
+
+  const handleBrandPresetSelect = useCallback(
+    (nextBrandPreset: NsBrandPreset) => {
+      setBrandPreset(nextBrandPreset);
+      toast({
+        message: `Brand theme set to ${nextBrandPreset}.`,
+        tone: 'success'
+      });
+    },
+    [setBrandPreset, toast]
+  );
 
   useEffect(() => {
     if (profileEvent?.content) {
@@ -531,7 +552,7 @@ export function SettingsScreen({
               borderColor: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined,
               color: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined
             }}
-            onClick={() => setTheme(nextTheme)}
+            onClick={handleThemeToggle}
             aria-pressed={theme === 'dark'}
             aria-label={`Switch to ${nextTheme} mode`}
           >
@@ -547,7 +568,7 @@ export function SettingsScreen({
           role="group"
           aria-label="Brand preset selection"
         >
-          {['default', 'ocean', 'sunset', 'midnight', 'emerald', 'crimson'].map((preset) => (
+          {(Object.keys(nsBrandPresets) as NsBrandPreset[]).map((preset) => (
             <button
               type="button"
               key={preset}
@@ -556,7 +577,7 @@ export function SettingsScreen({
                 borderColor: brandPreset === preset ? 'var(--ns-color-text-default)' : undefined,
                 color: brandPreset === preset ? 'var(--ns-color-text-default)' : undefined
               }}
-              onClick={() => setBrandPreset(preset as NsBrandPreset)}
+              onClick={() => handleBrandPresetSelect(preset as NsBrandPreset)}
               aria-pressed={brandPreset === preset}
               aria-label={`Switch to ${preset} theme`}
             >

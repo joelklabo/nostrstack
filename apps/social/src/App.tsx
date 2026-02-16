@@ -6,7 +6,12 @@ import {
   useAuth
 } from '@nostrstack/react';
 import { Alert } from '@nostrstack/ui';
-import { applyNsTheme, createNsBrandTheme, type NsBrandPreset } from '@nostrstack/widgets';
+import {
+  applyNsTheme,
+  createNsBrandTheme,
+  nsBrandPresets,
+  type NsBrandPreset
+} from '@nostrstack/widgets';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
@@ -14,11 +19,11 @@ import { useImmersiveScroll } from './hooks/useImmersiveScroll';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './layout/Sidebar';
 import { TelemetryBar } from './layout/TelemetryBar';
+import { relayMonitor } from './nostr/relayHealth';
 import { SearchScreen } from './screens/SearchScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
-import { relayMonitor } from './nostr/relayHealth';
 import { resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
@@ -68,6 +73,13 @@ function getNostrRouteId(pathname: string) {
 }
 
 const THEME_STORAGE_KEY = 'nostrstack.theme';
+const BRAND_PRESET_STORAGE_KEY = 'nostrstack.brandPreset';
+const BRAND_PRESET_DEFAULT: NsBrandPreset = 'default';
+const BRAND_PRESET_LIST: NsBrandPreset[] = Object.keys(nsBrandPresets) as NsBrandPreset[];
+
+function isBrandPreset(value: string | null): value is NsBrandPreset {
+  return value !== null && (BRAND_PRESET_LIST as readonly string[]).includes(value);
+}
 
 function getInitialTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light';
@@ -76,6 +88,12 @@ function getInitialTheme(): 'light' | 'dark' {
   // Respect system preference
   if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
   return 'light';
+}
+
+function getInitialBrandPreset(): NsBrandPreset {
+  if (typeof window === 'undefined') return BRAND_PRESET_DEFAULT;
+  const stored = localStorage.getItem(BRAND_PRESET_STORAGE_KEY);
+  return isBrandPreset(stored) ? stored : BRAND_PRESET_DEFAULT;
 }
 
 function LoadingFallback({
@@ -109,7 +127,7 @@ function LoadingFallback({
 function AppShell() {
   const { pubkey, isLoading, logout: authLogout } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
-  const [brandPreset, setBrandPreset] = useState<NsBrandPreset>('default');
+  const [brandPreset, setBrandPresetState] = useState<NsBrandPreset>(getInitialBrandPreset);
   const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
   const focusReturnToHamburger = useRef(false);
   const [isGuest, setIsGuest] = useState<boolean>(() => {
@@ -126,7 +144,34 @@ function AppShell() {
   // Wrap setTheme to persist to localStorage
   const setTheme = useCallback((newTheme: 'light' | 'dark') => {
     setThemeState(newTheme);
+    if (typeof window === 'undefined') return;
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  }, []);
+
+  const setBrandPreset = useCallback((newPreset: NsBrandPreset) => {
+    setBrandPresetState(newPreset);
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(BRAND_PRESET_STORAGE_KEY, newPreset);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === THEME_STORAGE_KEY) {
+        if (event.newValue === 'light' || event.newValue === 'dark') {
+          setThemeState(event.newValue);
+        }
+        return;
+      }
+
+      if (event.key === BRAND_PRESET_STORAGE_KEY) {
+        setBrandPresetState(isBrandPreset(event.newValue) ? event.newValue : BRAND_PRESET_DEFAULT);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
