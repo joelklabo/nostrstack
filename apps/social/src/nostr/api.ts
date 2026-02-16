@@ -337,6 +337,21 @@ export async function searchNotes(
       const lower = message.toLowerCase();
       return lower.includes('timeout') || lower.includes('timed out');
     };
+    const isNetworkError = (error: unknown): boolean => {
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+      return (
+        lower.includes('failed to fetch') ||
+        lower.includes('network error') ||
+        lower.includes('dns') ||
+        lower.includes('econnrefused') ||
+        lower.includes('connection refused') ||
+        lower.includes('connection failed') ||
+        lower.includes('socket') ||
+        lower.includes('enotfound') ||
+        lower.includes('etimedout')
+      );
+    };
 
     const runQuery = async (withSearch: boolean) => {
       const filter: { kinds: number[]; search?: string; limit: number; until?: number } = {
@@ -404,6 +419,14 @@ export async function searchNotes(
       primaryFailures.length === relayCount &&
       !hasSearchUnsupportedFailure
     ) {
+      const hasNetworkError = primaryFailures.some(isNetworkError);
+      if (hasNetworkError) {
+        const networkError = new Error(
+          'Unable to connect to relays. Check your internet connection and try again.'
+        );
+        (networkError as { code?: string }).code = 'relay_network_error';
+        throw networkError;
+      }
       throw primaryFailures[0];
     }
     return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);

@@ -134,11 +134,17 @@ export function SearchScreen() {
         console.error('Notes search failed', err);
         const timedOut =
           err instanceof Error && /(request timed out|timed out after|timeout)/i.test(err.message);
+        const networkError =
+          err instanceof Error &&
+          (('code' in err && err.code === 'relay_network_error') ||
+            /unable to connect|network error|dns|connection refused/i.test(err.message));
         setNotesSearchTimedOut(timedOut);
         setNotesError(
-          timedOut
-            ? 'Notes search timed out. Retry to try again.'
-            : 'Search failed. Relays might not support NIP-50.'
+          networkError
+            ? 'Unable to connect to relays. Check your internet connection and try again.'
+            : timedOut
+              ? 'Notes search timed out. Retry to try again.'
+              : 'Search failed. Relays might not support NIP-50.'
         );
       } finally {
         setNotesLoading(false);
