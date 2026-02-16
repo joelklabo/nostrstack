@@ -174,6 +174,12 @@ export const Sidebar = memo(function Sidebar({
       onMobileClose?.();
       return;
     }
+    if (view === 'settings') {
+      navigateTo('/settings');
+      setCurrentView('settings');
+      onMobileClose?.();
+      return;
+    }
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/search')) {
       navigateTo('/');
     }

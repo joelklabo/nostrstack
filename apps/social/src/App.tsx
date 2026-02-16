@@ -139,6 +139,7 @@ function AppShell() {
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
+  const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
@@ -149,6 +150,7 @@ function AppShell() {
     if (pathname === '/' || pathname === '') return true;
     // Known routes
     if (isSearchRoute) return true;
+    if (isSettingsRoute) return true;
     if (nostrRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
@@ -163,6 +165,10 @@ function AppShell() {
   }, [profileRoutePubkey]);
 
   useEffect(() => {
+    if (isSettingsRoute) {
+      setCurrentView('settings');
+      return;
+    }
     if (isSearchRoute) {
       setCurrentView('search');
       return;
@@ -170,7 +176,7 @@ function AppShell() {
     if (currentView === 'search') {
       setCurrentView('feed');
     }
-  }, [isSearchRoute, currentView]);
+  }, [isSettingsRoute, isSearchRoute, currentView]);
 
   useEffect(() => {
     if (mobileMenuOpen) {

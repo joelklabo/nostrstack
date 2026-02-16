@@ -61,4 +61,10 @@ test.describe('App Interactions', () => {
     await hideSourceBtn.click();
     await expect(sourceView).toBeHidden();
   });
+
+  test('settings route is directly reachable', async ({ page }) => {
+    await page.goto('/settings');
+    await expect(page.getByRole('button', { name: 'Settings' })).toHaveClass(/active/);
+    await expect(page.getByRole('heading', { name: 'System Settings' })).toBeVisible();
+  });
 });
