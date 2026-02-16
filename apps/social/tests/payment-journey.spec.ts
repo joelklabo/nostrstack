@@ -1,12 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { finalizeEvent, generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 
-import {
-  TEST_NSEC,
-  clickAndExpectPaymentModal,
-  closePaymentModal,
-  loginWithNsec
-} from './helpers';
+import { clickAndExpectPaymentModal, closePaymentModal, loginWithNsec, TEST_NSEC } from './helpers';
 import { mockLnurlPay } from './helpers/lnurl-mocks';
 import { installMockRelay } from './helpers/mock-websocket.ts';
 
@@ -80,7 +75,7 @@ async function waitForPaymentModal(page: Page) {
   await expect(modal).toBeVisible({ timeout: 10_000 });
   const invoiceReady = page.getByText(/Invoice ready/i);
   const statusReady = page.locator('.payment-status');
-  if (await invoiceReady.count() > 0) {
+  if ((await invoiceReady.count()) > 0) {
     await expect(invoiceReady.first()).toBeVisible({ timeout: 10_000 });
   } else {
     await expect(statusReady.first()).toBeVisible({ timeout: 10_000 });
@@ -113,7 +108,10 @@ test('zap two posts and send sats from profile', async ({ page }) => {
 
   if (feedTargetZapCount > 0) {
     for (let index = 0; index < feedTargetZapCount; index++) {
-      await expect(zapButtons.nth(index), 'Expected enough zap buttons for feed coverage').toBeVisible({
+      await expect(
+        zapButtons.nth(index),
+        'Expected enough zap buttons for feed coverage'
+      ).toBeVisible({
         timeout: 8000
       });
       await zapButtons.nth(index).scrollIntoViewIfNeeded();

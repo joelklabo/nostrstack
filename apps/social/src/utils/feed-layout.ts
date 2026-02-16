@@ -11,7 +11,7 @@ const MIN_ROW_HEIGHT = 260;
 const MAX_POST_ROW_HEIGHT = 980;
 const BREAK_COUNT_GROWTH_BONUS = 10;
 
-const URL_MATCHER = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+const URL_MATCHER = /https?:\/\/\S+/gi;
 const MEDIA_URL_PATTERN = /\.(?:jpe?g|png|gif|webp|mp4|webm|mov|mkv)(?:[?#].*)?$/i;
 const PAYWALL_TAG = 'paywall';
 
