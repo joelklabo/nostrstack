@@ -29,11 +29,11 @@ describe('resolveApiBase', () => {
     restoreLocation();
   });
 
-  it('normalizes legacy localhost:3002 API base and upgrades to https on secure pages', () => {
+  it('normalizes legacy localhost:3002 API base and keeps local HTTP on secure pages', () => {
     const restore = withProtocol('https:');
     const result = resolveApiBase('http://localhost:3002');
     restore();
-    expect(result.baseUrl).toBe('https://localhost:3001');
+    expect(result.baseUrl).toBe('http://localhost:3001');
     expect(result.raw).toBe('http://localhost:3001');
   });
 

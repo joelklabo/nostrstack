@@ -7,6 +7,7 @@ export type ApiBaseResolution = {
 };
 
 const LOCAL_API_PORT = 3001;
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 
 function normalizeLegacyLocalApiBase(raw: string): string {
   try {
@@ -25,6 +26,14 @@ function preferSecureBase(base: string) {
   if (typeof window === 'undefined') return base;
   if (window.location.protocol !== 'https:') return base;
   if (!/^http:\/\//i.test(base)) return base;
+  try {
+    const parsed = new URL(base);
+    if (parsed.hostname && LOCAL_HOSTNAMES.has(parsed.hostname)) {
+      return base;
+    }
+  } catch {
+    return base;
+  }
   return base.replace(/^http:/i, 'https:');
 }
 
