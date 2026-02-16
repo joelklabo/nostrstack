@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const ONBOARDING_KEY = 'nostrstack.onboarding.v1';
+const ONBOARDING_RESTART_EVENT = 'nostrstack:restart-onboarding-tour';
 
 export type OnboardingStep = {
   id: string;
@@ -14,7 +15,7 @@ export const TOUR_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to NostrStack',
-    content: 'Your gateway to the decentralized social web. Let\'s take a quick tour.',
+    content: "Your gateway to the decentralized social web. Let's take a quick tour.",
     placement: 'bottom'
   },
   {
@@ -61,6 +62,11 @@ export function useOnboarding() {
     return;
   }, []);
 
+  const finish = useCallback(() => {
+    setIsActive(false);
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+  }, []);
+
   const next = () => {
     if (currentStepIndex < TOUR_STEPS.length - 1) {
       setCurrentStepIndex((i) => i + 1);
@@ -77,16 +83,22 @@ export function useOnboarding() {
 
   const skip = () => finish();
 
-  const finish = () => {
-    setIsActive(false);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
-  };
-
-  const reset = () => {
+  const reset = useCallback(() => {
     setCurrentStepIndex(0);
     setIsActive(true);
     localStorage.removeItem(ONBOARDING_KEY);
-  }
+  }, []);
+
+  useEffect(() => {
+    const onRestartTour = () => {
+      reset();
+    };
+
+    window.addEventListener(ONBOARDING_RESTART_EVENT, onRestartTour);
+    return () => {
+      window.removeEventListener(ONBOARDING_RESTART_EVENT, onRestartTour);
+    };
+  }, [reset]);
 
   return {
     isActive,

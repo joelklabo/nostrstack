@@ -587,7 +587,7 @@ export function SettingsScreen({
           className="action-btn"
           onClick={() => {
             localStorage.removeItem('nostrstack.onboarding.v1');
-            window.location.reload();
+            window.dispatchEvent(new Event('nostrstack:restart-onboarding-tour'));
           }}
           aria-label="Restart onboarding tour"
         >
