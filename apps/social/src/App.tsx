@@ -78,6 +78,42 @@ function getInitialTheme(): 'light' | 'dark' {
   return 'light';
 }
 
+function LoadingFallback({
+  message,
+  includeRetry = false
+}: {
+  message: string;
+  includeRetry?: boolean;
+}) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: 'var(--ns-color-text-muted)',
+        fontFamily: 'var(--ns-font-family-sans)',
+        flexDirection: includeRetry ? 'column' : 'row',
+        gap: includeRetry ? '1rem' : 0
+      }}
+    >
+      <span>{message}</span>
+      {includeRetry && (
+        <button
+          type="button"
+          className="loading-retry-btn"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
+
 function AppShell() {
   const { pubkey, isLoading } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
@@ -185,12 +221,13 @@ function AppShell() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '100dvh',
+          minHeight: '100dvh',
           color: 'var(--ns-color-text-muted)',
-          fontFamily: 'var(--ns-font-family-sans)'
+          fontFamily: 'var(--ns-font-family-sans)',
+          flexDirection: 'row'
         }}
       >
-        Loading NostrStack...
+        <LoadingFallback message="Loading NostrStack..." includeRetry />
       </main>
     );
   }
@@ -198,7 +235,7 @@ function AppShell() {
   if (!pubkey && !isGuest) {
     return (
       <main className="feed-container" id="main-content" role="main">
-        <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+        <Suspense fallback={<LoadingFallback message="Loading..." includeRetry />}>
           <LoginScreen />
         </Suspense>
       </main>
@@ -268,20 +305,7 @@ function AppShell() {
         onOpenHelp={() => setHelpOpen(true)}
       />
       <main className="feed-container" id="main-content" role="main">
-        <Suspense
-          fallback={
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                padding: '2rem',
-                color: 'var(--ns-color-text-muted)'
-              }}
-            >
-              Loading...
-            </div>
-          }
-        >
+        <Suspense fallback={<LoadingFallback message="Loading..." includeRetry />}>
           {profileRouteError && (
             <Alert tone="danger" title="Routing Error">
               Invalid profile id. Showing your current view instead.
