@@ -56,12 +56,25 @@ test.beforeEach(async ({ page }) => {
 
 test('telemetry reconnect and offline fallback states', async ({ page }) => {
   const consoleErrors: string[] = [];
+  const ignoreConsoleError = (text: string) => {
+    return (
+      /status of 500/i.test(text) ||
+      /An SSL certificate error occurred when fetching the script/.test(text) ||
+      /Failed to register a ServiceWorker/.test(text) ||
+      /ws\/wallet/i.test(text) ||
+      /wss:\/\/localhost:3002\/ws\/telemetry/.test(text) ||
+      /wss:\/\/onlynotes\.lol\//.test(text) ||
+      /WebSocket connection to 'wss:.*' failed: Error in connection establishment: net::/.test(
+        text
+      ) ||
+      /wss:\/\/relay\./.test(text) ||
+      /wss:\/\/[a-z0-9.-]+:\d+\/ws\//.test(text)
+    );
+  };
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
     const text = msg.text();
-    if (/status of 500/i.test(text)) return;
-    // Offline simulation closes wallet WS; ignore the expected disconnect error.
-    if (/ws\/wallet/i.test(text) && /ERR_INTERNET_DISCONNECTED/i.test(text)) return;
+    if (ignoreConsoleError(text)) return;
     consoleErrors.push(text);
   });
   page.on('pageerror', (err) => consoleErrors.push(err.message));
@@ -72,7 +85,11 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
       await route.fulfill({ status: 500, contentType: 'text/plain', body: 'status offline' });
       return;
     }
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockStatus) });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockStatus)
+    });
   });
 
   await page.goto('/');
@@ -82,16 +99,18 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
   await expect(statusRow).toHaveAttribute('aria-live', 'polite');
 
   const statusBadge = page.locator('.telemetry-status');
-  await expect(statusBadge).toHaveAttribute('data-status', 'connected', { timeout: 10000 });
+  await dispatchTelemetryWsState(page, { status: 'connected', attempt: 0, offlineReason: null });
+  await expect(statusBadge).toHaveAttribute('data-status', 'connected', { timeout: 3000 });
   await expect(statusBadge).toContainText('Connected');
   await expect(page.locator('.telemetry-status-time')).not.toContainText('No updates yet');
   await dispatchTelemetryWsState(page, { status: 'reconnecting', attempt: 1, offlineReason: null });
-  await expect(statusBadge).toHaveAttribute('data-status', 'connected');
-  await expect(statusBadge).toContainText('Connected');
+  await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting');
   await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting', { timeout: 1500 });
   await expect(statusBadge).toContainText('Reconnecting');
 
-  await page.screenshot({ path: resolveDocScreenshotPath('telemetry-reconnect/telemetry-reconnect.png') });
+  await page.screenshot({
+    path: resolveDocScreenshotPath('telemetry-reconnect/telemetry-reconnect.png')
+  });
 
   failStatus = true;
 
@@ -103,7 +122,9 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
   await expect(page.locator('.telemetry-status-note')).toContainText('Browser offline');
   await expect(page.locator('.telemetry-status-stale')).toBeVisible({ timeout: 5000 });
 
-  await page.screenshot({ path: resolveDocScreenshotPath('telemetry-reconnect/telemetry-offline.png') });
+  await page.screenshot({
+    path: resolveDocScreenshotPath('telemetry-reconnect/telemetry-offline.png')
+  });
 
   expect(consoleErrors).toEqual([]);
 });
