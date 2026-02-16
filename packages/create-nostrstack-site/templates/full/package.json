@@ -14,7 +14,7 @@
     "@nostrstack/react": "^0.5.0",
     "@nostrstack/widgets": "^0.5.0",
     "buffer": "^6.0.3",
-    "markdown-it": "^14.1.0",
+    "markdown-it": ">=14.1.1",
     "nostr-tools": "workspace:*",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",

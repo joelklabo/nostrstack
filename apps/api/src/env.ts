@@ -107,7 +107,7 @@ const schema = z
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
     OTEL_SERVICE_NAME: z.string().default('nostrstack-api'),
-    RATE_LIMIT_MAX: positiveInt(60),
+    RATE_LIMIT_MAX: positiveInt(200),
     RATE_LIMIT_TIME_WINDOW: z.string().default('1 minute')
   })
   .superRefine((data, ctx) => {
