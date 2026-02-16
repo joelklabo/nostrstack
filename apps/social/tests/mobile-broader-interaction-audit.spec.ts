@@ -181,6 +181,14 @@ test.describe('Broader mobile interaction audit', () => {
 
       const firstRow = await feed.locator('.virtualized-row').first().boundingBox();
       expect(firstRow).toBeTruthy();
+      const readVisibleRowHeights = async () =>
+        page.evaluate(() =>
+          Array.from(document.querySelectorAll('.virtualized-row'), (row) => ({
+            key: row.getAttribute('data-virtualized-item') || '',
+            height: row.getBoundingClientRect().height
+          }))
+        );
+      const heightsBefore = await readVisibleRowHeights();
       const scrollStateBefore = await feed.evaluate((element) => ({
         scrollTop: element.scrollTop,
         scrollHeight: element.scrollHeight
@@ -198,6 +206,12 @@ test.describe('Broader mobile interaction audit', () => {
       await page.waitForTimeout(200);
       const afterRow = await feed.locator('.virtualized-row').first().boundingBox();
       expect(afterRow).toBeTruthy();
+      const heightsAfter = await readVisibleRowHeights();
+      const byKeyBefore = new Map(heightsBefore.map((entry) => [entry.key, entry.height]));
+      const changedHeights = heightsAfter.filter(
+        (entry) => entry.key && Math.abs(entry.height - (byKeyBefore.get(entry.key) || 0)) > 2
+      );
+      expect(changedHeights.length).toBe(0);
       const scrollStateAfter = await feed.evaluate((element) => ({
         scrollTop: element.scrollTop,
         scrollHeight: element.scrollHeight
