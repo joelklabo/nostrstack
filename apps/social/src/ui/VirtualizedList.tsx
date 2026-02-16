@@ -1,5 +1,5 @@
 import type { AriaAttributes, AriaRole, CSSProperties, ReactElement } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { List, type RowComponentProps, useDynamicRowHeight } from 'react-window';
 
 // Default estimated height for items before measurement
@@ -103,10 +103,15 @@ export function VirtualizedList<T>({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
 
+  const rowHeightCacheKey = useMemo(() => {
+    const itemKeys = items.map((item, index) => getItemKey(item, index)).join('|');
+    return `${items.length}:${itemKeys}`;
+  }, [items, getItemKey]);
+
   // Use dynamic row height from react-window v2
   const dynamicRowHeight = useDynamicRowHeight({
     defaultRowHeight: DEFAULT_ITEM_HEIGHT,
-    key: items.length // Re-calculate when items change
+    key: rowHeightCacheKey // Re-calculate when list order or item IDs change
   });
 
   // Update container height based on window size

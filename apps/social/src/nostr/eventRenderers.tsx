@@ -199,6 +199,8 @@ function renderContentWithLinks(content: string) {
                         <img
                           src={part}
                           alt="Embedded content"
+                          width={16}
+                          height={9}
                           loading="lazy"
                           className="nostr-media-img"
                         />
@@ -209,7 +211,13 @@ function renderContentWithLinks(content: string) {
                     return (
                       <div key={`media-${lineIdx}-${idx}`} className="nostr-media-container">
                         {/* eslint-disable-next-line jsx-a11y/media-has-caption -- User-generated content may not have captions */}
-                        <video src={part} controls className="nostr-media-video" />
+                        <video
+                          src={part}
+                          controls
+                          className="nostr-media-video"
+                          width={16}
+                          height={9}
+                        />
                       </div>
                     );
                   }

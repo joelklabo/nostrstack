@@ -2419,6 +2419,38 @@ body {
   text-decoration-color: var(--ns-color-primary-default);
 }
 
+/* Embedded media in note content */
+.nostr-media-container {
+  display: block;
+  margin-top: var(--ns-space-3);
+  border-radius: var(--ns-radius-md);
+  overflow: hidden;
+  background: var(--ns-color-bg-subtle);
+  width: 100%;
+  max-width: 100%;
+}
+
+.nostr-media-container:first-child {
+  margin-top: 0;
+}
+
+.nostr-media-img,
+.nostr-media-video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border-radius: inherit;
+}
+
+.nostr-media-img {
+  height: auto;
+}
+
+.nostr-media-video {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
 /* ===== LOGIN VIEW ===== */
 .login-container {
   display: grid;
