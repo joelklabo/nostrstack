@@ -54,6 +54,14 @@ describe('resolveApiBase', () => {
     expect(window.location.protocol).toBe('http:');
   });
 
+  it('keeps local loopback hosts as HTTP on HTTPS pages', () => {
+    const restore = withProtocol('https:');
+    const result = resolveApiBase('http://127.0.0.1:4001');
+    restore();
+    expect(result.baseUrl).toBe('http://127.0.0.1:4001');
+    expect(result.raw).toBe('http://127.0.0.1:4001');
+  });
+
   it('preserves relative API paths', () => {
     const restore = withProtocol('https:');
     const result = resolveApiBase('/api');
