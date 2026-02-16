@@ -28,6 +28,28 @@ function isDirectIdentitySearch(value: string) {
   );
 }
 
+function getProfileLookupErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) {
+    return 'Unable to load profile metadata at this time.';
+  }
+
+  const message = error.message.trim();
+  if (!message) {
+    return 'Unable to load profile metadata at this time.';
+  }
+  const lower = message.toLowerCase();
+  if (lower === 'failed to fetch' || lower === 'network error') {
+    return 'Unable to reach profile metadata service. Retry when your connection is available.';
+  }
+  if (lower.includes('event not found') || lower.includes('not_found')) {
+    return 'No profile metadata was found for this identity.';
+  }
+  if (lower.includes('timed out')) {
+    return 'Profile metadata lookup timed out. Retry to try again.';
+  }
+  return message;
+}
+
 export function SearchScreen() {
   const cfg = useNostrstackConfig();
   const apiBaseConfig = resolveGalleryApiBase(cfg);
@@ -221,16 +243,15 @@ export function SearchScreen() {
         if (res.author.profile) {
           setFetchedProfile(res.author.profile);
           setProfileLookupError(null);
+          return;
         }
-        if (!res.author.profile) {
-          setProfileLookupError('Metadata resolved to an empty profile.');
-        }
+        setProfileLookupError(
+          getProfileLookupErrorMessage(new Error('event not found on available relays'))
+        );
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
-        const message =
-          error instanceof Error ? error.message : 'Unable to load profile metadata at this time.';
-        setProfileLookupError(message);
+        setProfileLookupError(getProfileLookupErrorMessage(error));
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -378,6 +399,7 @@ export function SearchScreen() {
       {status === 'resolved' && result && profileLookupError && (
         <Alert tone="warning" title="Profile metadata not loaded" role="status">
           <p>{profileLookupError}</p>
+          <p>Showing partial profile data (identifier only) until metadata is available.</p>
           <button
             type="button"
             className="action-btn"
