@@ -43,6 +43,8 @@ export function SearchScreen() {
   const [notesError, setNotesError] = useState<string | null>(null);
   const [notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
   const [profileLookupError, setProfileLookupError] = useState<string | null>(null);
+  const [isProfileLookupLoading, setIsProfileLookupLoading] = useState(false);
+  const [profileRetryKey, setProfileRetryKey] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
@@ -165,6 +167,12 @@ export function SearchScreen() {
     [query, resolveNow, handleNotesSearch]
   );
 
+  const retryProfileLookup = useCallback(() => {
+    if (status !== 'resolved') return;
+    setProfileRetryKey((value) => value + 1);
+    setProfileLookupError(null);
+  }, [status]);
+
   useEffect(() => {
     const pending = pendingSearchRef.current;
     if (!pending) return;
@@ -194,12 +202,14 @@ export function SearchScreen() {
     if (status !== 'resolved' || !result || !npub) {
       setFetchedProfile(null);
       setProfileLookupError(null);
+      setIsProfileLookupLoading(false);
       return;
     }
 
     const controller = new AbortController();
-    setProfileLookupError(null);
     setFetchedProfile(null);
+    setProfileLookupError(null);
+    setIsProfileLookupLoading(true);
 
     fetchNostrEventFromApi({
       baseUrl: apiBase,
@@ -210,16 +220,28 @@ export function SearchScreen() {
       .then((res) => {
         if (res.author.profile) {
           setFetchedProfile(res.author.profile);
+          setProfileLookupError(null);
+        }
+        if (!res.author.profile) {
+          setProfileLookupError('Metadata resolved to an empty profile.');
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        const message =
+          error instanceof Error ? error.message : 'Unable to load profile metadata at this time.';
+        setProfileLookupError(message);
+      })
+      .finally(() => {
         if (!controller.signal.aborted) {
-          setProfileLookupError('Unable to load profile metadata at this time.');
+          setIsProfileLookupLoading(false);
         }
       });
 
-    return () => controller.abort();
-  }, [status, result, npub, apiBase]);
+    return () => {
+      controller.abort();
+    };
+  }, [status, result, npub, apiBase, profileRetryKey]);
 
   return (
     <div className="search-view">
@@ -353,9 +375,19 @@ export function SearchScreen() {
         </div>
       )}
 
-      {status === 'resolved' && result && profileLookupError && !fetchedProfile && (
-        <Alert tone="warning" title="Profile metadata not loaded">
-          {profileLookupError}
+      {status === 'resolved' && result && profileLookupError && (
+        <Alert tone="warning" title="Profile metadata not loaded" role="status">
+          <p>{profileLookupError}</p>
+          <button
+            type="button"
+            className="action-btn"
+            onClick={retryProfileLookup}
+            disabled={isProfileLookupLoading}
+            aria-label="Retry profile metadata lookup"
+            style={{ marginTop: '0.5rem' }}
+          >
+            {isProfileLookupLoading ? 'Retrying…' : 'Retry metadata lookup'}
+          </button>
         </Alert>
       )}
 
