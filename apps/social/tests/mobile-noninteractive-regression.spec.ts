@@ -26,12 +26,12 @@ test.describe('Mobile non-interactive regression sweep', () => {
     await dismissOnboardingTourIfOpen(page);
     await ensureZapPostAvailable(page, { fallbackText: 'Mobile interaction seed post' });
 
-    const post = page.locator('[data-testid="social-event-card"]').first();
     const feedContainer = page.locator('.feed-container');
-    await expect(post).toBeVisible({ timeout: 12000 });
 
     for (let batch = 0; batch < 3; batch++) {
       await closeKnownPaymentOverlays(page);
+      const post = page.locator('[data-testid="social-event-card"]:visible').first();
+      await expect(post).toBeVisible({ timeout: 12000 });
 
       const actionButtons = post.locator(
         '[data-testid="social-event-actions"] .ns-action-btn:visible'
