@@ -1,11 +1,7 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools';
 
-import {
-  clickAndExpectPaymentModal,
-  loginWithNsec,
-  toggleTheme
-} from './helpers.ts';
+import { clickAndExpectPaymentModal, loginWithNsec, toggleTheme } from './helpers.ts';
 import { mockLnurlPay } from './helpers/lnurl-mocks.ts';
 import { installMockRelay } from './helpers/mock-websocket.ts';
 
@@ -141,6 +137,10 @@ async function dismissTourIfOpen(page: Page) {
   }
 }
 
+async function waitForVisible(locator: Locator, message: string, timeout = 12_000) {
+  await expect(locator, message).toBeVisible({ timeout });
+}
+
 test('tip button renders', async ({ page }) => {
   await installDemoMockRelay(page);
   await loginWithNsec(page);
@@ -215,7 +215,9 @@ test('tip flow generates invoice', async ({ page }) => {
   expect(await zapButtons.count(), 'No zap buttons available in feed').toBeGreaterThan(0);
   await zapButtons.first().scrollIntoViewIfNeeded();
   await clickAndExpectPaymentModal(page, zapButtons.first());
-  const paymentModal = page.locator('.payment-modal, .paywall-payment-modal, .paywall-widget-host').first();
+  const paymentModal = page
+    .locator('.payment-modal, .paywall-payment-modal, .paywall-widget-host')
+    .first();
   const invoiceBox = page.locator('.payment-invoice-box');
   const hasInvoice = await invoiceBox.count();
   if (hasInvoice > 0) {
@@ -232,10 +234,7 @@ test('simulate unlock flow', async ({ page }) => {
   await installDemoMockRelay(page);
   await loginWithNsec(page);
   const unlockButtons = page.getByRole('button', { name: /UNLOCK_CONTENT/i });
-  if ((await unlockButtons.count()) === 0) {
-    test.skip(true, 'Paywall is not mounted in current app revision');
-    return;
-  }
+  await waitForVisible(unlockButtons.first(), 'Paywall UNLOCK_CONTENT control should be visible');
   await clickAndExpectPaymentModal(page, unlockButtons.first(), {
     modalSelector: '.paywall-payment-modal, .paywall-widget-host'
   });
@@ -250,41 +249,50 @@ test('embed tip generates mock invoice', async ({ page }) => {
     callback: 'https://localhost:4173/mock-lnurl-callback',
     metadataText: 'Playwright support card'
   });
+  await loginWithNsec(page);
   await page.goto('/');
   const supportCard = page.getByRole('region', { name: 'Support Nostrstack' });
-  if ((await supportCard.count()) === 0) {
-    test.skip(true, 'Support card is not available in this build');
-    return;
-  }
-  await expect(supportCard).toBeVisible({ timeout: 15_000 });
+  await waitForVisible(supportCard, 'Support card should render');
 
   const sendSatsBtn = supportCard.getByRole('button', { name: /Send sats/i });
   if ((await sendSatsBtn.count()) === 0) {
     const copyEnvBtn = supportCard.getByRole('button', { name: /Copy env template/i });
     if ((await copyEnvBtn.count()) > 0) {
-      test.skip(true, 'Support card is in env setup mode; no payable Send button available');
+      await waitForVisible(
+        copyEnvBtn,
+        'Support card env setup fallback action should render',
+        10_000
+      );
+      await expect(supportCard).toBeVisible();
       return;
     }
-    test.skip(true, 'Support card actionable button is unavailable');
+    test.fail(
+      true,
+      'Support card is visible but does not expose either Send sats or env fallback button.'
+    );
     return;
   }
 
   await clickAndExpectPaymentModal(page, sendSatsBtn, {
     modalSelector: '.payment-modal, .support-card-modal'
   });
-  await expect(page.locator('.payment-modal, .support-card-modal')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.payment-modal, .support-card-modal')).toBeVisible({
+    timeout: 10_000
+  });
   await expect(page.locator('.payment-invoice-box')).toBeVisible({ timeout: 8_000 });
 });
 
 test('embed pay unlocks content', async ({ page }) => {
   await installDemoMockRelay(page);
+  await loginWithNsec(page);
   await page.goto('/');
   const authButtons = page.locator('.auth-btn');
   const paywallButton = authButtons.filter({ hasText: 'UNLOCK_CONTENT' }).first();
-  if ((await paywallButton.count()) === 0) {
-    test.skip(true, 'Embedded paywall unlock control not rendered in this app revision');
-    return;
-  }
+  await waitForVisible(
+    paywallButton,
+    'Embedded paywall unlock control should render after feed load',
+    15_000
+  );
   await clickAndExpectPaymentModal(page, paywallButton, {
     modalSelector: '.paywall-payment-modal, .paywall-widget-host'
   });
@@ -295,17 +303,14 @@ test('embed comments accept mock post', async ({ page }) => {
   await installDemoMockRelay(page);
   await loginWithNsec(page);
   const nostrButton = page.getByRole('button', { name: 'Nostr' });
-  if ((await nostrButton.count()) === 0) {
-    test.skip(true, 'Comments rail is not present in current build');
-    return;
-  }
+  await waitForVisible(
+    nostrButton,
+    'Nostr comments rail toggle should be available in the current layout',
+    12_000
+  );
   await nostrButton.click();
   const commentBox = page.locator('#comments-container textarea');
-  if ((await commentBox.count()) === 0) {
-    test.skip(true, 'comments widget not mounted in this mode');
-    return;
-  }
-  await commentBox.first().waitFor({ timeout: 10_000 });
+  await waitForVisible(commentBox.first(), 'Comments composer should render when rail is open');
   await commentBox.first().fill('Hello comments');
   await page.locator('#comments-container button', { hasText: 'Post' }).click();
   await expect(page.locator('#comments-container')).toContainText('Hello comments');
@@ -326,12 +331,8 @@ test('relay badge renders in mock mode', async ({ page }) => {
 test('theme toggle flips background', async ({ page }) => {
   await loginWithNsec(page);
   const settingsButton = page.getByRole('button', { name: /Settings/i });
-  if (await settingsButton.isVisible().catch(() => false)) {
-    await settingsButton.click();
-  } else {
-    test.skip(true, 'Settings navigation not available');
-    return;
-  }
+  await waitForVisible(settingsButton, 'Settings navigation control should be available');
+  await settingsButton.click();
   const body = page.locator('body');
   const currentTheme = (await body.getAttribute('data-theme')) || 'light';
   const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
