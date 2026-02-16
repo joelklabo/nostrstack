@@ -256,6 +256,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
 
   btn.addEventListener('click', getInvoice);
   paidBtn.addEventListener('click', markPaid);
+  btn.onclick = getInvoice;
+  paidBtn.onclick = markPaid;
 
   return {
     el: btn,
@@ -263,6 +265,8 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       connection.destroy();
       btn.removeEventListener('click', getInvoice);
       paidBtn.removeEventListener('click', markPaid);
+      btn.onclick = null;
+      paidBtn.onclick = null;
     }
   };
 }
