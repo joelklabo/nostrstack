@@ -81,3 +81,29 @@ test('offers view creates offer and invoice', async ({ page }) => {
   await expect(invoiceWidget).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.offer-widget__value').nth(1)).toContainText('lni1mock');
 });
+
+test('offer creation failure clears loading state and shows error', async ({ page }) => {
+  await page.route('**/api/bolt12/offers', async (route) => {
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'bolt12_description_too_long',
+        message: 'Description must be 140 characters or fewer.'
+      })
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Offers/i }).click();
+  await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByLabel('Description').fill('x'.repeat(200));
+  const createButton = page.getByRole('button', { name: 'Create new BOLT12 offer' });
+  await createButton.click();
+
+  await expect(createButton).toBeEnabled({ timeout: 10_000 });
+  await expect(page.locator('.offer-error')).toHaveText(
+    'Description must be 140 characters or fewer.'
+  );
+});

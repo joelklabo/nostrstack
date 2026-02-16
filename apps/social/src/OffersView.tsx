@@ -59,7 +59,7 @@ export function OffersView() {
   const [label, setLabel] = useState('');
   const [issuer, setIssuer] = useState('');
   const [expiresIn, setExpiresIn] = useState('');
-  const [createStatus, setCreateStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [createStatus, setCreateStatus] = useState<'idle' | 'loading'>('idle');
   const [createError, setCreateError] = useState<string | null>(null);
   const [offers, setOffers] = useState<OfferEntry[]>([]);
 
@@ -84,12 +84,12 @@ export function OffersView() {
   const handleCreateOffer = async () => {
     if (!description.trim()) {
       setCreateError('Description is required.');
-      setCreateStatus('error');
+      setCreateStatus('idle');
       return;
     }
     if (!apiBaseConfig.isConfigured) {
       setCreateError('API base is not configured.');
-      setCreateStatus('error');
+      setCreateStatus('idle');
       return;
     }
 
@@ -159,7 +159,8 @@ export function OffersView() {
               ? err.message
               : 'Offer creation failed.';
       setCreateError(message);
-      setCreateStatus('error');
+      setCreateStatus('idle');
+      toast({ message, tone: 'danger' });
     } finally {
       if (timeoutId !== null) {
         clearTimeout(timeoutId);
