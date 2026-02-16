@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--ns-space-6);
-  z-index: 2000;
+  z-index: 100100;
   animation: shortcuts-fade-in var(--ns-duration-moderate) var(--ns-easing-easeOut);
 }
 

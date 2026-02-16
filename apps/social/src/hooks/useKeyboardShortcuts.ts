@@ -13,6 +13,8 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const isHelpShortcut = event.key === '?' || (event.code === 'Slash' && event.shiftKey);
+
       // Skip if typing in input/textarea
       const target = event.target as HTMLElement;
       const isInputField =
@@ -20,6 +22,12 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
       if (isInputField && event.key !== 'Escape') {
         // Allow escape to work even in input fields
+        return;
+      }
+
+      if (isHelpShortcut) {
+        event.preventDefault();
+        setHelpOpen(true);
         return;
       }
 
@@ -44,12 +52,6 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
           // Focus search
           event.preventDefault();
           setCurrentView('search');
-          break;
-
-        case '?':
-          // Show keyboard shortcuts help
-          event.preventDefault();
-          setHelpOpen(true);
           break;
 
         case 'Escape':

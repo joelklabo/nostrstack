@@ -23,6 +23,7 @@ type OfferEntry = {
 };
 
 const numberFormat = new Intl.NumberFormat('en-US');
+const OFFER_CREATE_TIMEOUT_MS = 15_000;
 
 function formatMsat(value?: number) {
   if (!value) return 'Any amount';
@@ -102,11 +103,17 @@ export function OffersView() {
     const parsedExpires = parseOptionalInt(expiresIn);
     if (parsedExpires) payload.expiresIn = parsedExpires;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, OFFER_CREATE_TIMEOUT_MS);
+
     try {
       const res = await fetch(`${baseUrl}/api/bolt12/offers`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
       const bodyText = await res.text();
       if (!res.ok) {
@@ -134,9 +141,16 @@ export function OffersView() {
       toast({ message: 'Offer created.', tone: 'success' });
       setCreateStatus('idle');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Offer creation failed.';
+      const message =
+        err instanceof DOMException && err.name === 'AbortError'
+          ? 'Offer creation timed out. Please try again.'
+          : err instanceof Error
+            ? err.message
+            : 'Offer creation failed.';
       setCreateError(message);
       setCreateStatus('error');
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
