@@ -48,7 +48,7 @@ const EVENT_FETCH_TTL_MS = 30_000;
 const EVENT_FETCH_BASE_RETRY_MS = 1_000;
 const EVENT_FETCH_MAX_RETRY_MS = 30_000;
 const MAX_EVENT_FETCH_ENTRIES = 250;
-const NOTES_SEARCH_TIMEOUT_MS = 8_000;
+export const NOTES_SEARCH_TIMEOUT_MS = 30_000;
 
 type NostrEventCacheEntry = {
   data?: ApiNostrEventResponse;

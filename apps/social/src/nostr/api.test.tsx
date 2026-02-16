@@ -1,7 +1,13 @@
 import type { SimplePool } from 'nostr-tools';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchNostrEventFromApi, getSearchRelays, SEARCH_RELAYS, searchNotes } from './api';
+import {
+  fetchNostrEventFromApi,
+  getSearchRelays,
+  NOTES_SEARCH_TIMEOUT_MS,
+  SEARCH_RELAYS,
+  searchNotes
+} from './api';
 import { relayMonitor } from './relayHealth';
 
 function mockFetchResponse(body: unknown) {
@@ -60,10 +66,7 @@ describe('getSearchRelays', () => {
 
     const relays = getSearchRelays(['wss://relay.custom']);
 
-    expect(relays).toEqual([
-      'wss://relay.custom/',
-      ...normalizedSearchRelays
-    ]);
+    expect(relays).toEqual(['wss://relay.custom/', ...normalizedSearchRelays]);
     expect(relays).not.toContain('wss://nos.lol/');
   });
 
@@ -72,10 +75,7 @@ describe('getSearchRelays', () => {
 
     const relays = getSearchRelays(['wss://relay.custom']);
 
-    expect(relays).toEqual([
-      'wss://relay.custom/',
-      ...normalizedSearchRelays
-    ]);
+    expect(relays).toEqual(['wss://relay.custom/', ...normalizedSearchRelays]);
   });
 });
 
@@ -120,17 +120,23 @@ describe('fetchNostrEventFromApi', () => {
 });
 
 describe('searchNotes', () => {
-  it('rejects when a relay query times out', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const pool = {
-      querySync: vi.fn(() => new Promise(() => {}))
-    } as unknown as SimplePool;
+  it(
+    'rejects when a relay query times out',
+    async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const pool = {
+        querySync: vi.fn(() => new Promise(() => {}))
+      } as unknown as SimplePool;
 
-    try {
-      const resultPromise = searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
-      await expect(resultPromise).rejects.toThrow('Request timed out after 8000ms');
-    } finally {
-      consoleSpy.mockRestore();
-    }
-  }, 12_000);
+      try {
+        const resultPromise = searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
+        await expect(resultPromise).rejects.toThrow(
+          `Request timed out after ${NOTES_SEARCH_TIMEOUT_MS}ms`
+        );
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    },
+    NOTES_SEARCH_TIMEOUT_MS + 2_000
+  );
 });

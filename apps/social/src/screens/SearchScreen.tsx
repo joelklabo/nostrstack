@@ -6,7 +6,6 @@ import { type Event, nip19 } from 'nostr-tools';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useIdentityResolver } from '../hooks/useIdentityResolver';
-import { useRelays } from '../hooks/useRelays';
 import { useSimplePool } from '../hooks/useSimplePool';
 import { fetchNostrEventFromApi, getSearchRelays, searchNotes } from '../nostr/api';
 import { type ProfileMeta, safeExternalUrl } from '../nostr/eventRenderers';
@@ -33,7 +32,6 @@ export function SearchScreen() {
   const cfg = useNostrstackConfig();
   const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
-  const { relays: relayList } = useRelays();
   const pool = useSimplePool();
   const [query, setQuery] = useState('');
   const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
@@ -82,7 +80,7 @@ export function SearchScreen() {
       setHasMore(false);
       setLastSearchQuery(q);
       try {
-        const searchRelays = getSearchRelays(relayList);
+        const searchRelays = getSearchRelays();
         const results = await searchNotes(pool, searchRelays, q, NOTES_PAGE_SIZE);
         setNotes(results);
         setHasMore(results.length >= NOTES_PAGE_SIZE);
@@ -102,7 +100,7 @@ export function SearchScreen() {
         setNotesLoading(false);
       }
     },
-    [relayList, pool]
+    [pool]
   );
 
   const handleLoadMore = useCallback(async () => {
@@ -110,7 +108,7 @@ export function SearchScreen() {
 
     setIsLoadingMore(true);
     try {
-      const searchRelays = getSearchRelays(relayList);
+      const searchRelays = getSearchRelays();
       // Get the oldest note's timestamp for pagination
       const oldestNote = notes.reduce((oldest, note) =>
         note.created_at < oldest.created_at ? note : oldest
@@ -138,7 +136,7 @@ export function SearchScreen() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, notes, lastSearchQuery, relayList, pool]);
+  }, [isLoadingMore, notes, lastSearchQuery, pool]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
