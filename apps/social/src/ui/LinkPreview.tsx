@@ -28,8 +28,38 @@ const MAX_CACHE_ENTRIES = 200;
 const PREVIEW_TTL_MS = 10 * 60_000;
 const BASE_RETRY_DELAY_MS = 2_000;
 const MAX_RETRY_DELAY_MS = 60_000;
+const MAX_PREVIEW_CONCURRENCY = 3;
 const PREVIEW_CACHE = new Map<string, PreviewCacheEntry>();
 const PREVIEW_REQUESTS = new Map<string, Promise<OpenGraphData>>();
+const PREVIEW_REQUEST_QUEUE: Array<() => void> = [];
+let activePreviewRequests = 0;
+
+function drainPreviewRequestQueue() {
+  while (activePreviewRequests < MAX_PREVIEW_CONCURRENCY && PREVIEW_REQUEST_QUEUE.length > 0) {
+    const next = PREVIEW_REQUEST_QUEUE.shift();
+    if (next) {
+      activePreviewRequests += 1;
+      next();
+    }
+  }
+}
+
+function enqueuePreviewRequest<T>(task: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const run = () => {
+      task()
+        .then(resolve)
+        .catch(reject)
+        .finally(() => {
+          activePreviewRequests -= 1;
+          drainPreviewRequestQueue();
+        });
+    };
+
+    PREVIEW_REQUEST_QUEUE.push(run);
+    drainPreviewRequestQueue();
+  });
+}
 
 // Simple URL validation
 function isValidUrl(urlString: string): boolean {
@@ -304,7 +334,8 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     const existingRequest = PREVIEW_REQUESTS.get(url);
-    const request = existingRequest ?? loadPreviewMetadata(url, cached);
+    const request =
+      existingRequest ?? enqueuePreviewRequest(() => loadPreviewMetadata(url, cached));
     PREVIEW_REQUESTS.set(url, request);
     setLoading(true);
     setError(false);
