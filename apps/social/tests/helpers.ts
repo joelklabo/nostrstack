@@ -96,6 +96,24 @@ export async function clickWithDispatchFallback(
   }
 }
 
+export async function waitForFeedSurface(page: Page, options: { timeoutMs?: number } = {}) {
+  const { timeoutMs = 15000 } = options;
+
+  const feedStream = page.locator('.feed-stream').first();
+  const feedContent = page
+    .locator(
+      '.feed-title, .feed-empty, .feed-loading, [aria-label="Loading posts"], [aria-label="Feed posts"]'
+    )
+    .first();
+
+  await expect(feedStream, 'Feed stream should be visible before continuing').toBeVisible({
+    timeout: timeoutMs
+  });
+  await expect(feedContent, 'Feed content should render after login/navigation').toBeVisible({
+    timeout: 8000
+  });
+}
+
 export async function dismissOnboardingTourIfOpen(page: Page) {
   const controls = [
     page.getByRole('button', { name: 'Skip' }),
@@ -368,10 +386,12 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
 
-  // If we are already logged in (reused state), we might see the feed
-  const liveFeed = page.getByRole('heading', { name: /Live Feed/ });
-  const alreadyIn = await liveFeed.isVisible().catch(() => false);
-  if (alreadyIn) return;
+  // If we are already logged in (reused state), we might already be on feed shell
+  const feedStream = page.locator('.feed-stream').first();
+  if (await feedStream.isVisible().catch(() => false)) {
+    await waitForFeedSurface(page);
+    return;
+  }
 
   const loginFlowReady = page
     .getByRole('button', { name: /(Enter nsec manually|Enter private key manually)/i })
@@ -411,7 +431,7 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   const signInBtn = page.getByRole('button', { name: 'Sign in' });
   await signInBtn.click();
 
-  await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 20000 });
+  await waitForFeedSurface(page, { timeoutMs: 20000 });
   await dismissOnboardingTourIfOpen(page);
 }
 

@@ -6,7 +6,7 @@ import { WalletView } from '../features/wallet/WalletView';
 import { useWallet } from '../hooks/useWallet';
 import { AnimatedSats } from '../ui/AnimatedNumber';
 import { resolveGalleryApiBase } from '../utils/api-base';
-import { navigateTo } from '../utils/navigation';
+import { navigateTo, navigateToProfile } from '../utils/navigation';
 
 interface SidebarProps {
   currentView: 'feed' | 'search' | 'profile' | 'settings';
@@ -26,7 +26,7 @@ export const Sidebar = memo(function Sidebar({
   onOpenHelp
 }: SidebarProps) {
   const { eventCount } = useStats();
-  const { logout } = useAuth();
+  const { logout, pubkey } = useAuth();
   const cfg = useNostrstackConfig();
   const { status, refresh } = useBitcoinStatus();
   const {
@@ -180,10 +180,19 @@ export const Sidebar = memo(function Sidebar({
       onMobileClose?.();
       return;
     }
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/search')) {
+    if (view === 'profile') {
+      if (pubkey) {
+        navigateToProfile(pubkey);
+      } else {
+        setCurrentView('profile');
+      }
+      onMobileClose?.();
+      return;
+    }
+    if (window.location.pathname !== '/') {
       navigateTo('/');
     }
-    setCurrentView(view);
+    setCurrentView('feed');
     onMobileClose?.();
   };
 

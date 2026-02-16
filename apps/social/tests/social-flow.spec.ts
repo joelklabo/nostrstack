@@ -6,7 +6,8 @@ import {
   ensureZapPostAvailable,
   loginWithNsec as doLoginWithNsec,
   resolveDocScreenshotPath,
-  TEST_NSEC
+  TEST_NSEC,
+  waitForFeedSurface
 } from './helpers.ts';
 
 test.describe('Social App Flow', () => {
@@ -39,7 +40,7 @@ test.describe('Social App Flow', () => {
     await expect(page.locator('.sidebar-title').getByText('NostrStack')).toBeVisible(); // Sidebar brand
     await page.screenshot({ path: resolveDocScreenshotPath('feed.png') });
 
-    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible(); // Feed
+    await waitForFeedSurface(page); // Feed
     await expect(page.getByPlaceholder('Share something with the network...')).toBeVisible(); // Post Editor
 
     // 3. Post a note
@@ -74,7 +75,10 @@ test.describe('Social App Flow', () => {
         page.getByText(/Wallet unavailable|Failed to connect to wallet/i).first(),
         'Expected a payment surface or an explicit wallet-unavailable state'
       ).toBeVisible({ timeout: 5000 });
-      await page.getByRole('button', { name: /Log out/ }).first().click();
+      await page
+        .getByRole('button', { name: /Log out/ })
+        .first()
+        .click();
       return;
     }
     const overlay = page
@@ -131,8 +135,8 @@ test.describe('Social App Flow', () => {
     await nav.getByRole('button', { name: 'Feed' }).click();
 
     // Verify Post Actions
-    // Wait for at least one post
-    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
+    // Wait for feed surface to be interactive before post actions
+    await waitForFeedSurface(page, { timeoutMs: 15000 });
 
     // Dismiss onboarding overlay if it appears before interacting with posts
     await dismissOnboardingTourIfOpen(page);

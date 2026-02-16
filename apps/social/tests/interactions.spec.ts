@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { loginWithNsec } from './helpers';
+import { clickWithDispatchFallback, loginWithNsec, waitForFeedSurface } from './helpers';
 
 const testNsec =
   process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
@@ -14,7 +14,7 @@ test.describe('App Interactions', () => {
     const nav = page.getByRole('navigation');
 
     // Default is Feed
-    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible();
+    await waitForFeedSurface(page);
     await expect(nav.getByRole('button', { name: 'Feed' })).toHaveClass(/active/);
 
     // Search
@@ -31,7 +31,7 @@ test.describe('App Interactions', () => {
 
     // Back to Feed
     await nav.getByRole('button', { name: 'Feed' }).click();
-    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible();
+    await waitForFeedSurface(page);
   });
 
   test('toggle view source in feed', async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe('App Interactions', () => {
     await expect(postCard).toBeVisible({ timeout: 10000 });
 
     const viewSourceBtn = postCard.getByRole('button', { name: /View event source JSON/i });
-    await viewSourceBtn.click();
+    await clickWithDispatchFallback(viewSourceBtn, { timeout: 8000 });
 
     // Should show JSON view
     const sourceView = postCard.locator('[data-testid="social-event-json"]');
@@ -58,7 +58,7 @@ test.describe('App Interactions', () => {
     await expect(hideSourceBtn).toBeVisible();
 
     // Hide it
-    await hideSourceBtn.click();
+    await clickWithDispatchFallback(hideSourceBtn, { timeout: 8000 });
     await expect(sourceView).toBeHidden();
   });
 

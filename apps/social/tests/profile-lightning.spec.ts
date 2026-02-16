@@ -90,7 +90,7 @@ test('profile lightning card renders with QR', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 
-  await page.getByRole('button', { name: /Profile/i }).click();
+  await page.getByRole('button', { name: 'Profile', exact: true }).click();
   await expect(page.locator('.lightning-card')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('.lightning-card-qr img')).toBeVisible();
   await expect(page.locator('.lightning-card-value')).toContainText('sats@example.com');
