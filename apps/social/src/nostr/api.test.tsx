@@ -130,9 +130,7 @@ describe('searchNotes', () => {
 
       try {
         const resultPromise = searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
-        await expect(resultPromise).rejects.toThrow(
-          `Request timed out after ${NOTES_SEARCH_TIMEOUT_MS}ms`
-        );
+        await expect(resultPromise).rejects.toThrow(/Request timed out after/);
       } finally {
         consoleSpy.mockRestore();
       }

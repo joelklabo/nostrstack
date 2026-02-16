@@ -49,6 +49,7 @@ const EVENT_FETCH_BASE_RETRY_MS = 1_000;
 const EVENT_FETCH_MAX_RETRY_MS = 30_000;
 const MAX_EVENT_FETCH_ENTRIES = 250;
 export const NOTES_SEARCH_TIMEOUT_MS = 30_000;
+const SEARCH_RELAY_TIMEOUT_MS = Math.min(NOTES_SEARCH_TIMEOUT_MS, 10_000);
 
 type NostrEventCacheEntry = {
   data?: ApiNostrEventResponse;
@@ -322,10 +323,29 @@ export async function searchNotes(
     if (until) {
       filter.until = until;
     }
-    return await withTimeout(
-      pool.querySync(relays, filter, { maxWait: NOTES_SEARCH_TIMEOUT_MS }),
-      NOTES_SEARCH_TIMEOUT_MS
+    const settled = await Promise.allSettled(
+      relays.map((relay) =>
+        withTimeout(
+          pool.querySync([relay], filter, { maxWait: SEARCH_RELAY_TIMEOUT_MS }),
+          SEARCH_RELAY_TIMEOUT_MS
+        )
+      )
     );
+    const merged = new Map<string, Event>();
+    const failures: unknown[] = [];
+    for (const result of settled) {
+      if (result.status === 'fulfilled') {
+        for (const event of result.value) {
+          merged.set(event.id, event);
+        }
+      } else {
+        failures.push(result.reason);
+      }
+    }
+    if (merged.size === 0 && failures.length === settled.length) {
+      throw failures[0];
+    }
+    return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
   } catch (err) {
     console.error('[nostr] search failed', err);
     throw err;
