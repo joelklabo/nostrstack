@@ -15,8 +15,39 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint (GitHub Actions Workflows)
+            tool: actionlint
+          - name: Lint (Knip)
+            command: pnpm lint:knip
+            allow_failure: true
+          - name: Lint (Copy/Paste)
+            command: pnpm lint:cpd
+          - name: Lint (File Naming)
+            command: pnpm lint:ls
+          - name: Lint (Spell Check)
+            command: pnpm lint:spell
+          - name: Lint (CSS)
+            command: pnpm lint:css
+          - name: Lint (Markdown)
+            command: pnpm lint:md
+          - name: Lint (Shell Scripts)
+            command: pnpm lint:sh
+            install_shellcheck: true
+          - name: Lint (Secrets)
+            command: pnpm lint:secrets
+          - name: Lint (Audit)
+            command: pnpm lint:audit
+          - name: Lint (Dependencies)
+            command: pnpm lint:deps
+          - name: Lint (Architecture)
+            command: pnpm lint:dep
     permissions:
       contents: read
+    continue-on-error: ${{ matrix.allow_failure }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,47 +55,19 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Lint (GitHub Actions Workflows)
+        if: matrix.tool == 'actionlint'
         uses: reviewdog/action-actionlint@v1
         with:
           fail_level: error
           filter_mode: nofilter
 
-      - name: Lint (Knip)
-        continue-on-error: true
-        run: pnpm lint:knip
-
-      - name: Lint (Copy/Paste)
-        run: pnpm lint:cpd
-
-      - name: Lint (File Naming)
-        run: pnpm lint:ls
-
-      - name: Lint (Spell Check)
-        run: pnpm lint:spell
-
-      - name: Lint (CSS)
-        run: pnpm lint:css
-
-      - name: Lint (Markdown)
-        run: pnpm lint:md
-
       - name: Install shellcheck
+        if: matrix.install_shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
-      - name: Lint (Shell Scripts)
-        run: pnpm lint:sh
-
-      - name: Lint (Secrets)
-        run: pnpm lint:secrets
-
-      - name: Lint (Audit)
-        run: pnpm lint:audit
-
-      - name: Lint (Dependencies)
-        run: pnpm lint:deps
-
-      - name: Lint (Architecture)
-        run: pnpm lint:dep
+      - name: ${{ matrix.name }}
+        if: matrix.command
+        run: ${{ matrix.command }}
 
   typecheck:
     name: TypeScript
