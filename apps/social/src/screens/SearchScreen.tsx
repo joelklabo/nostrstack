@@ -147,6 +147,12 @@ export function SearchScreen() {
     [pool, relayList]
   );
 
+  const handleSearchFallback = useCallback(() => {
+    const fallbackQuery = query.trim() || lastSearchQuery;
+    if (!fallbackQuery) return;
+    void handleNotesSearch(fallbackQuery);
+  }, [query, lastSearchQuery, handleNotesSearch]);
+
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || notes.length === 0 || !lastSearchQuery) return;
 
@@ -425,16 +431,25 @@ export function SearchScreen() {
         <Alert tone="warning" title="Profile metadata not loaded" role="status">
           <p>{profileLookupError}</p>
           <p>Showing partial profile data (identifier only) until metadata is available.</p>
-          <button
-            type="button"
-            className="action-btn"
-            onClick={retryProfileLookup}
-            disabled={isProfileLookupLoading}
-            aria-label="Retry profile metadata lookup"
-            style={{ marginTop: '0.5rem' }}
-          >
-            {isProfileLookupLoading ? 'Retrying…' : 'Retry metadata lookup'}
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="action-btn"
+              onClick={retryProfileLookup}
+              disabled={isProfileLookupLoading}
+              aria-label="Retry profile metadata lookup"
+            >
+              {isProfileLookupLoading ? 'Retrying…' : 'Retry metadata lookup'}
+            </button>
+            <button
+              type="button"
+              className="action-btn"
+              onClick={handleSearchFallback}
+              aria-label="Search notes as fallback"
+            >
+              Search notes instead
+            </button>
+          </div>
         </Alert>
       )}
 
@@ -445,15 +460,26 @@ export function SearchScreen() {
           <Alert tone="danger" title="Identity resolution failed" role="alert">
             <p>{error.message}</p>
             {canRetryIdentity() && (
-              <button
-                type="button"
-                className="action-btn"
-                onClick={retryIdentityLookup}
-                aria-label="Retry identity lookup"
-                style={{ marginTop: '0.5rem' }}
+              <div
+                style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}
               >
-                Retry lookup
-              </button>
+                <button
+                  type="button"
+                  className="action-btn"
+                  onClick={retryIdentityLookup}
+                  aria-label="Retry identity lookup"
+                >
+                  Retry lookup
+                </button>
+                <button
+                  type="button"
+                  className="action-btn"
+                  onClick={handleSearchFallback}
+                  aria-label="Search notes instead"
+                >
+                  Search notes instead
+                </button>
+              </div>
             )}
           </Alert>
         )}
