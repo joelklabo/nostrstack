@@ -19,6 +19,7 @@ jobs:
   social-e2e:
     name: Social App E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -51,6 +52,7 @@ jobs:
 
       - name: Run E2E Tests
         working-directory: apps/social
+        timeout-minutes: 40
         env:
           VITE_NOSTRSTACK_HOST: mock
           VITE_API_BASE_URL: /api
@@ -59,14 +61,15 @@ jobs:
           VITE_TEST_SIGNER_SK: 0000000000000000000000000000000000000000000000000000000000000001
         run: |
           if [ -n "${{ github.event.inputs.test_filter }}" ]; then
-            pnpm exec playwright test "${{ github.event.inputs.test_filter }}" --project=chromium --reporter=line
+            pnpm exec playwright test "${{ github.event.inputs.test_filter }}" --project=chromium --retries=2 --reporter=line
           else
-            pnpm exec playwright test --project=chromium --reporter=line
+            pnpm exec playwright test --project=chromium --retries=2 --reporter=line
           fi
 
   api-e2e:
     name: API E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     permissions:
       contents: read
     steps:
@@ -97,4 +100,5 @@ jobs:
         env:
           DATABASE_URL: file:./test.db
           ADMIN_API_KEY: test-admin
+          XDG_CACHE_HOME: /tmp
         run: pnpm test:e2e

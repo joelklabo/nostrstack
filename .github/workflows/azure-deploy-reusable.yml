@@ -69,6 +69,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -97,15 +98,20 @@ jobs:
             docker exec postgres-test pg_isready -U nostrstack && break
             sleep 1
           done
-          pnpm test
+          pnpm test:ci
         env:
           DATABASE_URL: postgresql://nostrstack:nostrstack@localhost:5432/nostrstack
+          XDG_CACHE_HOME: /tmp
+
+      - name: Stop postgres container
+        if: always()
+        run: docker rm -f postgres-test || true
 
       - name: Regtest e2e (Playwright)
         if: ${{ inputs.run_e2e_tests }}
         run: |
           cd apps/api
-          DATABASE_URL="file:./test-e2e.db" ADMIN_API_KEY="test-admin" pnpm test:e2e
+          DATABASE_URL="file:./test-e2e.db" ADMIN_API_KEY="test-admin" XDG_CACHE_HOME=/tmp pnpm test:e2e
 
       - name: Set image tag
         id: vars
