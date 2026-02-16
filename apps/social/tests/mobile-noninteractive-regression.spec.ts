@@ -100,14 +100,13 @@ test.describe('Mobile non-interactive regression sweep', () => {
     expect(pointerEvents).not.toBe('none');
     await retryButton.click({ force: true, timeout: 1000, trial: true });
 
-    const telemetryButtons = page.locator('.telemetry-sidebar button');
+    const telemetryButtons = page.locator('.telemetry-sidebar button:visible');
+    await expect(telemetryButtons.first()).toBeVisible({ timeout: 6000 });
     const telemetryButtonCount = await telemetryButtons.count();
     for (let i = 0; i < Math.min(telemetryButtonCount, 8); i++) {
       const button = telemetryButtons.nth(i);
-      if (await button.isVisible().catch(() => false)) {
-        await button.scrollIntoViewIfNeeded();
-        await button.click({ force: true, timeout: 1000, trial: true });
-      }
+      await button.scrollIntoViewIfNeeded();
+      await button.click({ force: true, timeout: 1000, trial: true });
     }
   });
 });
