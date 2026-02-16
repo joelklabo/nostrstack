@@ -39,6 +39,7 @@ export function LoginScreen() {
   const enableLnurlAuth =
     String(import.meta.env.VITE_ENABLE_LNURL_AUTH ?? '').toLowerCase() === 'true';
   const lnurlModalRef = useRef<HTMLDivElement>(null);
+  const firstAuthButtonRef = useRef<HTMLButtonElement>(null);
   const lnurlTriggerRef = useRef<HTMLElement | null>(null);
 
   const apiBaseRaw = cfg.apiBase ?? cfg.baseUrl ?? '';
@@ -306,6 +307,12 @@ export function LoginScreen() {
   const showRetry =
     lnurlStatus === 'error' || lnurlStatus === 'expired' || lnurlStatus === 'timeout';
 
+  useEffect(() => {
+    if (mode === 'menu') {
+      firstAuthButtonRef.current?.focus();
+    }
+  }, [mode]);
+
   return (
     <div className="login-container">
       <div className="login-card">
@@ -324,6 +331,7 @@ export function LoginScreen() {
           <div className="auth-options" role="group" aria-label="Authentication methods">
             <button
               type="button"
+              ref={firstAuthButtonRef}
               className="auth-btn auth-btn--primary"
               onClick={() => loginWithNip07()}
               aria-label="Sign in with Nostr browser extension"

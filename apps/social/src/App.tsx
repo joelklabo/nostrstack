@@ -177,7 +177,10 @@ function AppShell() {
 
   if (isLoading) {
     return (
-      <div
+      <main
+        className="feed-container"
+        id="main-content"
+        role="main"
         style={{
           display: 'flex',
           justifyContent: 'center',
@@ -188,15 +191,17 @@ function AppShell() {
         }}
       >
         Loading NostrStack...
-      </div>
+      </main>
     );
   }
 
   if (!pubkey && !isGuest) {
     return (
-      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
-        <LoginScreen />
-      </Suspense>
+      <main className="feed-container" id="main-content" role="main">
+        <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+          <LoginScreen />
+        </Suspense>
+      </main>
     );
   }
 
@@ -211,7 +216,7 @@ function AppShell() {
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
         />
-        <main className="feed-container" id="main-content">
+        <main className="feed-container" id="main-content" role="main">
           <NotFoundScreen />
         </main>
       </div>
@@ -262,7 +267,7 @@ function AppShell() {
         onMobileClose={closeMobileMenu}
         onOpenHelp={() => setHelpOpen(true)}
       />
-      <main className="feed-container" id="main-content">
+      <main className="feed-container" id="main-content" role="main">
         <Suspense
           fallback={
             <div
