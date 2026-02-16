@@ -31,19 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.26.1
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      # Install deps for build context if needed, though Dockerfile does it too.
-      # Dockerfile does 'COPY .', so it copies local node_modules if not ignored?
-      # .dockerignore usually ignores node_modules.
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:

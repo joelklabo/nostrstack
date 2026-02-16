@@ -20,18 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.26.1
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Lint (GitHub Actions Workflows)
         uses: reviewdog/action-actionlint@v1
@@ -85,18 +75,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.26.1
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: TypeCheck
         run: pnpm typecheck
@@ -116,18 +96,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.26.1
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Generate Prisma Client
         working-directory: apps/api
@@ -183,18 +153,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.26.1
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Setup Node and PNPM
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

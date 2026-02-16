@@ -1,0 +1,29 @@
+name: 'Setup Node and PNPM'
+description: 'Set up Node.js, pnpm, and optionally install workspace dependencies.'
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: false
+    default: '20'
+  pnpm-version:
+    description: 'pnpm version'
+    required: false
+    default: '10.26.1'
+  install-command:
+    description: 'Dependency install command. Set to empty to skip.'
+    required: false
+    default: 'pnpm install --frozen-lockfile'
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+    - name: Install dependencies
+      if: ${{ inputs.install-command != '' }}
+      run: ${{ inputs.install-command }}
+      shell: bash
