@@ -3,14 +3,15 @@ import { useToast } from '@nostrstack/ui';
 import { memo, useEffect, useRef, useState } from 'react';
 
 import { WalletView } from '../features/wallet/WalletView';
+import { type View } from '../hooks/useKeyboardShortcuts';
 import { useWallet } from '../hooks/useWallet';
 import { AnimatedSats } from '../ui/AnimatedNumber';
 import { resolveGalleryApiBase } from '../utils/api-base';
 import { navigateTo, navigateToProfile } from '../utils/navigation';
 
 interface SidebarProps {
-  currentView: 'feed' | 'search' | 'profile' | 'settings';
-  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'settings') => void;
+  currentView: View;
+  setCurrentView: (view: View) => void;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
   onOpenHelp?: () => void;
@@ -171,6 +172,13 @@ export const Sidebar = memo(function Sidebar({
   };
 
   const handleNavigate = (view: SidebarProps['currentView']) => {
+    if (view === 'offers') {
+      navigateTo('/offers');
+      setCurrentView('offers');
+      onMobileClose?.();
+      return;
+    }
+
     if (view === 'search') {
       navigateTo('/search');
       setCurrentView('search');
@@ -224,6 +232,14 @@ export const Sidebar = memo(function Sidebar({
           aria-current={currentView === 'search' ? 'page' : undefined}
         >
           Find friend
+        </button>
+        <button
+          type="button"
+          className={`nav-item ${currentView === 'offers' ? 'active' : ''}`}
+          onClick={() => handleNavigate('offers')}
+          aria-current={currentView === 'offers' ? 'page' : undefined}
+        >
+          Offers
         </button>
         <button
           type="button"

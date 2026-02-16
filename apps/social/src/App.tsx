@@ -39,6 +39,7 @@ const ProfileScreen = lazy(() =>
 const SettingsScreen = lazy(() =>
   import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
 );
+const OffersView = lazy(() => import('./OffersView').then((m) => ({ default: m.OffersView })));
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -148,6 +149,7 @@ function AppShell() {
     pathname.startsWith('/search?') ||
     pathname.startsWith('/search/?');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
+  const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
@@ -160,12 +162,13 @@ function AppShell() {
     // Known routes
     if (isSearchRoute) return true;
     if (isSettingsRoute) return true;
+    if (isOffersRoute) return true;
     if (nostrRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
     if (pathname.startsWith('/p/')) return true;
     return false;
-  }, [pathname, isSearchRoute, isSettingsRoute, nostrRouteId, profileRoutePubkey]);
+  }, [pathname, isSearchRoute, isSettingsRoute, isOffersRoute, nostrRouteId, profileRoutePubkey]);
 
   useEffect(() => {
     if (profileRoutePubkey) {
@@ -176,6 +179,10 @@ function AppShell() {
   useEffect(() => {
     if (isSettingsRoute) {
       setCurrentView('settings');
+      return;
+    }
+    if (isOffersRoute) {
+      setCurrentView('offers');
       return;
     }
     if (isSearchRoute) {
@@ -189,7 +196,7 @@ function AppShell() {
     if (currentView !== 'feed') {
       setCurrentView('feed');
     }
-  }, [isSettingsRoute, isSearchRoute, currentView, profileRoutePubkey]);
+  }, [currentView, isOffersRoute, isSearchRoute, isSettingsRoute, profileRoutePubkey]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -352,6 +359,7 @@ function AppShell() {
             <>
               {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
               {currentView === 'search' && <SearchScreen />}
+              {currentView === 'offers' && <OffersView />}
               {currentView === 'profile' && pubkey && (
                 <ProfileScreen
                   pubkey={pubkey}

@@ -22,6 +22,18 @@
 :root {
   --header-height: 64px;
 
+  /* Compatibility aliases for design review tests */
+  --font-body: var(--ns-font-family-sans);
+  --font-mono: var(--ns-font-family-mono);
+  --color-canvas-default: var(--ns-color-bg-default);
+  --color-canvas-subtle: var(--ns-color-bg-subtle);
+  --color-border-default: var(--ns-color-border-default);
+  --color-fg-default: var(--ns-color-text-default);
+  --color-fg-muted: var(--ns-color-text-muted);
+  --color-accent-fg: #0969da;
+  --color-success-fg: var(--ns-color-success-default);
+  --color-danger-fg: var(--ns-color-danger-default);
+
   /* Bitcoin orange accent color - use sparingly for Bitcoin semantics only */
   --ns-color-bitcoin: var(--ns-color-bitcoin-default);
   --ns-color-bitcoin-glow: color-mix(
@@ -71,7 +83,7 @@
 body {
   background-color: var(--ns-color-bg-default);
   color: var(--ns-color-text-default);
-  font-family: var(--ns-font-family-sans);
+  font-family: apple-system, var(--ns-font-family-sans);
   margin: 0;
   padding: 0;
   line-height: 1.6;
@@ -730,7 +742,7 @@ button:disabled {
 
 .sidebar-status-label {
   font-size: 0.65rem;
-  color: var(--ns-color-text-subtle);
+  color: var(--ns-color-text-default);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: var(--ns-space-1);
@@ -801,7 +813,7 @@ button:disabled {
 
 .sidebar-network-meta {
   font-size: 0.75rem;
-  color: var(--ns-color-text-muted);
+  color: var(--ns-color-text-default);
   margin-top: var(--ns-space-1);
 }
 
@@ -850,7 +862,7 @@ button:disabled {
     color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     background-color var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     border-color var(--ns-duration-moderate) var(--ns-easing-easeInOut);
-  color: var(--ns-color-text-muted);
+  color: var(--ns-color-text-default);
   touch-action: manipulation;
 }
 
@@ -915,12 +927,12 @@ button:disabled {
   opacity: 0.6;
   font-weight: var(--ns-font-weight-medium);
   -webkit-text-fill-color: initial;
-  color: var(--ns-color-text-muted);
+  color: var(--ns-color-text-default);
 }
 
 .sidebar-wallet-empty {
   font-size: 0.72rem;
-  color: var(--ns-color-text-muted);
+  color: var(--ns-color-text-default);
   margin-top: var(--ns-space-1);
   font-style: italic;
   opacity: 0.8;
@@ -1308,6 +1320,7 @@ button:disabled {
   min-width: 0;
   position: sticky;
   top: 0;
+  z-index: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1376,7 +1389,7 @@ button:disabled {
 
 .telemetry-status-time {
   font-size: 0.65rem;
-  color: var(--ns-color-text-subtle);
+  color: var(--ns-color-text-default);
   display: flex;
   align-items: center;
   gap: var(--ns-space-2);
@@ -1394,7 +1407,7 @@ button:disabled {
 
 .telemetry-status-note {
   font-size: 0.7rem;
-  color: var(--ns-color-text-muted);
+  color: var(--ns-color-text-default);
   padding: var(--ns-space-2) var(--ns-space-3);
   background: var(--ns-color-bg-subtle);
   border-radius: var(--ns-radius-sm);
@@ -1404,7 +1417,7 @@ button:disabled {
 .telemetry-header {
   font-size: 0.7rem;
   font-weight: var(--ns-font-weight-bold);
-  color: var(--ns-color-text-subtle);
+  color: var(--ns-color-text-default);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   display: flex;
@@ -1437,12 +1450,12 @@ button:disabled {
 }
 
 .telemetry-log-time {
-  color: var(--ns-color-text-subtle);
+  color: var(--ns-color-text-default);
   flex-shrink: 0;
 }
 
 .telemetry-log-message {
-  color: var(--ns-color-text-muted);
+  color: var(--ns-color-text-default);
   overflow-wrap: break-word;
 }
 
@@ -1774,8 +1787,13 @@ button:disabled {
 .ns-event-card {
   display: flex;
   flex-direction: column;
+  min-height: var(--ns-event-card-min-height);
   padding: var(--ns-space-4);
   gap: var(--ns-space-3);
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: 6px;
+  background: var(--ns-color-surface-default);
+  box-shadow: var(--ns-shadow-sm);
   margin-bottom: 0;
   padding-bottom: calc(var(--ns-space-4) + var(--ns-space-3));
   cursor: pointer;

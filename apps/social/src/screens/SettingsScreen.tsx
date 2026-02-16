@@ -46,6 +46,7 @@ export function SettingsScreen({
   brandPreset,
   setBrandPreset
 }: SettingsScreenProps) {
+  const nextTheme = theme === 'dark' ? 'light' : 'dark';
   const { pubkey, signEvent } = useAuth();
   const { relays: relayList } = useRelays();
   const { profile: profileEvent } = useProfile(pubkey ?? '', { enabled: !!pubkey });
@@ -522,7 +523,7 @@ export function SettingsScreen({
 
       <div className="paywall-container">
         <h4 style={{ color: 'var(--ns-color-text-muted)', marginBottom: '0.5rem' }}>Appearance</h4>
-        <div style={{ display: 'flex', gap: '1rem' }} role="group" aria-label="Theme selection">
+        <div style={{ display: 'flex', gap: '1rem' }} role="group" aria-label="Theme mode">
           <button
             type="button"
             className="action-btn"
@@ -530,24 +531,11 @@ export function SettingsScreen({
               borderColor: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined,
               color: theme === 'dark' ? 'var(--ns-color-text-default)' : undefined
             }}
-            onClick={() => setTheme('dark')}
+            onClick={() => setTheme(nextTheme)}
             aria-pressed={theme === 'dark'}
-            aria-label="Switch to dark mode"
+            aria-label={`Switch to ${nextTheme} mode`}
           >
-            Dark
-          </button>
-          <button
-            type="button"
-            className="action-btn"
-            style={{
-              borderColor: theme === 'light' ? 'var(--ns-color-text-default)' : undefined,
-              color: theme === 'light' ? 'var(--ns-color-text-default)' : undefined
-            }}
-            onClick={() => setTheme('light')}
-            aria-pressed={theme === 'light'}
-            aria-label="Switch to light mode"
-          >
-            Light
+            Theme: {theme === 'dark' ? 'Dark' : 'Light'}
           </button>
         </div>
       </div>
