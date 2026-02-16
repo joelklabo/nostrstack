@@ -41,6 +41,32 @@ function parseOptionalInt(value?: string) {
   return Math.floor(parsed);
 }
 
+function parseOfferErrorMessage(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (typeof parsed === 'string') {
+      return parsed;
+    }
+    if (typeof parsed === 'object' && parsed !== null) {
+      if (typeof parsed.message === 'string') {
+        return parsed.message;
+      }
+      if (typeof parsed.error === 'string') {
+        return parsed.error;
+      }
+    }
+  } catch {
+    // Not JSON; return raw text below.
+  }
+
+  return trimmed;
+}
+
 function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
@@ -124,11 +150,12 @@ export function OffersView() {
           signal: controller.signal
         })
       );
-      const bodyText = await withTimeout(res.text());
+      const responseText = await withTimeout(res.text());
       if (!res.ok) {
-        throw new Error(bodyText || `HTTP ${res.status}`);
+        const message = parseOfferErrorMessage(responseText) || `HTTP ${res.status}`;
+        throw new Error(message);
       }
-      const data = JSON.parse(bodyText) as { offer: string; offerId?: string; label?: string };
+      const data = JSON.parse(responseText) as { offer: string; offerId?: string; label?: string };
       const entry: OfferEntry = {
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         description: description.trim(),
