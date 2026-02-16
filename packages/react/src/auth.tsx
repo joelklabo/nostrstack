@@ -135,7 +135,7 @@ export function AuthProvider({
   }, []);
 
   const loginWithNip07 = useCallback(async () => {
-    if (!window.nostr) {
+    if (!window.nostr?.getPublicKey) {
       setState((s) => ({ ...s, isLoading: false, error: 'NIP-07 extension not found' }));
       return;
     }

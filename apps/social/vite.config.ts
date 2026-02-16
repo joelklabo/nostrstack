@@ -7,6 +7,9 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ command }) => {
   const useReactSrc = command === 'serve';
   const useHttps = process.env.USE_HTTPS !== 'false';
+  const configuredSocialPort = Number(process.env.DEV_SERVER_PORT ?? 4173);
+  const devServerPort =
+    Number.isFinite(configuredSocialPort) && configuredSocialPort > 0 ? configuredSocialPort : 4173;
   return {
     plugins: [
       react({
@@ -19,12 +22,14 @@ export default defineConfig(({ command }) => {
       ...(useHttps ? [basicSsl()] : [])
     ],
     server: {
-      port: 4173,
-      host: true
+      port: devServerPort,
+      host: true,
+      strictPort: true
     },
     preview: {
-      port: 4173,
-      host: true
+      port: devServerPort,
+      host: true,
+      strictPort: true
     },
     define: {
       // Some packages (e.g. nostr-tools) expect global Buffer.

@@ -10,7 +10,7 @@ ndev_claim_session
 trap 'ndev_release_session' EXIT INT TERM
 # shellcheck disable=SC2016
 api_protocol="http"
-if [[ "${USE_HTTPS:-false}" == "true" ]]; then
+if is_truthy "${USE_HTTPS:-false}"; then
   api_protocol="https"
 fi
 default_public_origin="$api_protocol://localhost:$PORT"

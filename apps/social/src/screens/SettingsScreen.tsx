@@ -2,7 +2,7 @@ import '../styles/components/nwc.css';
 
 import { NwcClient, useAuth, useProfile } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { nsBrandPresets, type NsBrandPreset } from '@nostrstack/widgets';
+import { type NsBrandPreset, nsBrandPresets } from '@nostrstack/widgets';
 import { SimplePool } from 'nostr-tools';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -13,6 +13,7 @@ import { CelebrationSettings } from '../ui/CelebrationSettings';
 const NWC_STORAGE_KEY = 'nostrstack.nwc';
 const NWC_PAYMENT_KEY = 'nostrstack.nwc.lastPayment';
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
+const NWC_REMEMBER_KEY = 'nostrstack.nwc.remember';
 
 type NwcLastPayment = {
   status: 'success' | 'error';
@@ -182,10 +183,16 @@ export function SettingsScreen({
 
   const { permission, requestPermission, sendLocalNotification } = usePushNotifications();
 
-  useEffect(() => {
+  const hydrateNwcFromStorage = useCallback(() => {
     if (typeof window === 'undefined') return;
     const raw = window.localStorage.getItem(NWC_STORAGE_KEY);
-    if (!raw) return;
+    const rememberRaw = window.localStorage.getItem(NWC_REMEMBER_KEY);
+    const hasRememberPreference = rememberRaw !== null;
+    const rememberFromStorage = rememberRaw === '1';
+    if (!raw) {
+      setPersistNwc(hasRememberPreference ? rememberFromStorage : false);
+      return;
+    }
     try {
       const parsed = JSON.parse(raw) as { uri?: string; relays?: string[]; maxSats?: number };
       if (parsed?.uri) setNwcUri(parsed.uri);
@@ -193,11 +200,24 @@ export function SettingsScreen({
       if (typeof parsed?.maxSats === 'number' && Number.isFinite(parsed.maxSats)) {
         setNwcMaxSats(String(parsed.maxSats));
       }
-      setPersistNwc(true);
+      setPersistNwc(hasRememberPreference ? rememberFromStorage : true);
     } catch {
+      setPersistNwc(hasRememberPreference ? rememberFromStorage : false);
       // ignore invalid storage
     }
   }, []);
+
+  useEffect(() => {
+    hydrateNwcFromStorage();
+    if (typeof window === 'undefined') return;
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === NWC_STORAGE_KEY || event.key === NWC_REMEMBER_KEY || event.key === null) {
+        hydrateNwcFromStorage();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [hydrateNwcFromStorage]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -312,6 +332,7 @@ export function SettingsScreen({
       maxSats: nwcMaxSatsValue ?? undefined
     };
     if (typeof window !== 'undefined') {
+      window.localStorage.setItem(NWC_REMEMBER_KEY, persistNwc ? '1' : '0');
       if (persistNwc) {
         window.localStorage.setItem(NWC_STORAGE_KEY, JSON.stringify(payload));
       } else {
@@ -319,6 +340,12 @@ export function SettingsScreen({
       }
       window.dispatchEvent(new CustomEvent('nostrstack:nwc-update', { detail: payload }));
     }
+    toast({
+      message: persistNwc
+        ? 'NWC settings saved and remembered on this device.'
+        : 'NWC settings saved without persistence.',
+      tone: 'success'
+    });
     setNwcMessage('Saved');
     window.setTimeout(() => setNwcMessage(null), 1500);
   };
@@ -335,8 +362,39 @@ export function SettingsScreen({
       window.localStorage.removeItem(NWC_STORAGE_KEY);
       window.dispatchEvent(new CustomEvent('nostrstack:nwc-update', { detail: null }));
     }
+    toast({ message: 'NWC wallet settings disconnected.', tone: 'success' });
     setNwcMessage('Disconnected');
     window.setTimeout(() => setNwcMessage(null), 1500);
+  };
+
+  const handlePersistPreferenceChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const next = event.target.checked;
+    setPersistNwc(next);
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(NWC_REMEMBER_KEY, next ? '1' : '0');
+    if (!next) {
+      window.localStorage.removeItem(NWC_STORAGE_KEY);
+      window.dispatchEvent(new CustomEvent('nostrstack:nwc-update', { detail: null }));
+      toast({ message: 'Wallet persistence disabled on this device.', tone: 'success' });
+      return;
+    }
+
+    if (hasNwcConfig) {
+      const payload = {
+        uri: nwcUriTrimmed || undefined,
+        relays: parsedRelays.length ? parsedRelays : undefined,
+        maxSats: nwcMaxSatsValue ?? undefined
+      };
+      window.localStorage.setItem(NWC_STORAGE_KEY, JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent('nostrstack:nwc-update', { detail: payload }));
+    }
+
+    toast({
+      message: hasNwcConfig
+        ? 'Wallet persistence enabled and current config saved.'
+        : 'Wallet persistence enabled. Connect to persist this wallet config.',
+      tone: 'success'
+    });
   };
 
   const handleCheckNwc = async () => {
@@ -775,7 +833,7 @@ export function SettingsScreen({
             type="checkbox"
             name="nwc-remember"
             checked={persistNwc}
-            onChange={(event) => setPersistNwc(event.target.checked)}
+            onChange={handlePersistPreferenceChange}
           />
           Remember on this device
         </label>
