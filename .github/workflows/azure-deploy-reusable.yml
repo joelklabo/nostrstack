@@ -115,6 +115,22 @@ jobs:
         if: always()
         run: docker rm -f postgres-test || true
 
+      - name: Cache Playwright browsers
+        if: ${{ inputs.run_e2e_tests }}
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright (if not cached)
+        if: ${{ inputs.run_e2e_tests && steps.playwright-cache.outputs.cache-hit != 'true' }}
+        run: |
+          cd apps/api
+          pnpm exec playwright install --with-deps chromium
+
       - name: Regtest e2e (Playwright)
         if: ${{ inputs.run_e2e_tests }}
         run: |
