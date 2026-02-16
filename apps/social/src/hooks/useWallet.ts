@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { resolveRuntimeWsUrl } from '../utils/api-base';
 
@@ -31,11 +31,18 @@ export function useWallet(): WalletState {
   const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const hasWalletSnapshot = useRef(false);
+
+  useEffect(() => {
+    hasWalletSnapshot.current = !!wallet;
+  }, [wallet]);
 
   const retry = () => {
-    setIsConnecting(true);
+    setIsConnecting(!hasWalletSnapshot.current);
+    if (!hasWalletSnapshot.current) {
+      setWallet(null);
+    }
     setError(null);
-    setWallet(null);
     setRetryCount((c) => c + 1);
   };
 
@@ -44,13 +51,18 @@ export function useWallet(): WalletState {
     if (!wsUrl) {
       setIsConnecting(false);
       setError('No wallet URL configured');
+      hasWalletSnapshot.current = false;
       setWallet(null);
       return;
     }
 
-    setIsConnecting(true);
+    const hadSnapshot = hasWalletSnapshot.current;
+    if (!hadSnapshot) {
+      hasWalletSnapshot.current = false;
+      setWallet(null);
+    }
+    setIsConnecting(!hadSnapshot);
     setError(null);
-    setWallet(null);
 
     let ws: WebSocket | null = null;
     let cancelled = false;
@@ -61,8 +73,10 @@ export function useWallet(): WalletState {
     const scheduleReconnect = (message: string) => {
       if (cancelled || reconnectScheduled) return;
       reconnectScheduled = true;
-      setError(`${message} Retrying...`);
-      setWallet(null);
+      if (!hasWalletSnapshot.current) {
+        setError(`${message} Retrying...`);
+        setWallet(null);
+      }
       setIsConnecting(false);
 
       reconnectTimer = globalThis.setTimeout(() => {
@@ -96,6 +110,7 @@ export function useWallet(): WalletState {
         try {
           const data = JSON.parse(e.data);
           if (data.type === 'wallet') {
+            hasWalletSnapshot.current = true;
             setWallet({
               id: data.id,
               name: data.name,
