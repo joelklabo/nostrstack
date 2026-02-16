@@ -178,11 +178,11 @@ jobs:
     permissions:
       contents: read
     if: >
-      github.event_name == 'workflow_dispatch' &&
-      (inputs.run_external_checks == true || inputs.run_extended_checks == true) ||
-      (github.event_name == 'pull_request' &&
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.run_external_checks == true || inputs.run_extended_checks == true))
+      || (github.event_name == 'pull_request' &&
         (contains(github.event.pull_request.labels.*.name, 'run-smoke-tests') ||
-         contains(github.event.pull_request.labels.*.name, 'run-extended-checks'))
+         contains(github.event.pull_request.labels.*.name, 'run-extended-checks')))
     steps:
       - uses: actions/checkout@v4
 
@@ -205,11 +205,11 @@ jobs:
     permissions:
       contents: read
     if: >
-      github.event_name == 'workflow_dispatch' &&
-      (inputs.run_external_checks == true || inputs.run_extended_checks == true) ||
-      (github.event_name == 'pull_request' &&
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.run_external_checks == true || inputs.run_extended_checks == true))
+      || (github.event_name == 'pull_request' &&
         (contains(github.event.pull_request.labels.*.name, 'run-smoke-tests') ||
-         contains(github.event.pull_request.labels.*.name, 'run-extended-checks'))
+         contains(github.event.pull_request.labels.*.name, 'run-extended-checks')))
     steps:
       - uses: actions/checkout@v4
 
