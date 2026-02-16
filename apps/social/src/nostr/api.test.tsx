@@ -1,6 +1,7 @@
+import type { SimplePool } from 'nostr-tools';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchNostrEventFromApi, getSearchRelays, SEARCH_RELAYS } from './api';
+import { fetchNostrEventFromApi, getSearchRelays, SEARCH_RELAYS, searchNotes } from './api';
 import { relayMonitor } from './relayHealth';
 
 function mockFetchResponse(body: unknown) {
@@ -120,5 +121,24 @@ describe('fetchNostrEventFromApi', () => {
     expect(fetchMock.mock.calls[0][0]).toBe(
       '/api/nostr/event/event-id-b?relays=wss%3A%2F%2Frelay.damus.io'
     );
+  });
+});
+
+describe('searchNotes', () => {
+  it('returns no results when a relay query times out', async () => {
+    vi.useFakeTimers();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const pool = {
+      querySync: vi.fn(() => new Promise(() => {}))
+    } as unknown as SimplePool;
+
+    try {
+      const resultPromise = searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
+      await vi.advanceTimersByTimeAsync(8_500);
+      await expect(resultPromise).resolves.toEqual([]);
+    } finally {
+      consoleSpy.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });

@@ -48,6 +48,7 @@ const EVENT_FETCH_TTL_MS = 30_000;
 const EVENT_FETCH_BASE_RETRY_MS = 1_000;
 const EVENT_FETCH_MAX_RETRY_MS = 30_000;
 const MAX_EVENT_FETCH_ENTRIES = 250;
+const NOTES_SEARCH_TIMEOUT_MS = 8_000;
 
 type NostrEventCacheEntry = {
   data?: ApiNostrEventResponse;
@@ -287,6 +288,24 @@ export async function fetchNostrEventFromApi(
   }
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = globalThis.setTimeout(() => {
+      reject(new Error(`Request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        globalThis.clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        globalThis.clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
 export async function searchNotes(
   pool: SimplePool,
   relays: string[],
@@ -303,7 +322,10 @@ export async function searchNotes(
     if (until) {
       filter.until = until;
     }
-    return await pool.querySync(relays, filter);
+    return await withTimeout(
+      pool.querySync(relays, filter, { maxWait: NOTES_SEARCH_TIMEOUT_MS }),
+      NOTES_SEARCH_TIMEOUT_MS
+    );
   } catch (err) {
     console.error('[nostr] search failed', err);
     return [];
