@@ -719,15 +719,18 @@ export function TelemetryBar() {
   const isMainnet = configuredNetwork.toLowerCase() === 'mainnet';
   const reconnectAttempt = Math.min(Math.max(wsAttempt, 0), telemetryTiming.wsMaxAttempts);
 
+  const effectiveDisplayStatus: WsStatus =
+    displayStatus === 'connecting' && status && !statusError ? 'connected' : displayStatus;
+
   // Map wsStatus to ConnectionState
   const connectionState: ConnectionState =
-    displayStatus === 'connected'
+    effectiveDisplayStatus === 'connected'
       ? 'connected'
-      : displayStatus === 'connecting'
+      : effectiveDisplayStatus === 'connecting'
         ? 'connecting'
-        : displayStatus === 'reconnecting'
+        : effectiveDisplayStatus === 'reconnecting'
           ? 'reconnecting'
-          : displayStatus === 'error'
+          : effectiveDisplayStatus === 'error'
             ? 'error'
             : 'offline';
 

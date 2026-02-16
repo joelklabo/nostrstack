@@ -228,6 +228,7 @@ export function ConnectionStatus({
 
   const showRetry = state === 'offline' || state === 'error';
   const showError = state === 'error' && errorMessage;
+  const showOfflineStatusNote = state === 'offline' && Boolean(errorMessage);
   const isRecent = lastSyncAt && Date.now() - lastSyncAt < 5000;
 
   if (compact) {
@@ -246,14 +247,14 @@ export function ConnectionStatus({
 
   return (
     <div
-      className={`ns-conn ns-conn--${state} ${className}`}
+      className={`telemetry-status-row ns-conn ns-conn--${state} ${className}`}
       role="status"
       aria-label={ariaLabel}
       aria-live="polite"
     >
       {/* Header Row: Status + Network */}
       <div className="ns-conn-header">
-        <div className="ns-conn-status">
+        <div className="telemetry-status ns-conn-status" data-status={state}>
           <StatusDot state={state} />
           <span className="ns-conn-label">{stateLabel}</span>
         </div>
@@ -263,10 +264,19 @@ export function ConnectionStatus({
       {/* Sync Time Row */}
       <div className="ns-conn-sync">
         <span className="ns-conn-sync-label">Last sync:</span>
-        <span className={`ns-conn-sync-time ${isRecent ? 'ns-conn-sync-time--recent' : ''}`}>
+        <span
+          className={`telemetry-status-time ns-conn-sync-time ${isRecent ? 'ns-conn-sync-time--recent' : ''}`}
+        >
           {timeSince}
         </span>
       </div>
+
+      {showOfflineStatusNote && (
+        <div className="telemetry-status-note">
+          <span className="telemetry-status-stale">Data may be outdated</span>
+          <span className="telemetry-status-note-text">Offline reason: {errorMessage}</span>
+        </div>
+      )}
 
       {/* Error Message */}
       {showError && (
