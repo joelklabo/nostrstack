@@ -19,7 +19,7 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { resolveGalleryApiBase } from './utils/api-base';
-import { resolveProfileRoute } from './utils/navigation';
+import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
 const FeedScreen = lazy(() =>
   import('./screens/FeedScreen').then((m) => ({ default: m.FeedScreen }))
@@ -155,6 +155,10 @@ function AppShell() {
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
   const previousPathRef = useRef(pathname);
+  const handleNavigateToSettings = useCallback(() => {
+    navigateTo('/settings');
+    setCurrentView('settings');
+  }, [setCurrentView]);
 
   // Check if the current path is a valid route
   const isValidRoute = useMemo(() => {
@@ -468,7 +472,7 @@ function AppShell() {
           {profileRoutePubkey ? (
             <ProfileScreen
               pubkey={profileRoutePubkey}
-              onNavigateToSettings={() => setCurrentView('settings')}
+              onNavigateToSettings={handleNavigateToSettings}
             />
           ) : (
             <>
@@ -476,10 +480,7 @@ function AppShell() {
               {currentView === 'search' && <SearchScreen />}
               {currentView === 'offers' && <OffersView />}
               {currentView === 'profile' && pubkey && (
-                <ProfileScreen
-                  pubkey={pubkey}
-                  onNavigateToSettings={() => setCurrentView('settings')}
-                />
+                <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
               )}
               {currentView === 'settings' && (
                 <SettingsScreen
