@@ -15,6 +15,35 @@ export interface BlockCelebrationPreferences {
   style: CelebrationStyle;
 }
 
+const DEFAULT_CELEBRATION_PREFERENCES: BlockCelebrationPreferences = {
+  soundEnabled: false,
+  animationEnabled: true,
+  style: 'glow-pulse'
+};
+
+function normalizeCelebrationStyle(style: string | null): CelebrationStyle {
+  if (style === 'confetti' || style === 'none' || style === 'glow-pulse') {
+    return style;
+  }
+  return DEFAULT_CELEBRATION_PREFERENCES.style;
+}
+
+function readCelebrationPreferences(): BlockCelebrationPreferences {
+  if (typeof window === 'undefined') return DEFAULT_CELEBRATION_PREFERENCES;
+  return {
+    soundEnabled: window.localStorage.getItem(CELEBRATION_SOUND_KEY) === 'true',
+    animationEnabled: window.localStorage.getItem(CELEBRATION_ANIMATION_KEY) !== 'false',
+    style: normalizeCelebrationStyle(window.localStorage.getItem(CELEBRATION_STYLE_KEY))
+  };
+}
+
+function writeCelebrationPreferences(prefs: BlockCelebrationPreferences) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(CELEBRATION_SOUND_KEY, String(prefs.soundEnabled));
+  window.localStorage.setItem(CELEBRATION_ANIMATION_KEY, String(prefs.animationEnabled));
+  window.localStorage.setItem(CELEBRATION_STYLE_KEY, prefs.style);
+}
+
 /**
  * Hook to manage block celebration preferences
  */
@@ -22,28 +51,32 @@ export function useBlockCelebrationPreferences(): [
   BlockCelebrationPreferences,
   (prefs: Partial<BlockCelebrationPreferences>) => void
 ] {
-  const [prefs, setPrefs] = useState<BlockCelebrationPreferences>(() => {
-    if (typeof window === 'undefined') {
-      return { soundEnabled: false, animationEnabled: true, style: 'glow-pulse' };
-    }
-    return {
-      soundEnabled: window.localStorage.getItem(CELEBRATION_SOUND_KEY) === 'true',
-      animationEnabled: window.localStorage.getItem(CELEBRATION_ANIMATION_KEY) !== 'false',
-      style:
-        (window.localStorage.getItem(CELEBRATION_STYLE_KEY) as CelebrationStyle) || 'glow-pulse'
-    };
-  });
+  const [prefs, setPrefs] = useState<BlockCelebrationPreferences>(readCelebrationPreferences);
 
   const updatePrefs = useCallback((updates: Partial<BlockCelebrationPreferences>) => {
     setPrefs((prev) => {
       const next = { ...prev, ...updates };
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(CELEBRATION_SOUND_KEY, String(next.soundEnabled));
-        window.localStorage.setItem(CELEBRATION_ANIMATION_KEY, String(next.animationEnabled));
-        window.localStorage.setItem(CELEBRATION_STYLE_KEY, next.style);
-      }
+      writeCelebrationPreferences(next);
       return next;
     });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorage = (event: StorageEvent) => {
+      if (
+        event.key !== CELEBRATION_SOUND_KEY &&
+        event.key !== CELEBRATION_ANIMATION_KEY &&
+        event.key !== CELEBRATION_STYLE_KEY
+      ) {
+        return;
+      }
+      setPrefs(readCelebrationPreferences());
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   return [prefs, updatePrefs];
