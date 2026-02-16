@@ -44,6 +44,54 @@ export type ApiNostrEventResponse = {
 
 export const SEARCH_RELAYS = ['wss://relay.nostr.band', 'wss://relay.damus.io'];
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
+const EVENT_FETCH_TTL_MS = 30_000;
+const EVENT_FETCH_BASE_RETRY_MS = 1_000;
+const EVENT_FETCH_MAX_RETRY_MS = 30_000;
+const MAX_EVENT_FETCH_ENTRIES = 250;
+
+type NostrEventCacheEntry = {
+  data?: ApiNostrEventResponse;
+  error?: string;
+  retryAtMs: number;
+  failCount: number;
+  resolvedAtMs?: number;
+  inFlight?: Promise<ApiNostrEventResponse>;
+};
+
+const eventResponseCache = new Map<string, NostrEventCacheEntry>();
+
+function parseRetryAfterSeconds(raw?: string | null): number | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const seconds = Number(trimmed);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.floor(seconds * 1000);
+  }
+
+  const asDate = Date.parse(trimmed);
+  if (Number.isFinite(asDate)) {
+    return Math.max(0, asDate - Date.now());
+  }
+
+  return null;
+}
+
+function pruneEventFetchCache(now: number) {
+  if (eventResponseCache.size <= MAX_EVENT_FETCH_ENTRIES) return;
+  for (const [key, entry] of eventResponseCache) {
+    if (entry.inFlight) continue;
+    if (entry.data && entry.resolvedAtMs && now - entry.resolvedAtMs > EVENT_FETCH_TTL_MS) {
+      eventResponseCache.delete(key);
+      continue;
+    }
+    if (entry.error && now - (entry.resolvedAtMs ?? 0) > EVENT_FETCH_TTL_MS) {
+      eventResponseCache.delete(key);
+    }
+    if (eventResponseCache.size <= MAX_EVENT_FETCH_ENTRIES) break;
+  }
+}
 
 function normalizeRelayList(relays: string[]): string[] {
   const cleaned = relays
@@ -150,22 +198,83 @@ export async function fetchNostrEventFromApi(
     replyCursor: options.replyCursor,
     replyTimeoutMs: options.replyTimeoutMs
   });
-  const res = await fetch(url, {
-    signal: options.signal,
-    headers: { Accept: 'application/json' }
+
+  const now = Date.now();
+  const cached = eventResponseCache.get(url);
+  if (cached?.data && cached.resolvedAtMs && now - cached.resolvedAtMs < EVENT_FETCH_TTL_MS) {
+    return cached.data;
+  }
+  if (cached?.error && cached.retryAtMs > now) {
+    throw new Error(cached.error);
+  }
+  if (cached?.inFlight) {
+    return cached.inFlight;
+  }
+
+  const failCount = cached?.failCount ?? 0;
+  const request = (async () => {
+    const res = await fetch(url, {
+      signal: options.signal,
+      headers: { Accept: 'application/json' }
+    });
+    const bodyText = await res.text();
+    if (!res.ok) {
+      const error = new Error(parseApiError(bodyText, res.status));
+      const status = res.status;
+      (error as { status?: number }).status = status;
+      const retryAfter = parseRetryAfterSeconds(res.headers.get('Retry-After'));
+      (error as { retryAfterMs?: number }).retryAfterMs = retryAfter ?? undefined;
+      throw error;
+    }
+    if (!bodyText) {
+      throw new Error('Empty API response.');
+    }
+    const data = JSON.parse(bodyText) as ApiNostrEventResponse;
+    if (!data?.event || !data?.target) {
+      throw new Error('Invalid API response.');
+    }
+    return data;
+  })();
+
+  eventResponseCache.set(url, {
+    ...cached,
+    inFlight: request,
+    failCount,
+    retryAtMs: 0
   });
-  const bodyText = await res.text();
-  if (!res.ok) {
-    throw new Error(parseApiError(bodyText, res.status));
+  pruneEventFetchCache(now);
+
+  try {
+    const data = await request;
+    eventResponseCache.set(url, {
+      data,
+      failCount: 0,
+      error: undefined,
+      retryAtMs: 0,
+      resolvedAtMs: Date.now(),
+      inFlight: undefined
+    });
+    return data;
+  } catch (err) {
+    const parsed = err as { status?: number; retryAfterMs?: number };
+    const retryDelayMs = (() => {
+      if (parsed.retryAfterMs && parsed.retryAfterMs > 0) return parsed.retryAfterMs;
+      if (parsed.status === 404)
+        return Math.min(EVENT_FETCH_MAX_RETRY_MS, EVENT_FETCH_BASE_RETRY_MS * 2 ** failCount);
+      return Math.min(
+        EVENT_FETCH_MAX_RETRY_MS,
+        EVENT_FETCH_BASE_RETRY_MS * 2 ** Math.min(failCount, 12)
+      );
+    })();
+    const message = err instanceof Error ? err.message : 'Failed to load event.';
+    eventResponseCache.set(url, {
+      error: message,
+      failCount: failCount + 1,
+      retryAtMs: Date.now() + retryDelayMs,
+      resolvedAtMs: Date.now()
+    });
+    throw err;
   }
-  if (!bodyText) {
-    throw new Error('Empty API response.');
-  }
-  const data = JSON.parse(bodyText) as ApiNostrEventResponse;
-  if (!data?.event || !data?.target) {
-    throw new Error('Invalid API response.');
-  }
-  return data;
 }
 
 export async function searchNotes(
