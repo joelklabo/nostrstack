@@ -147,7 +147,7 @@
   word-break: break-all;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .search-input-row {
     flex-direction: column;
     align-items: stretch;

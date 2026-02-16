@@ -170,7 +170,15 @@ function AppShell() {
     // Profile route with error is still "handled" (shows error)
     if (pathname.startsWith('/p/')) return true;
     return false;
-  }, [pathname, isSearchRoute, isSettingsRoute, isOffersRoute, nostrRouteId, profileRoutePubkey]);
+  }, [
+    pathname,
+    isDemoRoute,
+    isSearchRoute,
+    isSettingsRoute,
+    isOffersRoute,
+    nostrRouteId,
+    profileRoutePubkey
+  ]);
 
   useEffect(() => {
     if (profileRoutePubkey) {

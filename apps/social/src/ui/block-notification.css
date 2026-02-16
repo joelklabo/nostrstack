@@ -553,7 +553,7 @@
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .block-notification {
     padding: var(--ns-space-3, 12px);
     gap: var(--ns-space-2, 8px);

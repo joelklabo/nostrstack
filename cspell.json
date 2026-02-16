@@ -582,6 +582,7 @@
     "/lntb[a-z0-9]+/gi"
   ],
   "ignorePaths": [
+    "qa-repro-page.md",
     "node_modules",
     "dist",
     "coverage",

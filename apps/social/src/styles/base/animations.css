@@ -1120,7 +1120,7 @@
 }
 
 /* Disable sidebar animation at mobile breakpoint to prevent transform conflict */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .sidebar-nav {
     animation: none;
   }
