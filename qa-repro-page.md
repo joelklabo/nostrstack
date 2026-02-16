@@ -1,0 +1,100 @@
+- generic [ref=e5]:
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: 7357838d2149a34aa892b949269a35f28106d1b42ca3e61b16466e31bab01221
+      - generic [ref=e9]: Rendered by NostrStack
+    - link "Back to App" [ref=e11] [cursor=pointer]:
+      - /url: /
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]: Target
+        - generic [ref=e16]:
+          - text: 7357838d2149a34aa892b949269a35f28106d1b42ca3e61b16466e31bab01221
+          - button "Copy" [ref=e18] [cursor=pointer]:
+            - generic: Copied
+            - img [ref=e20]
+            - generic [ref=e23]: Copy
+      - generic [ref=e24]:
+        - generic [ref=e25]: Relays
+        - generic [ref=e26]: "3"
+      - generic [ref=e27]:
+        - generic [ref=e28]: Status
+        - generic [ref=e29]: READY
+    - article "Post by c558c7cc" [ref=e30] [cursor=pointer]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - link "Tracking Token Disrespector" [ref=e34]:
+              - /url: /p/npub1c4vv0nrfh0drcfchs2mndw4uvjkd9k393v20x4kme2txev9hhz0qw4cqk7
+            - generic [ref=e35]: •
+            - time [ref=e36]: 10:42 PM
+          - generic "Nostr event kind 1" [ref=e37]: Note
+        - generic [ref=e38]:
+          - article "Post content" [ref=e39]:
+            - paragraph [ref=e40]: 🤖 Tracking strings detected and removed!
+            - paragraph [ref=e41]:
+              - text: "🔗 Clean URL(s):"
+              - link "https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html" [ref=e42]:
+                - /url: https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html
+            - paragraph [ref=e43]:
+              - text: "❌ Removed parts:"
+              - text: "?utm_source=flipboard&utm_medium=activitypub"
+          - 'link "Preview: heise.de" [ref=e45]':
+            - /url: https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html
+            - generic [ref=e46]:
+              - generic [ref=e47]: heise.de
+              - generic [ref=e48]: heise.de
+      - group "Post actions" [ref=e49]:
+        - button "React to this post" [ref=e51]:
+          - generic [ref=e52]: ♡
+          - generic [ref=e53]: React
+        - generic [ref=e54]:
+          - radiogroup "Zap amount" [ref=e55]:
+            - button "21" [pressed] [ref=e56]
+            - button "50" [ref=e57]
+            - button "100" [ref=e58]
+            - button "500" [ref=e59]
+          - button "Zap 🤖 Tracking strings detected and removed! 🔗 Clea..." [ref=e60]: ⚡ ZAP 21
+        - button "Reply to this post" [ref=e61]:
+          - generic [ref=e62]: 💬
+          - generic [ref=e63]: Reply
+        - button "Copy link to post" [ref=e64]:
+          - generic [ref=e65]: 🔗
+          - generic [ref=e66]: Link
+        - button "View event source JSON" [ref=e67]:
+          - generic [ref=e68]: 👁️
+          - generic [ref=e69]: View source
+    - generic [ref=e70]:
+      - generic [ref=e72]:
+        - generic [ref=e73]: Replies
+        - generic [ref=e74]: 0 replies
+      - generic [ref=e75]: No replies yet. Check your relays or try again later.
+    - generic [ref=e76]:
+      - generic [ref=e77]:
+        - generic [ref=e79]: Thread root
+        - generic [ref=e81]: Reference unavailable.
+      - generic [ref=e82]:
+        - generic [ref=e83]: Mentioned profiles
+        - generic [ref=e84]:
+          - link "npub1zv8wp978get9sn6fj0qafsxcc0jfux5vmcmuxyfxk076w0j4azqs0lw3v8" [ref=e85] [cursor=pointer]:
+            - /url: /nostr/npub1zv8wp978get9sn6fj0qafsxcc0jfux5vmcmuxyfxk076w0j4azqs0lw3v8
+          - link "npub1k98vpez7mqkdmtntxcjmnxhal3gt7k0pdajgmvrh6v9ehd0dmrmqakcmmg" [ref=e86] [cursor=pointer]:
+            - /url: /nostr/npub1k98vpez7mqkdmtntxcjmnxhal3gt7k0pdajgmvrh6v9ehd0dmrmqakcmmg
+          - link "npub1fvkpzz0h458zpqzpwky0j3pm6jjqqtanfexdj8qvreaxacrka2ssnazt7x" [ref=e87] [cursor=pointer]:
+            - /url: /nostr/npub1fvkpzz0h458zpqzpwky0j3pm6jjqqtanfexdj8qvreaxacrka2ssnazt7x
+    - generic [ref=e88]:
+      - generic [ref=e89]: Tags
+      - generic [ref=e90]:
+        - generic [ref=e91]: e:80a2d1401dcf2d0ab8d2570ba369ea38d89a88e0a36223671e23268a0fbc0f28::root:4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1
+        - generic [ref=e92]: p:130ee097c74656584f4993c1d4c0d8c3e49e1a8cde37c31126b3fda73e55e881:wss://relay.ditto.pub
+        - generic [ref=e93]: p:b14ec0e45ed82cddae6b3625b99afdfc50bf59e16f648db077d30b9bb5edd8f6:wss://relay.ditto.pub
+        - generic [ref=e94]: p:4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1
+        - generic [ref=e95]: expiration:1834296122
+  - generic [ref=e97]:
+    - generic [ref=e98]:
+      - strong [ref=e99]: Raw Event
+      - button "Copy" [ref=e102] [cursor=pointer]:
+        - generic: Copied
+        - img [ref=e104]
+    - region "JSON content" [ref=e107]: "{ \"content\": \"🤖 Tracking strings detected and removed!\\n\\n🔗 Clean URL(s):\\nhttps://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html\\n\\n❌ Removed parts:\\n?utm_source=flipboard&utm_medium=activitypub\", \"created_at\": 1771224122, \"id\": \"7357838d2149a34aa892b949269a35f28106d1b42ca3e61b16466e31bab01221\", \"kind\": 1, \"pubkey\": \"c558c7cc69bbda3c271782b736babc64acd2da258b14f356dbca966cb0b7b89e\", \"sig\": \"25543e74562b5bed4bb8a6908d2ad66bf4625ee57f3eaa78680eeb6f6799b2b0b759e0f97e1abecae4892a5ead6729cee761da7fa1972a32c0add1189ed363c8\", \"tags\": [ [ \"e\", \"80a2d1401dcf2d0ab8d2570ba369ea38d89a88e0a36223671e23268a0fbc0f28\", \"\", \"root\", \"4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1\" ], [ \"p\", \"130ee097c74656584f4993c1d4c0d8c3e49e1a8cde37c31126b3fda73e55e881\", \"wss://relay.ditto.pub\" ], [ \"p\", \"b14ec0e45ed82cddae6b3625b99afdfc50bf59e16f648db077d30b9bb5edd8f6\", \"wss://relay.ditto.pub\" ], [ \"p\", \"4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1\" ], [ \"expiration\", \"1834296122\" ] ] }"
