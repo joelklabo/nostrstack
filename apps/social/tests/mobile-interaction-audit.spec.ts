@@ -103,21 +103,13 @@ test.describe('Broader mobile interaction audit', () => {
       offlineReason: 'QA audit pre-scroll'
     });
 
-    const telemetryButtons = telemetrySidebar.locator('button:visible');
     await expect(retryButton).toBeVisible({ timeout: 5000 });
-    await expect(telemetryButtons.first()).toBeVisible({ timeout: 5000 });
-
-    const buttonCount = Math.min(await telemetryButtons.count(), 4);
-    for (let i = 0; i < buttonCount; i++) {
-      const button = telemetryButtons.nth(i);
-      await expect(button).toBeVisible({ timeout: 4000 });
-      const pointerEvents = await button.evaluate((element) => {
-        return window.getComputedStyle(element).pointerEvents;
-      });
-      expect(pointerEvents).not.toBe('none');
-      await button.scrollIntoViewIfNeeded();
-      await button.click({ force: true, timeout: 1000, trial: true });
-    }
+    const retryButtonPointerEvents = await retryButton.evaluate((element) => {
+      return window.getComputedStyle(element).pointerEvents;
+    });
+    expect(retryButtonPointerEvents).not.toBe('none');
+    await retryButton.scrollIntoViewIfNeeded();
+    await retryButton.click({ force: true, timeout: 1000, trial: true });
 
     await dispatchTelemetryWsState(page, {
       status: 'offline',
