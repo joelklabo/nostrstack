@@ -134,18 +134,41 @@ export async function dismissOnboardingTourIfOpen(page: Page) {
 
   const overlay = page.locator('.onboarding-overlay, .onboarding-card, .onboarding-spotlight');
 
-  for (const control of controls) {
-    if (await control.isVisible({ timeout: 250 }).catch(() => false)) {
-      await control
-        .click({ timeout: 1000 })
-        .catch(() => control.dispatchEvent('click').catch(() => undefined))
-        .catch(() => undefined);
-      await overlay
-        .first()
-        .waitFor({ state: 'hidden', timeout: 2000 })
-        .catch(() => undefined);
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const isVisible = await overlay
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!isVisible) {
       return;
     }
+
+    let controlUsed = false;
+    for (const control of controls) {
+      if (await control.isVisible({ timeout: 120 }).catch(() => false)) {
+        controlUsed = true;
+        await control
+          .click({ timeout: 1000 })
+          .catch(() => control.dispatchEvent('click').catch(() => undefined))
+          .catch(() => undefined);
+        break;
+      }
+    }
+
+    if (!controlUsed) {
+      await page.keyboard.press('Escape').catch(() => undefined);
+    }
+
+    const hidden = await overlay
+      .first()
+      .waitFor({ state: 'hidden', timeout: 700 })
+      .then(() => true)
+      .catch(() => false);
+    if (hidden) {
+      return;
+    }
+
+    await page.waitForTimeout(120);
   }
 
   if (await overlay.count().catch(() => 0)) {

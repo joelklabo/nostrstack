@@ -107,6 +107,7 @@ export function ZapButton({
   const authErrorTimerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const activeRequestIdRef = useRef(0);
   const amountSnapshotRef = useRef(amountSats);
   const telemetryStateRef = useRef({
     invoiceRequested: false,
@@ -251,6 +252,7 @@ export function ZapButton({
   }, [authorLightningAddress, cfg.lnAddress, eventLightningAddress, authorPubkey, relayTargets]);
 
   const handleZap = useCallback(async () => {
+    const requestId = ++activeRequestIdRef.current;
     if (!pubkey) {
       setErrorMessage('Error: You must be logged in to send a zap.');
       setShouldAutoDismissAuthError(true);
@@ -273,6 +275,7 @@ export function ZapButton({
 
     try {
       const resolvedAddress = await resolveLightningAddress();
+      if (activeRequestIdRef.current !== requestId) return;
       if (!resolvedAddress) {
         setErrorMessage('Error: Author does not have a Lightning Address/LNURL.');
         setZapState('error');
@@ -321,6 +324,7 @@ export function ZapButton({
       };
 
       const signedZapRequest = await signEvent(zapRequestEventTemplate);
+      if (activeRequestIdRef.current !== requestId) return;
 
       // 3. Get invoice from callback URL
       setZapState('pending-invoice');
@@ -330,6 +334,7 @@ export function ZapButton({
         lnurlTag ?? null,
         signedZapRequest
       );
+      if (activeRequestIdRef.current !== requestId) return;
       const pr = invoiceData.pr;
       if (typeof pr !== 'string' || !pr) {
         throw new Error('Invoice response missing payment request.');
@@ -361,6 +366,7 @@ export function ZapButton({
 
       if (nwcEnabled) {
         const paidViaNwc = await payInvoiceViaNwc(pr, amountMsat);
+        if (activeRequestIdRef.current !== requestId) return;
         if (paidViaNwc) {
           emitPaymentTelemetry('payment_sent', { method: 'nwc' });
           setZapState('paid');
@@ -374,6 +380,7 @@ export function ZapButton({
         try {
           await window.webln.enable();
           await window.webln.sendPayment(pr);
+          if (activeRequestIdRef.current !== requestId) return;
           emitPaymentTelemetry('payment_sent', { method: 'webln' });
           setZapState('paid');
         } catch (weblnErr) {
@@ -385,6 +392,7 @@ export function ZapButton({
       // (Optional) Poll for payment status
       timerRef.current = window.setTimeout(
         () => {
+          if (activeRequestIdRef.current !== requestId) return;
           // Show timeout notification instead of silently closing
           setTimedOut(true);
           emitPaymentTelemetry('payment_failed', { reason: 'timeout' as PaymentFailureReason });
@@ -392,6 +400,7 @@ export function ZapButton({
         5 * 60 * 1000
       ); // 5 minutes to pay
     } catch (err: unknown) {
+      if (activeRequestIdRef.current !== requestId) return;
       setErrorMessage(`Error: ${(err as Error).message || String(err)}`);
       setZapState('error');
       emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
@@ -469,6 +478,7 @@ export function ZapButton({
   }, [invoice, regtestEnabled, apiBaseConfig.isConfigured, resolvedApiBase, emitPaymentTelemetry]);
 
   const handleCloseZap = useCallback(() => {
+    activeRequestIdRef.current += 1;
     if (zapState === 'waiting-payment' && invoice) {
       emitPaymentTelemetry('payment_failed', { method: 'manual', reason: 'manual' });
     }
@@ -525,13 +535,15 @@ export function ZapButton({
     if (zapState !== 'waiting-payment' || !statusUrl) return;
     let active = true;
     let timer: number | null = null;
+    const requestId = activeRequestIdRef.current;
 
     const poll = async () => {
       try {
+        if (!active || activeRequestIdRef.current !== requestId) return;
         const res = await fetch(statusUrl);
         if (!res.ok) return;
         const data = (await res.json()) as { status?: string };
-        if (!active) return;
+        if (!active || activeRequestIdRef.current !== requestId) return;
         if (isPaidStatus(data.status)) {
           emitPaymentTelemetry('payment_sent', { method: 'manual' });
           setZapState('paid');
@@ -540,7 +552,7 @@ export function ZapButton({
       } catch {
         // ignore polling errors
       }
-      if (!active) return;
+      if (!active || activeRequestIdRef.current !== requestId) return;
       timer = window.setTimeout(poll, 4000);
     };
 
