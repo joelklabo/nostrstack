@@ -373,7 +373,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       try {
         if (apiBaseConfig.isConfigured) {
           try {
-            const apiResult = await withTimeout(
+            let apiResult = await withTimeout(
               fetchNostrEventFromApi({
                 baseUrl: apiBase,
                 id: rawId,
@@ -383,6 +383,22 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
               }),
               REQUEST_TIMEOUT_MS
             );
+
+            if (!apiResult.replies && repliesEnabled) {
+              try {
+                apiResult = await withTimeout(
+                  fetchNostrEventFromApi({
+                    baseUrl: apiBase,
+                    id: rawId,
+                    relays: relayList
+                  }),
+                  REQUEST_TIMEOUT_MS
+                );
+              } catch {
+                // keep original response when metadata-only response contains replies.
+              }
+            }
+
             if (cancelled) return;
             const relays = apiResult.target?.relays?.length ? apiResult.target.relays : relayList;
 
@@ -414,7 +430,55 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
             });
             return;
           } catch (err) {
-            apiError = err instanceof Error ? err.message : String(err);
+            if (repliesEnabled) {
+              try {
+                const fallbackApiResult = await withTimeout(
+                  fetchNostrEventFromApi({
+                    baseUrl: apiBase,
+                    id: rawId,
+                    relays: relayList
+                  }),
+                  REQUEST_TIMEOUT_MS
+                );
+                if (cancelled) return;
+
+                const relays = fallbackApiResult.target?.relays?.length
+                  ? fallbackApiResult.target.relays
+                  : relayList;
+                let fallbackRepliesState: RepliesState = {
+                  status: 'ready',
+                  items: normalizeReplies(fallbackApiResult.replies ?? []),
+                  hasMore: fallbackApiResult.replyPage?.hasMore ?? false,
+                  nextCursor: fallbackApiResult.replyPage?.nextCursor ?? null,
+                  isLoadingMore: false,
+                  source: 'api'
+                };
+
+                if (fallbackApiResult.replies === undefined) {
+                  fallbackRepliesState = await fetchRepliesFromRelays(
+                    fallbackApiResult.event.id,
+                    relays
+                  );
+                }
+
+                setState({
+                  status: 'ready',
+                  relays,
+                  event: fallbackApiResult.event,
+                  references: fallbackApiResult.references,
+                  authorProfile: fallbackApiResult.author?.profile ?? null,
+                  authorPubkey: fallbackApiResult.author?.pubkey ?? fallbackApiResult.event.pubkey,
+                  targetLabel: fallbackApiResult.target?.input ?? rawId,
+                  replies: fallbackRepliesState,
+                  apiError: undefined
+                });
+                return;
+              } catch (fallbackErr) {
+                apiError = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+              }
+            } else {
+              apiError = err instanceof Error ? err.message : String(err);
+            }
           }
         }
 
@@ -430,7 +494,10 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           authorPubkey: relayResult.authorPubkey,
           targetLabel: rawId,
           replies: relayResult.repliesState,
-          apiError: apiError ?? undefined
+          apiError:
+            repliesEnabled && relayResult.repliesState.status !== 'ready'
+              ? apiError ?? undefined
+              : undefined
         });
       } catch (err) {
         if (cancelled) return;
