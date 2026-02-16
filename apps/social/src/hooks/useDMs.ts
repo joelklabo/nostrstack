@@ -1,4 +1,4 @@
-import { useAuth } from '@nostrstack/react';
+import { useAuth, useNostrstackConfig } from '@nostrstack/react';
 import { type Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -19,10 +19,29 @@ export interface Conversation {
 
 export function useDMs() {
   const { pubkey, signEvent, encrypt, decrypt } = useAuth();
+  const { onRelayFailure } = useNostrstackConfig();
   const { relays } = useRelays();
   const pool = useSimplePool();
   const [messages, setMessages] = useState<DMMessage[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const reportRelayFailure = useCallback(
+    (reasons: string[]) => {
+      if (!onRelayFailure) return;
+      if (reasons.some((reason) => reason.toLowerCase() !== 'closed')) {
+        relays.forEach((relay) => onRelayFailure(relay));
+      }
+    },
+    [onRelayFailure, relays]
+  );
+
+  const onRelayClose = useCallback(
+    (reasons: string[]) => {
+      reportRelayFailure(reasons);
+      setLoading(false);
+    },
+    [reportRelayFailure]
+  );
 
   // Fetch messages
   useEffect(() => {
@@ -65,12 +84,16 @@ export function useDMs() {
     const sub1 = pool.subscribeMany(
       relays,
       { kinds: [4], '#p': [pubkey] },
-      { onevent: onEvent, oneose: () => setLoading(false) }
+      {
+        onevent: onEvent,
+        oneose: () => setLoading(false),
+        onclose: onRelayClose
+      }
     );
     const sub2 = pool.subscribeMany(
       relays,
       { kinds: [4], authors: [pubkey] },
-      { onevent: onEvent }
+      { onevent: onEvent, onclose: onRelayClose }
     );
 
     return () => {
@@ -90,7 +113,7 @@ export function useDMs() {
       }
       setLoading(false);
     };
-  }, [pubkey, relays, pool]);
+  }, [onRelayClose, pubkey, relays, pool]);
 
   // Group into conversations
   const conversations = useMemo(() => {

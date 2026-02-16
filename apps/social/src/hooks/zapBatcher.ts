@@ -144,13 +144,23 @@ class ZapBatcher {
   /** Pool and relays for subscriptions */
   private pool: SimplePool | null = null;
   private relays: string[] = [];
+  private onRelayFailure?: (relayUrl: string) => void;
 
   /**
    * Configure the pool and relays for fetching.
    */
   configure(pool: SimplePool, relays: string[]) {
+    this.configureWithFailureCallback(pool, relays, undefined);
+  }
+
+  configureWithFailureCallback(
+    pool: SimplePool,
+    relays: string[],
+    onRelayFailure?: (relayUrl: string) => void
+  ) {
     this.pool = pool;
     this.relays = relays;
+    this.onRelayFailure = onRelayFailure;
   }
 
   /**
@@ -263,6 +273,12 @@ class ZapBatcher {
 
     try {
       this.activeSubscription = this.pool.subscribeMany(this.relays, filter, {
+        onclose: (reasons) => {
+          if (!this.onRelayFailure) return;
+          if (reasons.some((reason) => reason.toLowerCase() !== 'closed')) {
+            this.relays.forEach((relay) => this.onRelayFailure?.(relay));
+          }
+        },
         onevent: (event) => {
           if (!this.markSeenZapId(event.id)) return;
 

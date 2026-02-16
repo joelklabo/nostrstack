@@ -1,4 +1,4 @@
-import { useAuth, useStats } from '@nostrstack/react';
+import { useAuth, useNostrstackConfig, useStats } from '@nostrstack/react';
 import { NotificationSkeleton } from '@nostrstack/ui';
 import { type Event, type Filter } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,10 +18,20 @@ export function NotificationsView() {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const pool = useSimplePool();
   const { pubkey } = useAuth();
+  const { onRelayFailure } = useNostrstackConfig();
   const { isMuted } = useMuteList();
   const [events, setEvents] = useState<Event[]>([]);
   const seenIds = useRef(new Set<string>());
   const { incrementEvents } = useStats();
+  const reportRelayFailure = useCallback(
+    (reasons: string[]) => {
+      if (!onRelayFailure) return;
+      if (reasons.some((reason) => reason.toLowerCase() !== 'closed')) {
+        relayList.forEach((relay) => onRelayFailure(relay));
+      }
+    },
+    [onRelayFailure, relayList]
+  );
 
   useEffect(() => {
     if (!pubkey || relaysLoading) return;
@@ -65,7 +75,8 @@ export function NotificationsView() {
             pendingEvents.push(event);
             scheduleBatch();
           }
-        }
+        },
+        onclose: reportRelayFailure
       });
     } catch {
       // ignore
@@ -81,7 +92,7 @@ export function NotificationsView() {
         // Ignore websocket close errors during teardown.
       }
     };
-  }, [pubkey, relayList, relaysLoading, incrementEvents, pool]);
+  }, [pubkey, relayList, relaysLoading, incrementEvents, onRelayFailure, pool, reportRelayFailure]);
 
   const displayGroups = useMemo(() => {
     const filteredEvents = events.filter((e) => !isMuted(e.pubkey));

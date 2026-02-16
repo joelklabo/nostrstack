@@ -8,7 +8,14 @@ export type SubscribeManyOptions = {
   onevent?: (event: Event, relayUrl?: string) => void;
   oneose?: (relayUrl?: string) => void;
   onclose?: (reasons: string[]) => void;
+  onRelayFailure?: (relayUrl: string, reason?: string) => void;
   maxWait?: number;
+};
+
+const shouldReportRelayFailure = (reason: string | undefined) => {
+  if (!reason) return false;
+  const normalized = reason.trim().toLowerCase();
+  return normalized !== 'closed';
 };
 
 type SubscriptionState = {
@@ -84,6 +91,9 @@ export class SimplePool {
 
     if (type === 'CLOSED') {
       const reason = typeof rest[0] === 'string' ? rest[0] : 'closed';
+      if (shouldReportRelayFailure(reason)) {
+        sub.options.onRelayFailure?.(relayUrl, reason);
+      }
       sub.options.onclose?.([reason]);
     }
   }
@@ -174,6 +184,11 @@ export class SimplePool {
       if (closed) return;
       closed = true;
       if (reason) closeReasons.push(reason);
+      if (shouldReportRelayFailure(reason)) {
+        relays.forEach((relayUrl) => {
+          opts.onRelayFailure?.(relayUrl, reason);
+        });
+      }
       if (subscriptionId) {
         this.subscriptions.delete(subscriptionId);
         void this.client.unsubscribe(subscriptionId);
@@ -186,6 +201,15 @@ export class SimplePool {
         subscriptionId = id;
       })
       .catch((err) => {
+        if (err instanceof Error && opts.onRelayFailure) {
+          relays.forEach((relayUrl) => {
+            opts.onRelayFailure?.(relayUrl, err.message);
+          });
+        } else if (opts.onRelayFailure) {
+          relays.forEach((relayUrl) => {
+            opts.onRelayFailure?.(relayUrl, 'subscribe failed');
+          });
+        }
         closeReasons.push(err instanceof Error ? err.message : 'subscribe failed');
         close('error');
       });

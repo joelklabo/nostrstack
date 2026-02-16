@@ -1,3 +1,4 @@
+import { useNostrstackConfig } from '@nostrstack/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useRelays } from './useRelays';
@@ -27,6 +28,7 @@ interface UseTopZapsOptions {
 export function useTopZaps({ eventId, limit = 3, enabled = true }: UseTopZapsOptions) {
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const pool = useSimplePool();
+  const { onRelayFailure } = useNostrstackConfig();
   const [zapData, setZapData] = useState<ZapData>({
     zaps: [],
     totalAmount: 0,
@@ -36,9 +38,9 @@ export function useTopZaps({ eventId, limit = 3, enabled = true }: UseTopZapsOpt
   // Configure the batcher with pool and relays
   useEffect(() => {
     if (!relaysLoading && relayList.length > 0) {
-      zapBatcher.configure(pool, relayList);
+      zapBatcher.configureWithFailureCallback(pool, relayList, onRelayFailure);
     }
-  }, [pool, relayList, relaysLoading]);
+  }, [pool, relayList, relaysLoading, onRelayFailure]);
 
   // Subscribe to zap data through the batcher
   useEffect(() => {
