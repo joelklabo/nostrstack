@@ -4,11 +4,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LOG_DIR="$ROOT/.logs/dev"
+source "$ROOT/scripts/dev/session-manager.sh"
 
 # Suppress "NO_COLOR env is ignored due to FORCE_COLOR" warnings
 unset NO_COLOR
 
+PORT_WAS_SET=0
+DEV_SERVER_PORT_WAS_SET=0
+if [[ -v PORT ]]; then
+  PORT_WAS_SET=1
+fi
+if [[ -v DEV_SERVER_PORT ]]; then
+  DEV_SERVER_PORT_WAS_SET=1
+fi
+
 mkdir -p "$LOG_DIR"
+mkdir -p "$NOSTRDEV_SESSION_DIR"
 API_LOG="$LOG_DIR/api.log"
 SOCIAL_LOG="$LOG_DIR/social.log"
 : >"$API_LOG"
@@ -20,7 +31,6 @@ if [[ "${LOG_TAIL:-1}" != "0" ]]; then
   echo "👀 auto-following logs (set LOG_TAIL=0 to disable)"
   tail -F "$API_LOG" "$SOCIAL_LOG" &
   TAIL_PID=$!
-  trap 'kill $TAIL_PID >/dev/null 2>&1 || true' EXIT
 fi
 
 cd "$ROOT"
@@ -29,7 +39,6 @@ cd "$ROOT"
 export USE_HTTPS="${USE_HTTPS:-true}"
 export HTTPS_CERT="${HTTPS_CERT:-$ROOT/certs/dev-cert.pem}"
 export HTTPS_KEY="${HTTPS_KEY:-$ROOT/certs/dev-key.pem}"
-export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:3001}"
 export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
 export PRISMA_HIDE_UPDATE_MESSAGE="${PRISMA_HIDE_UPDATE_MESSAGE:-1}"
 export LIGHTNING_PROVIDER="${LIGHTNING_PROVIDER:-lnbits}"
@@ -48,6 +57,12 @@ export ENABLE_BOLT12="${ENABLE_BOLT12:-true}"
 export BOLT12_PROVIDER="${BOLT12_PROVIDER:-mock}"
 export PORT="${PORT:-3001}"
 export DEV_SERVER_PORT="${DEV_SERVER_PORT:-4173}"
+export NOSTRDEV_AGENT="${NOSTRDEV_AGENT:-${USER:-agent}}"
+if [[ "$PORT_WAS_SET" == "1" && "$DEV_SERVER_PORT_WAS_SET" == "1" ]]; then
+  export NOSTRDEV_MANAGED_SESSION="${NOSTRDEV_MANAGED_SESSION:-0}"
+else
+  export NOSTRDEV_MANAGED_SESSION="${NOSTRDEV_MANAGED_SESSION:-1}"
+fi
 
 if [[ ! -f "$HTTPS_CERT" || ! -f "$HTTPS_KEY" || "${REGEN_CERTS:-0}" == "1" ]]; then
   echo "🔐 generating self-signed dev certs with SAN=localhost at $HTTPS_CERT / $HTTPS_KEY"
@@ -60,22 +75,16 @@ else
   echo "🔐 using existing certs at $HTTPS_CERT / $HTTPS_KEY"
 fi
 
-check_port() {
-  local port="$1"
-  if lsof -i :"$port" >/dev/null 2>&1; then
-    if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
-      echo "⚠️  port $port in use; FORCE_KILL_PORTS=1, terminating owner..." >&2
-      lsof -i :"$port" -t | xargs -r kill
-      sleep 1
-    else
-      echo "⚠️  port $port already in use. Stop the other process or rerun with FORCE_KILL_PORTS=1." >&2
-      exit 1
-    fi
+ndev_claim_session
+export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:$PORT}"
+echo "📦 Dev session: agent=$NOSTRDEV_AGENT slot=${NOSTRDEV_SESSION_SLOT:-manual} api=$PORT social=$DEV_SERVER_PORT"
+cleanup_dev_session() {
+  ndev_release_session
+  if [[ -n "${TAIL_PID:-}" ]]; then
+    kill "$TAIL_PID" >/dev/null 2>&1 || true
   fi
 }
-
-check_port "$PORT"
-check_port "$DEV_SERVER_PORT"
+trap cleanup_dev_session EXIT INT TERM
 
 echo "🧬 applying Prisma migrations"
 pnpm --filter api exec prisma migrate deploy --schema "$ROOT/apps/api/prisma/schema.prisma"

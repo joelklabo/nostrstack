@@ -1,0 +1,31 @@
+- generic [ref=e4]:
+  - navigation "Main navigation" [ref=e5]:
+    - heading "NostrStack v1.0" [level=1] [ref=e7]:
+      - generic [ref=e8]: NostrStack
+      - generic [ref=e9]: v1.0
+    - generic [ref=e10]:
+      - button "Feed" [ref=e11] [cursor=pointer]
+      - button "Find friend" [ref=e12] [cursor=pointer]
+      - button "Offers" [ref=e13] [cursor=pointer]
+      - button "Profile" [ref=e14] [cursor=pointer]
+      - button "Settings" [ref=e15] [cursor=pointer]
+      - button "Open help and keyboard shortcuts" [ref=e16] [cursor=pointer]: Help
+    - region "Wallet and system status" [ref=e17]:
+      - status "Network and system status" [ref=e18]:
+        - generic [ref=e19]: Network
+        - generic [ref=e21]: MAINNET
+        - generic [ref=e23]: "Provider: —"
+        - generic "0 events in feed" [ref=e24]: "Events: 0"
+      - button "Exit guest mode" [ref=e25] [cursor=pointer]
+  - main [ref=e26]:
+    - generic [ref=e27]:
+      - generic [ref=e28]: "404"
+      - heading "Page Not Found" [level=1] [ref=e29]
+      - paragraph [ref=e30]: The page you're looking for doesn't exist or has been moved.
+      - button "Go to Feed" [ref=e32] [cursor=pointer]
+      - generic [ref=e33]:
+        - paragraph [ref=e34]: "Looking for something specific? Try:"
+        - list [ref=e35]:
+          - listitem [ref=e36]: Use the search to find users
+          - listitem [ref=e37]: Check your messages and notifications
+          - listitem [ref=e38]: Browse the feed for new content

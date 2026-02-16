@@ -27,7 +27,18 @@ Top-level scripts in `scripts/*.sh` remain as compatibility wrappers and forward
 ## Usage
 
 - `pnpm dev:logs` -> `scripts/dev/logs.sh`
+- `pnpm dev:ps` -> `scripts/dev/dev-ps.sh`
+- `pnpm dev:stop` -> `scripts/dev/dev-stop.sh`
+- `pnpm dev:stop:all` -> `scripts/dev/dev-stop.sh --all`
 - `pnpm dev:network` -> `scripts/dev/network-switch.sh`
 - `pnpm demo:regtest` -> `scripts/demo/run.sh regtest`
 - `pnpm dev:api:entr` -> `scripts/dev/watch-api.sh`
 - `pnpm dev:social:entr` -> `scripts/dev/watch-social.sh`
+
+### Session-aware environment variables
+
+- `NOSTRDEV_AGENT` (default: `$USER`) identifies the owner for session metadata and stopping by agent.
+- `NOSTRDEV_AGENT_SLOT` selects a specific session slot (`0` maps to `3001/4173`).
+- `NOSTRDEV_MANAGED_SESSION=0` uses explicit `PORT` and `DEV_SERVER_PORT` without auto-allocating.
+- `NOSTRDEV_BASE_API_PORT`, `NOSTRDEV_BASE_SOCIAL_PORT` set the auto-allocation base values.
+- `NOSTRDEV_MAX_SLOTS` sets the session search range (default `40`).

@@ -4,6 +4,12 @@
 2. Mark the issue `in_progress`
 3. Work on it
    - Run `pnpm dev:logs` (or tail `.logs/dev/*.log`) so API + gallery logs are visible while reproducing/fixing.
+   - `pnpm dev:logs` now allocates dedicated API/social ports per agent session to avoid collisions:
+     - Set `NOSTRDEV_AGENT` per person (`NOSTRDEV_AGENT=alice`, `NOSTRDEV_AGENT=bob`).
+     - `pnpm dev:ps` shows active sessions.
+     - `pnpm dev:stop` stops your sessions by default.
+     - `pnpm dev:stop:all` cleans all sessions.
+     - Use `NOSTRDEV_MANAGED_SESSION=0` with `PORT`/`DEV_SERVER_PORT` for fixed ports.
    - For any UI change, open the view with Chrome DevTools MCP (`scripts/mcp-devtools-server.sh` + `scripts/mcp-chrome.sh`) and confirm the console/network are clean.
      - If Chrome DevTools MCP is unavailable (e.g. tool calls error with `Transport closed`), use the Playwright QA fallback instead: `pnpm qa:regtest-demo` (fails on console errors + local request failures).
 4. Check your work, run tests
