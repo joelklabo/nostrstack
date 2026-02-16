@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import {
   closePaymentModal,
@@ -11,7 +11,7 @@ import {
 const mobileViewport = { width: 390, height: 844 };
 
 test.describe('Mobile non-interactive regression sweep', () => {
-  const closeKnownPaymentOverlays = async (page: import('playwright').Page) => {
+  const closeKnownPaymentOverlays = async (page: Page) => {
     const paymentModal = page
       .locator(
         '.payment-modal, .paywall-payment-modal, .zap-modal, .support-card-modal, .paywall-widget-host'

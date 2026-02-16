@@ -307,6 +307,16 @@ if (process.env.VITEST !== 'true') {
       console.log(`API listening on ${address}`);
     })
     .catch((err) => {
+      if (
+        env.NODE_ENV === 'development' &&
+        err != null &&
+        typeof err === 'object' &&
+        'code' in err &&
+        err.code === 'EADDRINUSE'
+      ) {
+        console.error(`API already running: port ${env.PORT} is already in use.`);
+        process.exit(0);
+      }
       console.error(err);
       process.exit(1);
     });

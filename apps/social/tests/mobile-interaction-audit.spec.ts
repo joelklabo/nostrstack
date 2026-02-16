@@ -8,6 +8,11 @@ import {
   TEST_NSEC
 } from './helpers.ts';
 
+type AuditCLSState = {
+  total: number;
+  shifts: number[];
+};
+
 const MOBILE_VIEWPORTS = [
   { width: 390, height: 844 },
   { width: 412, height: 915 },
@@ -20,12 +25,17 @@ test.describe('Broader mobile interaction audit', () => {
       page
     }) => {
       await page.addInitScript(() => {
-        (window as any).__auditCls = { total: 0, shifts: [] };
+        (window as Window & { __auditCls?: AuditCLSState }).__auditCls = {
+          total: 0,
+          shifts: []
+        };
         const observer = new PerformanceObserver((list) => {
           for (const entry of list.getEntries() as LayoutShift[]) {
+            const state = (window as Window & { __auditCls?: AuditCLSState }).__auditCls;
+            if (!state) continue;
             if (entry.hadRecentInput) continue;
-            (window as any).__auditCls.total += entry.value;
-            (window as any).__auditCls.shifts.push(entry.value);
+            state.total += entry.value;
+            state.shifts.push(entry.value);
           }
         });
         observer.observe({ type: 'layout-shift', buffered: true });
@@ -42,7 +52,9 @@ test.describe('Broader mobile interaction audit', () => {
         .first();
       await firstActionRow.waitFor({ state: 'visible', timeout: 12000 });
 
-      const clsStart = await page.evaluate(() => (window as any).__auditCls.total);
+      const clsStart = await page.evaluate(() => {
+        return (window as Window & { __auditCls?: AuditCLSState }).__auditCls?.total ?? 0;
+      });
       const feed = page.locator('.feed-container');
 
       for (let i = 0; i < 4; i++) {
@@ -65,7 +77,9 @@ test.describe('Broader mobile interaction audit', () => {
       }
 
       await page.mouse.move(160, 520);
-      const clsEnd = await page.evaluate(() => (window as any).__auditCls.total);
+      const clsEnd = await page.evaluate(() => {
+        return (window as Window & { __auditCls?: AuditCLSState }).__auditCls?.total ?? 0;
+      });
       expect(clsEnd - clsStart).toBeLessThan(0.2);
     });
   }
@@ -79,12 +93,19 @@ test.describe('Broader mobile interaction audit', () => {
     await dismissOnboardingTourIfOpen(page);
 
     const telemetrySidebar = page.locator('.telemetry-sidebar');
-    const telemetryButtons = telemetrySidebar.locator('button');
-    const retryButton = telemetrySidebar.locator('.ns-conn-retry');
     const feedContainer = page.locator('.feed-container');
+    const retryButton = telemetrySidebar.locator('.ns-conn-retry');
 
     await expect(telemetrySidebar).toBeVisible({ timeout: 10000 });
-    expect(await telemetryButtons.count()).toBeGreaterThan(0);
+    await dispatchTelemetryWsState(page, {
+      status: 'offline',
+      attempt: 1,
+      offlineReason: 'QA audit pre-scroll'
+    });
+
+    const telemetryButtons = telemetrySidebar.locator('button:visible');
+    await expect(retryButton).toBeVisible({ timeout: 5000 });
+    await expect(telemetryButtons.first()).toBeVisible({ timeout: 5000 });
 
     const buttonCount = Math.min(await telemetryButtons.count(), 4);
     for (let i = 0; i < buttonCount; i++) {

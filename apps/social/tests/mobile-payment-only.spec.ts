@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools';
+import { type EventTemplate, finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools';
 
 import { clickAndExpectPaymentModal, closePaymentModal, loginWithNsec, TEST_NSEC } from './helpers';
 import { mockLnurlPay } from './helpers/lnurl-mocks';
@@ -13,7 +13,7 @@ test.describe('mobile payment closure matrix', () => {
     const pubkey = getPublicKey(secretKey);
     const now = Math.floor(Date.now() / 1000);
 
-    const profileEvent = {
+    const profileEvent: EventTemplate = {
       kind: 0,
       created_at: now,
       tags: [],
@@ -23,9 +23,8 @@ test.describe('mobile payment closure matrix', () => {
         about: 'test'
       }),
       pubkey,
-      id: pubkey,
-      sig: '0'.repeat(128)
-    } as any;
+      pubkey
+    };
 
     const post = finalizeEvent(
       {
