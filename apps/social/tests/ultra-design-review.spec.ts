@@ -714,30 +714,17 @@ test.describe('Ultra Review: Visual Regression Detection', () => {
 test.describe('Ultra Review: Performance & Polish', () => {
   test('should not have layout shifts during load', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    // Measure cumulative layout shift
     const cls = await page.evaluate(() => {
-      return new Promise((resolve) => {
-        let cls = 0;
-        const observer = new PerformanceObserver((list) => {
-          for (const entry of list.getEntries()) {
-            const layoutShift = entry as PerformanceEntry & {
-              hadRecentInput: boolean;
-              value: number;
-            };
-            if (!layoutShift.hadRecentInput) {
-              cls += layoutShift.value;
-            }
-          }
-        });
-
-        observer.observe({ type: 'layout-shift', buffered: true });
-
-        setTimeout(() => {
-          observer.disconnect();
-          resolve(cls);
-        }, 3000);
-      });
+      return performance.getEntriesByType('layout-shift').reduce((sum, entry) => {
+        const layoutShift = entry as PerformanceEntry & {
+          hadRecentInput?: boolean;
+          value: number;
+        };
+        if (layoutShift.hadRecentInput) return sum;
+        return sum + layoutShift.value;
+      }, 0);
     });
 
     // CLS should be less than 0.1 for good UX

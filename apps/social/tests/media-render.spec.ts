@@ -71,7 +71,7 @@ test.describe('Rich Media Rendering', () => {
     // Inject a mock post with media to take a screenshot
     await page.evaluate(() => {
       const container = document.createElement('div');
-      container.className = 'post-card';
+      container.className = 'ns-event-card';
       container.innerHTML = `
             <div class="post-content">
                 <p>Check out this image:</p>

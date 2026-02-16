@@ -81,10 +81,10 @@ test('zap two posts and send sats from profile', async ({ page }) => {
 
         constructor(url: string) {
           this.url = url;
-          setTimeout(() => {
+          queueMicrotask(() => {
             this.readyState = MockWebSocket.OPEN;
             this.onopen?.({ type: 'open' });
-          }, 0);
+          });
         }
 
         send(data: string) {

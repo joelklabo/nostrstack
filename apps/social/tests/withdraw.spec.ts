@@ -25,7 +25,7 @@ test('withdraw modal shows QR and status', async ({ page }) => {
       onclose: ((event: CloseEvent) => void) | null = null;
 
       constructor() {
-        setTimeout(() => {
+        queueMicrotask(() => {
           this.onopen?.(new Event('open'));
           const payload = JSON.stringify({
             type: 'wallet',
@@ -34,7 +34,7 @@ test('withdraw modal shows QR and status', async ({ page }) => {
             balance: 42000
           });
           this.onmessage?.({ data: payload } as MessageEvent);
-        }, 0);
+        });
       }
 
       send() {
@@ -80,6 +80,8 @@ test('withdraw modal shows QR and status', async ({ page }) => {
   await withdrawBtn.click();
 
   await expect(page.getByText('Withdraw Funds')).toBeVisible();
-  await expect(page.locator('.withdraw-status')).toHaveText(/Scan QR or open your wallet to claim\./);
+  await expect(page.locator('.withdraw-status')).toHaveText(
+    /Scan QR or open your wallet to claim\./
+  );
   await expect(page.locator('.withdraw-qr img')).toBeVisible();
 });

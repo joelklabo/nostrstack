@@ -73,10 +73,10 @@ async function installMockRelay(page: Page) {
 
         constructor(url: string) {
           this.url = url;
-          setTimeout(() => {
+          queueMicrotask(() => {
             this.readyState = MockWebSocket.OPEN;
             this.dispatch('open', { type: 'open' });
-          }, 0);
+          });
         }
 
         private dispatch(type: ListenerType, event: MockEvent) {

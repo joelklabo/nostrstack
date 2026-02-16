@@ -43,8 +43,7 @@ function resolveFallbackApiBase(): string {
   if (isLocalRuntime()) {
     return DEFAULT_LOCAL_API_BASE;
   }
-  const origin = resolveRuntimeApiOrigin();
-  return origin || DEFAULT_LOCAL_API_BASE;
+  return resolveRuntimeApiOrigin();
 }
 
 function pickFirstDefined(...values: Array<string | undefined>): string {
@@ -81,7 +80,7 @@ export function resolveRuntimeHost(host?: string): string {
   if (isLocalRuntime()) {
     return DEFAULT_LOCAL_HOST;
   }
-  return resolveRuntimeHostname() || DEFAULT_LOCAL_HOST;
+  return resolveRuntimeHostname();
 }
 
 export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): string | null {
