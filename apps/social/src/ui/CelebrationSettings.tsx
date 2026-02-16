@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { useToast } from '@nostrstack/ui';
 
 import {
   CelebratingBlockHeight,
@@ -12,37 +11,22 @@ import {
  */
 export function CelebrationSettings() {
   const [prefs, updatePrefs] = useBlockCelebrationPreferences();
-  const toast = useToast();
   const [previewBlockHeight, setPreviewBlockHeight] = useState(880000);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
   const handleSoundToggle = useCallback(() => {
-    const nextSoundEnabled = !prefs.soundEnabled;
-    updatePrefs({ soundEnabled: nextSoundEnabled });
-    toast({
-      message: `Celebration sound ${nextSoundEnabled ? 'enabled' : 'disabled'}.`,
-      tone: 'success'
-    });
-  }, [prefs.soundEnabled, toast, updatePrefs]);
+    updatePrefs({ soundEnabled: !prefs.soundEnabled });
+  }, [prefs.soundEnabled, updatePrefs]);
 
   const handleAnimationToggle = useCallback(() => {
-    const nextAnimationEnabled = !prefs.animationEnabled;
-    updatePrefs({ animationEnabled: nextAnimationEnabled });
-    toast({
-      message: `Celebration animations ${nextAnimationEnabled ? 'enabled' : 'disabled'}.`,
-      tone: 'success'
-    });
-  }, [prefs.animationEnabled, toast, updatePrefs]);
+    updatePrefs({ animationEnabled: !prefs.animationEnabled });
+  }, [prefs.animationEnabled, updatePrefs]);
 
   const handleStyleChange = useCallback(
     (style: CelebrationStyle) => {
       updatePrefs({ style });
-      toast({
-        message: `Celebration style set to ${style.replace('-', ' ')}.`,
-        tone: 'success'
-      });
     },
-    [toast, updatePrefs]
+    [updatePrefs]
   );
 
   const handlePreview = useCallback(() => {
