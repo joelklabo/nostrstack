@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$SCRIPT_DIR/run-demo.sh" mainnet "$@"
+echo "deprecated: scripts/demo-mainnet.sh is kept for compatibility; use scripts/demo/mainnet.sh" >&2
+exec "$(cd "$(dirname "$0")" && pwd)/demo/mainnet.sh" "$@"

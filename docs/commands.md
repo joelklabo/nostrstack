@@ -2,6 +2,10 @@
 
 This document is the canonical list of common project commands.
 
+- Local helper scripts now live in `scripts/` subfolders for clearer naming:
+  - `scripts/dev/*`, `scripts/demo/*`, `scripts/regtest/*`, `scripts/lnbits/*`, `scripts/mcp/*`
+  - Legacy top-level `scripts/*.sh` shims are retained for backward compatibility.
+
 ## Local workflows
 
 ### Full stack
