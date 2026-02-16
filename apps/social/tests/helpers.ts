@@ -210,28 +210,69 @@ export async function closePaymentModal(
 ) {
   const { timeout = 10000 } = options;
 
-  const closeButtons = modal.locator(
-    'button.payment-close, button[aria-label="Close payment dialog"], button.close-btn, .close-btn'
-  );
-  const modalOverlay = page
-    .locator('.payment-overlay[role="button"], .zap-modal-overlay[role="button"]')
-    .first();
+  const closeSelectors = [
+    'button[aria-label="Close payment dialog"]',
+    'button.payment-close',
+    'button.payment-action:has-text("CLOSE")',
+    'button.close-btn',
+    '.close-btn',
+    'button:has-text("CLOSE")'
+  ];
 
-  await closeButtons
-    .first()
-    .click({ force: true, timeout: 2000 })
-    .catch(() => undefined);
+  const overlaySelectors = [
+    '.payment-overlay[role="button"]',
+    '.payment-overlay[aria-label="Close payment dialog"]',
+    '.payment-overlay',
+    '.zap-modal-overlay',
+    'button[aria-label="Close zap dialog"]'
+  ];
 
-  await expect(modal, 'Payment modal did not hide after close')
-    .toBeHidden({ timeout })
-    .catch(async () => {
-      await modalOverlay.click({ force: true }).catch(() => undefined);
-      await expect(modal, 'Payment modal did not hide after close')
-        .toBeHidden({ timeout: 2000 })
-        .catch(() => page.keyboard.press('Escape').catch(() => undefined));
-    });
+  const waitForHidden = async () =>
+    expect(modal, 'Payment modal did not hide after close')
+      .toBeHidden({ timeout: 1500 })
+      .then(
+        () => true,
+        () => false
+      );
 
-  await expect(modal).toBeHidden({ timeout: 5000 });
+  if (
+    await modal
+      .count()
+      .catch(() => 0)
+      .then((count) => count === 0)
+  ) {
+    return;
+  }
+
+  if (await modal.isHidden().catch(() => false)) {
+    return;
+  }
+
+  for (const selector of closeSelectors) {
+    const button = modal.locator(selector).first();
+    if (!(await button.isVisible().catch(() => false))) continue;
+    await button.scrollIntoViewIfNeeded().catch(() => undefined);
+    await button
+      .click({ force: true, timeout: 1800 })
+      .catch(() => button.dispatchEvent('click').catch(() => undefined));
+    if (await waitForHidden()) return;
+  }
+
+  if (await waitForHidden()) {
+    return;
+  }
+
+  // Backdrop tap and keyboard fallbacks for overlay-driven modal implementations.
+  for (const selector of overlaySelectors) {
+    const overlay = page.locator(selector).first();
+    if (!(await overlay.isVisible().catch(() => false))) continue;
+    await overlay.click({ force: true, timeout: 1200 }).catch(() => undefined);
+    await overlay.dispatchEvent('click').catch(() => undefined);
+    if (await waitForHidden()) return;
+  }
+
+  await page.keyboard.press('Escape').catch(() => undefined);
+  await expect(modal, 'Payment modal did not hide after close').toBeHidden({ timeout });
 }
 
 export type TelemetryWsDetail = {
