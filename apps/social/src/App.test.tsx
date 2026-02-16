@@ -13,7 +13,7 @@ describe('App', () => {
     );
     // It should transition to login
     await waitFor(() => {
-      expect(screen.getByText('NostrStack')).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Sign in to NostrStack' })).toBeTruthy();
     });
   });
 });
