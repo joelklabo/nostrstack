@@ -54,27 +54,42 @@ export function useWallet(): WalletState {
 
     let ws: WebSocket | null = null;
     let cancelled = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let reconnectScheduled = false;
+    const retryDelayMs = Math.min(500 * 2 ** Math.min(retryCount, 4), 15000);
+
+    const scheduleReconnect = (message: string) => {
+      if (cancelled || reconnectScheduled) return;
+      reconnectScheduled = true;
+      setError(`${message} Retrying...`);
+      setWallet(null);
+      setIsConnecting(false);
+
+      reconnectTimer = globalThis.setTimeout(() => {
+        if (cancelled) return;
+        setRetryCount((count) => count + 1);
+      }, retryDelayMs);
+    };
+
     const timer = globalThis.setTimeout(() => {
       if (cancelled) return;
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         if (cancelled) return;
+        reconnectScheduled = false;
         setIsConnecting(false);
         setError(null);
       };
 
       ws.onerror = () => {
         if (cancelled) return;
-        setError('Failed to connect to wallet');
-        setWallet(null);
-        setIsConnecting(false);
+        scheduleReconnect('Failed to connect to wallet');
       };
 
       ws.onclose = () => {
         if (cancelled) return;
-        setWallet(null);
-        setIsConnecting(false);
+        scheduleReconnect('Wallet connection closed');
       };
 
       ws.onmessage = (e) => {
@@ -96,6 +111,9 @@ export function useWallet(): WalletState {
     return () => {
       cancelled = true;
       globalThis.clearTimeout(timer);
+      if (reconnectTimer) {
+        globalThis.clearTimeout(reconnectTimer);
+      }
       safeClose(ws);
     };
   }, [retryCount]);
