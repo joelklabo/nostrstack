@@ -93,6 +93,15 @@ function pruneEventFetchCache(now: number) {
   }
 }
 
+function normalizeApiEventBase(baseUrl: string) {
+  const trimmed = baseUrl ? baseUrl.replace(/\/+$/, '') : '';
+  if (!trimmed) return '';
+  if (trimmed === '/api' || /\/api$/.test(trimmed)) {
+    return trimmed.slice(0, -4);
+  }
+  return trimmed;
+}
+
 function normalizeRelayList(relays: string[]): string[] {
   const cleaned = relays
     .map((relay) => relay.trim())
@@ -168,7 +177,8 @@ function buildNostrEventUrl(
   if (params.replyCursor) query.set('replyCursor', params.replyCursor);
   if (params.replyTimeoutMs != null) query.set('replyTimeoutMs', String(params.replyTimeoutMs));
   const suffix = query.toString();
-  return `${base}/api/nostr/event/${encodeURIComponent(id)}${suffix ? `?${suffix}` : ''}`;
+  const normalizedBase = normalizeApiEventBase(base);
+  return `${normalizedBase}/api/nostr/event/${encodeURIComponent(id)}${suffix ? `?${suffix}` : ''}`;
 }
 
 function parseApiError(bodyText: string, status: number) {
