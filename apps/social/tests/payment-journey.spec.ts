@@ -141,10 +141,10 @@ test('zap two posts and send sats from profile', async ({ page }) => {
 
   const zapButtons = page.locator('.zap-btn');
   const count = await zapButtons.count();
-  if (count < 2) {
-    test.skip(true, 'Not enough zap buttons available');
-    return;
-  }
+  expect(
+    count,
+    'Expected at least 2 zap buttons for payment journey coverage'
+  ).toBeGreaterThanOrEqual(2);
 
   for (const index of [0, 1]) {
     await zapButtons.nth(index).click();

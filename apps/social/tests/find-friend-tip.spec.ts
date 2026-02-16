@@ -47,87 +47,90 @@ const postEvents = [
 async function installMockRelay(page: Page) {
   const events = [profileEvent, ...postEvents];
 
-  await page.addInitScript(({ events }) => {
-    type MockEvent = { data?: string; type?: string };
-    type ListenerType = 'open' | 'message' | 'error' | 'close';
-    type HandlerKey = `on${ListenerType}`;
+  await page.addInitScript(
+    ({ events }) => {
+      type MockEvent = { data?: string; type?: string };
+      type ListenerType = 'open' | 'message' | 'error' | 'close';
+      type HandlerKey = `on${ListenerType}`;
 
-    class MockWebSocket {
-      static CONNECTING = 0;
-      static OPEN = 1;
-      static CLOSING = 2;
-      static CLOSED = 3;
-      url: string;
-      readyState = MockWebSocket.CONNECTING;
-      onopen: ((ev: MockEvent) => void) | null = null;
-      onmessage: ((ev: MockEvent) => void) | null = null;
-      onerror: ((ev: MockEvent) => void) | null = null;
-      onclose: ((ev: MockEvent) => void) | null = null;
-      private listeners: Record<ListenerType, Set<(ev: MockEvent) => void>> = {
-        open: new Set(),
-        message: new Set(),
-        error: new Set(),
-        close: new Set()
-      };
+      class MockWebSocket {
+        static CONNECTING = 0;
+        static OPEN = 1;
+        static CLOSING = 2;
+        static CLOSED = 3;
+        url: string;
+        readyState = MockWebSocket.CONNECTING;
+        onopen: ((ev: MockEvent) => void) | null = null;
+        onmessage: ((ev: MockEvent) => void) | null = null;
+        onerror: ((ev: MockEvent) => void) | null = null;
+        onclose: ((ev: MockEvent) => void) | null = null;
+        private listeners: Record<ListenerType, Set<(ev: MockEvent) => void>> = {
+          open: new Set(),
+          message: new Set(),
+          error: new Set(),
+          close: new Set()
+        };
 
-      constructor(url: string) {
-        this.url = url;
-        setTimeout(() => {
-          this.readyState = MockWebSocket.OPEN;
-          this.dispatch('open', { type: 'open' });
-        }, 0);
-      }
-
-      private dispatch(type: ListenerType, event: MockEvent) {
-        const handlerKey = `on${type}` as HandlerKey;
-        const handler = this[handlerKey];
-        if (typeof handler === 'function') handler(event);
-        for (const listener of this.listeners[type] ?? []) {
-          listener(event);
+        constructor(url: string) {
+          this.url = url;
+          setTimeout(() => {
+            this.readyState = MockWebSocket.OPEN;
+            this.dispatch('open', { type: 'open' });
+          }, 0);
         }
-      }
 
-      send(data: string) {
-        try {
-          const parsed = JSON.parse(data) as unknown[];
-          if (parsed[0] !== 'REQ') return;
-          const subId = parsed[1] as string;
-          const filters = parsed.slice(2) as Array<{ kinds?: number[]; authors?: string[] }>;
-          const sent = new Set<string>();
-          for (const filter of filters) {
-            for (const event of events) {
-              const kindOk = !filter.kinds || filter.kinds.includes(event.kind);
-              const authorOk = !filter.authors || filter.authors.includes(event.pubkey);
-              if (kindOk && authorOk && !sent.has(event.id)) {
-                sent.add(event.id);
-                this.dispatch('message', { data: JSON.stringify(['EVENT', subId, event]) });
-              }
-            }
-            this.dispatch('message', { data: JSON.stringify(['EOSE', subId]) });
+        private dispatch(type: ListenerType, event: MockEvent) {
+          const handlerKey = `on${type}` as HandlerKey;
+          const handler = this[handlerKey];
+          if (typeof handler === 'function') handler(event);
+          for (const listener of this.listeners[type] ?? []) {
+            listener(event);
           }
-        } catch {
-          // ignore invalid payloads
+        }
+
+        send(data: string) {
+          try {
+            const parsed = JSON.parse(data) as unknown[];
+            if (parsed[0] !== 'REQ') return;
+            const subId = parsed[1] as string;
+            const filters = parsed.slice(2) as Array<{ kinds?: number[]; authors?: string[] }>;
+            const sent = new Set<string>();
+            for (const filter of filters) {
+              for (const event of events) {
+                const kindOk = !filter.kinds || filter.kinds.includes(event.kind);
+                const authorOk = !filter.authors || filter.authors.includes(event.pubkey);
+                if (kindOk && authorOk && !sent.has(event.id)) {
+                  sent.add(event.id);
+                  this.dispatch('message', { data: JSON.stringify(['EVENT', subId, event]) });
+                }
+              }
+              this.dispatch('message', { data: JSON.stringify(['EOSE', subId]) });
+            }
+          } catch {
+            // ignore invalid payloads
+          }
+        }
+
+        close() {
+          this.readyState = MockWebSocket.CLOSED;
+          this.dispatch('close', { type: 'close' });
+        }
+
+        addEventListener(type: string, handler: (ev: MockEvent) => void) {
+          this.listeners[type]?.add(handler);
+        }
+
+        removeEventListener(type: string, handler: (ev: MockEvent) => void) {
+          this.listeners[type]?.delete(handler);
         }
       }
 
-      close() {
-        this.readyState = MockWebSocket.CLOSED;
-        this.dispatch('close', { type: 'close' });
-      }
-
-      addEventListener(type: string, handler: (ev: MockEvent) => void) {
-        this.listeners[type]?.add(handler);
-      }
-
-      removeEventListener(type: string, handler: (ev: MockEvent) => void) {
-        this.listeners[type]?.delete(handler);
-      }
-    }
-
-    window.WebSocket = MockWebSocket as typeof WebSocket;
-    globalThis.WebSocket = MockWebSocket as typeof WebSocket;
-    window.__NOSTRSTACK_ZAP_ADDRESS__ = 'https://mock.lnurl/lnurlp/test';
-  }, { events });
+      window.WebSocket = MockWebSocket as typeof WebSocket;
+      globalThis.WebSocket = MockWebSocket as typeof WebSocket;
+      window.__NOSTRSTACK_ZAP_ADDRESS__ = 'https://mock.lnurl/lnurlp/test';
+    },
+    { events }
+  );
 }
 
 test('find friend and tip flow', async ({ page }) => {
@@ -156,10 +159,10 @@ test('find friend and tip flow', async ({ page }) => {
 
   const zapButtons = page.locator('.zap-btn');
   const zapCount = await zapButtons.count();
-  if (zapCount < 2) {
-    test.skip(true, 'Not enough zap buttons available');
-    return;
-  }
+  expect(
+    zapCount,
+    'Expected at least 2 zap buttons for friend-tip coverage'
+  ).toBeGreaterThanOrEqual(2);
 
   for (const index of [0, 1]) {
     await zapButtons.nth(index).scrollIntoViewIfNeeded();

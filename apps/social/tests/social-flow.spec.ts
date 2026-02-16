@@ -68,28 +68,14 @@ test.describe('Social App Flow', () => {
     // 5. Interact: Click Zap (opens modal)
     // Wait for at least one post to load (PostItem)
     const zapBtn = page.locator('.zap-btn').first();
-    const hasZap = await zapBtn
-      .waitFor({ state: 'visible', timeout: 5000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!hasZap) {
-      test.skip(true, 'No posts found to zap');
-      return;
-    }
+    await expect(zapBtn, 'No posts found to zap').toBeVisible({ timeout: 5000 });
     const feedContainer = page.locator('.feed-container');
     const feedBox = await feedContainer.boundingBox();
     // Wait for stable state before clicking (DOM may re-render due to mock relay)
     await page.waitForTimeout(1000);
-    // Try clicking the zap button - may fail if DOM re-renders due to mock relay activity
-    const clickedZap = await zapBtn
-      .click({ timeout: 10000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!clickedZap) {
-      // Flaky in CI due to mock relay activity causing DOM detachment
-      console.log('Zap button click failed due to DOM instability - skipping zap test');
-      return;
-    }
+    // Click the zap button once feed and modal are ready.
+    await expect(zapBtn, 'Zap button must be interactive').toBeEnabled({ timeout: 5000 });
+    await zapBtn.click({ timeout: 10000 });
     await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
     const overlay = page.locator('.payment-overlay');
     await expect(overlay).toBeVisible();
@@ -101,17 +87,13 @@ test.describe('Social App Flow', () => {
       expect(Math.abs(feedBoxAfter.width - feedBox.width)).toBeLessThan(1);
     }
     await expect(page.locator('.payment-status')).toBeVisible();
-    const invoiceReady = await page
-      .locator('.payment-grid')
-      .waitFor({ state: 'visible', timeout: 8000 })
-      .then(() => true)
-      .catch(() => false);
-    if (invoiceReady) {
-      await expect(page.locator('.payment-qr')).toBeVisible();
-      await expect(page.locator('.payment-panel')).toBeVisible();
-      await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
-      await expect(page.locator('.payment-invoice-box')).toBeVisible();
-    }
+    await expect(page.locator('.payment-grid'), 'Invoice grid did not render').toBeVisible({
+      timeout: 8000
+    });
+    await expect(page.locator('.payment-qr')).toBeVisible();
+    await expect(page.locator('.payment-panel')).toBeVisible();
+    await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
+    await expect(page.locator('.payment-invoice-box')).toBeVisible();
     await page.screenshot({ path: resolveDocScreenshotPath('zap-modal.png') });
     // Close modal (might be CANCEL or CLOSE if error)
     await page.getByRole('button', { name: /CLOSE/ }).first().click();
@@ -133,14 +115,10 @@ test.describe('Social App Flow', () => {
 
     // Interact: Follow (button may not exist if viewing own profile)
     const followBtn = page.getByText('[+] FOLLOW');
-    const hasFollowBtn = await followBtn
-      .waitFor({ state: 'visible', timeout: 5000 })
-      .then(() => true)
-      .catch(() => false);
-
-    if (hasFollowBtn) {
-      await followBtn.click();
-    }
+    await expect(followBtn, 'Expected follow button to be visible before follow flow').toBeVisible({
+      timeout: 5000
+    });
+    await followBtn.click();
     await page.screenshot({ path: resolveDocScreenshotPath('profile.png') });
   });
 
@@ -174,14 +152,9 @@ test.describe('Social App Flow', () => {
       .locator('.ns-action-btn')
       .filter({ has: page.getByRole('button', { name: /View event source JSON/i }) })
       .first();
-    const hasPost = await viewSource
-      .waitFor({ state: 'attached', timeout: 10000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!hasPost) {
-      test.skip(true, 'No posts available for source view');
-      return;
-    }
+    await expect(viewSource.first(), 'No posts available for source view').toBeVisible({
+      timeout: 10000
+    });
     // Use force:true to bypass onboarding overlay if it intercepts clicks
     await viewSource.click({ force: true });
     // Wait for state change and re-render

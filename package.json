@@ -31,6 +31,7 @@
     "lint:deps": "syncpack list-mismatches",
     "test": "pnpm -r test",
     "test:unit": "pnpm -r test",
+    "test:ci": "VITEST_CACHE_DIR=${XDG_CACHE_HOME:-${HOME}/.cache}/nostrstack/vitest pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "dev": "pnpm --filter api dev",

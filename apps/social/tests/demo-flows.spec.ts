@@ -31,10 +31,7 @@ test('tip button renders', async ({ page }) => {
   await loginWithNsec(page);
   const zapButtons = page.locator('.zap-btn');
   const count = await zapButtons.count();
-  if (count === 0) {
-    test.skip(true, 'No zap buttons available in feed');
-    return;
-  }
+  expect(count, 'No zap buttons available in feed').toBeGreaterThan(0);
   await expect(zapButtons.first()).toBeVisible();
 });
 
@@ -42,30 +39,17 @@ test('pay-to-unlock shows locked state', async ({ page }) => {
   await loginWithNsec(page);
   const unlockButtons = page.getByRole('button', { name: /UNLOCK_CONTENT/i });
   const count = await unlockButtons.count();
-  if (count === 0) {
-    test.skip(true, 'No paywalled content available');
-    return;
-  }
+  expect(count, 'No paywalled content available').toBeGreaterThan(0);
   await expect(unlockButtons.first()).toBeVisible();
 });
 
 test('pay-to-unlock does not overflow card at common widths', async ({ page }) => {
   await loginWithNsec(page);
   const unlockButtons = page.getByRole('button', { name: /UNLOCK_CONTENT/i });
-  if ((await unlockButtons.count()) === 0) {
-    test.skip(true, 'No paywalled content available');
-    return;
-  }
+  expect(await unlockButtons.count(), 'No paywalled content available').toBeGreaterThan(0);
   await unlockButtons.first().click();
   const payWidget = page.locator('.ns-pay');
-  const widgetReady = await payWidget
-    .waitFor({ state: 'visible', timeout: 8000 })
-    .then(() => true)
-    .catch(() => false);
-  if (!widgetReady) {
-    test.skip(true, 'Paywall widget did not render');
-    return;
-  }
+  await expect(payWidget, 'Paywall widget did not render').toBeVisible({ timeout: 8000 });
 
   const widths = [1024, 1152, 1280, 1366, 1440, 1514];
   for (const width of widths) {
@@ -83,76 +67,60 @@ test('pay-to-unlock does not overflow card at common widths', async ({ page }) =
 test('tip flow generates invoice', async ({ page }) => {
   await loginWithNsec(page);
   const zapButtons = page.locator('.zap-btn');
-  if ((await zapButtons.count()) === 0) {
-    test.skip(true, 'No zap buttons available in feed');
-    return;
-  }
+  expect(await zapButtons.count(), 'No zap buttons available in feed').toBeGreaterThan(0);
   await zapButtons.first().click();
   await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
   const invoiceBox = page.locator('.payment-invoice-box');
-  const invoiceReady = await invoiceBox
-    .waitFor({ state: 'visible', timeout: 8000 })
-    .then(() => true)
-    .catch(() => false);
-  if (!invoiceReady) {
-    test.skip(true, 'Zap invoice not available');
-    return;
-  }
+  await expect(invoiceBox, 'Zap invoice not available').toBeVisible({ timeout: 8000 });
   await expect(invoiceBox).toContainText(/ln/i);
 });
 
 test('simulate unlock flow', async ({ page }) => {
   await loginWithNsec(page);
   const unlockButtons = page.getByRole('button', { name: /UNLOCK_CONTENT/i });
-  if ((await unlockButtons.count()) === 0) {
-    test.skip(true, 'No paywalled content available');
-    return;
-  }
+  expect(await unlockButtons.count(), 'No paywalled content available').toBeGreaterThan(0);
   await unlockButtons.first().click();
   await expect(page.locator('.paywall-payment-modal')).toBeVisible({ timeout: 8000 });
 });
 
-test.skip('embed tip generates mock invoice', async ({ page }) => {
+test('embed tip generates mock invoice', async ({ page }) => {
   await page.goto('/');
   const tipBtn = page.locator('#tip-container button').first();
-  await tipBtn.waitFor({ timeout: 15000 });
+  await expect(tipBtn, 'Mock tip control missing in embed flow').toBeVisible({ timeout: 15000 });
+  await expect(tipBtn, 'Mock tip control disabled').toBeEnabled();
   await tipBtn.click();
-  await expect(tipBtn).toBeEnabled();
+  await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.payment-invoice-box')).toBeVisible({ timeout: 8000 });
 });
 
-test.skip('embed pay unlocks content', async ({ page }) => {
+test('embed pay unlocks content', async ({ page }) => {
   await page.goto('/');
-  await page.getByTestId('paywall-unlock').click();
+  const paywallButton = page.getByTestId('paywall-unlock');
+  await expect(paywallButton, 'Mock paywall action not present').toBeVisible({ timeout: 15000 });
+  await paywallButton.click();
   const status = page.getByTestId('unlock-status');
-  try {
-    await expect(status).toContainText(/unlocked/i, { timeout: 10000 });
-  } catch {
-    await page.getByTestId('mock-unlock').click();
-    await expect(status).toContainText(/unlocked/i, { timeout: 5000 });
-  }
+  await expect(status, 'Unlock status indicator missing').toBeVisible({ timeout: 10000 });
+  await expect(status).toContainText(/unlocked/i, { timeout: 10000 });
   await expect(page.locator('text=Unlocked content')).toBeVisible();
 });
 
 test('embed comments accept mock post', async ({ page }) => {
   await loginWithNsec(page);
   const nostrButton = page.getByRole('button', { name: 'Nostr' });
-  if ((await nostrButton.count()) === 0) {
-    test.skip(true, 'Comments widget not available in this view');
-    return;
-  }
+  expect(await nostrButton.count(), 'Comments widget not available in this view').toBeGreaterThan(
+    0
+  );
   await nostrButton.click();
   const commentBox = page.locator('#comments-container textarea');
   const count = await commentBox.count();
-  if (count === 0) {
-    test.skip(true, 'comments widget not mounted in this mode');
-  }
+  expect(count, 'comments widget not mounted in this mode').toBeGreaterThan(0);
   await commentBox.first().waitFor({ timeout: 10000 });
   await commentBox.first().fill('Hello comments');
   await page.locator('#comments-container button', { hasText: 'Post' }).click();
   await expect(page.locator('#comments-container')).toContainText('Hello comments');
 });
 
-test.skip('relay badge renders in mock mode', async ({ page }) => {
+test('relay badge renders in mock mode', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Nostr' }).click();
   await expectRelayMode(page, 'mock');
@@ -169,10 +137,7 @@ test('theme toggle flips background', async ({ page }) => {
     (await page.getByRole('button', { name: /LIGHT_MODE/i }).count()) > 0;
   const hasThemeSelect =
     (await page.locator('select', { has: page.locator('option[value="dark"]') }).count()) > 0;
-  if (!hasThemeButtons && !hasThemeSelect) {
-    test.skip(true, 'Theme controls not available');
-    return;
-  }
+  expect(!hasThemeButtons && !hasThemeSelect, 'Theme controls not available').toBe(false);
   const body = page.locator('body');
   await expect(body).toHaveAttribute('data-theme', 'light');
   await toggleTheme(page, 'dark');

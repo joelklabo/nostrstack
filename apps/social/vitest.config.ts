@@ -3,10 +3,15 @@ import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
+
+import { getVitestCacheDir, getVitestCoverageDir } from '../../scripts/vitest-cache';
 const dirname =
   typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+const cacheDir = getVitestCacheDir('social');
+const coverageDir = getVitestCoverageDir('social');
 
 export default defineConfig({
+  cacheDir,
   plugins: [react()],
   test: {
     environment: 'jsdom',
@@ -19,6 +24,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'v8',
+      reportsDirectory: coverageDir,
       reporter: ['text', 'html', 'lcov'],
       exclude: [
         '**/node_modules/**',

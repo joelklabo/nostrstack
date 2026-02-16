@@ -31,6 +31,7 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
 - **Run Tests**:
 
   - Unit tests: `pnpm test`
+  - Read-only cache-safe tests: `pnpm test:ci` (sets `VITEST_CACHE_DIR` to a writable temp directory)
   - End-to-End tests: `pnpm --filter gallery exec playwright test`
 
 - **Linting & Formatting**:
