@@ -456,6 +456,7 @@ export function ActivityLog({
       ) : (
         <VirtualizedList
           items={sortedEvents}
+          rowHeightCacheKey="activity-log-v1"
           getItemKey={getItemKey}
           renderItem={renderItem}
           height={height}

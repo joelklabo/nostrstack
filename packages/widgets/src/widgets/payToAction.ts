@@ -255,9 +255,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
   };
 
   btn.addEventListener('click', getInvoice);
-  btn.onclick = getInvoice;
   paidBtn.addEventListener('click', markPaid);
-  paidBtn.onclick = markPaid;
 
   return {
     el: btn,

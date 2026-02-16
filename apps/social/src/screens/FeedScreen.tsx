@@ -284,6 +284,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         items={filteredPosts}
         getItemKey={getPostKey}
         renderItem={renderPostItem}
+        rowHeightCacheKey="feed-screen-posts-v1"
         onLoadMore={hasMore ? loadMore : undefined}
         hasMore={hasMore}
         loading={feedLoading}

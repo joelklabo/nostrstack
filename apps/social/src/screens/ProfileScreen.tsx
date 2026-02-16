@@ -631,6 +631,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
         ) : (
           <VirtualizedList
             items={events}
+            rowHeightCacheKey="profile-screen-posts-v1"
             getItemKey={getPostKey}
             renderItem={renderPostItem}
             onLoadMore={hasMore ? loadMore : undefined}

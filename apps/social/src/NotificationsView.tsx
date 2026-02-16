@@ -199,6 +199,7 @@ export function NotificationsView() {
       {displayGroups.length > 0 ? (
         <VirtualizedList
           items={displayGroups}
+          rowHeightCacheKey="notifications-list-v1"
           getItemKey={getNotificationKey}
           renderItem={renderNotificationItem}
           ariaLabel="Notifications list"

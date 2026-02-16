@@ -126,6 +126,14 @@ class ZapBatcher {
 
   /** Seen zap event IDs to dedupe */
   private seenZapIds = new Set<string>();
+  /** Preserve insertion order for seen zap IDs */
+  private seenZapOrder: string[] = [];
+
+  /** Maximum number of event IDs to keep in cache */
+  private readonly MAX_CACHE_SIZE = 500;
+
+  /** Maximum number of seen zap IDs to keep */
+  private readonly MAX_SEEN_ZAP_IDS = 5000;
 
   /** Batch delay in ms - wait for more requests before subscribing */
   private readonly BATCH_DELAY = 50;
@@ -159,6 +167,7 @@ class ZapBatcher {
     // If we have cached data, send it immediately
     const cached = this.cache.get(eventId);
     if (cached) {
+      this.touchCachedEvent(eventId);
       callback(cached);
     } else {
       // Notify subscriber that we're loading
@@ -255,8 +264,7 @@ class ZapBatcher {
     try {
       this.activeSubscription = this.pool.subscribeMany(this.relays, filter, {
         onevent: (event) => {
-          if (this.seenZapIds.has(event.id)) return;
-          this.seenZapIds.add(event.id);
+          if (!this.markSeenZapId(event.id)) return;
 
           const zapInfo = parseZapReceipt(event);
           if (!zapInfo) return;
@@ -285,7 +293,7 @@ class ZapBatcher {
             totalAmount,
             loading: true // Still loading until EOSE
           };
-          this.cache.set(targetEventId, newData);
+          this.setCachedEvent(targetEventId, newData);
 
           // Notify subscribers
           this.notifySubscribers(targetEventId, newData);
@@ -299,7 +307,7 @@ class ZapBatcher {
               loading: false
             };
             const finalData = { ...data, loading: false };
-            this.cache.set(eventId, finalData);
+            this.setCachedEvent(eventId, finalData);
             this.fetchingEventIds.delete(eventId);
             this.notifySubscribers(eventId, finalData);
           }
@@ -312,7 +320,7 @@ class ZapBatcher {
       // On error, mark all as done with empty data
       for (const eventId of eventIds) {
         const emptyData: ZapData = { zaps: [], totalAmount: 0, loading: false };
-        this.cache.set(eventId, emptyData);
+        this.setCachedEvent(eventId, emptyData);
         this.fetchingEventIds.delete(eventId);
         this.notifySubscribers(eventId, emptyData);
       }
@@ -329,7 +337,7 @@ class ZapBatcher {
             loading: false
           };
           const finalData = { ...data, loading: false };
-          this.cache.set(eventId, finalData);
+          this.setCachedEvent(eventId, finalData);
           this.fetchingEventIds.delete(eventId);
           this.notifySubscribers(eventId, finalData);
         }
@@ -356,7 +364,61 @@ class ZapBatcher {
    * Get cached zap data for an event ID.
    */
   getCached(eventId: string): ZapData | undefined {
-    return this.cache.get(eventId);
+    const cached = this.cache.get(eventId);
+    if (cached) {
+      this.touchCachedEvent(eventId);
+    }
+    return cached;
+  }
+
+  /**
+   * Track seen zap IDs with bounded memory.
+   * Returns false if already seen, true if this is a new ID.
+   */
+  private markSeenZapId(eventId: string): boolean {
+    if (this.seenZapIds.has(eventId)) {
+      return false;
+    }
+
+    this.seenZapIds.add(eventId);
+    this.seenZapOrder.push(eventId);
+
+    if (this.seenZapOrder.length > this.MAX_SEEN_ZAP_IDS) {
+      const overflow = this.seenZapOrder.length - this.MAX_SEEN_ZAP_IDS;
+      const removed = this.seenZapOrder.splice(0, overflow);
+      for (const id of removed) {
+        this.seenZapIds.delete(id);
+      }
+    }
+
+    return true;
+  }
+
+  private setCachedEvent(eventId: string, data: ZapData) {
+    this.cache.delete(eventId);
+    this.cache.set(eventId, data);
+    this.evictCacheIfNeeded();
+  }
+
+  private touchCachedEvent(eventId: string) {
+    const existing = this.cache.get(eventId);
+    if (!existing) return;
+
+    this.cache.delete(eventId);
+    this.cache.set(eventId, existing);
+  }
+
+  private evictCacheIfNeeded() {
+    if (this.cache.size <= this.MAX_CACHE_SIZE) return;
+
+    for (const eventId of this.cache.keys()) {
+      if (this.cache.size <= this.MAX_CACHE_SIZE) return;
+
+      const hasActiveSubscriber = this.subscribers.get(eventId)?.size;
+      if (hasActiveSubscriber) continue;
+
+      this.cache.delete(eventId);
+    }
   }
 
   /**
@@ -368,6 +430,7 @@ class ZapBatcher {
     this.pendingRequests = [];
     this.fetchingEventIds.clear();
     this.seenZapIds.clear();
+    this.seenZapOrder = [];
     if (this.batchTimer) {
       clearTimeout(this.batchTimer);
       this.batchTimer = null;

@@ -35,6 +35,8 @@ interface VirtualizedListProps<T> {
   role?: AriaRole;
   /** Accessibility role for each item wrapper */
   itemRole?: AriaRole;
+  /** Cache key used by dynamic row-height measurements */
+  rowHeightCacheKey?: string;
   /** Live region politeness for dynamic updates */
   ariaLive?: AriaAttributes['aria-live'];
   /** Live region relevance for dynamic updates */
@@ -106,6 +108,7 @@ export function VirtualizedList<T>({
   ariaLabel,
   role = 'feed',
   itemRole,
+  rowHeightCacheKey,
   ariaLive,
   ariaRelevant,
   ariaAtomic
@@ -118,9 +121,14 @@ export function VirtualizedList<T>({
     return Math.max(0, viewportHeight - CONTAINER_BOTTOM_PADDING);
   });
 
-  const rowHeightCacheKey = useMemo(() => {
-    return 'social-feed-row-height-v1';
-  }, []);
+  const resolvedRowHeightCacheKey = useMemo(() => {
+    if (rowHeightCacheKey) {
+      return rowHeightCacheKey;
+    }
+
+    const listContext = ariaLabel ?? 'virtualized-list';
+    return `social-list-row-height-v1::${role ?? 'list'}::${itemRole ?? 'item'}::${listContext}`;
+  }, [rowHeightCacheKey, role, itemRole, ariaLabel]);
 
   const resolveContainerHeight = useCallback((): number => {
     if (propHeight) return propHeight;
@@ -134,7 +142,7 @@ export function VirtualizedList<T>({
   // Use dynamic row height from react-window v2
   const dynamicRowHeight = useDynamicRowHeight({
     defaultRowHeight: DEFAULT_ITEM_HEIGHT,
-    key: rowHeightCacheKey
+    key: resolvedRowHeightCacheKey
   });
 
   // Update container height based on viewport and anchor changes
