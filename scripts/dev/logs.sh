@@ -77,7 +77,7 @@ fi
 
 ndev_claim_session
 API_SCHEME="http"
-if is_truthy "$USE_HTTPS"; then
+if [[ "$USE_HTTPS" == "true" ]]; then
   API_SCHEME="https"
 fi
 export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-$API_SCHEME://localhost:$PORT}"

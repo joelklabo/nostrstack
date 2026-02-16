@@ -11,17 +11,6 @@ NOSTRDEV_MAX_SLOTS="${NOSTRDEV_MAX_SLOTS:-40}"
 NOSTRDEV_AGENT="${NOSTRDEV_AGENT:-${NOSTR_AGENT:-${USER:-agent}}}"
 NOSTRDEV_SESSION_COMMAND="${NOSTRDEV_SESSION_COMMAND:-}"
 
-is_truthy() {
-  case "${1,,}" in
-    1 | true | yes | on)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
 mkdir -p "$NOSTRDEV_SESSION_DIR"
 
 ndev_slot_file() {
