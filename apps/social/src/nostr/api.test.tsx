@@ -60,9 +60,10 @@ describe('getSearchRelays', () => {
   });
 
   it('filters unhealthy relays when healthy alternatives are available', () => {
-    vi.spyOn(relayMonitor, 'isHealthy').mockImplementation(
-      (url: string) => !url.includes('nos.lol')
-    );
+    vi.spyOn(relayMonitor, 'isHealthy').mockImplementation((url: string) => {
+      const normalized = url.endsWith('/') ? url : `${url}/`;
+      return normalized !== 'wss://nos.lol/';
+    });
 
     const relays = getSearchRelays(['wss://relay.custom']);
 
