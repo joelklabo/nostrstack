@@ -573,7 +573,10 @@
     "retryable",
     "hashrate",
     "Hashrate",
-    "Grotesk"
+    "Grotesk",
+    "ndev",
+    "nullglob",
+    "ltnp"
   ],
   "ignoreRegExpList": [
     "/nsec1[0-9a-z]{20,}/g",

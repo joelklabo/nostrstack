@@ -63,7 +63,6 @@ function resolveEventPageTitle(target: Target | null, fallback?: string | null) 
   return fallback ?? 'Event';
 }
 
-const FALLBACK_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 const REQUEST_TIMEOUT_MS = 8000;
 const REPLY_PAGE_LIMIT = 50;
 const EMPTY_REPLIES_STATE: RepliesState = {
@@ -266,13 +265,8 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       ...buildMockSeedRelays(hasMockEventsSeed)
     ]).map(normalizeMockRelay);
     const rawTargetRelays = target?.relays ?? [];
-    const usesMockRelays = [...normalizedSourceRelays, ...rawTargetRelays].some((relay) =>
-      isMockRelay(relay)
-    );
     const targetRelays = rawTargetRelays.map(normalizeMockRelay);
-    const relays = usesMockRelays
-      ? [...targetRelays, ...normalizedSourceRelays]
-      : [...targetRelays, ...normalizedSourceRelays, ...FALLBACK_RELAYS];
+    const relays = [...targetRelays, ...normalizedSourceRelays];
     return uniqRelays(relays);
   }, [cfg.relays, target]);
 
