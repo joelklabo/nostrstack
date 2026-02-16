@@ -8,6 +8,7 @@ const DEFAULT_ITEM_HEIGHT = 200;
 const OVERSCAN_COUNT = 5;
 const DEFAULT_CONTAINER_HEIGHT = 600;
 const CONTAINER_BOTTOM_PADDING = 20;
+const MIN_CONTAINER_HEIGHT = 260;
 const STABLE_HEIGHT_EPSILON = 1;
 
 interface VirtualizedListProps<T> {
@@ -123,7 +124,7 @@ export function VirtualizedList<T>({
   const [containerHeight, setContainerHeight] = useState(() => {
     if (typeof window === 'undefined') return DEFAULT_CONTAINER_HEIGHT;
     const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    return Math.max(0, viewportHeight - CONTAINER_BOTTOM_PADDING);
+    return Math.max(MIN_CONTAINER_HEIGHT, viewportHeight - CONTAINER_BOTTOM_PADDING);
   });
 
   const resolvedRowHeightCacheKey = useMemo(() => {
@@ -141,8 +142,14 @@ export function VirtualizedList<T>({
 
     const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
     const offset = containerRef.current?.getBoundingClientRect().top ?? 0;
-    return Math.max(0, viewportHeight - offset - CONTAINER_BOTTOM_PADDING);
-  }, [propHeight]);
+    const nextHeight = viewportHeight - offset - CONTAINER_BOTTOM_PADDING;
+
+    if (!Number.isFinite(nextHeight) || nextHeight <= 0) {
+      return Math.max(MIN_CONTAINER_HEIGHT, containerHeight);
+    }
+
+    return Math.max(MIN_CONTAINER_HEIGHT, Math.round(nextHeight));
+  }, [containerHeight, propHeight]);
 
   // Use dynamic row height from react-window v2
   const dynamicRowHeight = useDynamicRowHeight({
