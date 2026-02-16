@@ -315,34 +315,76 @@ export async function searchNotes(
   until?: number
 ): Promise<Event[]> {
   try {
-    const filter: { kinds: number[]; search: string; limit: number; until?: number } = {
-      kinds: [1],
-      search: query,
-      limit
+    if (!relays.length) return [];
+
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return [];
+    }
+
+    const normalizedLimit = Number.isInteger(limit) && limit > 0 ? limit : 20;
+    const normalizedUntil =
+      typeof until === 'number' && Number.isInteger(until) ? until : undefined;
+    const quoted = trimmedQuery.toLowerCase();
+    const fallbackLimit = Math.max(1, Math.min(normalizedLimit * 2, 100));
+    const isSearchUnsupportedError = (error: unknown): boolean => {
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+      return lower.includes('unrecognized filter') || lower.includes('unrecognised filter');
     };
-    if (until) {
-      filter.until = until;
-    }
-    const settled = await Promise.allSettled(
-      relays.map((relay) =>
-        withTimeout(
-          pool.querySync([relay], filter, { maxWait: SEARCH_RELAY_TIMEOUT_MS }),
-          SEARCH_RELAY_TIMEOUT_MS
-        )
-      )
-    );
-    const merged = new Map<string, Event>();
-    const failures: unknown[] = [];
-    for (const result of settled) {
-      if (result.status === 'fulfilled') {
-        for (const event of result.value) {
-          merged.set(event.id, event);
-        }
-      } else {
-        failures.push(result.reason);
+
+    const runQuery = async (withSearch: boolean) => {
+      const filter: { kinds: number[]; search?: string; limit: number; until?: number } = {
+        kinds: [1],
+        limit: withSearch ? normalizedLimit : fallbackLimit
+      };
+      if (withSearch) {
+        filter.search = trimmedQuery;
       }
+      if (normalizedUntil) {
+        filter.until = normalizedUntil;
+      }
+      const settled = await Promise.allSettled(
+        relays.map((relay) =>
+          withTimeout(
+            pool.querySync([relay], filter, { maxWait: SEARCH_RELAY_TIMEOUT_MS }),
+            SEARCH_RELAY_TIMEOUT_MS
+          )
+        )
+      );
+
+      const merged = new Map<string, Event>();
+      const failures: unknown[] = [];
+      for (const result of settled) {
+        if (result.status === 'fulfilled') {
+          for (const event of result.value) {
+            merged.set(event.id, event);
+          }
+        } else {
+          failures.push(result.reason);
+        }
+      }
+      return { merged, failures };
+    };
+
+    const primary = await runQuery(true);
+    let merged = primary.merged;
+    const failures = primary.failures;
+    const relayCount = relays.length;
+
+    if (merged.size === 0 && failures.length > 0 && failures.every(isSearchUnsupportedError)) {
+      const fallback = await runQuery(false);
+      const filtered = new Map<string, Event>();
+      for (const [id, event] of fallback.merged) {
+        if (!event?.content || !event.content.toLowerCase().includes(quoted)) continue;
+        filtered.set(id, event);
+      }
+      merged = filtered;
+    } else {
+      // keep primary merge as-is
     }
-    if (merged.size === 0 && failures.length === settled.length) {
+
+    if (merged.size === 0 && failures.length === relayCount) {
       throw failures[0];
     }
     return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
