@@ -3140,7 +3140,7 @@ button:disabled {
  */
 
 /* Large tablets and small desktops - condensed 3-column */
-@media (width <= 1200px) and (width > 1024px) {
+@media (width <= 1200px) and (width >= 1025px) {
   .social-layout {
     grid-template-columns: 260px 1fr 280px;
   }
@@ -3328,7 +3328,7 @@ button:disabled {
 }
 
 /* Keep telemetry sidebar stable during immersive mode (desktop only) */
-@media (width > 1024px) {
+@media (width >= 1025px) {
   .telemetry-sidebar {
     /* GPU-accelerated transitions: transform + opacity only */
     transition:
