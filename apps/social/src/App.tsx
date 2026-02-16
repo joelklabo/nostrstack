@@ -145,6 +145,7 @@ function AppShell() {
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
+  const previousPathRef = useRef(pathname);
 
   // Check if the current path is a valid route
   const isValidRoute = useMemo(() => {
@@ -226,6 +227,18 @@ function AppShell() {
       body.classList.remove('is-mobile-menu-open');
     };
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      previousPathRef.current = pathname;
+      return;
+    }
+    if (previousPathRef.current !== pathname) {
+      setMobileMenuOpen(false);
+      return;
+    }
+    previousPathRef.current = pathname;
+  }, [mobileMenuOpen, pathname]);
 
   if (nostrRouteId) {
     return (
