@@ -38,7 +38,6 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   // Track new posts for indicator
   const [newPosts, setNewPosts] = useState<Array<{ pubkey: string; picture?: string }>>([]);
   const lastSeenPostId = useRef<string | null>(null);
-  const feedContainerRef = useRef<HTMLElement>(null);
   const isScrolledDown = useRef(false);
 
   // Track scroll position to know when to show indicator
@@ -105,6 +104,9 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
     since: trendingSince,
     limit: 20
   });
+
+  const isLoadingFeed = relaysLoading || (feedLoading && posts.length === 0);
+  const hasNoPosts = posts.length === 0 && !feedLoading;
 
   // Memoize filtered posts with safety checks and sorting
   const filteredPosts = useMemo(() => {
@@ -216,7 +218,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   );
 
   const renderContent = () => {
-    if (relaysLoading || (feedLoading && posts.length === 0)) {
+    if (isLoadingFeed) {
       return (
         <div className="feed-loading" aria-busy="true" aria-label="Loading posts">
           {[1, 2, 3].map((i) => (
@@ -226,7 +228,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
       );
     }
 
-    if (posts.length === 0 && !feedLoading) {
+    if (hasNoPosts) {
       return (
         <div className="feed-empty" role="status" aria-live="polite">
           <div className="feed-empty__icon" aria-hidden="true">
@@ -262,7 +264,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   };
 
   return (
-    <section className="feed-stream" aria-label="Live feed" ref={feedContainerRef}>
+    <section className="feed-stream" aria-label="Live feed">
       <NewPostsIndicator newPosts={newPosts} onScrollToTop={handleScrollToTop} />
 
       <header
