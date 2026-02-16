@@ -609,6 +609,16 @@ export default function App() {
   const [isResolvingLocalApiBase, setIsResolvingLocalApiBase] = useState(() =>
     isLocalApiBase(apiBaseConfig)
   );
+  const initialLocalApiConfig = useRef<ApiBaseResolution | null>(
+    isLocalApiBase(apiBaseConfig) ? apiBaseConfig : null
+  );
+
+  const retryLocalApiHealthCheck = useCallback(() => {
+    if (initialLocalApiConfig.current) {
+      setResolvedApiBaseConfig(initialLocalApiConfig.current);
+      setIsResolvingLocalApiBase(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isResolvingLocalApiBase) {
@@ -652,10 +662,16 @@ export default function App() {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [resolvedApiBaseConfig]);
+  }, [resolvedApiBaseConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const apiBase = resolvedApiBaseConfig.baseUrl;
   if (isResolvingLocalApiBase) {
-    return <LoadingFallback message="Checking API availability..." includeRetry />;
+    return (
+      <LoadingFallback
+        message="Checking API availability..."
+        includeRetry
+        onRetry={retryLocalApiHealthCheck}
+      />
+    );
   }
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||

@@ -65,7 +65,7 @@ export function SearchScreen() {
   const [notes, setNotes] = useState<Event[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
-  const [notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
+  const [_notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
   const [profileLookupError, setProfileLookupError] = useState<string | null>(null);
   const [isProfileLookupLoading, setIsProfileLookupLoading] = useState(false);
   const [profileRetryKey, setProfileRetryKey] = useState(0);
