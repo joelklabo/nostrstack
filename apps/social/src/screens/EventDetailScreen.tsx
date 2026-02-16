@@ -79,6 +79,10 @@ function normalizeMockRelay(relay: string) {
   return isMockRelay(relay) ? 'ws://mock' : relay;
 }
 
+function buildMockSeedRelays(hasSeed: boolean) {
+  return hasSeed ? ['ws://mock'] : [];
+}
+
 function trustMockRelays(pool: SimplePool, relays: string[]) {
   relays.forEach((relay) => {
     if (isMockRelay(relay)) {
@@ -221,16 +225,38 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
   const repliesEnabled = target?.type === 'event';
 
   const relayList = useMemo(() => {
-    const rawEnvRelays = cfg.relays ?? parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+    const parsedEnvRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+    const hasMockEventsSeed =
+      typeof window !== 'undefined' &&
+      Array.isArray(
+        (window as { __NOSTRSTACK_MOCK_EVENTS__?: unknown }).__NOSTRSTACK_MOCK_EVENTS__
+      );
+    const usesMockEnvironment =
+      String(import.meta.env.VITE_NOSTRSTACK_HOST ?? '')
+        .trim()
+        .toLowerCase() === 'mock' ||
+      String(import.meta.env.VITE_NOSTRSTACK_RELAYS ?? '')
+        .split(/[,\s\n]+/)
+        .map((relay) => relay.trim())
+        .filter(Boolean)
+        .some(isMockRelay);
+    const configuredRelays = cfg.relays ?? [];
+    const envRelays = (
+      parsedEnvRelays.length > 0 ? parsedEnvRelays : usesMockEnvironment ? ['mock'] : []
+    ).map(normalizeMockRelay);
+    const sourceRelays = envRelays.length > 0 ? envRelays : configuredRelays;
+    const normalizedSourceRelays = uniqRelays([
+      ...sourceRelays,
+      ...buildMockSeedRelays(hasMockEventsSeed)
+    ]).map(normalizeMockRelay);
     const rawTargetRelays = target?.relays ?? [];
-    const usesMockRelays = [...rawEnvRelays, ...rawTargetRelays].some((relay) =>
+    const usesMockRelays = [...normalizedSourceRelays, ...rawTargetRelays].some((relay) =>
       isMockRelay(relay)
     );
-    const envRelays = rawEnvRelays.map(normalizeMockRelay);
     const targetRelays = rawTargetRelays.map(normalizeMockRelay);
     const relays = usesMockRelays
-      ? [...targetRelays, ...envRelays]
-      : [...targetRelays, ...envRelays, ...FALLBACK_RELAYS];
+      ? [...targetRelays, ...normalizedSourceRelays]
+      : [...targetRelays, ...normalizedSourceRelays, ...FALLBACK_RELAYS];
     return uniqRelays(relays);
   }, [cfg.relays, target]);
 
