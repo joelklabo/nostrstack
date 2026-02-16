@@ -116,7 +116,8 @@ export function SearchScreen() {
         }
       } catch (err) {
         console.error('Notes search failed', err);
-        const timedOut = err instanceof Error && /Request timed out after/.test(err.message);
+        const timedOut =
+          err instanceof Error && /(request timed out|timed out after|timeout)/i.test(err.message);
         setNotesSearchTimedOut(timedOut);
         setNotesError(
           timedOut

@@ -178,4 +178,63 @@ describe('searchNotes', () => {
     );
     consoleSpy.mockRestore();
   });
+
+  it('falls back to content filtering when relay failures are mixed', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const event = {
+      id: 'event-id-d',
+      kind: 1,
+      pubkey: 'test-pubkey',
+      created_at: 2_000,
+      content: 'Search terms should still work in fallback mode',
+      tags: [],
+      sig: 'test-sig'
+    };
+
+    const querySync = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error('NOTICE from wss://relay.nostr.band/: ERROR: bad req: unrecognised filter item')
+      )
+      .mockRejectedValueOnce(new Error('Request timed out after 10000ms'))
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([event]);
+
+    const pool = { querySync } as unknown as SimplePool;
+
+    const events = await searchNotes(
+      pool,
+      ['wss://relay.nostr.band', 'wss://relay.damus.io'],
+      'search',
+      10
+    );
+
+    expect(events).toEqual([event]);
+    expect(querySync).toHaveBeenCalledTimes(4);
+    expect(querySync).toHaveBeenNthCalledWith(
+      1,
+      ['wss://relay.nostr.band'],
+      { kinds: [1], search: 'search', limit: 10 },
+      { maxWait: 10_000 }
+    );
+    expect(querySync).toHaveBeenNthCalledWith(
+      2,
+      ['wss://relay.damus.io'],
+      { kinds: [1], search: 'search', limit: 10 },
+      { maxWait: 10_000 }
+    );
+    expect(querySync).toHaveBeenNthCalledWith(
+      3,
+      ['wss://relay.nostr.band'],
+      { kinds: [1], limit: 20 },
+      { maxWait: 10_000 }
+    );
+    expect(querySync).toHaveBeenNthCalledWith(
+      4,
+      ['wss://relay.damus.io'],
+      { kinds: [1], limit: 20 },
+      { maxWait: 10_000 }
+    );
+    consoleSpy.mockRestore();
+  });
 });

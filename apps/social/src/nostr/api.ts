@@ -372,11 +372,12 @@ export async function searchNotes(
     };
 
     const primary = await runQuery(true);
+    const primaryFailures = primary.failures;
+    const hasSearchUnsupportedFailure = primaryFailures.some(isSearchUnsupportedError);
     let merged = primary.merged;
-    const failures = primary.failures;
     const relayCount = relays.length;
 
-    if (merged.size === 0 && failures.length > 0 && failures.every(isSearchUnsupportedError)) {
+    if (merged.size === 0 && hasSearchUnsupportedFailure) {
       const fallback = await runQuery(false);
       const filtered = new Map<string, Event>();
       for (const [id, event] of fallback.merged) {
@@ -388,8 +389,12 @@ export async function searchNotes(
       // keep primary merge as-is
     }
 
-    if (merged.size === 0 && failures.length === relayCount) {
-      throw failures[0];
+    if (
+      merged.size === 0 &&
+      primaryFailures.length === relayCount &&
+      !hasSearchUnsupportedFailure
+    ) {
+      throw primaryFailures[0];
     }
     return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
   } catch (err) {
