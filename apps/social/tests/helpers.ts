@@ -96,6 +96,40 @@ export async function clickWithDispatchFallback(
   }
 }
 
+export async function dismissOnboardingTourIfOpen(page: Page) {
+  const controls = [
+    page.getByRole('button', { name: 'Skip' }),
+    page.getByRole('button', { name: 'Skip tour' }),
+    page.getByRole('button', { name: 'Dismiss tour' }),
+    page.locator('.onboarding-dismiss'),
+    page.locator('[data-testid="onboarding-skip-btn"]')
+  ];
+
+  const overlay = page.locator('.onboarding-overlay, .onboarding-card, .onboarding-spotlight');
+
+  for (const control of controls) {
+    if (await control.isVisible({ timeout: 250 }).catch(() => false)) {
+      await control
+        .click({ timeout: 1000 })
+        .catch(() => control.dispatchEvent('click').catch(() => undefined))
+        .catch(() => undefined);
+      await overlay
+        .first()
+        .waitFor({ state: 'hidden', timeout: 2000 })
+        .catch(() => undefined);
+      return;
+    }
+  }
+
+  if (await overlay.count().catch(() => 0)) {
+    await page.keyboard.press('Escape').catch(() => undefined);
+    await overlay
+      .first()
+      .waitFor({ state: 'hidden', timeout: 1000 })
+      .catch(() => undefined);
+  }
+}
+
 const PAYMENT_MODAL_SELECTOR =
   '.payment-modal, .payment-overlay, .paywall-payment-modal, .paywall-widget-host, .zap-modal, .support-card-modal, .zap-modal-overlay';
 
@@ -378,6 +412,7 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   await signInBtn.click();
 
   await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 20000 });
+  await dismissOnboardingTourIfOpen(page);
 }
 
 export async function ensureZapPostAvailable(

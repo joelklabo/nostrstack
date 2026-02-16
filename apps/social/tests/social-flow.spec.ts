@@ -1,22 +1,13 @@
-import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 import {
+  clickWithDispatchFallback,
+  dismissOnboardingTourIfOpen,
   ensureZapPostAvailable,
   loginWithNsec as doLoginWithNsec,
-  resolveDocScreenshotPath
+  resolveDocScreenshotPath,
+  TEST_NSEC
 } from './helpers.ts';
-
-/**
- * Helper to perform nsec login and dismiss onboarding if it appears
- */
-async function loginWithNsec(page: Page, nsec: string) {
-  await doLoginWithNsec(page, nsec);
-  const skipBtn = page.getByRole('button', { name: 'Skip' });
-  if (await skipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await skipBtn.click();
-  }
-}
 
 test.describe('Social App Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -36,8 +27,7 @@ test.describe('Social App Flow', () => {
 
   test('User can login with nsec and see feed', async ({ page }) => {
     // 1. Login with NSEC and dismiss onboarding
-    const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await loginWithNsec(page, validNsec);
+    await doLoginWithNsec(page, TEST_NSEC);
 
     // Check for potential error message
     const errorMsg = page.locator('.error-msg');
@@ -75,11 +65,13 @@ test.describe('Social App Flow', () => {
     await expect(firstPost, 'Post card must be attached').toBeVisible({ timeout: 10000 });
     // Click the zap button once feed and modal are ready.
     await expect(zapBtn, 'Zap button must be interactive').toBeEnabled({ timeout: 5000 });
-    await zapBtn.click({ timeout: 10000 });
-    await expect(page.locator('.payment-modal, .zap-modal-overlay, .payment-overlay')).toBeVisible({
-      timeout: 10000
-    });
-    const overlay = page.locator('.payment-overlay, .zap-modal-overlay').first();
+    await clickWithDispatchFallback(zapBtn, { timeout: 10000, force: true });
+    const paymentSelector =
+      '.payment-modal, .payment-overlay, .paywall-payment-modal, .paywall-widget-host, .zap-modal, .support-card-modal, .zap-modal-overlay';
+    await expect(page.locator(paymentSelector)).toBeVisible({ timeout: 10000 });
+    const overlay = page
+      .locator('.payment-overlay, .zap-modal-overlay, .paywall-payment-modal, .paywall-widget-host')
+      .first();
     await expect(overlay).toBeVisible();
     const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
     expect(overlayPosition).toBe('fixed');
@@ -103,8 +95,7 @@ test.describe('Social App Flow', () => {
 
   test('Navigation to Profile, Follow, and Screenshot', async ({ page }) => {
     // Login first and dismiss onboarding
-    const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await loginWithNsec(page, validNsec);
+    await doLoginWithNsec(page, TEST_NSEC);
 
     // Click Profile - use nav-item class to be specific
     await page.locator('.nav-item', { hasText: 'Profile' }).click();
@@ -122,8 +113,7 @@ test.describe('Social App Flow', () => {
 
   test('Extended interactions: Sidebar navigation and Logout', async ({ page }) => {
     // Login and dismiss onboarding
-    const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
-    await loginWithNsec(page, validNsec);
+    await doLoginWithNsec(page, TEST_NSEC);
 
     // Verify Sidebar Buttons exist and are clickable (even if no-op)
     const nav = page.getByRole('navigation');
@@ -137,14 +127,7 @@ test.describe('Social App Flow', () => {
     await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 
     // Dismiss onboarding overlay if it appears before interacting with posts
-    const overlay = page.locator('.onboarding-overlay');
-    if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-      const skipBtn = page.getByRole('button', { name: 'Skip' });
-      if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await skipBtn.click();
-        await expect(overlay).toBeHidden({ timeout: 5000 });
-      }
-    }
+    await dismissOnboardingTourIfOpen(page);
 
     const firstPost = page.locator('[data-testid="social-event-card"]').first();
     const viewSource = firstPost.getByRole('button', { name: /View event source JSON/i });
