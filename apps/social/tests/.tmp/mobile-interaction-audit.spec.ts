@@ -211,17 +211,16 @@ test.describe('Mobile interaction audit', () => {
     await expect(overlay).toHaveClass(/is-visible/);
     await expect(page.locator('.sidebar-nav')).toHaveClass(/is-open/);
 
-    const overlayRect = await overlay.boundingBox();
-    if (!overlayRect) {
-      throw new Error('Overlay bounding box not available');
-    }
+    const overlayRect = await overlay.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.left + Math.max(24, rect.width - 24),
+        y: rect.top + 24
+      };
+    });
 
-    const clickPoint = {
-      x: Math.min(24, Math.max(12, overlayRect.width - 16)),
-      y: Math.min(24, Math.max(16, overlayRect.height - 16))
-    };
     const clickResult = await overlay
-      .click({ timeout: 2500, position: clickPoint, force: true })
+      .click({ timeout: 2500, position: overlayRect })
       .then(() => ({ ok: true }))
       .catch((error: Error) => ({ ok: false, message: error.message }));
 
