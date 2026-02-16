@@ -764,7 +764,7 @@ export function TelemetryBar() {
   }, [refresh]);
 
   return (
-    <div className="telemetry-sidebar">
+    <div className="telemetry-sidebar__content">
       {/* Block Notification - appears when new block is found */}
       {showBlockNotification && latestBlock && (
         <BlockNotification
