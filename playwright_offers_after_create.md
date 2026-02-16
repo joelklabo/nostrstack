@@ -1,0 +1,69 @@
+- generic [ref=e7]:
+  - link "Skip to main content" [ref=e8] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation "Main navigation" [ref=e9]:
+    - heading "NostrStack v1.0" [level=1] [ref=e11]:
+      - generic [ref=e12]: NostrStack
+      - generic [ref=e13]: v1.0
+    - generic [ref=e14]:
+      - button "Feed" [ref=e15] [cursor=pointer]
+      - button "Find friend" [ref=e16] [cursor=pointer]
+      - button "Offers" [ref=e17] [cursor=pointer]
+      - button "Profile" [ref=e18] [cursor=pointer]
+      - button "Settings" [ref=e19] [cursor=pointer]
+      - button "Open help and keyboard shortcuts" [ref=e20] [cursor=pointer]: Help
+    - region "Wallet and system status" [ref=e21]:
+      - status "Network and system status" [ref=e22]:
+        - generic [ref=e23]: Network
+        - generic [ref=e25]: REGTEST
+        - generic [ref=e27]: "Provider: —"
+        - generic "0 events in feed" [ref=e28]: "Events: 0"
+      - button "Exit guest mode" [ref=e29] [cursor=pointer]
+  - main [ref=e30]:
+    - generic [ref=e381]:
+      - generic [ref=e382]:
+        - generic [ref=e383]:
+          - generic [ref=e384]: BOLT12 Offers
+          - generic [ref=e385]: Create offers, copy QR codes, and request invoices.
+        - generic [ref=e386]: API ready
+      - region "Create a new offer" [ref=e387]:
+        - generic [ref=e388]:
+          - generic [ref=e389]:
+            - generic [ref=e390]: Create a new offer
+            - generic [ref=e391]:
+              - text: Any amount
+              - generic [ref=e409]: Expires in 3600s
+          - text: READY
+        - generic [ref=e392]:
+          - generic [ref=e393]:
+            - text: Description
+            - textbox "Description" [ref=e394]:
+              - /placeholder: Monthly update newsletter
+              - text: test offer
+          - generic [ref=e395]:
+            - text: Amount (msat)
+            - textbox "Amount (msat)" [ref=e396]:
+              - /placeholder: Leave blank for variable amount
+              - text: abc
+          - generic [ref=e397]:
+            - text: Label
+            - textbox "Label" [ref=e398]:
+              - /placeholder: subscription-tier-1
+              - text: label1
+          - generic [ref=e399]:
+            - text: Issuer
+            - textbox "Issuer" [ref=e400]:
+              - /placeholder: nostrstack.io
+              - text: alice@example.com
+          - generic [ref=e401]:
+            - text: Expires in (seconds)
+            - textbox "Expires in (seconds)" [ref=e402]:
+              - /placeholder: "3600"
+              - text: "3600"
+        - group "Offer creation actions" [ref=e403]:
+          - button "Create new BOLT12 offer" [ref=e404]: Create Offer
+          - alert [ref=e410]: HTTP 404
+      - region "Created offers" [ref=e405]:
+        - generic [ref=e406]:
+          - heading "No offers yet" [level=3] [ref=e407]
+          - paragraph [ref=e408]: Create an offer above to generate the QR and start accepting subscriptions.

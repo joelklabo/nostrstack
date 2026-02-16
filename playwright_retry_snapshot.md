@@ -1,0 +1,56 @@
+- generic [ref=e7]:
+  - link "Skip to main content" [ref=e8] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation "Main navigation" [ref=e9]:
+    - heading "NostrStack v1.0" [level=1] [ref=e11]:
+      - generic [ref=e12]: NostrStack
+      - generic [ref=e13]: v1.0
+    - generic [ref=e14]:
+      - button "Feed" [ref=e15] [cursor=pointer]
+      - button "Find friend" [ref=e16] [cursor=pointer]
+      - button "Offers" [ref=e17] [cursor=pointer]
+      - button "Profile" [ref=e18] [cursor=pointer]
+      - button "Settings" [ref=e19] [cursor=pointer]
+      - button "Open help and keyboard shortcuts" [ref=e20] [cursor=pointer]: Help
+    - region "Wallet and system status" [ref=e21]:
+      - status "Network and system status" [ref=e22]:
+        - generic [ref=e23]: Network
+        - generic [ref=e25]: REGTEST
+        - generic [ref=e27]: "Provider: —"
+        - generic "0 events in feed" [ref=e28]: "Events: 0"
+      - button "Exit guest mode" [ref=e29] [cursor=pointer]
+  - main [ref=e30]:
+    - region "Live feed" [ref=e31]:
+      - generic [ref=e32]:
+        - heading "Live Feed 3 relays connected" [level=2] [ref=e33]:
+          - text: Live Feed
+          - generic "3 relays connected" [ref=e34]: "3"
+        - group "Feed filters" [ref=e36]:
+          - button "Show all posts" [ref=e37] [cursor=pointer]: All
+          - button "Show posts from people you follow" [disabled] [ref=e38]: Following
+          - button "Show trending posts from last 4 hours" [pressed] [ref=e39] [cursor=pointer]: Trending 4h
+          - button "Search posts and profiles" [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]: 🔍
+            - text: Search
+          - button "Showing latest posts, click for chronological" [pressed] [ref=e42] [cursor=pointer]: Latest
+          - button "Spam filter disabled, click to enable" [ref=e43] [cursor=pointer]:
+            - generic [ref=e44]: 🛡️
+            - text: "Off"
+      - generic [ref=e47]: "ACCESS_DENIED: User not authenticated."
+      - region "Find a friend to tip" [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e50]: Find a friend to tip
+          - generic [ref=e51]: Paste an npub, nprofile, or NIP-05 address to jump to their profile.
+        - button "Find a friend to tip" [ref=e52] [cursor=pointer]: Find friend
+      - region "Support Nostrstack" [ref=e53]:
+        - generic [ref=e54]:
+          - generic [ref=e55]: ⚡
+          - generic [ref=e56]: Support Nostrstack
+          - generic [ref=e57]: Help keep Nostrstack running! Your support helps cover hosting costs.
+        - generic [ref=e58]:
+          - button "Support Nostrstack with a zap" [ref=e59] [cursor=pointer]: Send sats
+          - button "Dismiss" [ref=e60] [cursor=pointer]: ×
+      - status "Loading posts" [ref=e61]:
+        - article [ref=e62]
+        - article [ref=e77]
+        - article [ref=e92]
