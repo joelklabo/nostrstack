@@ -22,3 +22,10 @@ GEMINI.md
 CONTRIBUTING.md
 packages/create-nostrstack-site/**
 **/test-results/**
+playwright-*.md
+page-*.md
+thread-*.md
+find-friend*.md
+search-*.md
+home-*.md
+qa-*.md
