@@ -229,6 +229,15 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
     [apiBase, enableRegtestPay, handleOpenThread]
   );
 
+  const estimatePostHeight = useCallback(
+    (index: number) => estimatePostRowHeight(filteredPosts[index]),
+    [filteredPosts]
+  );
+
+  const feedRowHeightCacheKey = useMemo(() => {
+    return `feed-screen-posts-v1::mode=${sortMode}::filter=${spamFilterEnabled ? 'on' : 'off'}::len=${filteredPosts.length}`;
+  }, [sortMode, spamFilterEnabled, filteredPosts.length]);
+
   // Extract key for each post
   const getPostKey = useCallback((post: Event) => post.id, []);
 
@@ -286,8 +295,8 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         items={filteredPosts}
         getItemKey={getPostKey}
         renderItem={renderPostItem}
-        rowHeight={(index) => estimatePostRowHeight(filteredPosts[index])}
-        rowHeightCacheKey="feed-screen-posts-v1"
+        rowHeight={estimatePostHeight}
+        rowHeightCacheKey={feedRowHeightCacheKey}
         onLoadMore={hasMore ? loadMore : undefined}
         hasMore={hasMore}
         loading={feedLoading}

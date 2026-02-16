@@ -9,12 +9,23 @@ const PAYWALL_SLOT = 170;
 const ACTION_PANEL_HEIGHT = 88;
 const MIN_ROW_HEIGHT = 260;
 const MAX_POST_ROW_HEIGHT = 980;
+const BREAK_COUNT_GROWTH_BONUS = 10;
 
 const URL_MATCHER = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 const MEDIA_URL_PATTERN = /\.(?:jpe?g|png|gif|webp|mp4|webm|mov|mkv)(?:[?#].*)?$/i;
 const PAYWALL_TAG = 'paywall';
 
 const normalizeContent = (content: string | undefined): string => (content ?? '').trim();
+const estimateLinesFromBreaks = (content: string): number => {
+  const lines = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  if (!lines.length) return 1;
+
+  return lines.reduce((total, line) => {
+    const trimmed = line.trim();
+    const estimatedWrappedLines = Math.max(1, Math.ceil(trimmed.length / CHARS_PER_LINE));
+    return total + estimatedWrappedLines;
+  }, 0);
+};
 
 export const estimatePostRowHeight = (post: Event | undefined): number => {
   if (!post) {
@@ -23,8 +34,13 @@ export const estimatePostRowHeight = (post: Event | undefined): number => {
 
   const content = normalizeContent(post.content);
   const contentLength = content.length;
-  const estimatedLines = Math.max(1, Math.ceil(contentLength / CHARS_PER_LINE));
-  const textLines = Math.min(MAX_TEXT_LINES, estimatedLines);
+  const estimatedLinesByLength = Math.max(1, Math.ceil(contentLength / CHARS_PER_LINE));
+  const estimatedLinesByBreaks = estimateLinesFromBreaks(content);
+  const textLines = Math.min(
+    MAX_TEXT_LINES,
+    Math.max(estimatedLinesByLength, estimatedLinesByBreaks)
+  );
+  const breakLineBuffer = Math.min(BREAK_COUNT_GROWTH_BONUS, textLines);
 
   const urls = content.match(URL_MATCHER) ?? [];
   const hasLink = urls.length > 0;
@@ -46,6 +62,7 @@ export const estimatePostRowHeight = (post: Event | undefined): number => {
         linkBonus +
         mediaBonus +
         paywallBonus +
+        breakLineBuffer * 8 +
         ACTION_PANEL_HEIGHT
     )
   );

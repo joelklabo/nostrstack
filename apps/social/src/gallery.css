@@ -52,6 +52,13 @@
   --ns-top-zaps-slot-height: 1.875rem;
   --ns-link-preview-slot-height: 9.25rem;
   --ns-event-card-min-height: 180px;
+  --ns-app-vh: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --ns-app-vh: 100dvh;
+  }
 }
 
 /* ===== BASE STYLES ===== */
@@ -354,7 +361,8 @@ body {
 .social-layout {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 320px;
-  min-height: 100dvh;
+  min-height: var(--ns-app-vh);
+  height: var(--ns-app-vh);
   background: var(--ns-color-bg-default);
 
   /* Subtle texture for depth */
@@ -369,8 +377,11 @@ body {
 .sidebar-nav {
   position: sticky;
   top: 0;
-  height: 100dvh;
+  min-width: 0;
+  height: 100%;
   overflow-y: auto;
+  width: 100%;
+  min-height: 0;
 
   /* Elegant divider - subtle shadow instead of harsh line */
   border-right: none;
@@ -785,6 +796,8 @@ body {
  */
 .feed-container {
   min-width: 0;
+  min-height: 0;
+  scrollbar-gutter: stable;
 
   /* Generous padding - let content breathe */
   padding: var(--ns-space-6) var(--ns-space-8);
@@ -1114,7 +1127,10 @@ body {
 
   /* Generous padding for data to breathe */
   padding: var(--ns-space-6);
-  height: 100dvh;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
   position: sticky;
   top: 0;
   overflow-y: auto;
