@@ -31,7 +31,9 @@ export async function expectRelayMode(page: Page, mode: 'real' | 'mock') {
     await expect(page.locator(selector)).toBeVisible({ timeout: 12000 });
   } catch (err) {
     if (mode === 'mock') {
-      const relayInput = page.locator('input[placeholder="mock or wss://relay1,wss://relay2"]').first();
+      const relayInput = page
+        .locator('input[placeholder="mock or wss://relay1,wss://relay2"]')
+        .first();
       await relayInput.fill('mock');
       await page.waitForTimeout(300); // allow remount
       await expect(page.locator(selector)).toBeVisible({ timeout: 12000 });
@@ -255,20 +257,27 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   if (alreadyIn) return;
 
   // Wait for login screen elements to be available
-  await expect(page.locator('.terminal-title').first()).toBeVisible({ timeout: 15000 });
+  const loginView = page.locator('.login-title').first();
+  const appHeader = page.locator('.sidebar-title').first();
+  const alreadyLoggedIn = appHeader.isVisible({ timeout: 15000 }).catch(() => false);
+  const onLoginScreen = loginView.isVisible({ timeout: 15000 }).catch(() => false);
+  const ready = await Promise.race([alreadyLoggedIn, onLoginScreen]);
+  if (!(await ready)) {
+    throw new Error('Unable to detect login screen or logged-in shell after navigation');
+  }
 
   // Sometimes the button is not immediately clickable if content is shifting
   const manual = page.getByText('Enter nsec manually');
   // Use .first() in case of duplicates (e.g. mobile vs desktop layouts)
   await manual.first().waitFor({ state: 'visible', timeout: 10000 });
   await manual.first().click();
-  
+
   const input = page.getByPlaceholder('nsec1...');
   await input.waitFor({ state: 'visible', timeout: 5000 });
   await input.fill(nsec);
-  
+
   const signInBtn = page.getByRole('button', { name: 'Sign in' });
   await signInBtn.click();
-  
+
   await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20000 });
 }

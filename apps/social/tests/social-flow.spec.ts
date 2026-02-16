@@ -1,17 +1,13 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-import { resolveDocScreenshotPath } from './helpers.ts';
+import { loginWithNsec as doLoginWithNsec, resolveDocScreenshotPath } from './helpers.ts';
 
 /**
  * Helper to perform nsec login and dismiss onboarding if it appears
  */
 async function loginWithNsec(page: Page, nsec: string) {
-  await page.getByText('Enter nsec manually').click();
-  await page.getByPlaceholder('nsec1...').fill(nsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  // Wait for navigation and dismiss onboarding if it appears
-  await page.waitForTimeout(500);
+  await doLoginWithNsec(page, nsec);
   const skipBtn = page.getByRole('button', { name: 'Skip' });
   if (await skipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await skipBtn.click();

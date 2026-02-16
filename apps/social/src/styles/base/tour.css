@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   background: var(--ns-color-overlay-strong);
-  pointer-events: auto;
+  pointer-events: none;
   z-index: 99999;
   transition: opacity var(--ns-duration-moderate) var(--ns-easing-ease);
   backdrop-filter: blur(4px);
