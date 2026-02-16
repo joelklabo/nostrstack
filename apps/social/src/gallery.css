@@ -178,6 +178,10 @@ body {
   outline-offset: 2px;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
 .image-container {
   display: block;
 }
