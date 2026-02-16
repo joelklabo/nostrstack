@@ -131,7 +131,6 @@ jobs:
 
   smoke-lnbits:
     name: LNbits Smoke Test
-    if: secrets.LNBITS_STG_ADMIN_KEY != ''
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -144,11 +143,15 @@ jobs:
           LNBITS_URL: https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io
           LNBITS_ADMIN_KEY: ${{ secrets.LNBITS_STG_ADMIN_KEY }}
           AMOUNT: 100
-        run: ./scripts/lnbits-smoke.sh "${AMOUNT:-100}"
+        run: |
+          if [ -z "${LNBITS_ADMIN_KEY:-}" ]; then
+            echo "Skipping LNbits smoke test because LNBITS_STG_ADMIN_KEY is not set"
+            exit 0
+          fi
+          ./scripts/lnbits-smoke.sh "${AMOUNT:-100}"
 
   real-relay-comment:
     name: Real Relay Comment (opt-in)
-    if: secrets.REAL_RELAY != '' && secrets.NIP07_PROFILE_B64 != ''
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -174,19 +177,28 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Restore NIP-07 profile
+        env:
+          NIP07_PROFILE_B64: ${{ secrets.NIP07_PROFILE_B64 }}
         run: |
+          if [ -z "${NIP07_PROFILE_B64:-}" ]; then
+            echo "Skipping real relay comment test because NIP07_PROFILE_B64 is not set"
+            exit 0
+          fi
           echo "$NIP07_PROFILE_B64" | base64 -d > /tmp/nip07-profile.zip
           mkdir -p /tmp/nip07-profile
           unzip -q /tmp/nip07-profile.zip -d /tmp/nip07-profile
-        env:
-          NIP07_PROFILE_B64: ${{ secrets.NIP07_PROFILE_B64 }}
 
       - name: Real relay comment test
-        working-directory: apps/social
         env:
           REAL_RELAY: ${{ secrets.REAL_RELAY }}
           VITE_NOSTRSTACK_RELAYS: ${{ secrets.REAL_RELAY }}
           VITE_API_BASE_URL: mock
           VITE_NOSTRSTACK_HOST: mock
           CHROMIUM_USER_DATA_DIR: /tmp/nip07-profile
-        run: pnpm exec playwright test tests/comment-relay.spec.ts --project=chromium --retries=2 --reporter=line
+        working-directory: apps/social
+        run: |
+          if [ -z "${REAL_RELAY:-}" ]; then
+            echo "Skipping real relay comment test because REAL_RELAY is not set"
+            exit 0
+          fi
+          pnpm exec playwright test tests/comment-relay.spec.ts --project=chromium --retries=2 --reporter=line
