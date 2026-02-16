@@ -8,7 +8,7 @@ DEV_ORIGIN?=https://localhost:3001
 DEV_DB?=file:./dev.db
 DEV_LNBITS_URL?=http://localhost:15001
 
-.PHONY: deps deps-prod build lint test typecheck check dev dev-api dev-social dev-gallery dev-demo e2e deploy-staging deploy-prod
+.PHONY: deps deps-prod build lint test test-ci typecheck check ci dev dev-api dev-social dev-gallery dev-demo e2e help deploy-staging deploy-prod
 
 deps:
 	$(PNPM) install
@@ -25,8 +25,16 @@ lint:
 test:
 	$(PNPM) test
 
+test-ci:
+	$(PNPM) test:ci
+
 typecheck:
 	$(PNPM) typecheck
+
+ci:
+	$(PNPM) lint
+	$(PNPM) typecheck
+	$(PNPM) test:ci
 
 check: lint test typecheck
 
@@ -55,6 +63,20 @@ dev-demo:
 
 e2e:
 	$(PNPM) --filter api test:e2e
+
+help:
+	@echo "Core workflows:"
+	@echo "  make dev            - Start API + social with HTTPS and shared logs"
+	@echo "  make dev-api        - Start API only"
+	@echo "  make dev-social     - Start social only"
+	@echo ""
+	@echo "Quality gates:"
+	@echo "  make lint           - pnpm lint (all workspace lint checks)"
+	@echo "  make typecheck      - pnpm typecheck"
+	@echo "  make test           - pnpm test"
+	@echo "  make test-ci        - pnpm test:ci"
+	@echo "  make check          - lint + test + typecheck"
+	@echo "  make ci             - lint + typecheck + test:ci"
 
 deploy-staging:
 	gh workflow run azure-deploy-staging.yml --repo $(REPO)

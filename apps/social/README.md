@@ -1,4 +1,4 @@
-# NostrStack Social Network (Gallery)
+# NostrStack Social App
 
 A "Nerd Hacker" aesthetic social network client built on Nostr and Lightning, serving as the flagship implementation of the NostrStack SDK.
 
@@ -17,7 +17,7 @@ A "Nerd Hacker" aesthetic social network client built on Nostr and Lightning, se
 ### Prerequisites
 
 - Node.js 20+
-- PNPM 9+
+- PNPM 10+
 
 ### Run Locally
 
@@ -25,16 +25,16 @@ A "Nerd Hacker" aesthetic social network client built on Nostr and Lightning, se
 pnpm dev
 ```
 
-Runs at `http://localhost:4173`. Connects to `http://localhost:3001` (API) by default.
+Runs at `https://localhost:4173`. Connects to `https://localhost:3001` (API) by default.
 
 ### Regtest zaps (local)
 
 To pay zap invoices using the regtest wallet:
 
-1) Start the regtest stack and API (see `docs/local-demo.md`).
-2) Ensure the API has `ENABLE_REGTEST_PAY=true`.
-3) Run the gallery with `VITE_ENABLE_REGTEST_PAY=true` and `VITE_API_BASE_URL` pointing to the API.
-4) Click **ZAP** and choose **PAY_REGTEST** in the modal.
+1. Start the regtest stack and API (see `docs/local-demo.md`).
+2. Ensure the API has `ENABLE_REGTEST_PAY=true`.
+3. Run the social app with `VITE_ENABLE_REGTEST_PAY=true` and `VITE_API_BASE_URL` pointing to the API.
+4. Click **ZAP** and choose **PAY_REGTEST** in the modal.
 
 ### Build
 

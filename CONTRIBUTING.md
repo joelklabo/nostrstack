@@ -90,6 +90,8 @@ For detailed guidelines, patterns, and checklists, see:
 
 - **[docs/accessibility.md](docs/accessibility.md)** - Complete accessibility documentation
 - **[apps/social/tests/README.md](apps/social/tests/README.md)** - Testing guide
+- **[docs/commands.md](docs/commands.md)** - Canonical command reference
+- **[docs/project-structure.md](docs/project-structure.md)** - Workspace map and ownership
 
 ## License
 

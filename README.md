@@ -8,9 +8,11 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 - `apps/social` – Main social app (Vite + React app for user flows)
 - `apps/docs` – Documentation app
 - `packages/sdk` – Typed client for the API
-- `packages/embed` – Browser bundle and widgets
+- `packages/widgets` – Browser bundle and widgets
 - `packages/config` – Shared lint/tsconfig
 - `deploy/azure` – Bicep + GH Actions pipeline for Azure Container Apps
+- `docs/commands.md` – Command reference for local + CI workflows
+- `docs/project-structure.md` – Workspace map and ownership
 
 ## Speckit
 
