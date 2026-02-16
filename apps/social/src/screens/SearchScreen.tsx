@@ -70,6 +70,7 @@ export function SearchScreen() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
+  const lastProfileLookupKey = useRef<string | null>(null);
 
   const NOTES_PAGE_SIZE = 20;
 
@@ -225,11 +226,16 @@ export function SearchScreen() {
       setFetchedProfile(null);
       setProfileLookupError(null);
       setIsProfileLookupLoading(false);
+      lastProfileLookupKey.current = null;
       return;
     }
 
     const controller = new AbortController();
-    setFetchedProfile(null);
+    const isRetryForCurrentProfile = lastProfileLookupKey.current === npub;
+    if (!isRetryForCurrentProfile) {
+      setFetchedProfile(null);
+    }
+    lastProfileLookupKey.current = npub;
     setProfileLookupError(null);
     setIsProfileLookupLoading(true);
 
