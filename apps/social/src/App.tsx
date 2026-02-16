@@ -14,6 +14,7 @@ import { useImmersiveScroll } from './hooks/useImmersiveScroll';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './layout/Sidebar';
 import { TelemetryBar } from './layout/TelemetryBar';
+import { SearchScreen } from './screens/SearchScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
@@ -34,9 +35,6 @@ const NotFoundScreen = lazy(() =>
 );
 const ProfileScreen = lazy(() =>
   import('./screens/ProfileScreen').then((m) => ({ default: m.ProfileScreen }))
-);
-const SearchScreen = lazy(() =>
-  import('./screens/SearchScreen').then((m) => ({ default: m.SearchScreen }))
 );
 const SettingsScreen = lazy(() =>
   import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
@@ -138,7 +136,11 @@ function AppShell() {
   }, []);
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
-  const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
+  const isSearchRoute =
+    pathname === '/search' ||
+    pathname === '/search/' ||
+    pathname.startsWith('/search?') ||
+    pathname.startsWith('/search/?');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;

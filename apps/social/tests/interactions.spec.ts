@@ -67,4 +67,15 @@ test.describe('App Interactions', () => {
     await expect(page.getByRole('button', { name: 'Settings' })).toHaveClass(/active/);
     await expect(page.getByRole('heading', { name: 'System Settings' })).toBeVisible();
   });
+
+  test('search route is directly reachable', async ({ page }) => {
+    await page.goto('/search');
+    await expect(page.getByRole('button', { name: 'Find friend' })).toHaveClass(/active/);
+    await expect(page.getByRole('heading', { name: 'Discovery' })).toBeVisible();
+    await expect(page.getByRole('search')).toBeVisible();
+
+    await page.getByRole('navigation').getByRole('button', { name: 'Feed' }).click();
+    await waitForFeedSurface(page);
+    await expect(page.getByRole('button', { name: 'Feed' })).toHaveClass(/active/);
+  });
 });
