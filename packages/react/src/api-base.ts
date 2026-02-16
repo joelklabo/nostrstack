@@ -6,24 +6,10 @@ export type ApiBaseResolution = {
   isRelative: boolean;
 };
 
-const LOCALHOST_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
-
-function isLocalhost(hostname: string) {
-  if (!hostname) return false;
-  if (LOCALHOST_HOSTS.has(hostname)) return true;
-  return hostname.endsWith('.localhost');
-}
-
 function preferSecureBase(base: string) {
   if (typeof window === 'undefined') return base;
   if (window.location.protocol !== 'https:') return base;
   if (!/^http:\/\//i.test(base)) return base;
-  try {
-    const url = new URL(base);
-    if (!isLocalhost(url.hostname)) return base;
-  } catch {
-    return base;
-  }
   return base.replace(/^http:/i, 'https:');
 }
 
