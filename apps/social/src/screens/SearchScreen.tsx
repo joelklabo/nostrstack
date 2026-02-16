@@ -98,6 +98,22 @@ export function SearchScreen() {
     return 'Paste an identifier or search keywords.';
   }, [status, error]);
 
+  const canRetryIdentity = useCallback(() => {
+    if (status !== 'error' || !error) return false;
+    return ![
+      'lightning_only',
+      'invalid_format',
+      'decode_failed',
+      'nip05_not_found',
+      'nip05_invalid'
+    ].includes(error.code);
+  }, [error, status]);
+
+  const retryIdentityLookup = useCallback(() => {
+    if (!canRetryIdentity()) return;
+    void resolveNow(query);
+  }, [canRetryIdentity, query, resolveNow]);
+
   const handleNotesSearch = useCallback(
     async (q: string) => {
       setNotesLoading(true);
@@ -427,7 +443,18 @@ export function SearchScreen() {
         error.code !== 'lightning_only' &&
         error.code !== 'invalid_format' && (
           <Alert tone="danger" title="Identity resolution failed" role="alert">
-            {error.message}
+            <p>{error.message}</p>
+            {canRetryIdentity() && (
+              <button
+                type="button"
+                className="action-btn"
+                onClick={retryIdentityLookup}
+                aria-label="Retry identity lookup"
+                style={{ marginTop: '0.5rem' }}
+              >
+                Retry lookup
+              </button>
+            )}
           </Alert>
         )}
 
@@ -485,17 +512,15 @@ export function SearchScreen() {
           <div className="search-empty" role="status" aria-live="polite">
             <h3 className="search-empty__title">No matching notes found</h3>
             <p className="search-empty__text">{notesError}</p>
-            {notesSearchTimedOut && (
-              <div style={{ marginTop: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="action-btn"
-                  onClick={() => void handleNotesSearch(lastSearchQuery)}
-                >
-                  Retry search
-                </button>
-              </div>
-            )}
+            <div style={{ marginTop: '0.75rem' }}>
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => void handleNotesSearch(lastSearchQuery || query)}
+              >
+                Retry search
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -9,8 +9,8 @@ import { Alert } from '@nostrstack/ui';
 import {
   applyNsTheme,
   createNsBrandTheme,
-  nsBrandPresets,
-  type NsBrandPreset
+  type NsBrandPreset,
+  nsBrandPresets
 } from '@nostrstack/widgets';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -98,11 +98,17 @@ function getInitialBrandPreset(): NsBrandPreset {
 
 function LoadingFallback({
   message,
-  includeRetry = false
+  includeRetry = false,
+  retryLabel = 'Retry',
+  onRetry
 }: {
   message: string;
   includeRetry?: boolean;
+  retryLabel?: string;
+  onRetry?: () => void;
 }) {
+  const handleRetry = onRetry ?? (() => window.location.reload());
+
   return (
     <div
       className={`social-loading-state${includeRetry ? ' social-loading-state--with-retry' : ''}`}
@@ -112,12 +118,8 @@ function LoadingFallback({
     >
       <span className="social-loading-state__message">{message}</span>
       {includeRetry && (
-        <button
-          type="button"
-          className="social-loading-state__retry"
-          onClick={() => window.location.reload()}
-        >
-          Retry
+        <button type="button" className="social-loading-state__retry" onClick={handleRetry}>
+          {retryLabel}
         </button>
       )}
     </div>
@@ -368,7 +370,7 @@ function AppShell() {
   if (isLoading) {
     return (
       <main className="feed-container social-loading-main" id="main-content" role="main">
-        <LoadingFallback message="Loading NostrStack..." includeRetry />
+        <LoadingFallback message="Loading NostrStack..." />
       </main>
     );
   }
@@ -376,7 +378,11 @@ function AppShell() {
   if (!pubkey && !isGuest) {
     return (
       <main className="feed-container" id="main-content" role="main">
-        <Suspense fallback={<LoadingFallback message="Loading..." includeRetry />}>
+        <Suspense
+          fallback={
+            <LoadingFallback message="Loading..." includeRetry retryLabel="Retry sign-in screen" />
+          }
+        >
           <LoginScreen />
         </Suspense>
       </main>
@@ -520,7 +526,15 @@ function AppShell() {
         onLogout={handleLogout}
       />
       <main className="feed-container" id="main-content" role="main">
-        <Suspense fallback={<LoadingFallback message="Loading..." includeRetry />}>
+        <Suspense
+          fallback={
+            <LoadingFallback
+              message={`Loading ${currentView} route...`}
+              includeRetry
+              retryLabel="Retry current route"
+            />
+          }
+        >
           {profileRouteError && (
             <Alert tone="danger" title="Routing Error">
               Invalid profile id. Showing your current view instead.
