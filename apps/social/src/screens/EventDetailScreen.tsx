@@ -47,6 +47,22 @@ type RepliesState = {
   source?: 'api' | 'relay';
 };
 
+function resolveEventPageTitle(target: Target | null, fallback?: string | null) {
+  if (!target) {
+    return fallback ?? 'Event';
+  }
+  if (target.type === 'event') {
+    return 'Note';
+  }
+  if (target.type === 'profile') {
+    return 'Profile';
+  }
+  if (target.type === 'address') {
+    return `Kind ${target.kind}`;
+  }
+  return fallback ?? 'Event';
+}
+
 const FALLBACK_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
 const REQUEST_TIMEOUT_MS = 8000;
 const REPLY_PAGE_LIMIT = 50;
@@ -607,6 +623,10 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     repliesState.hasMore &&
     Boolean(repliesState.nextCursor) &&
     !repliesState.isLoadingMore;
+  const eventPageTitle = useMemo(
+    () => resolveEventPageTitle(target, state.targetLabel),
+    [state.targetLabel, target]
+  );
 
   const loadMoreReplies = async () => {
     if (!canLoadMore || !repliesState.nextCursor) return;
@@ -657,7 +677,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     <div className="nostr-event-page">
       <header className="nostr-event-header">
         <div>
-          <div className="nostr-event-title">{state.targetLabel ?? 'Event'}</div>
+          <div className="nostr-event-title">{eventPageTitle}</div>
           <div className="nostr-event-subtitle">Rendered by NostrStack</div>
         </div>
         <div className="nostr-event-actions">
@@ -698,7 +718,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           </div>
         )}
         {state.status === 'error' && (
-          <Alert tone="danger" title="Event Error" role="alert">
+          <Alert tone="danger" title="ERROR: Event Error" role="alert">
             <div className="nostr-event-error">
               <span>{state.error}</span>
               <button className="action-btn" type="button" onClick={handleRetry}>

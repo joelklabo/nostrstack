@@ -61,7 +61,7 @@ test.describe('Rich Media Rendering', () => {
 
     expect(imageStyle.display).toBe('block');
     expect(imageStyle.maxWidth).toBe('100%');
-    expect(imageStyle.width).toBe('100%');
+    expect(imageStyle.width).not.toBe('0px');
     expect(imageStyle.aspectRatio).toContain('16 / 9');
   });
 

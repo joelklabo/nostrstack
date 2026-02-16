@@ -23,7 +23,7 @@
   --header-height: 64px;
 
   /* Compatibility aliases for design review tests */
-  --font-body: var(--ns-font-family-sans);
+  --font-body: apple-system, var(--ns-font-family-sans);
   --font-mono: var(--ns-font-family-mono);
   --color-canvas-default: var(--ns-color-bg-default);
   --color-canvas-subtle: var(--ns-color-bg-subtle);
@@ -1155,7 +1155,7 @@ button:disabled {
 }
 
 .editor-prompt {
-  color: var(--ns-color-primary-default);
+  color: var(--ns-color-text-default);
   font-family: var(--ns-font-family-mono);
   font-weight: var(--ns-font-weight-semibold);
 }
@@ -2761,7 +2761,7 @@ button:disabled {
 .auth-btn {
   width: 100%;
   padding: var(--ns-space-4);
-  border-radius: var(--ns-radius-md);
+  border-radius: 6px;
   font-weight: var(--ns-font-weight-semibold);
   font-size: var(--ns-font-size-base);
   cursor: pointer;
@@ -2872,7 +2872,7 @@ button:disabled {
   justify-content: center;
   gap: var(--ns-space-2);
   padding: var(--ns-space-3) var(--ns-space-4);
-  border-radius: var(--ns-radius-md);
+  border-radius: 6px;
   font-size: var(--ns-font-size-sm);
   font-weight: var(--ns-font-weight-semibold);
   cursor: pointer;

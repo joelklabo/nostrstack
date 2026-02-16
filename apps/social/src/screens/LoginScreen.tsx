@@ -317,7 +317,7 @@ export function LoginScreen() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1 className="login-title">NostrStack</h1>
+          <h1 className="login-title">Sign in to NostrStack</h1>
           <p className="login-subtitle">Connect your identity to get started</p>
         </div>
 
@@ -485,7 +485,7 @@ export function LoginScreen() {
       </div>
 
       {lnurlModalOpen && (
-        <div className="ns-dialog-overlay">
+        <div className="ns-dialog-overlay lnurl-auth-modal">
           <div
             ref={lnurlModalRef}
             className="ns-dialog"
@@ -496,7 +496,11 @@ export function LoginScreen() {
           >
             <div className="ns-dialog__header">
               <div>
-                <div id="lnurl-title" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+                <div
+                  id="lnurl-title"
+                  className="lnurl-auth-title"
+                  style={{ fontSize: '1.1rem', fontWeight: 800 }}
+                >
                   Lightning Login
                 </div>
                 <div id="lnurl-subtitle" style={{ fontSize: '0.9rem', opacity: 0.7 }}>
