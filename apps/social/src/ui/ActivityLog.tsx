@@ -503,7 +503,7 @@ export function ActivityLog({
           renderLoadingIndicator={renderLoadingIndicator}
           ariaLabel="Activity log"
           role="log"
-          itemRole="article"
+          itemRole="listitem"
           ariaLive="polite"
           ariaRelevant="additions"
         />

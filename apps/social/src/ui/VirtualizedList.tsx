@@ -232,8 +232,13 @@ export function VirtualizedList<T>({
   );
 
   // Row props passed to row component
-  const resolvedItemRole =
-    itemRole ?? (role === 'list' ? 'listitem' : role === 'feed' ? 'article' : undefined);
+  const resolvedItemRole = itemRole
+    ? itemRole
+    : role === 'feed'
+      ? 'article'
+      : role === 'list' || role === 'log'
+        ? 'listitem'
+        : undefined;
 
   const rowProps: RowProps<T> = {
     items,

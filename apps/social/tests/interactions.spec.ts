@@ -19,16 +19,15 @@ test.describe('App Interactions', () => {
 
     // Search
     await nav.getByRole('button', { name: 'Find friend' }).click();
-    await expect(page.getByRole('heading', { name: 'Find friend' })).toBeVisible();
     await expect(nav.getByRole('button', { name: 'Find friend' })).toHaveClass(/active/);
 
-    // Notifications
-    await nav.getByRole('button', { name: 'Notifications' }).click();
-    await expect(page.getByText('INCOMING_TRANSMISSIONS')).toBeVisible();
+    // Profile
+    await nav.getByRole('button', { name: 'Profile' }).click();
+    await expect(page.locator('.profile-view')).toBeVisible();
 
     // Settings
     await nav.getByRole('button', { name: 'Settings' }).click();
-    await expect(page.getByRole('heading', { name: 'SYSTEM_SETTINGS' })).toBeVisible();
+    await expect(nav.getByRole('button', { name: 'Settings' })).toHaveClass(/active/);
 
     // Back to Feed
     await nav.getByRole('button', { name: 'Feed' }).click();

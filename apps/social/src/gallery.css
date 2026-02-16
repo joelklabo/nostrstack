@@ -3026,6 +3026,9 @@ body {
 
   .sidebar-overlay {
     display: block;
+    left: min(300px, 85vw);
+    width: calc(100% - min(300px, 85vw));
+    max-width: calc(100% - min(300px, 85vw));
   }
 
   .sidebar-nav {

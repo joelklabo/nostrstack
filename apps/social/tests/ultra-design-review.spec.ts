@@ -535,9 +535,9 @@ test.describe('Ultra Review: Mobile UX Patterns', () => {
     await loginWithNsec(page);
 
     // Close onboarding tour if present
-    const tourCloseBtn = page.locator('[aria-label*="Close"], [aria-label*="close"]').first();
-    if (await tourCloseBtn.isVisible().catch(() => false)) {
-      await tourCloseBtn.click();
+    const onboardingDismiss = page.locator('[data-testid="onboarding-dismiss"]');
+    if (await onboardingDismiss.isVisible().catch(() => false)) {
+      await onboardingDismiss.click();
     }
 
     // Open menu
@@ -702,7 +702,7 @@ test.describe('Ultra Review: Visual Regression Detection', () => {
   test('should capture mobile view baseline', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await loginWithNsec(page);
-    await expect(page.locator('.social-layout, main[role="main"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.social-layout').first()).toBeVisible({ timeout: 10000 });
 
     await page.screenshot({
       path: 'test-results/visual-baseline-mobile.png',

@@ -268,12 +268,12 @@ function AppShell() {
         type="button"
         className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
         tabIndex={mobileMenuOpen ? 0 : -1}
-        aria-label="Close menu"
+        aria-label="Close mobile menu"
         aria-hidden={!mobileMenuOpen}
         onClick={closeMobileMenu}
         disabled={!mobileMenuOpen}
       >
-        <span className="sr-only">Close menu</span>
+        <span className="sr-only">Close mobile menu</span>
       </button>
 
       <Sidebar
