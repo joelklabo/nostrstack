@@ -1,0 +1,62 @@
+- generic [ref=e4]:
+  - link "Skip to main content" [ref=e5] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation "Main navigation" [ref=e6]:
+    - heading "NostrStack v1.0" [level=1] [ref=e8]:
+      - generic [ref=e9]: NostrStack
+      - generic [ref=e10]: v1.0
+    - generic [ref=e11]:
+      - button "Feed" [ref=e12] [cursor=pointer]
+      - button "Find friend" [ref=e13] [cursor=pointer]
+      - button "Profile" [ref=e14] [cursor=pointer]
+      - button "Settings" [ref=e15] [cursor=pointer]
+      - button "Open help and keyboard shortcuts" [ref=e16] [cursor=pointer]: Help
+    - region "Wallet and system status" [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - img [ref=e21]
+          - text: Wallet
+        - paragraph [ref=e24]: Connecting to wallet...
+      - status "Network and system status" [ref=e25]:
+        - generic [ref=e26]: Network
+        - generic [ref=e27]:
+          - generic [ref=e28]: MAINNET
+          - generic [ref=e37]: "SOURCE: ESPLORA"
+        - generic [ref=e30]: "Provider: opennode"
+        - generic "0 events in feed" [ref=e31]: "Events: 0"
+      - button "Log out" [ref=e32] [cursor=pointer]
+  - main [ref=e33]:
+    - region "Live feed" [ref=e38]:
+      - generic [ref=e39]:
+        - heading "Live Feed 3 relays connected" [level=2] [ref=e40]:
+          - text: Live Feed
+          - generic "3 relays connected" [ref=e41]: "3"
+        - group "Feed filters" [ref=e43]:
+          - button "Show all posts" [ref=e44] [cursor=pointer]: All
+          - button "Show posts from people you follow" [disabled] [ref=e45]: Following
+          - button "Show trending posts from last 4 hours" [pressed] [ref=e46] [cursor=pointer]: Trending 4h
+          - button "Search posts and profiles" [ref=e47] [cursor=pointer]:
+            - generic [ref=e48]: 🔍
+            - text: Search
+          - button "Showing latest posts, click for chronological" [pressed] [ref=e49] [cursor=pointer]: Latest
+          - button "Spam filter disabled, click to enable" [ref=e50] [cursor=pointer]:
+            - generic [ref=e51]: 🛡️
+            - text: "Off"
+      - generic [ref=e54]: "ACCESS_DENIED: User not authenticated."
+      - region "Find a friend to tip" [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]: Find a friend to tip
+          - generic [ref=e58]: Paste an npub, nprofile, or NIP-05 address to jump to their profile.
+        - button "Find a friend to tip" [ref=e59] [cursor=pointer]: Find friend
+      - region "Support Nostrstack" [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]: ⚡
+          - generic [ref=e63]: Support Nostrstack
+          - generic [ref=e64]: Help keep Nostrstack running! Your support helps cover hosting costs.
+        - generic [ref=e65]:
+          - button "Support Nostrstack with a zap" [ref=e66] [cursor=pointer]: Send sats
+          - button "Dismiss" [ref=e67] [cursor=pointer]: ×
+      - generic "Loading posts" [ref=e68]:
+        - article [ref=e69]
+        - article [ref=e84]
+        - article [ref=e99]

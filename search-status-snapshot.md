@@ -1,0 +1,40 @@
+- generic [ref=e4]:
+  - link "Skip to main content" [ref=e5] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation "Main navigation" [ref=e6]:
+    - heading "NostrStack v1.0" [level=1] [ref=e8]:
+      - generic [ref=e9]: NostrStack
+      - generic [ref=e10]: v1.0
+    - generic [ref=e11]:
+      - button "Feed" [ref=e12] [cursor=pointer]
+      - button "Find friend" [ref=e13] [cursor=pointer]
+      - button "Profile" [ref=e14] [cursor=pointer]
+      - button "Settings" [ref=e15] [cursor=pointer]
+      - button "Open help and keyboard shortcuts" [ref=e16] [cursor=pointer]: Help
+    - region "Wallet and system status" [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - img [ref=e21]
+          - text: Wallet
+        - paragraph [ref=e24]: Connecting to wallet...
+      - status "Network and system status" [ref=e25]:
+        - generic [ref=e26]: Network
+        - generic [ref=e27]:
+          - generic [ref=e28]: MAINNET
+          - generic [ref=e69]: "SOURCE: ESPLORA"
+        - generic [ref=e30]: "Provider: opennode"
+        - generic "0 events in feed" [ref=e31]: "Events: 0"
+      - button "Log out" [ref=e32] [cursor=pointer]
+  - main [ref=e33]:
+    - generic [ref=e592]:
+      - generic [ref=e594]:
+        - heading "Discovery" [level=2] [ref=e595]
+        - paragraph [ref=e596]: Search for profiles or keywords across Nostr.
+      - search "Search Nostr" [ref=e597]:
+        - generic [ref=e598]: Search query
+        - generic [ref=e599]:
+          - searchbox "Search query" [ref=e600]: bitcoin
+          - button "Execute search" [active] [ref=e601] [cursor=pointer]: Search
+        - generic [ref=e602]: Try "bitcoin", "nostr", or an npub1...
+        - status [ref=e603]: Paste an identifier or search keywords.
+      - status [ref=e607]: Searching for notes...
