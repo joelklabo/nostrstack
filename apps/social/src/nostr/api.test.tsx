@@ -49,9 +49,7 @@ describe('getSearchRelays', () => {
     expect(relays).toEqual([
       'wss://relay.custom/',
       'wss://relay.damus.io/',
-      ...normalizedSearchRelays.filter((relay) => relay !== 'wss://relay.damus.io/'),
-      'wss://nos.lol/',
-      'wss://relay.primal.net/'
+      ...normalizedSearchRelays.filter((relay) => relay !== 'wss://relay.damus.io/')
     ]);
   });
 
@@ -64,8 +62,7 @@ describe('getSearchRelays', () => {
 
     expect(relays).toEqual([
       'wss://relay.custom/',
-      ...normalizedSearchRelays,
-      'wss://relay.primal.net/'
+      ...normalizedSearchRelays
     ]);
     expect(relays).not.toContain('wss://nos.lol/');
   });
@@ -77,9 +74,7 @@ describe('getSearchRelays', () => {
 
     expect(relays).toEqual([
       'wss://relay.custom/',
-      ...normalizedSearchRelays,
-      'wss://nos.lol/',
-      'wss://relay.primal.net/'
+      ...normalizedSearchRelays
     ]);
   });
 });
@@ -125,8 +120,7 @@ describe('fetchNostrEventFromApi', () => {
 });
 
 describe('searchNotes', () => {
-  it('returns no results when a relay query times out', async () => {
-    vi.useFakeTimers();
+  it('rejects when a relay query times out', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const pool = {
       querySync: vi.fn(() => new Promise(() => {}))
@@ -134,11 +128,9 @@ describe('searchNotes', () => {
 
     try {
       const resultPromise = searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
-      await vi.advanceTimersByTimeAsync(8_500);
-      await expect(resultPromise).resolves.toEqual([]);
+      await expect(resultPromise).rejects.toThrow('Request timed out after 8000ms');
     } finally {
       consoleSpy.mockRestore();
-      vi.useRealTimers();
     }
-  });
+  }, 12_000);
 });

@@ -1,0 +1,10 @@
+[GET] https://localhost:3003/api/bitcoin/status => [FAILED] net::ERR_FAILED
+[GET] https://localhost:3003/api/bitcoin/status => [FAILED] net::ERR_FAILED
+[GET] http://localhost:4173/ => [200] OK
+[GET] http://localhost:4173/ => [200] OK
+[GET] http://localhost:4173/@vite/client => [FAILED] net::ERR_FAILED
+[GET] http://localhost:4173/src/main.tsx => [FAILED] net::ERR_FAILED
+[GET] http://localhost:4173/@vite/client => [FAILED] net::ERR_FAILED
+[GET] http://localhost:4173/@react-refresh => [FAILED] net::ERR_FAILED
+[GET] http://localhost:4173/src/main.tsx => [FAILED] net::ERR_FAILED
+[GET] http://localhost:4173/@react-refresh => [FAILED] net::ERR_FAILED

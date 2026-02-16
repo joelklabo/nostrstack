@@ -1,0 +1,48 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - link "Skip to main content" [ref=e5] [cursor=pointer]:
+      - /url: "#main-content"
+    - navigation "Main navigation" [ref=e6]:
+      - heading "NostrStack v1.0" [level=1] [ref=e8]:
+        - generic [ref=e9]: NostrStack
+        - generic [ref=e10]: v1.0
+      - generic [ref=e11]:
+        - button "Feed" [ref=e12] [cursor=pointer]
+        - button "Find friend" [ref=e13] [cursor=pointer]
+        - button "Profile" [ref=e14] [cursor=pointer]
+        - button "Settings" [ref=e15] [cursor=pointer]
+        - button "Open help and keyboard shortcuts" [ref=e16] [cursor=pointer]: Help
+      - region "Wallet and system status" [ref=e17]:
+        - status [ref=e46]:
+          - generic [ref=e47]:
+            - img [ref=e49]
+            - text: Wallet
+          - generic [ref=e51]:
+            - paragraph [ref=e52]: Wallet unavailable
+            - paragraph [ref=e53]: Failed to connect to wallet
+            - button "Retry" [ref=e54] [cursor=pointer]
+        - status "Network and system status" [ref=e25]:
+          - generic [ref=e26]: Network
+          - generic [ref=e28]: REGTEST
+          - generic [ref=e30]: "Provider: —"
+          - generic "0 events in feed" [ref=e31]: "Events: 0"
+        - button "Exit guest mode" [ref=e32] [cursor=pointer]
+    - main [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e36]:
+          - heading "Discovery" [level=2] [ref=e37]
+          - paragraph [ref=e38]: Search for profiles or keywords across Nostr.
+        - search "Search Nostr" [ref=e39]:
+          - generic [ref=e40]: Search query
+          - generic [ref=e41]:
+            - searchbox "Search query" [ref=e42]
+            - button "Execute search" [ref=e43] [cursor=pointer]: Search
+          - generic [ref=e44]: Try "bitcoin", "nostr", or an npub1...
+          - status [ref=e45]: Paste an identifier or search keywords.
+  - button "Dismiss tour" [ref=e55] [cursor=pointer]: ×
+  - dialog "Welcome to NostrStack" [ref=e56]:
+    - generic [ref=e57]: Welcome to NostrStack
+    - generic [ref=e58]: Your gateway to the decentralized social web. Let's take a quick tour.
+    - generic [ref=e59]:
+      - button "Skip tour" [active] [ref=e60] [cursor=pointer]: Skip
+      - button "Go to next step" [ref=e61] [cursor=pointer]: Next

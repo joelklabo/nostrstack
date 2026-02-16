@@ -137,10 +137,10 @@
   transform: translateY(-1px);
 }
 
+/* Keep onboarding layers non-blocking on mobile menu interactions */
 .is-mobile-menu-open .onboarding-overlay,
 .is-mobile-menu-open .onboarding-spotlight,
-.is-mobile-menu-open .onboarding-dismiss,
-.is-mobile-menu-open .onboarding-card {
+.is-mobile-menu-open .onboarding-dismiss {
   pointer-events: none;
 }
 

@@ -130,7 +130,7 @@ export function getDefaultRelays(raw?: string | null): string[] {
 }
 
 export function getSearchRelays(rawRelays: string[] = []): string[] {
-  const merged = normalizeRelayList([...rawRelays, ...SEARCH_RELAYS, ...DEFAULT_RELAYS]);
+  const merged = normalizeRelayList([...rawRelays, ...SEARCH_RELAYS]);
   const healthy = merged.filter((relay) => relayMonitor.isHealthy(relay));
   return healthy.length ? healthy : merged;
 }
@@ -328,6 +328,6 @@ export async function searchNotes(
     );
   } catch (err) {
     console.error('[nostr] search failed', err);
-    return [];
+    throw err;
   }
 }

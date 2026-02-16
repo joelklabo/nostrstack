@@ -43,6 +43,7 @@ export function SearchScreen() {
   const [notes, setNotes] = useState<Event[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
   const [profileLookupError, setProfileLookupError] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -76,6 +77,7 @@ export function SearchScreen() {
     async (q: string) => {
       setNotesLoading(true);
       setNotesError(null);
+      setNotesSearchTimedOut(false);
       setNotes([]);
       setHasMore(false);
       setLastSearchQuery(q);
@@ -89,7 +91,13 @@ export function SearchScreen() {
         }
       } catch (err) {
         console.error('Notes search failed', err);
-        setNotesError('Search failed. Relays might not support NIP-50.');
+        const timedOut = err instanceof Error && /Request timed out after/.test(err.message);
+        setNotesSearchTimedOut(timedOut);
+        setNotesError(
+          timedOut
+            ? 'Notes search timed out. Retry to try again.'
+            : 'Search failed. Relays might not support NIP-50.'
+        );
       } finally {
         setNotesLoading(false);
       }
@@ -141,6 +149,7 @@ export function SearchScreen() {
       if (isDirectIdentitySearch(trimmed)) {
         setNotes([]);
         setNotesError(null);
+        setNotesSearchTimedOut(false);
         setHasMore(false);
         setLastSearchQuery('');
       }
@@ -423,6 +432,17 @@ export function SearchScreen() {
             aria-live="polite"
           >
             {notesError}
+            {notesSearchTimedOut && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="action-btn"
+                  onClick={() => void handleNotesSearch(query)}
+                >
+                  Retry search
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
