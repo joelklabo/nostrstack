@@ -15,8 +15,7 @@ PG_PORT="${PG_PORT:-65432}"
 PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
 SOCIAL_PORT="${SOCIAL_PORT:-4173}"
-VITE_NOSTRSTACK_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
-SOCIAL_RELAYS="${VITE_NOSTRSTACK_RELAYS}"
+SOCIAL_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }
@@ -175,8 +174,8 @@ case "$MODE" in
     }
 
     require_env_vars LN_BITS_URL LN_BITS_API_KEY TELEMETRY_ESPLORA_URL
-    [[ -n "${VITE_NOSTRSTACK_RELAYS}" ]] || VITE_NOSTRSTACK_RELAYS="wss://relay.damus.io"
-    SOCIAL_RELAYS="${VITE_NOSTRSTACK_RELAYS}"
+    [[ -n "${VITE_NOSTRSTACK_RELAYS:-}" ]] || { echo "Missing env VITE_NOSTRSTACK_RELAYS" >&2; exit 1; }
+    SOCIAL_RELAYS="$VITE_NOSTRSTACK_RELAYS"
 
     TELEMETRY_PROVIDER="${TELEMETRY_PROVIDER:-esplora}"
     ensure_postgres
