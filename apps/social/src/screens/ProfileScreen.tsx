@@ -16,6 +16,7 @@ import { paymentConfig } from '../config/payments';
 import { useContactList } from '../hooks/useContactList';
 import { useMuteList } from '../hooks/useMuteList';
 import { useRelays } from '../hooks/useRelays';
+import { copyToClipboard } from '../ui/clipboard';
 import { CopyButton } from '../ui/CopyButton';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
@@ -197,7 +198,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
   const handleCopyLightning = useCallback(async () => {
     if (!lightningAddress) return;
     try {
-      await navigator.clipboard.writeText(lightningAddress);
+      await copyToClipboard(lightningAddress);
       setLightningCopyStatus('copied');
     } catch {
       setLightningCopyStatus('error');

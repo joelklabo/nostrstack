@@ -7,6 +7,7 @@ import { memo, useCallback, useState } from 'react';
 import { useRepost } from '../hooks/useRepost';
 import { resolveRuntimeApiBase, resolveRuntimeHost } from '../utils/api-base';
 import { buildNoteLink } from '../utils/navigation';
+import { copyToClipboard } from './clipboard';
 import { EmojiReactionButton } from './EmojiReactionButton';
 import { JsonView } from './JsonView';
 import { LinkPreviews } from './LinkPreview';
@@ -96,7 +97,7 @@ export const NostrEventCard = memo(function NostrEventCard({
   const handleCopyLink = useCallback(async () => {
     try {
       const link = buildNoteLink(event.id);
-      await navigator.clipboard.writeText(link);
+      await copyToClipboard(link);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch (e) {
