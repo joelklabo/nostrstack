@@ -344,7 +344,7 @@ button:disabled {
   font-size: var(--ns-font-size-sm);
 }
 
-@media (width <= 720px) {
+@media (max-width: 720px) {
   .payment-modal {
     width: 100%;
     max-height: calc(100vh - var(--ns-space-4));
@@ -1959,7 +1959,7 @@ button:disabled {
 }
 
 /* Mobile: icon-only action buttons for better touch targets */
-@media (width <= 480px) {
+@media (max-width: 480px) {
   .ns-action-btn .label {
     /* Hide text labels on mobile, keeping icons visible */
     position: absolute;
@@ -2424,7 +2424,7 @@ button:disabled {
 }
 
 /* Responsive */
-@media (width <= 480px) {
+@media (max-width: 480px) {
   .link-preview {
     flex-direction: column;
   }
@@ -2991,7 +2991,7 @@ button:disabled {
   padding: 0.25rem 0.5rem;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .dm-back-btn {
     display: inline-flex;
   }
@@ -3140,7 +3140,7 @@ button:disabled {
  */
 
 /* Large tablets and small desktops - condensed 3-column */
-@media (width <= 1200px) and (width >= 1025px) {
+@media (max-width: 1200px) and (min-width: 1025px) {
   .social-layout {
     grid-template-columns: 260px 1fr 280px;
   }
@@ -3155,7 +3155,7 @@ button:disabled {
 }
 
 /* Tablet - elegant 2-column layout */
-@media (width <= 1024px) {
+@media (max-width: 1024px) {
   .social-layout {
     grid-template-columns: 260px 1fr;
   }
@@ -3181,7 +3181,7 @@ button:disabled {
 }
 
 /* Mobile - focused single column */
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .social-layout {
     grid-template-columns: 1fr;
 
@@ -3262,7 +3262,7 @@ button:disabled {
 }
 
 /* Small mobile - 480px */
-@media (width <= 480px) {
+@media (max-width: 480px) {
   .ns-event-card {
     padding: var(--ns-space-3);
   }
@@ -3285,7 +3285,7 @@ button:disabled {
 }
 
 /* Extra small mobile - icon-only action buttons */
-@media (width <= 360px) {
+@media (max-width: 360px) {
   .ns-event-card__actions .action-btn .action-btn__label {
     display: none;
   }
@@ -3328,7 +3328,7 @@ button:disabled {
 }
 
 /* Keep telemetry sidebar stable during immersive mode (desktop only) */
-@media (width >= 1025px) {
+@media (min-width: 1025px) {
   .telemetry-sidebar {
     /* GPU-accelerated transitions: transform + opacity only */
     transition:
@@ -3382,7 +3382,7 @@ button:disabled {
 }
 
 /* Minimum 44px touch targets for wallet action buttons on mobile */
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .wallet-action-btn {
     min-height: 44px;
     padding: var(--ns-space-3) var(--ns-space-3);
@@ -4088,7 +4088,7 @@ button:disabled {
   gap: var(--ns-space-4);
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .profile-tip-grid {
     grid-template-columns: 1fr;
   }
@@ -4320,7 +4320,7 @@ button:disabled {
 }
 
 /* Profile responsive - mobile */
-@media (width <= 480px) {
+@media (max-width: 480px) {
   .profile-header {
     flex-direction: column;
     align-items: center;
@@ -4347,7 +4347,7 @@ button:disabled {
 }
 
 /* Profile responsive - desktop */
-@media (width >= 768px) {
+@media (min-width: 768px) {
   .profile-picture {
     width: 96px;
     height: 96px;
@@ -5225,7 +5225,7 @@ a.nostr-event-chip:hover {
 }
 
 /* ===== NOTE PAGE RESPONSIVE ===== */
-@media (width <= 640px) {
+@media (max-width: 640px) {
   .nostr-event-page {
     padding: var(--ns-space-3);
   }
@@ -5314,7 +5314,7 @@ a.nostr-event-chip:hover {
   line-height: 1.5;
 }
 
-@media (width <= 640px) {
+@media (max-width: 640px) {
   .support-modal-content {
     padding: var(--ns-space-4);
   }

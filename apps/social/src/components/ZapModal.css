@@ -257,7 +257,7 @@
 }
 
 /* Responsive */
-@media (width <= 640px) {
+@media (max-width: 640px) {
   .zap-content-grid {
     grid-template-columns: 1fr;
   }

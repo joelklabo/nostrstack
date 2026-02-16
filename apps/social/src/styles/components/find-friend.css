@@ -60,7 +60,7 @@
   color: var(--ns-color-static-white);
 }
 
-@media (width <= 640px) {
+@media (max-width: 640px) {
   .find-friend-card {
     flex-direction: column;
     align-items: stretch;
