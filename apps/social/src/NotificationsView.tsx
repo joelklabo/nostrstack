@@ -152,6 +152,27 @@ export function NotificationsView() {
     return item.id;
   }, []);
 
+  const estimateNotificationHeight = useCallback(
+    (index: number) => {
+      const item = displayGroups[index];
+      if (!item) return 140;
+
+      if ('events' in item) {
+        const count = Array.isArray(item.events) ? item.events.length : 1;
+        const summaryRows = Math.min(4, Math.ceil(count / 2));
+        return 132 + summaryRows * 40;
+      }
+
+      return 132;
+    },
+    [displayGroups]
+  );
+
+  const notificationListCacheKey = useMemo(
+    () => `notifications-list-v1::len=${displayGroups.length}`,
+    [displayGroups.length]
+  );
+
   if (relaysLoading) {
     return (
       <section className="feed-stream" aria-label="Notifications loading" aria-busy={true}>
@@ -199,7 +220,8 @@ export function NotificationsView() {
       {displayGroups.length > 0 ? (
         <VirtualizedList
           items={displayGroups}
-          rowHeightCacheKey="notifications-list-v1"
+          rowHeight={estimateNotificationHeight}
+          rowHeightCacheKey={notificationListCacheKey}
           getItemKey={getNotificationKey}
           renderItem={renderNotificationItem}
           ariaLabel="Notifications list"

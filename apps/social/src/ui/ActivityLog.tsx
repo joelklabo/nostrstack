@@ -6,6 +6,12 @@ import { VirtualizedList } from './VirtualizedList';
 
 // ===== Types =====
 
+const ACTIVITY_ITEM_BASE_HEIGHT = 86;
+const ACTIVITY_DESC_LINE_HEIGHT = 18;
+const ACTIVITY_DESC_CHARS_PER_LINE = 48;
+const ACTIVITY_META_ROW_HEIGHT = 20;
+const ACTIVITY_DESC_MAX_LINES = 6;
+
 export type ActivityEventType =
   | 'block'
   | 'payment_received'
@@ -54,6 +60,27 @@ function formatRelativeTime(timestamp: number): string {
   if (delta < 3600) return `${Math.floor(delta / 60)}m ago`;
   if (delta < 86400) return `${Math.floor(delta / 3600)}h ago`;
   return `${Math.floor(delta / 86400)}d ago`;
+}
+
+function estimateMetadataLines(metadata?: Record<string, string | number>): number {
+  if (!metadata || Object.keys(metadata).length === 0) return 0;
+  return Math.min(4, Object.keys(metadata).length);
+}
+
+function estimateActivityRowHeight(event?: ActivityEvent): number {
+  if (!event) return ACTIVITY_ITEM_BASE_HEIGHT;
+
+  const descriptionLength = event.description?.trim().length ?? 0;
+  const descLines =
+    descriptionLength > 0 ? Math.ceil(descriptionLength / ACTIVITY_DESC_CHARS_PER_LINE) : 0;
+  const metaLines = estimateMetadataLines(event.metadata);
+  const descriptionHeight =
+    Math.min(descLines, ACTIVITY_DESC_MAX_LINES) * ACTIVITY_DESC_LINE_HEIGHT;
+
+  return Math.min(
+    360,
+    ACTIVITY_ITEM_BASE_HEIGHT + descriptionHeight + metaLines * ACTIVITY_META_ROW_HEIGHT
+  );
 }
 
 function getEventIcon(type: ActivityEventType): { icon: string; label: string } {
@@ -414,6 +441,16 @@ export function ActivityLog({
   // Key extractor
   const getItemKey = useCallback((event: ActivityEvent) => event.id, []);
 
+  const estimateRowHeight = useCallback(
+    (index: number) => estimateActivityRowHeight(sortedEvents[index]),
+    [sortedEvents]
+  );
+
+  const activityLogRowHeightCacheKey = useMemo(
+    () => `activity-log-v1::len=${sortedEvents.length}`,
+    [sortedEvents.length]
+  );
+
   // Loading indicator
   const renderLoadingIndicator = useCallback(
     () => (
@@ -456,7 +493,8 @@ export function ActivityLog({
       ) : (
         <VirtualizedList
           items={sortedEvents}
-          rowHeightCacheKey="activity-log-v1"
+          rowHeight={estimateRowHeight}
+          rowHeightCacheKey={activityLogRowHeightCacheKey}
           getItemKey={getItemKey}
           renderItem={renderItem}
           height={height}
