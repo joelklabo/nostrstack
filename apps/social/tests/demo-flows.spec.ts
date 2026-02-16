@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools';
+import { finalizeEvent, generateSecretKey } from 'nostr-tools';
 
 import { clickAndExpectPaymentModal, loginWithNsec, toggleTheme } from './helpers.ts';
 import { mockLnurlPay } from './helpers/lnurl-mocks.ts';
