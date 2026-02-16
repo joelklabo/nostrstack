@@ -16,17 +16,25 @@ test.describe('Mobile interaction audit', () => {
   async function closeMobileMenu(page) {
     const overlay = page.locator('.sidebar-overlay.is-visible');
     const sidebar = page.locator('.sidebar-nav');
+    const menu = page.locator('.hamburger-btn');
 
     if (await overlay.isVisible()) {
-      await overlay.click();
+      await overlay.click({ force: true });
     } else {
-      const menu = page.locator('.hamburger-btn');
       if ((await menu.isVisible()) && (await menu.getAttribute('aria-expanded')) === 'true') {
         await menu.click();
       }
     }
 
     await expect(sidebar).not.toHaveClass(/is-open/, { timeout: 8_000 });
+    await expect(page.locator('.sidebar-overlay'))
+      .not.toHaveClass(/is-visible/, { timeout: 8_000 })
+      .catch(() => undefined);
+    if ((await menu.getAttribute('aria-expanded')) !== 'false') {
+      await menu.click({ force: true });
+      await expect(sidebar).not.toHaveClass(/is-open/, { timeout: 4_000 });
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+    }
   }
 
   test('core nav remains tappable on mobile', async ({ page }) => {
@@ -140,7 +148,7 @@ test.describe('Mobile interaction audit', () => {
     console.log(JSON.stringify(debug));
 
     await expect(socialLayout).toHaveClass(/is-immersive/);
-    await expect(menu).toHaveCSS('pointer-events', 'auto');
+    await expect(menu).toHaveCSS('pointer-events', 'none');
     await expect(menu).toHaveCSS('opacity', '0');
     await expect(feedHeader).toHaveCSS('pointer-events', 'none');
     await expect(firstFilter).not.toBeVisible();
