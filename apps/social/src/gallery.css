@@ -807,16 +807,14 @@ body {
   display: flex;
   flex-direction: column;
   overflow-anchor: none;
-  contain: paint;
+  will-change: scroll-position;
 
   /* Consistent vertical rhythm */
   gap: var(--ns-space-5);
 }
 
 .virtualized-row {
-  contain: layout;
-  contain-intrinsic-size: 0 var(--ns-space-16);
-  content-visibility: auto;
+  width: 100%;
 }
 
 .feed-header {
@@ -1594,8 +1592,6 @@ body {
     box-shadow var(--ns-duration-fast) var(--ns-easing-easeInOut),
     transform var(--ns-duration-fast) var(--ns-easing-easeOut);
   overflow-anchor: none;
-  contain: layout;
-  content-visibility: auto;
 }
 
 .ns-event-card:hover {
@@ -2094,8 +2090,6 @@ body {
   gap: var(--ns-space-3);
   padding: var(--ns-space-3);
   min-height: var(--ns-link-preview-slot-height);
-  contain: layout;
-  contain-intrinsic-size: 0 var(--ns-link-preview-slot-height);
   background: var(--ns-color-bg-subtle);
   border: 1px solid var(--ns-color-border-default);
   border-radius: var(--ns-radius-md);
