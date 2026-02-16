@@ -87,24 +87,16 @@ function LoadingFallback({
 }) {
   return (
     <div
+      className={`social-loading-state${includeRetry ? ' social-loading-state--with-retry' : ''}`}
       role="status"
       aria-live="polite"
       aria-busy="true"
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        color: 'var(--ns-color-text-muted)',
-        fontFamily: 'var(--ns-font-family-sans)',
-        flexDirection: includeRetry ? 'column' : 'row',
-        gap: includeRetry ? '1rem' : 0
-      }}
     >
-      <span>{message}</span>
+      <span className="social-loading-state__message">{message}</span>
       {includeRetry && (
         <button
           type="button"
-          className="loading-retry-btn"
+          className="social-loading-state__retry"
           onClick={() => window.location.reload()}
         >
           Retry
@@ -213,20 +205,7 @@ function AppShell() {
 
   if (isLoading) {
     return (
-      <main
-        className="feed-container"
-        id="main-content"
-        role="main"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100dvh',
-          color: 'var(--ns-color-text-muted)',
-          fontFamily: 'var(--ns-font-family-sans)',
-          flexDirection: 'row'
-        }}
-      >
+      <main className="feed-container social-loading-main" id="main-content" role="main">
         <LoadingFallback message="Loading NostrStack..." includeRetry />
       </main>
     );
