@@ -97,6 +97,25 @@ describe('ZapButton', () => {
     });
   });
 
+  it('auto-dismisses unauthenticated error state', async () => {
+    vi.mocked(useAuth).mockReturnValue({ pubkey: null } as unknown as AuthContextType);
+    render(<ZapButton event={mockEvent} />);
+
+    const btn = screen.getByText('⚡ ZAP 21');
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/You must be logged in/)).toBeTruthy();
+    });
+
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/You must be logged in/)).toBeNull();
+      },
+      { timeout: 4_000 }
+    );
+  });
+
   it('resolves LNURL and requests invoice', async () => {
     const eventWithLud16 = { ...mockEvent, tags: [['lud16', 'user@domain.com']] };
 

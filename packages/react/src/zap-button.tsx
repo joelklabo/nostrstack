@@ -100,9 +100,11 @@ export function ZapButton({
   const [statusUrl, setStatusUrl] = useState<string | null>(null);
   const [regtestError, setRegtestError] = useState<string | null>(null);
   const [regtestPaying, setRegtestPaying] = useState(false);
+  const [shouldAutoDismissAuthError, setShouldAutoDismissAuthError] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const authErrorTimerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const amountSnapshotRef = useRef(amountSats);
@@ -251,11 +253,13 @@ export function ZapButton({
   const handleZap = useCallback(async () => {
     if (!pubkey) {
       setErrorMessage('Error: You must be logged in to send a zap.');
+      setShouldAutoDismissAuthError(true);
       setZapState('error');
       return;
     }
 
     setZapState('pending-lnurl');
+    setShouldAutoDismissAuthError(false);
     setErrorMessage(null);
     setRegtestError(null);
     setInvoice(null);
@@ -471,6 +475,7 @@ export function ZapButton({
     setZapState('idle');
     setErrorMessage(null);
     setRegtestError(null);
+    setShouldAutoDismissAuthError(false);
     setInvoice(null);
     setSuccessAction(null);
     setStatusUrl(null);
@@ -485,8 +490,25 @@ export function ZapButton({
       window.clearTimeout(copyTimerRef.current);
       copyTimerRef.current = null;
     }
+    if (authErrorTimerRef.current) {
+      window.clearTimeout(authErrorTimerRef.current);
+      authErrorTimerRef.current = null;
+    }
     triggerRef.current?.focus();
   }, [resetNwcPayment, zapState, invoice, emitPaymentTelemetry]);
+
+  useEffect(() => {
+    if (zapState !== 'error' || !shouldAutoDismissAuthError) return;
+    authErrorTimerRef.current = window.setTimeout(() => {
+      handleCloseZap();
+    }, 2200);
+    return () => {
+      if (authErrorTimerRef.current) {
+        window.clearTimeout(authErrorTimerRef.current);
+        authErrorTimerRef.current = null;
+      }
+    };
+  }, [handleCloseZap, shouldAutoDismissAuthError, zapState]);
 
   useEffect(() => {
     return () => {
