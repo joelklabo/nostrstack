@@ -147,6 +147,29 @@
   word-break: break-all;
 }
 
+.search-empty {
+  margin-top: var(--ns-space-4);
+  padding: var(--ns-space-4);
+  border: 1px dashed var(--ns-color-border-default);
+  border-radius: var(--ns-radius-lg);
+  background: color-mix(in oklch, var(--ns-color-bg-subtle) 70%, transparent);
+  text-align: center;
+  color: var(--ns-color-text-subtle);
+}
+
+.search-empty__title {
+  margin: 0 0 var(--ns-space-2);
+  color: var(--ns-color-text-default);
+  font-size: var(--ns-font-size-base);
+  font-weight: var(--ns-font-weight-semibold);
+}
+
+.search-empty__text {
+  margin: 0;
+  font-size: var(--ns-font-size-sm);
+  color: var(--ns-color-text-muted);
+}
+
 @media (width <= 640px) {
   .search-input-row {
     flex-direction: column;

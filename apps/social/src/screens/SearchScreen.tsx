@@ -480,24 +480,16 @@ export function SearchScreen() {
             Searching for notes...
           </div>
         )}
-        {notesError && !notesLoading && query && (
-          <div
-            style={{
-              padding: '2rem',
-              textAlign: 'center',
-              color: 'var(--ns-color-text-subtle)',
-              fontSize: '0.9rem'
-            }}
-            role="status"
-            aria-live="polite"
-          >
-            {notesError}
+        {notesError && !notesLoading && (
+          <div className="search-empty" role="status" aria-live="polite">
+            <h3 className="search-empty__title">No matching notes found</h3>
+            <p className="search-empty__text">{notesError}</p>
             {notesSearchTimedOut && (
               <div style={{ marginTop: '0.75rem' }}>
                 <button
                   type="button"
                   className="action-btn"
-                  onClick={() => void handleNotesSearch(query)}
+                  onClick={() => void handleNotesSearch(lastSearchQuery)}
                 >
                   Retry search
                 </button>
