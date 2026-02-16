@@ -1,0 +1,71 @@
+name: Check for relevant deploy changes
+description: Detect if a workflow-triggering commit touches allowed file patterns.
+
+inputs:
+  base_sha:
+    description: Base commit SHA (defaults to current SHA parent).
+    required: false
+    default: ''
+  head_sha:
+    description: Head commit SHA (defaults to current SHA).
+    required: false
+    default: ''
+  patterns:
+    description: Newline-separated shell globs to match changed paths.
+    required: true
+
+outputs:
+  should_deploy:
+    description: True when any changed file matches the patterns.
+    value: ${{ steps.changes.outputs.should_deploy }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - id: changes
+      shell: bash
+      run: |
+        set -euo pipefail
+        shopt -s globstar
+
+        BASE_SHA="${{ inputs.base_sha }}"
+        HEAD_SHA="${{ inputs.head_sha }}"
+
+        if [ -z "$BASE_SHA" ]; then
+          BASE_SHA="${GITHUB_SHA}^"
+        fi
+        if [ -z "$HEAD_SHA" ]; then
+          HEAD_SHA="$GITHUB_SHA"
+        fi
+
+        if ! git rev-parse --verify "$HEAD_SHA^{commit}" >/dev/null 2>&1; then
+          echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        if ! git rev-parse --verify "$BASE_SHA" >/dev/null 2>&1; then
+          echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+        SHOULD_DEPLOY=false
+
+        while IFS= read -r FILE; do
+          [ -z "$FILE" ] && continue
+          while IFS= read -r PATTERN; do
+            [ -z "$PATTERN" ] && continue
+            case "$FILE" in
+              $PATTERN)
+                SHOULD_DEPLOY=true
+                break 2
+                ;;
+            esac
+          done <<< "${{ inputs.patterns }}"
+        done <<< "$CHANGED_FILES"
+
+        echo "should_deploy=$SHOULD_DEPLOY" >> "$GITHUB_OUTPUT"

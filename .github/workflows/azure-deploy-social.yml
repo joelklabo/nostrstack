@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: azure-social-deploy
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-social
@@ -27,40 +31,14 @@ jobs:
     outputs:
       should_deploy: ${{ steps.changes.outputs.should_deploy }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
       - name: Check changed files
         id: changes
-        run: |
-          set -euo pipefail
-
-          BASE_SHA="${GITHUB_SHA}^"
-
-          if ! git rev-parse --verify "$GITHUB_SHA^{commit}" >/dev/null 2>&1; then
-            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if ! git rev-parse --verify "$BASE_SHA" >/dev/null 2>&1; then
-            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")"
-          SHOULD_DEPLOY="false"
-
-          while IFS= read -r FILE; do
-            case "$FILE" in
-              apps/social/*|packages/*|.github/workflows/azure-deploy-social.yml)
-                SHOULD_DEPLOY="true"
-                break
-                ;;
-            esac
-          done <<< "$CHANGED_FILES"
-
-          echo "should_deploy=$SHOULD_DEPLOY" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/deploy-changed-paths
+        with:
+          patterns: |
+            apps/social/**
+            packages/**
+            .github/workflows/azure-deploy-social.yml
 
   deploy:
     needs: detect-changes
@@ -91,7 +69,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Azure login
-        uses: azure/login@v2
+        uses: ./.github/actions/azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 

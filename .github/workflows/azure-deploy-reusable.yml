@@ -156,7 +156,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Azure login
-        uses: azure/login@v2
+        uses: ./.github/actions/azure-login
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
