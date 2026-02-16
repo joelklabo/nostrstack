@@ -25,6 +25,14 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
         return;
       }
 
+      const isInDialog = !!target.closest(
+        '[role="dialog"], [aria-modal="true"], .emoji-picker, .shortcuts-overlay, .ns-dialog-overlay'
+      );
+
+      if (isInDialog && event.key !== '?' && event.key !== 'Escape') {
+        return;
+      }
+
       if (isHelpShortcut) {
         event.preventDefault();
         setHelpOpen(true);
