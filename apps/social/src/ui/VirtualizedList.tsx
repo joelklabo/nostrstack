@@ -6,6 +6,9 @@ import { List, type RowComponentProps, useDynamicRowHeight } from 'react-window'
 const DEFAULT_ITEM_HEIGHT = 200;
 // Extra rows above/below viewport for smooth scrolling
 const OVERSCAN_COUNT = 5;
+const DEFAULT_CONTAINER_HEIGHT = 600;
+const CONTAINER_BOTTOM_PADDING = 20;
+const STABLE_HEIGHT_EPSILON = 1;
 
 interface VirtualizedListProps<T> {
   /** Array of items to render */
@@ -89,6 +92,7 @@ export function VirtualizedList<T>({
   getItemKey,
   renderItem,
   height: propHeight,
+  width,
   onLoadMore,
   hasMore,
   loading,
@@ -101,35 +105,87 @@ export function VirtualizedList<T>({
   ariaAtomic
 }: VirtualizedListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState(600);
+  const resizeFrameRef = useRef<number | null>(null);
+  const [containerHeight, setContainerHeight] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_CONTAINER_HEIGHT;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    return Math.max(0, viewportHeight - CONTAINER_BOTTOM_PADDING);
+  });
 
   const rowHeightCacheKey = useMemo(() => {
     const itemKeys = items.map((item, index) => getItemKey(item, index)).join('|');
     return `${items.length}:${itemKeys}`;
   }, [items, getItemKey]);
 
+  const resolveContainerHeight = useCallback((): number => {
+    if (propHeight) return propHeight;
+    if (typeof window === 'undefined') return DEFAULT_CONTAINER_HEIGHT;
+
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const offset = containerRef.current?.getBoundingClientRect().top ?? 0;
+    return Math.max(0, viewportHeight - offset - CONTAINER_BOTTOM_PADDING);
+  }, [propHeight]);
+
   // Use dynamic row height from react-window v2
   const dynamicRowHeight = useDynamicRowHeight({
     defaultRowHeight: DEFAULT_ITEM_HEIGHT,
-    key: rowHeightCacheKey // Re-calculate when list order or item IDs change
+    key: rowHeightCacheKey
   });
 
-  // Update container height based on window size
+  // Update container height based on viewport and anchor changes
   useEffect(() => {
-    const updateHeight = () => {
-      if (propHeight) {
-        setContainerHeight(propHeight);
-      } else {
-        // Default to window height minus some offset for headers
-        const offset = containerRef.current?.getBoundingClientRect().top ?? 0;
-        setContainerHeight(window.innerHeight - offset - 20);
-      }
+    if (typeof window === 'undefined') return;
+
+    const flushHeightUpdate = () => {
+      const nextHeight = resolveContainerHeight();
+      setContainerHeight((previousHeight) => {
+        if (Math.abs(previousHeight - nextHeight) <= STABLE_HEIGHT_EPSILON) {
+          return previousHeight;
+        }
+        return nextHeight;
+      });
     };
 
-    updateHeight();
-    window.addEventListener('resize', updateHeight);
-    return () => window.removeEventListener('resize', updateHeight);
-  }, [propHeight]);
+    const scheduleHeightUpdate = () => {
+      if (resizeFrameRef.current !== null) return;
+      resizeFrameRef.current = window.requestAnimationFrame(() => {
+        resizeFrameRef.current = null;
+        flushHeightUpdate();
+      });
+    };
+
+    if (propHeight) {
+      flushHeightUpdate();
+      return;
+    }
+
+    const container = containerRef.current;
+    const ro =
+      typeof ResizeObserver !== 'undefined' && container
+        ? new ResizeObserver(() => {
+            scheduleHeightUpdate();
+          })
+        : null;
+
+    flushHeightUpdate();
+    if (ro && container) {
+      ro.observe(container);
+    }
+    window.addEventListener('resize', scheduleHeightUpdate, { passive: true });
+    window.visualViewport?.addEventListener('resize', scheduleHeightUpdate, { passive: true });
+    window.addEventListener('orientationchange', scheduleHeightUpdate);
+
+    return () => {
+      if (resizeFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizeFrameRef.current);
+        resizeFrameRef.current = null;
+      }
+      window.removeEventListener('resize', scheduleHeightUpdate);
+      window.visualViewport?.removeEventListener('resize', scheduleHeightUpdate);
+      window.removeEventListener('orientationchange', scheduleHeightUpdate);
+      ro?.disconnect();
+    };
+  }, [resolveContainerHeight, propHeight]);
 
   // Handle scroll events for infinite loading
   const handleRowsRendered = useCallback(
@@ -163,7 +219,8 @@ export function VirtualizedList<T>({
 
   // Style for the list container
   const listStyle: CSSProperties = {
-    width: '100%'
+    width: width ?? '100%',
+    height: containerHeight
   };
 
   return (

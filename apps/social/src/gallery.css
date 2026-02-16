@@ -46,6 +46,8 @@
   --ns-color-tip-accent: var(--ns-color-primary-default);
   --ns-color-tip-subtle: var(--ns-color-primary-subtle);
   --ns-color-zap-accent: var(--ns-color-primary-default);
+  --ns-top-zaps-slot-height: 1.875rem;
+  --ns-link-preview-slot-height: 5rem;
 }
 
 /* ===== BASE STYLES ===== */
@@ -792,6 +794,7 @@ body {
 
   /* CLS FIX: Isolate layout calculations to this container */
   contain: layout style;
+  overflow-anchor: none;
 }
 
 .feed-stream {
@@ -800,6 +803,7 @@ body {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  overflow-anchor: none;
 
   /* Consistent vertical rhythm */
   gap: var(--ns-space-5);
@@ -817,6 +821,7 @@ body {
   transition:
     transform var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  will-change: transform, opacity;
 }
 
 .feed-title {
@@ -868,9 +873,9 @@ body {
   margin-bottom: var(--ns-space-5);
   overflow: hidden;
   transition:
-    max-height var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut),
-    margin var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+    transform var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+  will-change: transform, opacity;
 }
 
 .feed-loading {
@@ -1571,16 +1576,16 @@ body {
   flex-direction: column;
   padding: var(--ns-space-4);
   gap: var(--ns-space-3);
-  margin-bottom: var(--ns-space-4);
+  margin-bottom: 0;
+  padding-bottom: calc(var(--ns-space-4) + var(--ns-space-3));
   cursor: pointer;
   transition:
     background-color var(--ns-duration-fast) var(--ns-easing-easeInOut),
     box-shadow var(--ns-duration-fast) var(--ns-easing-easeInOut),
     transform var(--ns-duration-fast) var(--ns-easing-easeOut);
-
-  /* Optimize rendering for off-screen cards */
+  overflow-anchor: none;
+  contain: layout;
   content-visibility: auto;
-  contain-intrinsic-size: auto 200px;
 }
 
 .ns-event-card:hover {
@@ -1602,10 +1607,6 @@ body {
 /* Success burst for activated actions */
 .ns-action-btn.just-activated {
   animation: ns-success-burst 300ms ease-out;
-}
-
-.ns-event-card:last-child {
-  margin-bottom: 0;
 }
 
 .ns-event-card:focus {
@@ -1839,6 +1840,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--ns-space-2);
+  min-height: var(--ns-top-zaps-slot-height);
   padding: var(--ns-space-2) var(--ns-space-3);
   margin-top: var(--ns-space-2);
   background: linear-gradient(
@@ -1848,6 +1850,24 @@ body {
   );
   border-radius: var(--ns-radius-md);
   font-size: var(--ns-font-size-sm);
+  overflow: hidden;
+}
+
+.top-zaps--loading {
+  opacity: 0.75;
+}
+
+.top-zaps--loading .top-zaps__skeleton,
+.top-zaps__skeleton {
+  width: 100%;
+  height: 0.625rem;
+  border-radius: var(--ns-radius-sm);
+  background: color-mix(in oklch, var(--ns-color-bg-muted) 55%, transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.top-zaps--empty {
+  visibility: hidden;
 }
 
 .top-zaps__icon {
@@ -2063,6 +2083,7 @@ body {
   display: flex;
   gap: var(--ns-space-3);
   padding: var(--ns-space-3);
+  min-height: var(--ns-link-preview-slot-height);
   background: var(--ns-color-bg-subtle);
   border: 1px solid var(--ns-color-border-default);
   border-radius: var(--ns-radius-md);
@@ -2158,6 +2179,7 @@ body {
 /* Loading skeleton */
 .link-preview--loading {
   border: 1px solid var(--ns-color-border-subtle);
+  min-height: var(--ns-link-preview-slot-height);
 }
 
 .link-preview__skeleton {
@@ -2890,11 +2912,19 @@ body {
   backdrop-filter: blur(4px);
   z-index: 9999;
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--ns-duration-slow) var(--ns-easing-easeInOut);
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
 }
 
 .sidebar-overlay.is-visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -3068,18 +3098,14 @@ body {
 }
 
 .social-layout.is-immersive .feed-header {
-  transform: translateY(-10px);
+  transform: translateY(-12px);
   opacity: 0;
   pointer-events: none;
-  max-height: 0;
-  margin-bottom: 0;
-  overflow: hidden;
 }
 
 .social-layout.is-immersive .feed-editor {
-  max-height: 0;
   opacity: 0;
-  margin: 0;
+  transform: translateY(-12px);
   pointer-events: none;
 }
 

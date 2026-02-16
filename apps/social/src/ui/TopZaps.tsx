@@ -20,14 +20,17 @@ export const TopZaps = memo(function TopZaps({ eventId, hideEmpty = true }: TopZ
     enabled: true
   });
 
-  // Don't render if no zaps and hideEmpty is true
-  if (hideEmpty && zaps.length === 0 && !loading) {
-    return null;
+  // Show loading state briefly while top zaps are being fetched
+  if (loading && zaps.length === 0) {
+    return (
+      <div className="top-zaps top-zaps--loading" role="status" aria-label="Loading top zap data">
+        <span className="top-zaps__skeleton" aria-hidden="true" />
+      </div>
+    );
   }
 
-  // Show loading state only briefly
-  if (loading && zaps.length === 0) {
-    return null; // Don't show loading skeleton to reduce visual noise
+  if (hideEmpty && zaps.length === 0) {
+    return <div className="top-zaps top-zaps--empty" aria-hidden="true" />;
   }
 
   if (zaps.length === 0) {
@@ -46,7 +49,11 @@ export const TopZaps = memo(function TopZaps({ eventId, hideEmpty = true }: TopZ
   };
 
   return (
-    <div className="top-zaps" role="region" aria-label={`${zaps.length} zaps totaling ${totalAmountSats} sats`}>
+    <div
+      className="top-zaps"
+      role="region"
+      aria-label={`${zaps.length} zaps totaling ${totalAmountSats} sats`}
+    >
       <div className="top-zaps__icon" aria-hidden="true">
         ⚡
       </div>

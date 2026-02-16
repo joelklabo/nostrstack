@@ -7,7 +7,7 @@ import {
 } from '@nostrstack/react';
 import { Alert } from '@nostrstack/ui';
 import { applyNsTheme, createNsBrandTheme, type NsBrandPreset } from '@nostrstack/widgets';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RelayProvider } from './context/RelayProvider';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -80,6 +80,8 @@ function AppShell() {
   const { pubkey, isLoading } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
   const [brandPreset, setBrandPreset] = useState<NsBrandPreset>('default');
+  const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
+  const focusReturnToHamburger = useRef(false);
   const [isGuest, _setIsGuest] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('nostrstack.guest') === 'true';
@@ -93,10 +95,17 @@ function AppShell() {
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
-  const { isImmersive } = useImmersiveScroll({ threshold: 80, minDelta: 8 });
+  const { isImmersive } = useImmersiveScroll({
+    threshold: 80,
+    minDelta: 8,
+    scrollContainer: '.feed-container'
+  });
 
-  const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), []);
   const handleMobileMenuToggle = useCallback(() => setMobileMenuOpen((prev) => !prev), []);
+  const closeMobileMenu = useCallback(() => {
+    focusReturnToHamburger.current = true;
+    setMobileMenuOpen(false);
+  }, []);
   const pathname = usePathname();
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = pathname === '/search' || pathname.startsWith('/search?');
@@ -132,6 +141,23 @@ function AppShell() {
       setCurrentView('feed');
     }
   }, [isSearchRoute, currentView]);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      focusReturnToHamburger.current = false;
+      const firstNavItem = document.querySelector<HTMLElement>(
+        '.sidebar-nav .nav-item:first-child'
+      );
+      firstNavItem?.focus();
+      return;
+    }
+
+    if (!focusReturnToHamburger.current) return;
+    focusReturnToHamburger.current = false;
+    if (hamburgerButtonRef.current) {
+      hamburgerButtonRef.current.focus();
+    }
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     // We are overriding the theme with our own CSS, but we keep this for the embedded SDK components
@@ -180,7 +206,7 @@ function AppShell() {
           currentView={currentView}
           setCurrentView={setCurrentView}
           mobileOpen={mobileMenuOpen}
-          onMobileClose={handleMobileMenuClose}
+          onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
         />
         <main className="feed-container" id="main-content">
@@ -201,6 +227,7 @@ function AppShell() {
       {/* Mobile hamburger button */}
       <button
         type="button"
+        ref={hamburgerButtonRef}
         className={`hamburger-btn${mobileMenuOpen ? ' is-open' : ''}`}
         onClick={handleMobileMenuToggle}
         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -214,30 +241,23 @@ function AppShell() {
       </button>
 
       {/* Mobile overlay */}
-      <div
+      <button
+        type="button"
         className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
-        role="button"
         tabIndex={mobileMenuOpen ? 0 : -1}
         aria-label="Close menu"
         aria-hidden={!mobileMenuOpen}
-        onClick={(event) => {
-          if (event.target !== event.currentTarget) return;
-          handleMobileMenuClose();
-        }}
-        onKeyDown={(event) => {
-          if (event.target !== event.currentTarget) return;
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            handleMobileMenuClose();
-          }
-        }}
-      />
+        onClick={closeMobileMenu}
+        disabled={!mobileMenuOpen}
+      >
+        <span className="sr-only">Close menu</span>
+      </button>
 
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
         mobileOpen={mobileMenuOpen}
-        onMobileClose={handleMobileMenuClose}
+        onMobileClose={closeMobileMenu}
         onOpenHelp={() => setHelpOpen(true)}
       />
       <main className="feed-container" id="main-content">

@@ -6,7 +6,7 @@ import {
   useStats
 } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { supportConfig } from './config/payments';
 import { useWallet } from './hooks/useWallet';
@@ -67,6 +67,9 @@ export const Sidebar = memo(function Sidebar({
   const [isReceiving, setIsReceiving] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const prevBalanceRef = useRef(wallet?.balance ?? 0);
+  const supportTriggerRef = useRef<HTMLButtonElement>(null);
+  const supportDialogRef = useRef<HTMLDivElement>(null);
+  const closeSupportDialog = useCallback(() => setSupportOpen(false), []);
 
   // Detect balance increases for "receiving" animation
   useEffect(() => {
@@ -212,6 +215,59 @@ export const Sidebar = memo(function Sidebar({
     onMobileClose?.();
   };
 
+  useEffect(() => {
+    if (!supportOpen) return;
+
+    const modal = supportDialogRef.current;
+    if (!modal) return;
+
+    const focusable = Array.from(
+      modal.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((element) => !element.hasAttribute('disabled'));
+    const firstFocusable = focusable[0];
+    const lastFocusable = focusable[focusable.length - 1];
+
+    if (firstFocusable) {
+      firstFocusable.focus();
+    } else {
+      modal.focus();
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSupportDialog();
+        return;
+      }
+
+      if (event.key !== 'Tab' || focusable.length < 2) return;
+
+      const active = document.activeElement;
+      if (!active) return;
+
+      if (event.shiftKey && active === firstFocusable) {
+        event.preventDefault();
+        lastFocusable.focus();
+        return;
+      }
+
+      if (!event.shiftKey && active === lastFocusable) {
+        event.preventDefault();
+        firstFocusable.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (supportTriggerRef.current) {
+        supportTriggerRef.current.focus();
+      }
+    };
+  }, [closeSupportDialog, supportOpen]);
+
   return (
     <nav className={`sidebar-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
       <div className="sidebar-header">
@@ -293,6 +349,7 @@ export const Sidebar = memo(function Sidebar({
           className="nav-item"
           onClick={() => setSupportOpen(true)}
           aria-label="Support Nostrstack"
+          ref={supportTriggerRef}
         >
           Support
         </button>
@@ -451,8 +508,13 @@ export const Sidebar = memo(function Sidebar({
       )}
 
       {supportOpen && (
-        <dialog open={supportOpen} className="support-modal" aria-labelledby="support-modal-title">
-          <div className="support-modal-inner">
+        <dialog
+          open={supportOpen}
+          className="support-modal"
+          aria-labelledby="support-modal-title"
+          aria-modal="true"
+        >
+          <div className="support-modal-inner" ref={supportDialogRef} tabIndex={-1}>
             <h2 id="support-modal-title" className="support-modal-title">
               Support Nostrstack
             </h2>
@@ -484,7 +546,7 @@ export const Sidebar = memo(function Sidebar({
             <button
               type="button"
               className="support-modal-close"
-              onClick={() => setSupportOpen(false)}
+              onClick={closeSupportDialog}
               aria-label="Close support modal"
             >
               Close
