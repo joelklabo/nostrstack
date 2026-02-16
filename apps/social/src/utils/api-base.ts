@@ -87,6 +87,7 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   if (typeof window === 'undefined') return null;
 
   const raw = resolveRuntimeApiBase(baseURL);
+  const runtimeApiBase = resolveApiBase(baseURL);
   if (!raw) return null;
   const normalizedPath = ensureLeadingSlash(path);
   const websocketOrigin = convertToWsScheme(window.location.origin);
@@ -95,8 +96,8 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
     return `${convertToWsScheme(raw)}${normalizedPath}`;
   }
 
-  if (raw === '/api') {
-    return `${websocketOrigin}${raw}${normalizedPath}`;
+  if (runtimeApiBase.isRelative && runtimeApiBase.raw === '/api') {
+    return `${websocketOrigin}${normalizedPath}`;
   }
 
   if (raw.startsWith('/')) {
