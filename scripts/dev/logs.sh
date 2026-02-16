@@ -35,8 +35,8 @@ fi
 
 cd "$ROOT"
 
-# Default to one secure origin for dev
-export USE_HTTPS="${USE_HTTPS:-true}"
+# Default to HTTP for dev unless explicitly enabled.
+export USE_HTTPS="${USE_HTTPS:-false}"
 export HTTPS_CERT="${HTTPS_CERT:-$ROOT/certs/dev-cert.pem}"
 export HTTPS_KEY="${HTTPS_KEY:-$ROOT/certs/dev-key.pem}"
 export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
@@ -76,7 +76,12 @@ else
 fi
 
 ndev_claim_session
-export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://localhost:$PORT}"
+API_SCHEME="http"
+if [[ "$USE_HTTPS" == "true" ]]; then
+  API_SCHEME="https"
+fi
+export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-$API_SCHEME://localhost:$PORT}"
+API_BASE_URL="$API_SCHEME://localhost:$PORT"
 echo "📦 Dev session: agent=$NOSTRDEV_AGENT slot=${NOSTRDEV_SESSION_SLOT:-manual} api=$PORT social=$DEV_SERVER_PORT"
 cleanup_dev_session() {
   ndev_release_session
@@ -128,7 +133,7 @@ fi
 
 pnpm concurrently -k -p "[{name} {time}]" -n api,social \
   "pnpm --filter api dev | tee -a $API_LOG" \
-  "VITE_API_BASE_URL=http://localhost:$PORT \
+  "VITE_API_BASE_URL=$API_BASE_URL \
    VITE_NOSTRSTACK_HOST=localhost:$PORT \
    pnpm --filter social dev -- --host --port $DEV_SERVER_PORT | tee -a $SOCIAL_LOG"
 

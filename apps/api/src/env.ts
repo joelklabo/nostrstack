@@ -39,7 +39,7 @@ const schema = z
     PORT: z.coerce.number().default(3001),
     LOG_LEVEL: z.string().default('info'),
     DEV_MOCKS: bool().default(false),
-    USE_HTTPS: bool().default(process.env.NODE_ENV === 'development'),
+    USE_HTTPS: bool().default(false),
     HTTPS_CERT: z.string().optional(),
     HTTPS_KEY: z.string().optional(),
     OP_NODE_API_KEY: z.string().default('test-key'),
