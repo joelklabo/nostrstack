@@ -58,17 +58,6 @@ export const NewPostsIndicator = memo(function NewPostsIndicator({
     }
   }, [onScrollToTop]);
 
-  // Handle keyboard accessibility
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleClick();
-      }
-    },
-    [handleClick]
-  );
-
   if (!isVisible || newPosts.length === 0) {
     return null;
   }
@@ -80,7 +69,6 @@ export const NewPostsIndicator = memo(function NewPostsIndicator({
     <button
       className={`new-posts-indicator ${isAnimatingOut ? 'is-hiding' : ''}`}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
       aria-label={`${newPosts.length} new posts. Click to scroll to top.`}
       type="button"
     >

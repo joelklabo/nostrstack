@@ -1824,7 +1824,11 @@ body {
   border-radius: var(--ns-radius-sm, 4px);
   color: var(--ns-color-text-muted, oklch(55% 0.02 280deg));
   cursor: pointer;
-  transition: all var(--ns-motion-duration-fast, 150ms) var(--ns-motion-ease-default, ease);
+  transition:
+    background-color var(--ns-motion-duration-fast, 150ms) var(--ns-motion-ease-default, ease),
+    color var(--ns-motion-duration-fast, 150ms) var(--ns-motion-ease-default, ease),
+    border-color var(--ns-motion-duration-fast, 150ms) var(--ns-motion-ease-default, ease),
+    opacity var(--ns-motion-duration-fast, 150ms) var(--ns-motion-ease-default, ease);
 }
 
 .zap-amount-btn:hover {
