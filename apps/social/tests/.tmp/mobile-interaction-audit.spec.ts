@@ -78,6 +78,32 @@ test.describe('Mobile interaction audit', () => {
     await expect(page.locator('.sidebar-nav')).toHaveClass(/is-open/);
   });
 
+  test('mobile menu open state disables background scroll', async ({ page }) => {
+    await loginWithNsec(page);
+    const menu = page.locator('.hamburger-btn');
+
+    await openMobileMenu(page);
+    await expect(page.locator('.sidebar-nav')).toHaveClass(/is-open/);
+    await expect
+      .poll(async () => page.evaluate(() => document.body.style.overflow), { timeout: 2000 })
+      .toBe('hidden');
+
+    const beforeScrollY = await page.evaluate(() => window.scrollY);
+    await page.evaluate(() => window.scrollTo(0, 80));
+    await expect
+      .poll(async () => page.evaluate(() => window.scrollY), { timeout: 2_000 })
+      .toBe(beforeScrollY);
+
+    const bodyPadding = await page.evaluate(() => document.body.style.paddingRight);
+    expect(bodyPadding === '0px' || bodyPadding.endsWith('px')).toBe(true);
+
+    await closeMobileMenu(page);
+    await expect(page.locator('.sidebar-nav')).not.toHaveClass(/is-open/, { timeout: 8_000 });
+    await expect
+      .poll(async () => page.evaluate(() => document.body.style.overflow), { timeout: 2_000 })
+      .toBe('');
+  });
+
   test('scrolling hides/reveals mobile controls deterministically', async ({ page }) => {
     await loginWithNsec(page);
     const menu = page.locator('.hamburger-btn');

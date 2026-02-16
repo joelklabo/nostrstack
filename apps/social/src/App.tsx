@@ -210,12 +210,19 @@ function AppShell() {
   useEffect(() => {
     const body = document.body;
     if (mobileMenuOpen) {
+      const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
       body.classList.add('is-mobile-menu-open');
+      body.style.overflow = 'hidden';
+      body.style.paddingRight = `${scrollbarWidth}px`;
     } else {
+      body.style.overflow = '';
+      body.style.paddingRight = '';
       body.classList.remove('is-mobile-menu-open');
     }
 
     return () => {
+      body.style.overflow = '';
+      body.style.paddingRight = '';
       body.classList.remove('is-mobile-menu-open');
     };
   }, [mobileMenuOpen]);
