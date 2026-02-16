@@ -55,10 +55,40 @@ const demoPosts = [
     demoSecretKey
   )
 ];
+const MOCK_BITCOIN_STATUS = {
+  network: 'regtest',
+  configuredNetwork: 'regtest',
+  source: 'mock',
+  telemetry: {
+    height: 0,
+    hash: '000000000000000000000000000000000000000000000000000000000000000000',
+    time: Math.floor(Date.now() / 1000),
+    network: 'regtest',
+    subversion: '/NostrStack Demo/',
+    version: 0,
+    headers: 0,
+    blocks: 0,
+    connections: 0
+  },
+  lightning: {
+    provider: 'mock',
+    lnbits: { status: 'skipped', reason: 'provider_not_lnbits' }
+  }
+};
 
 async function installDemoMockRelay(page: Page) {
   await installMockRelay(page, [demoProfileEvent, ...demoPosts], {
     zapAddress: 'https://mock.lnurl/lnurlp/test'
+  });
+}
+
+async function installDemoTelemetryMocks(page: Page) {
+  await page.route('**/api/bitcoin/status', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_BITCOIN_STATUS)
+    });
   });
 }
 
@@ -173,6 +203,7 @@ test('pay-to-unlock does not overflow card at common widths', async ({ page }) =
 
 test('tip flow generates invoice', async ({ page }) => {
   await installDemoMockRelay(page);
+  await installDemoTelemetryMocks(page);
   const failedRequests: string[] = [];
   page.on('requestfailed', (request) => {
     if (shouldIgnoreRequestFailure(request.url())) return;
