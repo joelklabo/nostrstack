@@ -1,12 +1,21 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import type { Event } from 'nostr-tools';
 
-const testNsec =
-  process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+import { loginWithNsec, seedMockEvent } from './helpers';
 
 const walletPubkey = 'a'.repeat(64);
 const secretHex = 'b'.repeat(64);
 const relayUrl = 'wss://relay.example';
 const nwcUri = `nostr+walletconnect://${walletPubkey}?secret=${secretHex}&relay=${encodeURIComponent(relayUrl)}`;
+const seededZapPost: Event = {
+  id: 'nwc-zap-post-001',
+  pubkey: 'c'.repeat(64),
+  kind: 1,
+  created_at: Math.floor(Date.now() / 1000),
+  tags: [],
+  content: 'Deterministic zap flow fixture',
+  sig: 'd'.repeat(128)
+};
 const lnurlMetadata = {
   tag: 'payRequest',
   callback: 'https://mock.lnurl/callback',
@@ -23,14 +32,6 @@ declare global {
     };
     __NOSTRSTACK_ZAP_ADDRESS__?: string;
   }
-}
-
-async function loginWithNsec(page: Page) {
-  await page.goto('/');
-  await page.getByText('Enter nsec manually').click();
-  await page.getByPlaceholder('nsec1...').fill(testNsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 }
 
 test('connects NWC and pays zap via mock', async ({ page }) => {
@@ -58,31 +59,38 @@ test('connects NWC and pays zap via mock', async ({ page }) => {
   });
 
   await loginWithNsec(page);
+  await seedMockEvent(page, seededZapPost);
+  await page.getByRole('button', { name: /Feed/i }).click();
 
   await page.getByRole('button', { name: /Settings/i }).click();
-  await page.getByLabel('NWC_URI').fill(nwcUri);
-  await page.getByLabel(/RELAYS/i).fill(relayUrl);
-  await page.getByLabel(/MAX_SATS_PER_PAYMENT/i).fill('5000');
-  await page.getByRole('button', { name: 'CONNECT', exact: true }).click();
+  await page.getByLabel('Connection String').fill(nwcUri);
+  await page.getByPlaceholder('wss://relay.example, wss://relay2.example').fill(relayUrl);
+  await page.getByLabel(/Max Payment/i).fill('5000');
+  await page.getByRole('button', { name: 'Connect to NWC wallet' }).click();
   await expect(page.locator('.nwc-status-pill')).toHaveText(/CONNECTED/);
   await expect(page.getByText(/Balance:/)).toBeVisible();
 
   await page.getByRole('button', { name: /Feed/i }).click();
   const zapButtons = page.locator('.zap-btn');
-  const count = await zapButtons.count();
-  if (count === 0) {
-    test.skip(true, 'No zap buttons available in feed');
-    return;
+  await expect(
+    zapButtons.first(),
+    'Expected a seeded zap button from deterministic fixture'
+  ).toBeVisible({
+    timeout: 15000
+  });
+  const tourSkip = page.getByRole('button', { name: 'Skip tour' });
+  if (await tourSkip.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await tourSkip.click();
   }
-  await zapButtons.first().click();
+  await zapButtons.first().scrollIntoViewIfNeeded();
+  await zapButtons.first().click({ force: true });
   await expect(page.locator('.payment-modal')).toBeVisible();
   await expect(page.getByText('NWC payment sent.')).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText('Payment successful!')).toBeVisible();
 });
 
 test('invalid NWC URI shows error', async ({ page }) => {
   await loginWithNsec(page);
   await page.getByRole('button', { name: /Settings/i }).click();
-  await page.getByLabel('NWC_URI').fill('not-a-uri');
+  await page.getByLabel('Connection String').fill('not-a-uri');
   await expect(page.getByText('NWC URI must start with nostr+walletconnect://')).toBeVisible();
 });

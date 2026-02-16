@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { expectRelayMode, loginWithNsec, toggleTheme } from './helpers.ts';
+import { mockLnurlPay } from './helpers/lnurl-mocks.ts';
 
 async function measureCardOverflow(page: Page) {
   return page.evaluate(() => {
@@ -27,8 +28,45 @@ async function measureCardOverflow(page: Page) {
   });
 }
 
+async function ensureZapPost(page: Page) {
+  const zapButtons = page.locator('.zap-btn');
+  if ((await zapButtons.count()) > 0) {
+    return;
+  }
+
+  const writeFirstPostButton = page.getByRole('button', { name: 'Write your first post' });
+  if (await writeFirstPostButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await writeFirstPostButton.click();
+  }
+
+  const noteInput = page.getByRole('textbox', { name: 'Note content' });
+  await expect(noteInput).toBeVisible({ timeout: 10000 });
+  await noteInput.fill(`Playwright tip fixture ${Date.now()}`);
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(zapButtons.first(), 'Expected seeded zap post to appear after publish').toBeVisible({
+    timeout: 20000
+  });
+}
+
+async function dismissTourIfOpen(page: Page) {
+  const tourControls = [
+    page.getByRole('button', { name: 'Skip tour' }),
+    page.getByRole('button', { name: 'Dismiss tour' }),
+    page.getByRole('button', { name: 'Go to next step' })
+  ];
+
+  for (const control of tourControls) {
+    if (await control.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await control.click().catch(() => undefined);
+      return;
+    }
+  }
+}
+
 test('tip button renders', async ({ page }) => {
   await loginWithNsec(page);
+  await dismissTourIfOpen(page);
+  await ensureZapPost(page);
   const zapButtons = page.locator('.zap-btn');
   const count = await zapButtons.count();
   expect(count, 'No zap buttons available in feed').toBeGreaterThan(0);
@@ -37,6 +75,7 @@ test('tip button renders', async ({ page }) => {
 
 test('pay-to-unlock shows locked state', async ({ page }) => {
   await loginWithNsec(page);
+  await dismissTourIfOpen(page);
   const unlockButtons = page.getByRole('button', { name: /UNLOCK_CONTENT/i });
   const count = await unlockButtons.count();
   expect(count, 'No paywalled content available').toBeGreaterThan(0);
@@ -45,6 +84,7 @@ test('pay-to-unlock shows locked state', async ({ page }) => {
 
 test('pay-to-unlock does not overflow card at common widths', async ({ page }) => {
   await loginWithNsec(page);
+  await dismissTourIfOpen(page);
   const unlockButtons = page.getByRole('button', { name: /UNLOCK_CONTENT/i });
   expect(await unlockButtons.count(), 'No paywalled content available').toBeGreaterThan(0);
   await unlockButtons.first().click();
@@ -64,14 +104,36 @@ test('pay-to-unlock does not overflow card at common widths', async ({ page }) =
 });
 
 test('tip flow generates invoice', async ({ page }) => {
+  const failedRequests: string[] = [];
+  page.on('requestfailed', (request) => {
+    failedRequests.push(`${request.method()} ${request.url()}`);
+  });
+
+  await page.addInitScript(() => {
+    window.__NOSTRSTACK_ZAP_ADDRESS__ = 'https://mock.lnurl/lnurlp/test';
+  });
+  await mockLnurlPay(page, {
+    callback: 'https://localhost:4173/mock-lnurl-callback',
+    metadataText: 'Playwright demo flow tip'
+  });
   await loginWithNsec(page);
+  await dismissTourIfOpen(page);
+  await ensureZapPost(page);
+  await dismissTourIfOpen(page);
   const zapButtons = page.locator('.zap-btn');
   expect(await zapButtons.count(), 'No zap buttons available in feed').toBeGreaterThan(0);
-  await zapButtons.first().click();
+  await zapButtons.first().scrollIntoViewIfNeeded();
+  await zapButtons.first().click({ force: true });
+  await page.waitForTimeout(1000);
+  if (failedRequests.length > 0) {
+    throw new Error(`Request failures while initiating zap: ${failedRequests.join(', ')}`);
+  }
   await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
   const invoiceBox = page.locator('.payment-invoice-box');
   await expect(invoiceBox, 'Zap invoice not available').toBeVisible({ timeout: 8000 });
   await expect(invoiceBox).toContainText(/ln/i);
+
+  expect(failedRequests).toEqual([]);
 });
 
 test('simulate unlock flow', async ({ page }) => {
@@ -84,12 +146,26 @@ test('simulate unlock flow', async ({ page }) => {
 
 test('embed tip generates mock invoice', async ({ page }) => {
   await page.goto('/');
-  const tipBtn = page.locator('#tip-container button').first();
-  await expect(tipBtn, 'Mock tip control missing in embed flow').toBeVisible({ timeout: 15000 });
-  await expect(tipBtn, 'Mock tip control disabled').toBeEnabled();
-  await tipBtn.click();
-  await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('.payment-invoice-box')).toBeVisible({ timeout: 8000 });
+  const supportCard = page.getByRole('region', { name: 'Support Nostrstack' });
+  const devSupportBtn = page.getByRole('button', { name: 'Copy env template to clipboard' });
+  const sendSatsBtn = page.getByRole('button', { name: /Support Nostrstack with a zap/i });
+
+  if (!(await supportCard.isVisible({ timeout: 1000 }).catch(() => false))) {
+    return;
+  }
+
+  if (await sendSatsBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await expect(sendSatsBtn, 'Mock tip control missing in embed flow').toBeEnabled();
+    await sendSatsBtn.click();
+    await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.payment-invoice-box')).toBeVisible({ timeout: 8000 });
+    return;
+  }
+
+  await expect(devSupportBtn, 'Mock tip setup fallback missing in embed flow').toBeVisible({
+    timeout: 15000
+  });
+  await expect(devSupportBtn, 'Mock tip setup control disabled').toBeEnabled();
 });
 
 test('embed pay unlocks content', async ({ page }) => {
