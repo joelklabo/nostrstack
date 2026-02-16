@@ -229,6 +229,16 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
     [profile?.lud16, profile?.lud06, apiBase, enableRegtestPay]
   );
 
+  const estimatePostHeight = useCallback(
+    (index: number) => estimatePostRowHeight(events[index]),
+    [events]
+  );
+
+  const profileRowHeightCacheKey = useMemo(
+    () => `profile-screen-posts-v1::len=${events.length}`,
+    [events.length]
+  );
+
   // Extract key for each post
   const getPostKey = useCallback((event: Event) => event.id, []);
 
@@ -633,8 +643,8 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
         ) : (
           <VirtualizedList
             items={events}
-            rowHeight={(index) => estimatePostRowHeight(events[index])}
-            rowHeightCacheKey="profile-screen-posts-v1"
+            rowHeight={estimatePostHeight}
+            rowHeightCacheKey={profileRowHeightCacheKey}
             getItemKey={getPostKey}
             renderItem={renderPostItem}
             onLoadMore={hasMore ? loadMore : undefined}
