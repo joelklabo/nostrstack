@@ -2398,6 +2398,18 @@ body {
   max-width: 65ch;
 }
 
+.ns-content__image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border-radius: var(--ns-radius-md);
+  background: var(--ns-color-bg-subtle);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  overflow: hidden;
+}
+
 .ns-content p {
   margin: 0 0 0.75rem;
 }

@@ -19,6 +19,14 @@ const md = new MarkdownIt({
   typographer: true
 });
 
+md.renderer.rules.image = (tokens, idx) => {
+  const token = tokens[idx];
+  const src = token.attrGet('src');
+  if (!src) return '';
+  const alt = token.content ? token.content : '';
+  return `<img src="${md.utils.escapeHtml(src)}" alt="${md.utils.escapeHtml(alt)}" loading="lazy" decoding="async" class="ns-content__image" width="16" height="9" />`;
+};
+
 /** Human-readable labels for Nostr event kinds */
 const EVENT_KIND_LABELS: Record<number, string> = {
   0: 'Profile',
