@@ -11,16 +11,25 @@ import App from './App';
 import { startCacheManager } from './cache/cacheManager';
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(
-      (registration) => {
-        console.log('SW registered: ', registration);
-      },
-      (registrationError) => {
-        console.log('SW registration failed: ', registrationError);
-      }
-    );
-  });
+  const isLocalHttpsDev =
+    import.meta.env.DEV &&
+    location.protocol === 'https:' &&
+    (location.hostname === 'localhost' ||
+      location.hostname === '127.0.0.1' ||
+      location.hostname === '::1');
+
+  if (!isLocalHttpsDev) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(
+        (registration) => {
+          console.log('SW registered: ', registration);
+        },
+        (registrationError) => {
+          console.log('SW registration failed: ', registrationError);
+        }
+      );
+    });
+  }
 }
 
 ensureNsEmbedStyles();
