@@ -317,11 +317,7 @@ function AppShell() {
           )}
         </Suspense>
       </main>
-      <aside
-        className="telemetry-sidebar"
-        inert={isImmersive || undefined}
-        aria-hidden={isImmersive || undefined}
-      >
+      <aside className="telemetry-sidebar">
         <ErrorBoundary
           fallback={
             <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}>

@@ -261,7 +261,13 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   const renderContent = () => {
     if (isLoadingFeed) {
       return (
-        <div className="feed-loading" aria-busy="true" aria-label="Loading posts">
+        <div
+          className="feed-loading"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          aria-label="Loading posts"
+        >
           {[1, 2, 3].map((i) => (
             <PostSkeleton key={i} />
           ))}

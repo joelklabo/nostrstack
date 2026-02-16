@@ -20,55 +20,105 @@ export function useImmersiveScroll(options: UseImmersiveScrollOptions = {}) {
 
   const [isImmersive, setIsImmersive] = useState(false);
   const lastScrollY = useRef(0);
-  const ticking = useRef(false);
+  const containerRef = useRef<HTMLElement | Window | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const handleScroll = useCallback(() => {
-    if (ticking.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    ticking.current = true;
-    requestAnimationFrame(() => {
-      const container = scrollContainer ? document.querySelector(scrollContainer) : window;
+    const currentScrollY =
+      container instanceof Window ? window.scrollY : (container as HTMLElement).scrollTop;
+    const delta = currentScrollY - lastScrollY.current;
+    const pastThreshold = currentScrollY > threshold;
 
-      const currentScrollY =
-        container instanceof Window ? window.scrollY : (container as HTMLElement)?.scrollTop ?? 0;
-
-      const delta = currentScrollY - lastScrollY.current;
-      const pastThreshold = currentScrollY > threshold;
-
-      // Only change state if delta is significant
-      if (Math.abs(delta) > minDelta) {
-        if (delta > 0 && pastThreshold) {
-          // Scrolling down past threshold -> go immersive
-          setIsImmersive(true);
-        } else if (delta < 0) {
-          // Scrolling up -> exit immersive
-          setIsImmersive(false);
-        }
-      }
-
-      // At top of page, always exit immersive
-      if (currentScrollY < threshold / 2) {
+    // Only change state if delta is significant
+    if (Math.abs(delta) > minDelta) {
+      if (delta > 0 && pastThreshold) {
+        // Scrolling down past threshold -> go immersive
+        setIsImmersive(true);
+      } else if (delta < 0) {
+        // Scrolling up -> exit immersive
         setIsImmersive(false);
       }
+    }
 
-      lastScrollY.current = currentScrollY;
-      ticking.current = false;
-    });
-  }, [threshold, minDelta, scrollContainer]);
+    // At top of page, always exit immersive
+    if (currentScrollY < threshold / 2) {
+      setIsImmersive(false);
+    }
+
+    lastScrollY.current = currentScrollY;
+  }, [minDelta, threshold]);
+
+  const resolveScrollContainer = useCallback((): HTMLElement | Window => {
+    const configuredTarget = scrollContainer
+      ? document.querySelector<HTMLElement>(scrollContainer)
+      : null;
+    return configuredTarget ?? window;
+  }, [scrollContainer]);
+
+  const ensureScrollBinding = useCallback(() => {
+    const nextContainer = resolveScrollContainer();
+
+    if (containerRef.current === nextContainer) {
+      return;
+    }
+
+    if (containerRef.current) {
+      containerRef.current.removeEventListener('scroll', handleScroll);
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    }
+
+    containerRef.current = nextContainer;
+    lastScrollY.current =
+      containerRef.current instanceof Window ? window.scrollY : containerRef.current.scrollTop;
+    containerRef.current.addEventListener('scroll', handleScroll, { passive: true });
+  }, [handleScroll, resolveScrollContainer]);
 
   useEffect(() => {
     if (disabled) {
       setIsImmersive(false);
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('scroll', handleScroll);
+        containerRef.current = null;
+      }
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
       return;
     }
 
-    const container = scrollContainer ? document.querySelector(scrollContainer) : window;
+    ensureScrollBinding();
+    const mutationObserver = new MutationObserver(() => {
+      if (animationFrameRef.current !== null) return;
+      animationFrameRef.current = window.requestAnimationFrame(() => {
+        animationFrameRef.current = null;
+        ensureScrollBinding();
+      });
+    });
 
-    if (!container) return;
+    mutationObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
 
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, scrollContainer, disabled]);
+    return () => {
+      mutationObserver.disconnect();
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('scroll', handleScroll);
+        containerRef.current = null;
+      }
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [disabled, ensureScrollBinding, handleScroll]);
 
   // Apply class to body for CSS targeting
   useEffect(() => {
