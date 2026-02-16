@@ -33,7 +33,9 @@ export function useWallet(): WalletState {
   const [retryCount, setRetryCount] = useState(0);
 
   const retry = () => {
+    setIsConnecting(true);
     setError(null);
+    setWallet(null);
     setRetryCount((c) => c + 1);
   };
 
@@ -42,8 +44,13 @@ export function useWallet(): WalletState {
     if (!wsUrl) {
       setIsConnecting(false);
       setError('No wallet URL configured');
+      setWallet(null);
       return;
     }
+
+    setIsConnecting(true);
+    setError(null);
+    setWallet(null);
 
     let ws: WebSocket | null = null;
     let cancelled = false;
@@ -60,11 +67,13 @@ export function useWallet(): WalletState {
       ws.onerror = () => {
         if (cancelled) return;
         setError('Failed to connect to wallet');
+        setWallet(null);
         setIsConnecting(false);
       };
 
       ws.onclose = () => {
         if (cancelled) return;
+        setWallet(null);
         setIsConnecting(false);
       };
 

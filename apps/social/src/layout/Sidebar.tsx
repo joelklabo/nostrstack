@@ -269,7 +269,7 @@ export const Sidebar = memo(function Sidebar({
             </div>
           </div>
         )}
-        {walletError && !walletConnecting && (
+        {!walletConnecting && walletError && (
           <div className="sidebar-wallet-section" role="status" aria-live="polite">
             <div className="sidebar-status-label">
               <span className="sidebar-wallet-icon" aria-hidden="true">
@@ -290,7 +290,7 @@ export const Sidebar = memo(function Sidebar({
             </div>
           </div>
         )}
-        {wallet && !walletConnecting && (
+        {!walletConnecting && !walletError && wallet && (
           <div
             className={`sidebar-wallet-section ${isReceiving ? 'is-receiving' : ''} ${(wallet.balance ?? 0) > 0 ? 'has-balance' : ''}`}
           >
