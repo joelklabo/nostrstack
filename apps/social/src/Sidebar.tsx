@@ -1,14 +1,7 @@
-import {
-  SendSats,
-  useAuth,
-  useBitcoinStatus,
-  useNostrstackConfig,
-  useStats
-} from '@nostrstack/react';
+import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
-import { supportConfig } from './config/payments';
 import { useWallet } from './hooks/useWallet';
 import { AnimatedSats } from './ui/AnimatedNumber';
 import { resolveApiBase } from './utils/api-base';
@@ -16,26 +9,8 @@ import { navigateTo } from './utils/navigation';
 import { WalletView } from './WalletView';
 
 interface SidebarProps {
-  currentView:
-    | 'feed'
-    | 'search'
-    | 'profile'
-    | 'notifications'
-    | 'relays'
-    | 'offers'
-    | 'settings'
-    | 'messages';
-  setCurrentView: (
-    view:
-      | 'feed'
-      | 'search'
-      | 'profile'
-      | 'notifications'
-      | 'relays'
-      | 'offers'
-      | 'settings'
-      | 'messages'
-  ) => void;
+  currentView: 'feed' | 'search' | 'profile' | 'settings';
+  setCurrentView: (view: 'feed' | 'search' | 'profile' | 'settings') => void;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
   onOpenHelp?: () => void;
@@ -65,12 +40,7 @@ export const Sidebar = memo(function Sidebar({
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
   const prevBalanceRef = useRef(wallet?.balance ?? 0);
-  const supportTriggerRef = useRef<HTMLButtonElement>(null);
-  const supportDialogRef = useRef<HTMLDivElement>(null);
-  const supportModalRef = useRef<HTMLDialogElement>(null);
-  const closeSupportDialog = useCallback(() => setSupportOpen(false), []);
 
   // Detect balance increases for "receiving" animation
   useEffect(() => {
@@ -91,9 +61,6 @@ export const Sidebar = memo(function Sidebar({
   const apiBase = apiBaseConfig.baseUrl;
   const regtestFundEnabled =
     String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' ||
-    import.meta.env.DEV;
-  const bolt12Enabled =
-    String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
   const statusNetwork = status?.configuredNetwork ?? status?.network;
   const configuredNetworkRaw =
@@ -216,77 +183,6 @@ export const Sidebar = memo(function Sidebar({
     onMobileClose?.();
   };
 
-  useEffect(() => {
-    if (!supportOpen) return;
-
-    const modal = supportDialogRef.current;
-    const dialog = supportModalRef.current;
-    if (!modal) return;
-
-    const focusable = Array.from(
-      modal.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-    ).filter((element) => !element.hasAttribute('disabled'));
-    const firstFocusable = focusable[0];
-    const lastFocusable = focusable[focusable.length - 1];
-
-    if (firstFocusable) {
-      firstFocusable.focus();
-    } else {
-      modal.focus();
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeSupportDialog();
-        return;
-      }
-
-      if (event.key !== 'Tab' || focusable.length < 2) return;
-
-      const active = document.activeElement;
-      if (!active) return;
-
-      if (event.shiftKey && active === firstFocusable) {
-        event.preventDefault();
-        lastFocusable.focus();
-        return;
-      }
-
-      if (!event.shiftKey && active === lastFocusable) {
-        event.preventDefault();
-        firstFocusable.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    const handleDialogCancel = (event: Event) => {
-      event.preventDefault();
-      closeSupportDialog();
-    };
-
-    const handleDialogClick = (event: MouseEvent) => {
-      if (dialog && event.target === dialog) {
-        closeSupportDialog();
-      }
-    };
-
-    dialog?.addEventListener('cancel', handleDialogCancel);
-    dialog?.addEventListener('click', handleDialogClick);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      dialog?.removeEventListener('cancel', handleDialogCancel);
-      dialog?.removeEventListener('click', handleDialogClick);
-      if (supportTriggerRef.current) {
-        supportTriggerRef.current.focus();
-      }
-    };
-  }, [closeSupportDialog, supportOpen]);
-
   return (
     <nav className={`sidebar-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
       <div className="sidebar-header">
@@ -323,54 +219,11 @@ export const Sidebar = memo(function Sidebar({
         </button>
         <button
           type="button"
-          className={`nav-item ${currentView === 'notifications' ? 'active' : ''}`}
-          onClick={() => handleNavigate('notifications')}
-          aria-current={currentView === 'notifications' ? 'page' : undefined}
-        >
-          Notifications
-        </button>
-        <button
-          type="button"
-          className={`nav-item ${currentView === 'messages' ? 'active' : ''}`}
-          onClick={() => handleNavigate('messages')}
-          aria-current={currentView === 'messages' ? 'page' : undefined}
-        >
-          Messages
-        </button>
-        <button
-          type="button"
-          className={`nav-item ${currentView === 'relays' ? 'active' : ''}`}
-          onClick={() => handleNavigate('relays')}
-          aria-current={currentView === 'relays' ? 'page' : undefined}
-        >
-          Relays
-        </button>
-        {bolt12Enabled && (
-          <button
-            type="button"
-            className={`nav-item ${currentView === 'offers' ? 'active' : ''}`}
-            onClick={() => handleNavigate('offers')}
-            aria-current={currentView === 'offers' ? 'page' : undefined}
-          >
-            Offers
-          </button>
-        )}
-        <button
-          type="button"
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
           onClick={() => handleNavigate('settings')}
           aria-current={currentView === 'settings' ? 'page' : undefined}
         >
           Settings
-        </button>
-        <button
-          type="button"
-          className="nav-item"
-          onClick={() => setSupportOpen(true)}
-          aria-label="Support Nostrstack"
-          ref={supportTriggerRef}
-        >
-          Support
         </button>
         {onOpenHelp && (
           <button
@@ -524,55 +377,6 @@ export const Sidebar = memo(function Sidebar({
           apiConfigured={apiBaseConfig.isConfigured}
           withdrawEnabled={withdrawEnabled}
         />
-      )}
-
-      {supportOpen && (
-        <dialog
-          open={supportOpen}
-          className="support-modal"
-          aria-labelledby="support-modal-title"
-          aria-modal="true"
-          ref={supportModalRef}
-        >
-          <div className="support-modal-inner" ref={supportDialogRef} tabIndex={-1}>
-            <h2 id="support-modal-title" className="support-modal-title">
-              Support Nostrstack
-            </h2>
-            <p className="support-modal-subtitle">
-              Help keep Nostrstack running! Your support helps cover hosting costs and keeps the
-              lights on.
-            </p>
-            {supportConfig.enabled || regtestFundEnabled ? (
-              <SendSats
-                pubkey={supportConfig.tipPubkey || ''}
-                lightningAddress={supportConfig.enabled ? supportConfig.tipLnaddr : undefined}
-                defaultAmountSats={500}
-                presetAmountsSats={[100, 500, 1000, 5000]}
-                notePlaceholder="Say thanks (optional)"
-                enableRegtestPay={regtestFundEnabled}
-              />
-            ) : (
-              <div className="ns-callout">
-                <div className="ns-callout__title">Support Coming Soon</div>
-                <div className="ns-callout__content">
-                  <p>The ability to send sats to support Nostrstack is being set up.</p>
-                  <p>
-                    To enable this feature, configure <code>VITE_NOSTRSTACK_TIP_PUBKEY</code> or{' '}
-                    <code>VITE_NOSTRSTACK_TIP_LNADDR</code> in your environment.
-                  </p>
-                </div>
-              </div>
-            )}
-            <button
-              type="button"
-              className="support-modal-close"
-              onClick={closeSupportDialog}
-              aria-label="Close support modal"
-            >
-              Close
-            </button>
-          </div>
-        </dialog>
       )}
     </nav>
   );

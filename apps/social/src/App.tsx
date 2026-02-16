@@ -20,7 +20,6 @@ import { OnboardingTour } from './ui/OnboardingTour';
 import { resolveApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
-const DMView = lazy(() => import('./DMView').then((m) => ({ default: m.DMView })));
 const FeedView = lazy(() => import('./FeedView').then((m) => ({ default: m.FeedView })));
 const LoginView = lazy(() => import('./LoginView').then((m) => ({ default: m.LoginView })));
 const NostrEventView = lazy(() =>
@@ -29,12 +28,7 @@ const NostrEventView = lazy(() =>
 const NotFoundView = lazy(() =>
   import('./NotFoundView').then((m) => ({ default: m.NotFoundView }))
 );
-const NotificationsView = lazy(() =>
-  import('./NotificationsView').then((m) => ({ default: m.NotificationsView }))
-);
-const OffersView = lazy(() => import('./OffersView').then((m) => ({ default: m.OffersView })));
 const ProfileView = lazy(() => import('./ProfileView').then((m) => ({ default: m.ProfileView })));
-const RelaysView = lazy(() => import('./RelaysView').then((m) => ({ default: m.RelaysView })));
 const SearchView = lazy(() => import('./SearchView').then((m) => ({ default: m.SearchView })));
 const SettingsView = lazy(() =>
   import('./SettingsView').then((m) => ({ default: m.SettingsView }))
@@ -295,10 +289,6 @@ function AppShell() {
                   onNavigateToSettings={() => setCurrentView('settings')}
                 />
               )}
-              {currentView === 'notifications' && <NotificationsView />}
-              {currentView === 'messages' && <DMView />}
-              {currentView === 'relays' && <RelaysView />}
-              {currentView === 'offers' && <OffersView />}
               {currentView === 'settings' && (
                 <SettingsView
                   theme={theme}
