@@ -96,6 +96,53 @@ test.describe('Broader mobile interaction audit', () => {
       });
     });
 
+    test(`onboarding remains interactive when mobile menu is open on ${viewport.width}x${viewport.height}`, async ({
+      page
+    }) => {
+      page.setViewportSize(viewport);
+      await page.addInitScript(() => {
+        localStorage.removeItem('nostrstack.onboarding.v1');
+      });
+
+      await page.goto('/');
+      await loginWithNsec(page);
+      const onboardingCard = page.locator('.onboarding-card');
+      await expect(
+        onboardingCard,
+        'Onboarding should appear before test can validate menu behavior'
+      ).toBeVisible({ timeout: 14000 });
+
+      const hamburger = page.locator('.hamburger-btn');
+      await expect(hamburger, 'Hamburger should be visible').toBeVisible();
+      await hamburger.click();
+
+      const overlay = page.locator('.sidebar-overlay');
+      await expect(overlay).toHaveClass(/is-visible/, { timeout: 4000 });
+      const dismissButton = page.locator('.onboarding-dismiss');
+      await expect(
+        dismissButton,
+        'Onboarding dismiss button should stay clickable during menu open'
+      ).toBeVisible();
+      const pointerEvents = await dismissButton.evaluate(
+        (node) => window.getComputedStyle(node).pointerEvents
+      );
+      expect(pointerEvents).not.toBe('none');
+
+      await dismissButton.click();
+      await expect(onboardingCard, 'Onboarding should close after dismiss').toBeHidden({
+        timeout: 8000
+      });
+      await expect(overlay).toHaveClass(/is-visible/, { timeout: 2000 });
+      await overlay.click();
+      await expect(overlay, 'Overlay should hide after backdrop tap').not.toHaveClass(
+        /is-visible/,
+        { timeout: 3000 }
+      );
+      await expect(page.locator('.sidebar-nav').first()).not.toHaveClass(/is-open/, {
+        timeout: 5000
+      });
+    });
+
     test(`payment modal close audit on ${viewport.width}x${viewport.height}`, async ({ page }) => {
       page.setViewportSize(viewport);
 

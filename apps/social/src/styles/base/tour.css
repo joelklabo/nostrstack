@@ -138,9 +138,7 @@
 }
 
 .is-mobile-menu-open .onboarding-overlay,
-.is-mobile-menu-open .onboarding-spotlight,
-.is-mobile-menu-open .onboarding-dismiss,
-.is-mobile-menu-open .onboarding-card {
+.is-mobile-menu-open .onboarding-spotlight {
   pointer-events: none;
 }
 
