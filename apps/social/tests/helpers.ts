@@ -51,7 +51,9 @@ export async function postComment(page: Page, text: string) {
 
 export async function toggleTheme(page: Page, theme: 'light' | 'dark') {
   const labels =
-    theme === 'dark' ? [/DARK_MODE/i, /Switch to dark mode/i] : [/LIGHT_MODE/i, /Switch to light mode/i];
+    theme === 'dark'
+      ? [/DARK_MODE/i, /Switch to dark mode/i]
+      : [/LIGHT_MODE/i, /Switch to light mode/i];
 
   for (const label of labels) {
     const button = page.getByRole('button', { name: label });
@@ -81,7 +83,9 @@ export async function clickWithDispatchFallback(
   const { timeout = 10000, force = true, expectVisibleTimeout = 8000 } = options;
 
   await control.scrollIntoViewIfNeeded();
-  await expect(control, 'Expected interactive control').toBeVisible({ timeout: expectVisibleTimeout });
+  await expect(control, 'Expected interactive control').toBeVisible({
+    timeout: expectVisibleTimeout
+  });
   try {
     await control.click({ timeout, force });
     return;
@@ -105,18 +109,26 @@ export async function clickAndExpectPaymentModal(
   await clickWithDispatchFallback(control, { timeout, force });
   const modal = page.locator(modalSelector).first();
   const quickWindow = Math.min(timeout, 700);
-  await expect(modal, 'Payment/ zap modal did not render').toBeVisible({
-    timeout: quickWindow
-  }).catch(async () => {
-    await control.dispatchEvent('click');
-    await expect(modal, 'Payment/ zap modal did not render').toBeVisible({ timeout });
-  });
+  await expect(modal, 'Payment/ zap modal did not render')
+    .toBeVisible({
+      timeout: quickWindow
+    })
+    .catch(async () => {
+      await control.dispatchEvent('click');
+      await expect(modal, 'Payment/ zap modal did not render').toBeVisible({ timeout });
+    });
 }
 
-export async function closePaymentModal(page: Page, modal: Locator, options: { timeout?: number } = {}) {
+export async function closePaymentModal(
+  page: Page,
+  modal: Locator,
+  options: { timeout?: number } = {}
+) {
   const { timeout = 10000 } = options;
 
-  const closeButtons = modal.locator('button.payment-close, button[aria-label="Close payment dialog"]');
+  const closeButtons = modal.locator(
+    'button.payment-close, button[aria-label="Close payment dialog"]'
+  );
   const modalOverlay = page.locator('.payment-overlay[role="button"]').first();
 
   await closeButtons
@@ -124,16 +136,14 @@ export async function closePaymentModal(page: Page, modal: Locator, options: { t
     .click({ force: true, timeout: 2000 })
     .catch(() => undefined);
 
-  await expect(modal, 'Payment modal did not hide after close').toBeHidden({ timeout }).catch(async () => {
-    await modalOverlay.click({ force: true }).catch(() => undefined);
-    await expect(modal, 'Payment modal did not hide after close').toBeHidden({ timeout: 2000 }).catch(
-      () =>
-        page
-          .keyboard
-          .press('Escape')
-          .catch(() => undefined)
-    );
-  });
+  await expect(modal, 'Payment modal did not hide after close')
+    .toBeHidden({ timeout })
+    .catch(async () => {
+      await modalOverlay.click({ force: true }).catch(() => undefined);
+      await expect(modal, 'Payment modal did not hide after close')
+        .toBeHidden({ timeout: 2000 })
+        .catch(() => page.keyboard.press('Escape').catch(() => undefined));
+    });
 
   await expect(modal).toBeHidden({ timeout: 5000 });
 }
@@ -366,4 +376,35 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   await signInBtn.click();
 
   await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 20000 });
+}
+
+export async function ensureZapPostAvailable(
+  page: Page,
+  options: { fallbackText?: string; timeoutMs?: number } = {}
+) {
+  const { fallbackText = 'Playwright seed post', timeoutMs = 10_000 } = options;
+  const zapButtons = page.locator('.zap-btn');
+  const hasExistingZap = await zapButtons.count().catch(() => 0);
+  if (hasExistingZap > 0) {
+    return;
+  }
+
+  const writeFirstPostButton = page.getByRole('button', { name: 'Write your first post' });
+  if (await writeFirstPostButton.isVisible().catch(() => false)) {
+    await writeFirstPostButton.click();
+  }
+
+  const noteInput = page.getByRole('textbox', { name: 'Note content' });
+  await expect(noteInput, 'Expected note composer to appear for post fallback').toBeVisible({
+    timeout: timeoutMs
+  });
+  await noteInput.fill(`${fallbackText} ${Date.now()}`);
+  await page.getByRole('button', { name: 'Publish' }).click();
+
+  await expect(
+    zapButtons.first(),
+    'Expected a zap-capable post after seeding fallback content'
+  ).toBeVisible({
+    timeout: timeoutMs
+  });
 }

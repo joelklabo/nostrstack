@@ -1,7 +1,11 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-import { loginWithNsec as doLoginWithNsec, resolveDocScreenshotPath } from './helpers.ts';
+import {
+  ensureZapPostAvailable,
+  loginWithNsec as doLoginWithNsec,
+  resolveDocScreenshotPath
+} from './helpers.ts';
 
 /**
  * Helper to perform nsec login and dismiss onboarding if it appears
@@ -64,8 +68,8 @@ test.describe('Social App Flow', () => {
     // 5. Interact: Click Zap (opens modal)
     // Wait for at least one post to load (PostItem)
     const firstPost = page.locator('[data-testid="social-event-card"]').first();
-    const zapBtn = firstPost.getByRole('button', { name: /^⚡\s*ZAP/i });
-    await expect(zapBtn, 'No posts found to zap').toBeVisible({ timeout: 5000 });
+    await ensureZapPostAvailable(page);
+    const zapBtn = page.locator('.zap-btn').first();
     const feedContainer = page.locator('.feed-container');
     const feedBox = await feedContainer.boundingBox();
     await expect(firstPost, 'Post card must be attached').toBeVisible({ timeout: 10000 });

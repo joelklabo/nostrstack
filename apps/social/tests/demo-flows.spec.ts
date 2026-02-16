@@ -1,7 +1,12 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { finalizeEvent, generateSecretKey } from 'nostr-tools';
 
-import { clickAndExpectPaymentModal, loginWithNsec, toggleTheme } from './helpers.ts';
+import {
+  clickAndExpectPaymentModal,
+  ensureZapPostAvailable,
+  loginWithNsec,
+  toggleTheme
+} from './helpers.ts';
 import { mockLnurlPay } from './helpers/lnurl-mocks.ts';
 import { installMockRelay } from './helpers/mock-websocket.ts';
 
@@ -102,26 +107,6 @@ async function measureCardOverflow(page: Page) {
   });
 }
 
-async function ensureZapPost(page: Page) {
-  const zapButtons = page.locator('.zap-btn');
-  if ((await zapButtons.count()) > 0) {
-    return;
-  }
-
-  const writeFirstPostButton = page.getByRole('button', { name: 'Write your first post' });
-  if (await writeFirstPostButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await writeFirstPostButton.click();
-  }
-
-  const noteInput = page.getByRole('textbox', { name: 'Note content' });
-  await expect(noteInput).toBeVisible({ timeout: 10_000 });
-  await noteInput.fill(`Playwright tip fixture ${Date.now()}`);
-  await page.getByRole('button', { name: 'Publish' }).click();
-  await expect(zapButtons.first(), 'Expected seeded zap post to appear after publish').toBeVisible({
-    timeout: 20_000
-  });
-}
-
 async function dismissTourIfOpen(page: Page) {
   const tourControls = [
     page.getByRole('button', { name: 'Skip tour' }),
@@ -145,7 +130,7 @@ test('tip button renders', async ({ page }) => {
   await installDemoMockRelay(page);
   await loginWithNsec(page);
   await dismissTourIfOpen(page);
-  await ensureZapPost(page);
+  await ensureZapPostAvailable(page, { fallbackText: 'Playwright tip fixture' });
   const zapButtons = page.locator('.zap-btn');
   const count = await zapButtons.count();
   expect(count, 'No zap buttons available in feed').toBeGreaterThan(0);
@@ -209,7 +194,7 @@ test('tip flow generates invoice', async ({ page }) => {
   });
   await loginWithNsec(page);
   await dismissTourIfOpen(page);
-  await ensureZapPost(page);
+  await ensureZapPostAvailable(page, { fallbackText: 'Playwright tip flow seed' });
   await dismissTourIfOpen(page);
   const zapButtons = page.locator('.zap-btn');
   expect(await zapButtons.count(), 'No zap buttons available in feed').toBeGreaterThan(0);
