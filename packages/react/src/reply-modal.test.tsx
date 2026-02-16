@@ -59,4 +59,25 @@ describe('ReplyModal', () => {
     fireEvent.click(btn);
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('closes on Escape key', () => {
+    const onClose = vi.fn();
+    render(<ReplyModal isOpen={true} onClose={onClose} parentEvent={mockEvent} />);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('closes the dialog when unmounted while open', () => {
+    const closeSpy = vi.spyOn(HTMLDialogElement.prototype, 'close');
+
+    const { unmount } = render(
+      <ReplyModal isOpen={true} onClose={vi.fn()} parentEvent={mockEvent} />
+    );
+
+    expect(closeSpy).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(closeSpy).toHaveBeenCalled();
+  });
 });

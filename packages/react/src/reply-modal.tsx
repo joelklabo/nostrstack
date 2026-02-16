@@ -16,11 +16,27 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
     const modal = modalRef.current;
     if (!modal) return;
 
+    const closeDialog = () => {
+      if (modal.open) {
+        modal.close();
+        return;
+      }
+      if (modal.hasAttribute('open')) {
+        modal.removeAttribute('open');
+      }
+    };
+
     if (isOpen) {
-      modal.showModal();
+      if (!modal.open) {
+        modal.showModal();
+      }
     } else {
-      modal.close();
+      closeDialog();
     }
+
+    return () => {
+      closeDialog();
+    };
   }, [isOpen]);
 
   // Handle Escape key (explicit handling as backup to native dialog behavior)
@@ -35,6 +51,10 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  const handleDialogCancel = () => {
+    onClose();
+  };
 
   const handleClose = () => {
     onClose();
@@ -51,6 +71,7 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
     <dialog
       ref={modalRef}
       className="reply-modal"
+      onCancel={handleDialogCancel}
       onClick={handleBackdropClick}
       style={{
         padding: 0,

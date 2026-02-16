@@ -577,7 +577,8 @@
     "ndev",
     "nullglob",
     "ltnp",
-    "ionos"
+    "ionos",
+    "unrecognised"
   ],
   "ignoreRegExpList": [
     "/nsec1[0-9a-z]{20,}/g",

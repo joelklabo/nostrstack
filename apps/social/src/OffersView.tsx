@@ -24,6 +24,7 @@ type OfferEntry = {
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const OFFER_CREATE_TIMEOUT_MS = 15_000;
+const OFFER_CREATE_TIMEOUT_MESSAGE = 'Offer creation timed out. Please try again.';
 
 function formatMsat(value?: number) {
   if (!value) return 'Any amount';
@@ -104,18 +105,26 @@ export function OffersView() {
     if (parsedExpires) payload.expiresIn = parsedExpires;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, OFFER_CREATE_TIMEOUT_MS);
+    const timeoutError = new Error(OFFER_CREATE_TIMEOUT_MESSAGE);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(timeoutError);
+      }, OFFER_CREATE_TIMEOUT_MS);
+    });
+    const withTimeout = <T,>(promise: Promise<T>): Promise<T> => Promise.race([promise, timeout]);
 
     try {
-      const res = await fetch(`${baseUrl}/api/bolt12/offers`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-      const bodyText = await res.text();
+      const res = await withTimeout(
+        fetch(`${baseUrl}/api/bolt12/offers`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        })
+      );
+      const bodyText = await withTimeout(res.text());
       if (!res.ok) {
         throw new Error(bodyText || `HTTP ${res.status}`);
       }
@@ -142,15 +151,20 @@ export function OffersView() {
       setCreateStatus('idle');
     } catch (err) {
       const message =
-        err instanceof DOMException && err.name === 'AbortError'
-          ? 'Offer creation timed out. Please try again.'
-          : err instanceof Error
-            ? err.message
-            : 'Offer creation failed.';
+        err === timeoutError
+          ? OFFER_CREATE_TIMEOUT_MESSAGE
+          : err instanceof DOMException && err.name === 'AbortError'
+            ? OFFER_CREATE_TIMEOUT_MESSAGE
+            : err instanceof Error
+              ? err.message
+              : 'Offer creation failed.';
       setCreateError(message);
       setCreateStatus('error');
     } finally {
-      clearTimeout(timeoutId);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      controller.abort();
     }
   };
 

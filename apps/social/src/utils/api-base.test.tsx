@@ -23,7 +23,7 @@ describe('resolveRuntimeWsUrl', () => {
     expect(url).toBe('wss://api.local/ws/telemetry');
   });
 
-  it('keeps local HTTP API base as ws when the page is HTTPS', () => {
+  it('uses secure websocket scheme for local HTTP API base when the page is HTTPS', () => {
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
       configurable: true,
@@ -32,7 +32,7 @@ describe('resolveRuntimeWsUrl', () => {
 
     try {
       const url = resolveRuntimeWsUrl('http://localhost:3001', '/ws/telemetry');
-      expect(url).toBe('ws://localhost:3001/ws/telemetry');
+      expect(url).toBe('wss://localhost:3001/ws/telemetry');
     } finally {
       Object.defineProperty(window, 'location', {
         configurable: true,

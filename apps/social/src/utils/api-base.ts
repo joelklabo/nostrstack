@@ -133,7 +133,8 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   const websocketOrigin = convertToWsScheme(window.location.origin);
 
   if (isLocalhostUrl(raw) && raw.startsWith('http://')) {
-    return `${raw.replace(/^http:\/\//i, 'ws://')}${normalizedPath}`;
+    const wsScheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    return `${raw.replace(/^https?:\/\//i, wsScheme)}${normalizedPath}`;
   }
 
   if (!raw || /^ws(s)?:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) {

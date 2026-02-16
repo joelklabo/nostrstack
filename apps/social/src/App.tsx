@@ -188,13 +188,15 @@ function AppShell() {
     setMobileMenuOpen(false);
   }, []);
   const pathname = usePathname();
+  const isRouteWithOptionalQuery = (path: string) =>
+    pathname === path ||
+    pathname === `${path}/` ||
+    pathname.startsWith(`${path}?`) ||
+    pathname.startsWith(`${path}/?`);
   const isDemoRoute = pathname === '/demo' || pathname === '/demo/';
   const nostrRouteId = getNostrRouteId(pathname);
-  const isSearchRoute =
-    pathname === '/search' ||
-    pathname === '/search/' ||
-    pathname.startsWith('/search?') ||
-    pathname.startsWith('/search/?');
+  const isSearchRoute = isRouteWithOptionalQuery('/search');
+  const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
   const profileRoute = resolveProfileRoute(pathname);
@@ -213,6 +215,7 @@ function AppShell() {
     // Known routes
     if (isDemoRoute) return true;
     if (isSearchRoute) return true;
+    if (isFindFriendRoute) return true;
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
     if (nostrRouteId) return true;
@@ -224,6 +227,7 @@ function AppShell() {
     pathname,
     isDemoRoute,
     isSearchRoute,
+    isFindFriendRoute,
     isSettingsRoute,
     isOffersRoute,
     nostrRouteId,
@@ -245,7 +249,7 @@ function AppShell() {
       setCurrentView('offers');
       return;
     }
-    if (isSearchRoute) {
+    if (isSearchRoute || isFindFriendRoute) {
       setCurrentView('search');
       return;
     }
@@ -256,7 +260,14 @@ function AppShell() {
     if (currentView !== 'feed') {
       setCurrentView('feed');
     }
-  }, [currentView, isOffersRoute, isSearchRoute, isSettingsRoute, profileRoutePubkey]);
+  }, [
+    currentView,
+    isOffersRoute,
+    isSearchRoute,
+    isFindFriendRoute,
+    isSettingsRoute,
+    profileRoutePubkey
+  ]);
 
   useEffect(() => {
     const root = typeof document === 'undefined' ? null : document;
