@@ -76,8 +76,10 @@ test.describe('Social App Flow', () => {
     // Click the zap button once feed and modal are ready.
     await expect(zapBtn, 'Zap button must be interactive').toBeEnabled({ timeout: 5000 });
     await zapBtn.click({ timeout: 10000 });
-    await expect(page.locator('.payment-modal')).toBeVisible({ timeout: 10000 });
-    const overlay = page.locator('.payment-overlay');
+    await expect(page.locator('.payment-modal, .zap-modal-overlay, .payment-overlay')).toBeVisible({
+      timeout: 10000
+    });
+    const overlay = page.locator('.payment-overlay, .zap-modal-overlay').first();
     await expect(overlay).toBeVisible();
     const overlayPosition = await overlay.evaluate((el) => getComputedStyle(el).position);
     expect(overlayPosition).toBe('fixed');

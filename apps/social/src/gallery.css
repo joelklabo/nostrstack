@@ -196,6 +196,169 @@ button:disabled {
   opacity: 1;
 }
 
+/* ===== PAYMENT MODAL ===== */
+
+/* Shared fallback styles for @nostrstack/react payment modal states.
+   Keeps payment overlays from affecting document flow and blocking interactions. */
+.payment-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--ns-color-overlay-strong);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ns-space-4);
+}
+
+.payment-overlay[aria-label='Close payment dialog'] {
+  cursor: pointer;
+}
+
+.payment-modal {
+  width: min(980px, 100%);
+  max-height: calc(100vh - var(--ns-space-8));
+  overflow-y: auto;
+  background: var(--ns-color-surface-default);
+  color: var(--ns-color-text-default);
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: var(--ns-radius-xl);
+  box-shadow: var(--ns-shadow-xl);
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ns-space-3);
+  padding: var(--ns-space-4);
+  border-bottom: 1px solid var(--ns-color-border-default);
+}
+
+.payment-body {
+  padding: var(--ns-space-4);
+  display: grid;
+  gap: var(--ns-space-4);
+}
+
+.payment-title {
+  font-size: var(--ns-font-size-lg);
+  font-weight: var(--ns-font-weight-semibold);
+  margin: 0;
+}
+
+.payment-subtitle {
+  color: var(--ns-color-text-muted);
+  margin-top: var(--ns-space-1);
+}
+
+.payment-close,
+.payment-action,
+.close-btn,
+.payment-success-action button,
+.payment-actions .payment-action {
+  min-height: 40px;
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: var(--ns-radius-md);
+  padding: 0.55rem 0.85rem;
+  background: var(--ns-color-bg-subtle);
+  color: var(--ns-color-text-default);
+  cursor: pointer;
+}
+
+.payment-close {
+  margin-left: auto;
+}
+
+.payment-action {
+  padding-inline: var(--ns-space-4);
+  color: var(--ns-color-static-white);
+  background: var(--ns-color-primary-default);
+  border-color: var(--ns-color-primary-default);
+}
+
+.payment-status {
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
+  padding: 0.8rem;
+  border: 1px solid var(--ns-color-border-default);
+  border-radius: var(--ns-radius-md);
+  background: var(--ns-color-bg-subtle);
+  margin-bottom: var(--ns-space-2);
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ns-space-4);
+  align-items: stretch;
+}
+
+.payment-qr,
+.payment-panel {
+  min-height: 260px;
+  border-radius: var(--ns-radius-md);
+  border: 1px solid var(--ns-color-border-default);
+  background: var(--ns-color-bg-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: var(--ns-space-4);
+}
+
+.payment-panel-title {
+  font-size: var(--ns-font-size-lg);
+  font-weight: var(--ns-font-weight-semibold);
+  margin-bottom: var(--ns-space-2);
+}
+
+.payment-status--success {
+  background: color-mix(in oklch, var(--ns-color-success-subtle) 65%, transparent);
+  border-color: var(--ns-color-success-default);
+}
+
+.payment-status--error {
+  background: color-mix(in oklch, var(--ns-color-danger-subtle) 65%, transparent);
+  border-color: var(--ns-color-danger-default);
+}
+
+.payment-invoice-box {
+  font-family: var(--ns-font-family-mono);
+  white-space: break-spaces;
+  word-break: break-all;
+  width: 100%;
+  background: var(--ns-color-surface-default);
+  border-radius: var(--ns-radius-md);
+  border: 1px solid var(--ns-color-border-default);
+  padding: var(--ns-space-3);
+  font-size: 0.8rem;
+}
+
+.payment-disclaimer {
+  margin-top: var(--ns-space-3);
+  color: var(--ns-color-text-muted);
+  font-size: var(--ns-font-size-sm);
+}
+
+@media (width <= 720px) {
+  .payment-modal {
+    width: 100%;
+    max-height: calc(100vh - var(--ns-space-4));
+  }
+
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-header {
+    flex-wrap: wrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .image-container__img {
     transition: none;

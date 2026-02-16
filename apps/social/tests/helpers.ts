@@ -97,7 +97,7 @@ export async function clickWithDispatchFallback(
 }
 
 const PAYMENT_MODAL_SELECTOR =
-  '.payment-modal, .payment-overlay, .paywall-payment-modal, .paywall-widget-host, .zap-modal, .support-card-modal';
+  '.payment-modal, .payment-overlay, .paywall-payment-modal, .paywall-widget-host, .zap-modal, .support-card-modal, .zap-modal-overlay';
 
 export async function clickAndExpectPaymentModal(
   page: Page,
@@ -127,9 +127,11 @@ export async function closePaymentModal(
   const { timeout = 10000 } = options;
 
   const closeButtons = modal.locator(
-    'button.payment-close, button[aria-label="Close payment dialog"]'
+    'button.payment-close, button[aria-label="Close payment dialog"], button.close-btn, .close-btn'
   );
-  const modalOverlay = page.locator('.payment-overlay[role="button"]').first();
+  const modalOverlay = page
+    .locator('.payment-overlay[role="button"], .zap-modal-overlay[role="button"]')
+    .first();
 
   await closeButtons
     .first()
