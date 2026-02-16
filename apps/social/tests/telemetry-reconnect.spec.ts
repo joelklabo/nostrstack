@@ -86,7 +86,6 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
   await expect(statusBadge).toContainText('Connected');
   await expect(page.locator('.telemetry-status-time')).not.toContainText('No updates yet');
   await dispatchTelemetryWsState(page, { status: 'reconnecting', attempt: 1, offlineReason: null });
-  await page.waitForTimeout(150);
   await expect(statusBadge).toHaveAttribute('data-status', 'connected');
   await expect(statusBadge).toContainText('Connected');
   await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting', { timeout: 1500 });
@@ -98,7 +97,6 @@ test('telemetry reconnect and offline fallback states', async ({ page }) => {
 
   await setBrowserOffline(page);
 
-  await page.waitForTimeout(150);
   await expect(statusBadge).toHaveAttribute('data-status', 'reconnecting');
   await expect(statusBadge).toHaveAttribute('data-status', 'offline', { timeout: 2000 });
   await expect(page.locator('.telemetry-status-note')).toContainText('Offline reason');

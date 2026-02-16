@@ -25,7 +25,6 @@ test.describe('Event Detail View', () => {
         else document.body.appendChild(container);
     });
 
-    await page.waitForTimeout(500);
     const repliesHeader = page.getByText('Replies (2)');
     await expect(repliesHeader).toBeVisible();
     

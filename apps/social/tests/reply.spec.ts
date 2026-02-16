@@ -13,9 +13,11 @@ test.describe('Reply Composer', () => {
     await loginWithNsec(page, VALID_NSEC);
 
     // Wait for posts to load
-    await expect(page.locator('.post-card').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-testid="social-event-card"]').first()).toBeVisible({
+      timeout: 15000
+    });
 
-    const firstPost = page.locator('.post-card').first();
+    const firstPost = page.locator('[data-testid="social-event-card"]').first();
     const replyBtn = firstPost.getByRole('button', { name: 'Reply' });
 
     // Click reply

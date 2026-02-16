@@ -86,8 +86,7 @@ test.describe('Rich Media Rendering', () => {
       else document.body.prepend(container);
     });
 
-    // Wait for image to load
-    await page.waitForTimeout(1000);
+    await page.locator('.ns-content__image').first().waitFor({ state: 'attached', timeout: 5000 });
 
     await page.screenshot({ path: 'docs/screenshots/social/media-embed.png', fullPage: false });
   });

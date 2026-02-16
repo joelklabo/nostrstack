@@ -157,6 +157,7 @@ export const NostrEventCard = memo(function NostrEventCard({
 
     return (
       <div
+        data-testid="social-event-content"
         className="ns-content"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(md.render(event.content)) }}
         role="article"
@@ -182,6 +183,16 @@ export const NostrEventCard = memo(function NostrEventCard({
     [event.id, onOpenThread]
   );
 
+  const isDevLikeRuntime = import.meta.env.DEV || import.meta.env.NODE_ENV === 'test';
+  const browserOrigin = typeof window === 'undefined' ? undefined : window.location.origin;
+  const browserHost = typeof window === 'undefined' ? 'localhost' : window.location.hostname;
+  const paywallApiBase = isDevLikeRuntime ? apiBase ?? 'http://localhost:3001' : apiBase;
+  const paywallHost = isDevLikeRuntime
+    ? import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'
+    : import.meta.env.VITE_NOSTRSTACK_HOST ?? browserHost;
+  const productionPaywallApiBase = browserOrigin ?? '';
+  const resolvedPaywallApiBase = paywallApiBase ?? productionPaywallApiBase;
+
   return (
     <article
       className={rootClasses}
@@ -206,7 +217,7 @@ export const NostrEventCard = memo(function NostrEventCard({
             : undefined
         }
       >
-        <header className="ns-event-card__header">
+        <header className="ns-event-card__header" data-testid="social-event-header">
           <div className="ns-event-card__meta">
             <ProfileLink
               pubkey={event.pubkey}
@@ -240,8 +251,8 @@ export const NostrEventCard = memo(function NostrEventCard({
             <PaywalledContent
               itemId={paywallItemId}
               amountSats={paywallAmount}
-              apiBase={apiBase ?? 'http://localhost:3001'}
-              host={import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'}
+              apiBase={resolvedPaywallApiBase}
+              host={paywallHost}
               unlockedContent={renderContent()}
               lockedContent={
                 <div className="ns-callout">
@@ -374,7 +385,7 @@ export const NostrEventCard = memo(function NostrEventCard({
       <TopZaps eventId={event.id} />
 
       {showJson && (
-        <div className="ns-event-card__json">
+        <div className="ns-event-card__json" data-testid="social-event-json">
           <JsonView value={event} title={`Event ID: ${event.id.slice(0, 8)}...`} />
         </div>
       )}

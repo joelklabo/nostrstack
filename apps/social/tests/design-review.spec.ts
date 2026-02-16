@@ -207,8 +207,6 @@ test.describe('Design Review: Interactive States', () => {
 
     // Hover and check background changes
     await navItem.hover();
-    await page.waitForTimeout(100); // Wait for transition
-
     const hoveredBg = await navItem.evaluate((el) => window.getComputedStyle(el).backgroundColor);
 
     // Background should change on hover (unless already active)
@@ -356,7 +354,6 @@ test.describe('Design Review: Touch Targets & Accessibility', () => {
 test.describe('Design Review: Loading & Skeleton States', () => {
   test('should show loading state with proper styling', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(500);
 
     // Check for loading indicator during initial load
     const hasLoadingText = await page
@@ -410,7 +407,9 @@ test.describe('Design Review: Layout Consistency', () => {
     await loginWithNsec(page);
 
     const borderRadii = await page.evaluate(() => {
-      const elements = Array.from(document.querySelectorAll('.post-card, button, .action-btn'));
+      const elements = Array.from(
+        document.querySelectorAll('[data-testid="social-event-card"], button, .action-btn')
+      );
       return elements.map((el) => window.getComputedStyle(el).borderRadius);
     });
 
@@ -423,7 +422,7 @@ test.describe('Design Review: Layout Consistency', () => {
     await loginWithNsec(page);
 
     const shadows = await page.evaluate(() => {
-      const cards = Array.from(document.querySelectorAll('.post-card'));
+      const cards = Array.from(document.querySelectorAll('[data-testid="social-event-card"]'));
       return cards.map((el) => window.getComputedStyle(el).boxShadow);
     });
 
@@ -444,10 +443,10 @@ test.describe('Design Review: Dark Mode Support', () => {
 
     if ((await settingsBtn.count()) > 0) {
       await settingsBtn.first().click();
-      await page.waitForTimeout(500);
 
       // Look for theme toggle
       const themeToggle = page.locator('button:has-text("Dark"), button:has-text("Light")');
+      await expect(themeToggle).toBeVisible({ timeout: 5000 });
       const hasThemeToggle = (await themeToggle.count()) > 0;
 
       expect(hasThemeToggle).toBe(true);

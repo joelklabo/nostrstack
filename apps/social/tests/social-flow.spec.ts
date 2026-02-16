@@ -45,7 +45,7 @@ test.describe('Social App Flow', () => {
     await expect(page.locator('.sidebar-title').getByText('NostrStack')).toBeVisible(); // Sidebar brand
     await page.screenshot({ path: resolveDocScreenshotPath('feed.png') });
 
-    await expect(page.getByText('Live Feed')).toBeVisible(); // Feed
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible(); // Feed
     await expect(page.getByPlaceholder('Share something with the network...')).toBeVisible(); // Post Editor
 
     // 3. Post a note
@@ -63,12 +63,12 @@ test.describe('Social App Flow', () => {
 
     // 5. Interact: Click Zap (opens modal)
     // Wait for at least one post to load (PostItem)
-    const zapBtn = page.locator('.zap-btn').first();
+    const firstPost = page.locator('[data-testid="social-event-card"]').first();
+    const zapBtn = firstPost.getByRole('button', { name: /^⚡\s*ZAP/i });
     await expect(zapBtn, 'No posts found to zap').toBeVisible({ timeout: 5000 });
     const feedContainer = page.locator('.feed-container');
     const feedBox = await feedContainer.boundingBox();
-    // Wait for stable state before clicking (DOM may re-render due to mock relay)
-    await page.waitForTimeout(1000);
+    await expect(firstPost, 'Post card must be attached').toBeVisible({ timeout: 10000 });
     // Click the zap button once feed and modal are ready.
     await expect(zapBtn, 'Zap button must be interactive').toBeEnabled({ timeout: 5000 });
     await zapBtn.click({ timeout: 10000 });
@@ -106,15 +106,11 @@ test.describe('Social App Flow', () => {
     // Check Profile View
     await expect(page.locator('.profile-view')).toBeVisible({ timeout: 10000 });
 
-    // Wait for profile to fully load before interacting
-    await page.waitForTimeout(500);
-
     // Interact: Follow (button may not exist if viewing own profile)
-    const followBtn = page.getByText('[+] FOLLOW');
-    await expect(followBtn, 'Expected follow button to be visible before follow flow').toBeVisible({
-      timeout: 5000
-    });
-    await followBtn.click();
+    const followBtn = page.getByRole('button', { name: /Follow this user/i });
+    if (await followBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await followBtn.click();
+    }
     await page.screenshot({ path: resolveDocScreenshotPath('profile.png') });
   });
 
@@ -130,7 +126,7 @@ test.describe('Social App Flow', () => {
 
     // Verify Post Actions
     // Wait for at least one post
-    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 
     // Dismiss onboarding overlay if it appears before interacting with posts
     const overlay = page.locator('.onboarding-overlay');
@@ -138,40 +134,31 @@ test.describe('Social App Flow', () => {
       const skipBtn = page.getByRole('button', { name: 'Skip' });
       if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
         await skipBtn.click();
-        await page.waitForTimeout(300);
+        await expect(overlay).toBeHidden({ timeout: 5000 });
       }
     }
 
     // Click VIEW_SRC on the first post - use aria-label for more reliable matching
     // First wait for the button to be attached to DOM (not just visible)
-    const viewSource = page
-      .locator('.ns-action-btn')
-      .filter({ has: page.getByRole('button', { name: /View event source JSON/i }) })
-      .first();
+    const viewSource = page.getByRole('button', { name: /View event source JSON/i }).first();
     await expect(viewSource.first(), 'No posts available for source view').toBeVisible({
       timeout: 10000
     });
-    // Use force:true to bypass onboarding overlay if it intercepts clicks
-    await viewSource.click({ force: true });
-    // Wait for state change and re-render
-    await page.waitForTimeout(2000);
-    // Wait for JSON view to be attached to DOM first, then check visibility
-    const jsonView = page.locator('.ns-json');
+    await viewSource.click();
+    const jsonView = page.locator('[data-testid="social-event-json"]');
     await jsonView.waitFor({ state: 'attached', timeout: 10000 });
     // Now check visibility
     await expect(jsonView).toBeVisible({ timeout: 5000 });
 
     // Toggle back (HIDE_SRC)
     await page
-      .locator('.ns-action-btn')
-      .filter({ has: page.getByRole('button', { name: /Hide event source JSON/i }) })
+      .getByRole('button', { name: /Hide event source JSON/i })
       .first()
       .click();
-    await page.waitForTimeout(500);
-    await expect(page.locator('.ns-json')).not.toBeVisible({ timeout: 5000 });
+    await expect(jsonView).not.toBeVisible({ timeout: 5000 });
 
     // Click REPLY (no-op but should not crash)
-    await page.getByText('Reply').first().click();
+    await page.locator('[data-testid="social-event-reply"]').first().click();
 
     // Logout
     await page.getByRole('button', { name: 'Log out' }).click();

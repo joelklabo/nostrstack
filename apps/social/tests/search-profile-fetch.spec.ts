@@ -9,7 +9,7 @@ const testNsec =
 async function loginWithNsec(page: Page) {
   await page.goto('/');
   // If we are already logged in (reused state), we might see Live Feed
-  if (await page.getByText('Live Feed').isVisible()) return;
+  if (await page.getByRole('heading', { name: /Live Feed/ }).isVisible()) return;
 
   // Sometimes we land on welcome screen
   const manual = page.getByText('Enter nsec manually');
@@ -17,7 +17,7 @@ async function loginWithNsec(page: Page) {
     await manual.click();
     await page.getByPlaceholder('nsec1...').fill(testNsec);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
   } else {
     // Maybe we are on login page but "Enter nsec manually" is inside a details/button?
     // Let's assume standard flow.
@@ -26,7 +26,7 @@ async function loginWithNsec(page: Page) {
     await page.getByText('Enter nsec manually').click();
     await page.getByPlaceholder('nsec1...').fill(testNsec);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
   }
 }
 

@@ -91,17 +91,19 @@ test.describe('/nostr/:id replies', () => {
     await expect(page.locator('.nostr-event-replies .nostr-event-section-title')).toHaveText(
       'Replies'
     );
-    await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
+    await expect(page.locator('.nostr-event-replies-list [data-testid="social-event-card"]')).toHaveCount(
+      2
+    );
 
     const loadMore = page.getByRole('button', { name: /Load more replies/i });
     await expect(loadMore).toBeVisible();
     await loadMore.focus();
     await expect(loadMore).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(4);
+    await expect(page.locator('.nostr-event-replies-list [data-testid="social-event-card"]')).toHaveCount(4);
 
     const contents = await page
-      .locator('.nostr-event-replies-list .post-content')
+      .locator('.nostr-event-replies-list [data-testid="social-event-content"]')
       .allTextContents();
     expect(contents[0]).toContain('Oldest reply');
     expect(contents[1]).toContain('Older reply');
@@ -180,9 +182,9 @@ test.describe('/nostr/:id replies', () => {
     await expect(fallbackAlert).toBeVisible();
     await expect(fallbackAlert).toContainText('API unavailable');
 
-    await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
+    await expect(page.locator('.nostr-event-replies-list [data-testid="social-event-card"]')).toHaveCount(2);
     const contents = await page
-      .locator('.nostr-event-replies-list .post-content')
+      .locator('.nostr-event-replies-list [data-testid="social-event-content"]')
       .allTextContents();
     expect(contents[0]).toContain('Oldest reply');
     expect(contents[1]).toContain('Newest reply');
@@ -229,7 +231,7 @@ test.describe('/nostr/:id replies', () => {
     });
 
     await page.goto(`/nostr/${eventId}`);
-    await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
+    await expect(page.locator('.nostr-event-replies-list [data-testid="social-event-card"]')).toHaveCount(2);
 
     const loadMore = page.getByRole('button', { name: /Load more replies/i });
     await loadMore.click();
@@ -238,9 +240,9 @@ test.describe('/nostr/:id replies', () => {
     await expect(warning).toContainText('Some replies are unavailable');
     await expect(warning).toContainText('replyCursor must be a non-empty string.');
 
-    await expect(page.locator('.nostr-event-replies-list .post-card')).toHaveCount(2);
+    await expect(page.locator('.nostr-event-replies-list [data-testid="social-event-card"]')).toHaveCount(2);
     const contents = await page
-      .locator('.nostr-event-replies-list .post-content')
+      .locator('.nostr-event-replies-list [data-testid="social-event-content"]')
       .allTextContents();
     expect(contents[0]).toContain('Oldest reply');
     expect(contents[1]).toContain('Newest reply');

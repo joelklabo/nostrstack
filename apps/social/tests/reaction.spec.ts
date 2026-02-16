@@ -46,19 +46,18 @@ test.describe('Reaction (Like)', () => {
     await loginWithNsec(page, VALID_NSEC);
     
     // Wait for posts to load
-    await expect(page.locator('.post-card').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-testid="social-event-card"]').first()).toBeVisible({
+      timeout: 15000
+    });
     
-    const firstPost = page.locator('.post-card').first();
-    const likeBtn = firstPost.locator('.reaction-btn').first();
+    const firstPost = page.locator('[data-testid="social-event-card"]').first();
+    const likeBtn = firstPost.locator('[data-testid="social-event-reaction"]').first();
     
     // Click like
     await likeBtn.click();
     
     // Verify optimistic UI (active class)
     await expect(likeBtn).toHaveClass(/active/, { timeout: 10000 });
-    
-    // Verify it changed from default color (optional, or just check it's not the initial color)
-    const color = await likeBtn.evaluate(el => getComputedStyle(el).color);
-    expect(color).not.toBe('rgb(36, 41, 47)'); // Should not be default text color anymore
+    await expect(likeBtn).toHaveAttribute('aria-pressed', 'true', { timeout: 10000 });
   });
 });

@@ -163,13 +163,19 @@ export function OnboardingTour() {
 
   return createPortal(
     <>
-      <div className="onboarding-overlay" aria-hidden="true" />
+      <div className="onboarding-overlay" aria-hidden="true" data-testid="onboarding-overlay" />
       {spotlightStyle && (
-        <div className="onboarding-spotlight" style={spotlightStyle} aria-hidden="true" />
+        <div
+          className="onboarding-spotlight"
+          style={spotlightStyle}
+          aria-hidden="true"
+          data-testid="onboarding-spotlight"
+        />
       )}
       <button
         type="button"
         className="onboarding-dismiss"
+        data-testid="onboarding-dismiss"
         onClick={skip}
         aria-label="Dismiss tour"
         title="Press Escape to dismiss"
@@ -178,6 +184,7 @@ export function OnboardingTour() {
       </button>
       <div
         className="onboarding-card"
+        data-testid="onboarding-card"
         style={position}
         ref={cardRef}
         role="dialog"
@@ -185,34 +192,37 @@ export function OnboardingTour() {
         aria-labelledby="tour-title"
         aria-describedby="tour-desc"
       >
-        <div id="tour-title" className="onboarding-title">
+        <div id="tour-title" className="onboarding-title" data-testid="onboarding-title">
           {step.title}
         </div>
-        <div id="tour-desc" className="onboarding-content">
+        <div id="tour-desc" className="onboarding-content" data-testid="onboarding-content">
           {step.content}
         </div>
         <div className="onboarding-actions">
           <button
             type="button"
             className="onboarding-btn onboarding-btn-skip"
+            data-testid="onboarding-skip-btn"
             onClick={skip}
             aria-label="Skip tour"
           >
             Skip
           </button>
           {hasPreviousStep && (
-            <button
-              type="button"
-              className="onboarding-btn"
-              onClick={back}
-              aria-label="Go to previous step"
-            >
-              Back
+          <button
+            type="button"
+            className="onboarding-btn"
+            data-testid="onboarding-back-btn"
+            onClick={back}
+            aria-label="Go to previous step"
+          >
+            Back
             </button>
           )}
           <button
             type="button"
             className="onboarding-btn onboarding-btn-next"
+            data-testid="onboarding-next-btn"
             onClick={next}
             aria-label={isLastStep ? 'Finish tour' : 'Go to next step'}
           >

@@ -54,7 +54,6 @@ test('pay-to-unlock does not overflow card at common widths', async ({ page }) =
   const widths = [1024, 1152, 1280, 1366, 1440, 1514];
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
-    await page.waitForTimeout(50);
     const overflow = await measureCardOverflow(page);
     expect(overflow, 'paywall card not found').not.toBeNull();
     expect(

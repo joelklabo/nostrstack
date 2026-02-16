@@ -35,7 +35,6 @@ export async function expectRelayMode(page: Page, mode: 'real' | 'mock') {
         .locator('input[placeholder="mock or wss://relay1,wss://relay2"]')
         .first();
       await relayInput.fill('mock');
-      await page.waitForTimeout(300); // allow remount
       await expect(page.locator(selector)).toBeVisible({ timeout: 12000 });
     } else {
       throw err;
@@ -251,8 +250,8 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
 
-  // If we are already logged in (reused state), we might see Live Feed
-  const liveFeed = page.getByText('Live Feed');
+  // If we are already logged in (reused state), we might see the feed
+  const liveFeed = page.getByRole('heading', { name: /Live Feed/ });
   const alreadyIn = await liveFeed.isVisible().catch(() => false);
   if (alreadyIn) return;
 
@@ -294,5 +293,5 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   const signInBtn = page.getByRole('button', { name: 'Sign in' });
   await signInBtn.click();
 
-  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 20000 });
 }

@@ -9,7 +9,7 @@ test.describe('Markdown rendering', () => {
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
     await page.getByPlaceholder('nsec1...').fill(validNsec);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
   });
 
   test('renders markdown in posts', async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Markdown rendering', () => {
     });
 
     // Check if it appears in the feed and is rendered
-    const postContent = page.locator('.post-content').first();
+    const postContent = page.locator('[data-testid="social-event-content"]').first();
     await expect(postContent).toContainText('Hello bold and italic and link');
 
     // Verify HTML tags
@@ -53,7 +53,7 @@ test.describe('Markdown rendering', () => {
       timeout: 10000
     });
 
-    const postContent = page.locator('.post-content').first();
+    const postContent = page.locator('[data-testid="social-event-content"]').first();
 
     // Check for <br> or multiple paragraphs
     // markdown-it with breaks:true should use <br> for single newlines or wrap in <p>

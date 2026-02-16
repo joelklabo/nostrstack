@@ -14,7 +14,7 @@ test.describe('App Interactions', () => {
     const nav = page.getByRole('navigation');
 
     // Default is Feed
-    await expect(page.getByRole('heading', { name: 'Live Feed' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible();
     await expect(nav.getByRole('button', { name: 'Feed' })).toHaveClass(/active/);
 
     // Search
@@ -32,7 +32,7 @@ test.describe('App Interactions', () => {
 
     // Back to Feed
     await nav.getByRole('button', { name: 'Feed' }).click();
-    await expect(page.getByRole('heading', { name: 'Live Feed' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible();
   });
 
   test('toggle view source in feed', async ({ page }) => {
@@ -46,18 +46,20 @@ test.describe('App Interactions', () => {
       timeout: 10000
     });
 
-    const postCard = page.locator('.post-card').first();
+    const postCard = page.locator('[data-testid="social-event-card"]').first();
     await expect(postCard).toBeVisible({ timeout: 10000 });
 
-    const viewSourceBtn = postCard.getByRole('button', { name: 'View Source' });
+    const viewSourceBtn = postCard.getByRole('button', { name: /View event source JSON/i });
     await viewSourceBtn.click();
 
     // Should show JSON view
-    await expect(page.locator('.ns-json')).toBeVisible();
-    await expect(postCard.getByRole('button', { name: 'Hide Source' })).toBeVisible();
+    const sourceView = postCard.locator('[data-testid="social-event-json"]');
+    await expect(sourceView).toBeVisible();
+    const hideSourceBtn = postCard.getByRole('button', { name: /Hide event source JSON/i });
+    await expect(hideSourceBtn).toBeVisible();
 
     // Hide it
-    await postCard.getByRole('button', { name: 'Hide Source' }).click();
-    await expect(page.locator('.ns-json')).toBeHidden();
+    await hideSourceBtn.click();
+    await expect(sourceView).toBeHidden();
   });
 });

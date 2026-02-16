@@ -83,7 +83,9 @@ function RowComponent<T>({
         ...style,
         paddingBottom: 'var(--ns-space-4, 16px)',
         contain: 'layout',
-        minHeight: 'var(--ns-event-card-min-height, 180px)'
+        minHeight: 'var(--ns-event-card-min-height, 180px)',
+        contentVisibility: 'auto',
+        containIntrinsicSize: 'auto var(--ns-event-card-min-height, 180px)'
       }}
       data-virtualized-item={itemKey}
       role={itemRole}

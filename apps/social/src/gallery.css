@@ -2193,6 +2193,12 @@ body {
   min-height: var(--ns-link-preview-slot-height);
 }
 
+.link-preview--empty {
+  border: 1px solid transparent;
+  min-height: var(--ns-link-preview-slot-height);
+  visibility: hidden;
+}
+
 .link-preview__skeleton {
   display: flex;
   gap: var(--ns-space-3);

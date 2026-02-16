@@ -132,6 +132,7 @@ export const EmojiReactionButton = memo(function EmojiReactionButton({
         type="button"
         ref={buttonRef}
         className={`ns-btn ns-btn--ghost ns-btn--sm ns-action-btn ${className || ''} ${hasReacted ? 'active' : ''}`}
+        data-testid="social-event-reaction"
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}

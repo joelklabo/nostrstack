@@ -29,8 +29,7 @@ test.describe('Ultra Review: Visual Design Consistency', () => {
   test('should maintain consistent visual weight across components', async ({ page }) => {
     await loginWithNsec(page);
 
-    // Wait for content to render
-    await page.waitForTimeout(1000);
+    await expect(page.locator('.social-layout, main[role="main"]')).toBeVisible({ timeout: 10000 });
 
     // Analyze font weights across different components
     const fontWeights = await page.evaluate(() => {
@@ -39,7 +38,7 @@ test.describe('Ultra Review: Visual Design Consistency', () => {
         navItemActive: document.querySelector('.nav-item.active'),
         navItemInactive: document.querySelector('.nav-item:not(.active)'),
         feedTitle: document.querySelector('h2'),
-        postContent: document.querySelector('.post-content'),
+        postContent: document.querySelector('[data-testid=\"social-event-content\"]'),
         actionButton: document.querySelector('.action-btn')
       };
 
@@ -97,7 +96,7 @@ test.describe('Ultra Review: Visual Design Consistency', () => {
     // Check that visual hierarchy is clear
     const hierarchy = await page.evaluate(() => {
       const feedTitle = document.querySelector('h2');
-      const postCard = document.querySelector('.post-card');
+      const postCard = document.querySelector('[data-testid="social-event-card"]');
 
       if (!feedTitle || !postCard) return null;
 
@@ -128,13 +127,12 @@ test.describe('Ultra Review: Dark Mode Implementation', () => {
     const settingsBtn = page.locator('button', { hasText: 'Settings' });
     if ((await settingsBtn.count()) > 0) {
       await settingsBtn.click();
-      await page.waitForTimeout(500);
 
       // Look for dark mode toggle
       const darkModeBtn = page.locator('button:has-text("Dark")');
       if ((await darkModeBtn.count()) > 0) {
         await darkModeBtn.click();
-        await page.waitForTimeout(500);
+        await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark', { timeout: 5000 });
 
         // Verify dark mode colors are applied
         const darkColors = await page.evaluate(() => {
@@ -167,12 +165,11 @@ test.describe('Ultra Review: Dark Mode Implementation', () => {
     const settingsBtn = page.locator('button', { hasText: 'Settings' });
     if ((await settingsBtn.count()) > 0) {
       await settingsBtn.click();
-      await page.waitForTimeout(500);
 
       const darkModeBtn = page.locator('button:has-text("Dark")');
       if ((await darkModeBtn.count()) > 0) {
         await darkModeBtn.click();
-        await page.waitForTimeout(500);
+        await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark', { timeout: 5000 });
 
         // Run accessibility scan in dark mode
         const accessibilityScanResults = await new AxeBuilder({ page })
@@ -194,7 +191,6 @@ test.describe('Ultra Review: Dark Mode Implementation', () => {
     const settingsBtn = page.locator('button', { hasText: 'Settings' });
     if ((await settingsBtn.count()) > 0) {
       await settingsBtn.click();
-      await page.waitForTimeout(500);
 
       // Record initial state
       const initialBg = await page.evaluate(() => {
@@ -204,10 +200,6 @@ test.describe('Ultra Review: Dark Mode Implementation', () => {
       const darkModeBtn = page.locator('button:has-text("Dark")');
       if ((await darkModeBtn.count()) > 0) {
         await darkModeBtn.click();
-
-        // Wait a moment for transition
-        await page.waitForTimeout(200);
-
         const newBg = await page.evaluate(() => {
           return window.getComputedStyle(document.body).backgroundColor;
         });
@@ -223,8 +215,7 @@ test.describe('Ultra Review: Component States & Edge Cases', () => {
   test('should handle empty feed state gracefully', async ({ page }) => {
     await loginWithNsec(page);
 
-    // Wait for feed to fully load
-    await page.waitForTimeout(1000);
+    await expect(page.locator('.feed-stream')).toBeVisible({ timeout: 10000 });
 
     // Check if there's content (posts OR empty state message)
     const hasContent = await page.evaluate(() => {
@@ -232,7 +223,7 @@ test.describe('Ultra Review: Component States & Edge Cases', () => {
       if (!main) return false;
 
       const text = main.textContent || '';
-      const hasPosts = document.querySelectorAll('.post-card').length > 0;
+      const hasPosts = document.querySelectorAll('[data-testid=\"social-event-card\"]').length > 0;
       const hasEmptyState = text.includes('No posts') || text.includes('first post');
 
       return hasPosts || hasEmptyState || text.trim().length > 0;
@@ -258,7 +249,7 @@ test.describe('Ultra Review: Component States & Edge Cases', () => {
 
     // Check text overflow handling
     const textOverflow = await page.evaluate(() => {
-      const postContents = Array.from(document.querySelectorAll('.post-content'));
+      const postContents = Array.from(document.querySelectorAll('[data-testid=\"social-event-content\"]'));
       return postContents.map((el) => {
         const styles = window.getComputedStyle(el);
         return {
@@ -309,7 +300,7 @@ test.describe('Ultra Review: Typography Scale in Practice', () => {
 
     // Check that text content doesn't exceed optimal line length (45-75 chars)
     const lineLengths = await page.evaluate(() => {
-      const posts = Array.from(document.querySelectorAll('.post-content'));
+      const posts = Array.from(document.querySelectorAll('[data-testid=\"social-event-content\"]'));
       return posts.map((post) => {
         const width = post.getBoundingClientRect().width;
         const fontSize = parseFloat(window.getComputedStyle(post).fontSize);
@@ -335,8 +326,8 @@ test.describe('Ultra Review: Typography Scale in Practice', () => {
     const fontSizes = await page.evaluate(() => {
       const h1 = document.querySelector('h1');
       const h2 = document.querySelector('h2');
-      const body = document.querySelector('.post-content');
-      const small = document.querySelector('.post-header');
+      const body = document.querySelector('[data-testid=\"social-event-content\"]');
+      const small = document.querySelector('[data-testid=\"social-event-header\"]');
 
       return {
         h1: h1 ? parseFloat(window.getComputedStyle(h1).fontSize) : null,
@@ -362,7 +353,7 @@ test.describe('Ultra Review: Typography Scale in Practice', () => {
     await loginWithNsec(page);
 
     const lineHeights = await page.evaluate(() => {
-      const body = document.querySelector('.post-content p');
+      const body = document.querySelector('[data-testid=\"social-event-content\"] p');
       const nav = document.querySelector('.nav-item');
 
       return {
@@ -413,7 +404,6 @@ test.describe('Ultra Review: Micro-interactions & Polish', () => {
 
     // Tab through elements and verify focus styles
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(100);
 
     const focusedElement = await page.evaluate(() => {
       const el = document.activeElement;
@@ -514,7 +504,6 @@ test.describe('Ultra Review: Mobile UX Patterns', () => {
 
     // Click hamburger
     await hamburger.click();
-    await page.waitForTimeout(300); // Animation time
 
     // Sidebar should be visible
     const sidebar = page.locator('.sidebar-nav');
@@ -531,7 +520,6 @@ test.describe('Ultra Review: Mobile UX Patterns', () => {
 
     const hamburger = page.locator('.hamburger-btn');
     await hamburger.click();
-    await page.waitForTimeout(300);
 
     // Try to scroll - menu should stay in place
     const sidebar = page.locator('.sidebar-nav');
@@ -548,17 +536,14 @@ test.describe('Ultra Review: Mobile UX Patterns', () => {
     const tourCloseBtn = page.locator('[aria-label*="Close"], [aria-label*="close"]').first();
     if (await tourCloseBtn.isVisible().catch(() => false)) {
       await tourCloseBtn.click();
-      await page.waitForTimeout(300);
     }
 
     // Open menu
     await page.locator('.hamburger-btn').click();
-    await page.waitForTimeout(300);
 
     // Click overlay - use force to bypass potential intercepts
     const overlay = page.locator('.sidebar-overlay');
     await overlay.click({ force: true });
-    await page.waitForTimeout(300);
 
     // Sidebar should be hidden
     const sidebar = page.locator('.sidebar-nav');
@@ -582,7 +567,7 @@ test.describe('Ultra Review: Spacing Consistency Across Breakpoints', () => {
 
       const spacing = await page.evaluate(() => {
         const main = document.querySelector('main');
-        const cards = Array.from(document.querySelectorAll('.post-card'));
+        const cards = Array.from(document.querySelectorAll('[data-testid=\"social-event-card\"]'));
 
         if (!main) return null;
 
@@ -655,7 +640,6 @@ test.describe('Ultra Review: Information Architecture', () => {
     // Tab through first 5 elements
     for (let i = 0; i < 5; i++) {
       await page.keyboard.press('Tab');
-      await page.waitForTimeout(50);
 
       const focused = await page.evaluate(() => {
         const el = document.activeElement;
@@ -684,7 +668,7 @@ test.describe('Ultra Review: Information Architecture', () => {
 test.describe('Ultra Review: Visual Regression Detection', () => {
   test('should capture baseline screenshot of feed view', async ({ page }) => {
     await loginWithNsec(page);
-    await page.waitForTimeout(1000); // Let content settle
+    await expect(page.locator('.social-layout, main[role="main"]')).toBeVisible({ timeout: 10000 });
 
     // Take full page screenshot
     await page.screenshot({
@@ -699,12 +683,11 @@ test.describe('Ultra Review: Visual Regression Detection', () => {
     const settingsBtn = page.locator('button', { hasText: 'Settings' });
     if ((await settingsBtn.count()) > 0) {
       await settingsBtn.click();
-      await page.waitForTimeout(500);
 
       const darkModeBtn = page.locator('button:has-text("Dark")');
       if ((await darkModeBtn.count()) > 0) {
         await darkModeBtn.click();
-        await page.waitForTimeout(500);
+        await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark', { timeout: 5000 });
 
         await page.screenshot({
           path: 'test-results/visual-baseline-dark.png',
@@ -717,7 +700,7 @@ test.describe('Ultra Review: Visual Regression Detection', () => {
   test('should capture mobile view baseline', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await loginWithNsec(page);
-    await page.waitForTimeout(1000);
+    await expect(page.locator('.social-layout, main[role="main"]')).toBeVisible({ timeout: 10000 });
 
     await page.screenshot({
       path: 'test-results/visual-baseline-mobile.png',

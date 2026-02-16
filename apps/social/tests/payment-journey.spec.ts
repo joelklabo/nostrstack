@@ -51,7 +51,7 @@ async function loginWithNsec(page: import('@playwright/test').Page) {
   await page.getByText('Enter nsec manually').click();
   await page.getByPlaceholder('nsec1...').fill(testNsec);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 }
 
 test('zap two posts and send sats from profile', async ({ page }) => {

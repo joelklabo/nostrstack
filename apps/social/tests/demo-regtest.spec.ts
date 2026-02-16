@@ -11,7 +11,7 @@ test.describe('regtest demo (zap pay)', () => {
     await page.getByText('Enter nsec manually').click();
     await page.getByPlaceholder('nsec1...').fill(testNsec);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 
     const zapButtons = page.locator('.zap-btn');
     const total = await zapButtons.count();

@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { Image } from './Image';
 
@@ -65,6 +65,7 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
   const [data, setData] = useState<OpenGraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const isDirectMediaUrl = useMemo(() => isMediaUrl(url), [url]);
 
   useEffect(() => {
     if (!isValidUrl(url)) {
@@ -74,7 +75,7 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     // Skip for direct media URLs - they're handled by image components
-    if (isMediaUrl(url)) {
+    if (isDirectMediaUrl) {
       setLoading(false);
       return;
     }
@@ -154,7 +155,9 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, isDirectMediaUrl]);
+
+  if (isDirectMediaUrl) return null;
 
   // Handle YouTube embeds specially
   const youtube = isYouTubeUrl(url);
@@ -193,7 +196,12 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
   }
 
   if (error || !data) {
-    return null;
+    return (
+      <div
+        className={`link-preview link-preview--empty ${className || ''}`}
+        aria-label="Link preview unavailable"
+      />
+    );
   }
 
   // Don't show preview if we only have the URL (no metadata)
