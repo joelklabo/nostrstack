@@ -5,6 +5,8 @@ interface UsePostNavigationOptions {
   postSelector?: string;
   /** Enable/disable navigation */
   enabled?: boolean;
+  /** Scroll container selector. If omitted, falls back to window. */
+  scrollContainer?: string;
   /** Callback when a post action is triggered */
   onAction?: (action: 'like' | 'zap' | 'reply' | 'thread', element: HTMLElement) => void;
 }
@@ -15,7 +17,7 @@ interface UsePostNavigationOptions {
  * L for like, Z for zap, R for reply.
  */
 export function usePostNavigation(options: UsePostNavigationOptions = {}) {
-  const { postSelector = '.ns-event-card', enabled = true, onAction } = options;
+  const { postSelector = '.ns-event-card', enabled = true, scrollContainer, onAction } = options;
 
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const postsRef = useRef<HTMLElement[]>([]);
@@ -25,17 +27,46 @@ export function usePostNavigation(options: UsePostNavigationOptions = {}) {
     return Array.from(document.querySelectorAll(postSelector)) as HTMLElement[];
   }, [postSelector]);
 
-  // Scroll element into view with offset for fixed header
-  const scrollIntoViewWithOffset = useCallback((element: HTMLElement) => {
-    const headerOffset = 80; // Account for fixed header
-    const elementPosition = element.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.scrollY - headerOffset;
+  const getScrollContainer = useCallback((): Window | HTMLElement => {
+    if (scrollContainer && typeof document !== 'undefined') {
+      const container = document.querySelector<HTMLElement>(scrollContainer);
+      if (container) return container;
+    }
 
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: 'smooth'
-    });
-  }, []);
+    return window;
+  }, [scrollContainer]);
+
+  // Scroll element into view with offset for fixed header
+  const scrollIntoViewWithOffset = useCallback(
+    (element: HTMLElement) => {
+      const container = getScrollContainer();
+      const headerOffset = 80; // Account for fixed header
+      const elementRect = element.getBoundingClientRect();
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const behavior = prefersReducedMotion ? 'auto' : 'smooth';
+
+      if (container === window) {
+        const currentScrollTop = window.scrollY;
+        const offsetPosition = elementRect.top + currentScrollTop - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior });
+        return;
+      }
+
+      const scrollContainer = container as HTMLElement;
+      const currentScrollTop = scrollContainer.scrollTop;
+      const baseTop = scrollContainer.getBoundingClientRect().top;
+      const offsetPosition = elementRect.top - baseTop + currentScrollTop - headerOffset;
+
+      scrollContainer.scrollTo({
+        top: offsetPosition,
+        behavior
+      });
+    },
+    [getScrollContainer]
+  );
 
   // Focus a post by index
   const focusPost = useCallback(

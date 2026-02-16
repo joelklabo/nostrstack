@@ -51,6 +51,7 @@
   --ns-color-zap-accent: var(--ns-color-primary-default);
   --ns-top-zaps-slot-height: 1.875rem;
   --ns-link-preview-slot-height: 9.25rem;
+  --ns-event-card-min-height: 180px;
 }
 
 /* ===== BASE STYLES ===== */

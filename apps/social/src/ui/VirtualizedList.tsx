@@ -77,7 +77,12 @@ function RowComponent<T>({
   return (
     <div
       className="virtualized-row"
-      style={{ ...style, paddingBottom: 'var(--ns-space-4, 16px)' }}
+      style={{
+        ...style,
+        paddingBottom: 'var(--ns-space-4, 16px)',
+        contain: 'layout',
+        minHeight: 'var(--ns-event-card-min-height, 180px)'
+      }}
       data-virtualized-item={itemKey}
       role={itemRole}
       aria-posinset={itemRole ? index + 1 : undefined}
@@ -114,9 +119,8 @@ export function VirtualizedList<T>({
   });
 
   const rowHeightCacheKey = useMemo(() => {
-    const itemKeys = items.map((item, index) => getItemKey(item, index)).join('|');
-    return `${items.length}:${itemKeys}`;
-  }, [items, getItemKey]);
+    return 'social-feed-row-height-v1';
+  }, []);
 
   const resolveContainerHeight = useCallback((): number => {
     if (propHeight) return propHeight;

@@ -108,20 +108,12 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
   return (
     <div
       className="shortcuts-overlay"
-      role="button"
-      tabIndex={0}
-      aria-label="Close keyboard shortcuts"
+      role="presentation"
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
         onClose();
       }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClose();
-        }
-      }}
+      aria-hidden="true"
     >
       <div
         ref={modalRef}

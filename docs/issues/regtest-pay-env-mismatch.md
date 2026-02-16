@@ -10,7 +10,7 @@ The regtest Pay button appears in the social UI during local dev, but QA fails b
 - `.env` defaults set:
   - `ENABLE_REGTEST_PAY=false`
   - `ENABLE_REGTEST_FUND=false`
-- `scripts/dev-logs.sh` sets `VITE_ENABLE_REGTEST_PAY` and `VITE_ENABLE_REGTEST_FUND` to true on regtest, so the UI shows `PAY_REGTEST` even when the API is disabled.
+- `scripts/dev/logs.sh` sets `VITE_ENABLE_REGTEST_PAY` and `VITE_ENABLE_REGTEST_FUND` to true on regtest, so the UI shows `PAY_REGTEST` even when the API is disabled.
 
 ## Impact
 
@@ -19,7 +19,7 @@ The regtest Pay button appears in the social UI during local dev, but QA fails b
 
 ## Proposed Fix
 
-- Option A: In `scripts/dev-logs.sh`, mirror the `VITE_ENABLE_*` defaults into `ENABLE_REGTEST_PAY` and `ENABLE_REGTEST_FUND` when `BITCOIN_NETWORK=regtest`.
+- Option A: In `scripts/dev/logs.sh`, mirror the `VITE_ENABLE_*` defaults into `ENABLE_REGTEST_PAY` and `ENABLE_REGTEST_FUND` when `BITCOIN_NETWORK=regtest`.
 - Option B: Update `.env` (or `.env.network.regtest`) defaults to enable regtest pay/fund for local QA.
 - Option C: Update QA script to force env flags or surface a clear error when regtest pay is disabled.
 

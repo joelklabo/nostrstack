@@ -173,8 +173,8 @@ export function OnboardingTour() {
     <>
       <div
         className="onboarding-overlay"
-        aria-hidden="true"
         onClick={handleOverlayClick}
+        aria-hidden="true"
         style={{ cursor: 'pointer' }}
       />
       {spotlightStyle && (

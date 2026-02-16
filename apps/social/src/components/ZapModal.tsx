@@ -155,20 +155,12 @@ export const ZapModal: React.FC<ZapModalProps> = ({
   return (
     <div
       className="zap-modal-overlay"
-      role="button"
-      tabIndex={0}
-      aria-label="Close zap dialog"
+      role="presentation"
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
         onClose();
       }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClose();
-        }
-      }}
+      aria-hidden="true"
     >
       <div
         ref={modalRef}

@@ -100,7 +100,7 @@ case "$MODE" in
     LN_BITS_API_KEY="$(awk '/Admin key:/ {print $NF}' "$tmpout" | tail -1)"
     rm -f "$tmpout"
     if [[ -z "${LN_BITS_API_KEY:-}" ]]; then
-      echo "Failed to capture LNbits admin key from regtest-lndbits.sh output" >&2
+      echo "Failed to capture LNbits admin key from scripts/regtest/bootstrap-lnbits.sh output" >&2
       exit 1
     fi
     LN_BITS_URL="http://localhost:15001"

@@ -35,7 +35,7 @@ fi
 
 if ! curl -sf "${BROWSER_URL}/json/version" >/dev/null 2>&1; then
   if [[ "${AUTO_LAUNCH_CHROME}" != "0" ]]; then
-    "${SCRIPT_DIR}/mcp-chrome.sh"
+    "${SCRIPT_DIR}/chrome.sh"
   fi
   for ((i=1; i<=WAIT_ATTEMPTS; i++)); do
     if curl -sf "${BROWSER_URL}/json/version" >/dev/null 2>&1; then

@@ -270,20 +270,12 @@ export function WalletView({
   return (
     <div
       className="ns-dialog-overlay"
-      role="button"
-      tabIndex={0}
-      aria-label="Close withdraw dialog"
+      role="presentation"
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
         handleClose();
       }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          handleClose();
-        }
-      }}
+      aria-hidden="true"
     >
       <div
         ref={modalRef}

@@ -20,10 +20,12 @@ interface FeedScreenProps {
 }
 
 export function FeedScreen({ isImmersive }: FeedScreenProps) {
+  const FEED_SCROLL_CONTAINER = '.feed-container';
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   const { isMuted } = useMuteList();
   const { contacts, loading: contactsLoading } = useContactList();
   const { pubkey } = useAuth();
+  const feedContainerRef = useRef<HTMLElement | null>(null);
 
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
   const enableRegtestPay =
@@ -32,8 +34,38 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
 
   const [spamFilterEnabled, setSpamFilterEnabled] = useState(false);
 
+  const getFeedContainer = useCallback(() => {
+    if (typeof document === 'undefined') return null;
+    if (feedContainerRef.current) return feedContainerRef.current;
+    feedContainerRef.current = document.querySelector<HTMLElement>(FEED_SCROLL_CONTAINER);
+    return feedContainerRef.current;
+  }, []);
+
+  const getFeedScrollTop = useCallback(() => {
+    const container = getFeedContainer();
+    return container ? container.scrollTop : typeof window !== 'undefined' ? window.scrollY : 0;
+  }, [getFeedContainer]);
+
+  const scrollFeedToTop = useCallback(() => {
+    const container = getFeedContainer();
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const behavior = prefersReducedMotion ? 'auto' : 'smooth';
+
+    if (container) {
+      container.scrollTo({ top: 0, behavior });
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior });
+    }
+  }, [getFeedContainer]);
+
   // Keyboard navigation for posts
-  usePostNavigation({ enabled: true });
+  usePostNavigation({ enabled: true, scrollContainer: FEED_SCROLL_CONTAINER });
 
   // Track new posts for indicator
   const [newPosts, setNewPosts] = useState<Array<{ pubkey: string; picture?: string }>>([]);
@@ -43,11 +75,13 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   // Track scroll position to know when to show indicator
   useEffect(() => {
     const handleScroll = () => {
-      isScrolledDown.current = window.scrollY > 200;
+      isScrolledDown.current = getFeedScrollTop() > 200;
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const container = getFeedContainer();
+    if (!container) return;
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [getFeedScrollTop, getFeedContainer]);
 
   // Feed mode: 'all' shows all posts, 'following' shows only from contacts, 'trending' shows recent popular
   const [feedMode, setFeedMode] = useState<'all' | 'following' | 'trending'>(() => {
@@ -169,16 +203,12 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   }, [filteredPosts]);
 
   const handleScrollToTop = useCallback(() => {
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+    scrollFeedToTop();
     setNewPosts([]);
     if (filteredPosts[0]) {
       lastSeenPostId.current = filteredPosts[0].id;
     }
-  }, [filteredPosts]);
+  }, [filteredPosts, scrollFeedToTop]);
 
   const handleOpenThread = useCallback((eventId: string) => {
     navigateTo(`/nostr/${eventId}`);
