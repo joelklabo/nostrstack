@@ -183,7 +183,12 @@ export const NostrEventCard = memo(function NostrEventCard({
   );
 
   return (
-    <article className={rootClasses} aria-label={`Post by ${event.pubkey.slice(0, 8)}`}>
+    <article
+      className={rootClasses}
+      aria-label={`Post by ${event.pubkey.slice(0, 8)}`}
+      data-testid="social-event-card"
+      data-event-id={event.id}
+    >
       <div
         className="ns-event-card__body-wrapper"
         role={onOpenThread ? 'button' : undefined}
@@ -261,6 +266,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         className="ns-event-card__actions"
         role="group"
         aria-label="Post actions"
+        data-testid="social-event-actions"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -273,6 +279,7 @@ export const NostrEventCard = memo(function NostrEventCard({
                 type="button"
                 className={`zap-amount-btn ${zapAmount === amount ? 'active' : ''}`}
                 onClick={() => setZapAmount(amount)}
+                data-testid={`social-zap-amount-${amount}`}
                 aria-pressed={zapAmount === amount}
                 title={`Zap ${amount} sats`}
               >
@@ -294,6 +301,7 @@ export const NostrEventCard = memo(function NostrEventCard({
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
           type="button"
           onClick={() => setIsReplying(true)}
+          data-testid="social-event-reply"
           aria-label="Reply to this post"
         >
           <span className="icon" aria-hidden="true">
@@ -306,6 +314,7 @@ export const NostrEventCard = memo(function NostrEventCard({
             className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
             type="button"
             onClick={() => onOpenThread(event.id)}
+            data-testid="social-event-thread"
             aria-label="View thread"
           >
             <span className="icon" aria-hidden="true">
@@ -320,6 +329,7 @@ export const NostrEventCard = memo(function NostrEventCard({
             type="button"
             onClick={handleRepost}
             disabled={repostLoading || isReposted}
+            data-testid="social-event-repost"
             aria-label={isReposted ? 'Reposted' : 'Repost this post'}
           >
             <span className="icon" aria-hidden="true">
@@ -334,6 +344,7 @@ export const NostrEventCard = memo(function NostrEventCard({
           className={`ns-btn ns-btn--ghost ns-btn--sm ns-action-btn ${linkCopied ? 'active' : ''}`}
           type="button"
           onClick={handleCopyLink}
+          data-testid="social-event-copy-link"
           aria-label={linkCopied ? 'Link copied' : 'Copy link to post'}
           title={linkCopied ? 'Link copied!' : 'Copy link'}
         >
@@ -347,6 +358,7 @@ export const NostrEventCard = memo(function NostrEventCard({
           className="ns-btn ns-btn--ghost ns-btn--sm ns-action-btn"
           type="button"
           onClick={() => setShowJson(!showJson)}
+          data-testid="social-event-source-toggle"
           style={{ marginLeft: 'auto' }}
           aria-label={showJson ? 'Hide event source JSON' : 'View event source JSON'}
           aria-expanded={showJson}
