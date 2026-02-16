@@ -15,6 +15,20 @@ import { NostrEventCard } from '../ui/NostrEventCard';
 import { resolveGalleryApiBase } from '../utils/api-base';
 import { navigateToProfile } from '../utils/navigation';
 
+const DIRECT_IDENTITY_QUERY = /^\s*(npub1|nprofile1)[0-9a-z]+$/i;
+const HEX_IDENTITY_QUERY = /^\s*[0-9a-f]{64}\s*$/i;
+const LIGHTNING_OR_NIP05_QUERY = /^\s*[^@\s]+@[^@\s]+\s*$/i;
+
+function isDirectIdentitySearch(value: string) {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed || trimmed.includes(' ')) return false;
+  return (
+    DIRECT_IDENTITY_QUERY.test(trimmed) ||
+    HEX_IDENTITY_QUERY.test(trimmed) ||
+    LIGHTNING_OR_NIP05_QUERY.test(trimmed)
+  );
+}
+
 export function SearchScreen() {
   const cfg = useNostrstackConfig();
   const apiBaseConfig = resolveGalleryApiBase(cfg);
@@ -29,6 +43,7 @@ export function SearchScreen() {
   const [notes, setNotes] = useState<Event[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [profileLookupError, setProfileLookupError] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
@@ -122,6 +137,13 @@ export function SearchScreen() {
       event.preventDefault();
       const trimmed = query.trim();
       if (!trimmed) return;
+      setProfileLookupError(null);
+      if (isDirectIdentitySearch(trimmed)) {
+        setNotes([]);
+        setNotesError(null);
+        setHasMore(false);
+        setLastSearchQuery('');
+      }
       pendingSearchRef.current = trimmed;
       emitTelemetryEvent({ type: 'search', stage: 'start', query: trimmed });
 
@@ -129,7 +151,9 @@ export function SearchScreen() {
       void resolveNow(trimmed);
 
       // Also try content search
-      void handleNotesSearch(trimmed);
+      if (!isDirectIdentitySearch(trimmed)) {
+        void handleNotesSearch(trimmed);
+      }
     },
     [query, resolveNow, handleNotesSearch]
   );
@@ -162,16 +186,18 @@ export function SearchScreen() {
   useEffect(() => {
     if (status !== 'resolved' || !result || !npub) {
       setFetchedProfile(null);
+      setProfileLookupError(null);
       return;
     }
 
     const controller = new AbortController();
+    setProfileLookupError(null);
     setFetchedProfile(null);
 
     fetchNostrEventFromApi({
       baseUrl: apiBase,
       id: npub,
-      timeoutMs: 3000,
+      timeoutMs: 8000,
       signal: controller.signal
     })
       .then((res) => {
@@ -180,7 +206,9 @@ export function SearchScreen() {
         }
       })
       .catch(() => {
-        // Silent failure
+        if (!controller.signal.aborted) {
+          setProfileLookupError('Unable to load profile metadata at this time.');
+        }
       });
 
     return () => controller.abort();
@@ -316,6 +344,12 @@ export function SearchScreen() {
             Open profile
           </button>
         </div>
+      )}
+
+      {status === 'resolved' && result && profileLookupError && !fetchedProfile && (
+        <Alert tone="warning" title="Profile metadata not loaded">
+          {profileLookupError}
+        </Alert>
       )}
 
       {status === 'error' &&

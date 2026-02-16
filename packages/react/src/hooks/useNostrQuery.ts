@@ -95,12 +95,30 @@ export function useNostrQuery(
           queryFilters.map((filter) => pool.querySync(relayList, filter))
         );
         const results = resultArrays.flat();
+        const fetchedOldestTimestamp = results.length
+          ? results.reduce<number | null>((min, event) => {
+              if (typeof event.created_at !== 'number') return min;
+              return min === null ? event.created_at : Math.min(min, event.created_at);
+            }, null)
+          : null;
 
         if (results.length === 0) {
           setHasMore(false);
         } else {
           const newEvents = results.filter((e) => !seenIds.current.has(e.id));
           newEvents.forEach((e) => seenIds.current.add(e.id));
+          const duplicateOnlyPage = isLoadMore && newEvents.length === 0;
+
+          if (fetchedOldestTimestamp !== null) {
+            const previousOldest = oldestTimestamp.current;
+            if (!isLoadMore || previousOldest === null) {
+              oldestTimestamp.current = fetchedOldestTimestamp;
+            } else if (fetchedOldestTimestamp < previousOldest) {
+              oldestTimestamp.current = fetchedOldestTimestamp;
+            } else if (duplicateOnlyPage) {
+              setHasMore(false);
+            }
+          }
 
           if (newEvents.length > 0) {
             setEvents((prev) => {
