@@ -92,7 +92,16 @@ export async function clickWithDispatchFallback(
   } catch {
     // In Playwright runs where overlays/animation timing causes hit-target instability,
     // trigger a synthetic event as a fallback to keep coverage deterministic.
-    await control.dispatchEvent('click');
+    await control.evaluate((element) => {
+      const event = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view: window,
+        button: 0
+      });
+      element.dispatchEvent(event);
+    });
   }
 }
 

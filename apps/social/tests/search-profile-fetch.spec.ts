@@ -43,7 +43,11 @@ test('search result fetches and displays profile metadata', async ({ page }) => 
     targetType: 'profile'
   });
   // Add about to authorProfile in fixture manually as helper might only put name
-  fixture.author.profile = { name: 'Alice Wonderland', about: 'Down the rabbit hole', picture: 'https://example.com/alice.jpg' };
+  fixture.author.profile = {
+    name: 'Alice Wonderland',
+    about: 'Down the rabbit hole',
+    picture: 'https://example.com/alice.jpg'
+  };
 
   await mockNostrEventApi(page, {
     [npub]: fixture
@@ -53,14 +57,14 @@ test('search result fetches and displays profile metadata', async ({ page }) => 
 
   await page.getByRole('navigation').getByRole('button', { name: 'Find friend' }).click();
 
-  await page.getByLabel('Friend identifier').fill(npub);
+  await page.getByRole('search').getByLabel('Search query').fill(npub);
   await page.getByRole('button', { name: 'Search' }).click();
 
   // "Search result" card should appear.
   // We expect "Alice Wonderland" to appear in the card.
   await expect(page.locator('.search-result-card')).toContainText('Alice Wonderland');
   await expect(page.locator('.search-result-card')).toContainText('Down the rabbit hole');
-  
+
   // Verify avatar is present
   const avatar = page.locator('.search-result-card img');
   await expect(avatar).toBeVisible();
