@@ -67,6 +67,27 @@ describe('ReplyModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('closes on cancel event', () => {
+    const onClose = vi.fn();
+    render(<ReplyModal isOpen={true} onClose={onClose} parentEvent={mockEvent} />);
+    const dialog = screen.getByRole('dialog');
+    fireEvent(
+      dialog,
+      new Event('cancel', {
+        bubbles: true
+      })
+    );
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('closes on native close event', () => {
+    const onClose = vi.fn();
+    render(<ReplyModal isOpen={true} onClose={onClose} parentEvent={mockEvent} />);
+    const dialog = screen.getByRole('dialog');
+    fireEvent(dialog, new Event('close'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it('closes the dialog when unmounted while open', () => {
     const closeSpy = vi.spyOn(HTMLDialogElement.prototype, 'close');
 

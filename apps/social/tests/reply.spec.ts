@@ -1,8 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import { loginWithNsec } from './helpers.ts';
+import {
+  dismissOnboardingTourIfOpen,
+  ensureZapPostAvailable,
+  loginWithNsec,
+  TEST_NSEC
+} from './helpers.ts';
 
-const VALID_NSEC = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+const VALID_NSEC = TEST_NSEC;
 
 test.describe('Reply Composer', () => {
   test.beforeEach(async ({ page }) => {
@@ -41,5 +46,32 @@ test.describe('Reply Composer', () => {
 
     // Success toast check (optional, depending on toast implementation)
     // await expect(page.getByText('Reply published!')).toBeVisible();
+  });
+
+  test('reply close does not block copy action after thread navigation', async ({ page }) => {
+    await loginWithNsec(page, VALID_NSEC);
+    await dismissOnboardingTourIfOpen(page);
+    await ensureZapPostAvailable(page);
+
+    const firstPost = page.locator('[data-testid="social-event-card"]').first();
+    const replyBtn = firstPost.getByTestId('social-event-reply');
+    const threadBtn = firstPost.getByTestId('social-event-thread');
+    const copyBtn = firstPost.getByTestId('social-event-copy-link');
+
+    await replyBtn.click();
+    await expect(page.locator('dialog.reply-modal[open]')).toBeVisible({ timeout: 10000 });
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog.reply-modal[open]')).not.toBeVisible({ timeout: 10000 });
+
+    await threadBtn.click();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(/\/nostr\//, { timeout: 10000 });
+
+    await page.goBack({ waitUntil: 'domcontentloaded' });
+    await expect(page.locator('dialog.reply-modal[open]')).not.toBeVisible();
+
+    await expect(copyBtn).toBeVisible({ timeout: 10000 });
+    await copyBtn.click({ timeout: 10000 });
   });
 });

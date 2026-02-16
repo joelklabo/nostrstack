@@ -72,6 +72,7 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
       ref={modalRef}
       className="reply-modal"
       onCancel={handleDialogCancel}
+      onClose={handleClose}
       onClick={handleBackdropClick}
       style={{
         padding: 0,

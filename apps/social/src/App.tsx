@@ -24,7 +24,7 @@ import { SearchScreen } from './screens/SearchScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
-import { resolveGalleryApiBase } from './utils/api-base';
+import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
 const FeedScreen = lazy(() =>
@@ -76,6 +76,26 @@ const THEME_STORAGE_KEY = 'nostrstack.theme';
 const BRAND_PRESET_STORAGE_KEY = 'nostrstack.brandPreset';
 const BRAND_PRESET_DEFAULT: NsBrandPreset = 'default';
 const BRAND_PRESET_LIST: NsBrandPreset[] = Object.keys(nsBrandPresets) as NsBrandPreset[];
+const LOCAL_API_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+const LOCAL_API_TIMEOUT_MS = 3_000;
+const LOCAL_API_BASE_FALLBACK = '/api';
+
+function isLocalApiBase(apiBase: ApiBaseResolution): boolean {
+  if (!apiBase.baseUrl || apiBase.isRelative || !apiBase.isConfigured || apiBase.isMock)
+    return false;
+  try {
+    const parsed = new URL(apiBase.baseUrl);
+    return (
+      parsed.protocol === 'http:' && parsed.port === '3001' && LOCAL_API_HOSTS.has(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function buildApiBaseFallback(): ApiBaseResolution {
+  return resolveGalleryApiBase({ apiBase: LOCAL_API_BASE_FALLBACK });
+}
 
 function isBrandPreset(value: string | null): value is NsBrandPreset {
   return value !== null && (BRAND_PRESET_LIST as readonly string[]).includes(value);
@@ -584,7 +604,46 @@ export default function App() {
   const apiBaseConfig = resolveGalleryApiBase({
     apiBase: import.meta.env.VITE_API_BASE_URL
   });
-  const apiBase = apiBaseConfig.baseUrl;
+  const [resolvedApiBaseConfig, setResolvedApiBaseConfig] =
+    useState<ApiBaseResolution>(apiBaseConfig);
+
+  useEffect(() => {
+    if (!isLocalApiBase(resolvedApiBaseConfig)) {
+      return;
+    }
+    const controller = new AbortController();
+    let isMounted = true;
+    const timeout = window.setTimeout(() => controller.abort(), LOCAL_API_TIMEOUT_MS);
+    const probe = async () => {
+      try {
+        const response = await fetch(`${resolvedApiBaseConfig.baseUrl}/api/health`, {
+          signal: controller.signal
+        });
+        if (!response.ok) {
+          if (isMounted) {
+            setResolvedApiBaseConfig((current) =>
+              isLocalApiBase(current) ? buildApiBaseFallback() : current
+            );
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setResolvedApiBaseConfig((current) =>
+            isLocalApiBase(current) ? buildApiBaseFallback() : current
+          );
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+    void probe();
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [resolvedApiBaseConfig]);
+  const apiBase = resolvedApiBaseConfig.baseUrl;
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
@@ -605,7 +664,7 @@ export default function App() {
   return (
     <NostrstackProvider
       apiBase={apiBase}
-      apiBaseConfig={apiBaseConfig}
+      apiBaseConfig={resolvedApiBaseConfig}
       baseUrl={apiBase}
       relays={relays.length ? relays : undefined}
       onRelayFailure={relayMonitor.reportFailure.bind(relayMonitor)}
