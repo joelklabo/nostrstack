@@ -16,6 +16,20 @@ interface LinkPreviewProps {
   className?: string;
 }
 
+interface PreviewCacheEntry {
+  data?: OpenGraphData;
+  errorCount: number;
+  retryAtMs: number;
+  loading: boolean;
+  resolvedAtMs?: number;
+}
+
+const MAX_CACHE_ENTRIES = 200;
+const PREVIEW_TTL_MS = 10 * 60_000;
+const BASE_RETRY_DELAY_MS = 2_000;
+const MAX_RETRY_DELAY_MS = 60_000;
+const PREVIEW_CACHE = new Map<string, PreviewCacheEntry>();
+
 // Simple URL validation
 function isValidUrl(urlString: string): boolean {
   try {
@@ -58,6 +72,60 @@ function isYouTubeUrl(url: string): { isYouTube: boolean; videoId?: string } {
   return { isYouTube: false };
 }
 
+function parseRetryAfterMs(retryAfter: string | null): number | null {
+  if (!retryAfter) return null;
+  const trimmed = retryAfter.trim();
+  if (!trimmed) return null;
+
+  const seconds = Number(trimmed);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return Math.floor(seconds * 1000);
+  }
+
+  const asDate = Date.parse(trimmed);
+  if (Number.isFinite(asDate)) {
+    return Math.max(0, asDate - Date.now());
+  }
+
+  return null;
+}
+
+function createFallbackPreview(url: string): OpenGraphData {
+  return {
+    url,
+    title: getDomain(url)
+  };
+}
+
+function getCachedPreview(url: string): PreviewCacheEntry | undefined {
+  const cached = PREVIEW_CACHE.get(url);
+  if (!cached) return undefined;
+  if (cached.data && cached.resolvedAtMs && Date.now() - cached.resolvedAtMs > PREVIEW_TTL_MS) {
+    PREVIEW_CACHE.delete(url);
+    return undefined;
+  }
+  if (!cached.loading && cached.retryAtMs && Date.now() < cached.retryAtMs && !cached.data) {
+    return cached;
+  }
+  if (!cached.loading && cached.data && cached.resolvedAtMs) {
+    return cached;
+  }
+  return cached.data || cached.loading ? cached : undefined;
+}
+
+function prunePreviewCache() {
+  if (PREVIEW_CACHE.size <= MAX_CACHE_ENTRIES) return;
+  for (const [key, entry] of PREVIEW_CACHE) {
+    if (
+      !entry.loading &&
+      (!entry.data || (entry.resolvedAtMs && Date.now() - entry.resolvedAtMs > PREVIEW_TTL_MS))
+    ) {
+      PREVIEW_CACHE.delete(key);
+    }
+    if (PREVIEW_CACHE.size <= MAX_CACHE_ENTRIES) break;
+  }
+}
+
 /**
  * Renders a preview card for a URL with Open Graph metadata.
  * Uses a public proxy to fetch OG data to avoid CORS issues.
@@ -93,8 +161,43 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     let cancelled = false;
+    const fallback = createFallbackPreview(url);
+    const cached = getCachedPreview(url);
+
+    if (!cached?.loading && cached?.data) {
+      setData(cached.data);
+      setError(false);
+      setLoading(false);
+      return;
+    }
+
+    if (cached?.loading) {
+      setLoading(true);
+    }
+
+    if (cached?.data && !cached.loading && cached.retryAtMs && Date.now() < cached.retryAtMs) {
+      setData(cached.data);
+      setError(false);
+      setLoading(false);
+      return;
+    }
+
+    if (cached && cached.retryAtMs && Date.now() < cached.retryAtMs && !cached.data) {
+      setData(fallback);
+      setError(false);
+      setLoading(false);
+      return;
+    }
 
     const fetchOgData = async () => {
+      PREVIEW_CACHE.set(url, {
+        ...cached,
+        loading: true,
+        data: cached?.data,
+        errorCount: cached?.errorCount ?? 0,
+        retryAtMs: cached?.retryAtMs ?? 0
+      });
+      prunePreviewCache();
       try {
         // Use a public Open Graph proxy service
         // Options: opengraph.io, microlink.io, or self-hosted
@@ -104,7 +207,27 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
           headers: { Accept: 'application/json' }
         });
 
-        if (!response.ok) throw new Error('Failed to fetch');
+        if (!response.ok) {
+          const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'));
+          const statusDelay = retryAfterMs !== null ? retryAfterMs : null;
+          const errorRetryDelay =
+            statusDelay ??
+            Math.min(
+              MAX_RETRY_DELAY_MS,
+              BASE_RETRY_DELAY_MS * 2 ** Math.min(cached?.errorCount ?? 0, 12)
+            );
+          const now = Date.now();
+          PREVIEW_CACHE.set(url, {
+            data: cached?.data ?? fallback,
+            errorCount: (cached?.errorCount ?? 0) + 1,
+            retryAtMs: now + errorRetryDelay,
+            loading: false,
+            resolvedAtMs: now
+          });
+          setData(cached?.data ?? fallback);
+          setError(false);
+          return;
+        }
 
         const result = (await response.json()) as {
           status: string;
@@ -120,6 +243,7 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
         if (cancelled) return;
 
         if (result.status === 'success' && result.data) {
+          const now = Date.now();
           setData({
             title: result.data.title,
             description: result.data.description,
@@ -127,24 +251,60 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
             siteName: result.data.publisher,
             url: result.data.url || url
           });
+          PREVIEW_CACHE.set(url, {
+            data: {
+              title: result.data.title,
+              description: result.data.description,
+              image: result.data.image?.url,
+              siteName: result.data.publisher,
+              url: result.data.url || url
+            },
+            errorCount: 0,
+            retryAtMs: 0,
+            loading: false,
+            resolvedAtMs: now
+          });
         } else {
+          const now = Date.now();
           // Fallback to basic preview
           setData({
             url,
             title: getDomain(url)
           });
+          PREVIEW_CACHE.set(url, {
+            data: {
+              url,
+              title: getDomain(url)
+            },
+            errorCount: 0,
+            retryAtMs: 0,
+            loading: false,
+            resolvedAtMs: now
+          });
         }
       } catch {
         if (!cancelled) {
           // Fallback to basic preview on error
-          setData({
-            url,
-            title: getDomain(url)
+          const now = Date.now();
+          const previous = PREVIEW_CACHE.get(url);
+          PREVIEW_CACHE.set(url, {
+            data: previous?.data ?? fallback,
+            errorCount: (previous?.errorCount ?? cached?.errorCount ?? 0) + 1,
+            retryAtMs:
+              now +
+              Math.min(
+                MAX_RETRY_DELAY_MS,
+                BASE_RETRY_DELAY_MS * 2 ** Math.min(previous?.errorCount ?? 0, 12)
+              ),
+            loading: false,
+            resolvedAtMs: now
           });
+          setData(previous?.data ?? fallback);
         }
       } finally {
         if (!cancelled) {
           setLoading(false);
+          prunePreviewCache();
         }
       }
     };
