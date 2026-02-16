@@ -996,6 +996,8 @@ button:disabled {
 
 .virtualized-row {
   width: 100%;
+  padding-bottom: var(--ns-space-4, 16px);
+  box-sizing: border-box;
 }
 
 .feed-header {

@@ -1,6 +1,11 @@
 import type { AriaAttributes, AriaRole, CSSProperties, ReactElement } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { List, type RowComponentProps, useDynamicRowHeight } from 'react-window';
+import {
+  type DynamicRowHeight,
+  List,
+  type RowComponentProps,
+  useDynamicRowHeight
+} from 'react-window';
 
 // Default estimated height for items before measurement
 const DEFAULT_ITEM_HEIGHT = 200;
@@ -10,6 +15,7 @@ const DEFAULT_CONTAINER_HEIGHT = 600;
 const CONTAINER_BOTTOM_PADDING = 20;
 const MIN_CONTAINER_HEIGHT = 260;
 const STABLE_HEIGHT_EPSILON = 1;
+const ROW_CHROME_HEIGHT = 16;
 
 interface VirtualizedListProps<T> {
   /** Array of items to render */
@@ -39,7 +45,11 @@ interface VirtualizedListProps<T> {
   /** Cache key used by dynamic row-height measurements */
   rowHeightCacheKey?: string;
   /** Optional fixed/heuristic row height for predictable virtualized sizing */
-  rowHeight?: number | ((index: number, item: T | undefined) => number);
+  rowHeight?:
+    | number
+    | string
+    | ((index: number, rowProps: RowProps<T>) => number)
+    | DynamicRowHeight;
   /** Live region politeness for dynamic updates */
   ariaLive?: AriaAttributes['aria-live'];
   /** Live region relevance for dynamic updates */
@@ -83,9 +93,7 @@ function RowComponent<T>({
     <div
       className="virtualized-row"
       style={{
-        ...style,
-        paddingBottom: 'var(--ns-space-4, 16px)',
-        minHeight: 'var(--ns-event-card-min-height, 180px)'
+        ...style
       }}
       data-virtualized-item={itemKey}
       role={itemRole}
@@ -154,17 +162,33 @@ export function VirtualizedList<T>({
     key: resolvedRowHeightCacheKey
   });
 
+  const withChromeHeight = useCallback((rawHeight: number) => rawHeight + ROW_CHROME_HEIGHT, []);
+
+  const rowHeightWithChrome = useCallback(
+    (height: number | ((index: number, rowProps: RowProps<T>) => number)) => {
+      if (typeof height === 'number') {
+        return withChromeHeight(height);
+      }
+      return (index: number, rowProps: RowProps<T>) => withChromeHeight(height(index, rowProps));
+    },
+    [withChromeHeight]
+  );
+
   const resolvedRowHeight = useMemo(() => {
     if (typeof rowHeight === 'number') {
-      return rowHeight;
+      return rowHeightWithChrome(rowHeight);
     }
 
     if (typeof rowHeight === 'function') {
-      return (index: number) => rowHeight(index, items[index]);
+      return rowHeightWithChrome(rowHeight);
     }
 
-    return dynamicRowHeight;
-  }, [dynamicRowHeight, rowHeight, items]);
+    if (typeof rowHeight === 'string') {
+      return rowHeight;
+    }
+
+    return rowHeight ?? dynamicRowHeight;
+  }, [dynamicRowHeight, rowHeight, rowHeightWithChrome]);
 
   // Update container height based on viewport and anchor changes
   useEffect(() => {

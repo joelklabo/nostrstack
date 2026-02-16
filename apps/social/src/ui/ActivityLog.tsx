@@ -2,6 +2,7 @@ import './activity-log.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { buildVirtualizedCacheKey } from '../utils/virtualized-cache';
 import { VirtualizedList } from './VirtualizedList';
 
 // ===== Types =====
@@ -447,8 +448,14 @@ export function ActivityLog({
   );
 
   const activityLogRowHeightCacheKey = useMemo(
-    () => `activity-log-v1::len=${sortedEvents.length}`,
-    [sortedEvents.length]
+    () =>
+      buildVirtualizedCacheKey(
+        'activity-log-v1',
+        sortedEvents.length,
+        sortedEvents.map((event) => event.id),
+        { unread: unreadCount > 0 }
+      ),
+    [sortedEvents, unreadCount]
   );
 
   // Loading indicator

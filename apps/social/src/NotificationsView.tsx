@@ -10,6 +10,7 @@ import { useSimplePool } from './hooks/useSimplePool';
 import { NostrEventCard } from './ui/NostrEventCard';
 import { type NotificationGroup, NotificationItem } from './ui/NotificationItem';
 import { VirtualizedList } from './ui/VirtualizedList';
+import { buildVirtualizedCacheKey } from './utils/virtualized-cache';
 
 type NotificationDisplayItem = NotificationGroup | Event;
 
@@ -169,8 +170,14 @@ export function NotificationsView() {
   );
 
   const notificationListCacheKey = useMemo(
-    () => `notifications-list-v1::len=${displayGroups.length}`,
-    [displayGroups.length]
+    () =>
+      buildVirtualizedCacheKey(
+        'notifications-list-v1',
+        displayGroups.length,
+        displayGroups.map((item) => item.id),
+        { active: String(relaysLoading) }
+      ),
+    [displayGroups, relaysLoading]
   );
 
   if (relaysLoading) {

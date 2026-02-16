@@ -16,6 +16,7 @@ import { VirtualizedList } from '../ui/VirtualizedList';
 import { resolveRuntimeApiBase } from '../utils/api-base';
 import { estimatePostRowHeight } from '../utils/feed-layout';
 import { navigateTo } from '../utils/navigation';
+import { buildVirtualizedCacheKey } from '../utils/virtualized-cache';
 
 interface FeedScreenProps {
   isImmersive?: boolean;
@@ -235,8 +236,16 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   );
 
   const feedRowHeightCacheKey = useMemo(() => {
-    return `feed-screen-posts-v1::mode=${sortMode}::filter=${spamFilterEnabled ? 'on' : 'off'}::len=${filteredPosts.length}`;
-  }, [sortMode, spamFilterEnabled, filteredPosts.length]);
+    return buildVirtualizedCacheKey(
+      'feed-screen-posts-v1',
+      filteredPosts.length,
+      filteredPosts.map((post) => post.id),
+      {
+        mode: sortMode,
+        filter: spamFilterEnabled ? 'on' : 'off'
+      }
+    );
+  }, [sortMode, spamFilterEnabled, filteredPosts]);
 
   // Extract key for each post
   const getPostKey = useCallback((post: Event) => post.id, []);
