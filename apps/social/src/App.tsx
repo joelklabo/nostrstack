@@ -105,15 +105,21 @@ function LoadingFallback({
 }
 
 function AppShell() {
-  const { pubkey, isLoading } = useAuth();
+  const { pubkey, isLoading, logout: authLogout } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
   const [brandPreset, setBrandPreset] = useState<NsBrandPreset>('default');
   const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
   const focusReturnToHamburger = useRef(false);
-  const [isGuest, _setIsGuest] = useState<boolean>(() => {
+  const [isGuest, setIsGuest] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('nostrstack.guest') === 'true';
   });
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('nostrstack.guest');
+    setIsGuest(false);
+    authLogout();
+  }, [authLogout]);
 
   // Wrap setTheme to persist to localStorage
   const setTheme = useCallback((newTheme: 'light' | 'dark') => {
@@ -276,6 +282,7 @@ function AppShell() {
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
+          onLogout={handleLogout}
         />
         <main className="feed-container" id="main-content" role="main">
           <NotFoundScreen />
@@ -327,6 +334,7 @@ function AppShell() {
         mobileOpen={mobileMenuOpen}
         onMobileClose={closeMobileMenu}
         onOpenHelp={() => setHelpOpen(true)}
+        onLogout={handleLogout}
       />
       <main className="feed-container" id="main-content" role="main">
         <Suspense fallback={<LoadingFallback message="Loading..." includeRetry />}>

@@ -14,6 +14,7 @@ interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
   onOpenHelp?: () => void;
+  onLogout?: () => void;
 }
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
@@ -23,7 +24,8 @@ export const Sidebar = memo(function Sidebar({
   setCurrentView,
   mobileOpen,
   onMobileClose,
-  onOpenHelp
+  onOpenHelp,
+  onLogout
 }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout, pubkey } = useAuth();
@@ -391,7 +393,7 @@ export const Sidebar = memo(function Sidebar({
           className="nav-item nav-item--danger"
           onClick={() => {
             onMobileClose?.();
-            logout();
+            (onLogout ?? logout)();
           }}
         >
           Log out
