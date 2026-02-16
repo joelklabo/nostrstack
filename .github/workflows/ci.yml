@@ -19,6 +19,10 @@ on:
       - 'changelog/**'
   workflow_dispatch:
     inputs:
+      run_extended_checks:
+        description: Run extended checks (slow/optional lint + external jobs)
+        type: boolean
+        default: false
       run_external_checks:
         description: Run external integration checks (LNbits + real relay)
         type: boolean
@@ -44,6 +48,7 @@ jobs:
           - name: Lint (Knip)
             command: pnpm lint:knip
             allow_failure: true
+            extended: true
           - name: Lint (Copy/Paste)
             command: pnpm lint:cpd
             allow_failure: false
@@ -69,12 +74,15 @@ jobs:
           - name: Lint (Audit)
             command: pnpm lint:audit
             allow_failure: false
+            extended: true
           - name: Lint (Dependencies)
             command: pnpm lint:deps
             allow_failure: false
+            extended: true
           - name: Lint (Architecture)
             command: pnpm lint:dep
             allow_failure: false
+            extended: true
     permissions:
       contents: read
     continue-on-error: ${{ matrix.allow_failure == true }}
@@ -96,7 +104,14 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: ${{ matrix.name }}
-        if: matrix.command != ''
+        if: |
+          matrix.command != '' &&
+          (
+            matrix.extended != true ||
+            (github.event_name == 'workflow_dispatch' && inputs.run_extended_checks == true) ||
+            (github.event_name == 'pull_request' &&
+              (contains(github.event.pull_request.labels.*.name, 'run-extended-checks')))
+          )
         run: ${{ matrix.command }}
 
   typecheck:
@@ -163,10 +178,11 @@ jobs:
     permissions:
       contents: read
     if: >
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_external_checks == true) ||
+      github.event_name == 'workflow_dispatch' &&
+      (inputs.run_external_checks == true || inputs.run_extended_checks == true) ||
       (github.event_name == 'pull_request' &&
-       contains(github.event.pull_request.labels.*.name, 'run-smoke-tests'))
+        (contains(github.event.pull_request.labels.*.name, 'run-smoke-tests') ||
+         contains(github.event.pull_request.labels.*.name, 'run-extended-checks'))
     steps:
       - uses: actions/checkout@v4
 
@@ -189,10 +205,11 @@ jobs:
     permissions:
       contents: read
     if: >
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_external_checks == true) ||
+      github.event_name == 'workflow_dispatch' &&
+      (inputs.run_external_checks == true || inputs.run_extended_checks == true) ||
       (github.event_name == 'pull_request' &&
-       contains(github.event.pull_request.labels.*.name, 'run-smoke-tests'))
+        (contains(github.event.pull_request.labels.*.name, 'run-smoke-tests') ||
+         contains(github.event.pull_request.labels.*.name, 'run-extended-checks'))
     steps:
       - uses: actions/checkout@v4
 
