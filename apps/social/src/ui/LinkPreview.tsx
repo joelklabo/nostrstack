@@ -29,6 +29,7 @@ const PREVIEW_TTL_MS = 10 * 60_000;
 const BASE_RETRY_DELAY_MS = 2_000;
 const MAX_RETRY_DELAY_MS = 60_000;
 const PREVIEW_CACHE = new Map<string, PreviewCacheEntry>();
+const PREVIEW_REQUESTS = new Map<string, Promise<OpenGraphData>>();
 
 // Simple URL validation
 function isValidUrl(urlString: string): boolean {
@@ -97,6 +98,100 @@ function createFallbackPreview(url: string): OpenGraphData {
   };
 }
 
+async function loadPreviewMetadata(
+  url: string,
+  cached?: PreviewCacheEntry
+): Promise<OpenGraphData> {
+  const fallback = createFallbackPreview(url);
+  PREVIEW_CACHE.set(url, {
+    ...cached,
+    loading: true,
+    data: cached?.data,
+    errorCount: cached?.errorCount ?? 0,
+    retryAtMs: cached?.retryAtMs ?? 0
+  });
+  prunePreviewCache();
+
+  try {
+    const proxyUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}`;
+    const response = await fetch(proxyUrl, { headers: { Accept: 'application/json' } });
+
+    if (!response.ok) {
+      const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'));
+      const statusDelay = retryAfterMs !== null ? retryAfterMs : null;
+      const errorRetryDelay = Math.min(
+        MAX_RETRY_DELAY_MS,
+        BASE_RETRY_DELAY_MS * 2 ** Math.min(cached?.errorCount ?? 0, 12)
+      );
+      const delayMs = statusDelay ?? errorRetryDelay;
+      const now = Date.now();
+      const nextData = cached?.data ?? fallback;
+      PREVIEW_CACHE.set(url, {
+        data: nextData,
+        errorCount: (cached?.errorCount ?? 0) + 1,
+        retryAtMs: now + delayMs,
+        loading: false,
+        resolvedAtMs: now
+      });
+      return nextData;
+    }
+
+    const result = (await response.json()) as {
+      status: string;
+      data?: {
+        title?: string;
+        description?: string;
+        image?: { url?: string };
+        publisher?: string;
+        url?: string;
+      };
+    };
+
+    if (result.status === 'success' && result.data) {
+      const now = Date.now();
+      const previewData = {
+        title: result.data.title,
+        description: result.data.description,
+        image: result.data.image?.url,
+        siteName: result.data.publisher,
+        url: result.data.url || url
+      };
+      PREVIEW_CACHE.set(url, {
+        data: previewData,
+        errorCount: 0,
+        retryAtMs: 0,
+        loading: false,
+        resolvedAtMs: now
+      });
+      return previewData;
+    }
+
+    const now = Date.now();
+    PREVIEW_CACHE.set(url, {
+      data: fallback,
+      errorCount: 0,
+      retryAtMs: 0,
+      loading: false,
+      resolvedAtMs: now
+    });
+    return fallback;
+  } catch {
+    const previous = PREVIEW_CACHE.get(url);
+    const now = Date.now();
+    const delay = BASE_RETRY_DELAY_MS * 2 ** Math.min(previous?.errorCount ?? 0, 12);
+    PREVIEW_CACHE.set(url, {
+      data: previous?.data ?? fallback,
+      errorCount: (previous?.errorCount ?? 0) + 1,
+      retryAtMs: now + Math.min(delay, MAX_RETRY_DELAY_MS),
+      loading: false,
+      resolvedAtMs: now
+    });
+    return previous?.data ?? fallback;
+  } finally {
+    prunePreviewCache();
+  }
+}
+
 function getCachedPreview(url: string): PreviewCacheEntry | undefined {
   const cached = PREVIEW_CACHE.get(url);
   if (!cached) return undefined;
@@ -161,7 +256,6 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     let cancelled = false;
-    const fallback = createFallbackPreview(url);
     const cached = getCachedPreview(url);
 
     if (!cached?.loading && cached?.data) {
@@ -172,7 +266,27 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     if (cached?.loading) {
+      if (cached.data) {
+        setData(cached.data);
+      }
       setLoading(true);
+      const request = PREVIEW_REQUESTS.get(url);
+      if (request) {
+        request
+          .then((nextData) => {
+            if (cancelled) return;
+            setData(nextData);
+            setError(false);
+            setLoading(false);
+          })
+          .catch(() => {
+            if (cancelled) return;
+            setError(false);
+            setLoading(false);
+          });
+      }
+      setError(false);
+      return;
     }
 
     if (cached?.data && !cached.loading && cached.retryAtMs && Date.now() < cached.retryAtMs) {
@@ -183,133 +297,32 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     if (cached && cached.retryAtMs && Date.now() < cached.retryAtMs && !cached.data) {
-      setData(fallback);
+      setData(createFallbackPreview(url));
       setError(false);
       setLoading(false);
       return;
     }
 
-    const fetchOgData = async () => {
-      PREVIEW_CACHE.set(url, {
-        ...cached,
-        loading: true,
-        data: cached?.data,
-        errorCount: cached?.errorCount ?? 0,
-        retryAtMs: cached?.retryAtMs ?? 0
-      });
-      prunePreviewCache();
-      try {
-        // Use a public Open Graph proxy service
-        // Options: opengraph.io, microlink.io, or self-hosted
-        const proxyUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}`;
+    const existingRequest = PREVIEW_REQUESTS.get(url);
+    const request = existingRequest ?? loadPreviewMetadata(url, cached);
+    PREVIEW_REQUESTS.set(url, request);
+    setLoading(true);
+    setError(false);
 
-        const response = await fetch(proxyUrl, {
-          headers: { Accept: 'application/json' }
-        });
-
-        if (!response.ok) {
-          const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'));
-          const statusDelay = retryAfterMs !== null ? retryAfterMs : null;
-          const errorRetryDelay =
-            statusDelay ??
-            Math.min(
-              MAX_RETRY_DELAY_MS,
-              BASE_RETRY_DELAY_MS * 2 ** Math.min(cached?.errorCount ?? 0, 12)
-            );
-          const now = Date.now();
-          PREVIEW_CACHE.set(url, {
-            data: cached?.data ?? fallback,
-            errorCount: (cached?.errorCount ?? 0) + 1,
-            retryAtMs: now + errorRetryDelay,
-            loading: false,
-            resolvedAtMs: now
-          });
-          setData(cached?.data ?? fallback);
-          setError(false);
-          return;
-        }
-
-        const result = (await response.json()) as {
-          status: string;
-          data?: {
-            title?: string;
-            description?: string;
-            image?: { url?: string };
-            publisher?: string;
-            url?: string;
-          };
-        };
-
+    request
+      .then((nextData) => {
         if (cancelled) return;
-
-        if (result.status === 'success' && result.data) {
-          const now = Date.now();
-          setData({
-            title: result.data.title,
-            description: result.data.description,
-            image: result.data.image?.url,
-            siteName: result.data.publisher,
-            url: result.data.url || url
-          });
-          PREVIEW_CACHE.set(url, {
-            data: {
-              title: result.data.title,
-              description: result.data.description,
-              image: result.data.image?.url,
-              siteName: result.data.publisher,
-              url: result.data.url || url
-            },
-            errorCount: 0,
-            retryAtMs: 0,
-            loading: false,
-            resolvedAtMs: now
-          });
-        } else {
-          const now = Date.now();
-          // Fallback to basic preview
-          setData({
-            url,
-            title: getDomain(url)
-          });
-          PREVIEW_CACHE.set(url, {
-            data: {
-              url,
-              title: getDomain(url)
-            },
-            errorCount: 0,
-            retryAtMs: 0,
-            loading: false,
-            resolvedAtMs: now
-          });
-        }
-      } catch {
-        if (!cancelled) {
-          // Fallback to basic preview on error
-          const now = Date.now();
-          const previous = PREVIEW_CACHE.get(url);
-          PREVIEW_CACHE.set(url, {
-            data: previous?.data ?? fallback,
-            errorCount: (previous?.errorCount ?? cached?.errorCount ?? 0) + 1,
-            retryAtMs:
-              now +
-              Math.min(
-                MAX_RETRY_DELAY_MS,
-                BASE_RETRY_DELAY_MS * 2 ** Math.min(previous?.errorCount ?? 0, 12)
-              ),
-            loading: false,
-            resolvedAtMs: now
-          });
-          setData(previous?.data ?? fallback);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-          prunePreviewCache();
-        }
-      }
-    };
-
-    fetchOgData();
+        setData(nextData);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoading(false);
+        setError(false);
+      })
+      .finally(() => {
+        PREVIEW_REQUESTS.delete(url);
+      });
 
     return () => {
       cancelled = true;
