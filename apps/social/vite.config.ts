@@ -20,11 +20,13 @@ export default defineConfig(({ command }) => {
     ],
     server: {
       port: 4173,
-      host: true
+      host: true,
+      strictPort: true
     },
     preview: {
       port: 4173,
-      host: true
+      host: true,
+      strictPort: true
     },
     define: {
       // Some packages (e.g. nostr-tools) expect global Buffer.
