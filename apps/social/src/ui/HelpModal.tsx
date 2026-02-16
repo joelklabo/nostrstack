@@ -43,6 +43,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopImmediatePropagation();
         onClose();
       }
     };
