@@ -35,13 +35,13 @@
             - paragraph [ref=e40]: 🤖 Tracking strings detected and removed!
             - paragraph [ref=e41]:
               - text: "🔗 Clean URL(s):"
-              - link "https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html" [ref=e42]:
-                - /url: https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html
+              - link "<https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html>" [ref=e42]:
+                - /url: <https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html>
             - paragraph [ref=e43]:
               - text: "❌ Removed parts:"
               - text: "?utm_source=flipboard&utm_medium=activitypub"
           - 'link "Preview: heise.de" [ref=e45]':
-            - /url: https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html
+            - /url: <https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html>
             - generic [ref=e46]:
               - generic [ref=e47]: heise.de
               - generic [ref=e48]: heise.de
@@ -97,4 +97,4 @@
       - button "Copy" [ref=e102] [cursor=pointer]:
         - generic: Copied
         - img [ref=e104]
-    - region "JSON content" [ref=e107]: "{ \"content\": \"🤖 Tracking strings detected and removed!\\n\\n🔗 Clean URL(s):\\nhttps://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html\\n\\n❌ Removed parts:\\n?utm_source=flipboard&utm_medium=activitypub\", \"created_at\": 1771224122, \"id\": \"7357838d2149a34aa892b949269a35f28106d1b42ca3e61b16466e31bab01221\", \"kind\": 1, \"pubkey\": \"c558c7cc69bbda3c271782b736babc64acd2da258b14f356dbca966cb0b7b89e\", \"sig\": \"25543e74562b5bed4bb8a6908d2ad66bf4625ee57f3eaa78680eeb6f6799b2b0b759e0f97e1abecae4892a5ead6729cee761da7fa1972a32c0add1189ed363c8\", \"tags\": [ [ \"e\", \"80a2d1401dcf2d0ab8d2570ba369ea38d89a88e0a36223671e23268a0fbc0f28\", \"\", \"root\", \"4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1\" ], [ \"p\", \"130ee097c74656584f4993c1d4c0d8c3e49e1a8cde37c31126b3fda73e55e881\", \"wss://relay.ditto.pub\" ], [ \"p\", \"b14ec0e45ed82cddae6b3625b99afdfc50bf59e16f648db077d30b9bb5edd8f6\", \"wss://relay.ditto.pub\" ], [ \"p\", \"4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1\" ], [ \"expiration\", \"1834296122\" ] ] }"
+    - region "JSON content" [ref=e107]: "{ \"content\": \"🤖 Tracking strings detected and removed!\\n\\n🔗 Clean URL(s):\\n<https://www.heise.de/news/Besatzung-wieder-komplett-Crew-12-auf-der-ISS-angekommen-11177226.html>\\n\\n❌ Removed parts:\\n?utm_source=flipboard&utm_medium=activitypub\", \"created_at\": 1771224122, \"id\": \"7357838d2149a34aa892b949269a35f28106d1b42ca3e61b16466e31bab01221\", \"kind\": 1, \"pubkey\": \"c558c7cc69bbda3c271782b736babc64acd2da258b14f356dbca966cb0b7b89e\", \"sig\": \"25543e74562b5bed4bb8a6908d2ad66bf4625ee57f3eaa78680eeb6f6799b2b0b759e0f97e1abecae4892a5ead6729cee761da7fa1972a32c0add1189ed363c8\", \"tags\": [ [ \"e\", \"80a2d1401dcf2d0ab8d2570ba369ea38d89a88e0a36223671e23268a0fbc0f28\", \"\", \"root\", \"4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1\" ], [ \"p\", \"130ee097c74656584f4993c1d4c0d8c3e49e1a8cde37c31126b3fda73e55e881\", \"wss://relay.ditto.pub\" ], [ \"p\", \"b14ec0e45ed82cddae6b3625b99afdfc50bf59e16f648db077d30b9bb5edd8f6\", \"wss://relay.ditto.pub\" ], [ \"p\", \"4b2c1109f7ad0e2080417588f9443bd4a4002fb34e4cd91c0c1e7a6ee076eaa1\" ], [ \"expiration\", \"1834296122\" ] ] }"
