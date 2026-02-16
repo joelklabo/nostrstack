@@ -133,7 +133,12 @@ test.describe('Broader mobile interaction audit', () => {
         timeout: 8000
       });
       await expect(overlay).toHaveClass(/is-visible/, { timeout: 2000 });
-      await overlay.click();
+      const overlayRect = await overlay.boundingBox();
+      expect(overlayRect, 'Sidebar overlay should expose a clickable tap region').toBeTruthy();
+      await page.mouse.click(
+        Math.floor(overlayRect!.x + overlayRect!.width - 32),
+        Math.floor(overlayRect!.y + 32)
+      );
       await expect(overlay, 'Overlay should hide after backdrop tap').not.toHaveClass(
         /is-visible/,
         { timeout: 3000 }

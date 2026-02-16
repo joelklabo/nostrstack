@@ -3221,8 +3221,8 @@ button:disabled {
 
   .sidebar-overlay {
     display: block;
-    left: min(300px, 85vw);
-    width: calc(100% - min(300px, 85vw));
+    left: 0;
+    width: 100%;
     max-width: 100%;
   }
 
