@@ -39,7 +39,6 @@ jobs:
   deploy-push:
     needs: detect-changes
     if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && needs.detect-changes.outputs.should_deploy == 'true' }}
-    timeout-minutes: 120
     uses: ./.github/workflows/azure-deploy-reusable.yml
     permissions:
       contents: read
@@ -57,7 +56,6 @@ jobs:
 
   deploy-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    timeout-minutes: 120
     uses: ./.github/workflows/azure-deploy-reusable.yml
     permissions:
       contents: read

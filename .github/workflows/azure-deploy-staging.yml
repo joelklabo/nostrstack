@@ -14,7 +14,6 @@ concurrency:
 jobs:
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    timeout-minutes: 90
     uses: ./.github/workflows/azure-deploy-reusable.yml
     permissions:
       contents: read
