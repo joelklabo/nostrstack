@@ -77,7 +77,6 @@ export function CelebrationSettings() {
           onClick={handleSoundToggle}
           aria-label={prefs.soundEnabled ? 'Disable celebration sound' : 'Enable celebration sound'}
           aria-pressed={prefs.soundEnabled}
-          disabled={!prefs.animationEnabled}
         >
           <svg
             className="sound-icon"
@@ -129,7 +128,6 @@ export function CelebrationSettings() {
             role="radio"
             aria-checked={prefs.style === 'glow-pulse'}
             onClick={() => handleStyleChange('glow-pulse')}
-            disabled={!prefs.animationEnabled}
           >
             Glow Pulse
           </button>
@@ -139,7 +137,6 @@ export function CelebrationSettings() {
             role="radio"
             aria-checked={prefs.style === 'confetti'}
             onClick={() => handleStyleChange('confetti')}
-            disabled={!prefs.animationEnabled}
           >
             Confetti
           </button>
@@ -149,7 +146,6 @@ export function CelebrationSettings() {
             role="radio"
             aria-checked={prefs.style === 'none'}
             onClick={() => handleStyleChange('none')}
-            disabled={!prefs.animationEnabled}
           >
             None
           </button>
