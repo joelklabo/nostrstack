@@ -207,6 +207,19 @@ function AppShell() {
     document.body.setAttribute('data-theme', theme);
   }, [brandPreset, theme]);
 
+  useEffect(() => {
+    const body = document.body;
+    if (mobileMenuOpen) {
+      body.classList.add('is-mobile-menu-open');
+    } else {
+      body.classList.remove('is-mobile-menu-open');
+    }
+
+    return () => {
+      body.classList.remove('is-mobile-menu-open');
+    };
+  }, [mobileMenuOpen]);
+
   if (nostrRouteId) {
     return (
       <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>

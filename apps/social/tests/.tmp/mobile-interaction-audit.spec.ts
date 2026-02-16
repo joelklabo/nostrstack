@@ -145,4 +145,57 @@ test.describe('Mobile interaction audit', () => {
 
     expect(hitTarget.includes('telemetry-sidebar')).toBe(false);
   });
+
+  test('mobile menu closes when tapping overlay while onboarding is active', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript(() => {
+      localStorage.removeItem('nostrstack.onboarding.v1');
+      localStorage.removeItem('nostrstack.guest');
+    });
+
+    await page.goto('/');
+
+    const loginButton = page
+      .getByRole('button', { name: /(Enter nsec manually|Enter private key manually)/i })
+      .first();
+    await loginButton.click();
+    await page
+      .getByPlaceholder('nsec1...')
+      .fill('nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await page.locator('.feed-stream').first().waitFor({ timeout: 20000 });
+    await page.waitForTimeout(1800);
+
+    const onboardingCard = page.locator('[data-testid="onboarding-card"]');
+    const onboardingVisible = await onboardingCard.isVisible({ timeout: 2500 }).catch(() => false);
+    expect(onboardingVisible).toBe(true);
+
+    const overlay = page.locator('.sidebar-overlay').first();
+
+    await page.locator('.hamburger-btn').click({ timeout: 10000 });
+    await expect(overlay).toHaveClass(/is-visible/);
+    await expect(page.locator('.sidebar-nav')).toHaveClass(/is-open/);
+
+    const overlayRect = await overlay.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.left + Math.max(24, rect.width - 24),
+        y: rect.top + 24
+      };
+    });
+
+    const clickResult = await overlay
+      .click({ timeout: 2500, position: overlayRect })
+      .then(() => ({ ok: true }))
+      .catch((error: Error) => ({ ok: false, message: error.message }));
+
+    expect(clickResult.ok).toBe(true);
+
+    const sidebarOpen = await page
+      .locator('.sidebar-nav')
+      .evaluate((el) => el.classList.contains('is-open'));
+    expect(sidebarOpen).toBe(false);
+    expect(await onboardingCard.isVisible().catch(() => false)).toBe(true);
+  });
 });
