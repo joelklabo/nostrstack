@@ -14,36 +14,69 @@ env:
   IMAGE_NAME: ${{ github.repository }}-api
 
 jobs:
-  deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  detect-changes:
+    if: ${{ github.event_name == 'workflow_run' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_deploy: ${{ steps.changes.outputs.should_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check changed files
+        id: changes
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="${GITHUB_SHA}^"
+
+          if ! git rev-parse --verify "$GITHUB_SHA^{commit}" >/dev/null 2>&1; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git rev-parse --verify "$BASE_SHA" >/dev/null 2>&1; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")"
+          SHOULD_DEPLOY="false"
+
+          while IFS= read -r FILE; do
+            case "$FILE" in
+              apps/api/*|deploy/*|.github/workflows/azure-deploy-api-temp.yml|.github/workflows/azure-deploy-reusable.yml)
+                SHOULD_DEPLOY="true"
+                break
+                ;;
+            esac
+          done <<< "$CHANGED_FILES"
+
+          echo "should_deploy=$SHOULD_DEPLOY" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: detect-changes
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && needs.detect-changes.outputs.should_deploy == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node and PNPM
-        uses: ./.github/actions/setup-node-pnpm
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      - name: Build and push image
+        id: image
+        uses: ./.github/actions/build-push-ghcr
         with:
           registry: ${{ env.REGISTRY }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ github.sha }}
+          dockerfile: apps/api/Dockerfile
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Azure login
         uses: azure/login@v2
@@ -52,7 +85,7 @@ jobs:
 
       - name: Deploy Bicep (temp)
         env:
-          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          IMAGE: ${{ steps.image.outputs.image }}
           REGISTRY_USERNAME: ${{ github.actor }}
           REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           OP_NODE_API_KEY: ${{ secrets.OP_NODE_API_KEY }}

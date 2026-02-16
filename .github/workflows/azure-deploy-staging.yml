@@ -6,23 +6,15 @@ on:
       image_tag:
         description: 'Docker image tag (default: commit SHA)'
         required: false
-  push:
-    paths:
-      - '.github/workflows/azure-deploy-staging.yml'
 
 concurrency:
   group: azure-staging-deploy
   cancel-in-progress: true
 
 jobs:
-  meta:
-    if: ${{ github.event_name == 'push' }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Azure staging deploy workflow is manual-only; push run is a no-op."
-
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 90
     uses: ./.github/workflows/azure-deploy-reusable.yml
     permissions:
       contents: read

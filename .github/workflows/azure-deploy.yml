@@ -19,8 +19,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-changes:
+    if: ${{ github.event_name == 'workflow_run' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_deploy: ${{ steps.changes.outputs.should_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check changed files
+        id: changes
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="${GITHUB_SHA}^"
+
+          if ! git rev-parse --verify "$GITHUB_SHA^{commit}" >/dev/null 2>&1; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git rev-parse --verify "$BASE_SHA" >/dev/null 2>&1; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")"
+          SHOULD_DEPLOY="false"
+
+          while IFS= read -r FILE; do
+            case "$FILE" in
+              apps/api/*|deploy/*|.github/workflows/azure-deploy.yml|.github/workflows/azure-deploy-reusable.yml)
+                SHOULD_DEPLOY="true"
+                break
+                ;;
+            esac
+          done <<< "$CHANGED_FILES"
+
+          echo "should_deploy=$SHOULD_DEPLOY" >> "$GITHUB_OUTPUT"
+
   deploy-push:
-    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+    needs: detect-changes
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && needs.detect-changes.outputs.should_deploy == 'true' }}
+    timeout-minutes: 120
     uses: ./.github/workflows/azure-deploy-reusable.yml
     permissions:
       contents: read
@@ -38,6 +82,7 @@ jobs:
 
   deploy-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 120
     uses: ./.github/workflows/azure-deploy-reusable.yml
     permissions:
       contents: read
