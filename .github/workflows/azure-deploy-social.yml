@@ -58,6 +58,8 @@ jobs:
           file: apps/social/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             VITE_API_BASE_URL=${{ env.API_URL }}
             VITE_NETWORK=mainnet
