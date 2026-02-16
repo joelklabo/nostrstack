@@ -69,6 +69,7 @@ export const Sidebar = memo(function Sidebar({
   const prevBalanceRef = useRef(wallet?.balance ?? 0);
   const supportTriggerRef = useRef<HTMLButtonElement>(null);
   const supportDialogRef = useRef<HTMLDivElement>(null);
+  const supportModalRef = useRef<HTMLDialogElement>(null);
   const closeSupportDialog = useCallback(() => setSupportOpen(false), []);
 
   // Detect balance increases for "receiving" animation
@@ -219,6 +220,7 @@ export const Sidebar = memo(function Sidebar({
     if (!supportOpen) return;
 
     const modal = supportDialogRef.current;
+    const dialog = supportModalRef.current;
     if (!modal) return;
 
     const focusable = Array.from(
@@ -260,8 +262,25 @@ export const Sidebar = memo(function Sidebar({
     };
 
     document.addEventListener('keydown', handleKeyDown);
+
+    const handleDialogCancel = (event: Event) => {
+      event.preventDefault();
+      closeSupportDialog();
+    };
+
+    const handleDialogClick = (event: MouseEvent) => {
+      if (dialog && event.target === dialog) {
+        closeSupportDialog();
+      }
+    };
+
+    dialog?.addEventListener('cancel', handleDialogCancel);
+    dialog?.addEventListener('click', handleDialogClick);
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      dialog?.removeEventListener('cancel', handleDialogCancel);
+      dialog?.removeEventListener('click', handleDialogClick);
       if (supportTriggerRef.current) {
         supportTriggerRef.current.focus();
       }
@@ -513,6 +532,7 @@ export const Sidebar = memo(function Sidebar({
           className="support-modal"
           aria-labelledby="support-modal-title"
           aria-modal="true"
+          ref={supportModalRef}
         >
           <div className="support-modal-inner" ref={supportDialogRef} tabIndex={-1}>
             <h2 id="support-modal-title" className="support-modal-title">

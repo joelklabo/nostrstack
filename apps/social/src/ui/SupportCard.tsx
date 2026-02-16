@@ -1,13 +1,39 @@
 import '../styles/support-card.css';
 
 import { SendSats } from '@nostrstack/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { supportConfig } from '../config/payments';
 
 export function SupportCard() {
   const [dismissed, setDismissed] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
+  const supportModalRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!showSupport) return;
+
+    const dialog = supportModalRef.current;
+    if (!dialog) return;
+
+    const handleCancel = (event: Event) => {
+      event.preventDefault();
+      setShowSupport(false);
+    };
+
+    const handleClick = (event: MouseEvent) => {
+      if (event.target === dialog) {
+        setShowSupport(false);
+      }
+    };
+
+    dialog.addEventListener('cancel', handleCancel);
+    dialog.addEventListener('click', handleClick);
+
+    return () => {
+      dialog.removeEventListener('cancel', handleCancel);
+      dialog.removeEventListener('click', handleClick);
+    };
+  }, [showSupport]);
 
   const isDev = import.meta.env.DEV;
 
@@ -53,7 +79,7 @@ VITE_NOSTRSTACK_TIP_LNADDR=your@lightning.address`;
 
   if (showSupport) {
     return (
-      <dialog open className="support-card-modal">
+      <dialog open className="support-card-modal" aria-modal="true" ref={supportModalRef}>
         <div className="support-card-modal-inner">
           <h3>Support Nostrstack</h3>
           <p>Help keep Nostrstack running!</p>
