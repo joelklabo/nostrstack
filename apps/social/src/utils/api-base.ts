@@ -13,6 +13,7 @@ export type GalleryApiBaseInput = {
 const DEFAULT_LOCAL_API_BASE = 'http://localhost:3001';
 const DEFAULT_LOCAL_HOST = 'localhost';
 const LOCAL_API_PORT = 3001;
+const LOCAL_HOSTNAMES = ['localhost', '127.0.0.1', '[::1]', '::1'];
 
 function normalizeLegacyLocalApiBase(raw: string): string {
   const trimmed = normalizeInput(raw);
@@ -83,12 +84,32 @@ function convertToWsScheme(url: string): string {
   return url.replace(/^https:\/\//i, 'wss://').replace(/^http:\/\//i, 'ws://');
 }
 
+function isLocalhostUrl(raw: string): boolean {
+  try {
+    const parsed = new URL(raw);
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      LOCAL_HOSTNAMES.includes(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function resolveRuntimeApiBase(baseURL?: string): string {
   const explicit = normalizeInput(baseURL);
   if (explicit) {
-    return trimTrailingSlash(preferSecureBase(normalizeLegacyLocalApiBase(explicit)));
+    const normalized = normalizeLegacyLocalApiBase(explicit);
+    if (isLocalhostUrl(normalized) && normalized.startsWith('http://')) {
+      return trimTrailingSlash(normalized);
+    }
+    return trimTrailingSlash(preferSecureBase(normalized));
   }
-  return trimTrailingSlash(preferSecureBase(resolveFallbackApiBase()));
+  const fallback = resolveFallbackApiBase();
+  if (isLocalhostUrl(fallback) && fallback.startsWith('http://')) {
+    return trimTrailingSlash(fallback);
+  }
+  return trimTrailingSlash(preferSecureBase(fallback));
 }
 
 export function resolveRuntimeHost(host?: string): string {
@@ -110,6 +131,10 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   if (!raw) return null;
   const normalizedPath = ensureLeadingSlash(path);
   const websocketOrigin = convertToWsScheme(window.location.origin);
+
+  if (isLocalhostUrl(raw) && raw.startsWith('http://')) {
+    return `${raw.replace(/^http:\/\//i, 'ws://')}${normalizedPath}`;
+  }
 
   if (!raw || /^ws(s)?:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) {
     return `${convertToWsScheme(raw)}${normalizedPath}`;
