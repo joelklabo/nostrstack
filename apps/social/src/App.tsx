@@ -142,6 +142,7 @@ function AppShell() {
     setMobileMenuOpen(false);
   }, []);
   const pathname = usePathname();
+  const isDemoRoute = pathname === '/demo' || pathname === '/demo/';
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute =
     pathname === '/search' ||
@@ -160,6 +161,7 @@ function AppShell() {
     // Root is always valid
     if (pathname === '/' || pathname === '') return true;
     // Known routes
+    if (isDemoRoute) return true;
     if (isSearchRoute) return true;
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
@@ -294,6 +296,78 @@ function AppShell() {
         <main className="feed-container" id="main-content" role="main">
           <NotFoundScreen />
         </main>
+      </div>
+    );
+  }
+
+  if (isDemoRoute) {
+    return (
+      <div className={`social-layout${isImmersive ? ' is-immersive' : ''}`}>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <OnboardingTour />
+        <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+        {/* Mobile hamburger button */}
+        <button
+          type="button"
+          ref={hamburgerButtonRef}
+          className={`hamburger-btn${mobileMenuOpen ? ' is-open' : ''}`}
+          onClick={handleMobileMenuToggle}
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
+        >
+          <span className="hamburger-icon">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+
+        {/* Mobile overlay */}
+        <button
+          type="button"
+          className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
+          tabIndex={mobileMenuOpen ? 0 : -1}
+          aria-label="Close mobile menu"
+          aria-hidden={!mobileMenuOpen}
+          onClick={closeMobileMenu}
+          disabled={!mobileMenuOpen}
+        >
+          <span className="sr-only">Close mobile menu</span>
+        </button>
+
+        <Sidebar
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={closeMobileMenu}
+          onOpenHelp={() => setHelpOpen(true)}
+          onLogout={handleLogout}
+        />
+        <main className="feed-container" id="main-content" role="main">
+          <section className="nostr-event-card">
+            <div className="nostr-event-section-title" style={{ marginBottom: '1rem' }}>
+              Demo mode
+            </div>
+            <p className="ns-content">
+              Open this page to inspect Bitcoin status and live network telemetry in a public
+              context.
+            </p>
+          </section>
+        </main>
+        <aside className="telemetry-sidebar">
+          <ErrorBoundary
+            fallback={
+              <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}>
+                Telemetry Unavailable
+              </div>
+            }
+          >
+            <TelemetryBar />
+          </ErrorBoundary>
+        </aside>
       </div>
     );
   }

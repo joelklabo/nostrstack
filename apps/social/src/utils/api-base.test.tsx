@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveRuntimeWsUrl } from './api-base';
+import { resolveRuntimeApiBase, resolveRuntimeWsUrl } from './api-base';
 
 describe('resolveRuntimeWsUrl', () => {
   const getWebSocketOrigin = () =>
     window.location.origin.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+
+  it('normalizes legacy localhost:3002 API base to localhost:3001', () => {
+    const apiBase = resolveRuntimeApiBase('http://localhost:3002');
+    expect(apiBase).toBe('http://localhost:3001');
+  });
 
   it('uses secure websocket scheme for absolute HTTPS base URLs', () => {
     const url = resolveRuntimeWsUrl('https://api.local', '/ws/telemetry');

@@ -12,6 +12,25 @@ export type GalleryApiBaseInput = {
 
 const DEFAULT_LOCAL_API_BASE = 'http://localhost:3001';
 const DEFAULT_LOCAL_HOST = 'localhost';
+const LOCAL_API_PORT = 3001;
+
+function normalizeLegacyLocalApiBase(raw: string): string {
+  const trimmed = normalizeInput(raw);
+  if (!trimmed) return raw;
+  if (!/^https?:\/\/localhost:/.test(trimmed)) {
+    return trimmed;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname === 'localhost' && parsed.port === '3002') {
+      parsed.port = String(LOCAL_API_PORT);
+      return parsed.toString().replace(/\/$/, '');
+    }
+  } catch {
+    return trimmed;
+  }
+  return trimmed;
+}
 
 function normalizeInput(value?: string): string | undefined {
   const trimmed = value?.trim();
@@ -67,7 +86,7 @@ function convertToWsScheme(url: string): string {
 export function resolveRuntimeApiBase(baseURL?: string): string {
   const explicit = normalizeInput(baseURL);
   if (explicit) {
-    return trimTrailingSlash(preferSecureBase(explicit));
+    return trimTrailingSlash(preferSecureBase(normalizeLegacyLocalApiBase(explicit)));
   }
   return trimTrailingSlash(preferSecureBase(resolveFallbackApiBase()));
 }
