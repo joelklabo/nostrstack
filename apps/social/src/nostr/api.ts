@@ -355,15 +355,19 @@ export async function searchNotes(
 
       const merged = new Map<string, Event>();
       const failures: unknown[] = [];
-      for (const result of settled) {
+      settled.forEach((result, relayIndex) => {
         if (result.status === 'fulfilled') {
           for (const event of result.value) {
             merged.set(event.id, event);
           }
         } else {
+          const relay = relays[relayIndex];
           failures.push(result.reason);
+          if (!isSearchUnsupportedError(result.reason)) {
+            markRelayFailure(relay);
+          }
         }
-      }
+      });
       return { merged, failures };
     };
 

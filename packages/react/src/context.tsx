@@ -34,6 +34,7 @@ export type NostrstackConfig = {
   host?: string;
   lnAddress?: string;
   relays?: string[];
+  onRelayFailure?: (relay: string) => void;
   nwcUri?: string;
   nwcRelays?: string[];
   nwcMaxSats?: number;

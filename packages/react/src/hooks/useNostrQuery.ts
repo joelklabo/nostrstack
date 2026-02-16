@@ -59,6 +59,7 @@ export function useNostrQuery(
 ): UseNostrQueryResult {
   const { enabled = true, relays, limit = 20, initialEvents = EMPTY_EVENTS } = options;
   const cfg = useNostrstackConfig();
+  const reportRelayFailure = cfg.onRelayFailure;
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,11 +91,37 @@ export function useNostrQuery(
           return newFilter;
         });
 
+        const queryFilter = async (filter: Filter) => {
+          const relayResults = await Promise.allSettled(
+            relayList.map((relay) => pool.querySync([relay], filter))
+          );
+
+          const failures: unknown[] = [];
+          const relayEvents: Event[] = [];
+          relayResults.forEach((result, relayIndex) => {
+            if (result.status === 'fulfilled') {
+              relayEvents.push(...result.value);
+              return;
+            }
+
+            failures.push(result.reason);
+            if (reportRelayFailure) {
+              reportRelayFailure(relayList[relayIndex]);
+            }
+          });
+
+          return { failures, relayEvents };
+        };
+
         // Query each filter separately and merge results
-        const resultArrays = await Promise.all(
-          queryFilters.map((filter) => pool.querySync(relayList, filter))
-        );
+        const perFilterResults = await Promise.all(queryFilters.map(queryFilter));
+        const resultArrays = perFilterResults.map((item) => item.relayEvents);
+        const allFailures = perFilterResults.flatMap((item) => item.failures);
         const results = resultArrays.flat();
+
+        if (results.length === 0 && relayList.length > 0 && allFailures.length > 0) {
+          throw allFailures[0];
+        }
         const fetchedOldestTimestamp = results.length
           ? results.reduce<number | null>((min, event) => {
               if (typeof event.created_at !== 'number') return min;
