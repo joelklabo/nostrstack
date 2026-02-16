@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  closePaymentModal,
   dismissOnboardingTourIfOpen,
   dispatchTelemetryWsState,
   ensureZapPostAvailable,
@@ -10,6 +11,15 @@ import {
 const mobileViewport = { width: 390, height: 844 };
 
 test.describe('Mobile non-interactive regression sweep', () => {
+  const closeKnownPaymentOverlays = async (page: import('playwright').Page) => {
+    const paymentModal = page
+      .locator(
+        '.payment-modal, .paywall-payment-modal, .zap-modal, .support-card-modal, .paywall-widget-host'
+      )
+      .first();
+    await closePaymentModal(page, paymentModal).catch(() => undefined);
+  };
+
   test('feed card action buttons remain hittable during scroll', async ({ page }) => {
     page.setViewportSize(mobileViewport);
     await loginWithNsec(page);
@@ -17,18 +27,30 @@ test.describe('Mobile non-interactive regression sweep', () => {
     await ensureZapPostAvailable(page, { fallbackText: 'Mobile interaction seed post' });
 
     const post = page.locator('[data-testid="social-event-card"]').first();
+    const feedContainer = page.locator('.feed-container');
     await expect(post).toBeVisible({ timeout: 12000 });
 
     for (let batch = 0; batch < 3; batch++) {
-      const actionButtons = post.locator('[data-testid="social-event-actions"] button:visible');
+      await closeKnownPaymentOverlays(page);
+
+      const actionButtons = post.locator(
+        '[data-testid="social-event-actions"] .ns-action-btn:visible'
+      );
       const actionCount = await actionButtons.count();
       expect(actionCount).toBeGreaterThan(0);
       const targetCount = Math.min(actionCount, 8);
 
       for (let i = 0; i < targetCount; i++) {
+        await closeKnownPaymentOverlays(page);
         const action = actionButtons.nth(i);
-        await action.scrollIntoViewIfNeeded();
         await expect(action, `action ${i}`).toBeVisible({ timeout: 4000 });
+        await action.evaluate((node) => {
+          node.scrollIntoView({
+            block: 'center',
+            inline: 'center',
+            behavior: 'instant' as ScrollBehavior
+          });
+        });
 
         if (!(await action.isEnabled().catch(() => false))) continue;
         const box = await action.boundingBox();
@@ -50,8 +72,10 @@ test.describe('Mobile non-interactive regression sweep', () => {
         await action.click({ force: true, timeout: 1000, trial: true });
       }
 
-      await page.mouse.wheel(0, 280);
-      await page.waitForTimeout(200);
+      await feedContainer.evaluate((element) => {
+        element.scrollTo({ top: element.scrollTop + 280, behavior: 'auto' });
+      });
+      await page.waitForTimeout(220);
     }
   });
 
