@@ -172,5 +172,6 @@ export function resolveGalleryApiBase(config: GalleryApiBaseInput = {}): ApiBase
     import.meta.env.VITE_API_BASE_URL,
     resolveFallbackApiBase()
   );
-  return resolveApiBase(raw);
+  const normalized = raw ? normalizeLegacyLocalApiBase(raw) : raw;
+  return resolveApiBase(normalized);
 }

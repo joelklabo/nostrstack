@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveRuntimeApiBase, resolveRuntimeWsUrl } from './api-base';
+import { resolveGalleryApiBase, resolveRuntimeApiBase, resolveRuntimeWsUrl } from './api-base';
 
 describe('resolveRuntimeWsUrl', () => {
   const getWebSocketOrigin = () =>
@@ -9,6 +9,13 @@ describe('resolveRuntimeWsUrl', () => {
   it('normalizes legacy localhost:3002 API base to localhost:3001', () => {
     const apiBase = resolveRuntimeApiBase('http://localhost:3002');
     expect(apiBase).toBe('http://localhost:3001');
+  });
+
+  it('normalizes legacy localhost:3002 in gallery API base resolution', () => {
+    const apiBase = resolveGalleryApiBase({ apiBase: 'http://localhost:3002' });
+    expect(apiBase.baseUrl).toBe('http://localhost:3001');
+    expect(apiBase.isConfigured).toBe(true);
+    expect(apiBase.raw).toBe('http://localhost:3001');
   });
 
   it('uses secure websocket scheme for absolute HTTPS base URLs', () => {
