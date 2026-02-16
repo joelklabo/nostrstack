@@ -136,6 +136,14 @@ jobs:
           PRISMA_SCHEMA_FILE: prisma/schema.prisma
         run: pnpm prisma:generate
 
+      - name: Cache Vitest
+        uses: actions/cache@v4
+        with:
+          path: /tmp/nostrstack/vitest
+          key: vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/vitest.config.*', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx') }}
+          restore-keys: |
+            vitest-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+
       - name: Lint (ESLint)
         run: pnpm lint
 
