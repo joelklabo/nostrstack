@@ -43,7 +43,7 @@ test.describe('Issue #2: Feed Stability', () => {
       })
       .toBeGreaterThan(0);
 
-    let emptyStateCount = 0;
+    let settledFeedState: 'content' | 'empty' | null = null;
     let hasLoadedContent = false;
 
     const startTime = Date.now();
@@ -58,14 +58,29 @@ test.describe('Issue #2: Feed Stability', () => {
         hasLoadedContent = true;
       }
 
-      if (hasLoadedContent && noPostsVisible) {
-        emptyStateCount++;
+      if (hasLoadedContent) {
+        let currentState: 'content' | 'empty' | null = null;
+
+        if (postCount > 0) {
+          currentState = 'content';
+        } else if (noPostsVisible) {
+          currentState = 'empty';
+        }
+
+        if (currentState) {
+          if (settledFeedState === null) {
+            settledFeedState = currentState;
+          } else if (settledFeedState !== currentState) {
+            // Once loading settles, content should not oscillate between states.
+            expect(currentState).toBe(settledFeedState);
+          }
+        }
       }
 
       await waitForAnimationFrame(page);
     }
 
-    expect(emptyStateCount).toBe(0);
+    expect(hasLoadedContent).toBe(true);
   });
 
   test('feed maintains content during filter changes', async ({ page }) => {
@@ -80,7 +95,7 @@ test.describe('Issue #2: Feed Stability', () => {
     const cards = feedCards(page);
     const skeletons = feedSkeletons(page);
     const feedStream = page.locator('.feed-stream');
-    const visibleFeed = cards.or(skeletons);
+    const visibleFeed = cards.or(skeletons).first();
     await expect(heading).toBeVisible({ timeout: 10000 });
     await expect(visibleFeed).toBeVisible({ timeout: 8000 });
 
