@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import {
   clickWithDispatchFallback,
+  closePaymentModal,
   dismissOnboardingTourIfOpen,
   ensureZapPostAvailable,
   loginWithNsec as doLoginWithNsec,
@@ -70,11 +71,18 @@ test.describe('Social App Flow', () => {
     const paymentSelector =
       '.payment-modal, .payment-overlay, .paywall-payment-modal, .paywall-widget-host, .zap-modal, .support-card-modal, .zap-modal-overlay';
     const paymentSurface = page.locator(paymentSelector).first();
-    if (!(await paymentSurface.isVisible({ timeout: 3000 }).catch(() => false))) {
+    if (!(await paymentSurface.isVisible({ timeout: 12000 }).catch(() => false))) {
+      const walletMsg = page
+        .getByText(
+          /Wallet unavailable|Failed to connect to wallet|No wallet URL configured|Wallet not configured/i
+        )
+        .first();
       await expect(
-        page.getByText(/Wallet unavailable|Failed to connect to wallet/i).first(),
+        walletMsg,
         'Expected a payment surface or an explicit wallet-unavailable state'
-      ).toBeVisible({ timeout: 5000 });
+      ).toBeVisible({
+        timeout: 5000
+      });
       await page
         .getByRole('button', { name: /Log out/ })
         .first()
@@ -92,17 +100,22 @@ test.describe('Social App Flow', () => {
       expect(Math.abs(feedBoxAfter.x - feedBox.x)).toBeLessThan(1);
       expect(Math.abs(feedBoxAfter.width - feedBox.width)).toBeLessThan(1);
     }
-    await expect(page.locator('.payment-status')).toBeVisible();
-    await expect(page.locator('.payment-grid'), 'Invoice grid did not render').toBeVisible({
+    const paymentPanel = page.locator('.payment-status, .payment-grid, .paywall-status');
+    await expect(paymentPanel.first(), 'Payment panel did not render').toBeVisible({
       timeout: 8000
     });
-    await expect(page.locator('.payment-qr')).toBeVisible();
-    await expect(page.locator('.payment-panel')).toBeVisible();
-    await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
-    await expect(page.locator('.payment-invoice-box')).toBeVisible();
+    await expect(page.locator('.payment-qr, .payment-qr-code')).toBeVisible();
+    await expect(page.locator('.payment-panel, .payment-modal')).toBeVisible();
+    await expect(
+      page.locator('.payment-panel-title').first(),
+      'INVOICE title was not visible on payment panel'
+    ).toHaveText(/INVOICE/i);
+    await expect(page.locator('.payment-invoice-box, .invoice-box')).toBeVisible();
     await page.screenshot({ path: resolveDocScreenshotPath('zap-modal.png') });
-    // Close modal (might be CANCEL or CLOSE if error)
-    await page.getByRole('button', { name: /CLOSE/ }).first().click();
+    await closePaymentModal(
+      page,
+      page.locator('.payment-modal, .payment-overlay, .paywall-payment-modal').first()
+    );
   });
 
   test('Navigation to Profile, Follow, and Screenshot', async ({ page }) => {

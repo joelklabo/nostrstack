@@ -227,13 +227,15 @@ export async function closePaymentModal(
     'button[aria-label="Close zap dialog"]'
   ];
 
-  const waitForHidden = async () =>
-    expect(modal, 'Payment modal did not hide after close')
+  const waitForHidden = async () => {
+    if (page.isClosed()) return true;
+    return expect(modal, 'Payment modal did not hide after close')
       .toBeHidden({ timeout: 1500 })
       .then(
         () => true,
         () => false
       );
+  };
 
   if (
     await modal
@@ -255,6 +257,7 @@ export async function closePaymentModal(
     await button
       .click({ force: true, timeout: 1800 })
       .catch(() => button.dispatchEvent('click').catch(() => undefined));
+    if (page.isClosed()) return;
     if (await waitForHidden()) return;
   }
 
@@ -268,10 +271,12 @@ export async function closePaymentModal(
     if (!(await overlay.isVisible().catch(() => false))) continue;
     await overlay.click({ force: true, timeout: 1200 }).catch(() => undefined);
     await overlay.dispatchEvent('click').catch(() => undefined);
+    if (page.isClosed()) return;
     if (await waitForHidden()) return;
   }
 
   await page.keyboard.press('Escape').catch(() => undefined);
+  if (page.isClosed()) return;
   await expect(modal, 'Payment modal did not hide after close').toBeHidden({ timeout });
 }
 

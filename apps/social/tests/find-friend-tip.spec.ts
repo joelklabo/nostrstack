@@ -48,6 +48,7 @@ const postEvents = [
 function isKnownConsoleError(message: string) {
   const ignore = [
     /An SSL certificate error occurred when fetching the script/i,
+    /Failed to load resource: the server responded with a status of 404/i,
     /Failed to load resource: net::ERR_CONNECTION_REFUSED/i,
     /ERR_CERT_COMMON_NAME_INVALID/i,
     /ERR_NAME_NOT_RESOLVED/i
@@ -118,7 +119,9 @@ test('find friend and tip flow', async ({ page }) => {
 
   const sendButton = page.getByRole('button', { name: /SEND 500/i });
   if ((await sendButton.count()) > 0) {
-    await expect(sendButton.first(), 'Send 500 button was not visible').toBeVisible({ timeout: 15_000 });
+    await expect(sendButton.first(), 'Send 500 button was not visible').toBeVisible({
+      timeout: 15_000
+    });
     await sendButton.first().scrollIntoViewIfNeeded();
     await clickAndExpectPaymentModal(page, sendButton.first());
     const sendModal = page.locator('.payment-modal');

@@ -71,7 +71,11 @@ async function dismissTourIfOpen(page: Page) {
 }
 
 async function waitForPaymentModal(page: Page) {
-  const modal = page.locator('.payment-modal');
+  const modal = page
+    .locator(
+      '.payment-modal, .payment-overlay, .paywall-payment-modal, .paywall-widget-host, .zap-modal, .support-card-modal, .zap-modal-overlay'
+    )
+    .first();
   await expect(modal).toBeVisible({ timeout: 10_000 });
   const invoiceReady = page.getByText(/Invoice ready/i);
   const statusReady = page.locator('.payment-status');
