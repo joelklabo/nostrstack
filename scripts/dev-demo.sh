@@ -78,14 +78,14 @@ EOF
   echo "[demo] Wrote $API_ENV"
 fi
 
-GALLERY_ENV="apps/social/.env.local"
-if [[ ! -f "$GALLERY_ENV" ]]; then
-  cat > "$GALLERY_ENV" <<EOF
+SOCIAL_ENV="apps/social/.env.local"
+if [[ ! -f "$SOCIAL_ENV" ]]; then
+  cat > "$SOCIAL_ENV" <<EOF
 VITE_API_BASE_URL=$VITE_API_BASE_URL
 VITE_NOSTRSTACK_HOST=$VITE_NOSTRSTACK_HOST
 VITE_ENABLE_REAL_PAYMENTS=$VITE_ENABLE_REAL_PAYMENTS
 EOF
-  echo "[demo] Wrote $GALLERY_ENV"
+  echo "[demo] Wrote $SOCIAL_ENV"
 fi
 
 # Start dev servers

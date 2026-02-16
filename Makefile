@@ -8,7 +8,7 @@ DEV_ORIGIN?=https://localhost:3001
 DEV_DB?=file:./dev.db
 DEV_LNBITS_URL?=http://localhost:15001
 
-.PHONY: deps deps-prod build lint test test-ci typecheck check ci dev dev-api dev-social dev-gallery dev-demo e2e help deploy-staging deploy-prod
+.PHONY: commands deps deps-prod build lint test test-ci typecheck check ci dev dev-api dev-social dev-gallery dev-demo e2e help deploy-staging deploy-prod
 
 deps:
 	$(PNPM) install
@@ -77,9 +77,13 @@ help:
 	@echo "  make test-ci        - pnpm test:ci"
 	@echo "  make check          - lint + test + typecheck"
 	@echo "  make ci             - lint + typecheck + test:ci"
+	@echo "  make commands       - show canonical command catalog"
 
 deploy-staging:
 	gh workflow run azure-deploy-staging.yml --repo $(REPO)
 
 deploy-prod:
 	gh workflow run azure-deploy.yml --repo $(REPO)
+
+commands:
+	@cat docs/commands.md

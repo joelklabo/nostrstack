@@ -8,7 +8,7 @@ log() { echo "[dev] $*" >&2; }
 err() { echo "[dev] ERROR: $*" >&2; }
 
 API_PORT=3001
-GALLERY_PORT=4173
+SOCIAL_PORT=4173
 PG_URL="postgresql://nostrstack:nostrstack@localhost:5432/nostrstack"
 BITCOIND_RPC="http://bitcoin:bitcoin@localhost:18443"
 LNBITS_URL="http://localhost:15001"
@@ -108,7 +108,7 @@ run_migrations() {
 cleanup() {
   log "Cleaning up existing processes..."
   local pids
-  pids=$(ss -tlnp 2>/dev/null | grep -E ":$API_PORT|:$GALLERY_PORT" | grep -oP 'pid=\K[0-9]+' | sort -u || true)
+  pids=$(ss -tlnp 2>/dev/null | grep -E ":$API_PORT|:$SOCIAL_PORT" | grep -oP 'pid=\K[0-9]+' | sort -u || true)
   for pid in $pids; do
     kill "$pid" 2>/dev/null || true
   done
@@ -116,9 +116,9 @@ cleanup() {
 }
 
 start_servers() {
-  log "Starting API and Gallery..."
+  log "Starting API and social app..."
   log "  API:     http://localhost:$API_PORT"
-  log "  Gallery: http://localhost:$GALLERY_PORT"
+  log "  Social: http://localhost:$SOCIAL_PORT"
   log "  LNbits:  $LNBITS_URL"
   log ""
   log "Press Ctrl+C to stop"
@@ -131,7 +131,7 @@ start_servers() {
     --prefix-colors "blue,magenta" \
     --prefix "[{name}]" \
     "pnpm --filter api exec tsx watch src/server.ts" \
-    "pnpm --filter social dev -- --host --port $GALLERY_PORT --strictPort"
+    "pnpm --filter social dev -- --host --port $SOCIAL_PORT --strictPort"
 }
 
 main() {

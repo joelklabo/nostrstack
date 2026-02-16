@@ -12,7 +12,7 @@ fi
 PG_PORT="${PG_PORT:-65432}"
 PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
-GALLERY_PORT="${GALLERY_PORT:-4173}"
+SOCIAL_PORT="${SOCIAL_PORT:-4173}"
 
 require() { [[ -n "${!1:-}" ]] || { echo "Missing env $1" >&2; exit 1; }; }
 for var in LN_BITS_URL LN_BITS_API_KEY VITE_NOSTRSTACK_RELAYS TELEMETRY_ESPLORA_URL; do require "$var"; done
@@ -34,7 +34,7 @@ echo "  LNbits:              $LN_BITS_URL"
 echo "  Telemetry provider:  ${TELEMETRY_PROVIDER}"
 echo "  Esplora URL:         ${TELEMETRY_ESPLORA_URL}"
 echo "  API base:            http://localhost:${API_PORT}"
-echo "  Gallery:             http://localhost:${GALLERY_PORT}"
+echo "  Social:              http://localhost:${SOCIAL_PORT}"
 echo "  Relays:              ${VITE_NOSTRSTACK_RELAYS}"
 
 env \
@@ -57,4 +57,4 @@ env \
   VITE_ENABLE_TEST_SIGNER=false \
   pnpm exec concurrently -k -n api,social \
     "pnpm --filter api dev" \
-    "pnpm --filter social dev -- --host --port ${GALLERY_PORT}"
+    "pnpm --filter social dev -- --host --port ${SOCIAL_PORT}"

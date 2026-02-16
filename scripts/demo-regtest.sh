@@ -6,13 +6,13 @@ set -euo pipefail
 # - Starts regtest bitcoind + LND pair + LNbits (captures admin key)
 # - Ensures Postgres on localhost:65432
 # - Runs Prisma migrations
-# - Launches API + Gallery with regtest envs
+# - Launches API + social app with regtest envs
 
 
 PG_PORT="${PG_PORT:-65432}"
 PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
-GALLERY_PORT="${GALLERY_PORT:-4173}"
+SOCIAL_PORT="${SOCIAL_PORT:-4173}"
 RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }; }
@@ -58,10 +58,10 @@ echo "  LNbits UI:              http://localhost:15001"
 echo "  LNbits admin key:       $LNBITS_ADMIN_KEY"
 echo "  Postgres:               $PG_URL"
 echo "  API base:               http://localhost:${API_PORT}"
-echo "  Gallery:                http://localhost:${GALLERY_PORT}"
+echo "  Social:                http://localhost:${SOCIAL_PORT}"
 echo "  Relays:                 ${RELAYS}"
 
-log "Launching API and Gallery (Ctrl+C to stop)..."
+log "Launching API and social app (Ctrl+C to stop)..."
 env \
   BITCOIN_NETWORK=regtest \
   VITE_NETWORK=regtest \
@@ -87,4 +87,4 @@ env \
   VITE_NOSTRSTACK_RELAYS="${RELAYS}" \
   pnpm exec concurrently -k -n api,social \
     "pnpm --filter api dev" \
-    "pnpm --filter social dev -- --host --port ${GALLERY_PORT}"
+    "pnpm --filter social dev -- --host --port ${SOCIAL_PORT}"
