@@ -137,6 +137,28 @@ describe('AuthProvider and useAuth', () => {
     }
   });
 
+  it('NIP-07 login handles missing extension without throwing', async () => {
+    Object.defineProperty(window, 'nostr', { writable: true, value: undefined });
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    await act(async () => {
+      vi.advanceTimersByTime(0);
+    });
+
+    await act(async () => {
+      if (result.current) {
+        await expect(result.current.loginWithNip07()).resolves.toBeUndefined();
+        vi.advanceTimersByTime(1);
+        await Promise.resolve();
+      }
+    });
+
+    if (result.current) {
+      expect(result.current.mode).toBe('guest');
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBe('NIP-07 extension not found');
+    }
+  });
+
   it('logs in with NSEC successfully', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     await act(async () => {

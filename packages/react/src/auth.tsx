@@ -136,7 +136,8 @@ export function AuthProvider({
 
   const loginWithNip07 = useCallback(async () => {
     if (!window.nostr) {
-      throw new Error('NIP-07 extension not found');
+      setState((s) => ({ ...s, isLoading: false, error: 'NIP-07 extension not found' }));
+      return;
     }
     setState((s) => ({ ...s, isLoading: true, error: null }));
     try {
