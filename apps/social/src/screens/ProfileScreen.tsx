@@ -20,6 +20,7 @@ import { CopyButton } from '../ui/CopyButton';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
+import { resolveRuntimeApiBase } from '../utils/api-base';
 
 // Use CSS custom property for primary teal color for general UI accents
 // Bitcoin orange should only be used for actual Bitcoin data (block heights, sats amounts)
@@ -86,7 +87,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
     }
   };
 
-  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBase = resolveRuntimeApiBase(import.meta.env.VITE_API_BASE_URL);
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;

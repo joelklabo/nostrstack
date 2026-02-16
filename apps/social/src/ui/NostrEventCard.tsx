@@ -5,6 +5,7 @@ import type { Event } from 'nostr-tools';
 import { memo, useCallback, useState } from 'react';
 
 import { useRepost } from '../hooks/useRepost';
+import { resolveRuntimeApiBase, resolveRuntimeHost } from '../utils/api-base';
 import { buildNoteLink } from '../utils/navigation';
 import { EmojiReactionButton } from './EmojiReactionButton';
 import { JsonView } from './JsonView';
@@ -183,15 +184,8 @@ export const NostrEventCard = memo(function NostrEventCard({
     [event.id, onOpenThread]
   );
 
-  const isDevLikeRuntime = import.meta.env.DEV || import.meta.env.NODE_ENV === 'test';
-  const browserOrigin = typeof window === 'undefined' ? undefined : window.location.origin;
-  const browserHost = typeof window === 'undefined' ? 'localhost' : window.location.hostname;
-  const paywallApiBase = isDevLikeRuntime ? apiBase ?? 'http://localhost:3001' : apiBase;
-  const paywallHost = isDevLikeRuntime
-    ? import.meta.env.VITE_NOSTRSTACK_HOST ?? 'localhost'
-    : import.meta.env.VITE_NOSTRSTACK_HOST ?? browserHost;
-  const productionPaywallApiBase = browserOrigin ?? '';
-  const resolvedPaywallApiBase = paywallApiBase ?? productionPaywallApiBase;
+  const paywallApiBase = resolveRuntimeApiBase(apiBase);
+  const paywallHost = resolveRuntimeHost(import.meta.env.VITE_NOSTRSTACK_HOST);
 
   return (
     <article
@@ -251,7 +245,7 @@ export const NostrEventCard = memo(function NostrEventCard({
             <PaywalledContent
               itemId={paywallItemId}
               amountSats={paywallAmount}
-              apiBase={resolvedPaywallApiBase}
+              apiBase={paywallApiBase}
               host={paywallHost}
               unlockedContent={renderContent()}
               lockedContent={

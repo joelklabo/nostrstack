@@ -2,7 +2,7 @@ import { OfferWidget, useNostrstackConfig } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
 import { useMemo, useState } from 'react';
 
-import { resolveApiBase } from './utils/api-base';
+import { resolveGalleryApiBase } from './utils/api-base';
 
 type OfferEntry = {
   id: string;
@@ -46,9 +46,7 @@ function formatTime(ts: number) {
 export function OffersView() {
   const cfg = useNostrstackConfig();
   const toast = useToast();
-  const apiBaseRaw =
-    cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-  const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
+  const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
   const bolt12Enabled =
     String(import.meta.env.VITE_ENABLE_BOLT12 ?? '').toLowerCase() === 'true' ||

@@ -5,7 +5,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { WalletView } from '../features/wallet/WalletView';
 import { useWallet } from '../hooks/useWallet';
 import { AnimatedSats } from '../ui/AnimatedNumber';
-import { resolveApiBase } from '../utils/api-base';
+import { resolveGalleryApiBase } from '../utils/api-base';
 import { navigateTo } from '../utils/navigation';
 
 interface SidebarProps {
@@ -55,9 +55,7 @@ export const Sidebar = memo(function Sidebar({
     return undefined;
   }, [wallet?.balance]);
 
-  const apiBaseRaw =
-    cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-  const apiBaseConfig = cfg.apiBaseConfig ?? resolveApiBase(apiBaseRaw);
+  const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
   const regtestFundEnabled =
     String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' ||

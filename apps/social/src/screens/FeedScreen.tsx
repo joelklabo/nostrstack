@@ -13,6 +13,7 @@ import { NewPostsIndicator } from '../ui/NewPostsIndicator';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { SupportCard } from '../ui/SupportCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
+import { resolveRuntimeApiBase } from '../utils/api-base';
 import { navigateTo } from '../utils/navigation';
 
 interface FeedScreenProps {
@@ -27,7 +28,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   const { pubkey } = useAuth();
   const feedContainerRef = useRef<HTMLElement | null>(null);
 
-  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBase = resolveRuntimeApiBase(import.meta.env.VITE_API_BASE_URL);
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;

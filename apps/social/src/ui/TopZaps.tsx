@@ -30,11 +30,11 @@ export const TopZaps = memo(function TopZaps({ eventId, hideEmpty = true }: TopZ
   }
 
   if (hideEmpty && zaps.length === 0) {
-    return <div className="top-zaps top-zaps--empty" aria-hidden="true" />;
+    return <div className="top-zaps top-zaps--empty" aria-hidden="true" role="presentation" />;
   }
 
   if (zaps.length === 0) {
-    return null;
+    return <div className="top-zaps top-zaps--empty" aria-hidden="true" />;
   }
 
   // Format amount for display

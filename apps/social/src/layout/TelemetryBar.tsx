@@ -19,6 +19,7 @@ import { BitcoinNodeCard } from '../ui/BitcoinNodeCard';
 import { type BlockData, BlockNotification } from '../ui/BlockNotification';
 import { type ConnectionState, ConnectionStatus, type NetworkType } from '../ui/ConnectionStatus';
 import { LiveStatsTicker, type NetworkStats } from '../ui/LiveStatsTicker';
+import { resolveRuntimeWsUrl } from '../utils/api-base';
 
 type TelemetryEvent =
   | {
@@ -160,29 +161,6 @@ function formatSearchTelemetry(event: SearchTelemetryEvent): LogEntry {
     default:
       return { ts, level: 'info', message: `Search: event (${queryLabel})` };
   }
-}
-
-function resolveTelemetryWs(baseURL?: string): string | null {
-  if (typeof window === 'undefined') return null;
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = preferSecureBase(raw.replace(/\/$/, ''));
-  if (base === '/api') {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
-  if (!base) {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
-  if (/^https?:\/\//i.test(base)) {
-    return `${base.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
-  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
-}
-
-function preferSecureBase(base: string) {
-  if (typeof window === 'undefined') return base;
-  if (window.location.protocol !== 'https:') return base;
-  if (!/^http:\/\//i.test(base)) return base;
-  return base.replace(/^http:/i, 'https:');
 }
 
 function safeClose(socket: WebSocket | null) {
@@ -479,9 +457,7 @@ export function TelemetryBar() {
   }, [displayStatus, telemetryTiming.statusDwellMs, wsStatus]);
 
   useEffect(() => {
-    const telemetryWsUrl = resolveTelemetryWs(
-      import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
-    );
+    const telemetryWsUrl = resolveRuntimeWsUrl(import.meta.env.VITE_API_BASE_URL, '/ws/telemetry');
     if (!telemetryWsUrl) {
       appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' });
       setWsStatus('offline');

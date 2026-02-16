@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 
+import { resolveRuntimeHost } from '../utils/api-base';
 import { Image } from './Image';
 
 interface OpenGraphData {
@@ -81,9 +82,7 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     }
 
     const isLocalDev =
-      import.meta.env.DEV &&
-      typeof window !== 'undefined' &&
-      ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+      import.meta.env.DEV && ['localhost', '127.0.0.1', '::1'].includes(resolveRuntimeHost());
     if (isLocalDev) {
       setData({
         url,
@@ -195,7 +194,7 @@ export const LinkPreview = memo(function LinkPreview({ url, className }: LinkPre
     );
   }
 
-  if (error || !data) {
+  if (error || !data || (!data.title && !data.description && !data.image)) {
     return (
       <div
         className={`link-preview link-preview--empty ${className || ''}`}

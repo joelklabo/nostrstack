@@ -17,7 +17,7 @@ import { TelemetryBar } from './layout/TelemetryBar';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
-import { resolveApiBase } from './utils/api-base';
+import { resolveGalleryApiBase } from './utils/api-base';
 import { resolveProfileRoute } from './utils/navigation';
 
 const FeedScreen = lazy(() =>
@@ -337,8 +337,10 @@ function AppShell() {
 }
 
 export default function App() {
-  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-  const apiBaseConfig = resolveApiBase(apiBase);
+  const apiBaseConfig = resolveGalleryApiBase({
+    apiBase: import.meta.env.VITE_API_BASE_URL
+  });
+  const apiBase = apiBaseConfig.baseUrl;
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
@@ -351,7 +353,7 @@ export default function App() {
       ''
     ).trim() || undefined;
   const apiBaseForLnurl =
-    apiBaseConfig.baseUrl || (/^https?:\/\//i.test(apiBase) ? apiBase.replace(/\/$/, '') : '');
+    apiBase && /^https?:\/\//i.test(apiBase) ? apiBase.replace(/\/$/, '') : '';
   const demoLnurlAddress =
     enableRegtestPay && apiBaseForLnurl ? `${apiBaseForLnurl}/.well-known/lnurlp/alice` : undefined;
   const lnurlAddress = envZapAddress ?? demoLnurlAddress;

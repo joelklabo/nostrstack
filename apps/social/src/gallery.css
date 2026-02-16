@@ -353,7 +353,7 @@ body {
  */
 .social-layout {
   display: grid;
-  grid-template-columns: 280px 1fr 320px;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
   min-height: 100dvh;
   background: var(--ns-color-bg-default);
 
@@ -3126,7 +3126,7 @@ body {
   pointer-events: none;
 }
 
-/* Telemetry sidebar collapses on immersive mode (desktop only) */
+/* Keep telemetry sidebar stable during immersive mode (desktop only) */
 @media (width > 1024px) {
   .telemetry-sidebar {
     /* GPU-accelerated transitions: transform + opacity only */
@@ -3139,10 +3139,10 @@ body {
   }
 
   .social-layout.is-immersive .telemetry-sidebar {
-    /* Slide out to the right instead of collapsing width */
-    transform: translateX(100%);
-    opacity: 0;
-    pointer-events: none;
+    /* Keep right rail stable while preserving immersion behavior */
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   /* Grid structure stays stable - no column change needed */

@@ -12,12 +12,13 @@ import { fetchNostrEventFromApi, SEARCH_RELAYS, searchNotes } from '../nostr/api
 import { type ProfileMeta, safeExternalUrl } from '../nostr/eventRenderers';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
+import { resolveGalleryApiBase } from '../utils/api-base';
 import { navigateToProfile } from '../utils/navigation';
 
 export function SearchScreen() {
   const cfg = useNostrstackConfig();
-  const apiBase =
-    cfg.apiBase ?? cfg.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBaseConfig = resolveGalleryApiBase(cfg);
+  const apiBase = apiBaseConfig.baseUrl;
   const { relays: relayList } = useRelays();
   const pool = useSimplePool();
   const [query, setQuery] = useState('');

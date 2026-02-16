@@ -242,6 +242,11 @@
 /* ===== ENHANCED TOP ZAPS SECTION ===== */
 .top-zaps {
   /* Glowing zap highlight - override default */
+  min-height: 3.25rem;
+  padding: var(--ns-space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--ns-space-2);
   background: linear-gradient(
     135deg,
     color-mix(in oklch, var(--ns-bitcoin-glow) 20%, transparent) 0%,
@@ -249,6 +254,10 @@
   ) !important;
   border: 1px solid color-mix(in oklch, var(--ns-bitcoin-intense) 20%, transparent);
   box-shadow: 0 0 12px color-mix(in oklch, var(--ns-bitcoin-glow) 30%, transparent);
+}
+
+.top-zaps--empty {
+  visibility: hidden;
 }
 
 .top-zaps__icon {
