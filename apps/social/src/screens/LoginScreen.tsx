@@ -333,7 +333,9 @@ export function LoginScreen() {
               type="button"
               ref={firstAuthButtonRef}
               className="auth-btn auth-btn--primary"
-              onClick={() => loginWithNip07()}
+              onClick={() => {
+                void loginWithNip07().catch(() => {});
+              }}
               aria-label="Sign in with Nostr browser extension"
             >
               Sign in with Extension

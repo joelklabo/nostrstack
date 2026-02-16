@@ -122,22 +122,36 @@ describe('fetchNostrEventFromApi', () => {
 
 describe('searchNotes', () => {
   it(
-    'rejects when a relay query times out',
+    'returns no results when every relay times out',
     async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const pool = {
         querySync: vi.fn(() => new Promise(() => {}))
       } as unknown as SimplePool;
 
-      try {
-        const resultPromise = searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
-        await expect(resultPromise).rejects.toThrow(/Request timed out after/);
-      } finally {
-        consoleSpy.mockRestore();
-      }
+      const result = await searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
+      expect(result).toEqual([]);
+      expect(result).toHaveLength(0);
     },
     NOTES_SEARCH_TIMEOUT_MS + 2_000
   );
+
+  it('returns no results when every relay rejects with timeout errors', async () => {
+    const pool = {
+      querySync: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Request timed out after 10000ms'))
+        .mockRejectedValueOnce(new Error('request timed out after 10000ms'))
+    } as unknown as SimplePool;
+
+    const result = await searchNotes(
+      pool,
+      ['wss://relay.nostr.band', 'wss://relay.damus.io'],
+      'nostr'
+    );
+    expect(result).toEqual([]);
+    expect(result).toHaveLength(0);
+    expect(pool.querySync).toHaveBeenCalledTimes(2);
+  });
 
   it('falls back to content filtering when relays reject search filters', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

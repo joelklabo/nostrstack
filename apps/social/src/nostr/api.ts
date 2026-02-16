@@ -332,6 +332,11 @@ export async function searchNotes(
       const lower = message.toLowerCase();
       return lower.includes('unrecognized filter') || lower.includes('unrecognised filter');
     };
+    const isTimeoutError = (error: unknown): boolean => {
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+      return lower.includes('timeout') || lower.includes('timed out');
+    };
 
     const runQuery = async (withSearch: boolean) => {
       const filter: { kinds: number[]; search?: string; limit: number; until?: number } = {
@@ -374,8 +379,13 @@ export async function searchNotes(
     const primary = await runQuery(true);
     const primaryFailures = primary.failures;
     const hasSearchUnsupportedFailure = primaryFailures.some(isSearchUnsupportedError);
+    const hasOnlyTimeoutFailures = primaryFailures.every(isTimeoutError);
     let merged = primary.merged;
     const relayCount = relays.length;
+
+    if (merged.size === 0 && hasOnlyTimeoutFailures) {
+      return [];
+    }
 
     if (merged.size === 0 && hasSearchUnsupportedFailure) {
       const fallback = await runQuery(false);
