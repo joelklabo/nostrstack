@@ -244,7 +244,7 @@ export function SearchView() {
       </form>
 
       {error?.code === 'lightning_only' && error.lightning && (
-        <Alert tone="info" title="Lightning address detected">
+        <Alert tone="info" title="Lightning address detected" role="status" aria-live="polite">
           We found a Lightning address but no Nostr profile mapping. You can still send sats if you
           have their pubkey.
           <div style={{ marginTop: '0.5rem' }}>
@@ -322,7 +322,7 @@ export function SearchView() {
         error &&
         error.code !== 'lightning_only' &&
         error.code !== 'invalid_format' && (
-          <Alert tone="danger" title="Identity resolution failed">
+          <Alert tone="danger" title="Identity resolution failed" role="alert">
             {error.message}
           </Alert>
         )}

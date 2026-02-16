@@ -115,6 +115,7 @@ export const NostrEventCard = memo(function NostrEventCard({
     ? Number(event.tags.find((tag) => tag[0] === 'paywall')?.[1] || '0')
     : 0;
   const paywallItemId = event.id;
+  const openThreadLabel = `Open post ${event.id.slice(0, 8)} by ${event.pubkey.slice(0, 8)}`;
 
   const rootClasses = ['ns-card', 'ns-event-card', `ns-event-card--${variant}`, className]
     .filter(Boolean)
@@ -187,6 +188,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         className="ns-event-card__body-wrapper"
         role={onOpenThread ? 'button' : undefined}
         tabIndex={onOpenThread ? 0 : undefined}
+        aria-label={onOpenThread ? openThreadLabel : undefined}
         onClick={onOpenThread ? handleCardClick : undefined}
         onKeyDown={
           onOpenThread

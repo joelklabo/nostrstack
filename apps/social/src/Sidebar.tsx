@@ -257,7 +257,7 @@ export const Sidebar = memo(function Sidebar({
           </div>
         )}
         {walletError && !walletConnecting && (
-          <div className="sidebar-wallet-section">
+          <div className="sidebar-wallet-section" role="status" aria-live="polite">
             <div className="sidebar-status-label">
               <span className="sidebar-wallet-icon" aria-hidden="true">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -318,6 +318,13 @@ export const Sidebar = memo(function Sidebar({
                   onClick={handleRegtestFund}
                   disabled={isFunding || !apiBaseConfig.isConfigured}
                   aria-busy={isFunding}
+                  aria-label={
+                    isFunding
+                      ? 'Mining regtest funds'
+                      : !apiBaseConfig.isConfigured
+                        ? 'Regtest funding unavailable'
+                        : 'Add funds to regtest wallet'
+                  }
                 >
                   {!apiBaseConfig.isConfigured ? (
                     'Configuration needed'
@@ -335,6 +342,9 @@ export const Sidebar = memo(function Sidebar({
                   className="wallet-action-btn"
                   onClick={() => setWithdrawOpen(true)}
                   disabled={!withdrawAvailable}
+                  aria-label={
+                    withdrawAvailable ? 'Open LNURL withdraw flow' : withdrawUnavailableReason
+                  }
                 >
                   {!withdrawAvailable ? withdrawUnavailableReason : 'Withdraw via LNURL'}
                 </button>

@@ -598,13 +598,14 @@ export function NostrEventView({ rawId }: { rawId: string }) {
             className="nostr-event-loading"
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             role="status"
+            aria-live="polite"
           >
             <span className="ns-spinner" aria-hidden="true" />
             Fetching event data...
           </div>
         )}
         {state.status === 'error' && (
-          <Alert tone="danger" title="Event Error">
+          <Alert tone="danger" title="Event Error" role="alert">
             <div className="nostr-event-error">
               <span>{state.error}</span>
               <button className="action-btn" type="button" onClick={handleRetry}>
@@ -642,14 +643,14 @@ export function NostrEventView({ rawId }: { rawId: string }) {
                 )}
 
                 {repliesState.status === 'loading' && (
-                  <div className="nostr-event-replies-loading" role="status">
+                  <div className="nostr-event-replies-loading" role="status" aria-live="polite">
                     <span className="ns-spinner" aria-hidden="true" />
                     Loading replies...
                   </div>
                 )}
 
                 {repliesState.status === 'error' && (
-                  <Alert tone="danger" title="Replies unavailable">
+                  <Alert tone="danger" title="Replies unavailable" role="alert">
                     <div className="nostr-event-replies-error">
                       <span>{repliesState.error ?? 'Unable to load replies.'}</span>
                       <button className="action-btn" type="button" onClick={handleRetry}>
@@ -677,7 +678,12 @@ export function NostrEventView({ rawId }: { rawId: string }) {
                 )}
 
                 {repliesState.loadMoreError && (
-                  <Alert tone="warning" title="Some replies are unavailable">
+                  <Alert
+                    tone="warning"
+                    title="Some replies are unavailable"
+                    role="status"
+                    aria-live="polite"
+                  >
                     {repliesState.loadMoreError}
                   </Alert>
                 )}

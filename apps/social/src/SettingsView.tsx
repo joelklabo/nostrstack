@@ -673,6 +673,8 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
         <div
           className="nwc-status-row"
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          role="status"
+          aria-live="polite"
         >
           {nwcCheckStatus === 'checking' && (
             <span className="ns-spinner" style={{ width: '14px', height: '14px' }} />
@@ -768,6 +770,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             type="button"
             className="action-btn"
             onClick={handleConnectNwc}
+            aria-busy={nwcCheckStatus === 'checking'}
             disabled={
               !nwcUriTrimmed ||
               Boolean(nwcUriError) ||
@@ -776,12 +779,13 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             }
             aria-label="Connect to NWC wallet"
           >
-            Connect
+            {nwcCheckStatus === 'checking' ? 'Connecting…' : 'Connect'}
           </button>
           <button
             type="button"
             className="action-btn"
             onClick={handleCheckNwc}
+            aria-busy={nwcCheckStatus === 'checking'}
             disabled={
               !nwcUriTrimmed ||
               Boolean(nwcUriError) ||
@@ -790,7 +794,7 @@ export function SettingsView({ theme, setTheme, brandPreset, setBrandPreset }: S
             }
             aria-label="Check wallet balance"
           >
-            Check Balance
+            {nwcCheckStatus === 'checking' ? 'Checking…' : 'Check Balance'}
           </button>
           <button
             type="button"
