@@ -134,6 +134,7 @@ fi
 pnpm concurrently -k -p "[{name} {time}]" -n api,social \
   "pnpm --filter api dev | tee -a $API_LOG" \
   "VITE_API_BASE_URL=$API_BASE_URL \
+   VITE_API_PROXY_TARGET=$API_BASE_URL \
    VITE_NOSTRSTACK_HOST=localhost:$PORT \
    pnpm --filter social exec vite --host --port $DEV_SERVER_PORT | tee -a $SOCIAL_LOG"
 
