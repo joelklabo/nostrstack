@@ -76,6 +76,7 @@ function RowComponent<T>({
 
   return (
     <div
+      className="virtualized-row"
       style={{ ...style, paddingBottom: 'var(--ns-space-4, 16px)' }}
       data-virtualized-item={itemKey}
       role={itemRole}
