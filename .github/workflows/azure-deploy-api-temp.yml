@@ -48,6 +48,8 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Build and push image
         id: image
         uses: ./.github/actions/build-push-ghcr

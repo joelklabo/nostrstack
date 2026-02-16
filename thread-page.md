@@ -1,0 +1,24 @@
+- generic [ref=e371]:
+  - banner [ref=e372]:
+    - generic [ref=e373]:
+      - generic [ref=e374]: Note
+      - generic [ref=e375]: Rendered by NostrStack
+    - link "Back to App" [ref=e377] [cursor=pointer]:
+      - /url: /
+  - generic [ref=e378]:
+    - generic [ref=e379]:
+      - generic [ref=e380]:
+        - generic [ref=e381]: Target
+        - generic [ref=e382]:
+          - text: dcb5050177c4f873c31c58b4152a2bb503987f073c583e51e3fd417e7fa29c3a
+          - button "Copy" [ref=e384] [cursor=pointer]:
+            - generic: Copied
+            - img [ref=e386]
+            - generic [ref=e389]: Copy
+      - generic [ref=e390]:
+        - generic [ref=e391]: Relays
+        - generic [ref=e392]: "3"
+      - generic [ref=e393]:
+        - generic [ref=e394]: Status
+        - generic [ref=e395]: LOADING
+    - status [ref=e396]: Fetching event data...
