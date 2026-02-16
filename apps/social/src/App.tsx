@@ -18,6 +18,7 @@ import { SearchScreen } from './screens/SearchScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
+import { relayMonitor } from './nostr/relayHealth';
 import { resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
@@ -537,6 +538,7 @@ export default function App() {
       apiBaseConfig={apiBaseConfig}
       baseUrl={apiBase}
       relays={relays.length ? relays : undefined}
+      onRelayFailure={relayMonitor.reportFailure.bind(relayMonitor)}
       enableRegtestPay={enableRegtestPay}
       lnAddress={lnurlAddress}
     >
