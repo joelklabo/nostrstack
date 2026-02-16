@@ -8,7 +8,7 @@ DEV_ORIGIN?=https://localhost:3001
 DEV_DB?=file:./dev.db
 DEV_LNBITS_URL?=http://localhost:15001
 
-.PHONY: deps deps-prod build lint test typecheck check dev dev-api dev-gallery dev-demo e2e deploy-staging deploy-prod
+.PHONY: deps deps-prod build lint test typecheck check dev dev-api dev-social dev-gallery dev-demo e2e deploy-staging deploy-prod
 
 deps:
 	$(PNPM) install
@@ -33,11 +33,15 @@ check: lint test typecheck
 dev-api:
 	$(PNPM) --filter api dev
 
+dev-social:
+	$(PNPM) --filter social dev -- --host --port 4173
+
 dev-gallery:
-	$(PNPM) --filter gallery dev -- --host --port 4173
+	@echo "dev-gallery is deprecated; use dev-social"
+	$(MAKE) dev-social
 
 dev:
-	@echo "Starting API + gallery with HTTPS via Vite and logging to .logs/dev"
+	@echo "Starting API + social with HTTPS via Vite and logging to .logs/dev"
 	USE_HTTPS=true \
 	HTTPS_CERT=$(DEV_CERT) \
 	HTTPS_KEY=$(DEV_KEY) \

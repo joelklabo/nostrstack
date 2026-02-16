@@ -26,13 +26,19 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
   pnpm dev
   ```
 
-  This starts both the API (`http://localhost:3001`) and the Gallery (`http://localhost:4173`).
+  This starts both the API (`https://localhost:3001`) and the Social app (`https://localhost:4173`).
 
 - **Run Tests**:
 
   - Unit tests: `pnpm test`
   - Read-only cache-safe tests: `pnpm test:ci` (sets `VITEST_CACHE_DIR` to a writable temp directory)
-  - End-to-End tests: `pnpm --filter gallery exec playwright test`
+  - End-to-End tests: `pnpm --filter social exec playwright test`
+
+- **Command Conventions**:
+
+  - App-level: `dev:api`, `dev:social`, `dev:docs`
+  - CI-safe: `test:ci`
+  - Local one-command checks: `pnpm check`
 
 - **Linting & Formatting**:
 
@@ -45,18 +51,19 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
 
   ```bash
   # Run Storybook dev server
-  pnpm --filter gallery storybook
+  pnpm --filter social storybook
 
   # Build Storybook static site
-  pnpm --filter gallery build-storybook
+  pnpm --filter social build-storybook
   ```
 
   Storybook provides an isolated environment for developing and testing UI components.
 
 ## Project Structure
 
-- `apps/gallery`: The main social network frontend (React/Vite).
 - `apps/api`: The backend API (Fastify/Node.js).
+- `apps/social`: The main social network frontend (React/Vite).
+- `apps/docs`: Internal docs website and references.
 - `packages/react`: Reusable React components (`PostEditor`, `ZapButton`, `Auth`).
 - `packages/widgets`: Core embedding logic and script-tag widgets.
 - `packages/sdk`: The TypeScript SDK for interacting with the API.
@@ -73,7 +80,7 @@ Thank you for your interest in contributing to NostrStack! We welcome contributi
 
 We follow **WCAG 2.1 Level AA** standards for all user interfaces. When submitting PRs that affect UI:
 
-1. **Run accessibility tests**: `pnpm --filter gallery exec playwright test accessibility.spec.ts`
+1. **Run accessibility tests**: `pnpm --filter social exec playwright test accessibility.spec.ts`
 2. **Test with keyboard only**: Navigate your changes using Tab, Enter, and Escape
 3. **Check color contrast**: Use browser DevTools or [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
 4. **Add ARIA attributes**: Labels, roles, live regions, states (see `docs/accessibility.md`)
@@ -82,7 +89,7 @@ We follow **WCAG 2.1 Level AA** standards for all user interfaces. When submitti
 For detailed guidelines, patterns, and checklists, see:
 
 - **[docs/accessibility.md](docs/accessibility.md)** - Complete accessibility documentation
-- **[apps/gallery/tests/README.md](apps/gallery/tests/README.md)** - Testing guide
+- **[apps/social/tests/README.md](apps/social/tests/README.md)** - Testing guide
 
 ## License
 

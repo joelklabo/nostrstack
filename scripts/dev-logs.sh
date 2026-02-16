@@ -9,15 +9,15 @@ unset NO_COLOR
 
 mkdir -p "$LOG_DIR"
 API_LOG="$LOG_DIR/api.log"
-GALLERY_LOG="$LOG_DIR/social.log"
+SOCIAL_LOG="$LOG_DIR/social.log"
 : >"$API_LOG"
-: >"$GALLERY_LOG"
+: >"$SOCIAL_LOG"
 
 echo "🪵 writing logs to $LOG_DIR (api.log, social.log)"
-echo "💡 view live: tail -f $API_LOG $GALLERY_LOG"
+echo "💡 view live: tail -f $API_LOG $SOCIAL_LOG"
 if [[ "${LOG_TAIL:-1}" != "0" ]]; then
   echo "👀 auto-following logs (set LOG_TAIL=0 to disable)"
-  tail -F "$API_LOG" "$GALLERY_LOG" &
+  tail -F "$API_LOG" "$SOCIAL_LOG" &
   TAIL_PID=$!
   trap 'kill $TAIL_PID >/dev/null 2>&1 || true' EXIT
 fi
@@ -118,6 +118,6 @@ fi
 
 pnpm concurrently -k -p "[{name} {time}]" -n api,social \
   "pnpm --filter api dev | tee -a $API_LOG" \
-  "pnpm --filter social dev -- --host --port $DEV_SERVER_PORT | tee -a $GALLERY_LOG"
+  "pnpm --filter social dev -- --host --port $DEV_SERVER_PORT | tee -a $SOCIAL_LOG"
 
 echo "🧭 Reminder: verify UI changes with Chrome DevTools MCP (check console & network) and keep the tails above running while you test."

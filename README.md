@@ -5,7 +5,8 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 ## Packages
 
 - `apps/api` – Fastify API server (TypeScript, Prisma, OpenNode provider stub)
-- `apps/gallery` – Demo app to exercise SDK/embed (Vite + React skeleton)
+- `apps/social` – Main social app (Vite + React app for user flows)
+- `apps/docs` – Documentation app
 - `packages/sdk` – Typed client for the API
 - `packages/embed` – Browser bundle and widgets
 - `packages/config` – Shared lint/tsconfig
@@ -21,7 +22,7 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 pnpm install
 docker compose up -d postgres
 cp apps/api/.env.example .env
-pnpm dev   # runs the API against Postgres on :5432
+pnpm dev   # runs API + social app with shared local logs
 ```
 
 Database migrations (Postgres):
@@ -72,7 +73,7 @@ Find friend + tip flow:
 - Quick regtest start:
 
   ```sh
-  pnpm demo:regtest   # colima+docker required; API :3001, gallery :4173
+  pnpm demo:regtest   # colima+docker required; API :3001, social :4173
   ```
 
 ### Network switching (dev)
