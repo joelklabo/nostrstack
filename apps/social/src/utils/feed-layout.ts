@@ -11,9 +11,19 @@ const MIN_ROW_HEIGHT = 260;
 const MAX_POST_ROW_HEIGHT = 980;
 const BREAK_COUNT_GROWTH_BONUS = 10;
 
-const URL_MATCHER = /https?:\/\/\S+/gi;
-const MEDIA_URL_PATTERN = /\.(?:jpe?g|png|gif|webp|mp4|webm|mov|mkv)(?:[?#].*)?$/i;
 const PAYWALL_TAG = 'paywall';
+const URL_PREFIX = /^https?:\/\//i;
+const MEDIA_URL_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.mp4',
+  '.webm',
+  '.mov',
+  '.mkv'
+];
 
 const normalizeContent = (content: string | undefined): string => (content ?? '').trim();
 const estimateLinesFromBreaks = (content: string): number => {
@@ -42,9 +52,14 @@ export const estimatePostRowHeight = (post: Event | undefined): number => {
   );
   const breakLineBuffer = Math.min(BREAK_COUNT_GROWTH_BONUS, textLines);
 
-  const urls = content.match(URL_MATCHER) ?? [];
+  const urls = content.split(/\s+/).filter((token) => URL_PREFIX.test(token));
   const hasLink = urls.length > 0;
-  const hasMediaUrl = content ? MEDIA_URL_PATTERN.test(content) : false;
+  const hasMediaUrl = content
+    ? content
+        .toLowerCase()
+        .split(/\s+/)
+        .some((token) => MEDIA_URL_EXTENSIONS.some((extension) => token.includes(extension)))
+    : false;
   const hasPaywall = post.tags?.some((tag) => tag[0] === PAYWALL_TAG) ?? false;
   const zapAmountSection = content.includes('zap') || content.includes('lnurl');
 
