@@ -8,7 +8,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useIdentityResolver } from '../hooks/useIdentityResolver';
 import { useRelays } from '../hooks/useRelays';
 import { useSimplePool } from '../hooks/useSimplePool';
-import { fetchNostrEventFromApi, SEARCH_RELAYS, searchNotes } from '../nostr/api';
+import { fetchNostrEventFromApi, getSearchRelays, searchNotes } from '../nostr/api';
 import { type ProfileMeta, safeExternalUrl } from '../nostr/eventRenderers';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
@@ -65,8 +65,7 @@ export function SearchScreen() {
       setHasMore(false);
       setLastSearchQuery(q);
       try {
-        // Merge user relays with dedicated search relays
-        const searchRelays = [...new Set([...relayList, ...SEARCH_RELAYS])];
+        const searchRelays = getSearchRelays(relayList);
         const results = await searchNotes(pool, searchRelays, q, NOTES_PAGE_SIZE);
         setNotes(results);
         setHasMore(results.length >= NOTES_PAGE_SIZE);
@@ -88,7 +87,7 @@ export function SearchScreen() {
 
     setIsLoadingMore(true);
     try {
-      const searchRelays = [...new Set([...relayList, ...SEARCH_RELAYS])];
+      const searchRelays = getSearchRelays(relayList);
       // Get the oldest note's timestamp for pagination
       const oldestNote = notes.reduce((oldest, note) =>
         note.created_at < oldest.created_at ? note : oldest

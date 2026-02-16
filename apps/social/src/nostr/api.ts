@@ -42,7 +42,7 @@ export type ApiNostrEventResponse = {
   replyPage?: ApiReplyPage;
 };
 
-export const SEARCH_RELAYS = ['wss://relay.nostr.band', 'wss://search.nos.lol'];
+export const SEARCH_RELAYS = ['wss://relay.nostr.band', 'wss://relay.damus.io'];
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
 function normalizeRelayList(relays: string[]): string[] {
@@ -69,6 +69,12 @@ export function getDefaultRelays(raw?: string | null): string[] {
   const filtered = normalized.filter((url) => relayMonitor.isHealthy(url));
 
   return filtered.length ? filtered : normalized;
+}
+
+export function getSearchRelays(rawRelays: string[] = []): string[] {
+  const merged = normalizeRelayList([...rawRelays, ...SEARCH_RELAYS, ...DEFAULT_RELAYS]);
+  const healthy = merged.filter((relay) => relayMonitor.isHealthy(relay));
+  return healthy.length ? healthy : merged;
 }
 
 export function markRelayFailure(relay: string) {
