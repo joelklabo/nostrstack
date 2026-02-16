@@ -175,10 +175,14 @@ function AppShell() {
       setCurrentView('search');
       return;
     }
-    if (currentView === 'search') {
+    if (profileRoutePubkey) {
+      setCurrentView('profile');
+      return;
+    }
+    if (currentView !== 'feed') {
       setCurrentView('feed');
     }
-  }, [isSettingsRoute, isSearchRoute, currentView]);
+  }, [isSettingsRoute, isSearchRoute, currentView, profileRoutePubkey]);
 
   useEffect(() => {
     if (mobileMenuOpen) {

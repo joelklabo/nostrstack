@@ -78,4 +78,16 @@ test.describe('App Interactions', () => {
     await waitForFeedSurface(page);
     await expect(page.getByRole('button', { name: 'Feed' })).toHaveClass(/active/);
   });
+
+  test('view state resets when leaving non-home routes', async ({ page }) => {
+    await page.goto('/search');
+    await expect(page.getByRole('button', { name: 'Find friend' })).toHaveClass(/active/);
+
+    await page.goto('/settings');
+    await expect(page.getByRole('button', { name: 'Settings' })).toHaveClass(/active/);
+
+    await page.goto('/');
+    await waitForFeedSurface(page);
+    await expect(page.getByRole('button', { name: 'Feed' })).toHaveClass(/active/);
+  });
 });
