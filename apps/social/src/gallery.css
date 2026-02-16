@@ -3299,7 +3299,7 @@ button:disabled {
 .social-layout.is-immersive .hamburger-btn {
   transform: translateY(-100%);
   opacity: 0;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .social-layout.is-immersive .feed-header {
