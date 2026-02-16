@@ -2,13 +2,13 @@ name: Deploy Social to Azure
 
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - 'apps/social/**'
-      - 'packages/**'
-      - '.github/workflows/azure-deploy-social.yml'
 
 env:
   REGISTRY: ghcr.io
@@ -21,6 +21,7 @@ env:
 
 jobs:
   deploy:
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
