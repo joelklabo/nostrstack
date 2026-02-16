@@ -88,6 +88,7 @@ export const Sidebar = memo(function Sidebar({
   const withdrawEnabled =
     String(import.meta.env.VITE_ENABLE_LNURL_WITHDRAW ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
+  const authActionLabel = pubkey ? 'Log out' : 'Exit guest mode';
   const withdrawAvailable =
     withdrawEnabled && apiBaseConfig.isConfigured && (wallet?.balance ?? 0) >= 1;
   const withdrawUnavailableReason = !withdrawEnabled
@@ -396,7 +397,7 @@ export const Sidebar = memo(function Sidebar({
             (onLogout ?? logout)();
           }}
         >
-          Log out
+          {authActionLabel}
         </button>
       </div>
 
