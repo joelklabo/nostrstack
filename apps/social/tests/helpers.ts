@@ -256,18 +256,33 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   const alreadyIn = await liveFeed.isVisible().catch(() => false);
   if (alreadyIn) return;
 
-  // Wait for login screen elements to be available
-  const loginView = page.locator('.login-title').first();
-  const appHeader = page.locator('.sidebar-title').first();
-  const alreadyLoggedIn = appHeader.isVisible({ timeout: 15000 }).catch(() => false);
-  const onLoginScreen = loginView.isVisible({ timeout: 15000 }).catch(() => false);
-  const ready = await Promise.race([alreadyLoggedIn, onLoginScreen]);
-  if (!(await ready)) {
+  const loginFlowReady = page
+    .getByRole('button', { name: /(Enter nsec manually|Enter private key manually)/i })
+    .first();
+  const appShellReady = page
+    .locator('.sidebar-nav, .sidebar-title, .hamburger-btn, nav, .feed-stream')
+    .first();
+
+  const readyState = await Promise.race([
+    loginFlowReady
+      .waitFor({ state: 'visible', timeout: 15000 })
+      .then(() => 'login' as const)
+      .catch(() => 'timeout' as const),
+    appShellReady
+      .waitFor({ state: 'visible', timeout: 15000 })
+      .then(() => 'app-shell' as const)
+      .catch(() => 'timeout' as const)
+  ]);
+
+  if (readyState === 'app-shell') return;
+  if (readyState === 'timeout') {
     throw new Error('Unable to detect login screen or logged-in shell after navigation');
   }
 
   // Sometimes the button is not immediately clickable if content is shifting
-  const manual = page.getByText('Enter nsec manually');
+  const manual = page.getByRole('button', {
+    name: /(Enter nsec manually|Enter private key manually)/i
+  });
   // Use .first() in case of duplicates (e.g. mobile vs desktop layouts)
   await manual.first().waitFor({ state: 'visible', timeout: 10000 });
   await manual.first().click();
