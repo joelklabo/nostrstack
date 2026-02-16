@@ -606,9 +606,16 @@ export default function App() {
   });
   const [resolvedApiBaseConfig, setResolvedApiBaseConfig] =
     useState<ApiBaseResolution>(apiBaseConfig);
+  const [isResolvingLocalApiBase, setIsResolvingLocalApiBase] = useState(() =>
+    isLocalApiBase(apiBaseConfig)
+  );
 
   useEffect(() => {
+    if (!isResolvingLocalApiBase) {
+      return;
+    }
     if (!isLocalApiBase(resolvedApiBaseConfig)) {
+      setIsResolvingLocalApiBase(false);
       return;
     }
     const controller = new AbortController();
@@ -634,6 +641,9 @@ export default function App() {
         }
       } finally {
         clearTimeout(timeout);
+        if (isMounted) {
+          setIsResolvingLocalApiBase(false);
+        }
       }
     };
     void probe();
@@ -644,6 +654,9 @@ export default function App() {
     };
   }, [resolvedApiBaseConfig]);
   const apiBase = resolvedApiBaseConfig.baseUrl;
+  if (isResolvingLocalApiBase) {
+    return <LoadingFallback message="Checking API availability..." includeRetry />;
+  }
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
