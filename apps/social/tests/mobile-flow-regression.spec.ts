@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { finalizeEvent, generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
+import { finalizeEvent, generateSecretKey } from 'nostr-tools';
 
 import { clickAndExpectPaymentModal, closePaymentModal, loginWithNsec, TEST_NSEC } from './helpers';
 import { mockLnurlPay } from './helpers/lnurl-mocks';
@@ -8,32 +8,42 @@ import { installMockRelay } from './helpers/mock-websocket.ts';
 test.describe('mobile regression interaction matrix', () => {
   test('sidebar and profile navigation are tappable on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
 
     await loginWithNsec(page, TEST_NSEC);
 
-    await expect(page.locator('.hamburger-btn')).toBeVisible();
-    await page.locator('.hamburger-btn').click();
+    const hamburger = page.locator('.hamburger-btn');
+    await expect(hamburger).toBeVisible();
+    await hamburger.click();
 
     const nav = page.locator('.sidebar-nav');
     await expect(nav).toHaveClass(/is-open/);
+    await expect(nav).toBeVisible();
+    await expect(page.locator('.sidebar-overlay')).toHaveClass(/is-visible/);
 
     await nav.getByRole('button', { name: 'Profile' }).click();
     await expect(page.locator('.profile-view')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.sidebar-overlay')).not.toHaveClass(/is-visible/);
+    await expect(nav).not.toHaveClass(/is-open/);
 
-    await page.locator('.hamburger-btn').click();
+    await hamburger.click();
     await nav.getByRole('button', { name: 'Settings' }).click();
-    await expect(page.locator('.profile-view')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'System Settings' })).toBeVisible({
+      timeout: 5000
+    });
+    await expect(page.locator('.sidebar-overlay')).not.toHaveClass(/is-visible/);
+    await expect(nav).not.toHaveClass(/is-open/);
 
-    await page.locator('.hamburger-btn').click();
+    await hamburger.click();
     await nav.getByRole('button', { name: 'Feed' }).click();
     await expect(page.locator('.feed-stream')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.sidebar-overlay')).not.toHaveClass(/is-visible/);
+    await expect(nav).not.toHaveClass(/is-open/);
   });
 
   test('zap action opens payment modal on mobile and close path is reliable', async ({ page }) => {
     const secretKey = generateSecretKey();
-    const pubkey = getPublicKey(secretKey);
     const now = Math.floor(Date.now() / 1000);
-    const npub = nip19.npubEncode(pubkey);
 
     const profileEvent = finalizeEvent(
       {

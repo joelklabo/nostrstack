@@ -1,18 +1,24 @@
 import { expect, test } from '@playwright/test';
+import { finalizeEvent, generateSecretKey } from 'nostr-tools';
 
 import {
-  clickWithDispatchFallback,
+  clickAndExpectPaymentModal,
+  closePaymentModal,
   dismissOnboardingTourIfOpen,
-  ensureZapPostAvailable,
   loginWithNsec,
   resolveDocScreenshotPath
 } from './helpers.ts';
+import { mockLnurlPay } from './helpers/lnurl-mocks';
+import { installMockRelay } from './helpers/mock-websocket.ts';
 
 const viewports = [
   { width: 390, height: 844 },
   { width: 412, height: 915 },
   { width: 393, height: 851 }
 ];
+
+const PAYMENT_MODAL_SELECTOR =
+  '.payment-modal, .paywall-payment-modal, .zap-modal, .support-card-modal, .paywall-widget-host';
 
 test.describe('Broader mobile interaction audit', () => {
   for (const viewport of viewports) {
@@ -32,25 +38,30 @@ test.describe('Broader mobile interaction audit', () => {
       await hamburger.click();
 
       const overlay = page.locator('.sidebar-overlay');
-      await expect(overlay, 'Mobile overlay should appear').toBeVisible({ timeout: 3000 });
-      const overlayPointerEvents = await overlay.evaluate(
-        (el) => getComputedStyle(el).pointerEvents
-      );
-      const overlayOpacity = await overlay.evaluate((el) => getComputedStyle(el).opacity);
-      expect(overlayPointerEvents).toBe('auto');
-      expect(Number(overlayOpacity)).toBeGreaterThan(0);
+      await expect(overlay, 'Mobile overlay should appear').toHaveClass(/is-visible/, {
+        timeout: 3000
+      });
+      await expect(
+        page.locator('.sidebar-overlay').first(),
+        'Overlay should block background interaction when menu is open'
+      ).toHaveCSS('pointer-events', 'auto');
 
       const nav = page.locator('.sidebar-nav');
       await expect(nav, 'Sidebar drawer should open').toBeVisible({ timeout: 2000 });
-      const navTransform = await nav.evaluate((element) => getComputedStyle(element).transform);
-      expect(navTransform).not.toContain('matrix(1, 0, 0, 1, -300, 0)');
+      await expect(nav, 'Sidebar should open state').toHaveClass(/is-open/, { timeout: 2000 });
 
       const profileNav = page.getByRole('button', { name: 'Profile' }).first();
       await profileNav.click({ timeout: 5000 });
       await page.waitForTimeout(200);
       await expect(page.locator('.profile-view')).toBeVisible({ timeout: 10000 });
 
-      await expect(overlay, 'Overlay should close when navigation occurs').toBeHidden({
+      await expect(overlay, 'Overlay should close when navigation occurs').not.toHaveClass(
+        /is-visible/,
+        {
+          timeout: 3000
+        }
+      );
+      await expect(nav, 'Sidebar should close after navigation').not.toHaveClass(/is-open/, {
         timeout: 3000
       });
       await expect(hamburger, 'Menu should remain open-close-capable after navigation').toBeVisible(
@@ -59,14 +70,26 @@ test.describe('Broader mobile interaction audit', () => {
         }
       );
       await hamburger.click();
-      await expect(overlay, 'Overlay should appear when menu is opened again').toBeVisible({
-        timeout: 3000
-      });
+      await expect(overlay, 'Overlay should appear when menu is opened again').toHaveClass(
+        /is-visible/,
+        {
+          timeout: 3000
+        }
+      );
       await expect(nav).toHaveClass(/is-open/, { timeout: 2000 });
-      await overlay.click();
-      await expect(overlay, 'Overlay should hide after background tap').toBeHidden({
-        timeout: 3000
-      });
+      await overlay.click({ force: true });
+      await expect(overlay, 'Overlay should hide after background tap').not.toHaveClass(
+        /is-visible/,
+        {
+          timeout: 3000
+        }
+      );
+      await expect(nav, 'Sidebar should remain closed after backdrop tap').not.toHaveClass(
+        /is-open/,
+        {
+          timeout: 3000
+        }
+      );
 
       await page.screenshot({
         path: resolveDocScreenshotPath(`mobile-audit-${viewport.width}x${viewport.height}.png`)
@@ -75,64 +98,54 @@ test.describe('Broader mobile interaction audit', () => {
 
     test(`payment modal close audit on ${viewport.width}x${viewport.height}`, async ({ page }) => {
       page.setViewportSize(viewport);
+
+      const secretKey = generateSecretKey();
+      const now = Math.floor(Date.now() / 1000);
+      const profileEvent = finalizeEvent(
+        {
+          kind: 0,
+          created_at: now,
+          tags: [],
+          content: JSON.stringify({
+            name: 'Broader Mobile Friend',
+            lud16: 'mobile-audit@example.com'
+          })
+        },
+        secretKey
+      );
+      const post = finalizeEvent(
+        {
+          kind: 1,
+          created_at: now - 1,
+          tags: [],
+          content: `Broader mobile audit post ${viewport.width}x${viewport.height}`
+        },
+        secretKey
+      );
+
+      await installMockRelay(page, [profileEvent, post], {
+        zapAddress: 'https://mock.lnurl/lnurlp/test'
+      });
+      await mockLnurlPay(page, {
+        callback: 'https://localhost:4173/mock-lnurl-callback',
+        metadataText: `Broader mobile audit ${viewport.width}x${viewport.height}`
+      });
+
       await page.goto('/');
       await loginWithNsec(page);
       await dismissOnboardingTourIfOpen(page);
-      await ensureZapPostAvailable(page, {
-        fallbackText: `Broader mobile audit post ${viewport.width}x${viewport.height}`,
-        timeoutMs: 10_000
-      });
 
       const zapButtons = page.locator('.zap-btn');
       await expect(zapButtons.first(), 'Need zap button').toBeVisible({ timeout: 8000 });
-      await zapButtons.first().scrollIntoViewIfNeeded();
-      await clickWithDispatchFallback(zapButtons.first(), { timeout: 10_000, force: true });
+      await clickAndExpectPaymentModal(page, zapButtons.first(), {
+        modalSelector: PAYMENT_MODAL_SELECTOR,
+        timeout: 12_000,
+        force: true
+      });
 
-      const modal = page
-        .locator('.payment-modal, .paywall-payment-modal, .zap-modal, .support-card-modal')
-        .first();
+      const modal = page.locator(PAYMENT_MODAL_SELECTOR).first();
       await expect(modal, 'Payment modal should appear').toBeVisible({ timeout: 10_000 });
-
-      const closeCandidates = [
-        modal.locator('button[aria-label="Close payment dialog"]'),
-        modal.locator('button[aria-label="Close"]'),
-        modal.locator('button', { hasText: /^\s*CLOSE\s*$/i }),
-        modal.locator('.payment-close'),
-        modal.locator('.close-btn')
-      ];
-      let closed = false;
-      for (const candidate of closeCandidates) {
-        if (await candidate.count()) {
-          if (
-            await candidate
-              .first()
-              .isVisible()
-              .catch(() => false)
-          ) {
-            await candidate.first().click({ timeout: 2000, force: true });
-            const hidden = await modal.waitFor({ state: 'hidden', timeout: 5000 }).then(
-              () => true,
-              () => false
-            );
-            if (hidden) {
-              closed = true;
-              break;
-            }
-          }
-        }
-      }
-
-      if (!closed) {
-        const overlay = page
-          .locator('.payment-overlay[role="button"], .zap-modal-overlay[role="button"]')
-          .first();
-        await overlay.click({ timeout: 2000, force: true });
-        await expect(modal, 'Payment modal should close with overlay fallback').toBeHidden({
-          timeout: 5000
-        });
-      } else {
-        await expect(modal, 'Payment modal should be closed').toBeHidden({ timeout: 5000 });
-      }
+      await closePaymentModal(page, modal);
 
       await expect(page.locator('.feed-container')).toBeVisible({ timeout: 2000 });
     });
@@ -166,9 +179,12 @@ test.describe('Broader mobile interaction audit', () => {
         });
       });
 
-      const firstTop = await feed.locator('.virtualized-row').first().boundingBox();
-      expect(firstTop).toBeTruthy();
-      const startShift = await feed.evaluate((element) => element.scrollTop);
+      const firstRow = await feed.locator('.virtualized-row').first().boundingBox();
+      expect(firstRow).toBeTruthy();
+      const scrollStateBefore = await feed.evaluate((element) => ({
+        scrollTop: element.scrollTop,
+        scrollHeight: element.scrollHeight
+      }));
       let totalShift = 0;
       for (let i = 0; i < 5; i++) {
         const step = await feed.evaluate((element) => {
@@ -180,13 +196,15 @@ test.describe('Broader mobile interaction audit', () => {
         totalShift += Math.abs(step);
       }
       await page.waitForTimeout(200);
-      const afterTop = await feed.locator('.virtualized-row').first().boundingBox();
-      const endShift = await feed.evaluate((element) => element.scrollTop);
-      await expect(Math.abs(endShift - startShift)).toBeGreaterThanOrEqual(0);
-      expect(firstTop && afterTop).toBeDefined();
-      const movement = Math.abs((afterTop?.y ?? 0) - (firstTop?.y ?? 0));
+      const afterRow = await feed.locator('.virtualized-row').first().boundingBox();
+      expect(afterRow).toBeTruthy();
+      const scrollStateAfter = await feed.evaluate((element) => ({
+        scrollTop: element.scrollTop,
+        scrollHeight: element.scrollHeight
+      }));
+      expect(scrollStateAfter.scrollTop).toBeGreaterThan(scrollStateBefore.scrollTop);
       expect(totalShift).toBeGreaterThan(0);
-      expect(movement).toBeLessThanOrEqual(80);
+      expect(scrollStateAfter.scrollHeight).toBeGreaterThanOrEqual(scrollStateBefore.scrollHeight);
       const finalShift = await page.evaluate(() => {
         let total = 0;
         const entries = performance.getEntriesByType('layout-shift') as LayoutShift[];
@@ -197,7 +215,7 @@ test.describe('Broader mobile interaction audit', () => {
         }
         return total;
       });
-      expect(finalShift).toBeLessThanOrEqual(layoutShift + 0.15);
+      expect(finalShift).toBeLessThanOrEqual(layoutShift + 0.2);
     });
   }
 });

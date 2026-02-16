@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools';
 
-import { clickAndExpectPaymentModal, loginWithNsec, TEST_NSEC } from './helpers';
+import { clickAndExpectPaymentModal, closePaymentModal, loginWithNsec, TEST_NSEC } from './helpers';
 import { mockLnurlPay } from './helpers/lnurl-mocks';
 import { installMockRelay } from './helpers/mock-websocket.ts';
 
@@ -53,8 +53,7 @@ test.describe('mobile payment closure matrix', () => {
 
     const modal = page.locator('.payment-modal').first();
     await expect(modal).toBeVisible({ timeout: 8000 });
-    const closeButton = page.getByRole('button', { name: /CLOSE/i }).first();
-    await closeButton.click({ timeout: 5000 });
+    await closePaymentModal(page, modal);
 
     await expect(modal).toBeHidden({ timeout: 8000 });
     await expect(page.locator('.feed-stream')).toBeVisible({ timeout: 5000 });
