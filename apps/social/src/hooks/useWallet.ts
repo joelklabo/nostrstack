@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { resolveRuntimeWsUrl } from '../utils/api-base';
+import { resolveRuntimeApiBase, resolveRuntimeWsUrl } from '../utils/api-base';
+
+async function checkWalletEnabled(): Promise<boolean> {
+  const apiBase = resolveRuntimeApiBase(import.meta.env.VITE_API_BASE_URL);
+  if (!apiBase) return false;
+  try {
+    const url = `${apiBase}/debug/ws-wallet`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { enabled?: boolean };
+    return data.enabled ?? false;
+  } catch {
+    return false;
+  }
+}
 
 function safeClose(socket: WebSocket | null) {
   if (!socket) return;
@@ -47,89 +61,106 @@ export function useWallet(): WalletState {
   };
 
   useEffect(() => {
-    const wsUrl = resolveRuntimeWsUrl(import.meta.env.VITE_API_BASE_URL, '/ws/wallet');
-    if (!wsUrl) {
-      setIsConnecting(false);
-      setError('No wallet URL configured');
-      hasWalletSnapshot.current = false;
-      setWallet(null);
-      return;
-    }
-
-    const hadSnapshot = hasWalletSnapshot.current;
-    if (!hadSnapshot) {
-      hasWalletSnapshot.current = false;
-      setWallet(null);
-    }
-    setIsConnecting(!hadSnapshot);
-    setError(null);
-
-    let ws: WebSocket | null = null;
     let cancelled = false;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let reconnectScheduled = false;
-    const retryDelayMs = Math.min(500 * 2 ** Math.min(retryCount, 4), 15000);
 
-    const scheduleReconnect = (message: string) => {
-      if (cancelled || reconnectScheduled) return;
-      reconnectScheduled = true;
-      if (!hasWalletSnapshot.current) {
-        setError(`${message} Retrying...`);
+    async function initWallet() {
+      const wsUrl = resolveRuntimeWsUrl(import.meta.env.VITE_API_BASE_URL, '/ws/wallet');
+      if (!wsUrl) {
+        setIsConnecting(false);
+        setError('No wallet URL configured');
+        hasWalletSnapshot.current = false;
+        setWallet(null);
+        return;
+      }
+
+      const isEnabled = await checkWalletEnabled();
+      if (!isEnabled || cancelled) {
+        setIsConnecting(false);
+        hasWalletSnapshot.current = false;
+        setWallet(null);
+        return;
+      }
+
+      const hadSnapshot = hasWalletSnapshot.current;
+      if (!hadSnapshot) {
+        hasWalletSnapshot.current = false;
         setWallet(null);
       }
-      setIsConnecting(false);
+      setIsConnecting(!hadSnapshot);
+      setError(null);
 
-      reconnectTimer = globalThis.setTimeout(() => {
-        if (cancelled) return;
-        setRetryCount((count) => count + 1);
-      }, retryDelayMs);
-    };
+      let ws: WebSocket | null = null;
+      let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+      let reconnectScheduled = false;
+      const retryDelayMs = Math.min(500 * 2 ** Math.min(retryCount, 4), 15000);
 
-    const timer = globalThis.setTimeout(() => {
-      if (cancelled) return;
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        if (cancelled) return;
-        reconnectScheduled = false;
-        setIsConnecting(false);
-        setError(null);
-      };
-
-      ws.onerror = () => {
-        if (cancelled) return;
-        scheduleReconnect('Failed to connect to wallet');
-      };
-
-      ws.onclose = () => {
-        if (cancelled) return;
-        scheduleReconnect('Wallet connection closed');
-      };
-
-      ws.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.type === 'wallet') {
-            hasWalletSnapshot.current = true;
-            setWallet({
-              id: data.id,
-              name: data.name,
-              balance: data.balance
-            });
-          }
-        } catch (err) {
-          console.error('Wallet WS error', err);
+      const scheduleReconnect = (message: string) => {
+        if (cancelled || reconnectScheduled) return;
+        reconnectScheduled = true;
+        if (!hasWalletSnapshot.current) {
+          setError(`${message} Retrying...`);
+          setWallet(null);
         }
+        setIsConnecting(false);
+
+        reconnectTimer = globalThis.setTimeout(() => {
+          if (cancelled) return;
+          setRetryCount((count) => count + 1);
+        }, retryDelayMs);
       };
-    }, 0);
+
+      const timer = globalThis.setTimeout(() => {
+        if (cancelled) return;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          if (cancelled) return;
+          reconnectScheduled = false;
+          setIsConnecting(false);
+          setError(null);
+        };
+
+        ws.onerror = () => {
+          if (cancelled) return;
+          scheduleReconnect('Failed to connect to wallet');
+        };
+
+        ws.onclose = () => {
+          if (cancelled) return;
+          scheduleReconnect('Wallet connection closed');
+        };
+
+        ws.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data.type === 'wallet') {
+              hasWalletSnapshot.current = true;
+              setWallet({
+                id: data.id,
+                name: data.name,
+                balance: data.balance
+              });
+            }
+          } catch (err) {
+            console.error('Wallet WS error', err);
+          }
+        };
+      }, 0);
+
+      return () => {
+        globalThis.clearTimeout(timer);
+        if (reconnectTimer) {
+          globalThis.clearTimeout(reconnectTimer);
+        }
+        safeClose(ws);
+      };
+    }
+
+    const cleanup = initWallet();
 
     return () => {
       cancelled = true;
-      globalThis.clearTimeout(timer);
-      if (reconnectTimer) {
-        globalThis.clearTimeout(reconnectTimer);
-      }
-      safeClose(ws);
+      cleanup?.then((innerCleanup) => innerCleanup?.());
     };
   }, [retryCount]);
 

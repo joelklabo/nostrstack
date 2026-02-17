@@ -109,14 +109,20 @@ export async function registerWalletWs(app: FastifyInstance) {
   const baseUrl = (process.env.LN_BITS_URL || '').replace(/\/$/, '');
   const apiKey = process.env.LN_BITS_API_KEY || '';
 
-  if (!baseUrl || !apiKey) {
+  const isWalletEnabled = !!baseUrl && !!apiKey;
+
+  if (!isWalletEnabled) {
     app.log.warn('LN_BITS_URL/LN_BITS_API_KEY missing; /ws/wallet disabled');
-    return;
   }
 
   server.on('upgrade', (req, socket, head) => {
     const path = (req.url ?? '').split('?')[0] ?? '';
     if (!path.endsWith('/ws/wallet')) return;
+    if (!isWalletEnabled) {
+      socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
+      socket.destroy();
+      return;
+    }
     app.log.info('wallet ws upgrade');
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit('connection', ws, req);
@@ -197,6 +203,6 @@ export async function registerWalletWs(app: FastifyInstance) {
         }
       }
     },
-    async () => ({ enabled: true, url: '/ws/wallet' })
+    async () => ({ enabled: isWalletEnabled, url: isWalletEnabled ? '/ws/wallet' : '' })
   );
 }
