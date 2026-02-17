@@ -4,6 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import App from './App';
 
+vi.mock('./screens/EventDetailScreen', () => ({
+  EventDetailScreen: () => {
+    throw new Error('Critical module load failed');
+  }
+}));
+
 describe('App', () => {
   it('renders login screen by default', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(
@@ -18,5 +24,26 @@ describe('App', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Sign in to NostrStack' })).toBeTruthy();
     });
+  });
+
+  it('renders a recovery UI when event detail module fails to load', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response('{}', { status: 200 }) as unknown as Response
+    );
+    window.history.pushState({}, '', '/nostr/abc123');
+
+    render(
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Unable to load event screen. Please try reloading.')).toBeTruthy();
+    });
+
+    expect(screen.getByRole('button', { name: 'Reload page' })).toBeTruthy();
+
+    window.history.replaceState({}, '', '/');
   });
 });

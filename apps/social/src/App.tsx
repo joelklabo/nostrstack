@@ -148,6 +148,23 @@ function LoadingFallback({
   );
 }
 
+function RouteLoadFallback({ message, onRetry }: { message?: string; onRetry?: () => void }) {
+  return (
+    <div style={{ padding: '1.5rem', color: 'var(--ns-color-text)' }}>
+      <Alert tone="danger" style={{ marginBottom: '1rem' }} role="alert">
+        {message ?? 'Unable to load this route. Please try reloading.'}
+      </Alert>
+      <button
+        type="button"
+        className="ns-btn ns-btn--primary"
+        onClick={onRetry ?? (() => window.location.reload())}
+      >
+        Reload page
+      </button>
+    </div>
+  );
+}
+
 function AppShell() {
   const { pubkey, isLoading, logout: authLogout } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
@@ -388,9 +405,15 @@ function AppShell() {
 
   if (nostrRouteId) {
     return (
-      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
-        <EventDetailScreen rawId={nostrRouteId} />
-      </Suspense>
+      <ErrorBoundary
+        fallback={
+          <RouteLoadFallback message="Unable to load event screen. Please try reloading." />
+        }
+      >
+        <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+          <EventDetailScreen rawId={nostrRouteId} />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -405,9 +428,15 @@ function AppShell() {
   if (!pubkey && !isGuest) {
     return (
       <main className="feed-container" id="main-content" role="main">
-        <Suspense fallback={<LoadingFallback message="Loading login screen..." />}>
-          <LoginScreen />
-        </Suspense>
+        <ErrorBoundary
+          fallback={
+            <RouteLoadFallback message="Unable to load the login screen. Please try reloading." />
+          }
+        >
+          <Suspense fallback={<LoadingFallback message="Loading login screen..." />}>
+            <LoginScreen />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     );
   }
