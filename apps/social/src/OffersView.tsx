@@ -26,6 +26,8 @@ const numberFormat = new Intl.NumberFormat('en-US');
 const OFFER_CREATE_TIMEOUT_MS = 15_000;
 const OFFER_CREATE_TIMEOUT_MESSAGE = 'Offer creation timed out. Please try again.';
 const MAX_DESCRIPTION_CHARS = 140;
+const MAX_LABEL_CHARS = 64;
+const MAX_ISSUER_CHARS = 64;
 
 function formatMsat(value?: number) {
   if (!value) return 'Any amount';
@@ -116,6 +118,16 @@ export function OffersView() {
     }
     if (description.trim().length > MAX_DESCRIPTION_CHARS) {
       setCreateError(`Description must be ${MAX_DESCRIPTION_CHARS} characters or fewer.`);
+      setCreateStatus('idle');
+      return;
+    }
+    if (label.trim().length > MAX_LABEL_CHARS) {
+      setCreateError(`Label must be ${MAX_LABEL_CHARS} characters or fewer.`);
+      setCreateStatus('idle');
+      return;
+    }
+    if (issuer.trim().length > MAX_ISSUER_CHARS) {
+      setCreateError(`Issuer must be ${MAX_ISSUER_CHARS} characters or fewer.`);
       setCreateStatus('idle');
       return;
     }
@@ -315,6 +327,17 @@ export function OffersView() {
               onChange={(e) => setLabel(e.target.value)}
               placeholder="subscription-tier-1"
             />
+            <span
+              className={`offer-field-meta ${
+                label.length > MAX_LABEL_CHARS
+                  ? 'error'
+                  : label.length > MAX_LABEL_CHARS - 10
+                    ? 'warning'
+                    : ''
+              }`}
+            >
+              {label.length}/{MAX_LABEL_CHARS}
+            </span>
           </label>
           <label className="offer-field">
             <span>Issuer</span>
@@ -325,6 +348,17 @@ export function OffersView() {
               onChange={(e) => setIssuer(e.target.value)}
               placeholder="nostrstack.io"
             />
+            <span
+              className={`offer-field-meta ${
+                issuer.length > MAX_ISSUER_CHARS
+                  ? 'error'
+                  : issuer.length > MAX_ISSUER_CHARS - 10
+                    ? 'warning'
+                    : ''
+              }`}
+            >
+              {issuer.length}/{MAX_ISSUER_CHARS}
+            </span>
           </label>
           <label className="offer-field">
             <span>Expires in (seconds)</span>
