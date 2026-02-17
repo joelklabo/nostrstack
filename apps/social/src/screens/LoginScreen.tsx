@@ -373,7 +373,21 @@ export function LoginScreen() {
         )}
 
         {mode === 'nsec' && (
-          <div className="nsec-form" style={{ display: 'grid', gap: '1.25rem' }}>
+          <form
+            className="nsec-form"
+            style={{ display: 'grid', gap: '1.25rem' }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!nsec.trim()) {
+                setNsecError('Please enter a private key');
+                return;
+              }
+              setNsecError(null);
+              loginWithNsec(nsec).catch((err) => {
+                setNsecError(err instanceof Error ? err.message : 'Invalid private key');
+              });
+            }}
+          >
             <Alert tone="warning">
               <strong>Security Warning:</strong> Entering your private key directly is risky. Use a
               browser extension if possible.
@@ -396,20 +410,8 @@ export function LoginScreen() {
             </div>
             <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
               <button
-                type="button"
+                type="submit"
                 className="auth-btn auth-btn--primary"
-                onClick={async () => {
-                  if (!nsec.trim()) {
-                    setNsecError('Please enter a private key');
-                    return;
-                  }
-                  setNsecError(null);
-                  try {
-                    await loginWithNsec(nsec);
-                  } catch (err) {
-                    setNsecError(err instanceof Error ? err.message : 'Invalid private key');
-                  }
-                }}
                 aria-label="Sign in with private key"
               >
                 Sign in
@@ -482,7 +484,7 @@ export function LoginScreen() {
                 </div>
               </div>
             )}
-          </div>
+          </form>
         )}
       </div>
 
