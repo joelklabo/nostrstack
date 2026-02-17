@@ -131,7 +131,8 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   }
 
   if (runtimeApiBase.isRelative && runtimeApiBase.raw === '/api') {
-    return `${websocketOrigin}${normalizedPath}`;
+    const apiPath = isLocalRuntime() ? '' : runtimeApiBase.raw;
+    return `${websocketOrigin}${apiPath}${normalizedPath}`;
   }
 
   if (raw.startsWith('/')) {
