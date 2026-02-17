@@ -40,7 +40,7 @@ export type WalletState = {
   retry: () => void;
 };
 
-export function useWallet(): WalletState {
+export function useWallet(enabled: boolean = true): WalletState {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +61,14 @@ export function useWallet(): WalletState {
   };
 
   useEffect(() => {
+    if (!enabled) {
+      setIsConnecting(false);
+      setWallet(null);
+      setError(null);
+      hasWalletSnapshot.current = false;
+      return;
+    }
+
     let cancelled = false;
 
     async function initWallet() {
@@ -162,7 +170,7 @@ export function useWallet(): WalletState {
       cancelled = true;
       cleanup?.then((innerCleanup) => innerCleanup?.());
     };
-  }, [retryCount]);
+  }, [enabled, retryCount]);
 
   return { wallet, isConnecting, error, retry };
 }

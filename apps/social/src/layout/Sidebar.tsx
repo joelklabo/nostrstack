@@ -39,7 +39,7 @@ export const Sidebar = memo(function Sidebar({
     isConnecting: walletConnecting,
     error: walletError,
     retry: walletRetry
-  } = useWallet();
+  } = useWallet(!isGuest);
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
