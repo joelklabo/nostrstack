@@ -223,7 +223,7 @@ function AppShell() {
   const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
-  const isGuestProfileRoute = pathname === '/profile';
+  const isGuestProfileRoute = pathname === '/profile' || pathname === '/profile/';
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
@@ -243,7 +243,7 @@ function AppShell() {
     if (isFindFriendRoute) return true;
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
-    if (pathname === '/profile') return true;
+    if (isGuestProfileRoute) return true;
     if (nostrRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
@@ -256,6 +256,7 @@ function AppShell() {
     isFindFriendRoute,
     isSettingsRoute,
     isOffersRoute,
+    isGuestProfileRoute,
     nostrRouteId,
     profileRoutePubkey
   ]);
