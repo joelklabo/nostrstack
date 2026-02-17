@@ -6,16 +6,16 @@ describe('resolveRuntimeWsUrl', () => {
   const getWebSocketOrigin = () =>
     window.location.origin.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
 
-  it('normalizes legacy localhost:3002 API base to localhost:3001', () => {
+  it('preserves localhost:3002 API base', () => {
     const apiBase = resolveRuntimeApiBase('http://localhost:3002');
-    expect(apiBase).toBe('http://localhost:3001');
+    expect(apiBase).toBe('http://localhost:3002');
   });
 
-  it('normalizes legacy localhost:3002 in gallery API base resolution', () => {
+  it('preserves localhost:3002 in gallery API base resolution', () => {
     const apiBase = resolveGalleryApiBase({ apiBase: 'http://localhost:3002' });
-    expect(apiBase.baseUrl).toBe('http://localhost:3001');
+    expect(apiBase.baseUrl).toBe('http://localhost:3002');
     expect(apiBase.isConfigured).toBe(true);
-    expect(apiBase.raw).toBe('http://localhost:3001');
+    expect(apiBase.raw).toBe('http://localhost:3002');
   });
 
   it('uses secure websocket scheme for absolute HTTPS base URLs', () => {

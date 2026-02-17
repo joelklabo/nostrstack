@@ -11,22 +11,12 @@ export type GalleryApiBaseInput = {
 };
 
 const DEFAULT_LOCAL_HOST = 'localhost';
-const LOCAL_API_PORT = 3001;
 const LOCAL_HOSTNAMES = ['localhost', '127.0.0.1', '[::1]', '::1'];
 
 function normalizeLegacyLocalApiBase(raw: string): string {
   const trimmed = normalizeInput(raw);
   if (!trimmed) return raw;
   if (!/^https?:\/\/localhost:/.test(trimmed)) {
-    return trimmed;
-  }
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.hostname === 'localhost' && parsed.port === '3002') {
-      parsed.port = String(LOCAL_API_PORT);
-      return parsed.toString().replace(/\/$/, '');
-    }
-  } catch {
     return trimmed;
   }
   return trimmed;

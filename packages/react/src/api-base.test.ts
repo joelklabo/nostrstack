@@ -29,28 +29,28 @@ describe('resolveApiBase', () => {
     restoreLocation();
   });
 
-  it('normalizes legacy localhost:3002 API base and keeps local HTTP on secure pages', () => {
+  it('preserves localhost:3002 API base and keeps local HTTP on secure pages', () => {
     const restore = withProtocol('https:');
     const result = resolveApiBase('http://localhost:3002');
     restore();
-    expect(result.baseUrl).toBe('http://localhost:3001');
-    expect(result.raw).toBe('http://localhost:3001');
+    expect(result.baseUrl).toBe('http://localhost:3002');
+    expect(result.raw).toBe('http://localhost:3002');
   });
 
   it('normalizes legacy localhost:3002 HTTPS API base URLs', () => {
     const restore = withProtocol('https:');
     const result = resolveApiBase('https://localhost:3002');
     restore();
-    expect(result.baseUrl).toBe('https://localhost:3001');
-    expect(result.raw).toBe('https://localhost:3001');
+    expect(result.baseUrl).toBe('https://localhost:3002');
+    expect(result.raw).toBe('https://localhost:3002');
   });
 
   it('normalizes legacy localhost:3002 on non-secure pages', () => {
     const restore = withProtocol('http:');
     const result = resolveApiBase('http://localhost:3002');
     restore();
-    expect(result.baseUrl).toBe('http://localhost:3001');
-    expect(result.raw).toBe('http://localhost:3001');
+    expect(result.baseUrl).toBe('http://localhost:3002');
+    expect(result.raw).toBe('http://localhost:3002');
     expect(window.location.protocol).toBe('http:');
   });
 

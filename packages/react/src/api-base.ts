@@ -6,19 +6,9 @@ export type ApiBaseResolution = {
   isRelative: boolean;
 };
 
-const LOCAL_API_PORT = 3001;
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 
 function normalizeLegacyLocalApiBase(raw: string): string {
-  try {
-    const parsed = new URL(raw);
-    if (parsed.hostname === 'localhost' && parsed.port === '3002') {
-      parsed.port = String(LOCAL_API_PORT);
-      return parsed.toString().replace(/\/$/, '');
-    }
-  } catch {
-    return raw;
-  }
   return raw;
 }
 
