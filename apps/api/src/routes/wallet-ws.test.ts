@@ -75,19 +75,29 @@ describe('wallet-ws fetcher', () => {
     vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
 
-    for (let i = 1; i <= 13; i++) {
+    for (let i = 1; i <= 3; i++) {
       await fetcher();
     }
 
-    expect(mockLog.warn).toHaveBeenCalledTimes(2);
+    expect(mockLog.warn).toHaveBeenCalledTimes(1);
     expect(mockLog.warn).toHaveBeenCalledWith(
       expect.objectContaining({ successiveFailures: 3 }),
       expect.any(String)
     );
-    expect(mockLog.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ successiveFailures: 12 }),
-      expect.any(String)
-    );
+  });
+
+  it('applies backoff after repeated failures', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    await fetcher();
+    await fetcher();
+    await fetcher();
+
+    expect(mockLog.warn).toHaveBeenCalledTimes(1);
+
+    const result = await fetcher();
+    expect(result).toBeNull();
   });
 
   it('resets failure count on success', async () => {

@@ -13,12 +13,16 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
   let successiveFailures = 0;
   let lastErrorKey = '';
   let isStartup = true;
+  let backoffUntil = 0;
   const STARTUP_FAILURE_THRESHOLD = 2;
+  const BACKOFF_BASE_MS = 5000;
+  const BACKOFF_MAX_MS = 60000;
 
   const reset = () => {
     successiveFailures = 0;
     lastErrorKey = '';
     isStartup = true;
+    backoffUntil = 0;
   };
 
   const getErrorKey = (err: unknown): string => {
@@ -35,6 +39,9 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
   };
 
   const fetchFn = async (): Promise<WalletSnapshot | null> => {
+    if (Date.now() < backoffUntil) {
+      return null;
+    }
     if (process.env.LIGHTNING_PROVIDER === 'mock') {
       return {
         type: 'wallet',
@@ -78,6 +85,14 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
         log.warn({ err, successiveFailures }, 'wallet-ws fetch failed');
       } else {
         log.debug({ err, successiveFailures }, 'wallet-ws fetch failed (suppressed)');
+      }
+
+      if (successiveFailures > 2) {
+        const backoffMs = Math.min(
+          BACKOFF_BASE_MS * Math.pow(2, Math.min(successiveFailures - 3, 10)),
+          BACKOFF_MAX_MS
+        );
+        backoffUntil = Date.now() + backoffMs;
       }
 
       lastErrorKey = errorKey;
