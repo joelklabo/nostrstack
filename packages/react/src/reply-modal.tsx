@@ -76,6 +76,7 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
       onClick={handleBackdropClick}
       style={{
         padding: 0,
+        pointerEvents: 'none',
         border: 'none',
         background: 'transparent',
         maxWidth: '100%',
@@ -87,6 +88,7 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
         className="reply-modal-content"
         style={{
           background: 'var(--color-canvas-default)',
+          pointerEvents: 'auto',
           border: '1px solid var(--color-border-default)',
           borderRadius: '12px',
           width: 'min(600px, 90vw)',

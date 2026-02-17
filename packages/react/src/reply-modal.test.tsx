@@ -44,6 +44,15 @@ describe('ReplyModal', () => {
     expect(screen.getByTestId('post-editor')).toBeTruthy();
   });
 
+  it('keeps pointer interception scoped to modal body', () => {
+    render(<ReplyModal isOpen={true} onClose={vi.fn()} parentEvent={mockEvent} />);
+    const modal = screen.getByRole('dialog');
+    const content = modal.querySelector('.reply-modal-content') as HTMLElement;
+
+    expect(modal).toHaveStyle({ pointerEvents: 'none' });
+    expect(content).toHaveStyle({ pointerEvents: 'auto' });
+  });
+
   it('closes on close button click', () => {
     const onClose = vi.fn();
     render(<ReplyModal isOpen={true} onClose={onClose} parentEvent={mockEvent} />);
