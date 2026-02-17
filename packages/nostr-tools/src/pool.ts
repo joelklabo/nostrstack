@@ -18,6 +18,31 @@ const shouldReportRelayFailure = (reason: string | undefined) => {
   return normalized !== 'closed';
 };
 
+const RELAY_CONNECT_RETRY_BACKOFF_MS = 10_000;
+const RELAY_CONNECT_FAILURE_LOG_WINDOW_MS = 30_000;
+
+type RelayFailureState = {
+  nextRetryAt: number;
+  reason: string;
+  lastWarnedAt: number;
+};
+
+const relayFailureState = new Map<string, RelayFailureState>();
+let lastAllRelaysFailureLogAt = 0;
+
+const shouldLogRelayFailure = (url: string, reason: string, now: number) => {
+  const existing = relayFailureState.get(url);
+  if (!existing || existing.reason !== reason) {
+    return true;
+  }
+  return now - existing.lastWarnedAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS;
+};
+
+const shouldSkipRelayReconnect = (url: string, now: number) => {
+  const state = relayFailureState.get(url);
+  return Boolean(state && now < state.nextRetryAt);
+};
+
 type SubscriptionState = {
   id: string;
   relays: string[];
@@ -106,6 +131,11 @@ export class SimplePool {
     const failed: string[] = [];
 
     for (const url of unique) {
+      const now = Date.now();
+      if (shouldSkipRelayReconnect(url, now)) {
+        failed.push(url);
+        continue;
+      }
       if (this.relays.has(url)) {
         succeeded.push(url);
         continue;
@@ -115,13 +145,22 @@ export class SimplePool {
         this.relays.add(url);
         await this.client.connectRelay(url);
         succeeded.push(url);
+        relayFailureState.delete(url);
       } catch (err) {
         const reason = err instanceof Error ? err.message : 'connection failed';
-        if (reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')) {
-          console.warn(`DNS resolution failed for relay ${url}: ${reason}`);
-        } else {
-          console.warn(`Failed to connect to relay ${url}: ${reason}`);
+        const failureMessage =
+          reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')
+            ? `DNS resolution failed for relay ${url}: ${reason}`
+            : `Failed to connect to relay ${url}: ${reason}`;
+        const shouldLog = shouldLogRelayFailure(url, failureMessage, now);
+        if (shouldLog) {
+          console.warn(failureMessage);
         }
+        relayFailureState.set(url, {
+          nextRetryAt: now + RELAY_CONNECT_RETRY_BACKOFF_MS,
+          reason: failureMessage,
+          lastWarnedAt: shouldLog ? now : relayFailureState.get(url)?.lastWarnedAt ?? now
+        });
         failed.push(url);
       }
     }
@@ -137,7 +176,11 @@ export class SimplePool {
     if (!relays.length) return [];
     const { succeeded } = await this.ensureRelays(relays);
     if (succeeded.length === 0) {
-      console.warn('All relays failed to connect, falling back to trying all URLs');
+      const now = Date.now();
+      if (now - lastAllRelaysFailureLogAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS) {
+        lastAllRelaysFailureLogAt = now;
+        console.warn('All relays failed to connect, falling back to trying all URLs');
+      }
       return [];
     }
     const rustFilter = toRustFilter(filter);

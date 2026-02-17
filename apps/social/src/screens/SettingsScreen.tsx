@@ -420,7 +420,7 @@ export function SettingsScreen({
         const result = await mock.getBalance();
         setNwcBalanceMsat(result.balance);
         setNwcCheckStatus('connected');
-        setNwcCheckMessage('Wallet reachable.');
+        setNwcCheckMessage('Wallet connected.');
         return;
       }
       client = new NwcClient({
@@ -430,7 +430,7 @@ export function SettingsScreen({
       const result = await client.getBalance();
       setNwcBalanceMsat(result.balance);
       setNwcCheckStatus('connected');
-      setNwcCheckMessage('Wallet reachable.');
+      setNwcCheckMessage('Wallet connected.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to reach wallet.';
       setNwcCheckStatus('error');
@@ -442,7 +442,9 @@ export function SettingsScreen({
   };
 
   const handleConnectNwc = async () => {
+    setNwcMessage('Connecting to NWC wallet.');
     handleSaveNwc();
+    toast({ message: 'Connecting to NWC wallet.', tone: 'success' });
     await handleCheckNwc();
   };
 

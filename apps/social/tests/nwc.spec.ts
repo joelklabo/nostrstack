@@ -94,3 +94,89 @@ test('invalid NWC URI shows error', async ({ page }) => {
   await page.getByLabel('Connection String').fill('not-a-uri');
   await expect(page.getByText('NWC URI must start with nostr+walletconnect://')).toBeVisible();
 });
+
+test('persists Remember on this device preference and restores state after reload', async ({
+  page
+}) => {
+  await page.addInitScript(() => {
+    window.__NOSTRSTACK_NWC_MOCK__ = {
+      getBalance: async () => ({ balance: 21000 })
+    };
+  });
+
+  await loginWithNsec(page);
+  await page.getByRole('button', { name: /Settings/i }).click();
+
+  const rememberCheckbox = page.getByLabel(/Remember on this device/i);
+  const connectButton = page.getByRole('button', { name: /Connect to NWC wallet/i });
+  const disconnectButton = page.getByRole('button', { name: /Disconnect wallet/i });
+  const nwcUriInput = page.getByLabel('Connection String');
+  const relaysInput = page.getByPlaceholder('wss://relay.example, wss://relay2.example');
+  const maxSatsInput = page.getByLabel(/Max Payment/i);
+
+  await expect(rememberCheckbox).not.toBeChecked();
+  await nwcUriInput.fill(nwcUri);
+  await relaysInput.fill(relayUrl);
+  await maxSatsInput.fill('5000');
+
+  await rememberCheckbox.check();
+  await expect(rememberCheckbox).toBeChecked();
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem('nostrstack.nwc.remember')))
+    .toBe('1');
+
+  await connectButton.click();
+  await expect(page.getByText('Connecting to NWC wallet.')).toBeVisible();
+  await expect(
+    page.locator('[data-testid="toast"]', {
+      hasText: 'NWC settings saved and remembered on this device.'
+    })
+  ).toBeVisible();
+  await expect(page.locator('.nwc-status-text')).toContainText('Wallet connected.');
+
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem('nostrstack.nwc') !== null))
+    .toBe(true);
+
+  await page.reload();
+  await page.getByRole('button', { name: /Settings/i }).click();
+  await expect(rememberCheckbox).toBeChecked();
+  await expect(nwcUriInput).toHaveValue(nwcUri);
+  await expect(relaysInput).toHaveValue(relayUrl);
+  await expect(maxSatsInput).toHaveValue('5000');
+
+  await rememberCheckbox.uncheck();
+  await expect(rememberCheckbox).not.toBeChecked();
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem('nostrstack.nwc.remember')))
+    .toBe('0');
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem('nostrstack.nwc')))
+    .toBeNull();
+
+  await page.reload();
+  await page.getByRole('button', { name: /Settings/i }).click();
+  await expect(rememberCheckbox).not.toBeChecked();
+  await expect(nwcUriInput).toHaveValue('');
+  await expect(relaysInput).toHaveValue('');
+  await expect(maxSatsInput).toHaveValue('');
+
+  await nwcUriInput.fill(nwcUri);
+  await relaysInput.fill(relayUrl);
+  await maxSatsInput.fill('5000');
+  await connectButton.click();
+  await expect(page.locator('.nwc-status-text')).toContainText('Wallet connected.');
+  await expect(disconnectButton).toBeEnabled();
+  await disconnectButton.click();
+  await expect(nwcUriInput).toHaveValue('');
+  await expect(relaysInput).toHaveValue('');
+  await expect(maxSatsInput).toHaveValue('');
+  await expect(disconnectButton).toBeDisabled();
+  await expect(page.locator('.nwc-message')).toContainText('Disconnected');
+  await expect(
+    page.locator('[data-testid="toast"]', { hasText: 'NWC wallet settings disconnected.' })
+  ).toBeVisible();
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem('nostrstack.nwc')))
+    .toBeNull();
+});
