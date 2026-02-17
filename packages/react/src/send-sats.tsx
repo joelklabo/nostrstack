@@ -363,9 +363,29 @@ export function SendSats({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoice })
       });
-      const text = await res.text();
+      const responseText = await res.text();
+      let errorMessage: string | undefined;
       if (!res.ok) {
-        throw new Error(text || `HTTP ${res.status}`);
+        try {
+          const json = JSON.parse(responseText) as {
+            ok?: boolean;
+            error?: string;
+            detail?: string;
+          };
+          errorMessage = json.error ?? json.detail ?? `HTTP ${res.status}`;
+        } catch {
+          const status = res.status;
+          if (status >= 500) {
+            errorMessage = `Server error (${status}). Please try again later.`;
+          } else if (status >= 400) {
+            errorMessage = `Request failed (${status}).`;
+          } else {
+            errorMessage = `HTTP ${status}`;
+          }
+        }
+      }
+      if (errorMessage) {
+        throw new Error(errorMessage);
       }
       emitPaymentTelemetry('payment_sent', { method: 'regtest' });
       setStatusUrl(null);
