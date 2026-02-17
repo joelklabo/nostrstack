@@ -28,7 +28,19 @@ import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base'
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
 const FeedScreen = lazy(() =>
-  import('./screens/FeedScreen').then((m) => ({ default: m.FeedScreen }))
+  import('./screens/FeedScreen')
+    .then((m) => ({ default: m.FeedScreen }))
+    .catch((error) => {
+      console.error('Failed to load feed route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the feed screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
 );
 const LoginScreen = lazy(() =>
   import('./screens/LoginScreen').then((m) => ({ default: m.LoginScreen }))
