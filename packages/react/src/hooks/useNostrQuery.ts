@@ -5,6 +5,62 @@ import { useNostrstackConfig } from '../context';
 
 // Stable empty array to prevent unnecessary effect re-runs
 const EMPTY_EVENTS: Event[] = [];
+const DEFAULT_QUERY_TIMEOUT_MS = 8_000;
+
+type RelayQueryResult = {
+  failureReason?: string;
+  events: Event[];
+};
+
+function isNonFailureCloseReason(reason: string): boolean {
+  const normalized = reason.trim().toLowerCase();
+  return (
+    normalized === 'closed' ||
+    normalized === 'closed by caller' ||
+    normalized.startsWith('closed automatically on eose')
+  );
+}
+
+function hasFailureReason(reasons: string[]): string | undefined {
+  return reasons.find((reason) => !isNonFailureCloseReason(reason));
+}
+
+async function queryRelay(
+  pool: SimplePool,
+  relayUrl: string,
+  filter: Filter
+): Promise<RelayQueryResult> {
+  return new Promise<RelayQueryResult>((resolve) => {
+    const events: Event[] = [];
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const finish = (events: Event[], failureReason?: string) => {
+      if (settled) return;
+      settled = true;
+      if (timer) {
+        clearTimeout(timer);
+      }
+      resolve({ events, failureReason });
+    };
+
+    try {
+      const closer = pool.subscribeEose([relayUrl], filter, {
+        maxWait: DEFAULT_QUERY_TIMEOUT_MS,
+        onevent: (event) => events.push(event),
+        onclose: (reasons = []) => {
+          finish(events, hasFailureReason(reasons));
+        }
+      });
+
+      timer = setTimeout(() => {
+        closer.close('timeout');
+      }, DEFAULT_QUERY_TIMEOUT_MS + 1_000);
+    } catch (err) {
+      finish([], err instanceof Error ? err.message : 'failed to subscribe to relay');
+    }
+  });
+}
 
 /**
  * Options for the useNostrQuery hook.
@@ -92,21 +148,19 @@ export function useNostrQuery(
         });
 
         const queryFilter = async (filter: Filter) => {
-          const relayResults = await Promise.allSettled(
-            relayList.map((relay) => pool.querySync([relay], filter))
+          const relayResults = await Promise.all(
+            relayList.map((relay) => queryRelay(pool, relay, filter))
           );
 
-          const failures: unknown[] = [];
+          const failures: string[] = [];
           const relayEvents: Event[] = [];
           relayResults.forEach((result, relayIndex) => {
-            if (result.status === 'fulfilled') {
-              relayEvents.push(...result.value);
-              return;
-            }
-
-            failures.push(result.reason);
-            if (reportRelayFailure) {
-              reportRelayFailure(relayList[relayIndex]);
+            relayEvents.push(...result.events);
+            if (result.failureReason) {
+              failures.push(result.failureReason);
+              if (reportRelayFailure) {
+                reportRelayFailure(relayList[relayIndex]);
+              }
             }
           });
 
@@ -119,9 +173,6 @@ export function useNostrQuery(
         const allFailures = perFilterResults.flatMap((item) => item.failures);
         const results = resultArrays.flat();
 
-        if (results.length === 0 && relayList.length > 0 && allFailures.length > 0) {
-          throw allFailures[0];
-        }
         const fetchedOldestTimestamp = results.length
           ? results.reduce<number | null>((min, event) => {
               if (typeof event.created_at !== 'number') return min;
@@ -129,7 +180,10 @@ export function useNostrQuery(
             }, null)
           : null;
 
-        if (results.length === 0) {
+        if (results.length === 0 && relayList.length > 0 && allFailures.length > 0) {
+          setError(typeof allFailures[0] === 'string' ? allFailures[0] : 'Failed to fetch events');
+          setHasMore(false);
+        } else if (results.length === 0) {
           setHasMore(false);
         } else {
           const newEvents = results.filter((e) => !seenIds.current.has(e.id));

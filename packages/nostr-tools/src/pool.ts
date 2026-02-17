@@ -24,11 +24,31 @@ const RELAY_CONNECT_FAILURE_LOG_WINDOW_MS = 30_000;
 type RelayFailureState = {
   nextRetryAt: number;
   reason: string;
+  failureCount: number;
   lastWarnedAt: number;
 };
 
-const relayFailureState = new Map<string, RelayFailureState>();
+type SharedRelayState = {
+  relayFailureState: Map<string, RelayFailureState>;
+  relayConnectionInFlight: Map<string, Promise<void>>;
+};
+
+const RELAY_STATE_KEY = Symbol.for('nostrstack.relayFailureState');
+const getSharedRelayState = (): SharedRelayState => {
+  const globalScope = globalThis as unknown as {
+    [RELAY_STATE_KEY]?: SharedRelayState;
+  };
+  if (!globalScope[RELAY_STATE_KEY]) {
+    globalScope[RELAY_STATE_KEY] = {
+      relayFailureState: new Map(),
+      relayConnectionInFlight: new Map()
+    };
+  }
+  return globalScope[RELAY_STATE_KEY];
+};
+
 let lastAllRelaysFailureLogAt = 0;
+const { relayFailureState, relayConnectionInFlight } = getSharedRelayState();
 
 const shouldLogRelayFailure = (url: string, reason: string, now: number) => {
   const existing = relayFailureState.get(url);
@@ -36,6 +56,11 @@ const shouldLogRelayFailure = (url: string, reason: string, now: number) => {
     return true;
   }
   return now - existing.lastWarnedAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS;
+};
+
+const getRetryDelayMs = (failureCount: number) => {
+  const attempts = Math.min(Math.max(failureCount, 1), 6);
+  return RELAY_CONNECT_RETRY_BACKOFF_MS * 2 ** (attempts - 1);
 };
 
 const normalizeRelayUrl = (url: string) => url.trim().replace(/\/+$/, '');
@@ -143,13 +168,33 @@ export class SimplePool {
         succeeded.push(url);
         continue;
       }
+
+      const inFlight = relayConnectionInFlight.get(normalizedUrl);
+      if (inFlight) {
+        try {
+          await inFlight;
+          if (this.relays.has(normalizedUrl)) {
+            succeeded.push(url);
+            continue;
+          }
+        } catch {
+          failed.push(url);
+          continue;
+        }
+      }
+
       try {
-        await this.client.addRelay(normalizedUrl);
-        this.relays.add(normalizedUrl);
-        const relay = await this.client.relay(normalizedUrl);
-        await relay.tryConnect(Duration.fromMillis(BigInt(5000)));
+        const connectPromise = (async () => {
+          await this.client.addRelay(normalizedUrl);
+          this.relays.add(normalizedUrl);
+          const relay = await this.client.relay(normalizedUrl);
+          await relay.tryConnect(Duration.fromMillis(BigInt(5000)));
+          relayFailureState.delete(normalizedUrl);
+        })();
+
+        relayConnectionInFlight.set(normalizedUrl, connectPromise);
+        await connectPromise;
         succeeded.push(url);
-        relayFailureState.delete(normalizedUrl);
       } catch (err) {
         const reason = err instanceof Error ? err.message : 'connection failed';
         const failureMessage =
@@ -161,16 +206,21 @@ export class SimplePool {
           this.client.forceRemoveRelay(normalizedUrl)
         ]);
         this.relays.delete(normalizedUrl);
+        const existingState = relayFailureState.get(normalizedUrl);
+        const failureCount = (existingState?.failureCount ?? 0) + 1;
         const shouldLog = shouldLogRelayFailure(normalizedUrl, failureMessage, now);
         if (shouldLog) {
           console.warn(failureMessage);
         }
         relayFailureState.set(normalizedUrl, {
-          nextRetryAt: now + RELAY_CONNECT_RETRY_BACKOFF_MS,
+          nextRetryAt: now + getRetryDelayMs(failureCount),
           reason: failureMessage,
+          failureCount,
           lastWarnedAt: shouldLog ? now : relayFailureState.get(normalizedUrl)?.lastWarnedAt ?? now
         });
         failed.push(url);
+      } finally {
+        relayConnectionInFlight.delete(normalizedUrl);
       }
     }
 
