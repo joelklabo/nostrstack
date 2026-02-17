@@ -142,7 +142,14 @@ export const Sidebar = memo(function Sidebar({
       const res = await fetch(url, { method: 'POST' });
       const bodyText = await res.text();
       if (!res.ok) {
-        throw new Error(bodyText || `HTTP ${res.status}`);
+        let message = bodyText || `HTTP ${res.status}`;
+        try {
+          const parsed = JSON.parse(bodyText) as { message?: string; error?: string };
+          message = parsed.message || parsed.error || message;
+        } catch {
+          // Not JSON; use raw text
+        }
+        throw new Error(message);
       }
       const data = JSON.parse(bodyText) as {
         minedBlocks?: number;

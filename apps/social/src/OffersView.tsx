@@ -236,7 +236,8 @@ export function OffersView() {
       });
       const bodyText = await res.text();
       if (!res.ok) {
-        throw new Error(bodyText || `HTTP ${res.status}`);
+        const message = parseOfferErrorMessage(bodyText) || `HTTP ${res.status}`;
+        throw new Error(message);
       }
       const data = JSON.parse(bodyText) as { invoice: string };
       updateOffer(entry.id, { invoice: data.invoice, invoiceStatus: 'ready' });
