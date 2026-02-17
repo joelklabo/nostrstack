@@ -5345,3 +5345,23 @@ a.nostr-event-chip:hover {
     padding: var(--ns-space-4);
   }
 }
+
+.offer-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ns-space-1);
+}
+
+.offer-field-meta {
+  font-size: var(--ns-font-size-xs, 0.75rem);
+  color: var(--ns-color-text-muted, #666);
+  text-align: right;
+}
+
+.offer-field-meta.warning {
+  color: var(--ns-color-warning-default, #d97706);
+}
+
+.offer-field-meta.error {
+  color: var(--ns-color-danger-default, #dc2626);
+}

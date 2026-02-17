@@ -25,6 +25,7 @@ type OfferEntry = {
 const numberFormat = new Intl.NumberFormat('en-US');
 const OFFER_CREATE_TIMEOUT_MS = 15_000;
 const OFFER_CREATE_TIMEOUT_MESSAGE = 'Offer creation timed out. Please try again.';
+const MAX_DESCRIPTION_CHARS = 140;
 
 function formatMsat(value?: number) {
   if (!value) return 'Any amount';
@@ -110,6 +111,11 @@ export function OffersView() {
   const handleCreateOffer = async () => {
     if (!description.trim()) {
       setCreateError('Description is required.');
+      setCreateStatus('idle');
+      return;
+    }
+    if (description.trim().length > MAX_DESCRIPTION_CHARS) {
+      setCreateError(`Description must be ${MAX_DESCRIPTION_CHARS} characters or fewer.`);
       setCreateStatus('idle');
       return;
     }
@@ -278,6 +284,17 @@ export function OffersView() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Monthly update newsletter"
             />
+            <span
+              className={`offer-field-meta ${
+                description.length > MAX_DESCRIPTION_CHARS
+                  ? 'error'
+                  : description.length > MAX_DESCRIPTION_CHARS - 20
+                    ? 'warning'
+                    : ''
+              }`}
+            >
+              {description.length}/{MAX_DESCRIPTION_CHARS}
+            </span>
           </label>
           <label className="offer-field">
             <span>Amount (msat)</span>

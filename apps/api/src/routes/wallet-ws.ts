@@ -11,11 +11,24 @@ type WalletSnapshot = {
 
 export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, apiKey: string) {
   let successiveFailures = 0;
-  let lastFailureMsg = '';
+  let lastErrorKey = '';
 
   const reset = () => {
     successiveFailures = 0;
-    lastFailureMsg = '';
+    lastErrorKey = '';
+  };
+
+  const getErrorKey = (err: unknown): string => {
+    if (err instanceof Error) {
+      const name = err.name;
+      if (name === 'FetchError' || name === 'TypeError') {
+        const msg = err.message;
+        const match = msg.match(/^(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ERR_)/i);
+        if (match) return match[1] || match[0];
+      }
+      return name;
+    }
+    return String(err);
   };
 
   const fetchFn = async (): Promise<WalletSnapshot | null> => {
@@ -39,7 +52,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       if (!res.ok) throw new Error(`lnbits http ${res.status}: ${text.slice(0, 200)}`);
       const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
       successiveFailures = 0;
-      lastFailureMsg = '';
+      lastErrorKey = '';
       return {
         type: 'wallet',
         id: json.id,
@@ -49,11 +62,12 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       };
     } catch (err) {
       successiveFailures++;
-      const msg = err instanceof Error ? err.message : String(err);
+      const errorKey = getErrorKey(err);
 
-      // Warn on first failure, every 12th failure (~1 minute), or if error changed
       const shouldWarn =
-        successiveFailures === 1 || successiveFailures % 12 === 0 || msg !== lastFailureMsg;
+        successiveFailures === 3 ||
+        successiveFailures % 12 === 0 ||
+        (successiveFailures > 3 && errorKey !== lastErrorKey);
 
       if (shouldWarn) {
         log.warn({ err, successiveFailures }, 'wallet-ws fetch failed');
@@ -61,7 +75,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
         log.debug({ err, successiveFailures }, 'wallet-ws fetch failed (suppressed)');
       }
 
-      lastFailureMsg = msg;
+      lastErrorKey = errorKey;
       return null;
     }
   };
