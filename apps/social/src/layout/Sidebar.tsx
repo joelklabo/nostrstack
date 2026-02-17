@@ -16,6 +16,7 @@ interface SidebarProps {
   onMobileClose?: () => void;
   onOpenHelp?: () => void;
   onLogout?: () => void;
+  isGuest?: boolean;
 }
 
 const DEV_NETWORK_KEY = 'nostrstack.dev.network';
@@ -26,7 +27,8 @@ export const Sidebar = memo(function Sidebar({
   mobileOpen,
   onMobileClose,
   onOpenHelp,
-  onLogout
+  onLogout,
+  isGuest
 }: SidebarProps) {
   const { eventCount } = useStats();
   const { logout, pubkey } = useAuth();
@@ -416,6 +418,19 @@ export const Sidebar = memo(function Sidebar({
         >
           {authActionLabel}
         </button>
+        {isGuest && (
+          <button
+            type="button"
+            className="nav-item"
+            onClick={() => {
+              onMobileClose?.();
+              localStorage.removeItem('nostrstack.guest');
+              window.location.reload();
+            }}
+          >
+            Sign in
+          </button>
+        )}
       </div>
 
       {withdrawOpen && (
