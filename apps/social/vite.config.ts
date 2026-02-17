@@ -56,6 +56,17 @@ export default defineConfig(({ command }) => {
             ]
           : [])
       ]
+    },
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'nostr-tools',
+        '@nostrstack/react',
+        '@nostrstack/ui',
+        '@nostrstack/widgets'
+      ]
     }
   };
 });
