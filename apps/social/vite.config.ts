@@ -21,7 +21,10 @@ export default defineConfig(({ command }) => {
     server: {
       port: 4173,
       host: true,
-      strictPort: true,
+      hmr: {
+        clientPort: 4173,
+        port: 4173
+      },
       proxy: {
         '/api': {
           target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
@@ -32,8 +35,7 @@ export default defineConfig(({ command }) => {
     },
     preview: {
       port: 4173,
-      host: true,
-      strictPort: true
+      host: true
     },
     define: {
       // Some packages (e.g. nostr-tools) expect global Buffer.
