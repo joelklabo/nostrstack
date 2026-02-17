@@ -669,17 +669,6 @@ export default function App() {
     isLocalApiBase(apiBaseConfig)
   );
   const [localApiCheckFailed, setLocalApiCheckFailed] = useState(false);
-  const initialLocalApiConfig = useRef<ApiBaseResolution | null>(
-    isLocalApiBase(apiBaseConfig) ? apiBaseConfig : null
-  );
-
-  const retryLocalApiHealthCheck = useCallback(() => {
-    if (initialLocalApiConfig.current) {
-      setResolvedApiBaseConfig(initialLocalApiConfig.current);
-      setIsResolvingLocalApiBase(true);
-      setLocalApiCheckFailed(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (!isResolvingLocalApiBase) {
@@ -732,18 +721,11 @@ export default function App() {
     };
   }, [resolvedApiBaseConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const apiBase = resolvedApiBaseConfig.baseUrl;
-  if (isResolvingLocalApiBase || localApiCheckFailed) {
-    return (
-      <LoadingFallback
-        message={
-          localApiCheckFailed
-            ? 'API unavailable on localhost:3001 and /api'
-            : 'Checking API availability...'
-        }
-        includeRetry
-        onRetry={retryLocalApiHealthCheck}
-      />
-    );
+  if (isResolvingLocalApiBase) {
+    return <LoadingFallback message="Checking API availability..." />;
+  }
+  if (localApiCheckFailed) {
+    console.warn('Social API health check failed; continuing with fallback API configuration.');
   }
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
