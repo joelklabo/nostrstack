@@ -46,6 +46,7 @@ const schema = z
     OP_NODE_WEBHOOK_SECRET: z.string().default('whsec_test'),
     LN_BITS_URL: z.string().url().optional(),
     LN_BITS_API_KEY: z.string().optional(),
+    LN_BITS_WALLET_ID: z.string().optional(),
     LIGHTNING_PROVIDER: z.enum(['opennode', 'lnbits', 'mock']).default('opennode'),
     BITCOIN_NETWORK: z.enum(['regtest', 'mutinynet', 'mainnet']).default('regtest'),
     TELEMETRY_PROVIDER: z.enum(['bitcoind', 'esplora', 'mock']).default('bitcoind'),

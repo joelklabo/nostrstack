@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createWalletFetcher } from './wallet-ws';
 
@@ -10,10 +10,20 @@ describe('wallet-ws fetcher', () => {
     info: vi.fn(),
     error: vi.fn()
   } as unknown as FastifyBaseLogger;
+  const originalWalletId = process.env.LN_BITS_WALLET_ID;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn());
+    process.env.LN_BITS_WALLET_ID = '';
+  });
+
+  afterAll(() => {
+    if (originalWalletId === undefined) {
+      delete process.env.LN_BITS_WALLET_ID;
+    } else {
+      process.env.LN_BITS_WALLET_ID = originalWalletId;
+    }
   });
 
   it('logs warn on third failure', async () => {
@@ -124,6 +134,24 @@ describe('wallet-ws fetcher', () => {
     expect(mockLog.warn).toHaveBeenLastCalledWith(
       expect.objectContaining({ successiveFailures: 3 }),
       'wallet-ws fetch failed'
+    );
+  });
+
+  it('uses configured LN_BITS_WALLET_ID in LNbits wallet lookup', async () => {
+    process.env.LN_BITS_WALLET_ID = 'wallet-abc-123';
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: () =>
+        Promise.resolve(JSON.stringify({ id: 'wallet-abc-123', name: 'Wallet', balance: 500 }))
+    } as Response);
+
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    await fetcher();
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+      'http://localhost:5000/api/v1/wallet?usr=wallet-abc-123',
+      expect.any(Object)
     );
   });
 });

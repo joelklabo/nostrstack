@@ -117,6 +117,7 @@ if [[ "$BITCOIN_NETWORK" == "regtest" ]]; then
     if [[ -n "$ADMIN_KEY" ]]; then
       export LN_BITS_URL=${LN_BITS_URL:-http://localhost:15001}
       export LN_BITS_API_KEY=${LN_BITS_API_KEY:-$ADMIN_KEY}
+      [[ -n "$WALLET_ID" ]] && export LN_BITS_WALLET_ID=${LN_BITS_WALLET_ID:-$WALLET_ID}
       export VITE_LNBITS_URL=${VITE_LNBITS_URL:-http://localhost:15001}
       export VITE_LNBITS_ADMIN_KEY=${VITE_LNBITS_ADMIN_KEY:-$ADMIN_KEY}
       [[ -n "$WALLET_ID" ]] && export VITE_LNBITS_WALLET_ID=${VITE_LNBITS_WALLET_ID:-$WALLET_ID}

@@ -10,6 +10,7 @@ type WalletSnapshot = {
 };
 
 export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, apiKey: string) {
+  const walletId = (process.env.LN_BITS_WALLET_ID || '').trim();
   let successiveFailures = 0;
   let lastErrorKey = '';
   let isStartup = true;
@@ -52,7 +53,8 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       };
     }
     try {
-      const res = await fetch(`${baseUrl}/api/v1/wallet`, {
+      const walletUrl = `${baseUrl}/api/v1/wallet${walletId ? `?usr=${encodeURIComponent(walletId)}` : ''}`;
+      const res = await fetch(walletUrl, {
         headers: {
           Accept: 'application/json',
           'X-Api-Key': apiKey
