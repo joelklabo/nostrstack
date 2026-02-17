@@ -128,12 +128,14 @@ export function SearchScreen() {
   }, [canRetryIdentity, query, resolveNow]);
 
   const handleNotesSearch = useCallback(
-    async (q: string) => {
+    async (q: string, isRetry = false) => {
       setNotesLoading(true);
       setNotesError(null);
       setNotesSearchTimedOut(false);
-      setNotes([]);
-      setHasMore(false);
+      if (!isRetry) {
+        setNotes([]);
+        setHasMore(false);
+      }
       setLastSearchQuery(q);
       try {
         const searchRelays = getSearchRelays(relayList);
@@ -152,18 +154,21 @@ export function SearchScreen() {
           (('code' in err && err.code === 'relay_network_error') ||
             /unable to connect|network error|dns|connection refused/i.test(err.message));
         setNotesSearchTimedOut(timedOut);
-        setNotesError(
-          networkError
-            ? 'Unable to connect to relays. Check your internet connection and try again.'
-            : timedOut
-              ? 'Notes search timed out. Retry to try again.'
-              : 'Search failed. Relays might not support NIP-50.'
-        );
+        const errorMessage = networkError
+          ? 'Unable to connect to relays. Check your internet connection and try again.'
+          : timedOut
+            ? 'Notes search timed out. Retry to try again.'
+            : 'Search failed. Relays might not support NIP-50.';
+        if (notes.length > 0) {
+          setNotesError(`Previous results shown. ${errorMessage}`);
+        } else {
+          setNotesError(errorMessage);
+        }
       } finally {
         setNotesLoading(false);
       }
     },
-    [pool, relayList]
+    [pool, relayList, notes.length]
   );
 
   const handleSearchFallback = useCallback(() => {
@@ -577,7 +582,7 @@ export function SearchScreen() {
               <button
                 type="button"
                 className="action-btn"
-                onClick={() => void handleNotesSearch(lastSearchQuery || query)}
+                onClick={() => void handleNotesSearch(lastSearchQuery || query, true)}
               >
                 Retry search
               </button>
