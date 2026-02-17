@@ -17,10 +17,13 @@ let server: Awaited<ReturnType<typeof buildServerFn>>;
 describe('lnurl invoice provider field', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
   });
@@ -68,6 +71,25 @@ describe('lnurl invoice provider field', () => {
     const body = res.json() as { successAction?: { tag?: string; message?: string } };
     expect(body.successAction?.tag).toBe('message');
     expect(body.successAction?.message).toBe('Thanks!');
+  });
+
+  it('resolves .well-known lnurl metadata case-insensitively', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-case-insensitive-meta' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-case-insensitive-meta',
+        lightningAddress: 'case@default'
+      },
+      update: {}
+    });
+
+    const res = await server.inject({ url: '/.well-known/lnurlp/Case' });
+    expect(res.statusCode).toBe(200);
+
+    const domainScopedRes = await server.inject({ url: '/.well-known/lnurlp/Case@default' });
+    expect(domainScopedRes.statusCode).toBe(200);
   });
 
   it('rejects invalid successAction payloads', async () => {

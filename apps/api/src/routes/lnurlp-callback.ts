@@ -154,11 +154,35 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       const { amount, nostr } = request.query as { amount: number; nostr?: string; lnurl?: string };
       const tenant = await getTenantForRequest(app, request);
       const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
-      const identifier = `${username}@${tenant.domain}`;
+      const localUsername = username.includes('@') ? username.split('@', 1)[0] : username;
+      if (localUsername !== username) {
+        app.log.warn(
+          { username, tenant: tenant.domain },
+          'lnurlp invoice callback username included domain; normalizing to local part'
+        );
+      }
+      const identifier = `${localUsername}@${tenant.domain}`;
+      app.log.info(
+        {
+          tenant: tenant.domain,
+          username: localUsername,
+          amount,
+          hasNostr: Boolean(nostr)
+        },
+        'lnurlp invoice request received'
+      );
       const user = await app.prisma.user.findFirst({
-        where: { tenantId: tenant.id, lightningAddress: identifier }
+        where: {
+          tenantId: tenant.id,
+          lightningAddress: { equals: identifier, mode: 'insensitive' }
+        }
       });
-      if (!user) return reply.code(404).send({ status: 'not found' });
+      if (!user) {
+        app.log.warn({ tenant: tenant.domain, username }, 'lnurlp invoice request user not found');
+        return reply.code(404).send({ status: 'not found' });
+      }
+
+      const canonicalIdentifier = user.lightningAddress;
 
       const metadataRaw = user.lnurlMetadata ?? tenant.lnurlMetadata;
       if (metadataRaw) {
@@ -201,27 +225,65 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         metadataStr = nostr; // Store the raw zap request event
       }
 
-      const charge = await app.lightningProvider.createCharge({
-        amount: amountSats,
-        description: descriptionHash ? '' : `nostrstack payment to ${identifier}`,
-        descriptionHash,
-        callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(username)}/webhook`,
-        // LNbits uses a `webhook` field rather than OpenNode-style callbacks; our webhook handler updates Payment + broadcasts /ws/pay.
-        webhookUrl: `${origin}/api/pay/webhook/lnbits`
-      });
+      let charge;
+      try {
+        charge = await app.lightningProvider.createCharge({
+          amount: amountSats,
+          description: descriptionHash ? '' : `nostrstack payment to ${canonicalIdentifier}`,
+          descriptionHash,
+          callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(username)}/webhook`,
+          // LNbits uses a `webhook` field rather than OpenNode-style callbacks; our webhook handler updates Payment + broadcasts /ws/pay.
+          webhookUrl: `${origin}/api/pay/webhook/lnbits`
+        });
+      } catch (error) {
+        app.log.error(
+          {
+            tenant: tenant.domain,
+            username,
+            err: error instanceof Error ? error.message : error
+          },
+          'lnurlp invoice createCharge failed'
+        );
+        throw error;
+      }
 
-      await app.prisma.payment.create({
-        data: {
-          tenantId: tenant.id,
+      try {
+        await app.prisma.payment.create({
+          data: {
+            tenantId: tenant.id,
+            userId: user.id,
+            provider: env.LIGHTNING_PROVIDER,
+            providerRef: charge.id,
+            invoice: charge.invoice,
+            amountSats,
+            status: 'PENDING',
+            metadata: metadataStr
+          }
+        });
+      } catch (error) {
+        app.log.error(
+          {
+            tenant: tenant.domain,
+            userId: user.id,
+            providerRef: charge.id,
+            err: error instanceof Error ? error.message : error
+          },
+          'lnurlp invoice payment persistence failed'
+        );
+        throw error;
+      }
+
+      app.log.info(
+        {
+          tenant: tenant.domain,
+          username,
           userId: user.id,
           provider: env.LIGHTNING_PROVIDER,
           providerRef: charge.id,
-          invoice: charge.invoice,
-          amountSats,
-          status: 'PENDING',
-          metadata: metadataStr
-        }
-      });
+          invoiceSet: Boolean(charge.invoice)
+        },
+        'lnurlp invoice created'
+      );
 
       return reply.send({
         pr: charge.invoice,

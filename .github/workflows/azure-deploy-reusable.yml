@@ -122,11 +122,11 @@ jobs:
           cd apps/api
           pnpm exec playwright install --with-deps chromium
 
-      - name: Regtest e2e (Playwright)
+      - name: API E2E smoke (Playwright)
         if: ${{ inputs.run_e2e_tests }}
         run: |
           cd apps/api
-          DATABASE_URL="file:./test-e2e.db" ADMIN_API_KEY="test-admin" XDG_CACHE_HOME=/tmp pnpm test:e2e
+          DATABASE_URL=file:./test-e2e.db ADMIN_API_KEY=test-admin XDG_CACHE_HOME=/tmp pnpm test:e2e:smoke
 
       - name: Set image tag
         id: vars

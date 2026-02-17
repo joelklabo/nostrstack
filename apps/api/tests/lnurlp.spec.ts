@@ -16,7 +16,8 @@ test.beforeAll(async ({ playwright }) => {
   process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY ?? 'test-admin';
   process.env.OP_NODE_API_KEY = process.env.OP_NODE_API_KEY ?? 'test-key';
   process.env.OP_NODE_WEBHOOK_SECRET = process.env.OP_NODE_WEBHOOK_SECRET ?? 'whsec_test';
-  const dbPath = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
+  const dbPath =
+    process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
   process.env.DATABASE_URL = dbPath;
   const schema = dbPath.startsWith('postgres') ? 'prisma/pg/schema.prisma' : 'prisma/schema.prisma';
 
@@ -60,6 +61,24 @@ test('lnurlp metadata and invoice', async () => {
   expect(resInv.ok()).toBeTruthy();
   const inv = await resInv.json();
   expect(inv.pr).toBeTruthy();
+
+  const mixedResMeta = await api.get('/.well-known/lnurlp/Demo');
+  expect(mixedResMeta.ok()).toBeTruthy();
+  const mixedMeta = await mixedResMeta.json();
+  expect(mixedMeta.callback).toContain('/api/lnurlp/Demo/invoice');
+
+  const mixedCallbackUrl = new URL(mixedMeta.callback);
+  const mixedResInv = await api.get(`${mixedCallbackUrl.pathname}?amount=2000`);
+  expect(mixedResInv.ok()).toBeTruthy();
+  const mixedInv = await mixedResInv.json();
+  expect(mixedInv.pr).toBeTruthy();
+
+  const domainScopedResInv = await api.get(
+    '/api/lnurlp/Demo@demo.nostrstack.lol/invoice?amount=2000'
+  );
+  expect(domainScopedResInv.ok()).toBeTruthy();
+  const domainScopedInv = await domainScopedResInv.json();
+  expect(domainScopedInv.pr).toBeTruthy();
 });
 
 test.afterAll(async () => {

@@ -18,9 +18,16 @@ export async function lnurlpHandler(
   const { username } = request.params;
   const tenant = await getTenantForRequest(request.server, request);
   const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
-  const callback = `${origin}/api/lnurlp/${encodeURIComponent(username)}/invoice`;
+  const localUsername = username.includes('@') ? username.split('@', 1)[0] : username;
+  if (localUsername !== username) {
+    request.log.warn(
+      { username, tenant: tenant.domain },
+      'lnurlp metadata username included domain; normalizing to local part'
+    );
+  }
 
-  const identifier = `${username}@${tenant.domain}`;
+  const callback = `${origin}/api/lnurlp/${encodeURIComponent(localUsername)}/invoice`;
+  const identifier = `${localUsername}@${tenant.domain}`;
   const metadata = JSON.stringify([
     ['text/plain', `nostrstack payment to ${identifier}`],
     ['text/identifier', identifier]
@@ -29,25 +36,35 @@ export async function lnurlpHandler(
   const user = await request.server.prisma.user.findFirst({
     where: {
       tenantId: tenant.id,
-      lightningAddress: { equals: identifier }
+      lightningAddress: { equals: identifier, mode: 'insensitive' }
     }
   });
 
   if (!user) {
+    request.log.warn(
+      { username, tenant: tenant.domain, status: 'not_found' },
+      'lnurlp metadata lookup did not find user'
+    );
     return reply.code(404).send({ status: 'not found' });
   }
 
   const metadataRaw = user.lnurlMetadata ?? tenant.lnurlMetadata ?? metadata;
   const metadataResult = normalizeLnurlMetadata(metadataRaw);
   if (metadataResult.error) {
-    request.log.warn({ username, tenant: tenant.domain, reason: metadataResult.error }, 'invalid lnurl metadata');
+    request.log.warn(
+      { username, tenant: tenant.domain, reason: metadataResult.error },
+      'invalid lnurl metadata'
+    );
     return reply.code(400).send({ status: 'ERROR', reason: metadataResult.error });
   }
 
   const successActionRaw = user.lnurlSuccessAction ?? tenant.lnurlSuccessAction;
   const successActionResult = parseLnurlSuccessAction(successActionRaw);
   if (successActionResult.error) {
-    request.log.warn({ username, tenant: tenant.domain, reason: successActionResult.error }, 'invalid lnurl successAction');
+    request.log.warn(
+      { username, tenant: tenant.domain, reason: successActionResult.error },
+      'invalid lnurl successAction'
+    );
     return reply.code(400).send({ status: 'ERROR', reason: successActionResult.error });
   }
   const successAction = successActionResult.value;

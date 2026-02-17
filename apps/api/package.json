@@ -10,6 +10,7 @@
     "lint": "eslint . --ext .ts --max-warnings=0",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test tests/lnurlp.spec.ts",
     "test:e2e:pay": "playwright test tests/pay-to-act.spec.ts",
     "test:e2e:nostr": "playwright test tests/nostr-auth.spec.ts",
     "test:mutinynet": "node --loader tsx scripts/mutinynet-smoke.ts",

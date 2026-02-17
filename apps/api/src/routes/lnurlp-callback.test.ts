@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-import { afterAll,beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { buildServer as buildServerFn } from '../server.js';
 
@@ -17,10 +17,13 @@ let server: Awaited<ReturnType<typeof buildServerFn>>;
 describe('lnurl webhook', () => {
   beforeAll(async () => {
     const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-    execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-      stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-    });
+    execSync(
+      `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      }
+    );
     const { buildServer } = await import('../server.js');
     server = await buildServer();
   });
@@ -41,7 +44,12 @@ describe('lnurl webhook', () => {
   it('polls status and marks paid', async () => {
     // create invoice via normal flow
     await server.prisma.user.upsert({
-      where: { tenantId_pubkey: { tenantId: (await server.prisma.tenant.findFirstOrThrow()).id, pubkey: 'pk' } },
+      where: {
+        tenantId_pubkey: {
+          tenantId: (await server.prisma.tenant.findFirstOrThrow()).id,
+          pubkey: 'pk'
+        }
+      },
       create: {
         tenantId: (await server.prisma.tenant.findFirstOrThrow()).id,
         pubkey: 'pk',
@@ -58,9 +66,34 @@ describe('lnurl webhook', () => {
     const payment = await server.prisma.payment.findFirstOrThrow({ where: { invoice: body.pr } });
     expect(body.provider_ref).toBe(payment.providerRef);
 
-    const statusRes = await server.inject({ url: `/api/lnurlp/alice/status/${payment.providerRef}` });
+    const statusRes = await server.inject({
+      url: `/api/lnurlp/alice/status/${payment.providerRef}`
+    });
     expect(statusRes.statusCode).toBe(200);
     expect(statusRes.json().status).toBe('PAID');
+  });
+
+  it('creates invoice case-insensitively', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-invoice-case' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-invoice-case',
+        lightningAddress: 'case@default'
+      },
+      update: {}
+    });
+
+    const res = await server.inject({ url: '/api/lnurlp/Case/invoice?amount=1000' });
+    expect(res.statusCode).toBe(200);
+    expect((res.json() as { pr?: string }).pr).toBeTruthy();
+
+    const domainScopedRes = await server.inject({
+      url: '/api/lnurlp/Case@default/invoice?amount=1000'
+    });
+    expect(domainScopedRes.statusCode).toBe(200);
+    expect((domainScopedRes.json() as { pr?: string }).pr).toBeTruthy();
   });
 
   it('rejects invalid successAction payloads', async () => {
