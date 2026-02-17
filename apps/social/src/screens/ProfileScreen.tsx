@@ -66,7 +66,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>(
     'idle'
   );
-  const [walletLaunchState, setWalletLaunchState] = useState<'idle' | 'unable'>('idle');
+  const [walletLaunchState, setWalletLaunchState] = useState<'idle' | 'attempted'>('idle');
   const [zapAmount, setZapAmount] = useState(21);
 
   const { isFollowing, follow, unfollow, loading: contactsLoading } = useContactList();
@@ -217,15 +217,15 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
 
   const handleOpenWallet = useCallback(() => {
     if (!lightningUri) return;
+    setWalletLaunchState('attempted');
     try {
       const walletWindow = window.open(lightningUri, '_blank');
       if (!walletWindow) {
-        setWalletLaunchState('unable');
+        setWalletLaunchState('attempted');
         return;
       }
-      setWalletLaunchState('idle');
     } catch {
-      setWalletLaunchState('unable');
+      setWalletLaunchState('attempted');
     }
   }, [lightningUri]);
 
@@ -234,6 +234,14 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
       setWalletLaunchState('idle');
     }
   }, [lightningUri]);
+
+  useEffect(() => {
+    if (walletLaunchState !== 'attempted') return;
+    const timeout = setTimeout(() => {
+      setWalletLaunchState('idle');
+    }, 6000);
+    return () => clearTimeout(timeout);
+  }, [walletLaunchState]);
 
   const showLightningAddress = Boolean(lightningAddress);
   const showSendSats = paymentConfig.enableProfilePay && (showLightningAddress || pubkey);
@@ -614,7 +622,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
                             >
                               Open Wallet
                             </button>
-                            {walletLaunchState === 'unable' && (
+                            {walletLaunchState === 'attempted' && (
                               <span
                                 role="status"
                                 aria-live="polite"
