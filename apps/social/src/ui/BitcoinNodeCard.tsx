@@ -142,7 +142,7 @@ export function BitcoinNodeCard({
   }
 
   const { elapsed, countdown } = useTimeSinceBlock(info.time);
-  const hasLiveData = info.height != null && info.height > 0;
+  const hasLiveData = info.height != null && info.height > 0 && info.source !== 'mock';
 
   return (
     <div className={`ns-node-card ns-node-card--bitcoin ${className || ''}`} {...props}>
@@ -171,7 +171,11 @@ export function BitcoinNodeCard({
           >
             {networkLabel}
           </div>
-          {sourceLabel && <div className="ns-node-badge">{sourceLabel}</div>}
+          {sourceLabel && (
+            <div className={`ns-node-badge${info.source === 'mock' ? ' ns-node-badge--mock' : ''}`}>
+              {sourceLabel}
+            </div>
+          )}
         </div>
       </div>
       {chainLabel && <div className="ns-node-subtitle">Chain: {chainLabel}</div>}
