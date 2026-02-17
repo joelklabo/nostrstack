@@ -164,7 +164,9 @@ export function RelayProvider({ children }: { children: ReactNode }) {
   // Include _monitorVersion to re-filter when health changes (debounced)
   const activeRelays = useMemo(() => {
     const merged = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])];
-    return merged.filter((url) => relayMonitor.isHealthy(url));
+    const filtered = merged.filter((url) => relayMonitor.isHealthy(url));
+    // Fallback to all relays if none are healthy - prevents complete connectivity loss
+    return filtered.length ? filtered : merged;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- _monitorVersion intentionally triggers re-filter on health changes
   }, [bootstrapRelays, userRelays, _monitorVersion]);
 
