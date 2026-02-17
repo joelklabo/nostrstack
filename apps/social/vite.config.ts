@@ -24,6 +24,7 @@ export default defineConfig(({ command }) => {
     server: {
       port: devServerPort,
       host: true,
+      strictPort: true,
       proxy: {
         '/api': {
           target: apiProxyTarget,
