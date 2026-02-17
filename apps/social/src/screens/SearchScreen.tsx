@@ -84,6 +84,7 @@ export function SearchScreen() {
   const healthyRelayCount = useMemo(() => {
     const searchRelays = getSearchRelays(relayList);
     return searchRelays.filter((r) => relayMonitor.isHealthy(r)).length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- relayHealthCount intentionally triggers re-filter on health changes
   }, [relayList, relayHealthCount]);
 
   const NOTES_PAGE_SIZE = 20;
