@@ -148,11 +148,7 @@ export async function registerWalletWs(app: FastifyInstance) {
     });
   };
 
-  const { fetch: fetchWallet, reset: resetWalletFailures } = createWalletFetcher(
-    app.log,
-    baseUrl,
-    apiKey
-  );
+  const { fetch: fetchWallet } = createWalletFetcher(app.log, baseUrl, apiKey);
 
   const interval = setInterval(async () => {
     if (!hasClients()) return;
@@ -171,7 +167,6 @@ export async function registerWalletWs(app: FastifyInstance) {
 
   wss.on('connection', async (ws) => {
     app.log.info({ clientCount: wss.clients.size }, 'wallet ws connection');
-    resetWalletFailures();
     if (lastSnapshot) {
       ws.send(JSON.stringify(lastSnapshot));
     } else {
