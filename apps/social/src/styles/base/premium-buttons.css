@@ -10,6 +10,7 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  pointer-events: auto;
   transition:
     color 180ms var(--ns-easing-easeOut),
     background-color 180ms var(--ns-easing-easeOut),
