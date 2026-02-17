@@ -223,10 +223,11 @@ function AppShell() {
   const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
-  const isGuestProfileRoute = pathname === '/profile' || pathname === '/profile/';
+  const isGuestProfileRoute = isRouteWithOptionalQuery('/profile');
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
+  const isProfileRoute = isGuestProfileRoute || pathname.startsWith('/p/');
   const previousPathRef = useRef(pathname);
   const handleNavigateToSettings = useCallback(() => {
     navigateTo('/settings');
@@ -243,7 +244,7 @@ function AppShell() {
     if (isFindFriendRoute) return true;
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
-    if (isGuestProfileRoute) return true;
+    if (isProfileRoute) return true;
     if (nostrRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
@@ -256,7 +257,7 @@ function AppShell() {
     isFindFriendRoute,
     isSettingsRoute,
     isOffersRoute,
-    isGuestProfileRoute,
+    isProfileRoute,
     nostrRouteId,
     profileRoutePubkey
   ]);
@@ -280,7 +281,7 @@ function AppShell() {
       setCurrentView('search');
       return;
     }
-    if (profileRoutePubkey || isGuestProfileRoute) {
+    if (isProfileRoute) {
       setCurrentView('profile');
       return;
     }
@@ -294,7 +295,7 @@ function AppShell() {
     isFindFriendRoute,
     isSettingsRoute,
     profileRoutePubkey,
-    isGuestProfileRoute
+    isProfileRoute
   ]);
 
   useEffect(() => {
@@ -559,29 +560,31 @@ function AppShell() {
             />
           }
         >
-          {profileRouteError && (
-            <Alert tone="danger" title="Routing Error">
-              Invalid profile id. Showing your current view instead.
-            </Alert>
-          )}
-          {profileRoutePubkey ? (
-            <ProfileScreen
-              pubkey={profileRoutePubkey}
-              onNavigateToSettings={handleNavigateToSettings}
-            />
+          {isProfileRoute ? (
+            <>
+              {profileRouteError && (
+                <Alert tone="danger" title="Routing Error">
+                  Invalid profile id. Showing your current view instead.
+                </Alert>
+              )}
+              {profileRoutePubkey ? (
+                <ProfileScreen
+                  pubkey={profileRoutePubkey}
+                  onNavigateToSettings={handleNavigateToSettings}
+                />
+              ) : pubkey ? (
+                <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
+              ) : (
+                <div className="profile-guest-placeholder">
+                  <p>Sign in to view your profile</p>
+                </div>
+              )}
+            </>
           ) : (
             <>
               {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
               {currentView === 'search' && <SearchScreen />}
               {currentView === 'offers' && <OffersView />}
-              {currentView === 'profile' &&
-                (pubkey ? (
-                  <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
-                ) : (
-                  <div className="profile-guest-placeholder">
-                    <p>Sign in to view your profile</p>
-                  </div>
-                ))}
               {currentView === 'settings' && (
                 <SettingsScreen
                   theme={theme}
