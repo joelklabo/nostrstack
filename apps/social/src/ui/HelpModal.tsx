@@ -114,7 +114,6 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
         if (event.target !== event.currentTarget) return;
         onClose();
       }}
-      aria-hidden="true"
     >
       <div
         ref={modalRef}
