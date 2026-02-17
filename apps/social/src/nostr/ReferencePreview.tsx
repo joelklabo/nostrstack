@@ -133,9 +133,16 @@ export function ReferencePreview({ target, apiBase, hrefTarget }: ReferencePrevi
   }
 
   if (state.status === 'error' || !state.event) {
+    const errorMessage = state.error ?? 'Unable to load reference.';
+    const isNotFound = errorMessage.includes('not found');
+    const isTimeout = errorMessage.includes('timed out') || errorMessage.includes('timeout');
     return (
       <div className="nostr-event-preview-card nostr-event-preview-card--error">
-        Reference unavailable.
+        {isNotFound
+          ? 'Reference not found on relays.'
+          : isTimeout
+            ? 'Reference timed out. Tap to retry.'
+            : 'Reference unavailable.'}
       </div>
     );
   }
