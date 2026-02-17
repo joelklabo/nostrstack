@@ -404,11 +404,7 @@ function AppShell() {
   if (!pubkey && !isGuest) {
     return (
       <main className="feed-container" id="main-content" role="main">
-        <Suspense
-          fallback={
-            <LoadingFallback message="Loading..." includeRetry retryLabel="Retry sign-in screen" />
-          }
-        >
+        <Suspense fallback={<LoadingFallback message="Loading login screen..." />}>
           <LoginScreen />
         </Suspense>
       </main>
