@@ -31,6 +31,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       const name = err.name;
       if (name === 'FetchError' || name === 'TypeError') {
         const msg = err.message;
+        if (/other side closed/i.test(msg)) return 'OTHER_SIDE_CLOSED';
         const match = msg.match(/^(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ERR_)/i);
         if (match) return match[1] || match[0];
       }
@@ -76,8 +77,10 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     } catch (err) {
       successiveFailures++;
       const errorKey = getErrorKey(err);
+      const isTransientFailure = errorKey === 'OTHER_SIDE_CLOSED';
 
       const shouldWarn =
+        !isTransientFailure &&
         (!isStartup || successiveFailures > STARTUP_FAILURE_THRESHOLD) &&
         (successiveFailures === 3 ||
           successiveFailures % 12 === 0 ||
