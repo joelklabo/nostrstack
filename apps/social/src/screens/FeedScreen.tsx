@@ -158,11 +158,17 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         }
       });
       const result = spamFilterEnabled ? filterSpam(filtered) : filtered;
+      const seen = new Set<string>();
+      const unique = result.filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
       // Sort posts based on sort mode - use spread to avoid mutating original array
       if (sortMode === 'latest') {
-        return [...result].sort((a, b) => b.created_at - a.created_at);
+        return [...unique].sort((a, b) => b.created_at - a.created_at);
       }
-      return result; // chronological - return as-is from relay
+      return unique; // chronological - return as-is from relay
     } catch (e) {
       console.error('Filter error', e);
       return posts;

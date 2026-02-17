@@ -149,11 +149,20 @@ export function useNostrQuery(
 
           if (newEvents.length > 0) {
             setEvents((prev) => {
-              const all = [...prev, ...newEvents].sort((a, b) => b.created_at - a.created_at);
-              if (all.length > 0) {
-                oldestTimestamp.current = all[all.length - 1].created_at;
+              const combined = [...prev, ...newEvents];
+              const seen = new Set<string>();
+              const unique: Event[] = [];
+              for (const event of combined) {
+                if (!seen.has(event.id)) {
+                  seen.add(event.id);
+                  unique.push(event);
+                }
               }
-              return all;
+              unique.sort((a, b) => b.created_at - a.created_at);
+              if (unique.length > 0) {
+                oldestTimestamp.current = unique[unique.length - 1].created_at;
+              }
+              return unique;
             });
           }
 
