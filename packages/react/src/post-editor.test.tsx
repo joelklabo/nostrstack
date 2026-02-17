@@ -55,7 +55,7 @@ describe('PostEditor', () => {
     expect(screen.getByText('Publish')).toBeInTheDocument();
   });
 
-  it('shows access denied message when not authenticated', () => {
+  it('shows sign in prompt when not authenticated', () => {
     mockUseAuth.mockReturnValue({
       pubkey: null,
       signEvent: mockSignEvent,
@@ -63,7 +63,7 @@ describe('PostEditor', () => {
       error: null
     });
     render(<PostEditor />);
-    expect(screen.getByText('ACCESS_DENIED: User not authenticated.')).toBeInTheDocument();
+    expect(screen.getByText(/Sign in to post/)).toBeInTheDocument();
     expect(
       screen.queryByPlaceholderText('Share something with the network...')
     ).not.toBeInTheDocument();
