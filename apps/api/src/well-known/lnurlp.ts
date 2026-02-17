@@ -12,6 +12,18 @@ function resolveNumber(...values: Array<number | null | undefined>) {
   return undefined;
 }
 
+function getLocalLnurlUsername(rawUsername: string) {
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(rawUsername);
+    } catch {
+      return rawUsername;
+    }
+  })();
+  const [localPart] = decoded.split('@');
+  return localPart || decoded;
+}
+
 export async function lnurlpHandler(
   request: FastifyRequest<{ Params: { username: string } }>,
   reply: FastifyReply
@@ -19,7 +31,7 @@ export async function lnurlpHandler(
   const { username } = request.params;
   const tenant = await getTenantForRequest(request.server, request);
   const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
-  const localUsername = username.includes('@') ? username.split('@', 1)[0] : username;
+  const localUsername = getLocalLnurlUsername(username);
   if (localUsername !== username) {
     request.log.warn(
       { requestId: request.id, username, tenant: tenant.domain },

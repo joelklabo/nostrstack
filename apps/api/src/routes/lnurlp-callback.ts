@@ -14,6 +14,18 @@ function resolveNumber(...values: Array<number | null | undefined>) {
   return undefined;
 }
 
+function getLocalLnurlUsername(rawUsername: string) {
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(rawUsername);
+    } catch {
+      return rawUsername;
+    }
+  })();
+  const [localPart] = decoded.split('@');
+  return localPart || decoded;
+}
+
 const PAID_STATES = new Set(['PAID', 'COMPLETED', 'SETTLED', 'CONFIRMED']);
 
 export async function registerLnurlCallback(app: FastifyInstance) {
@@ -155,7 +167,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       const { amount, nostr } = request.query as { amount: number; nostr?: string; lnurl?: string };
       const tenant = await getTenantForRequest(app, request);
       const origin = originFromRequest(request, env.PUBLIC_ORIGIN);
-      const localUsername = username.includes('@') ? username.split('@', 1)[0] : username;
+      const localUsername = getLocalLnurlUsername(username);
       if (localUsername !== username) {
         app.log.warn(
           { requestId: request.id, username, tenant: tenant.domain },
@@ -241,7 +253,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
           amount: amountSats,
           description: descriptionHash ? '' : `nostrstack payment to ${canonicalIdentifier}`,
           descriptionHash,
-          callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(username)}/webhook`,
+          callbackUrl: `${origin}/api/lnurlp/${encodeURIComponent(localUsername)}/webhook`,
           // LNbits uses a `webhook` field rather than OpenNode-style callbacks; our webhook handler updates Payment + broadcasts /ws/pay.
           webhookUrl: `${origin}/api/pay/webhook/lnbits`
         });

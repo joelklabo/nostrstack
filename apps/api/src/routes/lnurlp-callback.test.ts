@@ -96,6 +96,25 @@ describe('lnurl webhook', () => {
     expect((domainScopedRes.json() as { pr?: string }).pr).toBeTruthy();
   });
 
+  it('creates invoice from encoded domain-scoped identifier', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: { tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-invoice-encoded' } },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-invoice-encoded',
+        lightningAddress: 'encoded@default'
+      },
+      update: {}
+    });
+
+    const res = await server.inject({
+      url: '/api/lnurlp/eNcOdEd%40default/invoice?amount=1000'
+    });
+    expect(res.statusCode).toBe(200);
+    expect((res.json() as { pr?: string }).pr).toBeTruthy();
+  });
+
   it('rejects invalid successAction payloads', async () => {
     const tenant = await server.prisma.tenant.findFirstOrThrow();
     await server.prisma.user.upsert({

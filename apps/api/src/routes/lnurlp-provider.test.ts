@@ -92,6 +92,28 @@ describe('lnurl invoice provider field', () => {
     expect(domainScopedRes.statusCode).toBe(200);
   });
 
+  it('normalizes encoded domain-scoped identifiers in lnurl metadata', async () => {
+    const tenant = await server.prisma.tenant.findFirstOrThrow();
+    await server.prisma.user.upsert({
+      where: {
+        tenantId_pubkey: { tenantId: tenant.id, pubkey: 'pk-encoded-meta' }
+      },
+      create: {
+        tenantId: tenant.id,
+        pubkey: 'pk-encoded-meta',
+        lightningAddress: 'encoded@default'
+      },
+      update: {}
+    });
+
+    const domainEncodedRes = await server.inject({ url: '/.well-known/lnurlp/eNcOdEd%40default' });
+    expect(domainEncodedRes.statusCode).toBe(200);
+    const body = domainEncodedRes.json() as { metadata?: string; callback?: string };
+    expect(body.metadata).toContain('"eNcOdEd@default"');
+    expect(body.callback).toContain('/api/lnurlp/eNcOdEd/invoice');
+    expect(body.callback).not.toContain('%40');
+  });
+
   it('rejects invalid successAction payloads', async () => {
     const tenant = await server.prisma.tenant.findFirstOrThrow();
     await server.prisma.user.upsert({
