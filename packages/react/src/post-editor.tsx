@@ -111,7 +111,9 @@ export function PostEditor({
     return (
       <div className="post-editor-container">
         <div className="system-msg">
-          Sign in to post. <a href="/login">Sign in</a> or <a href="/">browse as guest</a>.
+          {mode === 'guest'
+            ? 'Sign in to post. Click "Sign in" in the sidebar to authenticate.'
+            : 'Sign in to post. <a href="/login">Sign in</a> or <a href="/">browse as guest</a>.'}
         </div>
         {error && <div className="system-msg error-msg">{`[ERROR]: ${error}`}</div>}
       </div>
