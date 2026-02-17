@@ -3,6 +3,7 @@ import {
   useAuth,
   useFeed,
   useNostrQuery,
+  useNostrstackConfig,
   useProfile,
   ZapButton
 } from '@nostrstack/react';
@@ -21,7 +22,7 @@ import { CopyButton } from '../ui/CopyButton';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
-import { resolveRuntimeApiBase } from '../utils/api-base';
+import { resolveGalleryApiBase, resolveRuntimeApiBase } from '../utils/api-base';
 import { estimatePostRowHeight } from '../utils/feed-layout';
 import { buildVirtualizedCacheKey } from '../utils/virtualized-cache';
 
@@ -51,6 +52,14 @@ interface ProfileScreenProps {
 }
 
 export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenProps) {
+  const cfg = useNostrstackConfig();
+  const apiBase = resolveRuntimeApiBase(
+    resolveGalleryApiBase({
+      apiBase: cfg.apiBase,
+      baseUrl: cfg.baseUrl,
+      apiBaseConfig: cfg.apiBaseConfig
+    }).baseUrl
+  );
   const { relays: relayList, isLoading: relaysLoading } = useRelays();
   // const [retryCount, setRetryCount] = useState(0);
   const [lightningQr, setLightningQr] = useState<string | null>(null);
@@ -90,7 +99,6 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
     }
   };
 
-  const apiBase = resolveRuntimeApiBase(import.meta.env.VITE_API_BASE_URL);
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;

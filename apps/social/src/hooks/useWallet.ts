@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useNostrstackConfig } from '@nostrstack/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { resolveRuntimeApiBase, resolveRuntimeWsUrl } from '../utils/api-base';
+import {
+  resolveGalleryApiBase,
+  resolveRuntimeApiBase,
+  resolveRuntimeWsUrl
+} from '../utils/api-base';
 
-async function checkWalletEnabled(): Promise<boolean> {
-  const apiBase = resolveRuntimeApiBase(import.meta.env.VITE_API_BASE_URL);
+async function checkWalletEnabled(runtimeApiBase: string): Promise<boolean> {
+  const apiBase = runtimeApiBase;
   if (!apiBase) return false;
   try {
     const url = `${apiBase}/debug/ws-wallet`;
@@ -41,6 +46,20 @@ export type WalletState = {
 };
 
 export function useWallet(enabled: boolean = true): WalletState {
+  const cfg = useNostrstackConfig();
+  const apiBaseConfig = useMemo(
+    () =>
+      resolveGalleryApiBase({
+        apiBase: cfg.apiBase,
+        baseUrl: cfg.baseUrl,
+        apiBaseConfig: cfg.apiBaseConfig
+      }),
+    [cfg.apiBase, cfg.apiBaseConfig, cfg.baseUrl]
+  );
+  const apiBase = useMemo(
+    () => resolveRuntimeApiBase(apiBaseConfig.baseUrl),
+    [apiBaseConfig.baseUrl]
+  );
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +91,7 @@ export function useWallet(enabled: boolean = true): WalletState {
     let cancelled = false;
 
     async function initWallet() {
-      const wsUrl = resolveRuntimeWsUrl(import.meta.env.VITE_API_BASE_URL, '/ws/wallet');
+      const wsUrl = resolveRuntimeWsUrl(apiBaseConfig.baseUrl, '/ws/wallet');
       if (!wsUrl) {
         setIsConnecting(false);
         setError('No wallet URL configured');
@@ -81,7 +100,7 @@ export function useWallet(enabled: boolean = true): WalletState {
         return;
       }
 
-      const isEnabled = await checkWalletEnabled();
+      const isEnabled = await checkWalletEnabled(apiBase);
       if (!isEnabled || cancelled) {
         setIsConnecting(false);
         hasWalletSnapshot.current = false;
@@ -170,7 +189,7 @@ export function useWallet(enabled: boolean = true): WalletState {
       cancelled = true;
       cleanup?.then((innerCleanup) => innerCleanup?.());
     };
-  }, [enabled, retryCount]);
+  }, [apiBase, apiBaseConfig.baseUrl, enabled, retryCount]);
 
   return { wallet, isConnecting, error, retry };
 }

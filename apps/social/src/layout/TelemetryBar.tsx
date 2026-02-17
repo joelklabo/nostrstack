@@ -8,7 +8,8 @@ import {
   type PaymentTelemetryEvent,
   type SearchTelemetryEvent,
   subscribeTelemetry,
-  useBitcoinStatus
+  useBitcoinStatus,
+  useNostrstackConfig
 } from '@nostrstack/react';
 import { Alert, Skeleton } from '@nostrstack/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +20,7 @@ import { BitcoinNodeCard } from '../ui/BitcoinNodeCard';
 import { type BlockData, BlockNotification } from '../ui/BlockNotification';
 import { type ConnectionState, ConnectionStatus, type NetworkType } from '../ui/ConnectionStatus';
 import { LiveStatsTicker, type NetworkStats } from '../ui/LiveStatsTicker';
-import { resolveRuntimeWsUrl } from '../utils/api-base';
+import { resolveGalleryApiBase, resolveRuntimeWsUrl } from '../utils/api-base';
 
 type TelemetryEvent =
   | {
@@ -280,6 +281,16 @@ export function TelemetryBar() {
   const [pollFailures, setPollFailures] = useState(0);
   const [latestBlock, setLatestBlock] = useState<BlockData | null>(null);
   const [showBlockNotification, setShowBlockNotification] = useState(false);
+  const cfg = useNostrstackConfig();
+  const apiBaseConfig = useMemo(
+    () =>
+      resolveGalleryApiBase({
+        apiBase: cfg.apiBase,
+        baseUrl: cfg.baseUrl,
+        apiBaseConfig: cfg.apiBaseConfig
+      }),
+    [cfg.apiBase, cfg.apiBaseConfig, cfg.baseUrl]
+  );
   const { status, error: statusError, isLoading: statusLoading, refresh } = useBitcoinStatus();
   const { relays: activeRelays, isLoading: relaysLoading } = useRelays();
 
@@ -457,7 +468,7 @@ export function TelemetryBar() {
   }, [displayStatus, telemetryTiming.statusDwellMs, wsStatus]);
 
   useEffect(() => {
-    const telemetryWsUrl = resolveRuntimeWsUrl(import.meta.env.VITE_API_BASE_URL, '/ws/telemetry');
+    const telemetryWsUrl = resolveRuntimeWsUrl(apiBaseConfig.baseUrl, '/ws/telemetry');
     if (!telemetryWsUrl) {
       appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WS URL not resolved.' });
       setWsStatus('offline');
@@ -658,7 +669,7 @@ export function TelemetryBar() {
       safeClose(wsRef.current);
       wsRef.current = null;
     };
-  }, [appendLog, refresh, telemetryTiming]);
+  }, [apiBaseConfig.baseUrl, appendLog, refresh, telemetryTiming]);
 
   useEffect(() => {
     return subscribeTelemetry((event) => {

@@ -1,4 +1,4 @@
-import { PostEditor, useAuth, useFeed } from '@nostrstack/react';
+import { PostEditor, useAuth, useFeed, useNostrstackConfig } from '@nostrstack/react';
 import { Alert, PostSkeleton } from '@nostrstack/ui';
 import type { Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +13,7 @@ import { NewPostsIndicator } from '../ui/NewPostsIndicator';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { SupportCard } from '../ui/SupportCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
-import { resolveRuntimeApiBase } from '../utils/api-base';
+import { resolveGalleryApiBase, resolveRuntimeApiBase } from '../utils/api-base';
 import { estimatePostRowHeight } from '../utils/feed-layout';
 import { navigateTo } from '../utils/navigation';
 import { buildVirtualizedCacheKey } from '../utils/virtualized-cache';
@@ -29,8 +29,15 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
   const { contacts, loading: contactsLoading } = useContactList();
   const { pubkey } = useAuth();
   const feedContainerRef = useRef<HTMLElement | null>(null);
+  const cfg = useNostrstackConfig();
+  const apiBase = resolveRuntimeApiBase(
+    resolveGalleryApiBase({
+      apiBase: cfg.apiBase,
+      baseUrl: cfg.baseUrl,
+      apiBaseConfig: cfg.apiBaseConfig
+    }).baseUrl
+  );
 
-  const apiBase = resolveRuntimeApiBase(import.meta.env.VITE_API_BASE_URL);
   const enableRegtestPay =
     String(import.meta.env.VITE_ENABLE_REGTEST_PAY ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
