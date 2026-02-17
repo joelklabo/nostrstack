@@ -3990,6 +3990,13 @@ button:disabled {
   animation: hint-fade-in 0.3s ease-out;
 }
 
+.lightning-card-hint--warning {
+  color: var(--ns-color-text-subtle);
+  font-size: 0.7rem;
+  display: inline-block;
+  margin-top: var(--ns-space-1);
+}
+
 @keyframes hint-fade-in {
   from {
     opacity: 0;

@@ -66,6 +66,7 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
   const [lightningCopyStatus, setLightningCopyStatus] = useState<'idle' | 'copied' | 'error'>(
     'idle'
   );
+  const [walletLaunchState, setWalletLaunchState] = useState<'idle' | 'unable'>('idle');
   const [zapAmount, setZapAmount] = useState(21);
 
   const { isFollowing, follow, unfollow, loading: contactsLoading } = useContactList();
@@ -216,7 +217,22 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
 
   const handleOpenWallet = useCallback(() => {
     if (!lightningUri) return;
-    window.open(lightningUri, '_blank');
+    try {
+      const walletWindow = window.open(lightningUri, '_blank');
+      if (!walletWindow) {
+        setWalletLaunchState('unable');
+        return;
+      }
+      setWalletLaunchState('idle');
+    } catch {
+      setWalletLaunchState('unable');
+    }
+  }, [lightningUri]);
+
+  useEffect(() => {
+    if (!lightningUri) {
+      setWalletLaunchState('idle');
+    }
   }, [lightningUri]);
 
   const showLightningAddress = Boolean(lightningAddress);
@@ -598,6 +614,16 @@ export function ProfileScreen({ pubkey, onNavigateToSettings }: ProfileScreenPro
                             >
                               Open Wallet
                             </button>
+                            {walletLaunchState === 'unable' && (
+                              <span
+                                role="status"
+                                aria-live="polite"
+                                className="lightning-card-hint lightning-card-hint--warning"
+                              >
+                                If the wallet app did not open, copy the address and open it
+                                manually in your wallet.
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
