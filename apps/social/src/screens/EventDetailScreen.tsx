@@ -344,31 +344,63 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       try {
         let event: Event | null = null;
         let repliesState: RepliesState = EMPTY_REPLIES_STATE;
+        let fetchTimedOut = false;
 
         if (target.type === 'event') {
-          event = await withTimeout(pool.get(relayList, { ids: [target.id] }), REQUEST_TIMEOUT_MS);
+          try {
+            event = await withTimeout(
+              pool.get(relayList, { ids: [target.id] }),
+              REQUEST_TIMEOUT_MS
+            );
+          } catch (err) {
+            if (err instanceof Error && err.message === 'Request timed out') {
+              fetchTimedOut = true;
+            } else {
+              throw err;
+            }
+          }
           if (event) {
             repliesState = await fetchRepliesFromRelays(event.id, relayList, pool);
           }
         } else if (target.type === 'profile') {
-          event = await withTimeout(
-            pool.get(relayList, { kinds: [0], authors: [target.pubkey] }),
-            REQUEST_TIMEOUT_MS
-          );
+          try {
+            event = await withTimeout(
+              pool.get(relayList, { kinds: [0], authors: [target.pubkey] }),
+              REQUEST_TIMEOUT_MS
+            );
+          } catch (err) {
+            if (err instanceof Error && err.message === 'Request timed out') {
+              fetchTimedOut = true;
+            } else {
+              throw err;
+            }
+          }
         } else {
           const identifier = target.identifier ?? '';
-          event = await withTimeout(
-            pool.get(relayList, {
-              kinds: [target.kind],
-              authors: [target.pubkey],
-              '#d': [identifier]
-            }),
-            REQUEST_TIMEOUT_MS
-          );
+          try {
+            event = await withTimeout(
+              pool.get(relayList, {
+                kinds: [target.kind],
+                authors: [target.pubkey],
+                '#d': [identifier]
+              }),
+              REQUEST_TIMEOUT_MS
+            );
+          } catch (err) {
+            if (err instanceof Error && err.message === 'Request timed out') {
+              fetchTimedOut = true;
+            } else {
+              throw err;
+            }
+          }
         }
 
         if (!event) {
-          throw new Error('Event not found on available relays.');
+          throw new Error(
+            fetchTimedOut
+              ? 'Request timed out while fetching from relays. Please check your connection and try again.'
+              : 'Event not found on available relays.'
+          );
         }
 
         let authorProfile: ProfileMeta | null = null;
