@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ command }) => {
   const useReactSrc = command === 'serve';
   const useHttps = process.env.USE_HTTPS !== 'false';
+  const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001';
   return {
     plugins: [
       react({
@@ -27,7 +28,13 @@ export default defineConfig(({ command }) => {
       },
       proxy: {
         '/api': {
-          target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
+          target: apiProxyTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/ws': {
+          target: apiProxyTarget,
+          ws: true,
           changeOrigin: true,
           secure: false
         }

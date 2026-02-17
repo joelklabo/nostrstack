@@ -10,7 +10,6 @@ export type GalleryApiBaseInput = {
   apiBaseConfig?: ApiBaseResolution;
 };
 
-const DEFAULT_LOCAL_API_BASE = 'http://localhost:3001';
 const DEFAULT_LOCAL_HOST = 'localhost';
 const LOCAL_API_PORT = 3001;
 const LOCAL_HOSTNAMES = ['localhost', '127.0.0.1', '[::1]', '::1'];
@@ -61,7 +60,7 @@ function isLocalRuntime(): boolean {
 
 function resolveFallbackApiBase(): string {
   if (isLocalRuntime()) {
-    return DEFAULT_LOCAL_API_BASE;
+    return '/api';
   }
   return resolveRuntimeApiOrigin();
 }
