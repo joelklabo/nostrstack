@@ -27,8 +27,10 @@ export class Relay {
 
   async connect(): Promise<void> {
     if (this._connected) return;
-    await this.pool.connect([this.url]);
-    this._connected = true;
+    const { succeeded } = await this.pool.connect([this.url]);
+    if (succeeded.length > 0) {
+      this._connected = true;
+    }
   }
 
   close(): void {

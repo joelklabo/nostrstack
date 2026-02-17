@@ -98,27 +98,52 @@ export class SimplePool {
     }
   }
 
-  private async ensureRelays(relayUrls: string[]) {
+  private async ensureRelays(
+    relayUrls: string[]
+  ): Promise<{ failed: string[]; succeeded: string[] }> {
     const unique = relayUrls.filter(Boolean);
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+
     for (const url of unique) {
-      if (this.relays.has(url)) continue;
-      await this.client.addRelay(url);
-      this.relays.add(url);
-      await this.client.connectRelay(url);
+      if (this.relays.has(url)) {
+        succeeded.push(url);
+        continue;
+      }
+      try {
+        await this.client.addRelay(url);
+        this.relays.add(url);
+        await this.client.connectRelay(url);
+        succeeded.push(url);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : 'connection failed';
+        if (reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')) {
+          console.warn(`DNS resolution failed for relay ${url}: ${reason}`);
+        } else {
+          console.warn(`Failed to connect to relay ${url}: ${reason}`);
+        }
+        failed.push(url);
+      }
     }
+
+    return { failed, succeeded };
   }
 
-  async connect(relays: string[]): Promise<void> {
-    await this.ensureRelays(relays);
+  async connect(relays: string[]): Promise<{ failed: string[]; succeeded: string[] }> {
+    return this.ensureRelays(relays);
   }
 
   async querySync(relays: string[], filter: Filter, opts?: { maxWait?: number }): Promise<Event[]> {
     if (!relays.length) return [];
-    await this.ensureRelays(relays);
+    const { succeeded } = await this.ensureRelays(relays);
+    if (succeeded.length === 0) {
+      console.warn('All relays failed to connect, falling back to trying all URLs');
+      return [];
+    }
     const rustFilter = toRustFilter(filter);
     const timeoutMs = opts?.maxWait ?? 8000;
     const events = await this.client.fetchEventsFrom(
-      relays,
+      succeeded,
       rustFilter,
       Duration.fromMillis(BigInt(timeoutMs))
     );
@@ -135,7 +160,10 @@ export class SimplePool {
     if (!relays.length) return [];
     const rustEvent = toRustEvent(event);
     return relays.map(async (url) => {
-      await this.ensureRelays([url]);
+      const { succeeded } = await this.ensureRelays([url]);
+      if (succeeded.length === 0) {
+        throw new Error(`Failed to connect to relay ${url}`);
+      }
       return this.client.sendEventTo([url], rustEvent);
     });
   }
@@ -152,13 +180,21 @@ export class SimplePool {
     let closed = false;
 
     const start = async () => {
-      await this.ensureRelays(relays);
+      const { failed, succeeded } = await this.ensureRelays(relays);
+      if (failed.length > 0) {
+        failed.forEach((url) => {
+          opts.onRelayFailure?.(url, 'connection failed');
+        });
+      }
+      if (succeeded.length === 0) {
+        throw new Error('All relays failed to connect');
+      }
       const rustFilter = toRustFilter(filter);
       const autoClose = new SubscribeAutoCloseOptions();
       if (typeof opts.maxWait === 'number') {
         autoClose.timeout(Duration.fromMillis(BigInt(opts.maxWait)));
       }
-      const output = await this.client.subscribeTo(relays, rustFilter, autoClose);
+      const output = await this.client.subscribeTo(succeeded, rustFilter, autoClose);
       const state: SubscriptionState = {
         id: output.id,
         relays: output.success.length ? output.success : relays,
