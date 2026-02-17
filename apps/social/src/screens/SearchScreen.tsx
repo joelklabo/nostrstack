@@ -78,7 +78,6 @@ export function SearchScreen() {
 
   useEffect(() => {
     const updateRelayHealth = () => setRelayHealthCount((c) => c + 1);
-    updateRelayHealth();
     return relayMonitor.subscribe(updateRelayHealth);
   }, []);
 
