@@ -195,6 +195,7 @@ export const Sidebar = memo(function Sidebar({
       if (pubkey) {
         navigateToProfile(pubkey);
       } else {
+        navigateTo('/profile');
         setCurrentView('profile');
       }
       onMobileClose?.();

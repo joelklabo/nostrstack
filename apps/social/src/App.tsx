@@ -223,6 +223,7 @@ function AppShell() {
   const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
+  const isGuestProfileRoute = pathname === '/profile';
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
@@ -242,6 +243,7 @@ function AppShell() {
     if (isFindFriendRoute) return true;
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
+    if (pathname === '/profile') return true;
     if (nostrRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
@@ -277,7 +279,7 @@ function AppShell() {
       setCurrentView('search');
       return;
     }
-    if (profileRoutePubkey) {
+    if (profileRoutePubkey || isGuestProfileRoute) {
       setCurrentView('profile');
       return;
     }
@@ -290,7 +292,8 @@ function AppShell() {
     isSearchRoute,
     isFindFriendRoute,
     isSettingsRoute,
-    profileRoutePubkey
+    profileRoutePubkey,
+    isGuestProfileRoute
   ]);
 
   useEffect(() => {
@@ -572,9 +575,14 @@ function AppShell() {
               {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
               {currentView === 'search' && <SearchScreen />}
               {currentView === 'offers' && <OffersView />}
-              {currentView === 'profile' && pubkey && (
-                <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
-              )}
+              {currentView === 'profile' &&
+                (pubkey ? (
+                  <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
+                ) : (
+                  <div className="profile-guest-placeholder">
+                    <p>Sign in to view your profile</p>
+                  </div>
+                ))}
               {currentView === 'settings' && (
                 <SettingsScreen
                   theme={theme}
