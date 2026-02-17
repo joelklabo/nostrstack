@@ -22,7 +22,7 @@ export async function lnurlpHandler(
   const localUsername = username.includes('@') ? username.split('@', 1)[0] : username;
   if (localUsername !== username) {
     request.log.warn(
-      { username, tenant: tenant.domain },
+      { requestId: request.id, username, tenant: tenant.domain },
       'lnurlp metadata username included domain; normalizing to local part'
     );
   }
@@ -38,7 +38,7 @@ export async function lnurlpHandler(
 
   if (!user) {
     request.log.warn(
-      { username, tenant: tenant.domain, status: 'not_found' },
+      { requestId: request.id, username, tenant: tenant.domain, status: 'not_found' },
       'lnurlp metadata lookup did not find user'
     );
     return reply.code(404).send({ status: 'not found' });
@@ -48,7 +48,7 @@ export async function lnurlpHandler(
   const metadataResult = normalizeLnurlMetadata(metadataRaw);
   if (metadataResult.error) {
     request.log.warn(
-      { username, tenant: tenant.domain, reason: metadataResult.error },
+      { requestId: request.id, username, tenant: tenant.domain, reason: metadataResult.error },
       'invalid lnurl metadata'
     );
     return reply.code(400).send({ status: 'ERROR', reason: metadataResult.error });
@@ -58,7 +58,7 @@ export async function lnurlpHandler(
   const successActionResult = parseLnurlSuccessAction(successActionRaw);
   if (successActionResult.error) {
     request.log.warn(
-      { username, tenant: tenant.domain, reason: successActionResult.error },
+      { requestId: request.id, username, tenant: tenant.domain, reason: successActionResult.error },
       'invalid lnurl successAction'
     );
     return reply.code(400).send({ status: 'ERROR', reason: successActionResult.error });

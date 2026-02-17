@@ -275,6 +275,9 @@ export async function buildServer() {
     if (!reply.getHeader('x-request-id') && reply.request.id) {
       reply.header('x-request-id', reply.request.id);
     }
+    if (!reply.getHeader('x-lnurlp-request-id') && reply.request.id) {
+      reply.header('x-lnurlp-request-id', reply.request.id);
+    }
     return payload;
   });
 

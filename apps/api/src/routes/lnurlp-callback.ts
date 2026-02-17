@@ -158,13 +158,14 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       const localUsername = username.includes('@') ? username.split('@', 1)[0] : username;
       if (localUsername !== username) {
         app.log.warn(
-          { username, tenant: tenant.domain },
+          { requestId: request.id, username, tenant: tenant.domain },
           'lnurlp invoice callback username included domain; normalizing to local part'
         );
       }
       const identifier = `${localUsername}@${tenant.domain}`;
       app.log.info(
         {
+          requestId: request.id,
           tenant: tenant.domain,
           username: localUsername,
           amount,
@@ -174,7 +175,10 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       );
       const user = await findLnurlUserByIdentifier(app.prisma, tenant.id, identifier);
       if (!user) {
-        app.log.warn({ tenant: tenant.domain, username }, 'lnurlp invoice request user not found');
+        app.log.warn(
+          { requestId: request.id, tenant: tenant.domain, username },
+          'lnurlp invoice request user not found'
+        );
         return reply.code(404).send({ status: 'not found' });
       }
 
@@ -185,7 +189,12 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         const metadataResult = normalizeLnurlMetadata(metadataRaw);
         if (metadataResult.error) {
           app.log.warn(
-            { username, tenant: tenant.domain, reason: metadataResult.error },
+            {
+              requestId: request.id,
+              username,
+              tenant: tenant.domain,
+              reason: metadataResult.error
+            },
             'invalid lnurl metadata'
           );
           return reply.code(400).send({ status: 'ERROR', reason: metadataResult.error });
@@ -196,7 +205,12 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       const successActionResult = parseLnurlSuccessAction(successActionRaw);
       if (successActionResult.error) {
         app.log.warn(
-          { username, tenant: tenant.domain, reason: successActionResult.error },
+          {
+            requestId: request.id,
+            username,
+            tenant: tenant.domain,
+            reason: successActionResult.error
+          },
           'invalid lnurl successAction'
         );
         return reply.code(400).send({ status: 'ERROR', reason: successActionResult.error });
@@ -234,6 +248,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       } catch (error) {
         app.log.error(
           {
+            requestId: request.id,
             tenant: tenant.domain,
             username,
             err: error instanceof Error ? error.message : error
@@ -259,6 +274,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
       } catch (error) {
         app.log.error(
           {
+            requestId: request.id,
             tenant: tenant.domain,
             userId: user.id,
             providerRef: charge.id,
@@ -271,6 +287,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
 
       app.log.info(
         {
+          requestId: request.id,
           tenant: tenant.domain,
           username,
           userId: user.id,
