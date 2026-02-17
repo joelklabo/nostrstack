@@ -1,4 +1,4 @@
-import type { FastifyBaseLogger,FastifyInstance } from 'fastify';
+import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import WebSocket, { WebSocketServer } from 'ws';
 
 type WalletSnapshot = {
@@ -13,7 +13,12 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
   let successiveFailures = 0;
   let lastFailureMsg = '';
 
-  return async (): Promise<WalletSnapshot | null> => {
+  const reset = () => {
+    successiveFailures = 0;
+    lastFailureMsg = '';
+  };
+
+  const fetchFn = async (): Promise<WalletSnapshot | null> => {
     if (process.env.LIGHTNING_PROVIDER === 'mock') {
       return {
         type: 'wallet',
@@ -35,24 +40,33 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
       successiveFailures = 0;
       lastFailureMsg = '';
-      return { type: 'wallet', id: json.id, name: json.name, balance: json.balance, time: Math.floor(Date.now() / 1000) };
+      return {
+        type: 'wallet',
+        id: json.id,
+        name: json.name,
+        balance: json.balance,
+        time: Math.floor(Date.now() / 1000)
+      };
     } catch (err) {
       successiveFailures++;
       const msg = err instanceof Error ? err.message : String(err);
-      
+
       // Warn on first failure, every 12th failure (~1 minute), or if error changed
-      const shouldWarn = successiveFailures === 1 || successiveFailures % 12 === 0 || msg !== lastFailureMsg;
-      
+      const shouldWarn =
+        successiveFailures === 1 || successiveFailures % 12 === 0 || msg !== lastFailureMsg;
+
       if (shouldWarn) {
         log.warn({ err, successiveFailures }, 'wallet-ws fetch failed');
       } else {
         log.debug({ err, successiveFailures }, 'wallet-ws fetch failed (suppressed)');
       }
-      
+
       lastFailureMsg = msg;
       return null;
     }
   };
+
+  return { fetch: fetchFn, reset };
 }
 
 export async function registerWalletWs(app: FastifyInstance) {
@@ -77,6 +91,14 @@ export async function registerWalletWs(app: FastifyInstance) {
 
   let lastSnapshot: WalletSnapshot | null = null;
 
+  const hasClients = () => {
+    let count = 0;
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) count++;
+    });
+    return count > 0;
+  };
+
   const broadcast = (snap: WalletSnapshot) => {
     const payload = JSON.stringify(snap);
     wss.clients.forEach((client) => {
@@ -84,9 +106,14 @@ export async function registerWalletWs(app: FastifyInstance) {
     });
   };
 
-  const fetchWallet = createWalletFetcher(app.log, baseUrl, apiKey);
+  const { fetch: fetchWallet, reset: resetWalletFailures } = createWalletFetcher(
+    app.log,
+    baseUrl,
+    apiKey
+  );
 
   const interval = setInterval(async () => {
+    if (!hasClients()) return;
     const snap = await fetchWallet();
     if (!snap) return;
     const changed =
@@ -102,6 +129,7 @@ export async function registerWalletWs(app: FastifyInstance) {
 
   wss.on('connection', async (ws) => {
     app.log.info({ clientCount: wss.clients.size }, 'wallet ws connection');
+    resetWalletFailures();
     if (lastSnapshot) {
       ws.send(JSON.stringify(lastSnapshot));
     } else {
@@ -118,17 +146,21 @@ export async function registerWalletWs(app: FastifyInstance) {
     wss.close();
   });
 
-  app.get('/debug/ws-wallet', {
-    schema: {
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            enabled: { type: 'boolean' },
-            url: { type: 'string' }
+  app.get(
+    '/debug/ws-wallet',
+    {
+      schema: {
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              enabled: { type: 'boolean' },
+              url: { type: 'string' }
+            }
           }
         }
       }
-    }
-  }, async () => ({ enabled: true, url: '/ws/wallet' }));
+    },
+    async () => ({ enabled: true, url: '/ws/wallet' })
+  );
 }

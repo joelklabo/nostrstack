@@ -1,5 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
-import { beforeEach,describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createWalletFetcher } from './wallet-ws';
 
@@ -8,7 +8,7 @@ describe('wallet-ws fetcher', () => {
     warn: vi.fn(),
     debug: vi.fn(),
     info: vi.fn(),
-    error: vi.fn(),
+    error: vi.fn()
   } as unknown as FastifyBaseLogger;
 
   beforeEach(() => {
@@ -18,8 +18,8 @@ describe('wallet-ws fetcher', () => {
 
   it('logs warn on first failure', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('connection timeout'));
-    const fetcher = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
-    
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledWith(
       expect.objectContaining({ successiveFailures: 1 }),
@@ -29,12 +29,12 @@ describe('wallet-ws fetcher', () => {
 
   it('suppresses subsequent identical failures', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('503 Service Unavailable'));
-    const fetcher = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
-    
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
     // First failure
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
-    
+
     // Second failure (same error)
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
@@ -45,12 +45,12 @@ describe('wallet-ws fetcher', () => {
   });
 
   it('logs warn if error message changes', async () => {
-    const fetcher = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
-    
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
     vi.mocked(fetch).mockRejectedValue(new Error('503 Service Unavailable'));
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
-    
+
     vi.mocked(fetch).mockRejectedValue(new Error('401 Unauthorized'));
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledTimes(2);
@@ -62,31 +62,37 @@ describe('wallet-ws fetcher', () => {
 
   it('logs warn every 12th failure', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
-    const fetcher = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
-    
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
     for (let i = 1; i <= 13; i++) {
       await fetcher();
     }
-    
+
     // Should warn on 1st and 12th
     expect(mockLog.warn).toHaveBeenCalledTimes(2);
-    expect(mockLog.warn).toHaveBeenCalledWith(expect.objectContaining({ successiveFailures: 1 }), expect.any(String));
-    expect(mockLog.warn).toHaveBeenCalledWith(expect.objectContaining({ successiveFailures: 12 }), expect.any(String));
+    expect(mockLog.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ successiveFailures: 1 }),
+      expect.any(String)
+    );
+    expect(mockLog.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ successiveFailures: 12 }),
+      expect.any(String)
+    );
   });
 
   it('resets failure count on success', async () => {
-    const fetcher = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
-    
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
     vi.mocked(fetch).mockRejectedValue(new Error('fail'));
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
-    
+
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(JSON.stringify({ balance: 100 }))
     } as Response);
     await fetcher();
-    
+
     vi.mocked(fetch).mockRejectedValue(new Error('fail again'));
     await fetcher();
     expect(mockLog.warn).toHaveBeenCalledTimes(2);
