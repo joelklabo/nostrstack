@@ -103,13 +103,15 @@ export function SearchScreen() {
   }, [fetchedProfile]);
 
   const statusLabel = useMemo(() => {
+    if (notesLoading) return 'Searching for notes...';
+    if (notesError) return notesError;
     if (status === 'validating') return 'Checking format…';
     if (status === 'resolving') return 'Resolving identity…';
     if (status === 'resolved') return 'Identity ready.';
     if (status === 'error' && error?.code !== 'invalid_format')
       return error?.message ?? 'Lookup failed.';
     return 'Paste an identifier or search keywords.';
-  }, [status, error]);
+  }, [notesLoading, notesError, status, error]);
 
   const canRetryIdentity = useCallback(() => {
     if (status !== 'error' || !error) return false;

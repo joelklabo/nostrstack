@@ -38,6 +38,8 @@ const shouldLogRelayFailure = (url: string, reason: string, now: number) => {
   return now - existing.lastWarnedAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS;
 };
 
+const normalizeRelayUrl = (url: string) => url.trim().replace(/\/+$/, '');
+
 const shouldSkipRelayReconnect = (url: string, now: number) => {
   const state = relayFailureState.get(url);
   return Boolean(state && now < state.nextRetryAt);
@@ -131,35 +133,42 @@ export class SimplePool {
     const failed: string[] = [];
 
     for (const url of unique) {
+      const normalizedUrl = normalizeRelayUrl(url);
       const now = Date.now();
-      if (shouldSkipRelayReconnect(url, now)) {
+      if (shouldSkipRelayReconnect(normalizedUrl, now)) {
         failed.push(url);
         continue;
       }
-      if (this.relays.has(url)) {
+      if (this.relays.has(normalizedUrl)) {
         succeeded.push(url);
         continue;
       }
       try {
-        await this.client.addRelay(url);
-        this.relays.add(url);
-        await this.client.connectRelay(url);
+        await this.client.addRelay(normalizedUrl);
+        this.relays.add(normalizedUrl);
+        const relay = await this.client.relay(normalizedUrl);
+        await relay.tryConnect(Duration.fromMillis(BigInt(5000)));
         succeeded.push(url);
-        relayFailureState.delete(url);
+        relayFailureState.delete(normalizedUrl);
       } catch (err) {
         const reason = err instanceof Error ? err.message : 'connection failed';
         const failureMessage =
           reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')
-            ? `DNS resolution failed for relay ${url}: ${reason}`
-            : `Failed to connect to relay ${url}: ${reason}`;
-        const shouldLog = shouldLogRelayFailure(url, failureMessage, now);
+            ? `DNS resolution failed for relay ${normalizedUrl}: ${reason}`
+            : `Failed to connect to relay ${normalizedUrl}: ${reason}`;
+        await Promise.allSettled([
+          this.client.disconnectRelay(normalizedUrl),
+          this.client.forceRemoveRelay(normalizedUrl)
+        ]);
+        this.relays.delete(normalizedUrl);
+        const shouldLog = shouldLogRelayFailure(normalizedUrl, failureMessage, now);
         if (shouldLog) {
           console.warn(failureMessage);
         }
-        relayFailureState.set(url, {
+        relayFailureState.set(normalizedUrl, {
           nextRetryAt: now + RELAY_CONNECT_RETRY_BACKOFF_MS,
           reason: failureMessage,
-          lastWarnedAt: shouldLog ? now : relayFailureState.get(url)?.lastWarnedAt ?? now
+          lastWarnedAt: shouldLog ? now : relayFailureState.get(normalizedUrl)?.lastWarnedAt ?? now
         });
         failed.push(url);
       }
