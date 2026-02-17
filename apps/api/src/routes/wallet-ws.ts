@@ -12,10 +12,13 @@ type WalletSnapshot = {
 export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, apiKey: string) {
   let successiveFailures = 0;
   let lastErrorKey = '';
+  let isStartup = true;
+  const STARTUP_FAILURE_THRESHOLD = 2;
 
   const reset = () => {
     successiveFailures = 0;
     lastErrorKey = '';
+    isStartup = true;
   };
 
   const getErrorKey = (err: unknown): string => {
@@ -53,6 +56,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
       successiveFailures = 0;
       lastErrorKey = '';
+      isStartup = false;
       return {
         type: 'wallet',
         id: json.id,
@@ -65,9 +69,10 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       const errorKey = getErrorKey(err);
 
       const shouldWarn =
-        successiveFailures === 3 ||
-        successiveFailures % 12 === 0 ||
-        (successiveFailures > 3 && errorKey !== lastErrorKey);
+        (!isStartup || successiveFailures > STARTUP_FAILURE_THRESHOLD) &&
+        (successiveFailures === 3 ||
+          successiveFailures % 12 === 0 ||
+          (successiveFailures > 3 && errorKey !== lastErrorKey));
 
       if (shouldWarn) {
         log.warn({ err, successiveFailures }, 'wallet-ws fetch failed');
@@ -151,6 +156,8 @@ export async function registerWalletWs(app: FastifyInstance) {
       if (snap) {
         lastSnapshot = snap;
         ws.send(JSON.stringify(snap));
+      } else {
+        app.log.debug('wallet ws initial fetch failed, will retry via interval');
       }
     }
   });
