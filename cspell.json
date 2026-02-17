@@ -578,7 +578,8 @@
     "nullglob",
     "ltnp",
     "ionos",
-    "unrecognised"
+    "unrecognised",
+    "fuser"
   ],
   "ignoreRegExpList": [
     "/nsec1[0-9a-z]{20,}/g",

@@ -10,6 +10,7 @@ import { useRelays } from '../hooks/useRelays';
 import { useSimplePool } from '../hooks/useSimplePool';
 import { fetchNostrEventFromApi, getSearchRelays, searchNotes } from '../nostr/api';
 import { type ProfileMeta, safeExternalUrl } from '../nostr/eventRenderers';
+import { relayMonitor } from '../nostr/relayHealth';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { resolveGalleryApiBase } from '../utils/api-base';
@@ -73,6 +74,18 @@ export function SearchScreen() {
   const [hasMore, setHasMore] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
   const lastProfileLookupKey = useRef<string | null>(null);
+  const [relayHealthCount, setRelayHealthCount] = useState(0);
+
+  useEffect(() => {
+    const updateRelayHealth = () => setRelayHealthCount((c) => c + 1);
+    updateRelayHealth();
+    return relayMonitor.subscribe(updateRelayHealth);
+  }, []);
+
+  const healthyRelayCount = useMemo(() => {
+    const searchRelays = getSearchRelays(relayList);
+    return searchRelays.filter((r) => relayMonitor.isHealthy(r)).length;
+  }, [relayList, relayHealthCount]);
 
   const NOTES_PAGE_SIZE = 20;
 
@@ -304,9 +317,25 @@ export function SearchScreen() {
   return (
     <div className="search-view">
       <header className="search-header">
-        <div>
-          <h2 className="search-title">Discovery</h2>
-          <p className="search-subtitle">Search for profiles or keywords across Nostr.</p>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flex: 1 }}>
+          <div>
+            <h2 className="search-title">
+              Discovery
+              <span
+                className="feed-relay-status"
+                title={`${healthyRelayCount} of ${relayList.length} relays healthy`}
+                aria-label={`${healthyRelayCount} of ${relayList.length} relays healthy`}
+                style={{ marginLeft: '0.5rem', fontSize: '0.85rem', fontWeight: 400 }}
+              >
+                <span
+                  className={`feed-relay-dot ${healthyRelayCount > 0 ? 'feed-relay-dot--online' : 'feed-relay-dot--offline'}`}
+                  aria-hidden="true"
+                />
+                {healthyRelayCount}
+              </span>
+            </h2>
+            <p className="search-subtitle">Search for profiles or keywords across Nostr.</p>
+          </div>
         </div>
       </header>
 
