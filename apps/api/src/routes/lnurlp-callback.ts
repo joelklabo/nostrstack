@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
 import { normalizeLnurlMetadata, parseLnurlSuccessAction } from '../services/lnurl-pay.js';
+import { findLnurlUserByIdentifier } from '../services/lnurl-user.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
 function resolveNumber(...values: Array<number | null | undefined>) {
@@ -171,12 +172,7 @@ export async function registerLnurlCallback(app: FastifyInstance) {
         },
         'lnurlp invoice request received'
       );
-      const user = await app.prisma.user.findFirst({
-        where: {
-          tenantId: tenant.id,
-          lightningAddress: { equals: identifier, mode: 'insensitive' }
-        }
-      });
+      const user = await findLnurlUserByIdentifier(app.prisma, tenant.id, identifier);
       if (!user) {
         app.log.warn({ tenant: tenant.domain, username }, 'lnurlp invoice request user not found');
         return reply.code(404).send({ status: 'not found' });

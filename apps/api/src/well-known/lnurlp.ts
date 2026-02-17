@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { env } from '../env.js';
 import { normalizeLnurlMetadata, parseLnurlSuccessAction } from '../services/lnurl-pay.js';
+import { findLnurlUserByIdentifier } from '../services/lnurl-user.js';
 import { getTenantForRequest, originFromRequest } from '../tenant-resolver.js';
 
 function resolveNumber(...values: Array<number | null | undefined>) {
@@ -33,12 +34,7 @@ export async function lnurlpHandler(
     ['text/identifier', identifier]
   ]);
 
-  const user = await request.server.prisma.user.findFirst({
-    where: {
-      tenantId: tenant.id,
-      lightningAddress: { equals: identifier, mode: 'insensitive' }
-    }
-  });
+  const user = await findLnurlUserByIdentifier(request.server.prisma, tenant.id, identifier);
 
   if (!user) {
     request.log.warn(
