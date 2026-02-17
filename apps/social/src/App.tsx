@@ -425,6 +425,7 @@ function AppShell() {
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
           onLogout={handleLogout}
+          isGuest={isGuest}
         />
         <main className="feed-container" id="main-content" role="main">
           <NotFoundScreen />
@@ -478,6 +479,7 @@ function AppShell() {
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
           onLogout={handleLogout}
+          isGuest={isGuest}
         />
         <main className="feed-container" id="main-content" role="main">
           <section className="nostr-event-card">
