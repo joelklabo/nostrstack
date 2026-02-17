@@ -7,47 +7,66 @@ function preferSecureBase(base: string) {
   return base.replace(/^http:/i, 'https:');
 }
 
+function getBrowserOriginFallback() {
+  if (typeof window === 'undefined') return '';
+  return window.location.origin;
+}
+
 function resolveApiBaseUrl(baseURL?: string) {
   if (isMockBase(baseURL)) return '';
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = raw.replace(/\/$/, '');
-  if (base && base !== '/api') return base;
-  if (typeof window === 'undefined') return 'http://localhost:3001';
-  return window.location.origin;
+
+  const raw = baseURL?.trim() ?? '';
+  if (!raw) {
+    return getBrowserOriginFallback();
+  }
+
+  const normalized = raw.replace(/\/$/, '');
+  if (!normalized) {
+    return getBrowserOriginFallback();
+  }
+
+  if (normalized !== '/api') return normalized;
+  return getBrowserOriginFallback();
 }
 
 function resolvePayWsUrl(baseURL?: string): string | null {
   if (isMockBase(baseURL)) return null;
   if (typeof window === 'undefined') return null;
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = preferSecureBase(raw.replace(/\/$/, ''));
-  if (base === '/api') {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
-  }
+
+  const base = preferSecureBase(resolveApiBaseUrl(baseURL));
+  const wsOrigin = window.location.origin.replace(/^http/i, 'ws');
+
   if (!base) {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/pay`;
+    return `${wsOrigin}/ws/pay`;
+  }
+  if (base === '/api') {
+    return `${wsOrigin}/ws/pay`;
   }
   if (/^https?:\/\//i.test(base)) {
     return `${base.replace(/^http/i, 'ws')}/ws/pay`;
   }
-  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/pay`;
+
+  return `${wsOrigin}${base}/ws/pay`;
 }
 
 function resolveTelemetryWs(baseURL?: string): string | null {
   if (isMockBase(baseURL)) return null;
   if (typeof window === 'undefined') return null;
-  const raw = baseURL === undefined ? 'http://localhost:3001' : baseURL;
-  const base = preferSecureBase(raw.replace(/\/$/, ''));
-  if (base === '/api') {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
-  }
+
+  const base = preferSecureBase(resolveApiBaseUrl(baseURL));
+  const wsOrigin = window.location.origin.replace(/^http/i, 'ws');
+
   if (!base) {
-    return `${window.location.origin.replace(/^http/i, 'ws')}/ws/telemetry`;
+    return `${wsOrigin}/ws/telemetry`;
+  }
+  if (base === '/api') {
+    return `${wsOrigin}/ws/telemetry`;
   }
   if (/^https?:\/\//i.test(base)) {
     return `${base.replace(/^http/i, 'ws')}/ws/telemetry`;
   }
-  return `${window.location.origin.replace(/^http/i, 'ws')}${base}/ws/telemetry`;
+
+  return `${wsOrigin}${base}/ws/telemetry`;
 }
 
 export { isMockBase, preferSecureBase, resolveApiBaseUrl, resolvePayWsUrl, resolveTelemetryWs };
