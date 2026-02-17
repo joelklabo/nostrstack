@@ -55,11 +55,22 @@ describe('PostEditor', () => {
     expect(screen.getByText('Publish')).toBeInTheDocument();
   });
 
-  it('shows sign in prompt when not authenticated', () => {
+  it('renders nothing when in guest mode', () => {
     mockUseAuth.mockReturnValue({
       pubkey: null,
       signEvent: mockSignEvent,
       mode: 'guest',
+      error: null
+    });
+    const { container } = render(<PostEditor />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('shows sign in prompt when not authenticated (non-guest mode)', () => {
+    mockUseAuth.mockReturnValue({
+      pubkey: null,
+      signEvent: mockSignEvent,
+      mode: 'nip07',
       error: null
     });
     render(<PostEditor />);
@@ -69,11 +80,11 @@ describe('PostEditor', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows error from auth when not authenticated', () => {
+  it('shows error from auth when not authenticated (non-guest mode)', () => {
     mockUseAuth.mockReturnValue({
       pubkey: null,
       signEvent: mockSignEvent,
-      mode: 'guest',
+      mode: 'nip07',
       error: 'Auth failed'
     });
     render(<PostEditor />);

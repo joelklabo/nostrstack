@@ -54,11 +54,7 @@ export function PostEditor({
     try {
       const tags: string[][] = [];
       if (parentEvent) {
-        // NIP-10: Reply tags
-        // Find existing root (e marker with root, or first e tag if no markers)
         const rootTag = parentEvent.tags.find((t) => t[0] === 'e' && t[3] === 'root');
-
-        // If there's a root, preserve it. If not, the parent IS the root.
         const rootId = rootTag ? rootTag[1] : parentEvent.id;
 
         if (rootId !== parentEvent.id) {
@@ -66,7 +62,6 @@ export function PostEditor({
         }
         tags.push(['e', parentEvent.id, '', 'reply']);
 
-        // p tags: author of parent + anyone mentioned in parent
         const mentions = new Set<string>();
         mentions.add(parentEvent.pubkey);
         parentEvent.tags.forEach((t) => {
@@ -78,7 +73,7 @@ export function PostEditor({
       }
 
       const template: EventTemplate = {
-        kind: 1, // Text note
+        kind: 1,
         created_at: Math.floor(Date.now() / 1000),
         tags,
         content: content.trim()
@@ -107,13 +102,15 @@ export function PostEditor({
     }
   }, [pubkey, content, signEvent, cfg.relays, isOverLimit, parentEvent, onSuccess]);
 
+  if (mode === 'guest') {
+    return null;
+  }
+
   if (!pubkey) {
     return (
       <div className="post-editor-container">
         <div className="system-msg">
-          {mode === 'guest'
-            ? 'Sign in to post. Click "Sign in" in the sidebar to authenticate.'
-            : 'Sign in to post. <a href="/login">Sign in</a> or <a href="/">browse as guest</a>.'}
+          Sign in to post. <a href="/login">Sign in</a> or <a href="/">browse as guest</a>.
         </div>
         {error && <div className="system-msg error-msg">{`[ERROR]: ${error}`}</div>}
       </div>
