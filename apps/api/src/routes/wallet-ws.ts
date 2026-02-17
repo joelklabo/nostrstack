@@ -205,4 +205,20 @@ export async function registerWalletWs(app: FastifyInstance) {
     },
     async () => ({ enabled: isWalletEnabled, url: isWalletEnabled ? '/ws/wallet' : '' })
   );
+
+  app.get('/api/wallet-ws', async (req, reply) => {
+    if (!isWalletEnabled) {
+      return reply.status(503).send({
+        error: 'wallet_not_configured',
+        message: 'Wallet is not configured. Set LN_BITS_URL and LN_BITS_API_KEY.',
+        websocketUrl: isWalletEnabled ? '/ws/wallet' : null
+      });
+    }
+    return reply.status(400).send({
+      error: 'invalid_endpoint',
+      message:
+        'This is a WebSocket endpoint. Connect using WebSocket protocol at ws://<host>/ws/wallet',
+      websocketUrl: '/ws/wallet'
+    });
+  });
 }
