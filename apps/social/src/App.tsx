@@ -551,51 +551,69 @@ function AppShell() {
         onLogout={handleLogout}
       />
       <main className="feed-container" id="main-content" role="main">
-        <Suspense
+        <ErrorBoundary
+          key={pathname}
           fallback={
-            <LoadingFallback
-              message={`Loading ${currentView} route...`}
-              includeRetry
-              retryLabel="Retry current route"
-            />
+            <div style={{ padding: '1.5rem', color: 'var(--ns-color-text)' }}>
+              <Alert tone="danger" style={{ marginBottom: '1rem' }} role="alert">
+                Unable to load this route. Please try reloading.
+              </Alert>
+              <button
+                type="button"
+                className="ns-btn ns-btn--primary"
+                onClick={() => window.location.reload()}
+              >
+                Reload page
+              </button>
+            </div>
           }
         >
-          {isProfileRoute ? (
-            <>
-              {profileRouteError && (
-                <Alert tone="danger" title="Routing Error">
-                  Invalid profile id. Showing your current view instead.
-                </Alert>
-              )}
-              {profileRoutePubkey ? (
-                <ProfileScreen
-                  pubkey={profileRoutePubkey}
-                  onNavigateToSettings={handleNavigateToSettings}
-                />
-              ) : pubkey ? (
-                <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
-              ) : (
-                <div className="profile-guest-placeholder">
-                  <p>Sign in to view your profile</p>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
-              {currentView === 'search' && <SearchScreen />}
-              {currentView === 'offers' && <OffersView />}
-              {currentView === 'settings' && (
-                <SettingsScreen
-                  theme={theme}
-                  setTheme={setTheme}
-                  brandPreset={brandPreset}
-                  setBrandPreset={setBrandPreset}
-                />
-              )}
-            </>
-          )}
-        </Suspense>
+          <Suspense
+            fallback={
+              <LoadingFallback
+                message={`Loading ${currentView} route...`}
+                includeRetry
+                retryLabel="Retry current route"
+              />
+            }
+          >
+            {isProfileRoute ? (
+              <>
+                {profileRouteError && (
+                  <Alert tone="danger" title="Routing Error">
+                    Invalid profile id. Showing your current view instead.
+                  </Alert>
+                )}
+                {profileRoutePubkey ? (
+                  <ProfileScreen
+                    pubkey={profileRoutePubkey}
+                    onNavigateToSettings={handleNavigateToSettings}
+                  />
+                ) : pubkey ? (
+                  <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
+                ) : (
+                  <div className="profile-guest-placeholder">
+                    <p>Sign in to view your profile</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
+                {currentView === 'search' && <SearchScreen />}
+                {currentView === 'offers' && <OffersView />}
+                {currentView === 'settings' && (
+                  <SettingsScreen
+                    theme={theme}
+                    setTheme={setTheme}
+                    brandPreset={brandPreset}
+                    setBrandPreset={setBrandPreset}
+                  />
+                )}
+              </>
+            )}
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <aside className="telemetry-sidebar">
         <ErrorBoundary
