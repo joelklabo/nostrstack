@@ -158,6 +158,20 @@ describe('searchNotes', () => {
     expect(pool.querySync).toHaveBeenCalledTimes(2);
   });
 
+  it('throws timeout when no results are returned and at least one relay times out', async () => {
+    const pool = {
+      querySync: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Request timed out after 10000ms'))
+        .mockResolvedValueOnce([])
+    } as unknown as SimplePool;
+
+    await expect(
+      searchNotes(pool, ['wss://relay.nostr.band', 'wss://relay.damus.io'], 'nostr')
+    ).rejects.toThrow(/timed out/i);
+    expect(pool.querySync).toHaveBeenCalledTimes(2);
+  });
+
   it('falls back to content filtering when relays reject search filters', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const event = {

@@ -72,6 +72,7 @@ export function SearchScreen() {
   const [notes, setNotes] = useState<Event[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
   const [notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
   const [profileLookupError, setProfileLookupError] = useState<string | null>(null);
   const [isProfileLookupLoading, setIsProfileLookupLoading] = useState(false);
@@ -109,6 +110,7 @@ export function SearchScreen() {
   }, [fetchedProfile]);
 
   const statusLabel = useMemo(() => {
+    if (submitFeedback) return submitFeedback;
     if (notesLoading) return 'Searching for notes...';
     if (notesError) return notesError;
     if (status === 'validating') return 'Checking format…';
@@ -116,7 +118,7 @@ export function SearchScreen() {
     if (status === 'resolved') return 'Identity ready.';
     if (status === 'error') return error?.message ?? 'Lookup failed.';
     return 'Paste an identifier or search keywords.';
-  }, [notesLoading, notesError, status, error]);
+  }, [submitFeedback, notesLoading, notesError, status, error]);
 
   const canRetryIdentity = useCallback(() => {
     if (status !== 'error' || !error) return false;
@@ -236,11 +238,15 @@ export function SearchScreen() {
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       const trimmed = query.trim();
-      if (!trimmed) return;
+      if (!trimmed) {
+        setSubmitFeedback('Enter a search query to search profiles or notes.');
+        return;
+      }
       setProfileLookupError(null);
+      setSubmitFeedback(null);
+      setNotesError(null);
       if (isDirectSearch) {
         setNotes([]);
-        setNotesError(null);
         setNotesSearchTimedOut(false);
         setHasMore(false);
         setLastSearchQuery('');
@@ -382,7 +388,10 @@ export function SearchScreen() {
             type="search"
             className="ns-input search-input"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setSubmitFeedback(null);
+            }}
             placeholder="Keywords, npub, or name@domain"
             autoComplete="off"
             inputMode="search"

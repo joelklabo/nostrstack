@@ -401,11 +401,11 @@ export async function searchNotes(
     const primary = await runQuery(true);
     const primaryFailures = primary.failures;
     const hasSearchUnsupportedFailure = primaryFailures.some(isSearchUnsupportedError);
-    const hasOnlyTimeoutFailures = primaryFailures.every(isTimeoutError);
+    const hasAnyTimeoutFailure = primaryFailures.some(isTimeoutError);
     let merged = primary.merged;
     const relayCount = relays.length;
 
-    if (merged.size === 0 && hasOnlyTimeoutFailures) {
+    if (merged.size === 0 && hasAnyTimeoutFailure && !hasSearchUnsupportedFailure) {
       throw new Error('Notes search timed out. Retry to try again.');
     }
 
