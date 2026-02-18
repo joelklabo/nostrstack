@@ -132,7 +132,6 @@ export function SearchScreen() {
 
   const applyNotesSearchError = useCallback(
     (query: string, error: unknown, hasExistingResults: boolean) => {
-      console.error('Notes search failed', error);
       const timedOut =
         error instanceof Error &&
         /(request timed out|timed out after|timeout)/i.test(error.message);

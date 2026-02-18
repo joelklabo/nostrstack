@@ -438,7 +438,26 @@ export async function searchNotes(
     }
     return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
   } catch (err) {
-    console.error('[nostr] search failed', err);
+    const message = err instanceof Error ? err.message : String(err);
+    const lower = message.toLowerCase();
+    const isNetworkOrUnsupported =
+      lower.includes('failed to fetch') ||
+      lower.includes('network error') ||
+      lower.includes('dns') ||
+      lower.includes('econnrefused') ||
+      lower.includes('connection refused') ||
+      lower.includes('connection failed') ||
+      lower.includes('socket') ||
+      lower.includes('enotfound') ||
+      lower.includes('etimedout') ||
+      lower.includes('timeout') ||
+      lower.includes('timed out') ||
+      lower.includes('unrecognized filter') ||
+      lower.includes('unrecognised filter');
+
+    if (!isNetworkOrUnsupported) {
+      console.warn('[nostr] search failed', err);
+    }
     throw err;
   }
 }

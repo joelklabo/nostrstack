@@ -58,6 +58,21 @@ const shouldLogRelayFailure = (url: string, reason: string, now: number) => {
   return now - existing.lastWarnedAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS;
 };
 
+const isConnectivityFailure = (reason: string) => {
+  const lower = reason.toLowerCase();
+  return (
+    lower.includes('dns') ||
+    lower.includes('resolve') ||
+    lower.includes('econnrefused') ||
+    lower.includes('connection refused') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('network error') ||
+    lower.includes('socket') ||
+    lower.includes('enotfound') ||
+    lower.includes('etimedout')
+  );
+};
+
 const getRetryDelayMs = (failureCount: number) => {
   const attempts = Math.min(Math.max(failureCount, 1), 6);
   return RELAY_CONNECT_RETRY_BACKOFF_MS * 2 ** (attempts - 1);
@@ -212,7 +227,11 @@ export class SimplePool {
         const failureCount = (existingState?.failureCount ?? 0) + 1;
         const shouldLog = shouldLogRelayFailure(normalized, failureMessage, now);
         if (shouldLog) {
-          console.warn(failureMessage);
+          if (isConnectivityFailure(reason)) {
+            console.debug(failureMessage);
+          } else {
+            console.warn(failureMessage);
+          }
         }
         relayFailureState.set(normalized, {
           nextRetryAt: now + getRetryDelayMs(failureCount),
@@ -240,7 +259,7 @@ export class SimplePool {
       const now = Date.now();
       if (now - lastAllRelaysFailureLogAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS) {
         lastAllRelaysFailureLogAt = now;
-        console.warn('All relays failed to connect, falling back to trying all URLs');
+        console.debug('All relays failed to connect, falling back to trying all URLs');
       }
       return [];
     }
