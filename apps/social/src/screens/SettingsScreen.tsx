@@ -625,6 +625,15 @@ export function SettingsScreen({
             Theme: {theme === 'dark' ? 'Dark' : 'Light'}
           </button>
         </div>
+        <div
+          style={{
+            fontSize: '0.85rem',
+            color: 'var(--ns-color-text-muted)',
+            marginTop: '0.5rem'
+          }}
+        >
+          Current mode: <strong>{theme === 'dark' ? 'Dark' : 'Light'}</strong>
+        </div>
       </div>
 
       <div className="paywall-container">

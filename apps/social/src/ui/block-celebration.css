@@ -352,7 +352,7 @@
   color: var(--ns-color-text-default);
 }
 
-.celebration-style-btn[aria-pressed='true'] {
+.celebration-style-btn[aria-checked='true'] {
   background: color-mix(
     in oklch,
     var(--ns-color-primary-default) 10%,
