@@ -87,6 +87,10 @@ class MockWebSocket {
     this.openListeners.forEach((listener) => listener());
   }
 
+  triggerError() {
+    this.onerror?.({} as Event);
+  }
+
   triggerClose(event: Partial<CloseEvent> = {}) {
     this.readyState = MockWebSocket.CLOSED;
     this.onclose?.({ code: 1000, ...event } as CloseEvent);

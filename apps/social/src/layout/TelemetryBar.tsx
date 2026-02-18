@@ -483,6 +483,7 @@ export function TelemetryBar() {
     let attempt = 0;
     let offlineLogged = false;
     let disconnectLogged = false;
+    let errorLogged = false; // Gate repeated onerror logs per reconnect cycle
     const activeConnectionIdRef = { current: 0 };
     const isCurrentConnection = (connectionId: number) =>
       !cancelled && activeConnectionIdRef.current === connectionId;
@@ -552,6 +553,7 @@ export function TelemetryBar() {
         attempt = 0;
         offlineLogged = false;
         disconnectLogged = false;
+        errorLogged = false;
         setWsAttempt(0);
         setWsStatus('connected');
         setOfflineReason(null);
@@ -612,7 +614,11 @@ export function TelemetryBar() {
 
       ws.onerror = () => {
         if (!isCurrentConnection(connectionId)) return;
-        appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' });
+        // Gate repeated onerror logs per reconnect cycle - let onclose handle the transition
+        if (!errorLogged) {
+          appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' });
+          errorLogged = true;
+        }
         setWsStatus('error');
         setOfflineReason('Connection error');
       };
@@ -646,6 +652,7 @@ export function TelemetryBar() {
           });
           disconnectLogged = true;
         }
+        errorLogged = false; // Reset for next reconnect cycle
         retryTimeout = setTimeout(connect, delay);
       };
     };
@@ -654,6 +661,7 @@ export function TelemetryBar() {
       if (cancelled) return;
       offlineLogged = false;
       disconnectLogged = false;
+      errorLogged = false;
       clearRetry();
       clearPoll();
       attempt = 0;
