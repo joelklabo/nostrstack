@@ -16,6 +16,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
   let isStartup = true;
   let backoffUntil = 0;
   let walletIdFallbackAttempted = false;
+  let inFlightFetch: Promise<WalletSnapshot | null> | null = null;
   const STARTUP_FAILURE_THRESHOLD = 2;
   const BACKOFF_BASE_MS = 5000;
   const BACKOFF_MAX_MS = 60000;
@@ -112,7 +113,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
   const makeWalletUrl = (walletIdToUse: string) =>
     `${baseUrl}/api/v1/wallet${walletIdToUse ? `?usr=${encodeURIComponent(walletIdToUse)}` : ''}`;
 
-  const fetchFn = async (): Promise<WalletSnapshot | null> => {
+  const fetchOnce = async (): Promise<WalletSnapshot | null> => {
     if (Date.now() < backoffUntil) {
       return null;
     }
@@ -207,6 +208,20 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       lastErrorKey = errorKey;
       return null;
     }
+  };
+
+  const fetchFn = (): Promise<WalletSnapshot | null> => {
+    if (inFlightFetch) {
+      return inFlightFetch;
+    }
+    inFlightFetch = (async () => {
+      try {
+        return await fetchOnce();
+      } finally {
+        inFlightFetch = null;
+      }
+    })();
+    return inFlightFetch;
   };
 
   return { fetch: fetchFn, reset };

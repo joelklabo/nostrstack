@@ -347,4 +347,34 @@ describe('wallet-ws fetcher', () => {
       balance: 300
     });
   });
+
+  it('coalesces concurrent fetch calls into a single network request', async () => {
+    let resolveFetch: ((value: Response) => void) | undefined;
+    vi.mocked(fetch).mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        })
+    );
+
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    const first = fetcher();
+    const second = fetcher();
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    if (!resolveFetch) {
+      throw new Error('fetch resolver not set');
+    }
+
+    resolveFetch({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ id: 'wallet-1', balance: 123 }))
+    } as Response);
+
+    const [a, b] = await Promise.all([first, second]);
+    expect(a).toEqual(b);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 });
