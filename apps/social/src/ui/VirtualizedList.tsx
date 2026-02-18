@@ -141,20 +141,23 @@ export function VirtualizedList<T>({
     return `social-list-row-height-v1::${role ?? 'list'}::${itemRole ?? 'item'}::${listContext}`;
   }, [rowHeightCacheKey, role, itemRole, ariaLabel]);
 
-  const resolveContainerHeight = useCallback((): number => {
-    if (propHeight) return propHeight;
-    if (typeof window === 'undefined') return DEFAULT_CONTAINER_HEIGHT;
+  const resolveContainerHeight = useCallback(
+    (previousHeight: number): number => {
+      if (propHeight) return propHeight;
+      if (typeof window === 'undefined') return DEFAULT_CONTAINER_HEIGHT;
 
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    const offset = containerRef.current?.getBoundingClientRect().top ?? 0;
-    const nextHeight = viewportHeight - offset - CONTAINER_BOTTOM_PADDING;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const offset = containerRef.current?.getBoundingClientRect().top ?? 0;
+      const nextHeight = viewportHeight - offset - CONTAINER_BOTTOM_PADDING;
 
-    if (!Number.isFinite(nextHeight) || nextHeight <= 0) {
-      return Math.max(MIN_CONTAINER_HEIGHT, containerHeight);
-    }
+      if (!Number.isFinite(nextHeight) || nextHeight <= 0) {
+        return Math.max(MIN_CONTAINER_HEIGHT, previousHeight);
+      }
 
-    return Math.max(MIN_CONTAINER_HEIGHT, Math.round(nextHeight));
-  }, [containerHeight, propHeight]);
+      return Math.max(MIN_CONTAINER_HEIGHT, Math.round(nextHeight));
+    },
+    [propHeight]
+  );
 
   // Use dynamic row height from react-window v2
   const dynamicRowHeight = useDynamicRowHeight({
@@ -195,8 +198,8 @@ export function VirtualizedList<T>({
     if (typeof window === 'undefined') return;
 
     const flushHeightUpdate = () => {
-      const nextHeight = resolveContainerHeight();
       setContainerHeight((previousHeight) => {
+        const nextHeight = resolveContainerHeight(previousHeight);
         if (Math.abs(previousHeight - nextHeight) <= STABLE_HEIGHT_EPSILON) {
           return previousHeight;
         }
