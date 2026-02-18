@@ -34,7 +34,7 @@ export const TOUR_STEPS: OnboardingStep[] = [
   },
   {
     id: 'feed',
-    target: '.feed-stream',
+    target: '#main-content',
     title: 'Live Feed',
     content: 'Stream events from your connected relays in real-time.',
     placement: 'left'
