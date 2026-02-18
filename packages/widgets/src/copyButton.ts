@@ -55,6 +55,8 @@ export async function copyToClipboard(text: string) {
     );
   };
 
+  // cspell:ignore notallowederror securityerror
+
   if (navigator?.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(trimmed);

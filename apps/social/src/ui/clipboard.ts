@@ -14,6 +14,8 @@ export async function copyToClipboard(text: string) {
     );
   };
 
+  // cspell:ignore notallowederror securityerror
+
   const copyWithLegacyFallback = () => {
     const textarea = document.createElement('textarea');
     textarea.value = value;
