@@ -345,7 +345,7 @@ export function LoginScreen() {
         </div>
 
         {(authError || nsecError) && (
-          <Alert tone="danger" role="alert">
+          <Alert id="login-error" tone="danger" role="alert">
             {nsecError ?? authError}
           </Alert>
         )}
@@ -428,6 +428,8 @@ export function LoginScreen() {
                 placeholder="nsec1..."
                 value={nsec}
                 autoComplete="new-password"
+                aria-invalid={nsecError ? 'true' : 'false'}
+                aria-describedby={nsecError ? 'login-error' : undefined}
                 onChange={(e) => {
                   setNsec(e.target.value);
                   if (nsecError) setNsecError(null);
