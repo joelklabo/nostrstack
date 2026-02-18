@@ -1,6 +1,64 @@
+/* eslint-env node */
 import { chromium } from 'playwright';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const BASE_URL = process.env.GALLERY_URL || 'https://localhost:4173';
+const DEFAULT_BASE_URL = 'https://localhost:4173';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..');
+
+function parseSessionFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const fields = {};
+  for (const line of content.split('\n')) {
+    const eq = line.indexOf('=');
+    if (eq <= 0) continue;
+    const key = line.slice(0, eq);
+    const value = line.slice(eq + 1);
+    fields[key] = value;
+  }
+  return fields;
+}
+
+function pidAlive(pidText) {
+  const pid = Number(pidText);
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resolveManagedGalleryUrl() {
+  const sessionsDir = path.join(REPO_ROOT, '.logs', 'dev', 'sessions');
+  if (!fs.existsSync(sessionsDir)) return null;
+  const files = fs
+    .readdirSync(sessionsDir)
+    .filter((name) => name.endsWith('.session'))
+    .map((name) => path.join(sessionsDir, name))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+
+  for (const file of files) {
+    try {
+      const fields = parseSessionFile(file);
+      if (!pidAlive(fields.NOSTRDEV_SESSION_PID)) continue;
+      const port = Number(fields.NOSTRDEV_SESSION_SOCIAL_PORT);
+      if (Number.isInteger(port) && port > 0) {
+        return `https://localhost:${port}`;
+      }
+    } catch {
+      // Ignore unreadable/stale session files and continue fallback resolution.
+    }
+  }
+  return null;
+}
+
+const BASE_URL = process.env.GALLERY_URL || resolveManagedGalleryUrl() || DEFAULT_BASE_URL;
+const BASE_ORIGIN = new URL(BASE_URL).origin;
 const TEST_NSEC = process.env.TEST_NSEC || 'nsec1v0fhzv8swp7gax4kn8ux6p5wj2ljz32xj0v2ssuxvck5aa0d8xxslue67d';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -204,7 +262,7 @@ async function interactSidebar(page) {
   page.on('requestfailed', (req) => {
     const url = req.url();
     const err = req.failure()?.errorText || 'unknown';
-    if (url.startsWith('https://localhost:4173') || url.startsWith('http://localhost:4173')) {
+    if (url.startsWith(BASE_ORIGIN)) {
       if (!url.includes('/api/logs/stream')) {
         results.requestFailures.push(`${url} :: ${err}`);
       }
@@ -213,7 +271,7 @@ async function interactSidebar(page) {
   page.on('response', (res) => {
     if (res.status() === 404) {
       const url = res.url();
-      if (url.startsWith('https://localhost:4173') || url.startsWith('http://localhost:4173')) {
+      if (url.startsWith(BASE_ORIGIN)) {
         results.response404.push(url);
       }
     }
