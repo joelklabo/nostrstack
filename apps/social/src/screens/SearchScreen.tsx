@@ -173,7 +173,7 @@ export function SearchScreen() {
     async (q: string, isRetry = false) => {
       setNotesLoading(true);
       setNotesError(null);
-      setSubmitFeedback(null);
+      setSubmitFeedback(`Searching notes for "${q}"...`);
       setNotesSearchTimedOut(false);
       if (!isRetry) {
         setNotes([]);
@@ -254,7 +254,7 @@ export function SearchScreen() {
         return;
       }
       setProfileLookupError(null);
-      setSubmitFeedback(null);
+      setSubmitFeedback(`Searching for "${trimmed}"...`);
       setNotesError(null);
       if (isDirectSearch) {
         setNotes([]);
