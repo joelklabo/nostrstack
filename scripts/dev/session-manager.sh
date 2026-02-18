@@ -159,6 +159,34 @@ ndev_cleanup_stale_session_file() {
   fi
 }
 
+ndev_cleanup_stale_sockets() {
+  local max_slot="${NOSTRDEV_MAX_SLOTS:-40}"
+  local slot
+  local api_port social_port
+  local cleaned=0
+
+  for ((slot = 0; slot <= max_slot; slot++)); do
+    api_port=$((NOSTRDEV_BASE_API_PORT + slot))
+    social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
+
+    if ndev_port_in_use "$api_port" && ! ndev_port_has_owner "$api_port"; then
+      echo "Cleaning stale socket on API port $api_port (slot $slot)"
+      ndev_force_kill_port "$api_port" || true
+      cleaned=1
+    fi
+
+    if ndev_port_in_use "$social_port" && ! ndev_port_has_owner "$social_port"; then
+      echo "Cleaning stale socket on Social port $social_port (slot $slot)"
+      ndev_force_kill_port "$social_port" || true
+      cleaned=1
+    fi
+  done
+
+  if [[ "$cleaned" == "1" ]]; then
+    sleep 1
+  fi
+}
+
 ndev_lock_slot() {
   local slot="$1"
   local lock_dir="$NOSTRDEV_SESSION_DIR/.lock-slot-${slot}"
@@ -334,6 +362,10 @@ ndev_claim_session() {
   local requested_slot="${NOSTRDEV_AGENT_SLOT:-}"
   local max_slot="$NOSTRDEV_MAX_SLOTS"
   local slot
+
+  if [[ "${NOSTRDEV_CLEANUP_STALE:-1}" == "1" ]]; then
+    ndev_cleanup_stale_sockets
+  fi
 
   if [[ "${NOSTRDEV_MANAGED_SESSION:-1}" == "0" ]]; then
     local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
