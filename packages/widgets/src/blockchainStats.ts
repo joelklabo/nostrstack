@@ -26,6 +26,8 @@ export type BlockchainStatsOptions = {
   title?: string;
 };
 
+const MAX_AUTO_RECONNECT_ATTEMPTS = 5;
+
 const formatNumber = (value?: number) => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
   try {
@@ -138,6 +140,7 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   let statusTimer: number | null = null;
   let reconnectTimer: number | null = null;
   let reconnectDelay = 2000;
+  let reconnectAttempts = 0;
   let ws: WebSocket | null = null;
   let destroyed = false;
 
@@ -212,8 +215,14 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   const scheduleReconnect = () => {
     if (!wsUrl || destroyed) return;
     if (reconnectTimer) return;
+    if (reconnectAttempts >= MAX_AUTO_RECONNECT_ATTEMPTS) {
+      errorMessage = errorMessage ?? 'Live updates paused';
+      renderStatus();
+      return;
+    }
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
+      reconnectAttempts += 1;
       connectWebSocket();
     }, reconnectDelay);
     reconnectDelay = Math.min(30000, reconnectDelay * 2);
@@ -231,6 +240,7 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
     ws.onopen = () => {
       wsConnected = true;
       reconnectDelay = 2000;
+      reconnectAttempts = 0;
       renderStatus();
     };
 
@@ -262,6 +272,8 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   };
 
   const handleRetry = () => {
+    reconnectAttempts = 0;
+    reconnectDelay = 2000;
     hydrate();
     if (!wsConnected) scheduleReconnect();
   };

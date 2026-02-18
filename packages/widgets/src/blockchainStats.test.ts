@@ -4,9 +4,11 @@ import { renderBlockchainStats } from './blockchainStats.js';
 
 describe('renderBlockchainStats', () => {
   let host: HTMLElement;
+  let originalWebSocket: typeof WebSocket | undefined;
 
   beforeEach(() => {
     host = document.createElement('div');
+    originalWebSocket = globalThis.WebSocket;
     vi.useFakeTimers();
   });
 
@@ -14,6 +16,9 @@ describe('renderBlockchainStats', () => {
     document.body.innerHTML = '';
     vi.useRealTimers();
     vi.restoreAllMocks();
+    if (originalWebSocket) {
+      globalThis.WebSocket = originalWebSocket;
+    }
   });
 
   it('renders loading state initially', () => {
@@ -70,5 +75,38 @@ describe('renderBlockchainStats', () => {
     const retryBtn = host.querySelector('.ns-btn') as HTMLButtonElement;
 
     expect(retryBtn.hidden).toBe(false); // Retry button visible
+  });
+
+  it('stops auto-reconnect after max attempts', async () => {
+    class MockWebSocket {
+      static instances = 0;
+      onopen: (() => void) | null = null;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onmessage: (() => void) | null = null;
+
+      constructor(_url: string) {
+        MockWebSocket.instances += 1;
+        setTimeout(() => {
+          this.onclose?.();
+        }, 0);
+      }
+
+      close() {
+        // no-op
+      }
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500
+    } as Response);
+    globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+
+    renderBlockchainStats(host, { baseURL: 'http://localhost:3006' });
+
+    await vi.advanceTimersByTimeAsync(70_000);
+
+    expect(MockWebSocket.instances).toBe(6);
   });
 });
