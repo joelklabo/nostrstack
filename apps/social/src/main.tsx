@@ -11,14 +11,13 @@ import App from './App';
 import { startCacheManager } from './cache/cacheManager';
 
 if ('serviceWorker' in navigator) {
-  const isLocalHttpsDev =
+  const isLocalDev =
     import.meta.env.DEV &&
-    location.protocol === 'https:' &&
     (location.hostname === 'localhost' ||
       location.hostname === '127.0.0.1' ||
       location.hostname === '::1');
 
-  if (!isLocalHttpsDev) {
+  if (!isLocalDev) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').then(
         (registration) => {
