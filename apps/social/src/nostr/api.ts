@@ -327,6 +327,24 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   });
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>;
+    const directMessage = record.message;
+    if (typeof directMessage === 'string') return directMessage;
+    if (directMessage instanceof Error) return directMessage.message;
+    const reason = record.reason;
+    if (typeof reason === 'string') return reason;
+    if (reason instanceof Error) return reason.message;
+    const nestedError = record.error;
+    if (typeof nestedError === 'string') return nestedError;
+    if (nestedError instanceof Error) return nestedError.message;
+  }
+  return String(error);
+}
+
 export async function searchNotes(
   pool: SimplePool,
   relays: string[],
@@ -348,17 +366,17 @@ export async function searchNotes(
     const quoted = trimmedQuery.toLowerCase();
     const fallbackLimit = Math.max(1, Math.min(normalizedLimit * 2, 100));
     const isSearchUnsupportedError = (error: unknown): boolean => {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
       const lower = message.toLowerCase();
       return lower.includes('unrecognized filter') || lower.includes('unrecognised filter');
     };
     const isTimeoutError = (error: unknown): boolean => {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
       const lower = message.toLowerCase();
       return lower.includes('timeout') || lower.includes('timed out');
     };
     const isNetworkError = (error: unknown): boolean => {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
       const lower = message.toLowerCase();
       return (
         lower.includes('failed to fetch') ||
@@ -459,7 +477,7 @@ export async function searchNotes(
     }
     return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = getErrorMessage(err);
     const lower = message.toLowerCase();
     const isNetworkOrUnsupported =
       lower.includes('failed to fetch') ||

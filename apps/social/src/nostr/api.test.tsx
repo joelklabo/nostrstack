@@ -252,6 +252,44 @@ describe('searchNotes', () => {
     consoleSpy.mockRestore();
   });
 
+  it('falls back to content filtering when relay rejections are non-Error objects', async () => {
+    const event = {
+      id: 'event-id-e',
+      kind: 1,
+      pubkey: 'test-pubkey',
+      created_at: 3_000,
+      content: 'nostr keyword fallback should still work',
+      tags: [],
+      sig: 'test-sig'
+    };
+
+    const querySync = vi
+      .fn()
+      .mockRejectedValueOnce({
+        message: 'NOTICE from wss://relay.nostr.band/: ERROR: bad req: unrecognised filter item'
+      })
+      .mockResolvedValueOnce([event]);
+
+    const pool = { querySync } as unknown as SimplePool;
+
+    const events = await searchNotes(pool, ['wss://relay.nostr.band'], 'nostr', 10);
+
+    expect(events).toEqual([event]);
+    expect(querySync).toHaveBeenCalledTimes(2);
+    expect(querySync).toHaveBeenNthCalledWith(
+      1,
+      ['wss://relay.nostr.band'],
+      { kinds: [1], search: 'nostr', limit: 10 },
+      { maxWait: 10_000 }
+    );
+    expect(querySync).toHaveBeenNthCalledWith(
+      2,
+      ['wss://relay.nostr.band'],
+      { kinds: [1], limit: 20 },
+      { maxWait: 10_000 }
+    );
+  });
+
   it('falls back to content filtering when relay failures are mixed', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const event = {
