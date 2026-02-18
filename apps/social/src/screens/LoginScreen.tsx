@@ -326,6 +326,13 @@ export function LoginScreen() {
     }
   }, [mode]);
 
+  useEffect(() => {
+    if (mode !== 'menu') return;
+    if (authError?.toLowerCase().includes('extension not found')) {
+      setMode('nsec');
+    }
+  }, [authError, mode]);
+
   return (
     <div className="login-container">
       <div className="login-card">
