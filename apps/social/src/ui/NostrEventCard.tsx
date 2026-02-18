@@ -437,7 +437,7 @@ export const NostrEventCard = memo(function NostrEventCard({
   return (
     <ErrorBoundary
       fallback={
-        <NostrEventCardFallback variant={variant} className={className} eventId={event?.id} />
+        <NostrEventCardFallback variant={variant} className={className} eventId={event.id} />
       }
     >
       <NostrEventCardContent event={event} variant={variant} className={className} {...rest} />
