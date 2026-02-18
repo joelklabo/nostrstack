@@ -284,8 +284,9 @@ export function SearchScreen() {
         reason: error.code
       });
       pendingSearchRef.current = null;
+      void handleNotesSearch(pending);
     }
-  }, [status, result, error]);
+  }, [handleNotesSearch, status, result, error]);
 
   useEffect(() => {
     if (status !== 'resolved' || !result || !npub) {
