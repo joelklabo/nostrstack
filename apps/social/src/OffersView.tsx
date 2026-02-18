@@ -153,28 +153,32 @@ export function OffersView() {
   const handleCreateOffer = async () => {
     if (!description.trim()) {
       setCreateError('Description is required.');
-      setCreateStatus('idle');
+      setCreateSuccess(null);
+      setCreateStatus('error');
       return;
     }
     if (description.trim().length > MAX_DESCRIPTION_CHARS) {
       setCreateError(`Description must be ${MAX_DESCRIPTION_CHARS} characters or fewer.`);
-      setCreateStatus('idle');
+      setCreateSuccess(null);
+      setCreateStatus('error');
       return;
     }
     if (label.trim().length > MAX_LABEL_CHARS) {
       setCreateError(`Label must be ${MAX_LABEL_CHARS} characters or fewer.`);
-      setCreateStatus('idle');
+      setCreateSuccess(null);
+      setCreateStatus('error');
       return;
     }
     if (issuer.trim().length > MAX_ISSUER_CHARS) {
       setCreateError(`Issuer must be ${MAX_ISSUER_CHARS} characters or fewer.`);
-      setCreateStatus('idle');
+      setCreateSuccess(null);
+      setCreateStatus('error');
       return;
     }
     if (!apiBaseConfig.isConfigured) {
       setCreateError('API base is not configured.');
       setCreateSuccess(null);
-      setCreateStatus('idle');
+      setCreateStatus('error');
       return;
     }
 
@@ -436,13 +440,26 @@ export function OffersView() {
           >
             {createStatus === 'loading' ? 'Creating...' : 'Create Offer'}
           </button>
+          {createStatus === 'loading' && (
+            <div className="offer-pending ns-alert ns-alert--info" role="status" aria-live="polite">
+              Creating BOLT12 offer...
+            </div>
+          )}
           {createError && (
-            <div className="offer-error" role="alert" aria-live="assertive">
+            <div
+              className="offer-error ns-alert ns-alert--danger"
+              role="alert"
+              aria-live="assertive"
+            >
               {createError}
             </div>
           )}
           {createSuccess && (
-            <div className="offer-success" role="status" aria-live="polite">
+            <div
+              className="offer-success ns-alert ns-alert--success"
+              role="status"
+              aria-live="polite"
+            >
               {createSuccess}
             </div>
           )}
