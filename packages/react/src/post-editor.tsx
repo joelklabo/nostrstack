@@ -20,6 +20,7 @@ export function PostEditor({
   autoFocus
 }: PostEditorProps) {
   const { pubkey, signEvent, mode, error } = useAuth();
+  const isGuest = mode === 'guest';
   const cfg = useNostrstackConfig();
   const [content, setContent] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
@@ -35,6 +36,10 @@ export function PostEditor({
   }, [content]);
 
   const handlePublish = useCallback(async () => {
+    if (isGuest) {
+      setPublishStatus('Error: Guest users cannot post. Please sign in to post.');
+      return;
+    }
     if (!pubkey) {
       setPublishStatus('Error: Not authenticated. Please login.');
       return;
@@ -100,13 +105,9 @@ export function PostEditor({
     } finally {
       setIsPublishing(false);
     }
-  }, [pubkey, content, signEvent, cfg.relays, isOverLimit, parentEvent, onSuccess]);
+  }, [pubkey, content, signEvent, cfg.relays, isOverLimit, isGuest, parentEvent, onSuccess]);
 
-  if (mode === 'guest') {
-    return null;
-  }
-
-  if (!pubkey) {
+  if (!pubkey && !isGuest) {
     return (
       <div className="post-editor-container">
         <div className="system-msg">
@@ -125,9 +126,14 @@ export function PostEditor({
     >
       <div className="editor-header">
         <span className="editor-prompt" aria-hidden="true">
-          [{mode.toUpperCase()}] {'>'}
+          [{isGuest ? 'GUEST' : mode.toUpperCase()}] {'>'}
         </span>{' '}
         {parentEvent ? 'Reply to note:' : 'Post a new note:'}
+        {isGuest && (
+          <span className="system-msg" style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>
+            <a href="/login">Sign in</a> to post
+          </span>
+        )}
       </div>
       <textarea
         className="terminal-input editor-input"
@@ -180,12 +186,14 @@ export function PostEditor({
             type="button"
             className="auth-btn"
             onClick={handlePublish}
-            disabled={isPublishing || isOverLimit}
-            aria-label={isPublishing ? 'Publishing note' : 'Publish note'}
+            disabled={isPublishing || isOverLimit || isGuest}
+            aria-label={
+              isPublishing ? 'Publishing note' : isGuest ? 'Sign in to publish' : 'Publish note'
+            }
             aria-busy={isPublishing}
-            aria-disabled={isOverLimit}
+            aria-disabled={isOverLimit || isGuest}
           >
-            {isPublishing ? 'Publishing...' : 'Publish'}
+            {isPublishing ? 'Publishing...' : isGuest ? 'Sign in to post' : 'Publish'}
           </button>
         </div>
       </div>

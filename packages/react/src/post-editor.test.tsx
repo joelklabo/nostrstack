@@ -55,15 +55,16 @@ describe('PostEditor', () => {
     expect(screen.getByText('Publish')).toBeInTheDocument();
   });
 
-  it('renders nothing when in guest mode', () => {
+  it('renders composer in guest mode with sign in prompt', () => {
     mockUseAuth.mockReturnValue({
       pubkey: null,
       signEvent: mockSignEvent,
       mode: 'guest',
       error: null
     });
-    const { container } = render(<PostEditor />);
-    expect(container.firstChild).toBeNull();
+    render(<PostEditor />);
+    expect(screen.getByPlaceholderText('Share something with the network...')).toBeInTheDocument();
+    expect(screen.getByText(/Sign in to post/)).toBeInTheDocument();
   });
 
   it('shows sign in prompt when not authenticated (non-guest mode)', () => {
