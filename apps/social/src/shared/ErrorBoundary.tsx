@@ -3,6 +3,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  resetToken?: unknown;
 }
 
 interface State {
@@ -22,6 +23,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, info);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.resetToken !== this.props.resetToken) {
+      this.setState({ hasError: false, error: undefined });
+    }
   }
 
   render() {

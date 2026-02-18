@@ -567,7 +567,8 @@ function AppShell() {
   if (nostrRouteId) {
     return (
       <ErrorBoundary
-        key={`${pathname}-${routeRecoveryKey}`}
+        key={pathname}
+        resetToken={routeRecoveryKey}
         fallback={
           <RouteLoadFallback
             message="Unable to load event screen. Please try reloading."
@@ -595,7 +596,8 @@ function AppShell() {
     return (
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={`${pathname}-${routeRecoveryKey}`}
+          key={pathname}
+          resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
               message="Unable to load the login screen. Please try reloading."
@@ -755,7 +757,8 @@ function AppShell() {
       />
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={`${pathname}-${routeRecoveryKey}`}
+          key={pathname}
+          resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
               message="Unable to load this route. Please try reloading."
@@ -764,17 +767,7 @@ function AppShell() {
             />
           }
         >
-          <Suspense
-            key={`${pathname}-${routeRecoveryKey}`}
-            fallback={
-              <LoadingFallback
-                message={`Loading ${routeBoundView} route...`}
-                includeRetry
-                retryLabel="Retry current route"
-                onRetry={retryCurrentRoute}
-              />
-            }
-          >
+          <Suspense fallback={<LoadingFallback message={`Loading ${routeBoundView} route...`} />}>
             {isRelaysRoute ? (
               <RelaysView />
             ) : isProfileRoute ? (
