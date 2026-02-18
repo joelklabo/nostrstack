@@ -43,9 +43,22 @@ export async function copyToClipboard(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return;
 
+  const isClipboardPermissionError = (error: unknown): boolean => {
+    return (
+      error instanceof DOMException &&
+      (error.name === 'NotAllowedError' || error.name === 'SecurityError')
+    );
+  };
+
   if (navigator?.clipboard?.writeText) {
-    await navigator.clipboard.writeText(trimmed);
-    return;
+    try {
+      await navigator.clipboard.writeText(trimmed);
+      return;
+    } catch (error) {
+      if (!isClipboardPermissionError(error)) {
+        throw error;
+      }
+    }
   }
 
   // Fallback for older browsers / restricted clipboard APIs.
