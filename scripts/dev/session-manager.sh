@@ -231,13 +231,23 @@ ndev_claim_slot() {
     fi
     
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+      local api_has_unknown_owner social_has_unknown_owner
       if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
         echo "Skipping slot $slot: port $api_port has stale socket with no process owner"
+        api_has_unknown_owner=1
+      else
+        api_has_unknown_owner=0
       fi
       if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
         echo "Skipping slot $slot: port $social_port has stale socket with no process owner"
+        social_has_unknown_owner=1
+      else
+        social_has_unknown_owner=0
       fi
       ndev_unlock_slot "$slot"
+      if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
+        return 2
+      fi
       return 1
     fi
   fi
@@ -360,8 +370,17 @@ ndev_claim_session() {
   fi
 
   for ((slot = 0; slot <= max_slot; slot++)); do
-    if ndev_claim_slot "$slot"; then
+    local rc=0
+    ndev_claim_slot "$slot"
+    rc=$?
+    if [[ "$rc" == "0" ]]; then
       return 0
+    fi
+    if [[ "$rc" == "2" ]]; then
+      echo "Requested default ports are already occupied by listeners we can't positively identify." >&2
+      echo "Inspect live sessions with: pnpm dev:ps" >&2
+      echo "Clean stale listeners with: pnpm dev:stop:all -c" >&2
+      return 1
     fi
   done
 
