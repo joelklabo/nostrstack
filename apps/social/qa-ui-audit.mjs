@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DEFAULT_BASE_URL = 'https://localhost:4173';
+const DEFAULT_BASE_URL = 'http://localhost:4173';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -36,6 +36,7 @@ function pidAlive(pidText) {
 function resolveManagedGalleryUrl() {
   const sessionsDir = path.join(REPO_ROOT, '.logs', 'dev', 'sessions');
   if (!fs.existsSync(sessionsDir)) return null;
+  const requestedAgent = (process.env.NOSTRDEV_AGENT || '').trim();
   const files = fs
     .readdirSync(sessionsDir)
     .filter((name) => name.endsWith('.session'))
@@ -46,9 +47,10 @@ function resolveManagedGalleryUrl() {
     try {
       const fields = parseSessionFile(file);
       if (!pidAlive(fields.NOSTRDEV_SESSION_PID)) continue;
+      if (requestedAgent && fields.NOSTRDEV_SESSION_AGENT !== requestedAgent) continue;
       const port = Number(fields.NOSTRDEV_SESSION_SOCIAL_PORT);
       if (Number.isInteger(port) && port > 0) {
-        return `https://localhost:${port}`;
+        return `http://localhost:${port}`;
       }
     } catch {
       // Ignore unreadable/stale session files and continue fallback resolution.
