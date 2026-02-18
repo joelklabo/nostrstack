@@ -49,10 +49,6 @@ export function LoginScreen() {
   );
   const apiBase = useMemo(() => {
     if (apiBaseConfig.isRelative) return '';
-    if (typeof window === 'undefined') return apiBaseConfig.baseUrl;
-    if (window.location.protocol === 'https:' && apiBaseConfig.baseUrl.startsWith('http://')) {
-      return apiBaseConfig.baseUrl.replace(/^http:/i, 'https:');
-    }
     return apiBaseConfig.baseUrl;
   }, [apiBaseConfig.baseUrl, apiBaseConfig.isRelative]);
 
