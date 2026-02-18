@@ -1,6 +1,6 @@
 import { OfferWidget, useNostrstackConfig } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 import { copyToClipboard } from './ui/clipboard';
 import { resolveGalleryApiBase } from './utils/api-base';
@@ -189,6 +189,12 @@ export function OffersView() {
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
   const [offers, setOffers] = useState<OfferEntry[]>([]);
 
+  useEffect(() => {
+    if (createStatus === 'success' && createSuccess) {
+      toast({ message: createSuccess, tone: 'success', durationMs: 4000 });
+    }
+  }, [createStatus, createSuccess, toast]);
+
   const baseUrl = useMemo(
     () => (apiBaseConfig.isConfigured ? apiBase : ''),
     [apiBaseConfig.isConfigured, apiBase]
@@ -290,7 +296,6 @@ export function OffersView() {
       setExpiresIn('');
       setCreateSuccess('Offer created.');
       setCreateStatus('success');
-      toast({ message: 'Offer created.', tone: 'success' });
     } catch (err) {
       const message =
         err instanceof Error && err.message === OFFER_CREATE_TIMEOUT_MESSAGE
