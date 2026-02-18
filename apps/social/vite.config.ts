@@ -53,6 +53,13 @@ export default defineConfig(({ command }) => {
     },
     resolve: {
       alias: [
+        // Force a single React runtime across workspace packages to prevent invalid hook-call warnings.
+        { find: /^react$/, replacement: path.resolve(__dirname, 'node_modules/react') },
+        { find: /^react-dom$/, replacement: path.resolve(__dirname, 'node_modules/react-dom') },
+        {
+          find: /^react\/jsx-runtime$/,
+          replacement: path.resolve(__dirname, 'node_modules/react/jsx-runtime.js')
+        },
         // Polyfill Buffer for nostr-tools in browser environment
         { find: 'buffer', replacement: path.resolve(__dirname, 'node_modules/buffer') },
         ...(useReactSrc
