@@ -399,7 +399,7 @@ export async function searchNotes(
     const relayCount = relays.length;
 
     if (merged.size === 0 && hasOnlyTimeoutFailures) {
-      return [];
+      throw new Error('Notes search timed out. Retry to try again.');
     }
 
     if (merged.size === 0 && hasSearchUnsupportedFailure) {

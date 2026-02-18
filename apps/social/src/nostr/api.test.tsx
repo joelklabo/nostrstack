@@ -122,20 +122,20 @@ describe('fetchNostrEventFromApi', () => {
 
 describe('searchNotes', () => {
   it(
-    'returns no results when every relay times out',
+    'throws when every relay times out',
     async () => {
       const pool = {
         querySync: vi.fn(() => new Promise(() => {}))
       } as unknown as SimplePool;
 
-      const result = await searchNotes(pool, ['wss://relay.nostr.band'], 'nostr');
-      expect(result).toEqual([]);
-      expect(result).toHaveLength(0);
+      await expect(searchNotes(pool, ['wss://relay.nostr.band'], 'nostr')).rejects.toThrow(
+        /timed out/i
+      );
     },
     NOTES_SEARCH_TIMEOUT_MS + 2_000
   );
 
-  it('returns no results when every relay rejects with timeout errors', async () => {
+  it('throws when every relay rejects with timeout errors', async () => {
     const pool = {
       querySync: vi
         .fn()
@@ -143,13 +143,9 @@ describe('searchNotes', () => {
         .mockRejectedValueOnce(new Error('request timed out after 10000ms'))
     } as unknown as SimplePool;
 
-    const result = await searchNotes(
-      pool,
-      ['wss://relay.nostr.band', 'wss://relay.damus.io'],
-      'nostr'
-    );
-    expect(result).toEqual([]);
-    expect(result).toHaveLength(0);
+    await expect(
+      searchNotes(pool, ['wss://relay.nostr.band', 'wss://relay.damus.io'], 'nostr')
+    ).rejects.toThrow(/timed out/i);
     expect(pool.querySync).toHaveBeenCalledTimes(2);
   });
 
