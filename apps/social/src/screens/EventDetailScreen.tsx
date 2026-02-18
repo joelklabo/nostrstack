@@ -272,6 +272,8 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     return uniqRelays(relays);
   }, [cfg.relays, relayContextRelays, target]);
 
+  const apiRelayList = useMemo(() => relayList.filter((relay) => !isMockRelay(relay)), [relayList]);
+
   useEffect(() => {
     if (!target) {
       setState({
@@ -430,7 +432,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           fetchNostrEventFromApi({
             baseUrl: apiBase,
             id: rawId,
-            relays,
+            relays: apiRelayList.length ? apiRelayList : undefined,
             replyLimit: REPLY_PAGE_LIMIT,
             replyTimeoutMs: REQUEST_TIMEOUT_MS
           }),
@@ -499,7 +501,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
               fetchNostrEventFromApi({
                 baseUrl: apiBase,
                 id: rawId,
-                relays: relayList,
+                relays: apiRelayList.length ? apiRelayList : undefined,
                 replyLimit: repliesEnabled ? 0 : undefined
               }),
               REQUEST_TIMEOUT_MS
@@ -570,7 +572,16 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [apiBase, apiBaseConfig.isConfigured, rawId, relayList, target, repliesEnabled, reloadToken]);
+  }, [
+    apiBase,
+    apiBaseConfig.isConfigured,
+    rawId,
+    relayList,
+    apiRelayList,
+    target,
+    repliesEnabled,
+    reloadToken
+  ]);
 
   const event = state.event;
   const references = state.references;
@@ -647,7 +658,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       const result = await fetchNostrEventFromApi({
         baseUrl: apiBase,
         id: rawId,
-        relays: state.relays,
+        relays: apiRelayList.length ? apiRelayList : undefined,
         replyCursor: cursor,
         replyLimit: REPLY_PAGE_LIMIT,
         replyTimeoutMs: REQUEST_TIMEOUT_MS
