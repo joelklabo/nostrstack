@@ -42,10 +42,36 @@ export const Sidebar = memo(function Sidebar({
   } = useWallet(true);
   const toast = useToast();
   const [isFunding, setIsFunding] = useState(false);
+  const [fundingNotice, setFundingNotice] = useState<{
+    tone: 'info' | 'success' | 'danger';
+    message: string;
+  } | null>(null);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [devNetworkOverride, setDevNetworkOverride] = useState<string | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
   const prevBalanceRef = useRef(wallet?.balance ?? 0);
+  const fundingNoticeTimeoutRef = useRef<number | null>(null);
+
+  const clearFundingNoticeTimeout = () => {
+    if (fundingNoticeTimeoutRef.current !== null) {
+      window.clearTimeout(fundingNoticeTimeoutRef.current);
+      fundingNoticeTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleFundingNoticeClear = (delayMs: number) => {
+    clearFundingNoticeTimeout();
+    fundingNoticeTimeoutRef.current = window.setTimeout(() => {
+      setFundingNotice(null);
+      fundingNoticeTimeoutRef.current = null;
+    }, delayMs);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearFundingNoticeTimeout();
+    };
+  }, []);
 
   // Detect balance increases for "receiving" animation
   useEffect(() => {
@@ -53,12 +79,19 @@ export const Sidebar = memo(function Sidebar({
     if (currentBalance > prevBalanceRef.current) {
       setIsReceiving(true);
       const timeout = setTimeout(() => setIsReceiving(false), 2000);
+      if (fundingNotice?.tone === 'info') {
+        setFundingNotice({
+          tone: 'success',
+          message: 'Wallet balance updated.'
+        });
+        scheduleFundingNoticeClear(4000);
+      }
       prevBalanceRef.current = currentBalance;
       return () => clearTimeout(timeout);
     }
     prevBalanceRef.current = currentBalance;
     return undefined;
-  }, [wallet?.balance]);
+  }, [wallet?.balance, fundingNotice?.tone]);
 
   const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
@@ -137,6 +170,7 @@ export const Sidebar = memo(function Sidebar({
       return;
     }
     setIsFunding(true);
+    setFundingNotice({ tone: 'info', message: 'Submitting funding request...' });
     try {
       const url = apiBase ? `${apiBase}/api/regtest/fund` : '/api/regtest/fund';
       const res = await fetch(url, { method: 'POST' });
@@ -172,9 +206,16 @@ export const Sidebar = memo(function Sidebar({
         ? `Funded & mined ${mined} blocks (+${topup.toLocaleString()} sats).`
         : `Funded & mined ${mined} blocks.`;
       toast({ message: msg, tone: 'success' });
+      setFundingNotice({
+        tone: 'info',
+        message: 'Funding complete. Waiting for wallet sync...'
+      });
+      scheduleFundingNoticeClear(12000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Regtest funding failed.';
       toast({ message, tone: 'danger' });
+      setFundingNotice({ tone: 'danger', message });
+      scheduleFundingNoticeClear(8000);
     } finally {
       setIsFunding(false);
     }
@@ -393,6 +434,15 @@ export const Sidebar = memo(function Sidebar({
                   {!withdrawAvailable ? withdrawUnavailableReason : 'Withdraw via LNURL'}
                 </button>
               </div>
+            )}
+            {fundingNotice && (
+              <p
+                className={`wallet-action-status is-${fundingNotice.tone}`}
+                role="status"
+                aria-live="polite"
+              >
+                {fundingNotice.message}
+              </p>
             )}
           </div>
         )}

@@ -877,6 +877,21 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.wallet-action-status {
+  margin-top: var(--ns-space-2);
+  font-size: 0.7rem;
+  color: var(--ns-color-text-muted);
+  line-height: 1.4;
+}
+
+.wallet-action-status.is-success {
+  color: var(--ns-color-success-default);
+}
+
+.wallet-action-status.is-danger {
+  color: var(--ns-color-danger-default);
+}
+
 /* Sidebar Wallet Section */
 .sidebar-wallet-section {
   margin-bottom: var(--ns-space-4);

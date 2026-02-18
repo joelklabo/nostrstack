@@ -86,5 +86,13 @@ describe('Sidebar wallet regression', () => {
         method: 'POST'
       });
     });
+
+    await waitFor(() => {
+      expect(screen.getByText('Funding complete. Waiting for wallet sync...')).toBeTruthy();
+    });
+    expect(
+      (screen.getByRole('button', { name: 'Add funds to regtest wallet' }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
   });
 });
