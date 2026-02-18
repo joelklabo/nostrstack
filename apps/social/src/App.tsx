@@ -20,7 +20,6 @@ import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './layout/Sidebar';
 import { TelemetryBar } from './layout/TelemetryBar';
 import { relayMonitor, type RelayStats } from './nostr/relayHealth';
-import { FeedScreen } from './screens/FeedScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
@@ -113,6 +112,21 @@ const RelaysView = lazy(() =>
         default: () => (
           <RouteLoadFallback
             message="Unable to load relays management screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
+);
+const FeedScreen = lazy(() =>
+  import('./screens/FeedScreen')
+    .then((m) => ({ default: m.FeedScreen }))
+    .catch((error) => {
+      console.error('Failed to load feed route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the feed screen. Please try reloading."
             onRetry={() => window.location.reload()}
           />
         )
