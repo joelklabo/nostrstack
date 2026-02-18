@@ -39,7 +39,12 @@ async function sessionUrlReachable(url: string, timeoutMs = 1500) {
   }
 }
 
-async function detectManagedGalleryUrl() {
+type ManagedSession = {
+  galleryUrl: string | undefined;
+  apiUrl: string | undefined;
+};
+
+async function detectManagedSessionUrls(): Promise<ManagedSession> {
   const repoRoot = path.resolve(import.meta.dirname, '../../..');
   const sessionDir =
     process.env.NOSTRDEV_SESSION_DIR ?? path.join(repoRoot, '.logs', 'dev', 'sessions');
@@ -49,11 +54,11 @@ async function detectManagedGalleryUrl() {
   try {
     files = await fs.readdir(sessionDir);
   } catch {
-    return undefined;
+    return { galleryUrl: undefined, apiUrl: undefined };
   }
 
   const sessionFiles = files.filter((file) => file.endsWith('.session'));
-  if (!sessionFiles.length) return undefined;
+  if (!sessionFiles.length) return { galleryUrl: undefined, apiUrl: undefined };
 
   const sessions = await Promise.all(
     sessionFiles.map(async (fileName) => {
@@ -63,6 +68,7 @@ async function detectManagedGalleryUrl() {
       return {
         mtimeMs: stat?.mtimeMs ?? 0,
         agent: parseSessionValue(contents, 'NOSTRDEV_SESSION_AGENT'),
+        apiPort: parseSessionValue(contents, 'NOSTRDEV_SESSION_API_PORT'),
         socialPort: parseSessionValue(contents, 'NOSTRDEV_SESSION_SOCIAL_PORT')
       };
     })
@@ -78,17 +84,34 @@ async function detectManagedGalleryUrl() {
     .sort((a, b) => b.mtimeMs - a.mtimeMs);
 
   for (const session of [...preferred, ...fallback]) {
-    const port = Number(session.socialPort);
-    if (!Number.isFinite(port) || port <= 0) continue;
-    const candidates = [`http://localhost:${port}`, `https://localhost:${port}`];
-    for (const candidate of candidates) {
+    const socialPort = Number(session.socialPort);
+    const apiPort = Number(session.apiPort);
+    if (!Number.isFinite(socialPort) || socialPort <= 0) continue;
+
+    const galleryCandidates = [`http://localhost:${socialPort}`, `https://localhost:${socialPort}`];
+    const apiCandidates = [`http://localhost:${apiPort}`, `https://localhost:${apiPort}`];
+
+    let galleryUrl: string | undefined;
+    for (const candidate of galleryCandidates) {
       if (await sessionUrlReachable(candidate)) {
-        return candidate;
+        galleryUrl = candidate;
+        break;
       }
     }
+    if (!galleryUrl) continue;
+
+    let apiUrl: string | undefined;
+    for (const candidate of apiCandidates) {
+      if (await sessionUrlReachable(candidate)) {
+        apiUrl = candidate;
+        break;
+      }
+    }
+
+    return { galleryUrl, apiUrl };
   }
 
-  return undefined;
+  return { galleryUrl: undefined, apiUrl: undefined };
 }
 
 async function ensureGalleryAvailable(baseUrl: string) {
@@ -250,11 +273,32 @@ async function main() {
   // Allow Node-side HTTPS calls to the self-signed dev cert (only for local QA).
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED ?? '0';
 
-  const detectedBaseUrl = await detectManagedGalleryUrl();
-  const baseUrl = process.env.GALLERY_URL ?? detectedBaseUrl ?? 'http://localhost:4173';
-  if (!process.env.GALLERY_URL && detectedBaseUrl) {
-    console.log(`ℹ️ using managed dev session gallery URL: ${detectedBaseUrl}`);
+  const detected = await detectManagedSessionUrls();
+  const baseUrl = process.env.GALLERY_URL ?? detected.galleryUrl ?? 'http://localhost:4173';
+  const apiUrl = process.env.API_URL ?? detected.apiUrl ?? 'http://localhost:3001';
+
+  if (detected.galleryUrl || detected.apiUrl) {
+    const parts: string[] = [];
+    if (detected.galleryUrl) parts.push(`gallery=${detected.galleryUrl}`);
+    if (detected.apiUrl) parts.push(`api=${detected.apiUrl}`);
+    console.log(`ℹ️ using managed dev session: ${parts.join(', ')}`);
   }
+
+  if (!process.env.GALLERY_URL && !detected.galleryUrl && !process.env.NOSTRDEV_AGENT) {
+    console.log(
+      'ℹ️ No managed session detected. Using defaults. Set GALLERY_URL/API_URL or run under pnpm dev:logs for managed sessions.'
+    );
+  }
+
+  if (process.env.NOSTRDEV_AGENT && !detected.galleryUrl && !detected.apiUrl) {
+    const agent = process.env.NOSTRDEV_AGENT;
+    console.error(`❌ Managed session for agent '${agent}' not found or not reachable.`);
+    console.error(
+      '   Run "pnpm dev:logs" to start a managed session, or set GALLERY_URL explicitly.'
+    );
+    process.exit(1);
+  }
+
   const headless = envFlag('HEADLESS', true);
   const slowMo = Number(process.env.SLOWMO_MS ?? 0) || 0;
   const testNsec =
@@ -299,7 +343,7 @@ async function main() {
     const type = msg.type();
     const text = msg.text();
     if (type === 'error') consoleErrors.push(text);
-    if (type === 'warning' || type === 'warn') {
+    if (type === 'warning') {
       consoleWarnings.push(text);
     }
   });
