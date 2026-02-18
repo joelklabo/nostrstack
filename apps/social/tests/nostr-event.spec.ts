@@ -13,7 +13,11 @@ test.describe('/nostr/:id landing', () => {
     const profileId = 'f'.repeat(64);
     const addressPubkey = '1'.repeat(64);
     const addressCoord = `30023:${addressPubkey}:post`;
-    const addressNaddr = nip19.naddrEncode({ kind: 30023, pubkey: addressPubkey, identifier: 'post' });
+    const addressNaddr = nip19.naddrEncode({
+      kind: 30023,
+      pubkey: addressPubkey,
+      identifier: 'post'
+    });
 
     const mainResponse = buildNostrEventResponse({
       id: eventId,
@@ -42,7 +46,10 @@ test.describe('/nostr/:id landing', () => {
       [replyId]: buildNostrEventResponse({ id: replyId, content: 'Reply preview' }),
       [quoteId]: buildNostrEventResponse({ id: quoteId, content: 'Quote preview' }),
       [mentionId]: buildNostrEventResponse({ id: mentionId, content: 'Mention preview' }),
-      [addressNaddr]: buildNostrEventResponse({ id: '2'.repeat(64), content: 'Addressable preview' })
+      [addressNaddr]: buildNostrEventResponse({
+        id: '2'.repeat(64),
+        content: 'Addressable preview'
+      })
     };
 
     const consoleErrors: string[] = [];
@@ -69,6 +76,32 @@ test.describe('/nostr/:id landing', () => {
 
     expect(consoleErrors).toEqual([]);
     expect(failedRequests).toEqual([]);
+  });
+
+  test('ignores invalid markdown image sources in event content', async ({ page }) => {
+    const eventId = 'm'.repeat(64);
+    const invalidImageSource = `${eventId}:0`;
+
+    const response = buildNostrEventResponse({
+      id: eventId,
+      content: `![broken image](${invalidImageSource})\nThis is still readable.`
+    });
+
+    const failedRequests: string[] = [];
+    const consoleErrors: string[] = [];
+    page.on('requestfailed', (req) => failedRequests.push(req.url()));
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
+    });
+    page.on('pageerror', (err) => consoleErrors.push(err.message));
+
+    await mockNostrEventApi(page, { [eventId]: response });
+
+    await page.goto(`/nostr/${eventId}`);
+    await expect(page.locator('.nostr-event-title')).toHaveText('Note');
+
+    expect(failedRequests).toEqual([]);
+    expect(consoleErrors).toEqual([]);
   });
 
   test('shows error state when event is not found', async ({ page }) => {
