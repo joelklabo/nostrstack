@@ -127,6 +127,46 @@ describe('fetchNostrEventFromApi', () => {
       '/api/nostr/event/event-id-b?relays=wss%3A%2F%2Frelay.damus.io'
     );
   });
+
+  it('surfaces requestId and client-validation marker on 4xx API errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: 'invalid_id',
+          message: 'invalid event id',
+          requestId: 'req-validate-1'
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    await expect(
+      fetchNostrEventFromApi({
+        baseUrl: '/api',
+        id: 'not-a-valid-id'
+      })
+    ).rejects.toThrow(/client_validation; requestId=req-validate-1/);
+  });
+
+  it('surfaces requestId and backend marker on 5xx API errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: 'timeout',
+          message: 'Upstream timeout',
+          requestId: 'req-backend-1'
+        }),
+        { status: 504, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    await expect(
+      fetchNostrEventFromApi({
+        baseUrl: '/api',
+        id: 'event-id-c'
+      })
+    ).rejects.toThrow(/backend; requestId=req-backend-1/);
+  });
 });
 
 describe('searchNotes', () => {
@@ -168,7 +208,7 @@ describe('searchNotes', () => {
 
     await expect(
       searchNotes(pool, ['wss://relay.nostr.band', 'wss://relay.damus.io'], 'nostr')
-    ).rejects.toThrow(/timed out/i);
+    ).resolves.toEqual([]);
     expect(pool.querySync).toHaveBeenCalledTimes(2);
   });
 

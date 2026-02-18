@@ -195,13 +195,26 @@ function parseApiError(bodyText: string, status: number) {
     return 'Rate limited. Please wait a moment and try again.';
   }
   let message = bodyText || `HTTP ${status}`;
+  let requestId: string | undefined;
+  let isClientValidation = status >= 400 && status < 500;
   if (bodyText) {
     try {
       const parsed = JSON.parse(bodyText) as ApiErrorResponse;
       message = parsed.message || parsed.error || message;
+      requestId = parsed.requestId;
+      if (parsed.error) {
+        isClientValidation =
+          isClientValidation ||
+          parsed.error.startsWith('invalid_') ||
+          parsed.error.startsWith('malformed_');
+      }
     } catch {
       // ignore parse failures
     }
+  }
+  if (requestId) {
+    const source = isClientValidation ? 'client_validation' : 'backend';
+    return `${message} [${source}; requestId=${requestId}]`;
   }
   return message;
 }
@@ -382,8 +395,10 @@ export async function searchNotes(
 
       const merged = new Map<string, Event>();
       const failures: unknown[] = [];
+      let successCount = 0;
       settled.forEach((result, relayIndex) => {
         if (result.status === 'fulfilled') {
+          successCount++;
           for (const event of result.value) {
             merged.set(event.id, event);
           }
@@ -395,7 +410,7 @@ export async function searchNotes(
           }
         }
       });
-      return { merged, failures };
+      return { merged, failures, successCount };
     };
 
     const primary = await runQuery(true);
@@ -403,9 +418,15 @@ export async function searchNotes(
     const hasSearchUnsupportedFailure = primaryFailures.some(isSearchUnsupportedError);
     const hasAnyTimeoutFailure = primaryFailures.some(isTimeoutError);
     let merged = primary.merged;
+    const hadSuccessfulRelayResponse = primary.successCount > 0;
     const relayCount = relays.length;
 
-    if (merged.size === 0 && hasAnyTimeoutFailure && !hasSearchUnsupportedFailure) {
+    if (
+      merged.size === 0 &&
+      hasAnyTimeoutFailure &&
+      !hasSearchUnsupportedFailure &&
+      !hadSuccessfulRelayResponse
+    ) {
       throw new Error('Notes search timed out. Retry to try again.');
     }
 
