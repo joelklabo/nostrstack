@@ -10,11 +10,12 @@ type WalletSnapshot = {
 };
 
 export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, apiKey: string) {
-  const walletId = (process.env.LN_BITS_WALLET_ID || '').trim();
+  let walletId = (process.env.LN_BITS_WALLET_ID || '').trim();
   let successiveFailures = 0;
   let lastErrorKey = '';
   let isStartup = true;
   let backoffUntil = 0;
+  let walletIdFallbackAttempted = false;
   const STARTUP_FAILURE_THRESHOLD = 2;
   const BACKOFF_BASE_MS = 5000;
   const BACKOFF_MAX_MS = 60000;
@@ -63,6 +64,9 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     return String(err);
   };
 
+  const makeWalletUrl = (walletIdToUse: string) =>
+    `${baseUrl}/api/v1/wallet${walletIdToUse ? `?usr=${encodeURIComponent(walletIdToUse)}` : ''}`;
+
   const fetchFn = async (): Promise<WalletSnapshot | null> => {
     if (Date.now() < backoffUntil) {
       return null;
@@ -77,15 +81,52 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       };
     }
     try {
-      const walletUrl = `${baseUrl}/api/v1/wallet${walletId ? `?usr=${encodeURIComponent(walletId)}` : ''}`;
-      const res = await fetch(walletUrl, {
+      let walletUrl = makeWalletUrl(walletId);
+      let res = await fetch(walletUrl, {
         headers: {
           Accept: 'application/json',
           'X-Api-Key': apiKey
         }
       });
       const text = await res.text();
-      if (!res.ok) throw new Error(`lnbits http ${res.status}: ${text.slice(0, 200)}`);
+      if (!res.ok) {
+        if (
+          res.status === 404 &&
+          walletId &&
+          !walletIdFallbackAttempted &&
+          /wallet not found/i.test(text)
+        ) {
+          walletIdFallbackAttempted = true;
+          walletId = '';
+          walletUrl = makeWalletUrl(walletId);
+          res = await fetch(walletUrl, {
+            headers: {
+              Accept: 'application/json',
+              'X-Api-Key': apiKey
+            }
+          });
+          const fallbackText = await res.text();
+          if (res.ok) {
+            const fallbackJson = JSON.parse(fallbackText) as {
+              id?: string;
+              name?: string;
+              balance?: number;
+            };
+            successiveFailures = 0;
+            lastErrorKey = '';
+            isStartup = false;
+            return {
+              type: 'wallet',
+              id: fallbackJson.id,
+              name: fallbackJson.name,
+              balance: fallbackJson.balance,
+              time: Math.floor(Date.now() / 1000)
+            };
+          }
+          throw new Error(`lnbits http ${res.status}: ${fallbackText.slice(0, 200)}`);
+        }
+        throw new Error(`lnbits http ${res.status}: ${text.slice(0, 200)}`);
+      }
       const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
       successiveFailures = 0;
       lastErrorKey = '';
