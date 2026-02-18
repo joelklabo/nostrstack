@@ -70,4 +70,13 @@ describe('resolveApiBase', () => {
     expect(result.isRelative).toBe(true);
     expect(result.raw).toBe('/api');
   });
+
+  it('preserves relative API paths with trailing slash', () => {
+    const restore = withProtocol('https:');
+    const result = resolveApiBase('/api/');
+    restore();
+    expect(result.baseUrl).toBe('');
+    expect(result.isRelative).toBe(true);
+    expect(result.raw).toBe('/api/');
+  });
 });

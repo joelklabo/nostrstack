@@ -36,7 +36,7 @@ export function resolveApiBase(raw?: string | null): ApiBaseResolution {
   if (trimmed === 'mock') {
     return { raw: trimmed, baseUrl: '', isConfigured: false, isMock: true, isRelative: false };
   }
-  if (trimmed === '/api') {
+  if (/^\/api\/?$/.test(normalized)) {
     return { raw: trimmed, baseUrl: '', isConfigured: true, isMock: false, isRelative: true };
   }
 

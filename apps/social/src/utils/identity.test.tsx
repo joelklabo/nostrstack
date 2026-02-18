@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useIdentityResolver } from '../hooks/useIdentityResolver';
 import * as identityModule from './identity';
-import { type IdentityResolution,resolveIdentity } from './identity';
+import { type IdentityResolution, resolveIdentity } from './identity';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -78,6 +78,27 @@ describe('resolveIdentity', () => {
     );
   });
 
+  it('resolves nip05 via proxy when apiBase has trailing slash', async () => {
+    const pubkey = getPublicKey(new Uint8Array(32).fill(6));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ pubkey })
+    } as Response);
+
+    const result = await resolveIdentity('Bob@LocalHost', { apiBase: '/api/' });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.pubkey).toBe(pubkey.toLowerCase());
+      expect(result.value.source).toBe('nip05');
+      expect(result.value.nip05).toBe('bob@localhost');
+    }
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/nostr/identity?nip05=bob%40localhost',
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
   it('returns lightning_only when nip05 is not found', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: false,
@@ -94,7 +115,9 @@ describe('resolveIdentity', () => {
   });
 
   it('returns nip05_timeout on abort errors', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(Object.assign(new Error('abort'), { name: 'AbortError' }));
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+      Object.assign(new Error('abort'), { name: 'AbortError' })
+    );
 
     const result = await resolveIdentity('alice@localhost', { apiBase: 'https://api.example.com' });
     expect(result.ok).toBe(false);

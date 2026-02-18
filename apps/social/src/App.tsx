@@ -578,7 +578,7 @@ function AppShell() {
   if (nostrRouteId) {
     return (
       <ErrorBoundary
-        key={pathname}
+        key={`${pathname}-${routeRecoveryKey}`}
         resetToken={routeRecoveryKey}
         fallback={
           <RouteLoadFallback
@@ -607,7 +607,7 @@ function AppShell() {
     return (
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={pathname}
+          key={`${pathname}-${routeRecoveryKey}`}
           resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
@@ -768,7 +768,7 @@ function AppShell() {
       />
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={pathname}
+          key={`${pathname}-${routeRecoveryKey}`}
           resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
@@ -778,7 +778,10 @@ function AppShell() {
             />
           }
         >
-          <Suspense fallback={<LoadingFallback message={`Loading ${routeBoundView} route...`} />}>
+          <Suspense
+            key={`${pathname}-${routeRecoveryKey}`}
+            fallback={<LoadingFallback message={`Loading ${routeBoundView} route...`} />}
+          >
             {isRelaysRoute ? (
               <RelaysView />
             ) : isProfileRoute ? (
