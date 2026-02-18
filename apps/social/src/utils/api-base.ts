@@ -73,6 +73,13 @@ function convertToWsScheme(url: string): string {
   return url.replace(/^https:\/\//i, 'wss://').replace(/^http:\/\//i, 'ws://');
 }
 
+function preferSecureWsUrl(url: string): string {
+  const converted = convertToWsScheme(url);
+  if (typeof window === 'undefined') return converted;
+  if (window.location.protocol !== 'https:') return converted;
+  return converted.replace(/^ws:\/\//i, 'wss://');
+}
+
 function isLocalhostUrl(raw: string): boolean {
   try {
     const parsed = new URL(raw);
@@ -127,7 +134,7 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   }
 
   if (!raw || /^ws(s)?:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) {
-    return `${convertToWsScheme(raw)}${normalizedPath}`;
+    return `${preferSecureWsUrl(raw)}${normalizedPath}`;
   }
 
   if (runtimeApiBase.isRelative && runtimeApiBase.raw === '/api') {

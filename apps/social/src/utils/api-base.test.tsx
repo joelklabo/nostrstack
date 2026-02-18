@@ -41,6 +41,24 @@ describe('resolveRuntimeWsUrl', () => {
     }
   });
 
+  it('upgrades ws:// runtime base to wss:// when the page is HTTPS', () => {
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: new URL('https://localhost:4173') as unknown as Location
+    });
+
+    try {
+      const url = resolveRuntimeWsUrl('ws://localhost:3001', '/ws/telemetry');
+      expect(url).toBe('wss://localhost:3001/ws/telemetry');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation
+      });
+    }
+  });
+
   it('maps "/api" runtime base to host root websocket path', () => {
     const url = resolveRuntimeWsUrl('/api', '/ws/telemetry');
     expect(url).toBe(`${getWebSocketOrigin()}/ws/telemetry`);
