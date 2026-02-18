@@ -126,6 +126,26 @@ describe('wallet-ws fetcher', () => {
     );
   });
 
+  it('suppresses fetch failed errors with connection-close cause as recurring transient failures', async () => {
+    vi.mocked(fetch).mockRejectedValue(
+      Object.assign(new TypeError('fetch failed'), {
+        cause: { message: 'other side closed' }
+      })
+    );
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    for (let i = 0; i < 4; i++) {
+      await fetcher();
+    }
+
+    expect(mockLog.warn).not.toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenLastCalledWith(
+      expect.objectContaining({ successiveFailures: 3 }),
+      'wallet-ws fetch failed (suppressed)'
+    );
+  });
+
   it('suppresses UND_ERR_SOCKET transport failures as recurring transient failures', async () => {
     vi.mocked(fetch).mockRejectedValue(
       Object.assign(new TypeError('fetch failed'), {

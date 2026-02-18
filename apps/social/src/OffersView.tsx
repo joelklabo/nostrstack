@@ -1,6 +1,6 @@
 import { OfferWidget, useNostrstackConfig } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 
 import { copyToClipboard } from './ui/clipboard';
 import { resolveGalleryApiBase } from './utils/api-base';
@@ -316,6 +316,11 @@ export function OffersView() {
     }
   };
 
+  const handleCreateOfferSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    void handleCreateOffer();
+  };
+
   const handleRequestInvoice = async (entry: OfferEntry) => {
     if (!apiBaseConfig.isConfigured) {
       toast({ message: 'API base is not configured.', tone: 'danger' });
@@ -395,105 +400,108 @@ export function OffersView() {
           </span>
         </div>
 
-        <div className="offer-form">
-          <label className="offer-field">
-            <span>Description</span>
-            <input
-              className="offer-input"
-              name="offer-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Monthly update newsletter"
-            />
-            <span
-              className={`offer-field-meta ${
-                description.length > MAX_DESCRIPTION_CHARS
-                  ? 'error'
-                  : description.length > MAX_DESCRIPTION_CHARS - 20
-                    ? 'warning'
-                    : ''
-              }`}
-            >
-              {description.length}/{MAX_DESCRIPTION_CHARS}
-            </span>
-          </label>
-          <label className="offer-field">
-            <span>Amount (msat)</span>
-            <input
-              className="offer-input"
-              name="offer-amount-msat"
-              value={amountMsat}
-              onChange={(e) => setAmountMsat(e.target.value)}
-              placeholder="Leave blank for variable amount"
-            />
-          </label>
-          <label className="offer-field">
-            <span>Label</span>
-            <input
-              className="offer-input"
-              name="offer-label"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="subscription-tier-1"
-            />
-            <span
-              className={`offer-field-meta ${
-                label.length > MAX_LABEL_CHARS
-                  ? 'error'
-                  : label.length > MAX_LABEL_CHARS - 10
-                    ? 'warning'
-                    : ''
-              }`}
-            >
-              {label.length}/{MAX_LABEL_CHARS}
-            </span>
-          </label>
-          <label className="offer-field">
-            <span>Issuer</span>
-            <input
-              className="offer-input"
-              name="offer-issuer"
-              value={issuer}
-              onChange={(e) => setIssuer(e.target.value)}
-              placeholder="nostrstack.io"
-            />
-            <span
-              className={`offer-field-meta ${
-                issuer.length > MAX_ISSUER_CHARS
-                  ? 'error'
-                  : issuer.length > MAX_ISSUER_CHARS - 10
-                    ? 'warning'
-                    : ''
-              }`}
-            >
-              {issuer.length}/{MAX_ISSUER_CHARS}
-            </span>
-          </label>
-          <label className="offer-field">
-            <span>Expires in (seconds)</span>
-            <input
-              className="offer-input"
-              name="offer-expires"
-              value={expiresIn}
-              onChange={(e) => setExpiresIn(e.target.value)}
-              placeholder="3600"
-            />
-          </label>
-        </div>
+        <form onSubmit={handleCreateOfferSubmit}>
+          <div className="offer-form">
+            <label className="offer-field">
+              <span>Description</span>
+              <input
+                className="offer-input"
+                name="offer-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Monthly update newsletter"
+              />
+              <span
+                className={`offer-field-meta ${
+                  description.length > MAX_DESCRIPTION_CHARS
+                    ? 'error'
+                    : description.length > MAX_DESCRIPTION_CHARS - 20
+                      ? 'warning'
+                      : ''
+                }`}
+              >
+                {description.length}/{MAX_DESCRIPTION_CHARS}
+              </span>
+            </label>
+            <label className="offer-field">
+              <span>Amount (msat)</span>
+              <input
+                className="offer-input"
+                name="offer-amount-msat"
+                value={amountMsat}
+                onChange={(e) => setAmountMsat(e.target.value)}
+                placeholder="Leave blank for variable amount"
+              />
+            </label>
+            <label className="offer-field">
+              <span>Label</span>
+              <input
+                className="offer-input"
+                name="offer-label"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="subscription-tier-1"
+              />
+              <span
+                className={`offer-field-meta ${
+                  label.length > MAX_LABEL_CHARS
+                    ? 'error'
+                    : label.length > MAX_LABEL_CHARS - 10
+                      ? 'warning'
+                      : ''
+                }`}
+              >
+                {label.length}/{MAX_LABEL_CHARS}
+              </span>
+            </label>
+            <label className="offer-field">
+              <span>Issuer</span>
+              <input
+                className="offer-input"
+                name="offer-issuer"
+                value={issuer}
+                onChange={(e) => setIssuer(e.target.value)}
+                placeholder="nostrstack.io"
+              />
+              <span
+                className={`offer-field-meta ${
+                  issuer.length > MAX_ISSUER_CHARS
+                    ? 'error'
+                    : issuer.length > MAX_ISSUER_CHARS - 10
+                      ? 'warning'
+                      : ''
+                }`}
+              >
+                {issuer.length}/{MAX_ISSUER_CHARS}
+              </span>
+            </label>
+            <label className="offer-field">
+              <span>Expires in (seconds)</span>
+              <input
+                className="offer-input"
+                name="offer-expires"
+                value={expiresIn}
+                onChange={(e) => setExpiresIn(e.target.value)}
+                placeholder="3600"
+              />
+            </label>
+          </div>
 
+          <div className="offer-actions" role="group" aria-label="Offer creation actions">
+            <button
+              type="submit"
+              className="offer-primary-btn"
+              disabled={createStatus === 'loading'}
+              aria-busy={createStatus === 'loading'}
+              aria-label={
+                createStatus === 'loading' ? 'Creating BOLT12 offer' : 'Create new BOLT12 offer'
+              }
+            >
+              {createStatus === 'loading' ? 'Creating...' : 'Create Offer'}
+            </button>
+          </div>
+        </form>
         <div className="offer-actions" role="group" aria-label="Offer creation actions">
-          <button
-            type="button"
-            className="offer-primary-btn"
-            onClick={handleCreateOffer}
-            disabled={createStatus === 'loading'}
-            aria-busy={createStatus === 'loading'}
-            aria-label={
-              createStatus === 'loading' ? 'Creating BOLT12 offer' : 'Create new BOLT12 offer'
-            }
-          >
-            {createStatus === 'loading' ? 'Creating...' : 'Create Offer'}
-          </button>
           {createStatus === 'loading' && (
             <div className="offer-pending ns-alert ns-alert--info" role="status" aria-live="polite">
               Creating BOLT12 offer...

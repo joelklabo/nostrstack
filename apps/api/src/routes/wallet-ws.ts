@@ -49,12 +49,16 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       return asUnknown.code.trim();
     }
 
+    const msg = typeof asUnknown.message === 'string' ? asUnknown.message : '';
     const codeFromMessage = extractErrorCode({
-      message: typeof asUnknown.message === 'string' ? asUnknown.message : undefined,
+      message: msg || undefined,
       code: undefined
     });
     if (codeFromMessage) {
       return codeFromMessage;
+    }
+    if (/other side closed/i.test(msg) || /connection (?:closed|was reset)/i.test(msg)) {
+      return 'OTHER_SIDE_CLOSED';
     }
 
     return readErrorCode(asUnknown.cause);
@@ -82,7 +86,8 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
         if (code) return code.toUpperCase();
 
         const msg = err.message;
-        if (/other side closed/i.test(msg)) return 'OTHER_SIDE_CLOSED';
+        if (/other side closed/i.test(msg) || /connection (?:closed|was reset)/i.test(msg))
+          return 'OTHER_SIDE_CLOSED';
       }
       if (typeof (err as { code?: string }).code === 'string') {
         return (err as { code?: string }).code!.toUpperCase();
