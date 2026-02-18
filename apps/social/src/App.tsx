@@ -628,7 +628,21 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
           isGuest={isGuest}
         />
         <main className="feed-container" id="main-content" role="main">
-          <NotFoundScreen />
+          <ErrorBoundary
+            key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
+            resetToken={routeRecoveryKey}
+            fallback={
+              <RouteLoadFallback
+                message="Unable to load fallback screen. Please try reloading."
+                onRetry={retryRouteAndHealthCheck}
+                retryLabel="Retry route"
+              />
+            }
+          >
+            <Suspense fallback={<LoadingFallback message="Loading fallback screen..." />}>
+              <NotFoundScreen />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     );
