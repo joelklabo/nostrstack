@@ -9,6 +9,11 @@ err() { echo "[dev] ERROR: $*" >&2; }
 
 API_PORT=3001
 SOCIAL_PORT=4173
+USE_HTTPS="${USE_HTTPS:-false}"
+API_SCHEME="http"
+if [[ "$USE_HTTPS" == "true" ]]; then
+  API_SCHEME="https"
+fi
 PG_URL="postgresql://nostrstack:nostrstack@localhost:5432/nostrstack"
 BITCOIND_RPC="http://bitcoin:bitcoin@localhost:18443"
 LNBITS_URL="http://localhost:15001"
@@ -81,14 +86,14 @@ LN_BITS_API_KEY=$lnbits_key
 BITCOIND_RPC_URL=$BITCOIND_RPC
 TELEMETRY_PROVIDER=bitcoind
 BITCOIN_NETWORK=regtest
-PUBLIC_ORIGIN=http://localhost:$API_PORT
+PUBLIC_ORIGIN=$API_SCHEME://localhost:$API_PORT
 ENABLE_REGTEST_PAY=true
 ENABLE_REGTEST_FUND=true
 LOG_LEVEL=info
 EOF
 
   cat > "$ROOT/apps/social/.env.local" << EOF
-VITE_API_BASE_URL=http://localhost:$API_PORT
+VITE_API_BASE_URL=$API_SCHEME://localhost:$API_PORT
 VITE_NOSTRSTACK_HOST=localhost:$API_PORT
 VITE_NOSTRSTACK_RELAYS=wss://relay.damus.io,wss://relay.snort.social,wss://nos.lol
 VITE_ENABLE_REGTEST_PAY=true

@@ -15,6 +15,11 @@ PG_PORT="${PG_PORT:-65432}"
 PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
 SOCIAL_PORT="${SOCIAL_PORT:-4173}"
+USE_HTTPS="${USE_HTTPS:-false}"
+API_SCHEME="http"
+if [[ "$USE_HTTPS" == "true" ]]; then
+  API_SCHEME="https"
+fi
 SOCIAL_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
 
 need_cmd() {
@@ -39,7 +44,7 @@ require_env_vars() {
 }
 
 show_common_config() {
-  echo "  API base:            http://localhost:${API_PORT}"
+  echo "  API base:            ${API_SCHEME}://localhost:${API_PORT}"
   echo "  Social:              http://localhost:${SOCIAL_PORT}"
   echo "  Relays:              ${SOCIAL_RELAYS}"
   echo ""
@@ -72,8 +77,8 @@ start_stack() {
     PORT="$API_PORT" \
     DATABASE_URL="$PG_URL" \
     LIGHTNING_PROVIDER=lnbits \
-    PUBLIC_ORIGIN="http://localhost:${API_PORT}" \
-    VITE_API_BASE_URL="http://localhost:${API_PORT}" \
+    PUBLIC_ORIGIN="${API_SCHEME}://localhost:${API_PORT}" \
+    VITE_API_BASE_URL="${API_SCHEME}://localhost:${API_PORT}" \
     VITE_NOSTRSTACK_HOST="localhost:${API_PORT}" \
     VITE_ENABLE_REAL_PAYMENTS=true \
     VITE_LNBITS_URL="${LN_BITS_URL}" \
