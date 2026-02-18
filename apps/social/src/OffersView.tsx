@@ -256,6 +256,7 @@ export function OffersView() {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(payload),
+            keepalive: true,
             signal
           });
           return {
