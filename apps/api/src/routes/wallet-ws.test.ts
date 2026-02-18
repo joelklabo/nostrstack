@@ -202,6 +202,31 @@ describe('wallet-ws fetcher', () => {
     );
   });
 
+  it('suppresses AggregateError ECONNREFUSED transport failures as recurring transient failures', async () => {
+    const connRefused = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5000'), {
+      code: 'ECONNREFUSED'
+    });
+    const aggregateError = Object.assign(new Error('All attempts failed'), {
+      name: 'AggregateError',
+      errors: [connRefused]
+    });
+    const fetchFailure = Object.assign(new TypeError('fetch failed'), { cause: aggregateError });
+
+    vi.mocked(fetch).mockRejectedValue(fetchFailure);
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    for (let i = 0; i < 4; i++) {
+      await fetcher();
+    }
+
+    expect(mockLog.warn).not.toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenLastCalledWith(
+      expect.objectContaining({ successiveFailures: 3 }),
+      'wallet-ws fetch failed (suppressed)'
+    );
+  });
+
   it('resets failure count on success', async () => {
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
 

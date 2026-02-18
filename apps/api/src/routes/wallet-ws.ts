@@ -33,7 +33,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     }
     const msg = typeof err.message === 'string' ? err.message : '';
     const match = msg.match(
-      /\b(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|UND_ERR_[A-Z0-9_]+|ERR_[A-Z0-9_]+)\b/i
+      /\b(ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|UND_ERR_[A-Z0-9_]+|ERR_[A-Z0-9_]+)\b/i
     );
     if (match) return match[1];
     return undefined;
@@ -61,6 +61,15 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       return 'OTHER_SIDE_CLOSED';
     }
 
+    if (Array.isArray((asUnknown as { errors?: unknown[] }).errors)) {
+      for (const nestedErr of (asUnknown as { errors: unknown[] }).errors) {
+        const nestedCode = readErrorCode(nestedErr);
+        if (nestedCode) {
+          return nestedCode;
+        }
+      }
+    }
+
     return readErrorCode(asUnknown.cause);
   };
 
@@ -68,6 +77,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     !!errorKey &&
     [
       'OTHER_SIDE_CLOSED',
+      'ECONNREFUSED',
       'ECONNRESET',
       'ETIMEDOUT',
       'UND_ERR_SOCKET',
