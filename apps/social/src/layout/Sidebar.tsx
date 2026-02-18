@@ -7,7 +7,7 @@ import { type View } from '../hooks/useKeyboardShortcuts';
 import { useWallet } from '../hooks/useWallet';
 import { AnimatedSats } from '../ui/AnimatedNumber';
 import { resolveGalleryApiBase } from '../utils/api-base';
-import { navigateTo, navigateToProfile } from '../utils/navigation';
+import { navigateTo } from '../utils/navigation';
 
 interface SidebarProps {
   currentView: View;
@@ -242,11 +242,7 @@ export const Sidebar = memo(function Sidebar({
       return;
     }
     if (view === 'profile') {
-      if (pubkey) {
-        navigateToProfile(pubkey);
-      } else {
-        navigateTo('/profile');
-      }
+      navigateTo('/profile');
       setCurrentView('profile');
       onMobileClose?.();
       return;

@@ -24,7 +24,7 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
-import { navigateTo, navigateToProfile, resolveProfileRoute } from './utils/navigation';
+import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
 const FEED_IMPORT_AUTO_RELOAD_KEY = 'nostrstack.feed.import.auto-reload';
 
@@ -530,12 +530,6 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     nostrRouteId,
     profileRoutePubkey
   ]);
-
-  useEffect(() => {
-    if (!pubkey) return;
-    if (!isGuestProfileRoute) return;
-    navigateToProfile(pubkey);
-  }, [pubkey, isGuestProfileRoute]);
 
   useEffect(() => {
     if (profileRoutePubkey) {
