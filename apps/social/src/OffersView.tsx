@@ -129,6 +129,7 @@ export function OffersView() {
     'idle'
   );
   const [createError, setCreateError] = useState<string | null>(null);
+  const [createSuccess, setCreateSuccess] = useState<string | null>(null);
   const [offers, setOffers] = useState<OfferEntry[]>([]);
 
   const baseUrl = useMemo(
@@ -172,12 +173,14 @@ export function OffersView() {
     }
     if (!apiBaseConfig.isConfigured) {
       setCreateError('API base is not configured.');
+      setCreateSuccess(null);
       setCreateStatus('idle');
       return;
     }
 
     setCreateStatus('loading');
     setCreateError(null);
+    setCreateSuccess(null);
 
     const payload: Record<string, unknown> = { description: description.trim() };
     const parsedAmount = parseOptionalInt(amountMsat);
@@ -231,6 +234,7 @@ export function OffersView() {
       setLabel('');
       setIssuer('');
       setExpiresIn('');
+      setCreateSuccess('Offer created.');
       toast({ message: 'Offer created.', tone: 'success' });
       setCreateStatus('success');
     } catch (err) {
@@ -243,6 +247,7 @@ export function OffersView() {
               ? err.message
               : 'Offer creation failed.';
       setCreateError(message);
+      setCreateSuccess(null);
       setCreateStatus('error');
       toast({ message, tone: 'danger' });
     } finally {
@@ -434,6 +439,11 @@ export function OffersView() {
           {createError && (
             <div className="offer-error" role="alert" aria-live="assertive">
               {createError}
+            </div>
+          )}
+          {createSuccess && (
+            <div className="offer-success" role="status" aria-live="polite">
+              {createSuccess}
             </div>
           )}
         </div>
