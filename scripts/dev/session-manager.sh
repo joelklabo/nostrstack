@@ -316,6 +316,44 @@ ndev_claim_session() {
     if ndev_claim_slot "$requested_slot"; then
       return 0
     fi
+
+    local requested_api_port="$((NOSTRDEV_BASE_API_PORT + requested_slot))"
+    local requested_social_port="$((NOSTRDEV_BASE_SOCIAL_PORT + requested_slot))"
+    local pid
+    local fallback_api
+    local fallback_social
+    local fallback_slot
+    local fallback_slot_abs
+
+    if ndev_port_in_use "$requested_api_port" || ndev_port_in_use "$requested_social_port"; then
+      if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free ports $requested_api_port and $requested_social_port"
+        ndev_force_kill_port "$requested_api_port" || true
+        ndev_force_kill_port "$requested_social_port" || true
+        sleep 1
+      fi
+
+      if ndev_port_in_use "$requested_api_port" || ndev_port_in_use "$requested_social_port"; then
+        echo "Requested ports are already in use: API=$requested_api_port Social=$requested_social_port" >&2
+        pid="$(lsof -iTCP:"$requested_api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
+        [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $requested_api_port)" >&2
+        for ((fallback_slot = 1; fallback_slot <= max_slot; fallback_slot++)); do
+          fallback_api="$((requested_api_port + fallback_slot))"
+          fallback_social="$((requested_social_port + fallback_slot))"
+          fallback_slot_abs=$((requested_slot + fallback_slot))
+          if ndev_claim_slot "$fallback_slot_abs"; then
+            echo "Detected occupied requested slots; remapping deterministically for this session: API=${requested_api_port}->${fallback_api} Social=${requested_social_port}->${fallback_social} (slot offset +${fallback_slot})" >&2
+            return 0
+          fi
+        done
+
+        echo "No free replacement ports found in first ${NOSTRDEV_MAX_SLOTS} offsets." >&2
+        echo "Inspect live sessions with: pnpm dev:ps" >&2
+        echo "Clean stale listeners with: pnpm dev:stop:all -c" >&2
+        return 1
+      fi
+    fi
+
     echo "Requested dev session slot unavailable: $requested_slot" >&2
     echo "Inspect active sessions with pnpm dev:ps, then retry." >&2
     return 1
