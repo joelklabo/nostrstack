@@ -42,7 +42,7 @@ describe('App', () => {
       expect(screen.getByText('Unable to load event screen. Please try reloading.')).toBeTruthy();
     });
 
-    expect(screen.getByRole('button', { name: 'Reload page' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Retry route' })).toBeTruthy();
 
     window.history.replaceState({}, '', '/');
   });

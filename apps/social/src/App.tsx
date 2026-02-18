@@ -45,17 +45,17 @@ const FeedScreen = lazy(() =>
 const LoginScreen = lazy(() =>
   import('./screens/LoginScreen').then((m) => ({ default: m.LoginScreen }))
 );
-const EventDetailScreen = lazy(() =>
-  import('./screens/EventDetailScreen').then((m) => ({ default: m.EventDetailScreen }))
-);
-const NotFoundScreen = lazy(() =>
-  import('./screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen }))
-);
 const ProfileScreen = lazy(() =>
   import('./screens/ProfileScreen').then((m) => ({ default: m.ProfileScreen }))
 );
+const EventDetailScreen = lazy(() =>
+  import('./screens/EventDetailScreen').then((m) => ({ default: m.EventDetailScreen }))
+);
 const SettingsScreen = lazy(() =>
   import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
+);
+const NotFoundScreen = lazy(() =>
+  import('./screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen }))
 );
 const OffersView = lazy(() => import('./OffersView').then((m) => ({ default: m.OffersView })));
 
@@ -168,7 +168,15 @@ function LoadingFallback({
   );
 }
 
-function RouteLoadFallback({ message, onRetry }: { message?: string; onRetry?: () => void }) {
+function RouteLoadFallback({
+  message,
+  onRetry,
+  retryLabel = 'Reload page'
+}: {
+  message?: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+}) {
   return (
     <div style={{ padding: '1.5rem', color: 'var(--ns-color-text)' }}>
       <Alert tone="danger" style={{ marginBottom: '1rem' }} role="alert">
@@ -179,7 +187,7 @@ function RouteLoadFallback({ message, onRetry }: { message?: string; onRetry?: (
         className="ns-btn ns-btn--primary"
         onClick={onRetry ?? (() => window.location.reload())}
       >
-        Reload page
+        {retryLabel}
       </button>
     </div>
   );
@@ -195,6 +203,7 @@ function AppShell() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('nostrstack.guest') === 'true';
   });
+  const [routeRecoveryKey, setRouteRecoveryKey] = useState(0);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('nostrstack.guest');
@@ -247,6 +256,9 @@ function AppShell() {
   const closeMobileMenu = useCallback(() => {
     focusReturnToHamburger.current = true;
     setMobileMenuOpen(false);
+  }, []);
+  const retryCurrentRoute = useCallback(() => {
+    setRouteRecoveryKey((value) => value + 1);
   }, []);
   const pathname = usePathname();
   const isRouteWithOptionalQuery = (path: string) =>
@@ -426,8 +438,13 @@ function AppShell() {
   if (nostrRouteId) {
     return (
       <ErrorBoundary
+        key={`${pathname}-${routeRecoveryKey}`}
         fallback={
-          <RouteLoadFallback message="Unable to load event screen. Please try reloading." />
+          <RouteLoadFallback
+            message="Unable to load event screen. Please try reloading."
+            onRetry={retryCurrentRoute}
+            retryLabel="Retry route"
+          />
         }
       >
         <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
@@ -449,8 +466,13 @@ function AppShell() {
     return (
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
+          key={`${pathname}-${routeRecoveryKey}`}
           fallback={
-            <RouteLoadFallback message="Unable to load the login screen. Please try reloading." />
+            <RouteLoadFallback
+              message="Unable to load the login screen. Please try reloading."
+              onRetry={retryCurrentRoute}
+              retryLabel="Retry route"
+            />
           }
         >
           <Suspense fallback={<LoadingFallback message="Loading login screen..." />}>
@@ -602,28 +624,23 @@ function AppShell() {
       />
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={pathname}
+          key={`${pathname}-${routeRecoveryKey}`}
           fallback={
-            <div style={{ padding: '1.5rem', color: 'var(--ns-color-text)' }}>
-              <Alert tone="danger" style={{ marginBottom: '1rem' }} role="alert">
-                Unable to load this route. Please try reloading.
-              </Alert>
-              <button
-                type="button"
-                className="ns-btn ns-btn--primary"
-                onClick={() => window.location.reload()}
-              >
-                Reload page
-              </button>
-            </div>
+            <RouteLoadFallback
+              message="Unable to load this route. Please try reloading."
+              onRetry={retryCurrentRoute}
+              retryLabel="Retry route"
+            />
           }
         >
           <Suspense
+            key={`${pathname}-${routeRecoveryKey}`}
             fallback={
               <LoadingFallback
                 message={`Loading ${currentView} route...`}
                 includeRetry
                 retryLabel="Retry current route"
+                onRetry={retryCurrentRoute}
               />
             }
           >
