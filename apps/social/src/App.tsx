@@ -490,39 +490,6 @@ function AppShell() {
   ]);
 
   useEffect(() => {
-    const root = typeof document === 'undefined' ? null : document;
-    if (!root) return;
-
-    const markMediaImages = (node: ParentNode = root) => {
-      Array.from(node.querySelectorAll('.nostr-media-img:not(.ns-content__image)')).forEach(
-        (img) => {
-          img.classList.add('ns-content__image');
-        }
-      );
-      if ((node as HTMLElement).classList?.contains('nostr-media-img')) {
-        (node as HTMLElement).classList.add('ns-content__image');
-      }
-    };
-
-    markMediaImages();
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof HTMLElement)) return;
-          markMediaImages(node);
-        });
-      }
-    });
-
-    observer.observe(root, {
-      childList: true,
-      subtree: true
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
     if (mobileMenuOpen) {
       focusReturnToHamburger.current = false;
       const firstNavItem = document.querySelector<HTMLElement>(

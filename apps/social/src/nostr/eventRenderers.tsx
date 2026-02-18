@@ -202,7 +202,7 @@ function renderContentWithLinks(content: string) {
                           width={16}
                           height={9}
                           loading="lazy"
-                          className="nostr-media-img"
+                          className="nostr-media-img ns-content__image"
                         />
                       </div>
                     );
