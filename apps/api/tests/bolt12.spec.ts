@@ -137,6 +137,26 @@ test('creates offer and fetches invoice', async () => {
   expect(invoice.invoice).toContain('lni1');
 });
 
+test('lists previously created offers', async () => {
+  const createRes = await api.post('/api/bolt12/offers', {
+    data: { description: 'List check', amountMsat: 2000, label: 'list-test', issuer: 'test-issuer' }
+  });
+  expect(createRes.status()).toBe(201);
+  const created = await createRes.json();
+  expect(created.offer).toContain('lno1');
+
+  const offersRes = await api.get('/api/bolt12/offers');
+  expect(offersRes.status()).toBe(200);
+  const body = await offersRes.json();
+
+  expect(Array.isArray(body?.offers)).toBeTruthy();
+  const found = body.offers.find((entry: { offer: string }) => entry.offer === created.offer);
+  expect(found).toBeTruthy();
+  expect(found?.label).toBe('list-test');
+  expect(found?.issuer).toBe('test-issuer');
+  expect(found?.description).toBe('List check');
+});
+
 test('rejects amounts above configured max', async () => {
   const res = await api.post('/api/bolt12/offers', {
     data: { description: 'Too much', amountMsat: 200000 }

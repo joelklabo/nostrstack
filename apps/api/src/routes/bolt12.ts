@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
@@ -15,6 +17,18 @@ import {
 } from '../services/bolt12.js';
 
 type Bolt12ErrorResult = { status: number; error: string; message?: string };
+
+type StoredBolt12Offer = {
+  id: string;
+  description: string;
+  amountMsat?: number;
+  label?: string;
+  issuer?: string;
+  expiresIn?: number;
+  offer: string;
+  offerId?: string;
+  createdAt: string;
+};
 
 function formatBolt12Error(err: unknown): Bolt12ErrorResult {
   if (err instanceof Bolt12ValidationError) {
@@ -52,6 +66,8 @@ function formatBolt12Error(err: unknown): Bolt12ErrorResult {
 
 export async function registerBolt12Routes(app: FastifyInstance) {
   if (!env.ENABLE_BOLT12) return;
+
+  const offerHistory: StoredBolt12Offer[] = [];
 
   const limits: Bolt12Limits = {
     minAmountMsat: env.BOLT12_MIN_AMOUNT_MSAT,
@@ -96,6 +112,10 @@ export async function registerBolt12Routes(app: FastifyInstance) {
     }
   };
 
+  app.get('/api/bolt12/offers', async () => ({
+    offers: offerHistory
+  }));
+
   app.post(
     '/api/bolt12/offers',
     {
@@ -138,6 +158,20 @@ export async function registerBolt12Routes(app: FastifyInstance) {
           limits
         );
         const offer = await createBolt12Offer(provider, input);
+        offerHistory.unshift({
+          id: randomUUID(),
+          description: input.description,
+          amountMsat: input.amountMsat,
+          label: input.label,
+          issuer: input.issuer,
+          expiresIn: input.expiresIn,
+          offer: offer.offer,
+          offerId: offer.offerId,
+          createdAt: new Date().toISOString()
+        });
+        if (offerHistory.length > 1000) {
+          offerHistory.length = 1000;
+        }
         return reply.code(201).send(offer);
       } catch (err) {
         const formatted = formatBolt12Error(err);
