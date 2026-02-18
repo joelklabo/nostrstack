@@ -68,6 +68,19 @@ describe('getSearchRelays', () => {
     expect(relays).toEqual([...normalizedSearchRelays]);
   });
 
+  it('filters unsupported relays by hostname regardless of protocol or path variant', () => {
+    const relays = getSearchRelays([
+      'ws://relay.damus.io',
+      'wss://nos.lol/custom/path',
+      'WSS://relay.primal.net'
+    ]);
+
+    expect(relays).not.toContain('ws://relay.damus.io/');
+    expect(relays).not.toContain('wss://nos.lol/custom/path');
+    expect(relays).not.toContain('wss://relay.primal.net/');
+    expect(relays).toEqual([...normalizedSearchRelays]);
+  });
+
   it('filters unhealthy relays when healthy alternatives are available', () => {
     vi.spyOn(relayMonitor, 'isHealthy').mockImplementation((url: string) => {
       const normalized = url.endsWith('/') ? url : `${url}/`;
