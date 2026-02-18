@@ -285,24 +285,37 @@ function LoadingFallback({
 function RouteLoadFallback({
   message,
   onRetry,
-  retryLabel = 'Reload page'
+  retryLabel = 'Reload page',
+  onNavigateHome,
+  homeLabel = 'Go to feed'
 }: {
   message?: string;
   onRetry?: () => void;
   retryLabel?: string;
+  onNavigateHome?: () => void;
+  homeLabel?: string;
 }) {
   return (
     <div style={{ padding: '1.5rem', color: 'var(--ns-color-text)' }}>
       <Alert tone="danger" style={{ marginBottom: '1rem' }} role="alert">
         {message ?? 'Unable to load this route. Please try reloading.'}
       </Alert>
-      <button
-        type="button"
-        className="ns-btn ns-btn--primary"
-        onClick={onRetry ?? (() => window.location.reload())}
-      >
-        {retryLabel}
-      </button>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="ns-btn ns-btn--primary"
+          onClick={onRetry ?? (() => window.location.reload())}
+        >
+          {retryLabel}
+        </button>
+        <button
+          type="button"
+          className="ns-btn ns-btn--ghost"
+          onClick={onNavigateHome ?? (() => navigateTo('/'))}
+        >
+          {homeLabel}
+        </button>
+      </div>
     </div>
   );
 }

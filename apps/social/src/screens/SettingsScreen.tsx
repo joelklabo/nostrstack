@@ -442,6 +442,12 @@ export function SettingsScreen({
   };
 
   const handleConnectNwc = async () => {
+    if (nwcUriError || nwcLimitError || !nwcUriTrimmed) {
+      setNwcCheckStatus('error');
+      setNwcCheckMessage(nwcUriError ?? nwcLimitError ?? 'Enter a valid NWC URI to connect.');
+      setNwcBalanceMsat(null);
+      return;
+    }
     setNwcMessage('Connecting to NWC wallet.');
     handleSaveNwc();
     toast({ message: 'Connecting to NWC wallet.', tone: 'success' });
@@ -845,12 +851,7 @@ export function SettingsScreen({
             className="action-btn"
             onClick={handleConnectNwc}
             aria-busy={nwcCheckStatus === 'checking'}
-            disabled={
-              !nwcUriTrimmed ||
-              Boolean(nwcUriError) ||
-              Boolean(nwcLimitError) ||
-              nwcCheckStatus === 'checking'
-            }
+            disabled={!nwcUriTrimmed || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
             aria-label="Connect to NWC wallet"
           >
             {nwcCheckStatus === 'checking' ? 'Connecting…' : 'Connect'}
@@ -860,12 +861,7 @@ export function SettingsScreen({
             className="action-btn"
             onClick={handleCheckNwc}
             aria-busy={nwcCheckStatus === 'checking'}
-            disabled={
-              !nwcUriTrimmed ||
-              Boolean(nwcUriError) ||
-              Boolean(nwcLimitError) ||
-              nwcCheckStatus === 'checking'
-            }
+            disabled={!nwcUriTrimmed || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
             aria-label="Check wallet balance"
           >
             {nwcCheckStatus === 'checking' ? 'Checking…' : 'Check Balance'}

@@ -43,6 +43,7 @@ describe('App', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Retry route' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Go to feed' })).toBeTruthy();
 
     window.history.replaceState({}, '', '/');
   });
