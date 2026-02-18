@@ -8,6 +8,21 @@ import { relayMonitor } from '../nostr/relayHealth';
 // Reusing default relays from API module logic
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
+const defaultRelays = (() => {
+  const envRelays = parseRelays(import.meta.env.VITE_NOSTRSTACK_RELAYS);
+  return envRelays.length ? envRelays : DEFAULT_RELAYS;
+})();
+
+const noopRelayContext = {
+  relays: defaultRelays,
+  userRelays: [],
+  addRelay: () => {},
+  removeRelay: () => {},
+  saveRelays: async () => {},
+  isLoading: false,
+  error: null
+};
+
 export type RelayMode = 'read' | 'write' | 'both';
 
 export type RelayConfig = {
@@ -25,7 +40,7 @@ type RelayContextValue = {
   error: string | null;
 };
 
-export const RelayContext = createContext<RelayContextValue | null>(null);
+export const RelayContext = createContext<RelayContextValue>(noopRelayContext);
 
 export function RelayProvider({ children }: { children: ReactNode }) {
   const { pubkey, signEvent } = useAuth();
