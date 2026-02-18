@@ -72,7 +72,8 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       'ETIMEDOUT',
       'UND_ERR_SOCKET',
       'UND_ERR_CONNECT_TIMEOUT',
-      'UND_ERR_SOCKET_DID_CLOSE'
+      'UND_ERR_SOCKET_DID_CLOSE',
+      'FETCH_FAILED'
     ].includes(errorKey.toUpperCase());
 
   const getErrorKey = (err: unknown): string => {
@@ -86,6 +87,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
         if (code) return code.toUpperCase();
 
         const msg = err.message;
+        if (/fetch failed/i.test(msg)) return 'FETCH_FAILED';
         if (/other side closed/i.test(msg) || /connection (?:closed|was reset)/i.test(msg))
           return 'OTHER_SIDE_CLOSED';
       }
