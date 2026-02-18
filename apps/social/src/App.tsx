@@ -307,7 +307,7 @@ function RouteLoadFallback({
   );
 }
 
-function AppShell() {
+function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const { pubkey, isLoading, logout: authLogout } = useAuth();
   const [theme, setThemeState] = useState<'light' | 'dark'>(getInitialTheme);
   const [brandPreset, setBrandPresetState] = useState<NsBrandPreset>(getInitialBrandPreset);
@@ -374,6 +374,10 @@ function AppShell() {
   const retryCurrentRoute = useCallback(() => {
     setRouteRecoveryKey((value) => value + 1);
   }, []);
+  const retryRouteAndHealthCheck = useCallback(() => {
+    onRetryLocalApi?.();
+    retryCurrentRoute();
+  }, [onRetryLocalApi, retryCurrentRoute]);
   const routeLocation = usePathname();
   const pathname = routeLocation.split('?')[0] || '/';
   const routeRecoveryIdentity = routeLocation;
@@ -552,7 +556,7 @@ function AppShell() {
         fallback={
           <RouteLoadFallback
             message="Unable to load event screen. Please try reloading."
-            onRetry={retryCurrentRoute}
+            onRetry={retryRouteAndHealthCheck}
             retryLabel="Retry route"
           />
         }
@@ -581,7 +585,7 @@ function AppShell() {
           fallback={
             <RouteLoadFallback
               message="Unable to load the login screen. Please try reloading."
-              onRetry={retryCurrentRoute}
+              onRetry={retryRouteAndHealthCheck}
               retryLabel="Retry route"
             />
           }
@@ -742,7 +746,7 @@ function AppShell() {
           fallback={
             <RouteLoadFallback
               message="Unable to load this route. Please try reloading."
-              onRetry={retryCurrentRoute}
+              onRetry={retryRouteAndHealthCheck}
               retryLabel="Retry route"
             />
           }
@@ -813,9 +817,28 @@ export default function App() {
   const [resolvedApiBaseConfig, setResolvedApiBaseConfig] =
     useState<ApiBaseResolution>(apiBaseConfig);
   const [localApiCheckFailed, setLocalApiCheckFailed] = useState(false);
+  const [isResolvingLocalApiBase, setIsResolvingLocalApiBase] = useState(() =>
+    isLocalApiBase(apiBaseConfig)
+  );
+  const initialLocalApiConfig = useRef<ApiBaseResolution | null>(
+    isLocalApiBase(apiBaseConfig) ? apiBaseConfig : null
+  );
+
+  const retryLocalApiHealthCheck = useCallback(() => {
+    if (!initialLocalApiConfig.current) {
+      return;
+    }
+    setResolvedApiBaseConfig(initialLocalApiConfig.current);
+    setLocalApiCheckFailed(false);
+    setIsResolvingLocalApiBase(true);
+  }, []);
 
   useEffect(() => {
+    if (!isResolvingLocalApiBase) {
+      return;
+    }
     if (!isLocalApiBase(resolvedApiBaseConfig)) {
+      setIsResolvingLocalApiBase(false);
       return;
     }
     const controller = new AbortController();
@@ -865,6 +888,9 @@ export default function App() {
       }
 
       clearTimeout(timeout);
+      if (isMounted) {
+        setIsResolvingLocalApiBase(false);
+      }
     };
 
     void probe();
@@ -908,7 +934,7 @@ export default function App() {
       <AuthProvider>
         <RelayProvider>
           <StatsProvider>
-            <AppShell />
+            <AppShell onRetryLocalApi={retryLocalApiHealthCheck} />
           </StatsProvider>
         </RelayProvider>
       </AuthProvider>
