@@ -219,9 +219,7 @@
     "/api/lnurlp/{username}/invoice": {
       "get": {
         "summary": "Get Invoice",
-        "tags": [
-          "LNURL"
-        ],
+        "tags": ["LNURL"],
         "description": "Fetch an LNURL-pay invoice (LNURL callback step 2)",
         "parameters": [
           {
@@ -351,10 +349,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "id",
-                  "status"
-                ],
+                "required": ["id", "status"],
                 "additionalProperties": true
               }
             }
@@ -768,10 +763,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "minWithdrawable",
-                  "maxWithdrawable"
-                ],
+                "required": ["minWithdrawable", "maxWithdrawable"],
                 "additionalProperties": false
               }
             }
@@ -1158,10 +1150,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "domain",
-                  "displayName"
-                ],
+                "required": ["domain", "displayName"],
                 "additionalProperties": false
               }
             }
@@ -1217,10 +1206,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "domain",
-                  "displayName"
-                ],
+                "required": ["domain", "displayName"],
                 "additionalProperties": false
               }
             }
@@ -1271,11 +1257,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "domain",
-                  "lightningAddress",
-                  "pubkey"
-                ],
+                "required": ["domain", "lightningAddress", "pubkey"],
                 "additionalProperties": false
               }
             }
@@ -1346,9 +1328,7 @@
     "/api/nostr/identity": {
       "get": {
         "summary": "Resolve NIP-05",
-        "tags": [
-          "Nostr"
-        ],
+        "tags": ["Nostr"],
         "description": "Resolve a NIP-05 identifier to a Nostr public key and relays",
         "parameters": [
           {
@@ -1402,9 +1382,7 @@
                         "type": "string"
                       },
                       "description": "Preferred relays",
-                      "example": [
-                        "wss://relay.damus.io"
-                      ]
+                      "example": ["wss://relay.damus.io"]
                     },
                     "nip05": {
                       "type": "string",
@@ -1626,10 +1604,7 @@
                           "type": "boolean"
                         },
                         "nextCursor": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
+                          "type": ["null", "string"]
                         }
                       }
                     }
@@ -1901,10 +1876,7 @@
                           "type": "boolean"
                         },
                         "nextCursor": {
-                          "type": [
-                            "null",
-                            "string"
-                          ]
+                          "type": ["null", "string"]
                         }
                       }
                     }
@@ -2126,9 +2098,7 @@
     "/api/pay": {
       "post": {
         "summary": "Create Payment",
-        "tags": [
-          "Payments"
-        ],
+        "tags": ["Payments"],
         "description": "Create a new Lightning invoice for a specific action (e.g. unlock content)",
         "requestBody": {
           "content": {
@@ -2162,11 +2132,7 @@
                     }
                   }
                 },
-                "required": [
-                  "domain",
-                  "action",
-                  "amount"
-                ],
+                "required": ["domain", "action", "amount"],
                 "additionalProperties": false
               }
             }
@@ -2210,9 +2176,7 @@
     "/api/lnurlp/pay/status/{id}": {
       "get": {
         "summary": "Get Payment Status",
-        "tags": [
-          "Payments"
-        ],
+        "tags": ["Payments"],
         "description": "Check the status of a specific payment by its provider reference ID",
         "parameters": [
           {
@@ -2645,9 +2609,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "invoice"
-                ],
+                "required": ["invoice"],
                 "additionalProperties": false
               }
             }
@@ -2751,9 +2713,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "invoice"
-                ],
+                "required": ["invoice"],
                 "additionalProperties": false
               }
             }
@@ -2865,6 +2825,97 @@
       }
     },
     "/api/wallet/info": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "baseUrl": {
+                    "type": "string"
+                  },
+                  "apiKey": {
+                    "type": "string"
+                  },
+                  "walletId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "wallet": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "balance": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wallet": {
       "post": {
         "requestBody": {
           "content": {

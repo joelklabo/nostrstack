@@ -36,7 +36,9 @@ export async function registerWalletRoutes(app: FastifyInstance) {
       });
       const text = await res.text();
       if (!res.ok) {
-        return reply.status(res.status).send({ ok: false, error: `lnbits_http_${res.status}`, body: text.slice(0, 200) });
+        return reply
+          .status(res.status)
+          .send({ ok: false, error: `lnbits_http_${res.status}`, body: text.slice(0, 200) });
       }
       const json = JSON.parse(text) as { id?: string; name?: string; balance?: number };
       return { ok: true, wallet: { id: json.id, name: json.name, balance: json.balance } };
@@ -82,5 +84,6 @@ export async function registerWalletRoutes(app: FastifyInstance) {
   };
 
   app.post('/api/wallet/info', { schema }, handler);
+  app.post('/api/v1/wallet', { schema }, handler);
   app.post('/wallet/info', { schema }, handler);
 }
