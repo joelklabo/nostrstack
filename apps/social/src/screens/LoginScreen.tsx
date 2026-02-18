@@ -427,6 +427,7 @@ export function LoginScreen() {
                 name="nsec"
                 placeholder="nsec1..."
                 value={nsec}
+                autoComplete="new-password"
                 onChange={(e) => {
                   setNsec(e.target.value);
                   if (nsecError) setNsecError(null);
