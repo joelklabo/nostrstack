@@ -157,7 +157,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         continue;
       }
       await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      const closeBtn = page.locator('button:has-text("CLOSE")').first();
+      const closeBtn = page.locator('.payment-modal button:has-text("CLOSE")').first();
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       return true;
@@ -176,7 +176,6 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     await expect(page.locator('.payment-panel')).toBeVisible();
     await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
     await expect(page.locator('.payment-invoice-box')).toBeVisible();
-    // Use text-based selector since aria-label is different from button text
     const regtestBtn = page.locator('button:has-text("PAY_REGTEST")');
     if (!(await regtestBtn.isVisible())) {
       throw new Error('Regtest pay button missing after invoice ready.');
@@ -192,13 +191,12 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       if (paid) break;
     }
     if (!paid) {
-      const closeBtn = page.locator('button:has-text("CLOSE")').first();
+      const closeBtn = page.locator('.payment-modal button:has-text("CLOSE")').first();
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       continue;
     }
-    // Use text-based selector for CLOSE button
-    const closeBtn = page.locator('button:has-text("CLOSE")').first();
+    const closeBtn = page.locator('.payment-modal button:has-text("CLOSE")').first();
     await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
     await closeBtn.click({ force: true });
     return true;
