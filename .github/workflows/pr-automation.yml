@@ -114,23 +114,121 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
             const body = pr.body || '';
 
-            // Check for issue references
-            const issueRefs = body.match(/(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#\d+/gi);
-            const hasIssueRef = issueRefs && issueRefs.length > 0;
+            const issueRefPattern = /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#(\d+)/gi;
+            const issueRefsFromText = (text = '') => {
+              const refs = new Set();
+              for (const match of text.matchAll(issueRefPattern)) {
+                const num = Number(match[1]);
+                if (Number.isFinite(num) && num > 0) refs.add(num);
+              }
+              return Array.from(refs);
+            };
 
-            if (!hasIssueRef && !body.includes('no-issue-needed')) {
-              const comment = '## ⚠️ Missing Issue Reference\n\n' +
-                'This PR doesn\'t appear to reference any issues. Please:\n' +
-                '- Link to the issue this PR addresses using keywords like `Fixes #123` or `Closes #456`\n' +
-                '- Or add `no-issue-needed` to the PR description if no issue is required\n\n' +
-                'This helps track changes and provides context for reviewers.';
+            const issueMetadataFromCommit = async () => {
+              const fallbackRefs = new Set();
+              const commits = await github.paginate(github.rest.pulls.listCommits, {
+                owner,
+                repo,
+                pull_number: pr.number,
+                per_page: 100
+              });
+              for (const commit of commits || []) {
+                const message = (commit.commit && commit.commit.message) || '';
+                for (const ref of issueRefsFromText(message)) {
+                  fallbackRefs.add(ref);
+                }
+              }
+              return Array.from(fallbackRefs);
+            };
 
-              // Check if we already commented
+            const resolveIssueMetadata = async (issueNumber) => {
+              try {
+                const { data } = await github.rest.issues.get({
+                  owner,
+                  repo,
+                  issue_number: issueNumber
+                });
+                return {
+                  issueNumber,
+                  ok: true,
+                  title: String(data.title || '').trim() || '(untitled issue)',
+                  state: data.state || 'unknown'
+                };
+              } catch (error) {
+                return {
+                  issueNumber,
+                  ok: false,
+                  title: '(unresolved)',
+                  state: 'unknown',
+                  error: String(error?.status || error?.message || error)
+                };
+              }
+            };
+
+            const bodyIssueRefs = issueRefsFromText(body);
+            const hasExplicitIssueRefs = bodyIssueRefs.length > 0;
+            const usingCommitFallback = !hasExplicitIssueRefs;
+            const fallbackIssueRefs = usingCommitFallback ? await issueMetadataFromCommit() : [];
+
+            const explicitOrFallbackRefs = hasExplicitIssueRefs ? bodyIssueRefs : fallbackIssueRefs;
+            const needsFallback =
+              !hasExplicitIssueRefs &&
+              fallbackIssueRefs.length > 0 &&
+              !body.includes('no-issue-needed');
+
+            const issueMeta = await Promise.all(
+              explicitOrFallbackRefs.map((issueNumber) => resolveIssueMetadata(issueNumber))
+            );
+            const missingMetadata = issueMeta.filter((entry) => !entry.ok);
+            const staleMetadata = issueMeta.filter((entry) => entry.ok && entry.state !== 'open');
+            const resolvedMetadata = issueMeta.filter((entry) => entry.ok);
+
+            const isFallbackAmbiguous =
+              usingCommitFallback &&
+              fallbackIssueRefs.length > 1;
+            const isFallbackMissing = needsFallback && fallbackIssueRefs.length === 0;
+            const hasResolvedFallback = usingCommitFallback && resolvedMetadata.length === 1;
+            const hasUnusableFallback =
+              usingCommitFallback &&
+              (isFallbackMissing ||
+                missingMetadata.length > 0 ||
+                isFallbackAmbiguous ||
+                (hasResolvedFallback && staleMetadata.length > 0));
+
+            if (!body.includes('no-issue-needed') && (!hasExplicitIssueRefs || hasUnusableFallback)) {
+              const sortedFallback = fallbackIssueRefs.map(String).sort().join(', ');
+              const sortedMeta = issueMeta.map((entry) => `#${entry.issueNumber}: ${entry.title}`).join('\n');
+
+              let comment = '## ⚠️ Missing Issue Reference\n\n';
+              if (isFallbackMissing) {
+                comment += 'No issue reference keywords like `Fixes #123` were found in this PR body, and no issue references were found in commit metadata.\n\n';
+              } else if (isFallbackAmbiguous) {
+                comment += `I found multiple possible issue references in commit metadata: \`${sortedFallback}\`.\n\nThis fallback path is ambiguous, so I can't reliably attach a single issue.\n`;
+              } else if (missingMetadata.length > 0) {
+                const missingList = missingMetadata.map((entry) => `#${entry.issueNumber}`).join(', ');
+                comment += `I found fallback issue metadata candidates (${missingList}) but could not load issue details from GitHub.\n\n`;
+                comment += 'Fallback paths can become stale when issue numbers are removed, moved, or no longer accessible.\n';
+              } else if (staleMetadata.length > 0) {
+                const staleList = staleMetadata.map((entry) => `#${entry.issueNumber} (${entry.state})`).join(', ');
+                comment += `I resolved this PR to commit-metadata fallback issue(s) ${staleList}, but these are not currently open.\n\n`;
+                comment += 'Commit metadata may be stale, so please confirm or add a direct PR issue reference.\n';
+              } else {
+                comment += `I couldn't find a direct issue reference in the PR body, but I found commit metadata for: \n\`\`\`\n${sortedMeta}\n\`\`\`\n`;
+                comment += 'If commit-based metadata is intentional, it may become stale on rebases; please add `Fixes #123`/`Closes #456` in the PR description for stability.\n';
+              }
+
+              comment += '\nPlease add one of:\n' +
+                '- `Fixes #123` / `Closes #456` in the PR body\n' +
+                '- Or `no-issue-needed` if no issue is required\n\n' +
+                'This helps track changes and gives reviewers stable context.\n';
+
               const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner,
+                repo,
                 issue_number: pr.number
               });
 
@@ -141,8 +239,8 @@ jobs:
 
               if (!botComment) {
                 await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner,
+                  repo,
                   issue_number: pr.number,
                   body: comment
                 });
