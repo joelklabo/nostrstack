@@ -43,21 +43,95 @@ const FeedScreen = lazy(() =>
     })
 );
 const LoginScreen = lazy(() =>
-  import('./screens/LoginScreen').then((m) => ({ default: m.LoginScreen }))
+  import('./screens/LoginScreen')
+    .then((m) => ({ default: m.LoginScreen }))
+    .catch((error) => {
+      console.error('Failed to load login route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the login screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
 );
 const ProfileScreen = lazy(() =>
-  import('./screens/ProfileScreen').then((m) => ({ default: m.ProfileScreen }))
+  import('./screens/ProfileScreen')
+    .then((m) => ({ default: m.ProfileScreen }))
+    .catch((error) => {
+      console.error('Failed to load profile route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the profile screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
 );
 const EventDetailScreen = lazy(() =>
-  import('./screens/EventDetailScreen').then((m) => ({ default: m.EventDetailScreen }))
+  import('./screens/EventDetailScreen')
+    .then((m) => ({ default: m.EventDetailScreen }))
+    .catch((error) => {
+      console.error('Failed to load event route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the event screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
 );
 const SettingsScreen = lazy(() =>
-  import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }))
+  import('./screens/SettingsScreen')
+    .then((m) => ({ default: m.SettingsScreen }))
+    .catch((error) => {
+      console.error('Failed to load settings route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the settings screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
 );
 const NotFoundScreen = lazy(() =>
-  import('./screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen }))
+  import('./screens/NotFoundScreen')
+    .then((m) => ({ default: m.NotFoundScreen }))
+    .catch((error) => {
+      console.error('Failed to load not found route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load fallback screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
 );
-const OffersView = lazy(() => import('./OffersView').then((m) => ({ default: m.OffersView })));
+const OffersView = lazy(() =>
+  import('./OffersView')
+    .then((m) => ({ default: m.OffersView }))
+    .catch((error) => {
+      console.error('Failed to load offers route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the offers screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
+);
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
