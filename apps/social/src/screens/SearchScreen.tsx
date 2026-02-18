@@ -59,7 +59,9 @@ export function SearchScreen() {
   const { relays: relayList } = useRelays();
   const pool = useSimplePool();
   const [query, setQuery] = useState('');
-  const { status, result, error, resolveNow } = useIdentityResolver(query, { apiBase });
+  const isDirectSearch = useMemo(() => isDirectIdentitySearch(query), [query]);
+  const identityInput = isDirectSearch ? query : '';
+  const { status, result, error, resolveNow } = useIdentityResolver(identityInput, { apiBase });
   const pendingSearchRef = useRef<string | null>(null);
 
   const [fetchedProfile, setFetchedProfile] = useState<ProfileMeta | null>(null);
@@ -220,25 +222,25 @@ export function SearchScreen() {
       const trimmed = query.trim();
       if (!trimmed) return;
       setProfileLookupError(null);
-      if (isDirectIdentitySearch(trimmed)) {
+      if (isDirectSearch) {
         setNotes([]);
         setNotesError(null);
         setNotesSearchTimedOut(false);
         setHasMore(false);
         setLastSearchQuery('');
+        pendingSearchRef.current = trimmed;
+        void resolveNow(trimmed);
+      } else {
+        pendingSearchRef.current = null;
       }
-      pendingSearchRef.current = trimmed;
       emitTelemetryEvent({ type: 'search', stage: 'start', query: trimmed });
 
-      // Always try identity resolution
-      void resolveNow(trimmed);
-
       // Also try content search
-      if (!isDirectIdentitySearch(trimmed)) {
+      if (!isDirectSearch) {
         void handleNotesSearch(trimmed);
       }
     },
-    [query, resolveNow, handleNotesSearch]
+    [isDirectSearch, query, resolveNow, handleNotesSearch]
   );
 
   const retryProfileLookup = useCallback(() => {
