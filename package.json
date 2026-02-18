@@ -18,6 +18,7 @@
     "compile": "pnpm -r typecheck",
     "lint:knip": "knip",
     "lint:cpd": "jscpd .",
+    "lint:cpd:audit": "node -e \"const fs=require('fs');const path=require('path');function r(d){let f=[];try{fs.readdirSync(d).forEach(n=>{const p=path.join(d,n);try{fs.statSync(p).isDirectory()?f.push(...r(p)):(n==='qa-ui-audit.mjs'&&f.push(p))}catch(e){}})}catch(e){}return f}f=r('.');if(f.length>1)throw new Error('Duplicate qa-ui-audit.mjs found: '+f.join(', '));console.log('Found single qa-ui-audit.mjs at: '+f[0])\"",
     "lint:ls": "ls-lint",
     "lint:spell": "cspell \"**\" --exclude \"report/**\"",
     "lint:css": "stylelint \"**/*.css\"",
