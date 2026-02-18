@@ -11,7 +11,12 @@ interface State {
   error?: Error;
 }
 
+const ERROR_DEDUP_WINDOW_MS = 2000;
+
 export class ErrorBoundary extends Component<Props, State> {
+  private lastErrorTime = 0;
+  private lastErrorMessage = '';
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -22,6 +27,22 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    const now = Date.now();
+    const isModuleLoadError =
+      error.message.includes('Failed to fetch dynamically imported module') ||
+      error.message.includes('Failed to load module script');
+
+    if (
+      isModuleLoadError &&
+      now - this.lastErrorTime < ERROR_DEDUP_WINDOW_MS &&
+      error.message === this.lastErrorMessage
+    ) {
+      return;
+    }
+
+    this.lastErrorTime = now;
+    this.lastErrorMessage = error.message;
+
     console.error('ErrorBoundary caught an error:', error, info);
   }
 
