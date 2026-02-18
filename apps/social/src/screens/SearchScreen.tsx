@@ -110,8 +110,7 @@ export function SearchScreen() {
     if (status === 'validating') return 'Checking format…';
     if (status === 'resolving') return 'Resolving identity…';
     if (status === 'resolved') return 'Identity ready.';
-    if (status === 'error' && error?.code !== 'invalid_format')
-      return error?.message ?? 'Lookup failed.';
+    if (status === 'error') return error?.message ?? 'Lookup failed.';
     return 'Paste an identifier or search keywords.';
   }, [notesLoading, notesError, status, error]);
 
@@ -511,36 +510,51 @@ export function SearchScreen() {
         </Alert>
       )}
 
-      {status === 'error' &&
-        error &&
-        error.code !== 'lightning_only' &&
-        error.code !== 'invalid_format' && (
-          <Alert tone="danger" title="Identity resolution failed" role="alert">
-            <p>{error.message}</p>
+      {status === 'error' && error && error.code !== 'invalid_format' && (
+        <Alert tone="danger" title="Identity resolution failed" role="alert">
+          <p>{error.message}</p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
             {canRetryIdentity() && (
-              <div
-                style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}
+              <button
+                type="button"
+                className="action-btn"
+                onClick={retryIdentityLookup}
+                aria-label="Retry identity lookup"
               >
-                <button
-                  type="button"
-                  className="action-btn"
-                  onClick={retryIdentityLookup}
-                  aria-label="Retry identity lookup"
-                >
-                  Retry lookup
-                </button>
-                <button
-                  type="button"
-                  className="action-btn"
-                  onClick={handleSearchFallback}
-                  aria-label="Search notes instead"
-                >
-                  Search notes instead
-                </button>
-              </div>
+                Retry lookup
+              </button>
             )}
-          </Alert>
-        )}
+            <button
+              type="button"
+              className="action-btn"
+              onClick={handleSearchFallback}
+              aria-label="Search notes instead"
+            >
+              Search notes instead
+            </button>
+          </div>
+        </Alert>
+      )}
+
+      {status === 'error' && error && error.code === 'lightning_only' && (
+        <Alert tone="info" title="Lightning address detected" role="status" aria-live="polite">
+          We found a Lightning address but no Nostr profile mapping. You can still send sats if you
+          have their pubkey.
+          <div style={{ marginTop: '0.5rem' }}>
+            <code className="search-alert-code">{error.lightning}</code>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="action-btn"
+              onClick={handleSearchFallback}
+              aria-label="Search notes instead"
+            >
+              Search notes instead
+            </button>
+          </div>
+        </Alert>
+      )}
 
       <div className="search-notes-results">
         {notes.length > 0 && (
