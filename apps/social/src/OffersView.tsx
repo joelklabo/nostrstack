@@ -149,27 +149,23 @@ function parseCreateOfferResponse(text: string): CreateOfferResponse {
   return { offer, offerId, label: normalizedLabel };
 }
 
-function withTimeout<T>(
-  promise: Promise<T>,
+async function withRequestTimeout<T>(
   timeoutMs: number,
-  onTimeout?: () => void
+  request: (signal: AbortSignal) => Promise<T>
 ): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      if (onTimeout) {
-        onTimeout();
-      }
-      reject(new Error(OFFER_CREATE_TIMEOUT_MESSAGE));
-    }, timeoutMs);
-  });
-
-  return Promise.race([promise, timeout]).finally(() => {
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId);
+  try {
+    return await request(controller.signal);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError' && controller.signal.aborted) {
+      throw new Error(OFFER_CREATE_TIMEOUT_MESSAGE);
     }
-  });
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export function OffersView() {
@@ -252,21 +248,20 @@ export function OffersView() {
     const parsedExpires = parseOptionalInt(expiresIn);
     if (parsedExpires) payload.expiresIn = parsedExpires;
 
-    const controller = new AbortController();
     try {
-      const { res, responseText } = await withTimeout(
-        fetch(`${baseUrl}/api/bolt12/offers`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        }).then(async (response) => ({
-          res: response,
-          responseText: await response.text()
-        })),
+      const { res, responseText } = await withRequestTimeout(
         OFFER_CREATE_TIMEOUT_MS,
-        () => {
-          controller.abort();
+        async (signal) => {
+          const response = await fetch(`${baseUrl}/api/bolt12/offers`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal
+          });
+          return {
+            res: response,
+            responseText: await response.text()
+          };
         }
       );
       if (!res.ok) {
@@ -305,8 +300,6 @@ export function OffersView() {
               ? err.message
               : 'Offer creation failed.';
       failCreate(message);
-    } finally {
-      controller.abort();
     }
   };
 
