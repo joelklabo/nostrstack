@@ -278,6 +278,29 @@ function AppShell() {
   const profileRouteError = profileRoute.error;
   const isProfileRoute = isGuestProfileRoute || pathname.startsWith('/p/');
   const previousPathRef = useRef(pathname);
+  const routeBoundView = useMemo<View>(() => {
+    if (isProfileRoute || profileRoutePubkey) {
+      return 'profile';
+    }
+    if (isSettingsRoute) {
+      return 'settings';
+    }
+    if (isOffersRoute) {
+      return 'offers';
+    }
+    if (isSearchRoute || isFindFriendRoute) {
+      return 'search';
+    }
+    return currentView;
+  }, [
+    currentView,
+    isProfileRoute,
+    isSettingsRoute,
+    isOffersRoute,
+    isSearchRoute,
+    isFindFriendRoute,
+    profileRoutePubkey
+  ]);
   const handleNavigateToSettings = useCallback(() => {
     navigateTo('/settings');
     setCurrentView('settings');
@@ -488,7 +511,7 @@ function AppShell() {
     return (
       <div className="social-layout">
         <Sidebar
-          currentView={currentView}
+          currentView={routeBoundView}
           setCurrentView={setCurrentView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
@@ -542,7 +565,7 @@ function AppShell() {
         </button>
 
         <Sidebar
-          currentView={currentView}
+          currentView={routeBoundView}
           setCurrentView={setCurrentView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
@@ -614,7 +637,7 @@ function AppShell() {
       </button>
 
       <Sidebar
-        currentView={currentView}
+        currentView={routeBoundView}
         setCurrentView={setCurrentView}
         mobileOpen={mobileMenuOpen}
         onMobileClose={closeMobileMenu}
@@ -637,7 +660,7 @@ function AppShell() {
             key={`${pathname}-${routeRecoveryKey}`}
             fallback={
               <LoadingFallback
-                message={`Loading ${currentView} route...`}
+                message={`Loading ${routeBoundView} route...`}
                 includeRetry
                 retryLabel="Retry current route"
                 onRetry={retryCurrentRoute}
@@ -666,10 +689,10 @@ function AppShell() {
               </>
             ) : (
               <>
-                {currentView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
-                {currentView === 'search' && <SearchScreen />}
-                {currentView === 'offers' && <OffersView />}
-                {currentView === 'settings' && (
+                {routeBoundView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
+                {routeBoundView === 'search' && <SearchScreen />}
+                {routeBoundView === 'offers' && <OffersView />}
+                {routeBoundView === 'settings' && (
                   <SettingsScreen
                     theme={theme}
                     setTheme={setTheme}
