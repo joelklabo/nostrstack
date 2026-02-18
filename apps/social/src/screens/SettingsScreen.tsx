@@ -851,7 +851,7 @@ export function SettingsScreen({
             className="action-btn"
             onClick={handleConnectNwc}
             aria-busy={nwcCheckStatus === 'checking'}
-            disabled={!nwcUriTrimmed || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
+            disabled={!nwcUriTrimmed || nwcCheckStatus === 'checking'}
             aria-label="Connect to NWC wallet"
           >
             {nwcCheckStatus === 'checking' ? 'Connecting…' : 'Connect'}
@@ -861,7 +861,7 @@ export function SettingsScreen({
             className="action-btn"
             onClick={handleCheckNwc}
             aria-busy={nwcCheckStatus === 'checking'}
-            disabled={!nwcUriTrimmed || Boolean(nwcLimitError) || nwcCheckStatus === 'checking'}
+            disabled={!nwcUriTrimmed || nwcCheckStatus === 'checking'}
             aria-label="Check wallet balance"
           >
             {nwcCheckStatus === 'checking' ? 'Checking…' : 'Check Balance'}

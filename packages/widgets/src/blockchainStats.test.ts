@@ -22,20 +22,23 @@ describe('renderBlockchainStats', () => {
   });
 
   it('renders loading state initially', () => {
-    renderBlockchainStats(host);
+    const widget = renderBlockchainStats(host);
     expect(host.querySelector('.ns-blockchain-stats__title')?.textContent).toBe('Blockchain');
     expect(host.querySelector('.ns-status')?.textContent).toBe('Loading…');
+    widget.destroy();
   });
 
   it('renders mock data correctly', () => {
-    renderBlockchainStats(host, { baseURL: 'http://localhost:3000' }); // Assuming localhost triggers mock check if defined as such, but logic is `isMockBase`.
+    const localhostWidget = renderBlockchainStats(host, { baseURL: 'http://localhost:3000' }); // Assuming localhost triggers mock check if defined as such, but logic is `isMockBase`.
     // Wait, isMockBase might need 'localhost' or '127.0.0.1'. Let's verify `url-utils.js`.
     // But better to check what `isMockBase` expects.
     // For now let's assume `mock` triggers it based on test in tipWidget.
 
-    renderBlockchainStats(host, { baseURL: 'mock' });
+    localhostWidget.destroy();
+    const widget = renderBlockchainStats(host, { baseURL: 'mock' });
     expect(host.querySelector('.ns-status')?.textContent).toBe('Mock data');
     expect(host.querySelector('[data-stat="height"]')?.textContent).not.toBe('—');
+    widget.destroy();
   });
 
   it('fetches data on hydration', async () => {
@@ -58,6 +61,7 @@ describe('renderBlockchainStats', () => {
     expect(global.fetch).toHaveBeenCalled();
     expect(host.querySelector('[data-stat="height"]')?.textContent).toBe('100');
     expect(host.querySelector('[data-stat="network"]')?.textContent).toBe('testnet');
+    widget.destroy();
   });
 
   it('handles fetch error', async () => {
@@ -75,6 +79,7 @@ describe('renderBlockchainStats', () => {
     const retryBtn = host.querySelector('.ns-btn') as HTMLButtonElement;
 
     expect(retryBtn.hidden).toBe(false); // Retry button visible
+    widget.destroy();
   });
 
   it('stops auto-reconnect after max attempts', async () => {
@@ -103,10 +108,11 @@ describe('renderBlockchainStats', () => {
     } as Response);
     globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
-    renderBlockchainStats(host, { baseURL: 'http://localhost:3006' });
+    const widget = renderBlockchainStats(host, { baseURL: 'http://localhost:3006' });
 
     await vi.advanceTimersByTimeAsync(70_000);
 
     expect(MockWebSocket.instances).toBe(6);
+    widget.destroy();
   });
 });
