@@ -68,7 +68,7 @@ export function SearchScreen() {
   const [notes, setNotes] = useState<Event[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
-  const [_notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
+  const [notesSearchTimedOut, setNotesSearchTimedOut] = useState(false);
   const [profileLookupError, setProfileLookupError] = useState<string | null>(null);
   const [isProfileLookupLoading, setIsProfileLookupLoading] = useState(false);
   const [profileRetryKey, setProfileRetryKey] = useState(0);
@@ -131,6 +131,35 @@ export function SearchScreen() {
     void resolveNow(query);
   }, [canRetryIdentity, query, resolveNow]);
 
+  const applyNotesSearchError = useCallback(
+    (query: string, error: unknown, hasExistingResults: boolean) => {
+      console.error('Notes search failed', error);
+      const timedOut =
+        error instanceof Error &&
+        /(request timed out|timed out after|timeout)/i.test(error.message);
+      const networkError =
+        error instanceof Error &&
+        (('code' in error && error.code === 'relay_network_error') ||
+          /unable to connect|network error|dns|connection refused/i.test(error.message));
+
+      setNotesSearchTimedOut(timedOut);
+      const errorMessage = networkError
+        ? 'Unable to connect to relays. Check your internet connection and try again.'
+        : timedOut
+          ? 'Notes search timed out. Retry to try again.'
+          : 'Search failed. Relays might not support NIP-50.';
+
+      const quotedQuery = query ? ` for "${query}"` : '';
+      const prefixedErrorMessage = quotedQuery ? `${errorMessage}${quotedQuery}` : errorMessage;
+      setNotesError(
+        hasExistingResults
+          ? `Previous results shown${quotedQuery}. ${errorMessage}`
+          : prefixedErrorMessage
+      );
+    },
+    []
+  );
+
   const handleNotesSearch = useCallback(
     async (q: string, isRetry = false) => {
       setNotesLoading(true);
@@ -150,31 +179,12 @@ export function SearchScreen() {
           setNotesError(`No notes found for "${q}".`);
         }
       } catch (err) {
-        console.error('Notes search failed', err);
-        const timedOut =
-          err instanceof Error && /(request timed out|timed out after|timeout)/i.test(err.message);
-        const networkError =
-          err instanceof Error &&
-          (('code' in err && err.code === 'relay_network_error') ||
-            /unable to connect|network error|dns|connection refused/i.test(err.message));
-        setNotesSearchTimedOut(timedOut);
-        const errorMessage = networkError
-          ? 'Unable to connect to relays. Check your internet connection and try again.'
-          : timedOut
-            ? 'Notes search timed out. Retry to try again.'
-            : 'Search failed. Relays might not support NIP-50.';
-        const quotedQuery = q ? ` for "${q}"` : '';
-        const prefixedErrorMessage = quotedQuery ? `${errorMessage}${quotedQuery}` : errorMessage;
-        if (notes.length > 0) {
-          setNotesError(`Previous results shown${quotedQuery}. ${errorMessage}`);
-        } else {
-          setNotesError(prefixedErrorMessage);
-        }
+        applyNotesSearchError(q, err, notes.length > 0);
       } finally {
         setNotesLoading(false);
       }
     },
-    [pool, relayList, notes.length]
+    [applyNotesSearchError, pool, relayList, notes.length]
   );
 
   const handleSearchFallback = useCallback(() => {
@@ -187,6 +197,8 @@ export function SearchScreen() {
     if (isLoadingMore || notes.length === 0 || !lastSearchQuery) return;
 
     setIsLoadingMore(true);
+    setNotesError(null);
+    setNotesSearchTimedOut(false);
     try {
       const searchRelays = getSearchRelays(relayList);
       // Get the oldest note's timestamp for pagination
@@ -212,11 +224,11 @@ export function SearchScreen() {
       }
       setHasMore(moreResults.length >= NOTES_PAGE_SIZE);
     } catch (err) {
-      console.error('Load more failed', err);
+      applyNotesSearchError(lastSearchQuery, err, notes.length > 0);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, notes, lastSearchQuery, pool, relayList]);
+  }, [applyNotesSearchError, isLoadingMore, notes, lastSearchQuery, pool, relayList]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -583,9 +595,13 @@ export function SearchScreen() {
         {notesError && !notesLoading && (
           <div className="search-empty" role="status" aria-live="polite">
             <h3 className="search-empty__title">
-              {lastSearchQuery
-                ? `No matching notes found for "${lastSearchQuery}"`
-                : 'No matching notes found'}
+              {notesSearchTimedOut && notes.length > 0
+                ? 'Unable to load more notes'
+                : notesSearchTimedOut
+                  ? `Notes search timed out for "${lastSearchQuery}"`
+                  : lastSearchQuery
+                    ? `No matching notes found for "${lastSearchQuery}"`
+                    : 'No matching notes found'}
             </h3>
             <p className="search-empty__text">{notesError}</p>
             <div style={{ marginTop: '0.75rem' }}>
