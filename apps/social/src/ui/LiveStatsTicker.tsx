@@ -209,6 +209,7 @@ function TimeSinceBlock({ timestamp, className = '' }: TimeSinceBlockProps) {
     display: '--',
     isRecent: false
   });
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!timestamp) {
@@ -221,9 +222,15 @@ function TimeSinceBlock({ timestamp, className = '' }: TimeSinceBlockProps) {
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 1000);
+    // Update every 10 seconds instead of every second to reduce INP impact
+    // The "just now" status is still shown via CSS for recent blocks
+    intervalRef.current = setInterval(updateTime, 10000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [timestamp]);
 
   return (
@@ -247,7 +254,7 @@ function TimeSinceBlock({ timestamp, className = '' }: TimeSinceBlockProps) {
         Last block
       </div>
       <div className="live-stat__value live-stat__value--time">
-        <OdometerDisplay value={timeData.display} />
+        <span className="time-since-value">{timeData.display}</span>
         {timeData.isRecent && <span className="live-stat__badge">Just now</span>}
       </div>
     </div>
