@@ -56,6 +56,24 @@ function shouldAutoReloadForFeedImport(error: unknown): boolean {
   }
 }
 
+async function recoverFromStaleFeedImportState(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+  } catch {
+    // Best-effort cleanup; always continue with a reload attempt.
+  } finally {
+    window.location.reload();
+  }
+}
+
 const FeedScreen = lazy(() =>
   import('./screens/FeedScreen')
     .then((m) => {
@@ -68,14 +86,14 @@ const FeedScreen = lazy(() =>
     })
     .catch((error) => {
       if (shouldAutoReloadForFeedImport(error)) {
-        window.location.reload();
+        void recoverFromStaleFeedImportState();
       }
       console.error('Failed to load feed route module.', error);
       return {
         default: () => (
           <RouteLoadFallback
             message="Unable to load the feed screen. Please try reloading."
-            onRetry={() => window.location.reload()}
+            onRetry={() => void recoverFromStaleFeedImportState()}
           />
         )
       };
