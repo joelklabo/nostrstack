@@ -239,4 +239,26 @@ describe('TelemetryBar', () => {
     await advanceTimers(400);
     expect(errorSpy).not.toHaveBeenCalled();
   });
+
+  it('does not schedule an additional retry after retrying from online', async () => {
+    (
+      window as Window & { __NOSTRSTACK_TELEMETRY_TIMING__?: unknown }
+    ).__NOSTRSTACK_TELEMETRY_TIMING__ = { wsBaseDelayMs: 100 };
+
+    render(<TelemetryBar />);
+    const socket = getLatestSocket();
+
+    act(() => {
+      socket.triggerClose({ code: 1006 });
+    });
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(MockWebSocket.instances).toHaveLength(2);
+
+    await advanceTimers(150);
+    expect(MockWebSocket.instances).toHaveLength(2);
+  });
 });

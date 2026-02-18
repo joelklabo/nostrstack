@@ -483,6 +483,9 @@ export function TelemetryBar() {
     let attempt = 0;
     let offlineLogged = false;
     let disconnectLogged = false;
+    const activeConnectionIdRef = { current: 0 };
+    const isCurrentConnection = (connectionId: number) =>
+      !cancelled && activeConnectionIdRef.current === connectionId;
 
     const clearRetry = () => {
       if (retryTimeout) clearTimeout(retryTimeout);
@@ -531,13 +534,18 @@ export function TelemetryBar() {
         return;
       }
 
+      const previousSocket = wsRef.current;
       setWsStatus(attempt === 0 ? 'connecting' : 'reconnecting');
       setWsAttempt(attempt);
+      const connectionId = ++activeConnectionIdRef.current;
       ws = new WebSocket(telemetryWsUrl);
       wsRef.current = ws;
+      if (previousSocket && previousSocket !== ws) {
+        safeClose(previousSocket);
+      }
 
       ws.onopen = () => {
-        if (cancelled) {
+        if (!isCurrentConnection(connectionId)) {
           safeClose(ws);
           return;
         }
@@ -554,6 +562,7 @@ export function TelemetryBar() {
       };
 
       ws.onmessage = (event) => {
+        if (!isCurrentConnection(connectionId)) return;
         try {
           const msg = JSON.parse(event.data) as TelemetryEvent;
 
@@ -602,13 +611,14 @@ export function TelemetryBar() {
       };
 
       ws.onerror = () => {
+        if (!isCurrentConnection(connectionId)) return;
         appendLog({ ts: Date.now(), level: 'error', message: 'Telemetry WebSocket Error' });
         setWsStatus('error');
         setOfflineReason('Connection error');
       };
 
       ws.onclose = (event) => {
-        if (cancelled) return;
+        if (!isCurrentConnection(connectionId)) return;
         wsRef.current = null;
         if (AUTH_CLOSE_CODES.has(event.code)) {
           markOffline('Authentication required');
@@ -644,6 +654,7 @@ export function TelemetryBar() {
       if (cancelled) return;
       offlineLogged = false;
       disconnectLogged = false;
+      clearRetry();
       clearPoll();
       attempt = 0;
       connect();
