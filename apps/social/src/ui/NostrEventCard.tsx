@@ -5,6 +5,7 @@ import type { Event } from 'nostr-tools';
 import { memo, useCallback, useState } from 'react';
 
 import { useRepost } from '../hooks/useRepost';
+import { ErrorBoundary } from '../shared';
 import { resolveRuntimeApiBase, resolveRuntimeHost } from '../utils/api-base';
 import { buildNoteLink } from '../utils/navigation';
 import { copyToClipboard } from './clipboard';
@@ -70,7 +71,7 @@ type NostrEventCardProps = {
   className?: string;
 };
 
-export const NostrEventCard = memo(function NostrEventCard({
+const NostrEventCardContent = memo(function NostrEventCard({
   event,
   variant = 'feed',
   authorLightningAddress,
@@ -389,5 +390,57 @@ export const NostrEventCard = memo(function NostrEventCard({
 
       <ReplyModal isOpen={isReplying} onClose={() => setIsReplying(false)} parentEvent={event} />
     </article>
+  );
+});
+
+function NostrEventCardFallback({
+  variant = 'feed',
+  className,
+  eventId
+}: {
+  variant?: NostrEventCardProps['variant'];
+  className?: string;
+  eventId?: string;
+}) {
+  const shortEventId = eventId ? eventId.slice(0, 8) : 'unknown';
+  return (
+    <article
+      className={['ns-card', 'ns-event-card', `ns-event-card--${variant}`, className]
+        .filter(Boolean)
+        .join(' ')}
+      data-testid="social-event-card-fallback"
+      data-event-id={eventId}
+      role="status"
+      aria-live="polite"
+      style={{
+        border: '1px solid var(--ns-color-danger-default)',
+        background: 'var(--ns-color-danger-subtle)',
+        borderRadius: 'var(--ns-radius-md)',
+        padding: '1rem',
+        color: 'var(--ns-color-danger-default)'
+      }}
+    >
+      <strong>Post could not be rendered.</strong>
+      <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+        This card is temporarily unavailable ({shortEventId}).
+      </div>
+    </article>
+  );
+}
+
+export const NostrEventCard = memo(function NostrEventCard({
+  event,
+  variant = 'feed',
+  className,
+  ...rest
+}: NostrEventCardProps) {
+  return (
+    <ErrorBoundary
+      fallback={
+        <NostrEventCardFallback variant={variant} className={className} eventId={event?.id} />
+      }
+    >
+      <NostrEventCardContent event={event} variant={variant} className={className} {...rest} />
+    </ErrorBoundary>
   );
 });
