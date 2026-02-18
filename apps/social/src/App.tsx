@@ -26,10 +26,50 @@ import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, navigateToProfile, resolveProfileRoute } from './utils/navigation';
 
+const FEED_IMPORT_AUTO_RELOAD_KEY = 'nostrstack.feed.import.autoreload';
+
+function isDynamicImportChunkError(error: unknown): boolean {
+  if (typeof error === 'string') {
+    return (
+      error.includes('Failed to fetch dynamically imported module') ||
+      error.includes('error loading dynamically imported module')
+    );
+  }
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('error loading dynamically imported module')
+  );
+}
+
+function shouldAutoReloadForFeedImport(error: unknown): boolean {
+  if (typeof window === 'undefined') return false;
+  if (!isDynamicImportChunkError(error)) return false;
+  try {
+    if (window.sessionStorage.getItem(FEED_IMPORT_AUTO_RELOAD_KEY) === '1') {
+      return false;
+    }
+    window.sessionStorage.setItem(FEED_IMPORT_AUTO_RELOAD_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const FeedScreen = lazy(() =>
   import('./screens/FeedScreen')
-    .then((m) => ({ default: m.FeedScreen }))
+    .then((m) => {
+      try {
+        window.sessionStorage.removeItem(FEED_IMPORT_AUTO_RELOAD_KEY);
+      } catch {
+        // Ignore sessionStorage access issues and proceed.
+      }
+      return { default: m.FeedScreen };
+    })
     .catch((error) => {
+      if (shouldAutoReloadForFeedImport(error)) {
+        window.location.reload();
+      }
       console.error('Failed to load feed route module.', error);
       return {
         default: () => (
