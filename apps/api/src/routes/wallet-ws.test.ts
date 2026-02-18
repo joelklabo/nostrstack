@@ -126,6 +126,26 @@ describe('wallet-ws fetcher', () => {
     );
   });
 
+  it('suppresses ECONNRESET transport errors as recurring transient failures', async () => {
+    const connReset = Object.assign(new TypeError('fetch failed'), {
+      cause: new Error('connect ECONNRESET 127.0.0.1:5000')
+    });
+
+    vi.mocked(fetch).mockRejectedValue(connReset);
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    for (let i = 0; i < 4; i++) {
+      await fetcher();
+    }
+
+    expect(mockLog.warn).not.toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenLastCalledWith(
+      expect.objectContaining({ successiveFailures: 3 }),
+      'wallet-ws fetch failed (suppressed)'
+    );
+  });
+
   it('resets failure count on success', async () => {
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
 

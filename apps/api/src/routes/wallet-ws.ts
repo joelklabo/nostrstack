@@ -26,14 +26,37 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     backoffUntil = 0;
   };
 
+  const extractErrorCode = (err: { message?: string; code?: string }): string | undefined => {
+    if (typeof err?.code === 'string' && err.code.trim()) {
+      return err.code.trim();
+    }
+    const msg = typeof err.message === 'string' ? err.message : '';
+    const match = msg.match(/\b(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ERR_[A-Z0-9_]+)\b/i);
+    if (match) return match[1];
+    return undefined;
+  };
+
   const getErrorKey = (err: unknown): string => {
     if (err instanceof Error) {
       const name = err.name;
       if (name === 'FetchError' || name === 'TypeError') {
+        const code = extractErrorCode(err);
+        const errCause = (err as { cause?: unknown }).cause;
+        const causeCode = errCause instanceof Error ? extractErrorCode(errCause) : undefined;
+
+        if (causeCode) return causeCode.toUpperCase();
+        if (code) return code.toUpperCase();
+
         const msg = err.message;
         if (/other side closed/i.test(msg)) return 'OTHER_SIDE_CLOSED';
-        const match = msg.match(/^(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ERR_)/i);
-        if (match) return match[1] || match[0];
+
+        const nestedCode = (errCause as { code?: string })?.code;
+        if (typeof nestedCode === 'string' && nestedCode.trim()) {
+          return nestedCode.trim().toUpperCase();
+        }
+      }
+      if (typeof (err as { code?: string }).code === 'string') {
+        return (err as { code?: string }).code!.toUpperCase();
       }
       return name;
     }
@@ -77,7 +100,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     } catch (err) {
       successiveFailures++;
       const errorKey = getErrorKey(err);
-      const isTransientFailure = errorKey === 'OTHER_SIDE_CLOSED';
+      const isTransientFailure = errorKey === 'OTHER_SIDE_CLOSED' || errorKey === 'ECONNRESET';
 
       const shouldWarn =
         !isTransientFailure &&
