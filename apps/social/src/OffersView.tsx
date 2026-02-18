@@ -44,6 +44,35 @@ function parseOptionalInt(value?: string) {
   return Math.floor(parsed);
 }
 
+function pickMessageFromErrorPayload(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const extracted = pickMessageFromErrorPayload(entry);
+      if (extracted) {
+        return extracted;
+      }
+      if (entry && typeof entry === 'object' && 'message' in entry) {
+        const nested = pickMessageFromErrorPayload((entry as { message?: unknown }).message);
+        if (nested) {
+          return nested;
+        }
+      }
+    }
+  }
+
+  if (value && typeof value === 'object' && 'message' in value) {
+    const nested = pickMessageFromErrorPayload((value as { message?: unknown }).message);
+    return nested ?? undefined;
+  }
+
+  return undefined;
+}
+
 function parseOfferErrorMessage(text: string) {
   const trimmed = text.trim();
   if (!trimmed) {
@@ -56,11 +85,19 @@ function parseOfferErrorMessage(text: string) {
       return parsed;
     }
     if (typeof parsed === 'object' && parsed !== null) {
-      if (typeof parsed.message === 'string') {
-        return parsed.message;
+      const message = pickMessageFromErrorPayload(parsed.message);
+      if (message) {
+        return message;
       }
-      if (typeof parsed.error === 'string') {
-        return parsed.error;
+      const errorCode = pickMessageFromErrorPayload(parsed.error);
+      if (errorCode) {
+        return errorCode;
+      }
+      if (Array.isArray(parsed.details)) {
+        const detailMessage = pickMessageFromErrorPayload(parsed.details);
+        if (detailMessage) {
+          return detailMessage;
+        }
       }
     }
   } catch {
@@ -88,7 +125,9 @@ export function OffersView() {
   const [label, setLabel] = useState('');
   const [issuer, setIssuer] = useState('');
   const [expiresIn, setExpiresIn] = useState('');
-  const [createStatus, setCreateStatus] = useState<'idle' | 'loading'>('idle');
+  const [createStatus, setCreateStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(
+    'idle'
+  );
   const [createError, setCreateError] = useState<string | null>(null);
   const [offers, setOffers] = useState<OfferEntry[]>([]);
 
@@ -193,7 +232,7 @@ export function OffersView() {
       setIssuer('');
       setExpiresIn('');
       toast({ message: 'Offer created.', tone: 'success' });
-      setCreateStatus('idle');
+      setCreateStatus('success');
     } catch (err) {
       const message =
         err === timeoutError
@@ -204,7 +243,7 @@ export function OffersView() {
               ? err.message
               : 'Offer creation failed.';
       setCreateError(message);
-      setCreateStatus('idle');
+      setCreateStatus('error');
       toast({ message, tone: 'danger' });
     } finally {
       if (timeoutId !== null) {
@@ -283,7 +322,13 @@ export function OffersView() {
             </div>
           </div>
           <span className={`offer-pill ${createStatus === 'loading' ? 'busy' : ''}`}>
-            {createStatus === 'loading' ? 'CREATING' : 'READY'}
+            {createStatus === 'loading'
+              ? 'CREATING'
+              : createStatus === 'error'
+                ? 'ERROR'
+                : createStatus === 'success'
+                  ? 'CREATED'
+                  : 'READY'}
           </span>
         </div>
 

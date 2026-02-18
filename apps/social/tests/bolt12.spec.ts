@@ -70,13 +70,14 @@ test('offers view creates offer and invoice', async ({ page }) => {
   await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
 
   await page.getByLabel('Description').fill('Quarterly update');
-  await page.getByRole('button', { name: 'CREATE_OFFER' }).click();
+  await page.getByRole('button', { name: 'Create new BOLT12 offer' }).click();
 
   const offerWidget = page.locator('.offer-widget__title', { hasText: 'Offer' });
   await expect(offerWidget).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.offer-widget__value').first()).toContainText('lno1mock');
+  await expect(page.locator('.offer-pill')).toHaveText('CREATED');
 
-  await page.getByRole('button', { name: 'REQUEST_INVOICE' }).click();
+  await page.getByRole('button', { name: 'Request Invoice' }).first().click();
   const invoiceWidget = page.locator('.offer-widget__title', { hasText: 'Invoice' });
   await expect(invoiceWidget).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.offer-widget__value').nth(1)).toContainText('lni1mock');
@@ -98,7 +99,7 @@ test('offer creation failure clears loading state and shows error', async ({ pag
   await page.getByRole('button', { name: /Offers/i }).click();
   await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
 
-  await page.getByLabel('Description').fill('x'.repeat(200));
+  await page.getByLabel('Description').fill('Validation test payload');
   const createButton = page.getByRole('button', { name: 'Create new BOLT12 offer' });
   await createButton.click();
 
@@ -106,4 +107,5 @@ test('offer creation failure clears loading state and shows error', async ({ pag
   await expect(page.locator('.offer-error')).toHaveText(
     'Description must be 140 characters or fewer.'
   );
+  await expect(page.locator('.offer-pill')).toHaveText('ERROR');
 });
