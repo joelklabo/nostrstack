@@ -26,7 +26,7 @@ import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, navigateToProfile, resolveProfileRoute } from './utils/navigation';
 
-const FEED_IMPORT_AUTO_RELOAD_KEY = 'nostrstack.feed.import.autoreload';
+const FEED_IMPORT_AUTO_RELOAD_KEY = 'nostrstack.feed.import.auto-reload';
 
 function isDynamicImportChunkError(error: unknown): boolean {
   if (typeof error === 'string') {
