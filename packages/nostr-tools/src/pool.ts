@@ -264,7 +264,8 @@ export class SimplePool {
     const { succeeded } = await this.ensureRelays(relays);
     if (succeeded.length === 0) {
       const now = Date.now();
-      if (now - lastAllRelaysFailureLogAt >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS) {
+      const timeSinceLastLog = now - lastAllRelaysFailureLogAt;
+      if (timeSinceLastLog >= RELAY_CONNECT_FAILURE_LOG_WINDOW_MS) {
         lastAllRelaysFailureLogAt = now;
         console.debug('All relays failed to connect, falling back to trying all URLs');
       }
