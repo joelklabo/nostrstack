@@ -153,74 +153,76 @@ export class SimplePool {
   private async ensureRelays(
     relayUrls: string[]
   ): Promise<{ failed: string[]; succeeded: string[] }> {
-    const unique = relayUrls.filter(Boolean);
+    const normalizedInputs = relayUrls.filter(Boolean).map((url) => ({
+      input: url,
+      normalized: normalizeRelayUrl(url)
+    }));
     const succeeded: string[] = [];
     const failed: string[] = [];
 
-    for (const url of unique) {
-      const normalizedUrl = normalizeRelayUrl(url);
+    for (const { input, normalized } of normalizedInputs) {
       const now = Date.now();
-      if (shouldSkipRelayReconnect(normalizedUrl, now)) {
-        failed.push(url);
+      if (shouldSkipRelayReconnect(normalized, now)) {
+        failed.push(input);
         continue;
       }
-      if (this.relays.has(normalizedUrl)) {
-        succeeded.push(url);
+      if (this.relays.has(normalized)) {
+        succeeded.push(normalized);
         continue;
       }
 
-      const inFlight = relayConnectionInFlight.get(normalizedUrl);
+      const inFlight = relayConnectionInFlight.get(normalized);
       if (inFlight) {
         try {
           await inFlight;
-          if (this.relays.has(normalizedUrl)) {
-            succeeded.push(url);
+          if (this.relays.has(normalized)) {
+            succeeded.push(normalized);
             continue;
           }
         } catch {
-          failed.push(url);
+          failed.push(input);
           continue;
         }
       }
 
       try {
         const connectPromise = (async () => {
-          await this.client.addRelay(normalizedUrl);
-          this.relays.add(normalizedUrl);
-          const relay = await this.client.relay(normalizedUrl);
+          await this.client.addRelay(normalized);
+          this.relays.add(normalized);
+          const relay = await this.client.relay(normalized);
           await relay.tryConnect(Duration.fromMillis(BigInt(5000)));
-          relayFailureState.delete(normalizedUrl);
+          relayFailureState.delete(normalized);
         })();
 
-        relayConnectionInFlight.set(normalizedUrl, connectPromise);
+        relayConnectionInFlight.set(normalized, connectPromise);
         await connectPromise;
-        succeeded.push(url);
+        succeeded.push(normalized);
       } catch (err) {
         const reason = err instanceof Error ? err.message : 'connection failed';
         const failureMessage =
           reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')
-            ? `DNS resolution failed for relay ${normalizedUrl}: ${reason}`
-            : `Failed to connect to relay ${normalizedUrl}: ${reason}`;
+            ? `DNS resolution failed for relay ${normalized}: ${reason}`
+            : `Failed to connect to relay ${normalized}: ${reason}`;
         await Promise.allSettled([
-          this.client.disconnectRelay(normalizedUrl),
-          this.client.forceRemoveRelay(normalizedUrl)
+          this.client.disconnectRelay(normalized),
+          this.client.forceRemoveRelay(normalized)
         ]);
-        this.relays.delete(normalizedUrl);
-        const existingState = relayFailureState.get(normalizedUrl);
+        this.relays.delete(normalized);
+        const existingState = relayFailureState.get(normalized);
         const failureCount = (existingState?.failureCount ?? 0) + 1;
-        const shouldLog = shouldLogRelayFailure(normalizedUrl, failureMessage, now);
+        const shouldLog = shouldLogRelayFailure(normalized, failureMessage, now);
         if (shouldLog) {
           console.warn(failureMessage);
         }
-        relayFailureState.set(normalizedUrl, {
+        relayFailureState.set(normalized, {
           nextRetryAt: now + getRetryDelayMs(failureCount),
           reason: failureMessage,
           failureCount,
-          lastWarnedAt: shouldLog ? now : relayFailureState.get(normalizedUrl)?.lastWarnedAt ?? now
+          lastWarnedAt: shouldLog ? now : relayFailureState.get(normalized)?.lastWarnedAt ?? now
         });
-        failed.push(url);
+        failed.push(input);
       } finally {
-        relayConnectionInFlight.delete(normalizedUrl);
+        relayConnectionInFlight.delete(normalized);
       }
     }
 
@@ -297,9 +299,10 @@ export class SimplePool {
         autoClose.timeout(Duration.fromMillis(BigInt(opts.maxWait)));
       }
       const output = await this.client.subscribeTo(succeeded, rustFilter, autoClose);
+      const subscribedRelays = output.success.length ? output.success : succeeded;
       const state: SubscriptionState = {
         id: output.id,
-        relays: output.success.length ? output.success : relays,
+        relays: subscribedRelays,
         eoseRelays: new Set(),
         options: opts,
         timer: null
@@ -356,7 +359,8 @@ export class SimplePool {
   }
 
   close(relays: string[]) {
-    relays.forEach((url) => {
+    const normalized = relays.filter(Boolean).map(normalizeRelayUrl);
+    normalized.forEach((url) => {
       if (!this.relays.has(url)) return;
       void this.client.disconnectRelay(url);
     });
