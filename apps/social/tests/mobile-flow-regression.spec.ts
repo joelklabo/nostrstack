@@ -21,10 +21,20 @@ test.describe('mobile regression interaction matrix', () => {
     await expect(nav).toBeVisible();
     await expect(page.locator('.sidebar-overlay')).toHaveClass(/is-visible/);
 
+    await nav.getByRole('button', { name: 'Offers' }).click();
+    await expect(page).toHaveURL(/\/offers\/?$/);
+    await expect(page.locator('.offers-view')).toBeVisible({ timeout: 5000 });
+
+    await hamburger.click();
     await nav.getByRole('button', { name: 'Profile' }).click();
     await expect(page.locator('.profile-view')).toBeVisible({ timeout: 5000 });
+    await expect(page).toHaveURL(/\/p\/|\/profile\/?$/);
     await expect(page.locator('.sidebar-overlay')).not.toHaveClass(/is-visible/);
     await expect(nav).not.toHaveClass(/is-open/);
+
+    await page.goto('/profile');
+    await expect(page.locator('.profile-view')).toBeVisible({ timeout: 5000 });
+    await expect(page).toHaveURL(/\/p\/|\/profile\/?$/);
 
     await hamburger.click();
     await nav.getByRole('button', { name: 'Settings' }).click();
