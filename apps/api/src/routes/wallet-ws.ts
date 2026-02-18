@@ -248,9 +248,15 @@ export async function registerWalletWs(app: FastifyInstance) {
       return;
     }
     app.log.info('wallet ws upgrade');
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req);
-    });
+    try {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit('connection', ws, req);
+      });
+    } catch (err) {
+      app.log.warn({ err, path: req.url }, 'wallet ws upgrade failed');
+      socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+      socket.destroy();
+    }
   });
 
   let lastSnapshot: WalletSnapshot | null = null;

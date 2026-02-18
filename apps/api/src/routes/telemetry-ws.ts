@@ -10,22 +10,22 @@ import { getTelemetryProvider } from '../telemetry/providers.js';
 
 type TelemetryEvent =
   | {
-    type: 'block';
-    height: number;
-    hash: string;
-    time: number;
-    txs?: number;
-    size?: number;
-    weight?: number;
-    interval?: number;
-    mempoolTxs?: number;
-    mempoolBytes?: number;
-    network?: string;
-    version?: number;
-    subversion?: string;
-    connections?: number;
-    source?: TelemetrySource;
-  }
+      type: 'block';
+      height: number;
+      hash: string;
+      time: number;
+      txs?: number;
+      size?: number;
+      weight?: number;
+      interval?: number;
+      mempoolTxs?: number;
+      mempoolBytes?: number;
+      network?: string;
+      version?: number;
+      subversion?: string;
+      connections?: number;
+      source?: TelemetrySource;
+    }
   | { type: 'tx'; txid: string; time: number }
   | { type: 'lnd'; role: 'merchant' | 'payer'; event: string; time: number }
   | { type: 'error'; message: string; time: number };
@@ -40,9 +40,15 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   server.on('upgrade', (req, socket, head) => {
     const path = (req.url ?? '').split('?')[0] ?? '';
     if (!path.endsWith('/ws/telemetry')) return;
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req);
-    });
+    try {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit('connection', ws, req);
+      });
+    } catch (err) {
+      app.log.warn({ err, path: req.url }, 'telemetry ws upgrade failed');
+      socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+      socket.destroy();
+    }
   });
 
   const broadcast = (ev: TelemetryEvent) => {
@@ -69,7 +75,13 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       } else if (lastErrorEvent) {
         ws.send(JSON.stringify(lastErrorEvent));
       } else {
-        ws.send(JSON.stringify({ type: 'error', message: 'Waiting for block data…', time: Math.floor(Date.now() / 1000) } satisfies TelemetryEvent));
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            message: 'Waiting for block data…',
+            time: Math.floor(Date.now() / 1000)
+          } satisfies TelemetryEvent)
+        );
       }
     }
   });
@@ -128,7 +140,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         }
       } else {
         useMock = true;
-        app.log.warn('telemetry provider returned non-numeric block height, switching to mock telemetry');
+        app.log.warn(
+          'telemetry provider returned non-numeric block height, switching to mock telemetry'
+        );
       }
     } catch (err) {
       app.log.warn({ err }, 'telemetry initial tip fetch failed, switching to mock telemetry');
@@ -141,7 +155,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
     const mockNetwork = env.BITCOIN_NETWORK || 'mocknet';
     let mockHeight = 820000;
     let mockHash = '000000000000000000035c1ec826f03027878434757045197825310657158739';
-    
+
     // Simulate initial block
     lastEvent = {
       type: 'block',
@@ -164,11 +178,13 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       // 10% chance of a new block every 2 seconds (avg block time 20s)
       if (Math.random() < 0.1) {
         mockHeight++;
-        mockHash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+        mockHash = Array.from({ length: 64 }, () =>
+          Math.floor(Math.random() * 16).toString(16)
+        ).join('');
         const now = Math.floor(Date.now() / 1000);
-        const interval = now - (lastBlockTime || (now - 600));
+        const interval = now - (lastBlockTime || now - 600);
         lastBlockTime = now;
-        
+
         const blockEvent: TelemetryBlockEvent = {
           type: 'block',
           height: mockHeight,
@@ -188,15 +204,15 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         };
         lastEvent = blockEvent;
         broadcast(blockEvent);
-      } 
+      }
       // 50% chance of a random tx or info log
       else if (Math.random() < 0.5) {
         // Emit a random log to keep the feed alive
-        // (Note: The UI currently only logs 'error' or 'block' events for the main log, 
+        // (Note: The UI currently only logs 'error' or 'block' events for the main log,
         // but we can emit other types if the UI supports them or just internal noise)
-        // For the "Activity Log" in TelemetryBar.tsx, it renders 'error' messages. 
-        // Let's not spam errors. The UI also renders blocks. 
-        // We could emit a custom type if we wanted, but let's stick to blocks for now 
+        // For the "Activity Log" in TelemetryBar.tsx, it renders 'error' messages.
+        // Let's not spam errors. The UI also renders blocks.
+        // We could emit a custom type if we wanted, but let's stick to blocks for now
         // to avoid breaking the UI which expects specific types.
       }
     }, 2000);
@@ -248,7 +264,11 @@ export async function registerTelemetryWs(app: FastifyInstance) {
         }
         lastErrorMsg = msg;
         lastErrorAt = errorAt;
-        broadcastError(isBackpressure ? 'telemetry backpressure; retrying' : 'telemetry poll failed; see API logs');
+        broadcastError(
+          isBackpressure
+            ? 'telemetry backpressure; retrying'
+            : 'telemetry poll failed; see API logs'
+        );
       }
     } finally {
       pollInFlight = false;
