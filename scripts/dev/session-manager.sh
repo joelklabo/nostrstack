@@ -371,16 +371,13 @@ ndev_claim_session() {
 
   for ((slot = 0; slot <= max_slot; slot++)); do
     local rc=0
-    ndev_claim_slot "$slot"
-    rc=$?
-    if [[ "$rc" == "0" ]]; then
+    if ndev_claim_slot "$slot"; then
       return 0
+    else
+      rc=$?
     fi
     if [[ "$rc" == "2" ]]; then
-      echo "Requested default ports are already occupied by listeners we can't positively identify." >&2
-      echo "Inspect live sessions with: pnpm dev:ps" >&2
-      echo "Clean stale listeners with: pnpm dev:stop:all -c" >&2
-      return 1
+      continue
     fi
   done
 
