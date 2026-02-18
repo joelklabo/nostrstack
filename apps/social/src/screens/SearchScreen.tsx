@@ -155,11 +155,11 @@ export function SearchScreen() {
 
       const quotedQuery = query ? ` for "${query}"` : '';
       const prefixedErrorMessage = quotedQuery ? `${errorMessage}${quotedQuery}` : errorMessage;
-      setNotesError(
-        hasExistingResults
-          ? `Previous results shown${quotedQuery}. ${errorMessage}`
-          : prefixedErrorMessage
-      );
+      const visibleMessage = hasExistingResults
+        ? `Previous results shown${quotedQuery}. ${errorMessage}`
+        : prefixedErrorMessage;
+      setNotesError(visibleMessage);
+      setSubmitFeedback(visibleMessage);
     },
     []
   );
@@ -168,6 +168,7 @@ export function SearchScreen() {
     async (q: string, isRetry = false) => {
       setNotesLoading(true);
       setNotesError(null);
+      setSubmitFeedback(null);
       setNotesSearchTimedOut(false);
       if (!isRetry) {
         setNotes([]);
@@ -180,7 +181,12 @@ export function SearchScreen() {
         setNotes(results);
         setHasMore(results.length >= NOTES_PAGE_SIZE);
         if (results.length === 0) {
-          setNotesError(`No notes found for "${q}".`);
+          const noResultsMessage = `No notes found for "${q}".`;
+          setNotesError(noResultsMessage);
+          setSubmitFeedback(noResultsMessage);
+        } else {
+          const resultWord = results.length === 1 ? 'result' : 'results';
+          setSubmitFeedback(`Found ${results.length} note ${resultWord} for "${q}".`);
         }
       } catch (err) {
         applyNotesSearchError(q, err, notes.length > 0);

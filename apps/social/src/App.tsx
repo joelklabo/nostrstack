@@ -882,16 +882,22 @@ export default function App() {
       setIsResolvingLocalApiBase(false);
       return;
     }
-    const controller = new AbortController();
     let isMounted = true;
-    const timeout = window.setTimeout(() => controller.abort(), LOCAL_API_TIMEOUT_MS);
 
     const checkApiHealth = async (url: string): Promise<boolean> => {
+      let timeoutHandle: number | null = null;
+      const timeoutPromise = new Promise<null>((resolve) => {
+        timeoutHandle = window.setTimeout(() => resolve(null), LOCAL_API_TIMEOUT_MS);
+      });
       try {
-        const response = await fetch(`${url}/api/health`, { signal: controller.signal });
-        return response.ok;
+        const response = await Promise.race([fetch(`${url}/api/health`), timeoutPromise]);
+        return !!response && response.ok;
       } catch {
         return false;
+      } finally {
+        if (timeoutHandle !== null) {
+          window.clearTimeout(timeoutHandle);
+        }
       }
     };
 
@@ -928,7 +934,6 @@ export default function App() {
         }
       }
 
-      clearTimeout(timeout);
       if (isMounted) {
         setIsResolvingLocalApiBase(false);
       }
@@ -937,8 +942,6 @@ export default function App() {
     void probe();
     return () => {
       isMounted = false;
-      controller.abort();
-      clearTimeout(timeout);
     };
   }, [resolvedApiBaseConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const apiBase = resolvedApiBaseConfig.baseUrl;
