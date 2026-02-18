@@ -97,13 +97,21 @@ export function resolveRuntimeApiBase(baseURL?: string): string {
   if (explicit) {
     const normalized = normalizeLegacyLocalApiBase(explicit);
     if (isLocalhostUrl(normalized) && normalized.startsWith('http://')) {
-      return trimTrailingSlash(normalized);
+      let url = trimTrailingSlash(normalized);
+      if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+        url = url.replace(/^http:/i, 'https:');
+      }
+      return url;
     }
     return trimTrailingSlash(preferSecureBase(normalized));
   }
   const fallback = resolveFallbackApiBase();
   if (isLocalhostUrl(fallback) && fallback.startsWith('http://')) {
-    return trimTrailingSlash(fallback);
+    let url = trimTrailingSlash(fallback);
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      url = url.replace(/^http:/i, 'https:');
+    }
+    return url;
   }
   return trimTrailingSlash(preferSecureBase(fallback));
 }
@@ -129,7 +137,11 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   const websocketOrigin = convertToWsScheme(window.location.origin);
 
   if (isLocalhostUrl(raw) && raw.startsWith('http://')) {
-    return `${convertToWsScheme(raw)}${normalizedPath}`;
+    let wsUrl = convertToWsScheme(raw);
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      wsUrl = wsUrl.replace(/^ws:\/\//i, 'wss://');
+    }
+    return `${wsUrl}${normalizedPath}`;
   }
 
   if (!raw || /^ws(s)?:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) {

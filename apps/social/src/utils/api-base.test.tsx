@@ -11,6 +11,24 @@ describe('resolveRuntimeWsUrl', () => {
     expect(apiBase).toBe('http://localhost:3002');
   });
 
+  it('upgrades localhost HTTP API base to HTTPS when page is HTTPS', () => {
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: new URL('https://localhost:4173') as unknown as Location
+    });
+
+    try {
+      const apiBase = resolveRuntimeApiBase('http://localhost:3002');
+      expect(apiBase).toBe('https://localhost:3002');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation
+      });
+    }
+  });
+
   it('preserves localhost:3002 in gallery API base resolution', () => {
     const apiBase = resolveGalleryApiBase({ apiBase: 'http://localhost:3002' });
     expect(apiBase.baseUrl).toBe('http://localhost:3002');
@@ -23,7 +41,7 @@ describe('resolveRuntimeWsUrl', () => {
     expect(url).toBe('wss://api.local/ws/telemetry');
   });
 
-  it('keeps ws:// for local HTTP API base when the page is HTTPS', () => {
+  it('upgrades ws:// for local HTTP API base when the page is HTTPS', () => {
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
       configurable: true,
@@ -32,7 +50,7 @@ describe('resolveRuntimeWsUrl', () => {
 
     try {
       const url = resolveRuntimeWsUrl('http://localhost:3001', '/ws/telemetry');
-      expect(url).toBe('ws://localhost:3001/ws/telemetry');
+      expect(url).toBe('wss://localhost:3001/ws/telemetry');
     } finally {
       Object.defineProperty(window, 'location', {
         configurable: true,
