@@ -4,6 +4,7 @@ import { type Event, nip19 } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useRelays } from '../hooks/useRelays';
 import { fetchNostrEventFromApi } from '../nostr/api';
 import {
   type EventReferences,
@@ -223,6 +224,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
   const [reloadToken, setReloadToken] = useState(0);
 
   const cfg = useNostrstackConfig();
+  const { relays: relayContextRelays } = useRelays();
   const target = useMemo(() => resolveTarget(rawId), [rawId]);
   const apiBaseConfig = useMemo(
     () =>
@@ -255,7 +257,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
         .map((relay) => relay.trim())
         .filter(Boolean)
         .some(isMockRelay);
-    const configuredRelays = cfg.relays ?? [];
+    const configuredRelays = cfg.relays?.length ? cfg.relays : relayContextRelays;
     const envRelays = (
       parsedEnvRelays.length > 0 ? parsedEnvRelays : usesMockEnvironment ? ['mock'] : []
     ).map(normalizeMockRelay);
@@ -268,7 +270,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     const targetRelays = rawTargetRelays.map(normalizeMockRelay);
     const relays = [...targetRelays, ...normalizedSourceRelays];
     return uniqRelays(relays);
-  }, [cfg.relays, target]);
+  }, [cfg.relays, relayContextRelays, target]);
 
   useEffect(() => {
     if (!target) {
