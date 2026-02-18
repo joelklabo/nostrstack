@@ -198,13 +198,20 @@ jobs:
                 missingMetadata.length > 0 ||
                 isFallbackAmbiguous ||
                 (hasResolvedFallback && staleMetadata.length > 0));
+            const hasExplicitMetadataLoadFailure =
+              hasExplicitIssueRefs &&
+              missingMetadata.length > 0;
 
-            if (!body.includes('no-issue-needed') && (!hasExplicitIssueRefs || hasUnusableFallback)) {
+            if (!body.includes('no-issue-needed') && (!hasExplicitIssueRefs || hasUnusableFallback || hasExplicitMetadataLoadFailure)) {
               const sortedFallback = fallbackIssueRefs.map(String).sort().join(', ');
               const sortedMeta = issueMeta.map((entry) => `#${entry.issueNumber}: ${entry.title}`).join('\n');
 
               let comment = '## ⚠️ Missing Issue Reference\n\n';
-              if (isFallbackMissing) {
+              if (hasExplicitMetadataLoadFailure) {
+                const missingList = missingMetadata.map((entry) => `#${entry.issueNumber}`).join(', ');
+                comment += `I found direct issue reference(s) in the PR body (${missingList}), but couldn't load issue metadata from GitHub.\n\n`;
+                comment += 'Please confirm these issue numbers still exist and are accessible to repository automation.\n';
+              } else if (isFallbackMissing) {
                 comment += 'No issue reference keywords like `Fixes #123` were found in this PR body, and no issue references were found in commit metadata.\n\n';
               } else if (isFallbackAmbiguous) {
                 comment += `I found multiple possible issue references in commit metadata: \`${sortedFallback}\`.\n\nThis fallback path is ambiguous, so I can't reliably attach a single issue.\n`;
