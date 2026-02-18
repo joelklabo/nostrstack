@@ -42,7 +42,7 @@ export type ApiNostrEventResponse = {
   replyPage?: ApiReplyPage;
 };
 
-export const SEARCH_RELAYS = ['wss://relay.nostr.band', 'wss://relay.snort.social'];
+export const SEARCH_RELAYS = ['wss://relay.snort.social'];
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 const EVENT_FETCH_TTL_MS = 30_000;
 const EVENT_FETCH_BASE_RETRY_MS = 1_000;
