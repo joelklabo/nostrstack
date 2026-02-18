@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { chromium, expect, type Page } from '@playwright/test';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 type Failure = { kind: string; detail: string };
 
@@ -16,6 +18,77 @@ function isLocalUrl(url: string) {
   } catch {
     return false;
   }
+}
+
+function parseSessionValue(contents: string, key: string) {
+  const line = contents.split('\n').find((entry) => entry.startsWith(`${key}=`));
+  if (!line) return '';
+  return line.slice(key.length + 1).trim();
+}
+
+async function sessionUrlReachable(url: string, timeoutMs = 1500) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { method: 'GET', signal: controller.signal });
+    return res.ok || res.status === 404;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function detectManagedGalleryUrl() {
+  const repoRoot = path.resolve(import.meta.dirname, '../../..');
+  const sessionDir =
+    process.env.NOSTRDEV_SESSION_DIR ?? path.join(repoRoot, '.logs', 'dev', 'sessions');
+  const requestedAgent = process.env.NOSTRDEV_AGENT?.trim();
+
+  let files: string[];
+  try {
+    files = await fs.readdir(sessionDir);
+  } catch {
+    return undefined;
+  }
+
+  const sessionFiles = files.filter((file) => file.endsWith('.session'));
+  if (!sessionFiles.length) return undefined;
+
+  const sessions = await Promise.all(
+    sessionFiles.map(async (fileName) => {
+      const fullPath = path.join(sessionDir, fileName);
+      const stat = await fs.stat(fullPath).catch(() => null);
+      const contents = await fs.readFile(fullPath, 'utf8').catch(() => '');
+      return {
+        mtimeMs: stat?.mtimeMs ?? 0,
+        agent: parseSessionValue(contents, 'NOSTRDEV_SESSION_AGENT'),
+        socialPort: parseSessionValue(contents, 'NOSTRDEV_SESSION_SOCIAL_PORT')
+      };
+    })
+  );
+
+  const preferred = sessions
+    .filter(
+      (session) => session.socialPort && (!requestedAgent || session.agent === requestedAgent)
+    )
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+  const fallback = sessions
+    .filter((session) => session.socialPort)
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+  for (const session of [...preferred, ...fallback]) {
+    const port = Number(session.socialPort);
+    if (!Number.isFinite(port) || port <= 0) continue;
+    const candidates = [`http://localhost:${port}`, `https://localhost:${port}`];
+    for (const candidate of candidates) {
+      if (await sessionUrlReachable(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 async function ensureGalleryAvailable(baseUrl: string) {
@@ -179,7 +252,11 @@ async function main() {
   // Allow Node-side HTTPS calls to the self-signed dev cert (only for local QA).
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED ?? '0';
 
-  const baseUrl = process.env.GALLERY_URL ?? 'https://localhost:4173';
+  const detectedBaseUrl = await detectManagedGalleryUrl();
+  const baseUrl = process.env.GALLERY_URL ?? detectedBaseUrl ?? 'http://localhost:4173';
+  if (!process.env.GALLERY_URL && detectedBaseUrl) {
+    console.log(`ℹ️ using managed dev session gallery URL: ${detectedBaseUrl}`);
+  }
   const headless = envFlag('HEADLESS', true);
   const slowMo = Number(process.env.SLOWMO_MS ?? 0) || 0;
   const testNsec =
