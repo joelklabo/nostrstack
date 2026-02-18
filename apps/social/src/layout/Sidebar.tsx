@@ -251,14 +251,16 @@ export const Sidebar = memo(function Sidebar({
         >
           Offers
         </button>
-        <button
-          type="button"
-          className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
-          onClick={() => handleNavigate('profile')}
-          aria-current={currentView === 'profile' ? 'page' : undefined}
-        >
-          Profile
-        </button>
+        {!isGuest && (
+          <button
+            type="button"
+            className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
+            onClick={() => handleNavigate('profile')}
+            aria-current={currentView === 'profile' ? 'page' : undefined}
+          >
+            Profile
+          </button>
+        )}
         <button
           type="button"
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}

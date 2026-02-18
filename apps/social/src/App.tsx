@@ -91,6 +91,13 @@ const BRAND_PRESET_LIST: NsBrandPreset[] = Object.keys(nsBrandPresets) as NsBran
 const LOCAL_API_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const LOCAL_API_TIMEOUT_MS = 3_000;
 const LOCAL_API_BASE_FALLBACK = '/api';
+const LOCAL_API_UNAVAILABLE: ApiBaseResolution = {
+  raw: '',
+  baseUrl: '',
+  isConfigured: false,
+  isMock: false,
+  isRelative: false
+};
 
 function isLocalApiBase(apiBase: ApiBaseResolution): boolean {
   if (!apiBase.baseUrl || apiBase.isRelative || !apiBase.isConfigured || apiBase.isMock)
@@ -98,7 +105,8 @@ function isLocalApiBase(apiBase: ApiBaseResolution): boolean {
   try {
     const parsed = new URL(apiBase.baseUrl);
     return (
-      parsed.protocol === 'http:' && parsed.port === '3001' && LOCAL_API_HOSTS.has(parsed.hostname)
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      LOCAL_API_HOSTS.has(parsed.hostname)
     );
   } catch {
     return false;
@@ -714,7 +722,7 @@ export default function App() {
         } else {
           setLocalApiCheckFailed(true);
           setResolvedApiBaseConfig((current) =>
-            isLocalApiBase(current) ? buildApiBaseFallback() : current
+            isLocalApiBase(current) ? LOCAL_API_UNAVAILABLE : current
           );
         }
       }
