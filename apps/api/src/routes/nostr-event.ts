@@ -44,6 +44,7 @@ type NostrEventRoute = {
     relays?: string;
     limitRefs?: string;
     timeoutMs?: string;
+    replyTimeoutMs?: string;
     replyLimit?: string;
     replyCursor?: string;
   };
@@ -66,6 +67,15 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
       return reply.code(400).send({
         error: 'invalid_timeout',
         message: 'timeoutMs must be a positive integer.',
+        requestId: request.id
+      });
+    }
+
+    const replyTimeoutMs = parseIntParam(request.query.replyTimeoutMs);
+    if (request.query.replyTimeoutMs && replyTimeoutMs == null) {
+      return reply.code(400).send({
+        error: 'invalid_reply_timeout',
+        message: 'replyTimeoutMs must be a positive integer.',
         requestId: request.id
       });
     }
@@ -109,7 +119,7 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
     const relays = defaultRelays.relays.length ? defaultRelays.relays : DEFAULT_RELAYS;
     const replyMaxLimit = env.NOSTR_EVENT_REPLY_MAX_LIMIT;
     const resolvedReplyLimit = Math.min(replyLimit ?? env.NOSTR_EVENT_REPLY_LIMIT, replyMaxLimit);
-    const replyTimeoutMs = timeoutMs ?? env.NOSTR_EVENT_REPLY_TIMEOUT_MS;
+    const resolvedReplyTimeoutMs = replyTimeoutMs ?? env.NOSTR_EVENT_REPLY_TIMEOUT_MS;
 
     try {
       const resolved = await resolveNostrEvent(id, {
@@ -124,7 +134,7 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         replyLimit: resolvedReplyLimit,
         replyMaxLimit,
         replyCursor: replyCursor ?? undefined,
-        replyTimeoutMs,
+        replyTimeoutMs: resolvedReplyTimeoutMs,
         prisma: app.prisma,
         logger: request.log
       });
@@ -240,6 +250,7 @@ export async function registerNostrEventRoute(app: FastifyInstance) {
         relays: { type: 'string' },
         limitRefs: { type: 'string' },
         timeoutMs: { type: 'string' },
+        replyTimeoutMs: { type: 'string' },
         replyLimit: { type: 'string' },
         replyCursor: { type: 'string' }
       }

@@ -101,6 +101,19 @@ describe('/api/nostr/event security', () => {
     expect(resolveMock).not.toHaveBeenCalled();
   });
 
+  it('rejects invalid replyTimeoutMs values', async () => {
+    const res = await server.inject({
+      url: `/api/nostr/event/${baseEventId}?replyTimeoutMs=0`
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({
+      error: 'invalid_reply_timeout',
+      message: 'replyTimeoutMs must be a positive integer.',
+      requestId: expect.any(String)
+    });
+    expect(resolveMock).not.toHaveBeenCalled();
+  });
+
   it('rejects relay overrides with invalid entries', async () => {
     const res = await server.inject({
       url: `/api/nostr/event/${baseEventId}?relays=wss://relay.one,ws://example.com`

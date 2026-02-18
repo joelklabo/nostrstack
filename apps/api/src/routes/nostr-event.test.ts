@@ -155,16 +155,17 @@ describe('/api/nostr/event', () => {
 
   it('passes reply options to the resolver', async () => {
     const res = await server.inject({
-      url: `/api/nostr/event/${baseEventId}?replyLimit=12&replyCursor=cursor&timeoutMs=5000`
+      url: `/api/nostr/event/${baseEventId}?replyLimit=12&replyCursor=cursor&timeoutMs=5000&replyTimeoutMs=4000`
     });
     expect(res.statusCode).toBe(200);
     const call = resolveMock.mock.calls[0];
     expect(call?.[1]).toEqual(
       expect.objectContaining({
+        timeoutMs: 5000,
         replyLimit: 12,
         replyMaxLimit: 50,
         replyCursor: 'cursor',
-        replyTimeoutMs: 5000
+        replyTimeoutMs: 4000
       })
     );
   });
