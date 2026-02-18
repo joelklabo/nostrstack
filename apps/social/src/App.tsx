@@ -20,7 +20,6 @@ import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './layout/Sidebar';
 import { TelemetryBar } from './layout/TelemetryBar';
 import { relayMonitor } from './nostr/relayHealth';
-import { SearchScreen } from './screens/SearchScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
@@ -126,6 +125,21 @@ const OffersView = lazy(() =>
         default: () => (
           <RouteLoadFallback
             message="Unable to load the offers screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
+);
+const SearchScreen = lazy(() =>
+  import('./screens/SearchScreen')
+    .then((m) => ({ default: m.SearchScreen }))
+    .catch((error) => {
+      console.error('Failed to load search route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load the search screen. Please try reloading."
             onRetry={() => window.location.reload()}
           />
         )
