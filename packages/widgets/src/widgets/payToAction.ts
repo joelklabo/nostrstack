@@ -2,7 +2,7 @@ import QRCode from 'qrcode';
 
 import { copyToClipboard, createCopyButton } from '../copyButton.js';
 import { type ConnectionState, PaymentConnection } from '../core/paymentConnection.js';
-import { createClient } from '../helpers.js';
+import { createClient, toAuthOrMessage } from '../helpers.js';
 import { ensureNsRoot } from '../styles.js';
 import type { PayToActionOptions } from '../types.js';
 import { resolveApiBaseUrl, resolvePayWsUrl } from '../url-utils.js';
@@ -207,7 +207,7 @@ export function renderPayToAction(container: HTMLElement, opts: PayToActionOptio
       return pr;
     } catch (e) {
       console.error('pay-to-action error', e);
-      status.textContent = 'Failed to generate invoice';
+      status.textContent = toAuthOrMessage(e);
       status.classList.remove('ns-status--muted', 'ns-status--success');
       status.classList.add('ns-status--danger');
       return null;

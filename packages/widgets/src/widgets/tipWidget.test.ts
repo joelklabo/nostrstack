@@ -82,4 +82,25 @@ describe('renderTipWidget', () => {
     // Should not throw
     widget.destroy();
   });
+
+  it('shows auth guidance on ACCESS_DENIED', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => 'ACCESS_DENIED: User not authenticated.'
+    } as Response);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderTipWidget(host, {
+      username: 'alice',
+      itemId: 'item123',
+      baseURL: 'http://localhost:3001'
+    });
+
+    const presetBtn = host.querySelector('.ns-tip__amt') as HTMLButtonElement;
+    await presetBtn.onclick?.(new MouseEvent('click'));
+
+    expect(host.textContent).toContain('Authentication required. Please sign in to continue.');
+  });
 });

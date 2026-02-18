@@ -1,7 +1,12 @@
 import { INVOICE_TTL_SECS, RING_CIRCUMFERENCE } from '../config.js';
 import { copyToClipboard } from '../copyButton.js';
 import { type ConnectionState, PaymentConnection } from '../core/paymentConnection.js';
-import { extractPayEventInvoice, resolveTenantDomain } from '../helpers.js';
+import {
+  extractPayEventInvoice,
+  parseMaybeJson,
+  resolveTenantDomain,
+  toAuthOrMessage
+} from '../helpers.js';
 import { renderQrCodeInto } from '../qr.js';
 import { ensureNsRoot } from '../styles.js';
 import type { TipWidgetV2Options } from '../types.js';
@@ -513,14 +518,43 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
             metadata: meta
           })
         });
-
-        if (!res.ok) throw new Error(`HTTP ${'status' in res ? (res as Response).status : 0}`);
-        const body = (await (res as Response).json()) as Record<string, unknown>;
-        pr = normalizeInvoice(extractPayEventInvoice(body));
+        const responseText = await (async () => {
+          if (typeof (res as Response).text === 'function') {
+            return (res as Response).text();
+          }
+          if (typeof (res as Response).json === 'function') {
+            return JSON.stringify(await (res as Response).json());
+          }
+          return '';
+        })();
+        if (!res.ok) {
+          const bodyJson = parseMaybeJson(responseText);
+          let serverError = '';
+          if (bodyJson && typeof bodyJson === 'object') {
+            if (typeof (bodyJson as Record<string, unknown>).error === 'string') {
+              serverError = (bodyJson as Record<string, unknown>).error as string;
+            } else if (typeof (bodyJson as Record<string, unknown>).detail === 'string') {
+              serverError = (bodyJson as Record<string, unknown>).detail as string;
+            } else {
+              serverError = responseText.trim();
+            }
+          } else {
+            serverError = responseText.trim();
+          }
+          throw new Error(
+            `HTTP ${'status' in res ? (res as Response).status : 0}${serverError ? `: ${serverError}` : ''}`
+          );
+        }
+        const body = parseMaybeJson(responseText);
+        if (!body || typeof body !== 'object') {
+          throw new Error('Invalid invoice response');
+        }
+        const bodyObj = body as Record<string, unknown>;
+        pr = normalizeInvoice(extractPayEventInvoice(bodyObj));
         providerRef =
-          (typeof body.provider_ref === 'string' ? body.provider_ref : null) ??
-          (typeof body.providerRef === 'string' ? body.providerRef : null) ??
-          (typeof body.payment_hash === 'string' ? body.payment_hash : null);
+          (typeof bodyObj.provider_ref === 'string' ? bodyObj.provider_ref : null) ??
+          (typeof bodyObj.providerRef === 'string' ? bodyObj.providerRef : null) ??
+          (typeof bodyObj.payment_hash === 'string' ? bodyObj.payment_hash : null);
       }
 
       if (!pr) throw new Error('Invoice not returned');
@@ -574,7 +608,7 @@ export function renderTipWidget(container: HTMLElement, opts: TipWidgetV2Options
       return pr;
     } catch (e) {
       console.error('tip v2 error', e);
-      status.textContent = 'Failed to generate invoice';
+      status.textContent = toAuthOrMessage(e);
       status.classList.remove('ns-status--muted');
       status.classList.add('ns-status--danger');
       return null;

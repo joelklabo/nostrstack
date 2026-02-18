@@ -2,7 +2,7 @@
  * TipButton Widget - Simple button to generate lightning invoice
  */
 
-import { createClient, setBrandAttr } from '../helpers.js';
+import { createClient, setBrandAttr, toAuthOrMessage } from '../helpers.js';
 import { renderInvoicePopover } from '../invoicePopover.js';
 import { ensureNsRoot } from '../styles.js';
 import type { TipWidgetOptions } from '../types.js';
@@ -57,7 +57,7 @@ export function renderTipButton(container: HTMLElement, opts: TipWidgetOptions):
       }
     } catch (e) {
       console.error('tip error', e);
-      status.textContent = 'Failed to generate invoice';
+      status.textContent = toAuthOrMessage(e);
       status.classList.remove('ns-status--muted');
       status.classList.add('ns-status--danger');
     } finally {

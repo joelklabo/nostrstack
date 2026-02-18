@@ -98,6 +98,31 @@ export function parseMaybeJson(raw: unknown): unknown | undefined {
   }
 }
 
+export function toAuthOrMessage(error: unknown, fallback = 'Failed to generate invoice'): string {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : String(error ?? '');
+  if (!message) return fallback;
+
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes('access_denied') ||
+    normalized.includes('access denied') ||
+    normalized.includes('not authenticated') ||
+    normalized.includes('authentication required')
+  ) {
+    return 'Authentication required. Please sign in to continue.';
+  }
+  if (normalized.includes(' 401') || normalized.includes('401 ') || normalized.includes(' 403')) {
+    return 'Authentication required. Please sign in to continue.';
+  }
+  if (message === '[object Object]') return fallback;
+  return message;
+}
+
 /**
  * Extract provider reference from payment event message
  */

@@ -142,4 +142,22 @@ describe('renderPayToAction', () => {
 
     expect(removeListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
   });
+
+  it('shows auth guidance on ACCESS_DENIED', async () => {
+    vi.spyOn(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ callback: 'http://localhost:3001/api/lnurlp/alice/invoice' })
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: async () => 'ACCESS_DENIED: User not authenticated.'
+      } as Response);
+
+    const { el: btn } = renderPayToAction(host, { username: 'alice' });
+    await btn.onclick?.(new MouseEvent('click'));
+
+    expect(host.textContent).toContain('Authentication required. Please sign in to continue.');
+  });
 });
