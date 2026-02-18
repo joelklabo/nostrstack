@@ -80,6 +80,10 @@ test.describe('/nostr/:id replies', () => {
       const url = new URL(route.request().url());
       const id = url.pathname.split('/').pop() ?? '';
       if (id === eventId) {
+        if (url.searchParams.get('replyLimit') === '0') {
+          await fulfillJson(route, baseResponse);
+          return;
+        }
         expect(url.searchParams.get('replyLimit')).toBe('50');
       }
       const cursor = url.searchParams.get('replyCursor');
@@ -131,6 +135,13 @@ test.describe('/nostr/:id replies', () => {
       const url = new URL(route.request().url());
       const id = url.pathname.split('/').pop() ?? '';
       if (id === eventId) {
+        if (url.searchParams.get('replyLimit') === '0') {
+          await fulfillJson(
+            route,
+            buildNostrEventResponse({ id: eventId, content: 'No replies yet' })
+          );
+          return;
+        }
         expect(url.searchParams.get('replyLimit')).toBe('50');
       }
       await fulfillJson(route, emptyResponse);
