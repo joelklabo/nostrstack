@@ -62,9 +62,9 @@ interface RowProps<T> {
   items: T[];
   renderItem: (item: T, index: number) => React.ReactNode;
   getItemKey: (item: T, index: number) => string;
-  hasMore?: boolean;
-  renderLoadingIndicator?: () => React.ReactNode;
-  itemRole?: AriaRole;
+  hasMore: boolean;
+  renderLoadingIndicator: (() => React.ReactNode) | undefined;
+  itemRole: AriaRole | undefined;
 }
 
 // Row component that renders individual items
@@ -268,14 +268,17 @@ export function VirtualizedList<T>({
         ? 'listitem'
         : undefined;
 
-  const rowProps: RowProps<T> = {
-    items,
-    renderItem,
-    getItemKey,
-    hasMore,
-    renderLoadingIndicator,
-    itemRole: resolvedItemRole
-  };
+  const rowProps: RowProps<T> = useMemo(
+    () => ({
+      items,
+      renderItem,
+      getItemKey,
+      hasMore: Boolean(hasMore),
+      renderLoadingIndicator,
+      itemRole: resolvedItemRole
+    }),
+    [items, renderItem, getItemKey, hasMore, renderLoadingIndicator, resolvedItemRole]
+  );
 
   // Total item count including potential loading indicator
   const rowCount = items.length + (hasMore && renderLoadingIndicator ? 1 : 0);
