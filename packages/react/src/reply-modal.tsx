@@ -1,6 +1,7 @@
 import type { Event } from 'nostr-tools';
 import { useEffect, useRef } from 'react';
 
+import { useAuth } from './auth';
 import { PostEditor } from './post-editor';
 
 interface ReplyModalProps {
@@ -11,6 +12,7 @@ interface ReplyModalProps {
 
 export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
+  const { mode, error } = useAuth();
 
   useEffect(() => {
     const modal = modalRef.current;
@@ -118,15 +120,26 @@ export function ReplyModal({ isOpen, onClose, parentEvent }: ReplyModalProps) {
           </button>
         </div>
         <div style={{ padding: '1rem' }}>
-          {/* eslint-disable jsx-a11y/no-autofocus -- Modal opens with focus for UX */}
-          <PostEditor
-            parentEvent={parentEvent}
-            onSuccess={handleClose}
-            onCancel={handleClose}
-            placeholder="Write your reply..."
-            autoFocus
-          />
-          {/* eslint-enable jsx-a11y/no-autofocus */}
+          {mode === 'guest' ? (
+            <div className="post-editor-container">
+              <div className="system-msg">
+                Sign in to post your reply. <a href="/login">Sign in</a> to continue.
+                {error ? <span className="system-msg error-msg">{` ${error}`}</span> : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* eslint-disable jsx-a11y/no-autofocus -- Modal opens with focus for UX */}
+              <PostEditor
+                parentEvent={parentEvent}
+                onSuccess={handleClose}
+                onCancel={handleClose}
+                placeholder="Write your reply..."
+                autoFocus
+              />
+              {/* eslint-enable jsx-a11y/no-autofocus */}
+            </>
+          )}
         </div>
       </div>
     </dialog>

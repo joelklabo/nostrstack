@@ -13,6 +13,9 @@ vi.mock('./post-editor', () => ({
     </div>
   )
 }));
+vi.mock('./auth', () => ({
+  useAuth: () => mockUseAuth()
+}));
 
 // Mock HTMLDialogElement methods if missing in JSDOM
 if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.showModal) {
@@ -33,10 +36,29 @@ const mockEvent = {
   tags: [],
   sig: 'sig'
 };
+const mockUseAuth = vi.fn();
 
 describe('ReplyModal', () => {
+  beforeEach(() => {
+    mockUseAuth.mockReturnValue({
+      mode: 'nip07',
+      error: null,
+      pubkey: 'pubkey1'
+    });
+  });
+
   afterEach(() => {
     cleanup();
+  });
+
+  it('renders an auth prompt when in guest mode', () => {
+    mockUseAuth.mockReturnValue({
+      mode: 'guest',
+      error: null,
+      pubkey: null
+    });
+    render(<ReplyModal isOpen={true} onClose={vi.fn()} parentEvent={mockEvent} />);
+    expect(screen.getByText(/Sign in to post your reply\./i)).toBeTruthy();
   });
 
   it('renders correctly when open', () => {
