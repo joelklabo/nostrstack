@@ -19,7 +19,7 @@ import { useImmersiveScroll } from './hooks/useImmersiveScroll';
 import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './layout/Sidebar';
 import { TelemetryBar } from './layout/TelemetryBar';
-import { relayMonitor } from './nostr/relayHealth';
+import { relayMonitor, type RelayStats } from './nostr/relayHealth';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
@@ -194,6 +194,7 @@ const BRAND_PRESET_LIST: NsBrandPreset[] = Object.keys(nsBrandPresets) as NsBran
 const LOCAL_API_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const LOCAL_API_TIMEOUT_MS = 3_000;
 const LOCAL_API_BASE_FALLBACK = '/api';
+const RELAY_DEGRADED_WINDOW_MS = 5 * 60_000;
 const LOCAL_API_UNAVAILABLE: ApiBaseResolution = {
   raw: '',
   baseUrl: '',
@@ -250,6 +251,14 @@ function getInitialBrandPreset(): NsBrandPreset {
   if (typeof window === 'undefined') return BRAND_PRESET_DEFAULT;
   const stored = localStorage.getItem(BRAND_PRESET_STORAGE_KEY);
   return isBrandPreset(stored) ? stored : BRAND_PRESET_DEFAULT;
+}
+
+function hasRecentRelayFailures(now: number = Date.now()) {
+  const stats = Object.values(relayMonitor.getStatsSnapshot()) as RelayStats[];
+  return stats.some((entry) => {
+    if (!entry.lastFailureAt || entry.consecutiveFailures < 1) return false;
+    return now - entry.lastFailureAt < RELAY_DEGRADED_WINDOW_MS;
+  });
 }
 
 function LoadingFallback({
@@ -331,6 +340,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     return localStorage.getItem('nostrstack.guest') === 'true';
   });
   const [routeRecoveryKey, setRouteRecoveryKey] = useState(0);
+  const [relayHealthVersion, setRelayHealthVersion] = useState(0);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('nostrstack.guest');
@@ -370,6 +380,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
+  useEffect(() => relayMonitor.subscribe(() => setRelayHealthVersion((value) => value + 1)), []);
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
@@ -561,6 +572,8 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     previousPathRef.current = pathname;
   }, [mobileMenuOpen, pathname]);
 
+  const relayConnectivityDegraded = useMemo(() => hasRecentRelayFailures(), [relayHealthVersion]);
+
   if (nostrRouteId) {
     return (
       <ErrorBoundary
@@ -592,6 +605,16 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   if (!pubkey && !isGuest) {
     return (
       <main className="feed-container" id="main-content" role="main">
+        {relayConnectivityDegraded && (
+          <Alert
+            tone="warning"
+            title="Relay connectivity degraded"
+            style={{ marginBottom: '1rem' }}
+          >
+            Some relay/WebSocket connections are failing. Wallet funding and publish actions may be
+            delayed or fail until relays recover. Check your relay settings in the Relays view.
+          </Alert>
+        )}
         <ErrorBoundary
           key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
           resetToken={routeRecoveryKey}

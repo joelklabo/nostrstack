@@ -114,12 +114,25 @@ ndev_force_kill_port() {
 
 ndev_cleanup_stale_session_file() {
   local file="$1"
+  local slot
   local pid
   if [[ ! -f "$file" ]]; then
     return 0
   fi
+  slot="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SLOT)"
   pid="$(ndev_parse_field "$file" NOSTRDEV_SESSION_PID)"
   if [[ -z "$pid" ]] || ! ndev_pid_alive "$pid"; then
+    if [[ "$slot" == manual-* ]]; then
+      local api_port social_port
+      api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
+      social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
+      if [[ -n "$api_port" ]] && ndev_port_in_use "$api_port"; then
+        return 0
+      fi
+      if [[ -n "$social_port" ]] && ndev_port_in_use "$social_port"; then
+        return 0
+      fi
+    fi
     rm -f "$file"
   fi
 }
@@ -425,11 +438,14 @@ ndev_print_sessions() {
     command="$(ndev_parse_field "$file" NOSTRDEV_SESSION_COMMAND)"
     api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
     social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
-    state="running"
-    found=1
-    if ! ndev_pid_alive "$pid"; then
+    if ndev_pid_alive "$pid"; then
+      state="running"
+    elif [[ "$slot" == manual-* ]] && { [[ -n "$api_port" ]] && ndev_port_in_use "$api_port" || [[ -n "$social_port" ]] && ndev_port_in_use "$social_port"; }; then
+      state="orphaned"
+    else
       continue
     fi
+    found=1
 
     printf '%s %s %s %s %s %s %s\n' "$slot" "$agent" "$pid" "$api_port" "$social_port" "$state" "$command"
   done
@@ -447,6 +463,8 @@ ndev_stop_sessions() {
   local slot
   local pid
   local agent
+  local api_port
+  local social_port
   local stopped=0
 
   shopt -s nullglob
@@ -457,6 +475,8 @@ ndev_stop_sessions() {
     slot="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SLOT)"
     pid="$(ndev_parse_field "$file" NOSTRDEV_SESSION_PID)"
     agent="$(ndev_parse_field "$file" NOSTRDEV_SESSION_AGENT)"
+    api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
+    social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
 
     case "$mode" in
       all)
@@ -478,13 +498,21 @@ ndev_stop_sessions() {
     esac
 
     echo "Stopping session $slot (pid=$pid, agent=$agent)"
+    local pid_was_alive=0
     if [[ -n "${pid:-}" ]] && ndev_pid_alive "$pid"; then
+      pid_was_alive=1
       kill "$pid" >/dev/null 2>&1 || true
       sleep 1
       if ndev_pid_alive "$pid"; then
         kill -9 "$pid" >/dev/null 2>&1 || true
       fi
     fi
+
+    if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]] || [[ "$slot" == manual-* && "$pid_was_alive" == "0" ]]; then
+      [[ -n "$api_port" ]] && ndev_force_kill_port "$api_port" || true
+      [[ -n "$social_port" ]] && ndev_force_kill_port "$social_port" || true
+    fi
+
     rm -f "$file"
     stopped=1
   done
