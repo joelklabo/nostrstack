@@ -17,7 +17,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
   let backoffUntil = 0;
   let walletIdFallbackAttempted = false;
   let inFlightFetch: Promise<WalletSnapshot | null> | null = null;
-  const STARTUP_FAILURE_THRESHOLD = 2;
+  const STARTUP_GRACE_FAILURES = 12;
   const BACKOFF_BASE_MS = 5000;
   const BACKOFF_MAX_MS = 60000;
 
@@ -81,6 +81,8 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       'ECONNREFUSED',
       'ECONNRESET',
       'ETIMEDOUT',
+      'ENOTFOUND',
+      'EAI_AGAIN',
       'UND_ERR_SOCKET',
       'UND_ERR_CONNECT_TIMEOUT',
       'UND_ERR_SOCKET_DID_CLOSE',
@@ -184,9 +186,13 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       const errorKey = getErrorKey(err);
       const isTransientFailure = isTransientError(errorKey);
 
+      if (isStartup && successiveFailures >= STARTUP_GRACE_FAILURES) {
+        isStartup = false;
+      }
+
       const shouldWarn =
         !isTransientFailure &&
-        (!isStartup || successiveFailures > STARTUP_FAILURE_THRESHOLD) &&
+        !isStartup &&
         (successiveFailures === 3 ||
           successiveFailures % 12 === 0 ||
           (successiveFailures > 3 && errorKey !== lastErrorKey));

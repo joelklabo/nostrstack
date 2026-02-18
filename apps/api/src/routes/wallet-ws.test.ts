@@ -26,9 +26,16 @@ describe('wallet-ws fetcher', () => {
     }
   });
 
-  it('logs warn on third failure', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('connection timeout'));
+  it('logs warn on third failure after startup grace period ends', async () => {
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ balance: 100 }))
+    } as Response);
+    await fetcher();
+
+    vi.mocked(fetch).mockRejectedValue(new Error('connection timeout'));
 
     await fetcher();
     expect(mockLog.warn).not.toHaveBeenCalled();
@@ -43,29 +50,26 @@ describe('wallet-ws fetcher', () => {
     );
   });
 
-  it('suppresses subsequent identical failures', async () => {
+  it('suppresses all failures during startup grace period', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('503 Service Unavailable'));
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
 
-    // First failure - no warn (need 3+)
-    await fetcher();
-    expect(mockLog.warn).not.toHaveBeenCalled();
+    for (let i = 0; i < 11; i++) {
+      await fetcher();
+    }
 
-    // Second failure - no warn (need 3+)
-    await fetcher();
     expect(mockLog.warn).not.toHaveBeenCalled();
-    expect(mockLog.debug).toHaveBeenCalledWith(
-      expect.objectContaining({ successiveFailures: 2 }),
-      'wallet-ws fetch failed (suppressed)'
-    );
-
-    // Third failure - warn
-    await fetcher();
-    expect(mockLog.warn).toHaveBeenCalledTimes(1);
+    expect(mockLog.debug).toHaveBeenCalled();
   });
 
-  it('logs warn if error key changes', async () => {
+  it('logs warn if error key changes after startup', async () => {
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ balance: 100 }))
+    } as Response);
+    await fetcher();
 
     vi.mocked(fetch).mockRejectedValue(new Error('connection timeout'));
     await fetcher();
@@ -81,10 +85,16 @@ describe('wallet-ws fetcher', () => {
     );
   });
 
-  it('logs warn every 12th failure', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
+  it('logs warn every 12th failure after startup', async () => {
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
 
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ balance: 100 }))
+    } as Response);
+    await fetcher();
+
+    vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
     for (let i = 1; i <= 3; i++) {
       await fetcher();
     }
@@ -97,8 +107,15 @@ describe('wallet-ws fetcher', () => {
   });
 
   it('applies backoff after repeated failures', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ balance: 100 }))
+    } as Response);
+    await fetcher();
+
+    vi.mocked(fetch).mockRejectedValue(new Error('continuous fail'));
 
     await fetcher();
     await fetcher();
@@ -230,6 +247,12 @@ describe('wallet-ws fetcher', () => {
   it('resets failure count on success', async () => {
     const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
 
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ balance: 50 }))
+    } as Response);
+    await fetcher();
+
     vi.mocked(fetch).mockRejectedValue(new Error('fail'));
     await fetcher();
     await fetcher();
@@ -346,6 +369,35 @@ describe('wallet-ws fetcher', () => {
       name: 'Default Wallet',
       balance: 300
     });
+  });
+
+  it('suppresses ENOTFOUND DNS failures as recurring transient failures', async () => {
+    const dnsError = Object.assign(new TypeError('fetch failed'), {
+      cause: Object.assign(new Error('getaddrinfo ENOTFOUND lnbits.local'), {
+        code: 'ENOTFOUND'
+      })
+    });
+    vi.mocked(fetch).mockRejectedValue(dnsError);
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    for (let i = 0; i < 4; i++) {
+      await fetcher();
+    }
+
+    expect(mockLog.warn).not.toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenCalled();
+  });
+
+  it('suppresses all non-transient failures during startup grace period', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('unexpected error'));
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    for (let i = 0; i < 11; i++) {
+      await fetcher();
+    }
+
+    expect(mockLog.warn).not.toHaveBeenCalled();
+    expect(mockLog.debug).toHaveBeenCalled();
   });
 
   it('coalesces concurrent fetch calls into a single network request', async () => {
