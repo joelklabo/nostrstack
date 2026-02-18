@@ -111,6 +111,66 @@ function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
+type CreateOfferResponse = {
+  offer: string;
+  offerId?: string;
+  label?: string;
+};
+
+function parseCreateOfferResponse(text: string): CreateOfferResponse {
+  if (!text.trim()) {
+    throw new Error('Offer creation response was empty.');
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    throw new Error('Offer creation response was not valid JSON.');
+  }
+
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Offer creation response shape is invalid.');
+  }
+  const asRecord = raw as Record<string, unknown>;
+  const offer = typeof asRecord.offer === 'string' ? asRecord.offer.trim() : '';
+  if (!offer) {
+    throw new Error('Offer creation response missing offer value.');
+  }
+
+  const offerId =
+    typeof asRecord.offerId === 'string' && asRecord.offerId.trim()
+      ? asRecord.offerId.trim()
+      : undefined;
+  const normalizedLabel =
+    typeof asRecord.label === 'string' && asRecord.label.trim() ? asRecord.label.trim() : undefined;
+
+  return { offer, offerId, label: normalizedLabel };
+}
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  onTimeout?: () => void
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      if (onTimeout) {
+        onTimeout();
+      }
+      reject(new Error(OFFER_CREATE_TIMEOUT_MESSAGE));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  });
+}
+
 export function OffersView() {
   const cfg = useNostrstackConfig();
   const toast = useToast();
@@ -195,31 +255,27 @@ export function OffersView() {
     if (parsedExpires) payload.expiresIn = parsedExpires;
 
     const controller = new AbortController();
-    const timeoutError = new Error(OFFER_CREATE_TIMEOUT_MESSAGE);
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const timeout = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        controller.abort();
-        reject(timeoutError);
-      }, OFFER_CREATE_TIMEOUT_MS);
-    });
-    const withTimeout = <T,>(promise: Promise<T>): Promise<T> => Promise.race([promise, timeout]);
-
     try {
-      const res = await withTimeout(
+      const { res, responseText } = await withTimeout(
         fetch(`${baseUrl}/api/bolt12/offers`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(payload),
           signal: controller.signal
-        })
+        }).then(async (response) => ({
+          res: response,
+          responseText: await response.text()
+        })),
+        OFFER_CREATE_TIMEOUT_MS,
+        () => {
+          controller.abort();
+        }
       );
-      const responseText = await withTimeout(res.text());
       if (!res.ok) {
         const message = parseOfferErrorMessage(responseText) || `HTTP ${res.status}`;
         throw new Error(message);
       }
-      const data = JSON.parse(responseText) as { offer: string; offerId?: string; label?: string };
+      const data = parseCreateOfferResponse(responseText);
       const entry: OfferEntry = {
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         description: description.trim(),
@@ -243,7 +299,7 @@ export function OffersView() {
       setCreateStatus('success');
     } catch (err) {
       const message =
-        err === timeoutError
+        err instanceof Error && err.message === OFFER_CREATE_TIMEOUT_MESSAGE
           ? OFFER_CREATE_TIMEOUT_MESSAGE
           : err instanceof DOMException && err.name === 'AbortError'
             ? OFFER_CREATE_TIMEOUT_MESSAGE
@@ -255,9 +311,6 @@ export function OffersView() {
       setCreateStatus('error');
       toast({ message, tone: 'danger' });
     } finally {
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-      }
       controller.abort();
     }
   };
