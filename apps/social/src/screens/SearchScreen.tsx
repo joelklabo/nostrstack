@@ -116,9 +116,14 @@ export function SearchScreen() {
     if (status === 'validating') return 'Checking format…';
     if (status === 'resolving') return 'Resolving identity…';
     if (status === 'resolved') return 'Identity ready.';
-    if (status === 'error') return error?.message ?? 'Lookup failed.';
+    if (status === 'error') {
+      if (error?.code === 'invalid_format' && !isDirectSearch) {
+        return 'Paste an identifier or search keywords.';
+      }
+      return error?.message ?? 'Lookup failed.';
+    }
     return 'Paste an identifier or search keywords.';
-  }, [submitFeedback, notesLoading, notesError, status, error]);
+  }, [submitFeedback, notesLoading, notesError, status, error, isDirectSearch]);
 
   const canRetryIdentity = useCallback(() => {
     if (status !== 'error' || !error) return false;
