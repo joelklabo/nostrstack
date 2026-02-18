@@ -56,7 +56,11 @@ export function SearchScreen() {
   const cfg = useNostrstackConfig();
   const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
-  const { relays: relayList } = useRelays();
+  const relayContext = useRelays();
+  const relayList = useMemo(() => {
+    const listFromContext = relayContext?.relays;
+    return Array.isArray(listFromContext) ? listFromContext : [];
+  }, [relayContext?.relays]);
   const pool = useSimplePool();
   const [query, setQuery] = useState('');
   const isDirectSearch = useMemo(() => isDirectIdentitySearch(query), [query]);
