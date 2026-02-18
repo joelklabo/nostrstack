@@ -19,7 +19,20 @@ export default defineConfig(({ command }) => {
           compact: true
         }
       }),
-      ...(useHttps ? [basicSsl()] : [])
+      ...(useHttps ? [basicSsl()] : []),
+      {
+        // Some HMR updates occasionally request a lowercase CopyButton module path.
+        // Rewrite to the on-disk PascalCase filename to avoid transient dev-server 500s.
+        name: 'copybutton-hmr-path-fallback',
+        configureServer(server) {
+          server.middlewares.use((req, _res, next) => {
+            if (req.url?.startsWith('/src/ui/copyButton.tsx')) {
+              req.url = req.url.replace('/src/ui/copyButton.tsx', '/src/ui/CopyButton.tsx');
+            }
+            next();
+          });
+        }
+      }
     ],
     server: {
       port: devServerPort,
