@@ -216,6 +216,17 @@ function isLocalApiBase(apiBase: ApiBaseResolution): boolean {
   }
 }
 
+function shouldProbeProxyForLocalApi(apiBase: ApiBaseResolution): boolean {
+  if (window.location.protocol !== 'https:') return false;
+  if (!isLocalApiBase(apiBase) || !apiBase.baseUrl) return false;
+  try {
+    const parsed = new URL(apiBase.baseUrl);
+    return parsed.protocol === 'http:' && LOCAL_API_HOSTS.has(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function buildApiBaseFallback(): ApiBaseResolution {
   return resolveGalleryApiBase({ apiBase: LOCAL_API_BASE_FALLBACK });
 }
@@ -849,18 +860,35 @@ export default function App() {
     };
 
     const probe = async () => {
-      const localApiWorks = await checkApiHealth(resolvedApiBaseConfig.baseUrl);
+      const shouldUseProxyFallback = shouldProbeProxyForLocalApi(resolvedApiBaseConfig);
+      const primaryBase = shouldUseProxyFallback ? FALLBACK_API_BASE : resolvedApiBaseConfig;
+      const primaryHealthCheckWorks = await checkApiHealth(primaryBase.baseUrl);
 
-      if (!localApiWorks && isMounted) {
-        const fallbackWorks = await checkApiHealth(FALLBACK_API_BASE.baseUrl);
-
-        if (fallbackWorks) {
+      if (primaryHealthCheckWorks) {
+        if (shouldUseProxyFallback && isMounted) {
           setResolvedApiBaseConfig(FALLBACK_API_BASE);
-        } else {
+        }
+      } else if (shouldUseProxyFallback) {
+        if (isMounted) {
           setLocalApiCheckFailed(true);
           setResolvedApiBaseConfig((current) =>
             isLocalApiBase(current) ? LOCAL_API_UNAVAILABLE : current
           );
+        }
+      } else {
+        const fallbackWorks = await checkApiHealth(FALLBACK_API_BASE.baseUrl);
+
+        if (fallbackWorks) {
+          if (isMounted) {
+            setResolvedApiBaseConfig(FALLBACK_API_BASE);
+          }
+        } else {
+          if (isMounted) {
+            setLocalApiCheckFailed(true);
+            setResolvedApiBaseConfig((current) =>
+              isLocalApiBase(current) ? LOCAL_API_UNAVAILABLE : current
+            );
+          }
         }
       }
 
