@@ -32,29 +32,57 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       return err.code.trim();
     }
     const msg = typeof err.message === 'string' ? err.message : '';
-    const match = msg.match(/\b(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ERR_[A-Z0-9_]+)\b/i);
+    const match = msg.match(
+      /\b(ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|UND_ERR_[A-Z0-9_]+|ERR_[A-Z0-9_]+)\b/i
+    );
     if (match) return match[1];
     return undefined;
   };
+
+  const readErrorCode = (value: unknown): string | undefined => {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+
+    const asUnknown = value as { code?: unknown; message?: unknown; cause?: unknown };
+    if (typeof asUnknown.code === 'string' && asUnknown.code.trim()) {
+      return asUnknown.code.trim();
+    }
+
+    const codeFromMessage = extractErrorCode({
+      message: typeof asUnknown.message === 'string' ? asUnknown.message : undefined,
+      code: undefined
+    });
+    if (codeFromMessage) {
+      return codeFromMessage;
+    }
+
+    return readErrorCode(asUnknown.cause);
+  };
+
+  const isTransientError = (errorKey: string | undefined): boolean =>
+    !!errorKey &&
+    [
+      'OTHER_SIDE_CLOSED',
+      'ECONNRESET',
+      'ETIMEDOUT',
+      'UND_ERR_SOCKET',
+      'UND_ERR_CONNECT_TIMEOUT',
+      'UND_ERR_SOCKET_DID_CLOSE'
+    ].includes(errorKey.toUpperCase());
 
   const getErrorKey = (err: unknown): string => {
     if (err instanceof Error) {
       const name = err.name;
       if (name === 'FetchError' || name === 'TypeError') {
         const code = extractErrorCode(err);
-        const errCause = (err as { cause?: unknown }).cause;
-        const causeCode = errCause instanceof Error ? extractErrorCode(errCause) : undefined;
+        const causeCode = readErrorCode((err as { cause?: unknown }).cause);
 
         if (causeCode) return causeCode.toUpperCase();
         if (code) return code.toUpperCase();
 
         const msg = err.message;
         if (/other side closed/i.test(msg)) return 'OTHER_SIDE_CLOSED';
-
-        const nestedCode = (errCause as { code?: string })?.code;
-        if (typeof nestedCode === 'string' && nestedCode.trim()) {
-          return nestedCode.trim().toUpperCase();
-        }
       }
       if (typeof (err as { code?: string }).code === 'string') {
         return (err as { code?: string }).code!.toUpperCase();
@@ -141,7 +169,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
     } catch (err) {
       successiveFailures++;
       const errorKey = getErrorKey(err);
-      const isTransientFailure = errorKey === 'OTHER_SIDE_CLOSED' || errorKey === 'ECONNRESET';
+      const isTransientFailure = isTransientError(errorKey);
 
       const shouldWarn =
         !isTransientFailure &&
