@@ -50,6 +50,11 @@ const EVENT_FETCH_MAX_RETRY_MS = 30_000;
 const MAX_EVENT_FETCH_ENTRIES = 250;
 export const NOTES_SEARCH_TIMEOUT_MS = 30_000;
 const SEARCH_RELAY_TIMEOUT_MS = Math.min(NOTES_SEARCH_TIMEOUT_MS, 10_000);
+const SEARCH_UNSUPPORTED_RELAYS = new Set([
+  'wss://relay.damus.io/',
+  'wss://nos.lol/',
+  'wss://relay.primal.net/'
+]);
 
 type NostrEventCacheEntry = {
   data?: ApiNostrEventResponse;
@@ -131,7 +136,9 @@ export function getDefaultRelays(raw?: string | null): string[] {
 }
 
 export function getSearchRelays(rawRelays: string[] = []): string[] {
-  const merged = normalizeRelayList([...rawRelays, ...SEARCH_RELAYS]);
+  const merged = normalizeRelayList([...rawRelays, ...SEARCH_RELAYS]).filter(
+    (relay) => !SEARCH_UNSUPPORTED_RELAYS.has(relay)
+  );
   const healthy = merged.filter((relay) => relayMonitor.isHealthy(relay));
   return healthy.length ? healthy : merged;
 }

@@ -52,11 +52,20 @@ describe('getSearchRelays', () => {
   it('merges user relays with search defaults and removes duplicates', () => {
     const relays = getSearchRelays(['wss://relay.custom', 'wss://relay.damus.io']);
 
-    expect(relays).toEqual([
-      'wss://relay.custom/',
-      'wss://relay.damus.io/',
-      ...normalizedSearchRelays.filter((relay) => relay !== 'wss://relay.damus.io/')
+    expect(relays).toEqual(['wss://relay.custom/', ...normalizedSearchRelays]);
+  });
+
+  it('filters relays known to reject search filter key', () => {
+    const relays = getSearchRelays([
+      'wss://relay.damus.io',
+      'wss://relay.primal.net',
+      'wss://nos.lol'
     ]);
+
+    expect(relays).not.toContain('wss://relay.damus.io/');
+    expect(relays).not.toContain('wss://nos.lol/');
+    expect(relays).not.toContain('wss://relay.primal.net/');
+    expect(relays).toEqual([...normalizedSearchRelays]);
   });
 
   it('filters unhealthy relays when healthy alternatives are available', () => {
