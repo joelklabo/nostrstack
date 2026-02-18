@@ -219,7 +219,7 @@ async function tryBolt12Flow(page: Page) {
     throw new Error(`BOLT12 offer error: ${await offerError.textContent()}`);
   }
 
-  await page.getByRole('button', { name: 'REQUEST_INVOICE' }).click();
+  await page.getByRole('button', { name: /Request Invoice/i }).click();
   const invoiceWidget = page.locator('.offer-widget__title', { hasText: 'Invoice' });
   await expect(invoiceWidget).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.offer-widget__value').nth(1)).toBeVisible({ timeout: 20_000 });
