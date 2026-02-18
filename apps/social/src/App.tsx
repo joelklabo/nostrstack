@@ -164,11 +164,11 @@ const RelaysView = lazy(() =>
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
-    typeof window === 'undefined' ? '/' : window.location.pathname
+    typeof window === 'undefined' ? '/' : `${window.location.pathname}${window.location.search}`
   );
 
   useEffect(() => {
-    const handle = () => setPathname(window.location.pathname);
+    const handle = () => setPathname(`${window.location.pathname}${window.location.search}`);
     window.addEventListener('popstate', handle);
     return () => window.removeEventListener('popstate', handle);
   }, []);
@@ -374,7 +374,9 @@ function AppShell() {
   const retryCurrentRoute = useCallback(() => {
     setRouteRecoveryKey((value) => value + 1);
   }, []);
-  const pathname = usePathname();
+  const routeLocation = usePathname();
+  const pathname = routeLocation.split('?')[0] || '/';
+  const routeRecoveryIdentity = routeLocation;
   const isRouteWithOptionalQuery = (path: string) =>
     pathname === path ||
     pathname === `${path}/` ||
@@ -578,7 +580,7 @@ function AppShell() {
   if (nostrRouteId) {
     return (
       <ErrorBoundary
-        key={`${pathname}-${routeRecoveryKey}`}
+        key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
         resetToken={routeRecoveryKey}
         fallback={
           <RouteLoadFallback
@@ -607,7 +609,7 @@ function AppShell() {
     return (
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={`${pathname}-${routeRecoveryKey}`}
+          key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
           resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
@@ -768,7 +770,7 @@ function AppShell() {
       />
       <main className="feed-container" id="main-content" role="main">
         <ErrorBoundary
-          key={`${pathname}-${routeRecoveryKey}`}
+          key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
           resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
@@ -779,7 +781,7 @@ function AppShell() {
           }
         >
           <Suspense
-            key={`${pathname}-${routeRecoveryKey}`}
+            key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
             fallback={<LoadingFallback message={`Loading ${routeBoundView} route...`} />}
           >
             {isRelaysRoute ? (
