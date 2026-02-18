@@ -157,7 +157,8 @@ async function interactOnSettings(page) {
 async function interactOnProfile(page) {
   await clickMaybe(page.getByRole('button', { name: 'Edit Profile' }));
   findings.interactions.push('edit-profile');
-  if (page.url().includes('/p/') === false) {
+  const isProfileRoute = page.url().includes('/profile') || page.url().includes('/p/');
+  if (!isProfileRoute) {
     await page.goBack({ waitUntil: 'domcontentloaded' }).catch(() => {});
   }
   await clickMaybe(page.getByRole('button', { name: 'Copy npub' }).first());
