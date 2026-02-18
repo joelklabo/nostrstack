@@ -13,8 +13,8 @@ trap 'ndev_release_session' EXIT INT TERM
 # shellcheck disable=SC2016
 find apps/app/src -type f | entr -r sh -c '
   echo "[entr] restarting app dev";
-  cd apps/app && VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:'"$PORT"'} \
-  VITE_NOSTRSTACK_HOST=${VITE_NOSTRSTACK_HOST:-localhost:'"$PORT"'} \
+  cd apps/app && VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:'$PORT'} \
+  VITE_NOSTRSTACK_HOST=${VITE_NOSTRSTACK_HOST:-localhost:'$PORT'} \
   VITE_NOSTRSTACK_RELAYS=${VITE_NOSTRSTACK_RELAYS:-mock} \
   pnpm dev -- --host --port '"$DEV_SERVER_PORT"'
 '
