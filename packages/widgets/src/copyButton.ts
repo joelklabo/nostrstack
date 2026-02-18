@@ -66,12 +66,24 @@ export async function copyToClipboard(text: string) {
   el.value = trimmed;
   el.setAttribute('readonly', 'true');
   el.style.position = 'fixed';
-  el.style.left = '-9999px';
+  el.style.left = '0';
   el.style.top = '0';
+  el.style.width = '2em';
+  el.style.height = '2em';
+  el.style.padding = '0';
+  el.style.border = 'none';
+  el.style.outline = 'none';
+  el.style.boxShadow = 'none';
+  el.style.background = 'transparent';
+  el.style.fontSize = '16px';
   document.body.appendChild(el);
   try {
-    el.select();
-    document.execCommand('copy');
+    el.focus();
+    el.setSelectionRange(0, trimmed.length);
+    const hasExecCommand = typeof document.execCommand === 'function';
+    if (!hasExecCommand || !document.execCommand('copy')) {
+      throw new Error('Copy failed');
+    }
   } finally {
     el.remove();
   }
