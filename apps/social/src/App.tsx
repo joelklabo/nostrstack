@@ -800,17 +800,10 @@ export default function App() {
   });
   const [resolvedApiBaseConfig, setResolvedApiBaseConfig] =
     useState<ApiBaseResolution>(apiBaseConfig);
-  const [isResolvingLocalApiBase, setIsResolvingLocalApiBase] = useState(() =>
-    isLocalApiBase(apiBaseConfig)
-  );
   const [localApiCheckFailed, setLocalApiCheckFailed] = useState(false);
 
   useEffect(() => {
-    if (!isResolvingLocalApiBase) {
-      return;
-    }
     if (!isLocalApiBase(resolvedApiBaseConfig)) {
-      setIsResolvingLocalApiBase(false);
       return;
     }
     const controller = new AbortController();
@@ -843,9 +836,6 @@ export default function App() {
       }
 
       clearTimeout(timeout);
-      if (isMounted) {
-        setIsResolvingLocalApiBase(false);
-      }
     };
 
     void probe();
@@ -856,9 +846,6 @@ export default function App() {
     };
   }, [resolvedApiBaseConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const apiBase = resolvedApiBaseConfig.baseUrl;
-  if (isResolvingLocalApiBase) {
-    return <LoadingFallback message="Checking API availability..." />;
-  }
   if (localApiCheckFailed) {
     console.warn('Social API health check failed; continuing with fallback API configuration.');
   }
