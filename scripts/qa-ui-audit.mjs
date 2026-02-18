@@ -81,6 +81,29 @@ const results = {
   response404: []
 };
 
+function shouldIgnoreRequestFailure(req) {
+  const url = req.url();
+  if (!url.startsWith(BASE_ORIGIN)) return true;
+  if (url.includes('/api/logs/stream')) return true;
+
+  const err = req.failure()?.errorText || '';
+  if (err !== 'net::ERR_ABORTED' && err !== 'net::ERR_NETWORK_IO_SUSPENDED') {
+    return false;
+  }
+
+  // Direct route navigation can abort superseded document fetches.
+  if (req.resourceType() === 'document') {
+    return true;
+  }
+
+  // Local dev health probes are short-lived and may be cancelled during route changes.
+  if (url.includes('/api/health') || url.includes('/api/debug/ws-wallet')) {
+    return true;
+  }
+
+  return false;
+}
+
 async function clickMaybe(locator, opts) {
   return safe(() => locator.first().click(opts));
 }
@@ -260,13 +283,10 @@ async function interactSidebar(page) {
   });
   page.on('pageerror', (err) => results.pageErrors.push(String(err.message || err)));
   page.on('requestfailed', (req) => {
+    if (shouldIgnoreRequestFailure(req)) return;
     const url = req.url();
     const err = req.failure()?.errorText || 'unknown';
-    if (url.startsWith(BASE_ORIGIN)) {
-      if (!url.includes('/api/logs/stream')) {
-        results.requestFailures.push(`${url} :: ${err}`);
-      }
-    }
+    results.requestFailures.push(`${url} :: ${err}`);
   });
   page.on('response', (res) => {
     if (res.status() === 404) {
