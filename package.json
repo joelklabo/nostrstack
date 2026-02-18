@@ -71,7 +71,9 @@
       "@isaacs/brace-expansion": ">=5.0.1",
       "lodash": ">=4.17.23",
       "fastify": ">=5.7.3",
-      "qs": ">=6.14.2"
+      "qs": ">=6.14.2",
+      "baseline-browser-mapping": "^2.9.19",
+      "browserslist": "^4.28.1"
     },
     "onlyBuiltDependencies": [
       "@prisma/client",
@@ -93,6 +95,7 @@
     "@typescript-eslint/parser": "8.51.0",
     "@vitest/browser-playwright": "^4.0.16",
     "audit-ci": "^7.1.0",
+    "baseline-browser-mapping": "^2.9.19",
     "chrome-devtools-mcp": "0.12.1",
     "concurrently": "^9.2.1",
     "cspell": "^9.4.0",
