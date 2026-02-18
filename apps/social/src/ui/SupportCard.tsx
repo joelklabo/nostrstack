@@ -1,12 +1,14 @@
 import '../styles/components/support-card.css';
 
 import { SendSats } from '@nostrstack/react';
+import { useToast } from '@nostrstack/ui';
 import { useEffect, useRef, useState } from 'react';
 
 import { supportConfig } from '../config/payments';
 import { copyToClipboard } from './clipboard';
 
 export function SupportCard() {
+  const toast = useToast();
   const [dismissed, setDismissed] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
   const supportModalRef = useRef<HTMLDialogElement>(null);
@@ -49,8 +51,9 @@ VITE_NOSTRSTACK_TIP_PUBKEY=your-npub-here
 VITE_NOSTRSTACK_TIP_LNADDR=your@lightning.address`;
       try {
         await copyToClipboard(text);
+        toast({ message: 'Env template copied.', tone: 'success' });
       } catch {
-        // Ignore copy errors in dev env tooling
+        toast({ message: 'Unable to copy env template.', tone: 'danger' });
       }
     };
     return (

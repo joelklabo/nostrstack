@@ -1,5 +1,6 @@
 import './ZapModal.css';
 
+import { useToast } from '@nostrstack/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import type React from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -23,12 +24,13 @@ export const ZapModal: React.FC<ZapModalProps> = ({
   recipientName = 'User',
   onZap
 }) => {
+  const toast = useToast();
   const [amount, setAmount] = useState<number>(50);
   const [message, setMessage] = useState('');
   const [state, setState] = useState<ZapState>('idle');
   const [invoice, setInvoice] = useState('');
   const [error, setError] = useState('');
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const titleId = useId();
   const descriptionId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -146,10 +148,12 @@ export const ZapModal: React.FC<ZapModalProps> = ({
     try {
       await copyToClipboard(invoice);
       setCopyStatus('copied');
-      setTimeout(() => setCopyStatus('idle'), 2000);
+      toast({ message: 'Invoice copied.', tone: 'success' });
     } catch {
-      // Clipboard write failed, do nothing
+      setCopyStatus('error');
+      toast({ message: 'Unable to copy invoice.', tone: 'danger' });
     }
+    setTimeout(() => setCopyStatus('idle'), 2000);
   };
 
   if (!isOpen) return null;
@@ -277,13 +281,19 @@ export const ZapModal: React.FC<ZapModalProps> = ({
                     onClick={copyInvoice}
                     className={copyStatus === 'copied' ? 'copy-success' : ''}
                     aria-label={
-                      copyStatus === 'copied' ? 'Invoice copied' : 'Copy invoice to clipboard'
+                      copyStatus === 'copied'
+                        ? 'Invoice copied'
+                        : copyStatus === 'error'
+                          ? 'Invoice copy failed'
+                          : 'Copy invoice to clipboard'
                     }
                   >
                     {copyStatus === 'copied' ? (
                       <>
                         <span aria-hidden="true">✓</span> Copied!
                       </>
+                    ) : copyStatus === 'error' ? (
+                      'Copy failed'
                     ) : (
                       'Copy Invoice'
                     )}

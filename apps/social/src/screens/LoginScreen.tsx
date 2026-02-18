@@ -1,5 +1,5 @@
 import { resolveApiBase, useAuth, useNostrstackConfig } from '@nostrstack/react';
-import { Alert } from '@nostrstack/ui';
+import { Alert, useToast } from '@nostrstack/ui';
 import { generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -27,6 +27,7 @@ const POLL_TIMEOUT_MS = 90000;
 
 export function LoginScreen() {
   const { loginWithNip07, loginWithNsec, loginWithLnurl, error: authError } = useAuth();
+  const toast = useToast();
   const cfg = useNostrstackConfig();
   const [nsec, setNsec] = useState('');
   const [nsecError, setNsecError] = useState<string | null>(null);
@@ -198,11 +199,13 @@ export function LoginScreen() {
     try {
       await copyToClipboard(lnurlRequest.lnurl);
       setCopyStatus('copied');
+      toast({ message: 'LNURL copied.', tone: 'success' });
     } catch {
       setCopyStatus('error');
+      toast({ message: 'Unable to copy LNURL.', tone: 'danger' });
     }
     window.setTimeout(() => setCopyStatus('idle'), 1500);
-  }, [lnurlRequest]);
+  }, [lnurlRequest, toast]);
 
   const handleOpenWallet = useCallback(() => {
     if (!lnurlRequest?.lnurl) return;
@@ -613,7 +616,11 @@ export function LoginScreen() {
                         onClick={handleCopyLnurl}
                         aria-label="Copy LNURL to clipboard"
                       >
-                        {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
+                        {copyStatus === 'copied'
+                          ? 'COPIED'
+                          : copyStatus === 'error'
+                            ? 'FAILED'
+                            : 'COPY'}
                       </button>
                       <button
                         type="button"
