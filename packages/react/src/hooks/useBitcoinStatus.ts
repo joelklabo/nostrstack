@@ -121,15 +121,36 @@ export function useBitcoinStatus(apiBase?: string): BitcoinStatusState {
       ? 'relative'
       : apiBaseConfig.baseUrl
     : '';
-  const [status, setStatus] = useState<BitcoinStatus | null>(() => (cacheKey ? readCachedStatus(cacheKey) : null));
+  const [status, setStatus] = useState<BitcoinStatus | null>(() =>
+    cacheKey ? readCachedStatus(cacheKey) : null
+  );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(apiBaseConfig.isConfigured && !status);
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    if (typeof navigator === 'undefined') return true;
+    return navigator.onLine;
+  });
   const [refreshToken, setRefreshToken] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    setIsOnline(window.navigator.onLine);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const refresh = useCallback(() => {
     if (!cacheKey) return;
     statusCache.delete(cacheKey);
-    setRefreshToken(prev => prev + 1);
+    setRefreshToken((prev) => prev + 1);
   }, [cacheKey]);
 
   useEffect(() => {
@@ -137,6 +158,11 @@ export function useBitcoinStatus(apiBase?: string): BitcoinStatusState {
       setStatus(null);
       setIsLoading(false);
       setError(apiBaseConfig.isMock ? 'API base is mock.' : 'API base not configured.');
+      return;
+    }
+    if (!isOnline) {
+      setIsLoading(false);
+      setError('Bitcoin status updates are paused while offline.');
       return;
     }
 
@@ -153,14 +179,17 @@ export function useBitcoinStatus(apiBase?: string): BitcoinStatusState {
     setError(null);
     const baseUrl = apiBaseConfig.isRelative ? '' : apiBaseConfig.baseUrl;
     fetchBitcoinStatusCached(cacheKey, baseUrl)
-      .then(data => {
+      .then((data) => {
         if (cancelled) return;
         setStatus(data);
         setError(null);
       })
-      .catch(err => {
+      .catch((err) => {
         if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'Bitcoin status unavailable.';
+        const rawMessage = err instanceof Error ? err.message : 'Bitcoin status unavailable.';
+        const message = /^HTTP\s+\d+:/.test(rawMessage)
+          ? `Bitcoin status unavailable. ${rawMessage}`
+          : rawMessage;
         setError(message);
       })
       .finally(() => {
@@ -171,7 +200,15 @@ export function useBitcoinStatus(apiBase?: string): BitcoinStatusState {
     return () => {
       cancelled = true;
     };
-  }, [apiBaseConfig.baseUrl, apiBaseConfig.isConfigured, apiBaseConfig.isMock, apiBaseConfig.isRelative, cacheKey, refreshToken]);
+  }, [
+    apiBaseConfig.baseUrl,
+    apiBaseConfig.isConfigured,
+    apiBaseConfig.isMock,
+    apiBaseConfig.isRelative,
+    cacheKey,
+    refreshToken,
+    isOnline
+  ]);
 
   return {
     status,
