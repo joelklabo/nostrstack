@@ -655,7 +655,9 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
-        <OnboardingTour />
+        <ErrorBoundary fallback={null}>
+          <OnboardingTour />
+        </ErrorBoundary>
         <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
 
         {/* Mobile hamburger button */}
@@ -728,7 +730,9 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
-      <OnboardingTour />
+      <ErrorBoundary fallback={null}>
+        <OnboardingTour />
+      </ErrorBoundary>
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       {/* Mobile hamburger button */}
