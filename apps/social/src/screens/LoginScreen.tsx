@@ -54,6 +54,21 @@ export function LoginScreen() {
     return apiBaseConfig.baseUrl;
   }, [apiBaseConfig.baseUrl, apiBaseConfig.isRelative]);
 
+  const validateNsecInput = useCallback((value: string): string | null => {
+    const cleanNsec = value.trim().toLowerCase();
+    if (!cleanNsec) return 'Please enter a private key';
+    if (!cleanNsec.startsWith('nsec1')) return 'Invalid private key. It must start with nsec1.';
+    try {
+      const decoded = nip19.decode(cleanNsec);
+      if (decoded.type !== 'nsec') {
+        return 'Invalid private key. Please enter a valid nsec.';
+      }
+      return null;
+    } catch {
+      return 'Invalid private key. Please enter a valid nsec.';
+    }
+  }, []);
+
   const openLnurlModal = useCallback(async () => {
     if (!enableLnurlAuth) {
       return;
@@ -376,8 +391,9 @@ export function LoginScreen() {
             style={{ display: 'grid', gap: '1.25rem' }}
             onSubmit={(e) => {
               e.preventDefault();
-              if (!nsec.trim()) {
-                setNsecError('Please enter a private key');
+              const validationError = validateNsecInput(nsec);
+              if (validationError) {
+                setNsecError(validationError);
                 return;
               }
               setNsecError(null);
@@ -401,7 +417,10 @@ export function LoginScreen() {
                 name="nsec"
                 placeholder="nsec1..."
                 value={nsec}
-                onChange={(e) => setNsec(e.target.value)}
+                onChange={(e) => {
+                  setNsec(e.target.value);
+                  if (nsecError) setNsecError(null);
+                }}
                 // eslint-disable-next-line jsx-a11y/no-autofocus -- Intentional for modal/form UX
                 autoFocus
               />
