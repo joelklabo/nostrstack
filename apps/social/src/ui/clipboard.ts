@@ -3,9 +3,14 @@ export async function copyToClipboard(text: string) {
   if (!value) throw new Error('Nothing to copy');
 
   const isClipboardPermissionError = (error: unknown): boolean => {
+    if (!(error instanceof DOMException)) return false;
+    const name = error.name.toLowerCase();
+    const message = error.message.toLowerCase();
     return (
-      error instanceof DOMException &&
-      (error.name === 'NotAllowedError' || error.name === 'SecurityError')
+      name === 'notallowederror' ||
+      name === 'securityerror' ||
+      message.includes('clipboard') ||
+      message.includes('permission')
     );
   };
 

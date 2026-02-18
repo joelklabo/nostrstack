@@ -54,7 +54,7 @@ export function useCopyAction({
       setState('copied');
       toast({ message: toastMessage ?? toastMessageFromLabel(label), tone: 'success' });
       return true;
-    } catch (err) {
+    } catch {
       try {
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
           navigator.vibrate([15, 25, 15]);

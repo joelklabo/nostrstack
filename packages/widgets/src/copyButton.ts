@@ -44,9 +44,14 @@ export async function copyToClipboard(text: string) {
   if (!trimmed) return;
 
   const isClipboardPermissionError = (error: unknown): boolean => {
+    if (!(error instanceof DOMException)) return false;
+    const name = error.name.toLowerCase();
+    const message = error.message.toLowerCase();
     return (
-      error instanceof DOMException &&
-      (error.name === 'NotAllowedError' || error.name === 'SecurityError')
+      name === 'notallowederror' ||
+      name === 'securityerror' ||
+      message.includes('clipboard') ||
+      message.includes('permission')
     );
   };
 
@@ -156,7 +161,7 @@ export function createCopyButton(opts: CopyButtonOptions) {
         /* ignore */
       }
       setState('copied');
-    } catch (err) {
+    } catch {
       try {
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
           navigator.vibrate([15, 25, 15]);
