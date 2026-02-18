@@ -61,6 +61,30 @@ function getKindLabel(kind: number): string {
   return EVENT_KIND_LABELS[kind] ?? `Kind ${kind}`;
 }
 
+function isValidNostrEventShape(event: unknown): boolean {
+  if (!event || typeof event !== 'object') return false;
+
+  const candidate = event as Partial<Event> & {
+    id?: unknown;
+    pubkey?: unknown;
+    tags?: unknown;
+    content?: unknown;
+    kind?: unknown;
+    created_at?: unknown;
+  };
+
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.length > 0 &&
+    typeof candidate.pubkey === 'string' &&
+    candidate.pubkey.length > 0 &&
+    Array.isArray(candidate.tags) &&
+    typeof candidate.content === 'string' &&
+    typeof candidate.kind === 'number' &&
+    Number.isFinite(candidate.created_at)
+  );
+}
+
 type NostrEventCardProps = {
   event: Event;
   variant?: 'hero' | 'compact' | 'feed';
@@ -434,8 +458,15 @@ export const NostrEventCard = memo(function NostrEventCard({
   className,
   ...rest
 }: NostrEventCardProps) {
+  const hasValidEventShape = isValidNostrEventShape(event as unknown);
+
+  if (!hasValidEventShape) {
+    return <NostrEventCardFallback variant={variant} className={className} eventId={event?.id} />;
+  }
+
   return (
     <ErrorBoundary
+      key={event.id}
       fallback={
         <NostrEventCardFallback variant={variant} className={className} eventId={event.id} />
       }
