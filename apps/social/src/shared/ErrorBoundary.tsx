@@ -11,6 +11,7 @@ interface State {
   error?: Error;
 }
 
+// cspell:ignore dedup
 const ERROR_DEDUP_WINDOW_MS = 2000;
 
 export class ErrorBoundary extends Component<Props, State> {
