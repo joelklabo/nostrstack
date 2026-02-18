@@ -289,8 +289,8 @@ export function OffersView() {
       setIssuer('');
       setExpiresIn('');
       setCreateSuccess('Offer created.');
-      toast({ message: 'Offer created.', tone: 'success' });
       setCreateStatus('success');
+      toast({ message: 'Offer created.', tone: 'success' });
     } catch (err) {
       const message =
         err instanceof Error && err.message === OFFER_CREATE_TIMEOUT_MESSAGE
