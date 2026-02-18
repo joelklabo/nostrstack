@@ -171,7 +171,8 @@ export const NostrEventCard = memo(function NostrEventCard({
   const handleCardClick = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {
       // Don't navigate if clicking on action buttons, links, or interactive elements
-      const target = e.target as HTMLElement;
+      const target = e.target as Element | null;
+      if (!target) return;
       if (
         target.closest('.ns-event-card__actions') ||
         target.closest('a') ||
@@ -204,6 +205,7 @@ export const NostrEventCard = memo(function NostrEventCard({
         onKeyDown={
           onOpenThread
             ? (e) => {
+                if (e.target !== e.currentTarget) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   onOpenThread(event.id);
