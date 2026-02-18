@@ -1,6 +1,22 @@
+import { Relay } from 'nostr-tools';
 import { useWebSocketImplementation } from 'nostr-tools/pool';
+import { validateEvent, verifyEvent } from 'nostr-tools/pure';
 
 import { installMockRelayWebSocket } from './mock-relay';
+
+function setupNostrTools() {
+  if (typeof window === 'undefined') return;
+  const w = window as typeof window & { NostrTools?: unknown };
+  if (w.NostrTools) return;
+
+  w.NostrTools = {
+    relayInit: (url: string) => new Relay(url),
+    validateEvent: validateEvent as (event: unknown) => boolean,
+    verifySignature: verifyEvent as (event: unknown) => boolean
+  };
+}
+
+setupNostrTools();
 
 type MockRelayWindow = {
   __NOSTRSTACK_MOCK_EVENTS__?: unknown;
