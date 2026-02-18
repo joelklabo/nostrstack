@@ -212,34 +212,31 @@ export function OffersView() {
   };
 
   const handleCreateOffer = async () => {
-    if (!description.trim()) {
-      setCreateError('Description is required.');
+    const failCreate = (message: string) => {
+      setCreateError(message);
       setCreateSuccess(null);
       setCreateStatus('error');
+      toast({ message, tone: 'danger' });
+    };
+
+    if (!description.trim()) {
+      failCreate('Description is required.');
       return;
     }
     if (description.trim().length > MAX_DESCRIPTION_CHARS) {
-      setCreateError(`Description must be ${MAX_DESCRIPTION_CHARS} characters or fewer.`);
-      setCreateSuccess(null);
-      setCreateStatus('error');
+      failCreate(`Description must be ${MAX_DESCRIPTION_CHARS} characters or fewer.`);
       return;
     }
     if (label.trim().length > MAX_LABEL_CHARS) {
-      setCreateError(`Label must be ${MAX_LABEL_CHARS} characters or fewer.`);
-      setCreateSuccess(null);
-      setCreateStatus('error');
+      failCreate(`Label must be ${MAX_LABEL_CHARS} characters or fewer.`);
       return;
     }
     if (issuer.trim().length > MAX_ISSUER_CHARS) {
-      setCreateError(`Issuer must be ${MAX_ISSUER_CHARS} characters or fewer.`);
-      setCreateSuccess(null);
-      setCreateStatus('error');
+      failCreate(`Issuer must be ${MAX_ISSUER_CHARS} characters or fewer.`);
       return;
     }
     if (!apiBaseConfig.isConfigured) {
-      setCreateError('API base is not configured.');
-      setCreateSuccess(null);
-      setCreateStatus('error');
+      failCreate('API base is not configured.');
       return;
     }
 
@@ -307,10 +304,7 @@ export function OffersView() {
             : err instanceof Error
               ? err.message
               : 'Offer creation failed.';
-      setCreateError(message);
-      setCreateSuccess(null);
-      setCreateStatus('error');
-      toast({ message, tone: 'danger' });
+      failCreate(message);
     } finally {
       controller.abort();
     }
