@@ -20,85 +20,12 @@ import { useKeyboardShortcuts, type View } from './hooks/useKeyboardShortcuts';
 import { Sidebar } from './layout/Sidebar';
 import { TelemetryBar } from './layout/TelemetryBar';
 import { relayMonitor, type RelayStats } from './nostr/relayHealth';
+import { FeedScreen } from './screens/FeedScreen';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
-
-const FEED_IMPORT_AUTO_RELOAD_KEY = 'nostrstack.feed.import.auto-reload';
-
-function isDynamicImportChunkError(error: unknown): boolean {
-  if (typeof error === 'string') {
-    return (
-      error.includes('Failed to fetch dynamically imported module') ||
-      error.includes('error loading dynamically imported module')
-    );
-  }
-  if (!(error instanceof Error)) return false;
-  return (
-    error.message.includes('Failed to fetch dynamically imported module') ||
-    error.message.includes('error loading dynamically imported module')
-  );
-}
-
-function shouldAutoReloadForFeedImport(error: unknown): boolean {
-  if (typeof window === 'undefined') return false;
-  if (!isDynamicImportChunkError(error)) return false;
-  try {
-    if (window.sessionStorage.getItem(FEED_IMPORT_AUTO_RELOAD_KEY) === '1') {
-      return false;
-    }
-    window.sessionStorage.setItem(FEED_IMPORT_AUTO_RELOAD_KEY, '1');
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function recoverFromStaleFeedImportState(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  try {
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((registration) => registration.unregister()));
-    }
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-    }
-  } catch {
-    // Best-effort cleanup; always continue with a reload attempt.
-  } finally {
-    window.location.reload();
-  }
-}
-
-const FeedScreen = lazy(() =>
-  import('./screens/FeedScreen')
-    .then((m) => {
-      try {
-        window.sessionStorage.removeItem(FEED_IMPORT_AUTO_RELOAD_KEY);
-      } catch {
-        // Ignore sessionStorage access issues and proceed.
-      }
-      return { default: m.FeedScreen };
-    })
-    .catch((error) => {
-      if (shouldAutoReloadForFeedImport(error)) {
-        void recoverFromStaleFeedImportState();
-      }
-      console.error('Failed to load feed route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the feed screen. Please try reloading."
-            onRetry={() => void recoverFromStaleFeedImportState()}
-          />
-        )
-      };
-    })
-);
 const LoginScreen = lazy(() =>
   import('./screens/LoginScreen')
     .then((m) => ({ default: m.LoginScreen }))
