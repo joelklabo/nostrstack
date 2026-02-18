@@ -147,7 +147,7 @@ export function SearchScreen() {
         setNotes(results);
         setHasMore(results.length >= NOTES_PAGE_SIZE);
         if (results.length === 0) {
-          setNotesError('No notes found for this query.');
+          setNotesError(`No notes found for "${q}".`);
         }
       } catch (err) {
         console.error('Notes search failed', err);
@@ -163,10 +163,12 @@ export function SearchScreen() {
           : timedOut
             ? 'Notes search timed out. Retry to try again.'
             : 'Search failed. Relays might not support NIP-50.';
+        const quotedQuery = q ? ` for "${q}"` : '';
+        const prefixedErrorMessage = quotedQuery ? `${errorMessage}${quotedQuery}` : errorMessage;
         if (notes.length > 0) {
-          setNotesError(`Previous results shown. ${errorMessage}`);
+          setNotesError(`Previous results shown${quotedQuery}. ${errorMessage}`);
         } else {
-          setNotesError(errorMessage);
+          setNotesError(prefixedErrorMessage);
         }
       } finally {
         setNotesLoading(false);
@@ -580,7 +582,11 @@ export function SearchScreen() {
         )}
         {notesError && !notesLoading && (
           <div className="search-empty" role="status" aria-live="polite">
-            <h3 className="search-empty__title">No matching notes found</h3>
+            <h3 className="search-empty__title">
+              {lastSearchQuery
+                ? `No matching notes found for "${lastSearchQuery}"`
+                : 'No matching notes found'}
+            </h3>
             <p className="search-empty__text">{notesError}</p>
             <div style={{ marginTop: '0.75rem' }}>
               <button
