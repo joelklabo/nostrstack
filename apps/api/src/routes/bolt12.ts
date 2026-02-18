@@ -172,6 +172,17 @@ export async function registerBolt12Routes(app: FastifyInstance) {
         if (offerHistory.length > 1000) {
           offerHistory.length = 1000;
         }
+        request.log.info(
+          {
+            reqId: request.id,
+            offerId: offer.offerId,
+            hasAmountMsat: typeof input.amountMsat === 'number',
+            hasLabel: Boolean(input.label),
+            hasIssuer: Boolean(input.issuer),
+            hasExpiresIn: typeof input.expiresIn === 'number'
+          },
+          'bolt12 offer created'
+        );
         return reply.code(201).send(offer);
       } catch (err) {
         const formatted = formatBolt12Error(err);
