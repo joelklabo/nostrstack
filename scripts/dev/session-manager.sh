@@ -392,12 +392,26 @@ ndev_claim_session() {
 ndev_release_session() {
   local file="${NOSTRDEV_SESSION_FILE:-}"
   local owner_pid=""
+  local slot=""
+  local api_port=""
+  local social_port=""
 
   if [[ -z "$file" || ! -f "$file" ]]; then
     return 0
   fi
   owner_pid="$(ndev_parse_field "$file" NOSTRDEV_SESSION_PID)"
   if [[ "$owner_pid" == "$$" ]]; then
+    slot="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SLOT)"
+    if [[ "$slot" == manual-* ]]; then
+      api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
+      social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
+      if [[ -n "$api_port" ]] && ndev_port_in_use "$api_port"; then
+        return 0
+      fi
+      if [[ -n "$social_port" ]] && ndev_port_in_use "$social_port"; then
+        return 0
+      fi
+    fi
     rm -f "$file"
   fi
 }
