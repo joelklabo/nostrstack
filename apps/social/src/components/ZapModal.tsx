@@ -4,6 +4,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import type React from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { copyToClipboard } from '../ui/clipboard';
+
 interface ZapModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -142,7 +144,7 @@ export const ZapModal: React.FC<ZapModalProps> = ({
 
   const copyInvoice = async () => {
     try {
-      await navigator.clipboard.writeText(invoice);
+      await copyToClipboard(invoice);
       setCopyStatus('copied');
       setTimeout(() => setCopyStatus('idle'), 2000);
     } catch {

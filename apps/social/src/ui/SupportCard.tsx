@@ -4,6 +4,7 @@ import { SendSats } from '@nostrstack/react';
 import { useEffect, useRef, useState } from 'react';
 
 import { supportConfig } from '../config/payments';
+import { copyToClipboard } from './clipboard';
 
 export function SupportCard() {
   const [dismissed, setDismissed] = useState(false);
@@ -46,7 +47,11 @@ export function SupportCard() {
       const text = `# Add to your .env to enable SupportCard
 VITE_NOSTRSTACK_TIP_PUBKEY=your-npub-here
 VITE_NOSTRSTACK_TIP_LNADDR=your@lightning.address`;
-      await navigator.clipboard.writeText(text);
+      try {
+        await copyToClipboard(text);
+      } catch {
+        // Ignore copy errors in dev env tooling
+      }
     };
     return (
       <section className="support-card support-card--dev" aria-label="Support Nostrstack">

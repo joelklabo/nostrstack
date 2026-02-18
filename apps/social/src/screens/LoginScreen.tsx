@@ -4,6 +4,8 @@ import { generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { copyToClipboard } from '../ui/clipboard';
+
 type LnurlAuthRequest = {
   k1: string;
   callback: string;
@@ -179,7 +181,7 @@ export function LoginScreen() {
   const handleCopyLnurl = useCallback(async () => {
     if (!lnurlRequest?.lnurl) return;
     try {
-      await navigator.clipboard.writeText(lnurlRequest.lnurl);
+      await copyToClipboard(lnurlRequest.lnurl);
       setCopyStatus('copied');
     } catch {
       setCopyStatus('error');

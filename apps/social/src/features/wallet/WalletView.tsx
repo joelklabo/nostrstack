@@ -2,6 +2,8 @@ import { Alert, useToast } from '@nostrstack/ui';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { copyToClipboard } from '../../ui/clipboard';
+
 type WithdrawRequest = {
   k1: string;
   lnurl: string;
@@ -251,7 +253,7 @@ export function WalletView({
   const handleCopy = useCallback(async () => {
     if (!request?.lnurl) return;
     try {
-      await navigator.clipboard.writeText(request.lnurl);
+      await copyToClipboard(request.lnurl);
       setCopyState('copied');
     } catch {
       setCopyState('error');

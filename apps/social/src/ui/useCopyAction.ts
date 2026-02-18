@@ -19,7 +19,7 @@ export function useCopyAction({
   label,
   successDurationMs = 1200,
   disabled,
-  toastMessage,
+  toastMessage
 }: {
   text: string;
   label: string;
@@ -46,7 +46,8 @@ export function useCopyAction({
       if (!value) return false;
       await copyToClipboard(value);
       try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(10);
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
+          navigator.vibrate(10);
       } catch {
         /* ignore */
       }
@@ -54,9 +55,9 @@ export function useCopyAction({
       toast({ message: toastMessage ?? toastMessageFromLabel(label), tone: 'success' });
       return true;
     } catch (err) {
-      console.warn('copy failed', err);
       try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate([15, 25, 15]);
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
+          navigator.vibrate([15, 25, 15]);
       } catch {
         /* ignore */
       }
@@ -70,4 +71,3 @@ export function useCopyAction({
 
   return { state, copy, isDisabled };
 }
-

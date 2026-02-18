@@ -283,8 +283,8 @@ export function mountTipButton(container: HTMLElement, opts: MountTipOptions = {
       try {
         if (opts.onInvoice) await opts.onInvoice(pr);
         else await copyToClipboard(pr);
-      } catch (e) {
-        console.warn('clipboard copy failed', e);
+      } catch {
+        // Ignore clipboard failures after user interaction; component state is handled by callers.
       }
     }
   });
@@ -338,8 +338,8 @@ export function mountTipWidget(container: HTMLElement, opts: MountTipWidgetOptio
       try {
         if (opts.onInvoice) await opts.onInvoice(info);
         else await copyToClipboard(info.pr);
-      } catch (e) {
-        console.warn('clipboard copy failed', e);
+      } catch {
+        // Ignore clipboard failures after user interaction; component state is handled by callers.
       }
     },
     onPaid: opts.onPaid
@@ -392,8 +392,8 @@ export function mountPayToAction(container: HTMLElement, opts: MountPayOptions =
       try {
         if (opts.onInvoice) await opts.onInvoice(pr);
         else await copyToClipboard(pr);
-      } catch (e) {
-        console.warn('clipboard copy failed', e);
+      } catch {
+        // Ignore clipboard failures after user interaction; component state is handled by callers.
       }
     }
   });

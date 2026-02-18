@@ -2,6 +2,7 @@ import { OfferWidget, useNostrstackConfig } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
 import { useMemo, useState } from 'react';
 
+import { copyToClipboard } from './ui/clipboard';
 import { resolveGalleryApiBase } from './utils/api-base';
 
 type OfferEntry = {
@@ -203,7 +204,7 @@ export function OffersView() {
 
   const handleCopy = async (value: string, labelText: string) => {
     try {
-      await navigator.clipboard.writeText(value);
+      await copyToClipboard(value);
       toast({ message: `${labelText} copied.`, tone: 'success' });
     } catch {
       toast({ message: `Unable to copy ${labelText}.`, tone: 'danger' });

@@ -132,7 +132,6 @@ export function createCopyButton(opts: CopyButtonOptions) {
       }
       setState('copied');
     } catch (err) {
-      console.warn('copy failed', err);
       try {
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function')
           navigator.vibrate([15, 25, 15]);

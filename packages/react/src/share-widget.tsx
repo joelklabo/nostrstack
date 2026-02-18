@@ -4,6 +4,7 @@ import { ensureNsRoot } from '@nostrstack/widgets';
 import { Relay, type Subscription } from 'nostr-tools/relay';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { copyToClipboard } from './clipboard';
 import { useNostrstackConfig } from './context';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
@@ -85,16 +86,6 @@ async function publishToRelays(relays: string[], event: SignedEvent) {
         }
       });
     }, 0);
-  }
-}
-
-async function copyText(text: string) {
-  try {
-    if (navigator?.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-    }
-  } catch (error) {
-    console.warn('clipboard copy failed', error);
   }
 }
 
@@ -379,7 +370,7 @@ export function ShareWidget({
         return;
       }
 
-      await copyText(note);
+      await copyToClipboard(note);
       setShareState('shared');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Share failed');

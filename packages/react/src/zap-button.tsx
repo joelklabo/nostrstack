@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { resolveApiBase } from './api-base';
 import { useAuth } from './auth';
+import { copyToClipboard } from './clipboard';
 import { useNostrstackConfig } from './context';
 import {
   deriveLnurlStatusUrl,
@@ -426,10 +427,7 @@ export function ZapButton({
   const handleCopyInvoice = useCallback(async () => {
     if (!invoice) return;
     try {
-      if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-        throw new Error('Clipboard unavailable');
-      }
-      await navigator.clipboard.writeText(invoice);
+      await copyToClipboard(invoice);
       setCopyStatus('copied');
     } catch {
       setCopyStatus('error');
