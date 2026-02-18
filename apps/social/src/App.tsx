@@ -146,6 +146,21 @@ const SearchScreen = lazy(() =>
       };
     })
 );
+const RelaysView = lazy(() =>
+  import('./RelaysView')
+    .then((m) => ({ default: m.RelaysView }))
+    .catch((error) => {
+      console.error('Failed to load relays route module.', error);
+      return {
+        default: () => (
+          <RouteLoadFallback
+            message="Unable to load relays management screen. Please try reloading."
+            onRetry={() => window.location.reload()}
+          />
+        )
+      };
+    })
+);
 
 function usePathname() {
   const [pathname, setPathname] = useState(() =>
@@ -358,6 +373,7 @@ function AppShell() {
   const nostrRouteId = getNostrRouteId(pathname);
   const isSearchRoute = isRouteWithOptionalQuery('/search');
   const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
+  const isRelaysRoute = isRouteWithOptionalQuery('/relays');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
   const isGuestProfileRoute = isRouteWithOptionalQuery('/profile');
@@ -402,6 +418,7 @@ function AppShell() {
     if (isDemoRoute) return true;
     if (isSearchRoute) return true;
     if (isFindFriendRoute) return true;
+    if (isRelaysRoute) return true;
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
     if (isProfileRoute) return true;
@@ -415,6 +432,7 @@ function AppShell() {
     isDemoRoute,
     isSearchRoute,
     isFindFriendRoute,
+    isRelaysRoute,
     isSettingsRoute,
     isOffersRoute,
     isProfileRoute,
@@ -757,7 +775,9 @@ function AppShell() {
               />
             }
           >
-            {isProfileRoute ? (
+            {isRelaysRoute ? (
+              <RelaysView />
+            ) : isProfileRoute ? (
               <>
                 {profileRouteError && (
                   <Alert tone="danger" title="Routing Error">

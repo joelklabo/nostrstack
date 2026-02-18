@@ -102,4 +102,37 @@ describe('/api/bitcoin/status', () => {
     const body = res.json();
     expect(body.source).toBe('mock');
   });
+
+  it('continues when the first LNBits health endpoint hangs', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const signal = init?.signal;
+        if (url === 'https://lnbits.test/api/v1/health') {
+          return new Promise<Response>((_resolve, reject) => {
+            const abortError = new DOMException('This operation was aborted', 'AbortError');
+            signal?.addEventListener('abort', () => reject(abortError), { once: true });
+          });
+        }
+        if (url === 'https://lnbits.test/status/health') {
+          return new Response('ok', { status: 200 });
+        }
+        throw new Error(`unexpected fetch call: ${url}`);
+      })
+    );
+
+    await app.close();
+    app = await buildApp({
+      LIGHTNING_PROVIDER: 'lnbits',
+      LN_BITS_URL: 'https://lnbits.test',
+      TELEMETRY_PROVIDER: 'mock',
+      BITCOIN_NETWORK: 'mainnet'
+    });
+
+    const res = await app.inject({ url: '/api/bitcoin/status' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.lightning.lnbits.status).toBe('ok');
+    expect(body.source).toBe('mock');
+  });
 });

@@ -2,7 +2,11 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import { env } from '../env.js';
 import { type TelemetrySource, type TelemetrySummary } from './bitcoind.js';
-import { bitcoinStatusFailureCounter, bitcoinStatusFetchDuration, bitcoinStatusRequestCounter } from './metrics.js';
+import {
+  bitcoinStatusFailureCounter,
+  bitcoinStatusFetchDuration,
+  bitcoinStatusRequestCounter
+} from './metrics.js';
 import { createTelemetryFetcher } from './providers.js';
 
 type LnbitsHealth =
@@ -47,12 +51,28 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
     if (!env.LN_BITS_URL) {
       return { status: 'error', error: 'LN_BITS_URL not set' };
     }
+
+    const fetchWithTimeout = async (url: string) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3_000);
+      try {
+        return await fetch(url, { signal: controller.signal });
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          throw new Error('lnbits health check timeout after 3000ms');
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+
     const started = Date.now();
     const base = env.LN_BITS_URL.replace(/\/$/, '');
     const candidates = [`${base}/api/v1/health`, `${base}/status/health`];
     for (const url of candidates) {
       try {
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url);
         const body = await res.text();
         if (res.ok) {
           return {
@@ -75,7 +95,8 @@ export function registerTelemetryRoutes(app: FastifyInstance) {
   };
 
   const telemetryFetcher = createTelemetryFetcher();
-  const fetchTelemetry = async (): Promise<TelemetryFetchResult> => telemetryFetcher.fetchSummaryWithFallback();
+  const fetchTelemetry = async (): Promise<TelemetryFetchResult> =>
+    telemetryFetcher.fetchSummaryWithFallback();
 
   // Expose under both roots: some clients treat "/api" as their base.
   app.get('/health/lnbits', lnbitsHealthHandler);
