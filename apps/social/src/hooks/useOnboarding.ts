@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const ONBOARDING_KEY = 'nostrstack.onboarding.v1';
 const ONBOARDING_RESTART_EVENT = 'nostrstack:restart-onboarding-tour';
@@ -51,12 +51,10 @@ export const TOUR_STEPS: OnboardingStep[] = [
 export function useOnboarding() {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const hasInitialized = useRef(false);
+  const [initKey, setInitKey] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
 
     const completed = localStorage.getItem(ONBOARDING_KEY);
     if (!completed) {
@@ -64,7 +62,7 @@ export function useOnboarding() {
       return () => clearTimeout(timer);
     }
     return;
-  }, []);
+  }, [initKey]);
 
   const finish = useCallback(() => {
     setIsActive(false);
@@ -88,7 +86,7 @@ export function useOnboarding() {
   const skip = () => finish();
 
   const reset = useCallback(() => {
-    hasInitialized.current = false;
+    setInitKey((k) => k + 1);
     setCurrentStepIndex(0);
     setIsActive(true);
     localStorage.removeItem(ONBOARDING_KEY);
