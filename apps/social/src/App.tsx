@@ -254,8 +254,20 @@ function getInitialBrandPreset(): NsBrandPreset {
 }
 
 function hasRecentRelayFailures(now: number = Date.now()) {
-  const stats = Object.values(relayMonitor.getStatsSnapshot()) as RelayStats[];
-  return stats.some((entry) => {
+  const inMemoryStats = Object.values(relayMonitor.getStatsSnapshot()) as RelayStats[];
+  let persistedStats: RelayStats[] = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('nostrstack.relayStats.v2');
+      if (raw) {
+        persistedStats = Object.values(JSON.parse(raw) as Record<string, RelayStats>);
+      }
+    } catch {
+      // Ignore invalid persisted relay stats.
+    }
+  }
+
+  return [...inMemoryStats, ...persistedStats].some((entry) => {
     if (!entry.lastFailureAt || entry.consecutiveFailures < 1) return false;
     return now - entry.lastFailureAt < RELAY_DEGRADED_WINDOW_MS;
   });
@@ -340,7 +352,6 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     return localStorage.getItem('nostrstack.guest') === 'true';
   });
   const [routeRecoveryKey, setRouteRecoveryKey] = useState(0);
-  const [relayHealthVersion, setRelayHealthVersion] = useState(0);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('nostrstack.guest');
@@ -380,7 +391,6 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
-  useEffect(() => relayMonitor.subscribe(() => setRelayHealthVersion((value) => value + 1)), []);
   const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
@@ -572,7 +582,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     previousPathRef.current = pathname;
   }, [mobileMenuOpen, pathname]);
 
-  const relayConnectivityDegraded = useMemo(() => hasRecentRelayFailures(), [relayHealthVersion]);
+  const relayConnectivityDegraded = hasRecentRelayFailures();
 
   if (nostrRouteId) {
     return (
@@ -776,6 +786,16 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
         isGuest={isGuest}
       />
       <main className="feed-container" id="main-content" role="main">
+        {relayConnectivityDegraded && (
+          <Alert
+            tone="warning"
+            title="Relay connectivity degraded"
+            style={{ marginBottom: '1rem' }}
+          >
+            Some relay/WebSocket connections are failing. Wallet funding and publish actions may be
+            delayed or fail until relays recover. Check your relay settings in the Relays view.
+          </Alert>
+        )}
         <ErrorBoundary
           key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
           resetToken={routeRecoveryKey}

@@ -300,10 +300,6 @@ ndev_claim_session() {
   if [[ "${NOSTRDEV_MANAGED_SESSION:-1}" == "0" ]]; then
     local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
     local social_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_SOCIAL_PORT}"
-    local fallback
-    local fallback_api
-    local fallback_social
-    local fallback_slot
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
       if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
         echo "FORCE_KILL_PORTS=1: Attempting to free ports $api_port and $social_port"
@@ -312,24 +308,15 @@ ndev_claim_session() {
         sleep 1
       fi
       if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-        local pid owner_file
+        local pid
         echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
         pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
-        owner_file="$(ndev_slot_file "0")"
         [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $api_port)" >&2
-        if fallback="$(ndev_find_fallback_ports "$api_port" "$social_port")"; then
-          read -r fallback_api fallback_social fallback_slot <<< "$fallback"
-          echo "Detected occupied default ports; remapping deterministically for this session: API=${api_port}->${fallback_api} Social=${social_port}->${fallback_social} (slot offset +${fallback_slot})" >&2
-          api_port="$fallback_api"
-          social_port="$fallback_social"
-        else
-          echo "No free replacement ports found in first ${NOSTRDEV_MAX_SLOTS} offsets." >&2
-          echo "Inspect live sessions with: pnpm dev:ps" >&2
-          echo "Clean stale listeners with: pnpm dev:stop:all -c" >&2
-          return 1
-        fi
+        echo "Fixed-port mode does not auto-remap ports." >&2
+        echo "Use different PORT/DEV_SERVER_PORT values or stop listeners with: pnpm dev:stop:all -c" >&2
+        return 1
       fi
-      echo "Successfully freed ports"
+      echo "Successfully freed requested ports"
     fi
     ndev_write_session_file "manual-$$" "$api_port" "$social_port"
     return 0
