@@ -643,6 +643,7 @@ function AppShell() {
         <button
           type="button"
           className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
+          hidden={!mobileMenuOpen}
           tabIndex={mobileMenuOpen ? 0 : -1}
           aria-label="Close mobile menu"
           aria-hidden={!mobileMenuOpen}
@@ -715,6 +716,7 @@ function AppShell() {
       <button
         type="button"
         className={`sidebar-overlay${mobileMenuOpen ? ' is-visible' : ''}`}
+        hidden={!mobileMenuOpen}
         tabIndex={mobileMenuOpen ? 0 : -1}
         aria-label="Close mobile menu"
         aria-hidden={!mobileMenuOpen}
