@@ -309,4 +309,42 @@ describe('wallet-ws fetcher', () => {
       balance: 250
     });
   });
+
+  it('falls back to default wallet lookup for any 404 when configured wallet id is set', async () => {
+    process.env.LN_BITS_WALLET_ID = 'missing-wallet';
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      text: () => Promise.resolve(JSON.stringify({ detail: 'Not Found' }))
+    } as Response);
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      text: () =>
+        Promise.resolve(
+          JSON.stringify({ id: 'wallet-default', name: 'Default Wallet', balance: 300 })
+        )
+    } as Response);
+
+    const { fetch: fetcher } = createWalletFetcher(mockLog, 'http://localhost:5000', 'test-key');
+
+    const result = await fetcher();
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch)).toHaveBeenNthCalledWith(
+      1,
+      'http://localhost:5000/api/v1/wallet?usr=missing-wallet',
+      expect.any(Object)
+    );
+    expect(vi.mocked(fetch)).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:5000/api/v1/wallet',
+      expect.any(Object)
+    );
+    expect(result).toMatchObject({
+      type: 'wallet',
+      id: 'wallet-default',
+      name: 'Default Wallet',
+      balance: 300
+    });
+  });
 });

@@ -135,12 +135,7 @@ export function createWalletFetcher(log: FastifyBaseLogger, baseUrl: string, api
       });
       const text = await res.text();
       if (!res.ok) {
-        if (
-          res.status === 404 &&
-          walletId &&
-          !walletIdFallbackAttempted &&
-          /wallet not found/i.test(text)
-        ) {
+        if (res.status === 404 && walletId && !walletIdFallbackAttempted) {
           walletIdFallbackAttempted = true;
           walletId = '';
           walletUrl = makeWalletUrl(walletId);

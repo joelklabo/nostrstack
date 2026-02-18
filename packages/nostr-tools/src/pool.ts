@@ -172,76 +172,83 @@ export class SimplePool {
       input: url,
       normalized: normalizeRelayUrl(url)
     }));
+    const results = await Promise.all(
+      normalizedInputs.map(async ({ input, normalized }) => {
+        let success = false;
+        const now = Date.now();
+        if (shouldSkipRelayReconnect(normalized, now)) {
+          return { input, normalized, success };
+        }
+        if (this.relays.has(normalized)) {
+          return { input, normalized, success: true };
+        }
+
+        const inFlight = relayConnectionInFlight.get(normalized);
+        if (inFlight) {
+          try {
+            await inFlight;
+            if (this.relays.has(normalized)) {
+              return { input, normalized, success: true };
+            }
+          } catch {
+            return { input, normalized, success };
+          }
+        }
+
+        try {
+          const connectPromise = (async () => {
+            await this.client.addRelay(normalized);
+            this.relays.add(normalized);
+            const relay = await this.client.relay(normalized);
+            await relay.tryConnect(Duration.fromMillis(BigInt(5000)));
+            relayFailureState.delete(normalized);
+          })();
+
+          relayConnectionInFlight.set(normalized, connectPromise);
+          await connectPromise;
+          success = true;
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : 'connection failed';
+          const failureMessage =
+            reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')
+              ? `DNS resolution failed for relay ${normalized}: ${reason}`
+              : `Failed to connect to relay ${normalized}: ${reason}`;
+          await Promise.allSettled([
+            this.client.disconnectRelay(normalized),
+            this.client.forceRemoveRelay(normalized)
+          ]);
+          this.relays.delete(normalized);
+          const existingState = relayFailureState.get(normalized);
+          const failureCount = (existingState?.failureCount ?? 0) + 1;
+          const shouldLog = shouldLogRelayFailure(normalized, failureMessage, now);
+          if (shouldLog) {
+            if (isConnectivityFailure(reason)) {
+              console.debug(failureMessage);
+            } else {
+              console.warn(failureMessage);
+            }
+          }
+          relayFailureState.set(normalized, {
+            nextRetryAt: now + getRetryDelayMs(failureCount),
+            reason: failureMessage,
+            failureCount,
+            lastWarnedAt: shouldLog ? now : relayFailureState.get(normalized)?.lastWarnedAt ?? now
+          });
+        } finally {
+          relayConnectionInFlight.delete(normalized);
+        }
+
+        return { input, normalized, success };
+      })
+    );
+
     const succeeded: string[] = [];
     const failed: string[] = [];
-
-    for (const { input, normalized } of normalizedInputs) {
-      const now = Date.now();
-      if (shouldSkipRelayReconnect(normalized, now)) {
-        failed.push(input);
-        continue;
-      }
-      if (this.relays.has(normalized)) {
-        succeeded.push(normalized);
-        continue;
-      }
-
-      const inFlight = relayConnectionInFlight.get(normalized);
-      if (inFlight) {
-        try {
-          await inFlight;
-          if (this.relays.has(normalized)) {
-            succeeded.push(normalized);
-            continue;
-          }
-        } catch {
-          failed.push(input);
-          continue;
-        }
-      }
-
-      try {
-        const connectPromise = (async () => {
-          await this.client.addRelay(normalized);
-          this.relays.add(normalized);
-          const relay = await this.client.relay(normalized);
-          await relay.tryConnect(Duration.fromMillis(BigInt(5000)));
-          relayFailureState.delete(normalized);
-        })();
-
-        relayConnectionInFlight.set(normalized, connectPromise);
-        await connectPromise;
-        succeeded.push(normalized);
-      } catch (err) {
-        const reason = err instanceof Error ? err.message : 'connection failed';
-        const failureMessage =
-          reason.toLowerCase().includes('dns') || reason.toLowerCase().includes('resolve')
-            ? `DNS resolution failed for relay ${normalized}: ${reason}`
-            : `Failed to connect to relay ${normalized}: ${reason}`;
-        await Promise.allSettled([
-          this.client.disconnectRelay(normalized),
-          this.client.forceRemoveRelay(normalized)
-        ]);
-        this.relays.delete(normalized);
-        const existingState = relayFailureState.get(normalized);
-        const failureCount = (existingState?.failureCount ?? 0) + 1;
-        const shouldLog = shouldLogRelayFailure(normalized, failureMessage, now);
-        if (shouldLog) {
-          if (isConnectivityFailure(reason)) {
-            console.debug(failureMessage);
-          } else {
-            console.warn(failureMessage);
-          }
-        }
-        relayFailureState.set(normalized, {
-          nextRetryAt: now + getRetryDelayMs(failureCount),
-          reason: failureMessage,
-          failureCount,
-          lastWarnedAt: shouldLog ? now : relayFailureState.get(normalized)?.lastWarnedAt ?? now
-        });
-        failed.push(input);
-      } finally {
-        relayConnectionInFlight.delete(normalized);
+    for (const result of results) {
+      if (result.success) {
+        succeeded.push(result.normalized);
+      } else {
+        failed.push(result.input);
       }
     }
 
