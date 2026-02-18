@@ -78,6 +78,7 @@ export function SearchScreen() {
   const [isProfileLookupLoading, setIsProfileLookupLoading] = useState(false);
   const [profileRetryKey, setProfileRetryKey] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
   const lastProfileLookupKey = useRef<string | null>(null);
@@ -250,9 +251,11 @@ export function SearchScreen() {
       event.preventDefault();
       const trimmed = query.trim();
       if (!trimmed) {
+        setHasSubmittedSearch(false);
         setSubmitFeedback('Enter a search query to search profiles or notes.');
         return;
       }
+      setHasSubmittedSearch(true);
       setProfileLookupError(null);
       setSubmitFeedback(`Searching for "${trimmed}"...`);
       setNotesError(null);
@@ -402,6 +405,9 @@ export function SearchScreen() {
             onChange={(event) => {
               setQuery(event.target.value);
               setSubmitFeedback(null);
+              if (!event.target.value.trim()) {
+                setHasSubmittedSearch(false);
+              }
             }}
             placeholder="Keywords, npub, or name@domain"
             autoComplete="off"
@@ -581,6 +587,29 @@ export function SearchScreen() {
       )}
 
       <div className="search-notes-results">
+        {hasSubmittedSearch &&
+          status === 'idle' &&
+          notes.length === 0 &&
+          !notesLoading &&
+          !notesError && (
+            <div className="search-empty" role="status" aria-live="polite">
+              <h3 className="search-empty__title">Search complete, but no visible results yet</h3>
+              <p className="search-empty__text">
+                We could not render profile or note results for this query. Try running a notes
+                search again.
+              </p>
+              <div style={{ marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="action-btn"
+                  onClick={handleSearchFallback}
+                  aria-label="Retry notes search"
+                >
+                  Retry notes search
+                </button>
+              </div>
+            </div>
+          )}
         {notes.length > 0 && (
           <>
             <h3 style={{ margin: '2rem 0 1rem', fontSize: '1.2rem' }}>Matching Notes</h3>
