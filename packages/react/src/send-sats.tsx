@@ -17,6 +17,7 @@ import {
   sanitizeSuccessAction
 } from './lnurl';
 import { useNwcPayment } from './nwc-pay';
+import { toAuthOrMessage } from './payment-errors';
 import {
   emitTelemetryEvent,
   type PaymentFailureReason,
@@ -304,7 +305,7 @@ export function SendSats({
         5 * 60 * 1000
       );
     } catch (err: unknown) {
-      setErrorMessage(`Error: ${(err as Error).message || String(err)}`);
+      setErrorMessage(`Error: ${toAuthOrMessage(err)}`);
       setSendState('error');
       emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
     }

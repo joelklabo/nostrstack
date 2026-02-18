@@ -179,4 +179,19 @@ describe('ZapButton', () => {
     // Cleanup window.webln
     delete (window as Window & { webln?: unknown }).webln;
   });
+
+  it('shows auth guidance when invoice request is denied', async () => {
+    const eventWithLud16 = { ...mockEvent, tags: [['lud16', 'user@domain.com']] };
+    vi.mocked(getLnurlpInvoice).mockRejectedValue(new Error('access denied'));
+
+    render(<ZapButton event={eventWithLud16} />);
+    fireEvent.click(screen.getByText('⚡ ZAP 21'));
+
+    await waitFor(() => {
+      const authErrors = screen.getAllByText((content) =>
+        content.includes('Authentication required. Please sign in to continue.')
+      );
+      expect(authErrors.length).toBeGreaterThan(0);
+    });
+  });
 });

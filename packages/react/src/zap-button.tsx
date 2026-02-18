@@ -16,6 +16,7 @@ import {
   sanitizeSuccessAction
 } from './lnurl';
 import { useNwcPayment } from './nwc-pay';
+import { toAuthOrMessage } from './payment-errors';
 import {
   emitTelemetryEvent,
   type PaymentFailureReason,
@@ -401,7 +402,7 @@ export function ZapButton({
       ); // 5 minutes to pay
     } catch (err: unknown) {
       if (activeRequestIdRef.current !== requestId) return;
-      setErrorMessage(`Error: ${(err as Error).message || String(err)}`);
+      setErrorMessage(`Error: ${toAuthOrMessage(err)}`);
       setZapState('error');
       emitPaymentTelemetry('payment_failed', { reason: 'lnurl' });
     }

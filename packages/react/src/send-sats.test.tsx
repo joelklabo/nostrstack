@@ -122,4 +122,27 @@ describe('SendSats', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(mockedGetLnurlpInvoice).not.toHaveBeenCalled();
   });
+
+  it('shows auth guidance when invoice request is denied', async () => {
+    mockedGetLnurlpMetadata.mockResolvedValue({
+      tag: 'payRequest',
+      callback: 'https://example.com/lnurl/callback',
+      minSendable: 1000,
+      maxSendable: 500000,
+      metadata: '[]',
+      commentAllowed: 120
+    });
+    mockedGetLnurlpInvoice.mockRejectedValue(new Error('ACCESS_DENIED'));
+
+    renderSendSats();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /send 500/i }));
+    });
+
+    const authErrors = await screen.findAllByText((content) =>
+      content.includes('Authentication required. Please sign in to continue.')
+    );
+    expect(authErrors.length).toBeGreaterThan(0);
+  });
 });
