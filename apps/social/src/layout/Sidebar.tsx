@@ -91,7 +91,7 @@ export const Sidebar = memo(function Sidebar({
   const withdrawEnabled =
     String(import.meta.env.VITE_ENABLE_LNURL_WITHDRAW ?? '').toLowerCase() === 'true' ||
     import.meta.env.DEV;
-  const authActionLabel = pubkey ? 'Log out' : 'Exit guest mode';
+  const authActionLabel = pubkey ? 'Log out' : 'Sign in';
   const withdrawAvailable =
     withdrawEnabled && apiBaseConfig.isConfigured && (wallet?.balance ?? 0) >= 1;
   const withdrawUnavailableReason = !withdrawEnabled
@@ -427,19 +427,6 @@ export const Sidebar = memo(function Sidebar({
         >
           {authActionLabel}
         </button>
-        {isGuest && (
-          <button
-            type="button"
-            className="nav-item"
-            onClick={() => {
-              onMobileClose?.();
-              localStorage.removeItem('nostrstack.guest');
-              window.location.reload();
-            }}
-          >
-            Sign in
-          </button>
-        )}
       </div>
 
       {withdrawOpen && (
