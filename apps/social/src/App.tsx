@@ -71,21 +71,8 @@ const EventDetailScreen = lazy(() =>
       };
     })
 );
-const SettingsScreen = lazy(() =>
-  import('./screens/SettingsScreen')
-    .then((m) => ({ default: m.SettingsScreen }))
-    .catch((error) => {
-      console.error('Failed to load settings route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the settings screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
-);
+const loadSettingsScreen = () =>
+  import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }));
 const NotFoundScreen = lazy(() =>
   import('./screens/NotFoundScreen')
     .then((m) => ({ default: m.NotFoundScreen }))
@@ -101,21 +88,7 @@ const NotFoundScreen = lazy(() =>
       };
     })
 );
-const OffersView = lazy(() =>
-  import('./OffersView')
-    .then((m) => ({ default: m.OffersView }))
-    .catch((error) => {
-      console.error('Failed to load offers route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the offers screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
-);
+const loadOffersView = () => import('./OffersView').then((m) => ({ default: m.OffersView }));
 const SearchScreen = lazy(() =>
   import('./screens/SearchScreen')
     .then((m) => ({ default: m.SearchScreen }))
@@ -400,6 +373,11 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const routeLocation = usePathname();
   const pathname = routeLocation.split('?')[0] || '/';
   const routeRecoveryIdentity = routeLocation;
+  const SettingsScreen = useMemo(
+    () => lazy(loadSettingsScreen),
+    [routeRecoveryIdentity, routeRecoveryKey]
+  );
+  const OffersView = useMemo(() => lazy(loadOffersView), [routeRecoveryIdentity, routeRecoveryKey]);
   const isRouteWithOptionalQuery = (path: string) =>
     pathname === path ||
     pathname === `${path}/` ||
@@ -412,6 +390,13 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const isRelaysRoute = isRouteWithOptionalQuery('/relays');
   const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
   const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
+  const retryFailedRoute = useCallback(() => {
+    if (isSettingsRoute || isOffersRoute) {
+      window.location.reload();
+      return;
+    }
+    retryRouteAndHealthCheck();
+  }, [isOffersRoute, isSettingsRoute, retryRouteAndHealthCheck]);
   const isGuestProfileRoute = isRouteWithOptionalQuery('/profile');
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
@@ -790,9 +775,15 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
           resetToken={routeRecoveryKey}
           fallback={
             <RouteLoadFallback
-              message="Unable to load this route. Please try reloading."
-              onRetry={retryRouteAndHealthCheck}
-              retryLabel="Retry route"
+              message={
+                isSettingsRoute
+                  ? 'Unable to load the settings screen. Please try reloading.'
+                  : isOffersRoute
+                    ? 'Unable to load the offers screen. Please try reloading.'
+                    : 'Unable to load this route. Please try reloading.'
+              }
+              onRetry={retryFailedRoute}
+              retryLabel={isSettingsRoute || isOffersRoute ? 'Reload page' : 'Retry route'}
             />
           }
         >
