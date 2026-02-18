@@ -10,14 +10,23 @@ import {
 async function checkWalletEnabled(runtimeApiBase: string): Promise<boolean> {
   const apiBase = runtimeApiBase;
   if (!apiBase) return false;
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<null>((resolve) => {
+    timeoutHandle = globalThis.setTimeout(() => resolve(null), 3000);
+  });
   try {
     const url = `${apiBase}/debug/ws-wallet`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    const res = await Promise.race([fetch(url), timeoutPromise]);
+    if (!res) return false;
     if (!res.ok) return false;
     const data = (await res.json()) as { enabled?: boolean };
     return data.enabled ?? false;
   } catch {
     return false;
+  } finally {
+    if (timeoutHandle) {
+      globalThis.clearTimeout(timeoutHandle);
+    }
   }
 }
 
