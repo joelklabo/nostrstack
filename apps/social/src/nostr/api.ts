@@ -155,6 +155,27 @@ export function getSearchRelays(rawRelays: string[] = []): string[] {
   return merged.filter((relay) => relayMonitor.isHealthy(relay));
 }
 
+export function getFallbackSearchRelays(healthyRelays: string[], allRelays: string[]): string[] {
+  const tried = new Set(
+    healthyRelays.map((r) => {
+      try {
+        return new URL(r).hostname;
+      } catch {
+        return r;
+      }
+    })
+  );
+  const fallback = allRelays.filter((relay) => {
+    try {
+      const { hostname } = new URL(relay);
+      return !tried.has(hostname.toLowerCase());
+    } catch {
+      return false;
+    }
+  });
+  return fallback.slice(0, 2);
+}
+
 export function markRelayFailure(relay: string) {
   relayMonitor.reportFailure(relay);
 }
@@ -360,7 +381,8 @@ export async function searchNotes(
   query: string,
   limit = 20,
   until?: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  rawRelays: string[] = []
 ): Promise<Event[]> {
   if (signal?.aborted) {
     throw new Error('Search aborted');
@@ -412,12 +434,14 @@ export async function searchNotes(
     };
 
     const runQuery = async (
-      withSearch: boolean
+      withSearch: boolean,
+      relayList?: string[]
     ): Promise<{
       merged: Map<string, Event>;
       failures: unknown[];
       successCount: number;
     }> => {
+      const targetRelays = relayList ?? relays;
       const filter: { kinds: number[]; search?: string; limit: number; until?: number } = {
         kinds: [1],
         limit: withSearch ? normalizedLimit : fallbackLimit
@@ -433,7 +457,7 @@ export async function searchNotes(
       const failures: unknown[] = [];
       let successCount = 0;
 
-      const relayPromises = relays.map((relay) => {
+      const relayPromises = targetRelays.map((relay) => {
         return withTimeout(
           pool.querySync([relay], filter, { maxWait: SEARCH_RELAY_TIMEOUT_MS }),
           SEARCH_RELAY_TIMEOUT_MS
@@ -474,8 +498,35 @@ export async function searchNotes(
     const hasSearchUnsupportedFailure = primaryFailures.some(isSearchUnsupportedError);
     const hasAnyTimeoutFailure = primaryFailures.some(isTimeoutError);
     let merged = primary.merged;
-    const hadSuccessfulRelayResponse = primary.successCount > 0;
+    let hadSuccessfulRelayResponse = primary.successCount > 0;
     const relayCount = relays.length;
+
+    const shouldTryFallback =
+      rawRelays.length > 0 &&
+      merged.size === 0 &&
+      hasAnyTimeoutFailure &&
+      !hasSearchUnsupportedFailure &&
+      !hadSuccessfulRelayResponse;
+
+    if (shouldTryFallback) {
+      const fallbackRelays = getFallbackSearchRelays(relays, rawRelays);
+      if (fallbackRelays.length > 0) {
+        try {
+          const fallback = await withTimeout(
+            runQuery(false, fallbackRelays),
+            SEARCH_RELAY_TIMEOUT_MS
+          );
+          for (const [id, event] of fallback.merged) {
+            merged.set(id, event);
+          }
+          if (fallback.successCount > 0) {
+            hadSuccessfulRelayResponse = true;
+          }
+        } catch {
+          // Fallback failed, continue to throw timeout error
+        }
+      }
+    }
 
     if (
       merged.size === 0 &&

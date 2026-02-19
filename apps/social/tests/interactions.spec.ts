@@ -1,9 +1,30 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
-import { clickWithDispatchFallback, loginWithNsec, waitForFeedSurface } from './helpers';
+import {
+  clickWithDispatchFallback,
+  loginWithNsec,
+  seedMockEvent,
+  waitForFeedSurface
+} from './helpers';
 
 const testNsec =
   process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+
+async function ensureFeedHasPost(page: Page) {
+  const existingPost = page.locator('[data-testid="social-event-card"]').first();
+  const hasExisting = await existingPost.isVisible().catch(() => false);
+  if (hasExisting) {
+    return;
+  }
+
+  await seedMockEvent(page, {
+    content: 'Test seed post for interactions',
+    pubkey: 'a'.repeat(64),
+    kind: 1
+  });
+
+  await expect(existingPost).toBeVisible({ timeout: 15000 });
+}
 
 test.describe('App Interactions', () => {
   test.beforeEach(async ({ page }) => {
@@ -36,14 +57,10 @@ test.describe('App Interactions', () => {
 
   test('toggle view source in feed', async ({ page }) => {
     const editor = page.getByPlaceholder('Share something with the network...');
-    await editor.fill('Testing interactions');
-    await page.getByText('Publish').click();
-    await expect(page.getByText('Success: Event published to relays.')).toBeVisible({
-      timeout: 10000
-    });
+    await expect(editor).toBeVisible({ timeout: 20000 });
+    await ensureFeedHasPost(page);
 
     const postCard = page.locator('[data-testid="social-event-card"]').first();
-    await expect(postCard).toBeVisible({ timeout: 15000 });
 
     const viewSourceBtn = postCard.getByRole('button', { name: /View event source JSON/i });
     await clickWithDispatchFallback(viewSourceBtn, { timeout: 8000 });

@@ -222,7 +222,8 @@ export function SearchScreen() {
           q,
           NOTES_PAGE_SIZE,
           undefined,
-          controller.signal
+          controller.signal,
+          relayList
         );
         if (controller.signal.aborted) return;
         setNotes(results);
@@ -284,7 +285,8 @@ export function SearchScreen() {
         lastSearchQuery,
         NOTES_PAGE_SIZE,
         until,
-        controller.signal
+        controller.signal,
+        relayList
       );
       if (controller.signal.aborted) return;
 
