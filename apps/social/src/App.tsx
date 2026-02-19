@@ -25,113 +25,76 @@ import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
+
+const MAX_LAZY_RETRIES = 2;
+const LAZY_RETRY_DELAY_MS = 500;
+
+function robustLazy<T>(
+  loader: () => Promise<{ default: T }>,
+  screenName: string,
+  retryCount = 0
+): Promise<{ default: T }> {
+  return loader().catch((error) => {
+    console.error(`Failed to load ${screenName} route module.`, error);
+    if (retryCount < MAX_LAZY_RETRIES) {
+      return new Promise<{ default: T }>((resolve) => {
+        setTimeout(
+          () => {
+            resolve(robustLazy(loader, screenName, retryCount + 1));
+          },
+          LAZY_RETRY_DELAY_MS * (retryCount + 1)
+        );
+      });
+    }
+    return {
+      default: (() => (
+        <RouteLoadFallback
+          message={`Unable to load the ${screenName} screen. Please try reloading.`}
+          onRetry={() => window.location.reload()}
+        />
+      )) as unknown as T
+    };
+  });
+}
+
 const LoginScreen = lazy(() =>
-  import('./screens/LoginScreen')
-    .then((m) => ({ default: m.LoginScreen }))
-    .catch((error) => {
-      console.error('Failed to load login route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the login screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(
+    () => import('./screens/LoginScreen').then((m) => ({ default: m.LoginScreen })),
+    'login'
+  )
 );
 const ProfileScreen = lazy(() =>
-  import('./screens/ProfileScreen')
-    .then((m) => ({ default: m.ProfileScreen }))
-    .catch((error) => {
-      console.error('Failed to load profile route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the profile screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(
+    () => import('./screens/ProfileScreen').then((m) => ({ default: m.ProfileScreen })),
+    'profile'
+  )
 );
 const EventDetailScreen = lazy(() =>
-  import('./screens/EventDetailScreen')
-    .then((m) => ({ default: m.EventDetailScreen }))
-    .catch((error) => {
-      console.error('Failed to load event route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the event screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(
+    () => import('./screens/EventDetailScreen').then((m) => ({ default: m.EventDetailScreen })),
+    'event'
+  )
 );
 const loadSettingsScreen = () =>
   import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }));
 const NotFoundScreen = lazy(() =>
-  import('./screens/NotFoundScreen')
-    .then((m) => ({ default: m.NotFoundScreen }))
-    .catch((error) => {
-      console.error('Failed to load not found route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load fallback screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(
+    () => import('./screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen })),
+    'not found'
+  )
 );
 const loadOffersView = () => import('./OffersView').then((m) => ({ default: m.OffersView }));
 const SearchScreen = lazy(() =>
-  import('./screens/SearchScreen')
-    .then((m) => ({ default: m.SearchScreen }))
-    .catch((error) => {
-      console.error('Failed to load search route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the search screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(
+    () => import('./screens/SearchScreen').then((m) => ({ default: m.SearchScreen })),
+    'search'
+  )
 );
 const RelaysView = lazy(() =>
-  import('./RelaysView')
-    .then((m) => ({ default: m.RelaysView }))
-    .catch((error) => {
-      console.error('Failed to load relays route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load relays management screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(() => import('./RelaysView').then((m) => ({ default: m.RelaysView })), 'relays')
 );
 const FeedScreen = lazy(() =>
-  import('./screens/FeedScreen')
-    .then((m) => ({ default: m.FeedScreen }))
-    .catch((error) => {
-      console.error('Failed to load feed route module.', error);
-      return {
-        default: () => (
-          <RouteLoadFallback
-            message="Unable to load the feed screen. Please try reloading."
-            onRetry={() => window.location.reload()}
-          />
-        )
-      };
-    })
+  robustLazy(() => import('./screens/FeedScreen').then((m) => ({ default: m.FeedScreen })), 'feed')
 );
 
 function usePathname() {

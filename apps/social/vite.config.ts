@@ -56,6 +56,22 @@ export default defineConfig(({ command }) => {
       port: 4173,
       host: true
     },
+    build: {
+      rollupOptions: {
+        output: {
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react/jsx-runtime'],
+            'vendor-nostr': ['nostr-tools'],
+            'vendor-ui': ['@nostrstack/ui', '@nostrstack/widgets']
+          }
+        }
+      },
+      sourcemap: false,
+      minify: 'esbuild'
+    },
     define: {
       // Some packages (e.g. nostr-tools) expect global Buffer.
       // Deno doesn't have it, and Node polyfills it in browser builds.
