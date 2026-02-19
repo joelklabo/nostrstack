@@ -379,79 +379,78 @@ ndev_find_fallback_ports() {
   return 1
 }
 
+ndev_claim_session_unmanaged() {
+  local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
+  local social_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_SOCIAL_PORT}"
+
+  if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+    local api_has_owner=0
+    local social_has_owner=0
+    ndev_port_has_owner "$api_port" && api_has_owner=1
+    ndev_port_has_owner "$social_port" && social_has_owner=1
+
+    if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
+      if [[ "$api_has_owner" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free port $api_port"
+        ndev_force_kill_port "$api_port" || true
+      elif ndev_port_in_use "$api_port"; then
+        echo "Port $api_port has no visible owner (owner unknown) - skipping"
+      fi
+      if [[ "$social_has_owner" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
+        ndev_force_kill_port "$social_port" || true
+      elif ndev_port_in_use "$social_port"; then
+        echo "Port $social_port has no visible owner (owner unknown) - skipping"
+      fi
+      sleep 1
+    fi
+
+    if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+      if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
+        echo "WARNING: API port $api_port is in use but owner is not visible" >&2
+        echo "  - Cannot determine if this is a stale socket or a valid process" >&2
+        ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive" >&2
+      fi
+      if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
+        echo "WARNING: Social port $social_port is in use but owner is not visible" >&2
+        echo "  - Cannot determine if this is a stale socket or a valid process" >&2
+        ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive" >&2
+      fi
+
+      if [[ "$api_has_owner" == "0" || "$social_has_owner" == "0" ]]; then
+        echo "ERROR: Fixed-port mode cannot proceed with ports that have unknown ownership" >&2
+        echo "  - Cannot safely clean ports without visible owners" >&2
+        echo "  - Manually stop the process using the port, or use a different port" >&2
+        return 1
+      fi
+
+      local pid
+      echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
+      pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
+      [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $api_port)" >&2
+      echo "Fixed-port mode does not auto-remap ports." >&2
+      echo "Use different PORT/DEV_SERVER_PORT values or stop listeners with: pnpm dev:stop:all -c" >&2
+      return 1
+    fi
+    echo "Successfully freed requested ports"
+  fi
+
+  ndev_write_session_file "manual-$$" "$api_port" "$social_port"
+  return 0
+}
+
 ndev_claim_session() {
   local requested_slot="${NOSTRDEV_AGENT_SLOT:-}"
   local max_slot="$NOSTRDEV_MAX_SLOTS"
   local slot
 
-  if [[ "${NOSTRDEV_CLEANUP_STALE:-1}" == "1" ]]; then
-    ndev_cleanup_stale_sockets
+  if [[ "${NOSTRDEV_MANAGED_SESSION:-1}" == "0" ]]; then
+    ndev_claim_session_unmanaged
+    return $?
   fi
 
-  if [[ "${NOSTRDEV_MANAGED_SESSION:-1}" == "0" ]]; then
-    local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
-    local social_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_SOCIAL_PORT}"
-    if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-      local api_has_owner social_has_owner
-      api_has_owner=0
-      social_has_owner=0
-      ndev_port_has_owner "$api_port" && api_has_owner=1
-      ndev_port_has_owner "$social_port" && social_has_owner=1
-
-      if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
-        if [[ "$api_has_owner" == "1" ]]; then
-          echo "FORCE_KILL_PORTS=1: Attempting to free port $api_port"
-          ndev_force_kill_port "$api_port" || true
-        elif ndev_port_in_use "$api_port"; then
-          echo "Port $api_port has no visible owner (owner unknown) - skipping"
-        fi
-        if [[ "$social_has_owner" == "1" ]]; then
-          echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
-          ndev_force_kill_port "$social_port" || true
-        elif ndev_port_in_use "$social_port"; then
-          echo "Port $social_port has no visible owner (owner unknown) - skipping"
-        fi
-        sleep 1
-      fi
-      if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-        local api_has_unknown_owner social_has_unknown_owner
-        api_has_unknown_owner=0
-        social_has_unknown_owner=0
-
-        if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
-          echo "WARNING: API port $api_port is in use but owner is not visible"
-          echo "  - Cannot determine if this is a stale socket or a valid process"
-          echo "  - Skipping this port in fixed-port mode"
-          ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive"
-          api_has_unknown_owner=1
-        fi
-        if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
-          echo "WARNING: Social port $social_port is in use but owner is not visible"
-          echo "  - Cannot determine if this is a stale socket or a valid process"
-          echo "  - Skipping this port in fixed-port mode"
-          ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive"
-          social_has_unknown_owner=1
-        fi
-
-        if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
-          echo "ERROR: Fixed-port mode cannot proceed with ports that have unknown ownership" >&2
-          echo "  - Cannot safely clean ports without visible owners" >&2
-          echo "  - Manually stop the process using the port, or use a different port" >&2
-          return 1
-        fi
-
-        local pid
-        echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
-        pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
-        [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $api_port)" >&2
-        echo "Fixed-port mode does not auto-remap ports." >&2
-        echo "Use different PORT/DEV_SERVER_PORT values or stop listeners with: pnpm dev:stop:all -c" >&2
-        return 1
-      fi
-      echo "Successfully freed requested ports"
-    fi
-    ndev_write_session_file "manual-$$" "$api_port" "$social_port"
-    return 0
+  if [[ "${NOSTRDEV_CLEANUP_STALE:-1}" == "1" ]]; then
+    ndev_cleanup_stale_sockets
   fi
 
   if [[ -n "$requested_slot" ]]; then

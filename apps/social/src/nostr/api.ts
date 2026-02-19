@@ -51,6 +51,8 @@ const MAX_EVENT_FETCH_ENTRIES = 250;
 export const NOTES_SEARCH_TIMEOUT_MS = 30_000;
 const SEARCH_RELAY_TIMEOUT_MS = Math.min(NOTES_SEARCH_TIMEOUT_MS, 10_000);
 const SEARCH_UNSUPPORTED_RELAY_HOSTS = new Set(['relay.damus.io', 'nos.lol', 'relay.primal.net']);
+const SEARCH_FAILURE_LOG_WINDOW_MS = 30_000;
+let lastSearchFailureLogAt = 0;
 
 type NostrEventCacheEntry = {
   data?: ApiNostrEventResponse;
@@ -502,7 +504,11 @@ export async function searchNotes(
       lower.includes('unrecognised filter');
 
     if (!isNetworkOrUnsupported) {
-      console.warn('[nostr] search failed', err);
+      const now = Date.now();
+      if (now - lastSearchFailureLogAt >= SEARCH_FAILURE_LOG_WINDOW_MS) {
+        lastSearchFailureLogAt = now;
+        console.warn('[nostr] search failed', err);
+      }
     }
     throw err;
   }

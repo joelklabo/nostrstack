@@ -20,7 +20,7 @@ const shouldReportRelayFailure = (reason: string | undefined) => {
 };
 
 const RELAY_CONNECT_RETRY_BACKOFF_MS = 10_000;
-const RELAY_CONNECT_FAILURE_LOG_WINDOW_MS = 30_000;
+const RELAY_CONNECT_FAILURE_LOG_WINDOW_MS = 60_000;
 
 type RelayFailureState = {
   nextRetryAt: number;
@@ -235,7 +235,7 @@ export class SimplePool {
             nextRetryAt: now + getRetryDelayMs(failureCount),
             reason: failureMessage,
             failureCount,
-            lastWarnedAt: shouldLog ? now : relayFailureState.get(normalized)?.lastWarnedAt ?? now
+            lastWarnedAt: shouldLog ? now : existingState?.lastWarnedAt ?? now
           });
         } finally {
           relayConnectionInFlight.delete(normalized);
