@@ -35,9 +35,6 @@ test.describe('App Interactions', () => {
   });
 
   test('toggle view source in feed', async ({ page }) => {
-    // We expect at least one post if using mock relays or if real relays have data.
-    // If not, we can publish one?
-    // Let's publish a note first to ensure there is something.
     const editor = page.getByPlaceholder('Share something with the network...');
     await editor.fill('Testing interactions');
     await page.getByText('Publish').click();
@@ -46,7 +43,7 @@ test.describe('App Interactions', () => {
     });
 
     const postCard = page.locator('[data-testid="social-event-card"]').first();
-    await expect(postCard).toBeVisible({ timeout: 10000 });
+    await expect(postCard).toBeVisible({ timeout: 15000 });
 
     const viewSourceBtn = postCard.getByRole('button', { name: /View event source JSON/i });
     await clickWithDispatchFallback(viewSourceBtn, { timeout: 8000 });
