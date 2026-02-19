@@ -95,7 +95,7 @@ export function useImmersiveScroll(options: UseImmersiveScrollOptions = {}) {
 
     ensureScrollBinding();
     const mutationObserver = new MutationObserver(() => {
-      if (animationFrameRef.current !== null) return;
+      if (typeof window === 'undefined' || animationFrameRef.current !== null) return;
       animationFrameRef.current = window.requestAnimationFrame(() => {
         animationFrameRef.current = null;
         ensureScrollBinding();
