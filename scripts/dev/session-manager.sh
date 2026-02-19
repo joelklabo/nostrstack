@@ -333,12 +333,14 @@ ndev_claim_slot() {
         fi
       fi
 
-      ndev_unlock_slot "$slot"
       if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
         if [[ "$slot" == "0" ]]; then
           echo "⚠️  Stale sockets detected on default ports - attempting to continue anyway..."
+          ndev_write_session_file "$slot" "$api_port" "$social_port"
+          ndev_unlock_slot "$slot"
           return 0
         fi
+        ndev_unlock_slot "$slot"
         return 2
       fi
       return 1
