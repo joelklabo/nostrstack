@@ -625,6 +625,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   if (!isValidRoute) {
     return (
       <div className="social-layout">
+        <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
         <Sidebar
           currentView={routeBoundView}
           setCurrentView={setCurrentView}
