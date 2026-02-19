@@ -39,3 +39,6 @@ test-results
 # Syncthing temp files
 .syncthing*.tmp
 *.syncthing*.tmp
+
+# GitHub worker locks
+.github_worker_locks/
