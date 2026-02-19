@@ -13,6 +13,7 @@ import {
   type ProfileMeta
 } from '../nostr/eventRenderers';
 import { ReferencePreview } from '../nostr/ReferencePreview';
+import { relayMonitor } from '../nostr/relayHealth';
 import { CopyButton } from '../ui/CopyButton';
 import { JsonView } from '../ui/JsonView';
 import { NostrEventCard } from '../ui/NostrEventCard';
@@ -276,6 +277,15 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
   const stableRelayList = useMemo(() => relayList, [relayList]);
   const stableApiRelayList = useMemo(() => apiRelayList, [apiRelayList]);
 
+  const healthyRelayList = useMemo(
+    () => stableRelayList.filter((relay) => !isMockRelay(relay) && relayMonitor.isHealthy(relay)),
+    [stableRelayList]
+  );
+  const healthyApiRelayList = useMemo(
+    () => stableApiRelayList.filter((relay) => relayMonitor.isHealthy(relay)),
+    [stableApiRelayList]
+  );
+
   useEffect(() => {
     if (!target) {
       setState({
@@ -323,6 +333,10 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           source: 'relay'
         };
       } catch (err) {
+        const isTimeout = err instanceof Error && err.message === 'Request timed out';
+        if (isTimeout) {
+          relays.forEach((relay) => relayMonitor.reportFailure(relay));
+        }
         return {
           ...EMPTY_REPLIES_STATE,
           status: 'error',
@@ -335,12 +349,13 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     };
 
     const loadFromRelays = async () => {
+      const relaysToUse = healthyRelayList.length > 0 ? healthyRelayList : stableRelayList;
       const pool = new SimplePool();
-      trustMockRelays(pool, stableRelayList);
+      trustMockRelays(pool, relaysToUse);
       const closePool = () => {
         globalThis.setTimeout(() => {
           try {
-            pool.close(stableRelayList);
+            pool.close(relaysToUse);
           } catch {
             // ignore close errors
           }
@@ -355,28 +370,30 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
         if (target.type === 'event') {
           try {
             event = await withTimeout(
-              pool.get(stableRelayList, { ids: [target.id] }),
+              pool.get(relaysToUse, { ids: [target.id] }),
               REQUEST_TIMEOUT_MS
             );
           } catch (err) {
             if (err instanceof Error && err.message === 'Request timed out') {
               fetchTimedOut = true;
+              relaysToUse.forEach((relay) => relayMonitor.reportFailure(relay));
             } else {
               throw err;
             }
           }
           if (event) {
-            repliesState = await fetchRepliesFromRelays(event.id, stableRelayList, pool);
+            repliesState = await fetchRepliesFromRelays(event.id, relaysToUse, pool);
           }
         } else if (target.type === 'profile') {
           try {
             event = await withTimeout(
-              pool.get(stableRelayList, { kinds: [0], authors: [target.pubkey] }),
+              pool.get(relaysToUse, { kinds: [0], authors: [target.pubkey] }),
               REQUEST_TIMEOUT_MS
             );
           } catch (err) {
             if (err instanceof Error && err.message === 'Request timed out') {
               fetchTimedOut = true;
+              relaysToUse.forEach((relay) => relayMonitor.reportFailure(relay));
             } else {
               throw err;
             }
@@ -385,7 +402,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           const identifier = target.identifier ?? '';
           try {
             event = await withTimeout(
-              pool.get(stableRelayList, {
+              pool.get(relaysToUse, {
                 kinds: [target.kind],
                 authors: [target.pubkey],
                 '#d': [identifier]
@@ -395,6 +412,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           } catch (err) {
             if (err instanceof Error && err.message === 'Request timed out') {
               fetchTimedOut = true;
+              relaysToUse.forEach((relay) => relayMonitor.reportFailure(relay));
             } else {
               throw err;
             }
@@ -412,7 +430,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
         let authorProfile: ProfileMeta | null = null;
         if (event.kind !== 0) {
           const profileEvent = await withTimeout(
-            pool.get(stableRelayList, { kinds: [0], authors: [event.pubkey] }),
+            pool.get(relaysToUse, { kinds: [0], authors: [event.pubkey] }),
             REQUEST_TIMEOUT_MS
           );
           authorProfile = parseProfileContent(profileEvent?.content);
@@ -428,13 +446,14 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
 
     const loadEventReplies = async (eventId: string, relays: string[]) => {
       let replyError: string | null = null;
+      const relaysForApi = healthyApiRelayList.length > 0 ? healthyApiRelayList : apiRelayList;
 
       try {
         const replyResult = await withTimeout(
           fetchNostrEventFromApi({
             baseUrl: apiBase,
             id: rawId,
-            relays: apiRelayList.length ? apiRelayList : undefined,
+            relays: relaysForApi.length ? relaysForApi : undefined,
             replyLimit: REPLY_PAGE_LIMIT,
             replyTimeoutMs: REQUEST_TIMEOUT_MS
           }),
@@ -464,6 +483,9 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
         return;
       } catch (err) {
         replyError = err instanceof Error ? err.message : String(err);
+        if (relaysForApi.length > 0) {
+          relaysForApi.forEach((relay) => relayMonitor.reportFailure(relay));
+        }
       }
 
       const relayReplies = await fetchRepliesFromRelays(eventId, relays);
@@ -495,6 +517,8 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       });
 
       let apiError: string | null = null;
+      const relaysForApi =
+        healthyApiRelayList.length > 0 ? healthyApiRelayList : stableApiRelayList;
 
       try {
         if (apiBaseConfig.isConfigured) {
@@ -503,7 +527,7 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
               fetchNostrEventFromApi({
                 baseUrl: apiBase,
                 id: rawId,
-                relays: stableApiRelayList.length ? stableApiRelayList : undefined,
+                relays: relaysForApi.length ? relaysForApi : undefined,
                 replyLimit: repliesEnabled ? 0 : undefined
               }),
               REQUEST_TIMEOUT_MS
@@ -512,7 +536,9 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
             if (cancelled) return;
             const relays = apiResult.target?.relays?.length
               ? apiResult.target.relays
-              : stableRelayList;
+              : relaysForApi.length > 0
+                ? relaysForApi
+                : stableRelayList;
 
             setState({
               status: 'ready',
@@ -534,6 +560,9 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
             return;
           } catch (err) {
             apiError = err instanceof Error ? err.message : String(err);
+            if (relaysForApi.length > 0) {
+              relaysForApi.forEach((relay) => relayMonitor.reportFailure(relay));
+            }
           }
         }
 
@@ -557,6 +586,9 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       } catch (err) {
         if (cancelled) return;
         const relayMessage = err instanceof Error ? err.message : String(err);
+        if (stableRelayList.length > 0) {
+          stableRelayList.forEach((relay) => relayMonitor.reportFailure(relay));
+        }
         setState({
           status: 'error',
           relays: stableRelayList,
@@ -584,6 +616,8 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     stableApiRelayList,
     relayList,
     apiRelayList,
+    healthyRelayList,
+    healthyApiRelayList,
     target,
     repliesEnabled,
     reloadToken
