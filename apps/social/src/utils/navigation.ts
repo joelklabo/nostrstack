@@ -63,7 +63,9 @@ export function buildNoteLink(eventId: string): string {
 
 export function navigateTo(path: string): void {
   if (typeof window === 'undefined') return;
-  if (window.location.pathname === path) return;
+  const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+  const targetPath = path.replace(/\/$/, '') || '/';
+  if (currentPath === targetPath) return;
   window.history.pushState({}, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
