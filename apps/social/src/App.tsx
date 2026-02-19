@@ -395,6 +395,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     retryRouteAndHealthCheck();
   }, [isOffersRoute, isSettingsRoute, retryRouteAndHealthCheck]);
   const isGuestProfileRoute = isRouteWithOptionalQuery('/profile');
+  const isHelpRoute = isRouteWithOptionalQuery('/help');
   const profileRoute = resolveProfileRoute(pathname);
   const profileRoutePubkey = profileRoute.pubkey;
   const profileRouteError = profileRoute.error;
@@ -440,6 +441,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     if (isSettingsRoute) return true;
     if (isOffersRoute) return true;
     if (isProfileRoute) return true;
+    if (isHelpRoute) return true;
     if (nostrRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
@@ -454,6 +456,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     isSettingsRoute,
     isOffersRoute,
     isProfileRoute,
+    isHelpRoute,
     nostrRouteId,
     profileRoutePubkey
   ]);
@@ -463,6 +466,12 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
       setCurrentView('profile');
     }
   }, [profileRoutePubkey]);
+
+  useEffect(() => {
+    if (isHelpRoute) {
+      setHelpOpen(true);
+    }
+  }, [isHelpRoute, setHelpOpen]);
 
   useEffect(() => {
     if (isSettingsRoute) {
