@@ -15,6 +15,10 @@ function normalizeLegacyLocalApiBase(raw: string): string {
 function preferSecureBase(base: string) {
   if (typeof window === 'undefined') return base;
   if (window.location.protocol !== 'https:') return base;
+  const isDev =
+    typeof import.meta !== 'undefined' &&
+    (import.meta as { env?: Record<string, unknown> }).env?.DEV;
+  if (isDev) return base;
   if (!/^http:\/\//i.test(base)) return base;
   try {
     const parsed = new URL(base);
