@@ -175,10 +175,22 @@ ndev_try_clear_stale_port() {
   ! ndev_port_in_use "$port"
 }
 
+ndev_port_owner_inconclusive() {
+  local port="$1"
+  if ! ndev_port_in_use "$port"; then
+    return 1
+  fi
+  if ndev_port_has_owner "$port"; then
+    return 1
+  fi
+  return 0
+}
+
 ndev_port_is_stale() {
   local port="$1"
   ndev_port_in_use "$port" || return 1
   ndev_port_has_owner "$port" && return 1
+  ndev_port_owner_inconclusive "$port" && return 1
   if ndev_probe_port_health "$port" 1; then
     return 1
   fi
@@ -204,6 +216,8 @@ ndev_cleanup_stale_sockets() {
         else
           echo "  Could not clear port $api_port - will skip slot $slot"
         fi
+      elif ndev_port_owner_inconclusive "$api_port"; then
+        echo "Port $api_port is in use but owner detection is inconclusive - allowing slot $slot to be claimed"
       else
         echo "Port $api_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
@@ -218,6 +232,8 @@ ndev_cleanup_stale_sockets() {
         else
           echo "  Could not clear port $social_port - will skip slot $slot"
         fi
+      elif ndev_port_owner_inconclusive "$social_port"; then
+        echo "Port $social_port is in use but owner detection is inconclusive - allowing slot $slot to be claimed"
       else
         echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
@@ -313,37 +329,45 @@ ndev_claim_slot() {
   social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
   
   if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-    local api_has_owner social_has_owner
+    local api_has_owner social_has_owner api_inconclusive social_inconclusive
     api_has_owner=0
     social_has_owner=0
+    api_inconclusive=0
+    social_inconclusive=0
     ndev_port_has_owner "$api_port" && api_has_owner=1
     ndev_port_has_owner "$social_port" && social_has_owner=1
+    ndev_port_owner_inconclusive "$api_port" && api_inconclusive=1
+    ndev_port_owner_inconclusive "$social_port" && social_inconclusive=1
     
     if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
       if [[ "$api_has_owner" == "1" ]]; then
         echo "FORCE_KILL_PORTS=1: Attempting to free port $api_port"
         ndev_force_kill_port "$api_port" || true
-      elif ndev_port_in_use "$api_port"; then
+      elif ndev_port_in_use "$api_port" && [[ "$api_inconclusive" == "0" ]]; then
         echo "Port $api_port has no visible owner (owner unknown) - skipping slot $slot"
       fi
       if [[ "$social_has_owner" == "1" ]]; then
         echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
         ndev_force_kill_port "$social_port" || true
-      elif ndev_port_in_use "$social_port"; then
+      elif ndev_port_in_use "$social_port" && [[ "$social_inconclusive" == "0" ]]; then
         echo "Port $social_port has no visible owner (owner unknown) - skipping slot $slot"
       fi
       sleep 1
     fi
     
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-      if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
+      local api_unknown=0
+      local social_unknown=0
+      if [[ "$api_has_owner" == "0" && "$api_inconclusive" == "0" ]] && ndev_port_in_use "$api_port"; then
         echo "Port $api_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
+        api_unknown=1
       fi
-      if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
+      if [[ "$social_has_owner" == "0" && "$social_inconclusive" == "0" ]] && ndev_port_in_use "$social_port"; then
         echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
+        social_unknown=1
       fi
 
-      if [[ "$api_has_owner" == "0" || "$social_has_owner" == "0" ]]; then
+      if [[ "$api_unknown" == "1" || "$social_unknown" == "1" ]]; then
         echo "Port with unknown owner detected - cannot safely claim this slot"
         ndev_unlock_slot "$slot"
         return 2
@@ -386,38 +410,46 @@ ndev_claim_session_unmanaged() {
   if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
     local api_has_owner=0
     local social_has_owner=0
+    local api_inconclusive=0
+    local social_inconclusive=0
     ndev_port_has_owner "$api_port" && api_has_owner=1
     ndev_port_has_owner "$social_port" && social_has_owner=1
+    ndev_port_owner_inconclusive "$api_port" && api_inconclusive=1
+    ndev_port_owner_inconclusive "$social_port" && social_inconclusive=1
 
     if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
       if [[ "$api_has_owner" == "1" ]]; then
         echo "FORCE_KILL_PORTS=1: Attempting to free port $api_port"
         ndev_force_kill_port "$api_port" || true
-      elif ndev_port_in_use "$api_port"; then
+      elif ndev_port_in_use "$api_port" && [[ "$api_inconclusive" == "0" ]]; then
         echo "Port $api_port has no visible owner (owner unknown) - skipping"
       fi
       if [[ "$social_has_owner" == "1" ]]; then
         echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
         ndev_force_kill_port "$social_port" || true
-      elif ndev_port_in_use "$social_port"; then
+      elif ndev_port_in_use "$social_port" && [[ "$social_inconclusive" == "0" ]]; then
         echo "Port $social_port has no visible owner (owner unknown) - skipping"
       fi
       sleep 1
     fi
 
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-      if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
+      local api_unknown=0
+      local social_unknown=0
+      if [[ "$api_has_owner" == "0" && "$api_inconclusive" == "0" ]] && ndev_port_in_use "$api_port"; then
         echo "WARNING: API port $api_port is in use but owner is not visible" >&2
         echo "  - Cannot determine if this is a stale socket or a valid process" >&2
         ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive" >&2
+        api_unknown=1
       fi
-      if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
+      if [[ "$social_has_owner" == "0" && "$social_inconclusive" == "0" ]] && ndev_port_in_use "$social_port"; then
         echo "WARNING: Social port $social_port is in use but owner is not visible" >&2
         echo "  - Cannot determine if this is a stale socket or a valid process" >&2
         ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive" >&2
+        social_unknown=1
       fi
 
-      if [[ "$api_has_owner" == "0" || "$social_has_owner" == "0" ]]; then
+      if [[ "$api_unknown" == "1" || "$social_unknown" == "1" ]]; then
         echo "ERROR: Fixed-port mode cannot proceed with ports that have unknown ownership" >&2
         echo "  - Cannot safely clean ports without visible owners" >&2
         echo "  - Manually stop the process using the port, or use a different port" >&2
