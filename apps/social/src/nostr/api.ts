@@ -359,8 +359,19 @@ export async function searchNotes(
   relays: string[],
   query: string,
   limit = 20,
-  until?: number
+  until?: number,
+  signal?: AbortSignal
 ): Promise<Event[]> {
+  if (signal?.aborted) {
+    throw new Error('Search aborted');
+  }
+
+  const abortPromise = signal
+    ? new Promise<never>((_, reject) => {
+        signal.addEventListener('abort', () => reject(new Error('Search aborted')), { once: true });
+      })
+    : null;
+
   try {
     if (!relays.length) return [];
 
@@ -429,9 +440,11 @@ export async function searchNotes(
         );
       });
 
+      const promisesToRace = abortPromise ? [...relayPromises, abortPromise] : relayPromises;
+
       for (let i = 0; i < relayPromises.length; i++) {
         try {
-          const result = await relayPromises[i];
+          const result = await promisesToRace[i];
           successCount++;
           for (const event of result) {
             merged.set(event.id, event);
@@ -442,6 +455,9 @@ export async function searchNotes(
             break;
           }
         } catch (error) {
+          if (signal?.aborted) {
+            throw new Error('Search aborted');
+          }
           const relay = relays[i];
           failures.push(error);
           if (!isSearchUnsupportedError(error)) {

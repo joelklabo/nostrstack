@@ -84,6 +84,8 @@ export function SearchScreen() {
   const lastProfileLookupKey = useRef<string | null>(null);
   const notesCountRef = useRef(0);
   const [relayHealthCount, setRelayHealthCount] = useState(0);
+  const notesSearchControllerRef = useRef<AbortController | null>(null);
+  const loadMoreControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const updateRelayHealth = () => setRelayHealthCount((c) => c + 1);
@@ -93,6 +95,17 @@ export function SearchScreen() {
   useEffect(() => {
     notesCountRef.current = notes.length;
   }, [notes]);
+
+  useEffect(() => {
+    return () => {
+      if (notesSearchControllerRef.current) {
+        notesSearchControllerRef.current.abort();
+      }
+      if (loadMoreControllerRef.current) {
+        loadMoreControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const healthyRelayCount = useMemo(() => {
     const searchRelays = getSearchRelays(relayList);
@@ -177,6 +190,12 @@ export function SearchScreen() {
 
   const handleNotesSearch = useCallback(
     async (q: string, isRetry = false) => {
+      if (notesSearchControllerRef.current) {
+        notesSearchControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      notesSearchControllerRef.current = controller;
+
       const hasExistingNotes = notesCountRef.current > 0;
       setNotesLoading(true);
       setNotesError(null);
@@ -197,7 +216,15 @@ export function SearchScreen() {
           setNotesLoading(false);
           return;
         }
-        const results = await searchNotes(pool, searchRelays, q, NOTES_PAGE_SIZE);
+        const results = await searchNotes(
+          pool,
+          searchRelays,
+          q,
+          NOTES_PAGE_SIZE,
+          undefined,
+          controller.signal
+        );
+        if (controller.signal.aborted) return;
         setNotes(results);
         setHasMore(results.length >= NOTES_PAGE_SIZE);
         if (results.length === 0) {
@@ -209,9 +236,12 @@ export function SearchScreen() {
           setSubmitFeedback(`Found ${results.length} note ${resultWord} for "${q}".`);
         }
       } catch (err) {
+        if (controller.signal.aborted) return;
         applyNotesSearchError(q, err, hasExistingNotes);
       } finally {
-        setNotesLoading(false);
+        if (!controller.signal.aborted) {
+          setNotesLoading(false);
+        }
       }
     },
     [applyNotesSearchError, pool, relayList]
@@ -225,6 +255,12 @@ export function SearchScreen() {
 
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || notes.length === 0 || !lastSearchQuery) return;
+
+    if (loadMoreControllerRef.current) {
+      loadMoreControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    loadMoreControllerRef.current = controller;
 
     setIsLoadingMore(true);
     setNotesError(null);
@@ -247,8 +283,10 @@ export function SearchScreen() {
         searchRelays,
         lastSearchQuery,
         NOTES_PAGE_SIZE,
-        until
+        until,
+        controller.signal
       );
+      if (controller.signal.aborted) return;
 
       // Filter out duplicates
       const existingIds = new Set(notes.map((n) => n.id));
@@ -259,9 +297,12 @@ export function SearchScreen() {
       }
       setHasMore(moreResults.length >= NOTES_PAGE_SIZE);
     } catch (err) {
+      if (controller.signal.aborted) return;
       applyNotesSearchError(lastSearchQuery, err, notes.length > 0);
     } finally {
-      setIsLoadingMore(false);
+      if (!controller.signal.aborted) {
+        setIsLoadingMore(false);
+      }
     }
   }, [applyNotesSearchError, isLoadingMore, notes, lastSearchQuery, pool, relayList]);
 
