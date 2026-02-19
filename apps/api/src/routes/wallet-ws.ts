@@ -337,6 +337,24 @@ export async function registerWalletWs(app: FastifyInstance) {
     async () => ({ enabled: isWalletEnabled, url: isWalletEnabled ? '/ws/wallet' : '' })
   );
 
+  app.get(
+    '/api/debug/ws-wallet',
+    {
+      schema: {
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              enabled: { type: 'boolean' },
+              url: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async () => ({ enabled: isWalletEnabled, url: isWalletEnabled ? '/ws/wallet' : '' })
+  );
+
   app.get('/api/wallet-ws', async (req, reply) => {
     if (!isWalletEnabled) {
       return reply.status(503).send({
