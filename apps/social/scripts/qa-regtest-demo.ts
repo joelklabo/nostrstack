@@ -206,7 +206,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     await expect(page.locator('.payment-panel-title')).toHaveText('INVOICE');
     await expect(page.locator('.payment-invoice-box')).toBeVisible();
     const regtestBtn = page.locator('button:has-text("PAY_REGTEST")');
-    const regtestAvailable = await regtestBtn.isVisible();
+    const regtestAvailable = await regtestBtn
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
     if (!regtestAvailable) {
       console.log(
         '⚠️ PAY_REGTEST button not available - regtest wallet not configured on API, skipping regtest payment test'
@@ -216,9 +219,8 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .getByText(/CLOSE/i)
         .click({ force: true })
         .catch(() => {});
-      return false;
+      continue;
     }
-    await regtestBtn.waitFor({ state: 'visible' });
     let paid = false;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       await regtestBtn.click({ force: true });
