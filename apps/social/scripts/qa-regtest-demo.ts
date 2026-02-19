@@ -185,11 +185,15 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .then(() => true)
         .catch(() => false);
       if (!nwcPaid) {
-        await modal.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+        await modal
+          .locator('.payment-header button')
+          .getByText(/CLOSE/i)
+          .first()
+          .click({ force: true });
         continue;
       }
       await expect(modal.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
+      const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       return true;
@@ -201,7 +205,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       .then(() => true)
       .catch(() => false);
     if (!invoiceReady) {
-      await modal.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+      await modal
+        .locator('.payment-header button')
+        .getByText(/CLOSE/i)
+        .first()
+        .click({ force: true });
       continue;
     }
     await expect(modal.locator('.payment-qr')).toBeVisible();
@@ -228,7 +236,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         '⚠️ PAY_REGTEST button not available - regtest wallet not configured on API, skipping regtest payment test'
       );
       try {
-        await modal.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+        await modal
+          .locator('.payment-header button')
+          .getByText(/CLOSE/i)
+          .first()
+          .click({ force: true });
       } catch {
         // ignore close failures
       }
@@ -248,7 +260,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         }
         console.log('⚠️ PAY_REGTEST button not clickable, skipping regtest payment test');
         try {
-          await modal.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+          await modal
+            .locator('.payment-header button')
+            .getByText(/CLOSE/i)
+            .first()
+            .click({ force: true });
         } catch {
           // ignore close failures
         }
@@ -263,7 +279,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     if (!paid && !modalClosed) {
       try {
-        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
+        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
         await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
         await closeBtn.click({ force: true });
       } catch {
@@ -272,7 +288,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     if (paid && !modalClosed) {
       try {
-        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
+        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
         await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
         await closeBtn.click({ force: true });
       } catch {
