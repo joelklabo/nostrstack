@@ -399,6 +399,9 @@ async function main() {
     if (url.includes('/api/health') && errText === 'net::ERR_ABORTED') {
       return;
     }
+    if (url.includes('/api/debug/ws-wallet') && errText === 'net::ERR_ABORTED') {
+      return;
+    }
     localRequestFailures.push(`${url} :: ${errText}`);
   });
   page.on('response', (res) => {
