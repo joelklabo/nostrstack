@@ -283,7 +283,9 @@ async function main() {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED ?? '0';
 
   const detected = await detectManagedSessionUrls();
-  const baseUrl = process.env.GALLERY_URL ?? detected.galleryUrl ?? 'http://localhost:4173';
+  const devServerPort = process.env.DEV_SERVER_PORT;
+  const fallbackUrl = devServerPort ? `http://localhost:${devServerPort}` : 'http://localhost:4173';
+  const baseUrl = process.env.GALLERY_URL ?? detected.galleryUrl ?? fallbackUrl;
   const _apiUrl = process.env.API_URL ?? detected.apiUrl ?? 'http://localhost:3001';
 
   if (detected.galleryUrl || detected.apiUrl) {
@@ -293,17 +295,18 @@ async function main() {
     console.log(`ℹ️ using managed dev session: ${parts.join(', ')}`);
   }
 
+  const hasExplicitUrl = process.env.GALLERY_URL || process.env.DEV_SERVER_PORT;
   if (!process.env.GALLERY_URL && !detected.galleryUrl && !process.env.NOSTRDEV_AGENT) {
     console.log(
-      'ℹ️ No managed session detected. Using defaults. Set GALLERY_URL/API_URL or run under pnpm dev:logs for managed sessions.'
+      `ℹ️ No managed session detected. Using defaults (gallery=${fallbackUrl}). Set GALLERY_URL/API_URL or run under pnpm dev:logs for managed sessions.`
     );
   }
 
-  if (process.env.NOSTRDEV_AGENT && !detected.galleryUrl && !detected.apiUrl) {
+  if (process.env.NOSTRDEV_AGENT && !detected.galleryUrl && !detected.apiUrl && !hasExplicitUrl) {
     const agent = process.env.NOSTRDEV_AGENT;
     console.error(`❌ Managed session for agent '${agent}' not found or not reachable.`);
     console.error(
-      '   Run "pnpm dev:logs" to start a managed session, or set GALLERY_URL explicitly.'
+      '   Run "pnpm dev:logs" to start a managed session, or set GALLERY_URL/DEV_SERVER_PORT explicitly.'
     );
     process.exit(1);
   }
