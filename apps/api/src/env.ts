@@ -49,7 +49,7 @@ const schema = z
     LN_BITS_WALLET_ID: z.string().optional(),
     LIGHTNING_PROVIDER: z.enum(['opennode', 'lnbits', 'mock']).default('opennode'),
     BITCOIN_NETWORK: z.enum(['regtest', 'mutinynet', 'mainnet']).default('regtest'),
-    TELEMETRY_PROVIDER: z.enum(['bitcoind', 'esplora', 'mock']).default('bitcoind'),
+    TELEMETRY_PROVIDER: z.enum(['bitcoind', 'esplora', 'mock']).default('mock'),
     BITCOIND_RPC_URL: z.string().url().optional(),
     TELEMETRY_ESPLORA_URL: z.string().url().optional(),
     TELEMETRY_HOST_ALLOWLIST: z.string().optional(),
