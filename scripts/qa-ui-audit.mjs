@@ -61,7 +61,8 @@ function resolveManagedGalleryUrl() {
 
 const BASE_URL = process.env.GALLERY_URL || resolveManagedGalleryUrl() || DEFAULT_BASE_URL;
 const BASE_ORIGIN = new URL(BASE_URL).origin;
-const TEST_NSEC = process.env.TEST_NSEC || 'nsec1v0fhzv8swp7gax4kn8ux6p5wj2ljz32xj0v2ssuxvck5aa0d8xxslue67d';
+const TEST_NSEC =
+  process.env.TEST_NSEC || 'nsec1v0fhzv8swp7gax4kn8ux6p5wj2ljz32xj0v2ssuxvck5aa0d8xxslue67d';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const safe = async (fn) => {
@@ -99,7 +100,8 @@ function shouldIgnoreRequestFailure(req) {
   }
 
   // Local dev health probes are short-lived and may be cancelled during route changes.
-  if (url.includes('/api/health') || url.includes('/api/debug/ws-wallet')) {
+  // Also ignore wallet WebSocket health check - it returns 503 when wallet is not configured.
+  if (url.includes('/api/health') || url.includes('/debug/ws-wallet')) {
     return true;
   }
 
@@ -246,7 +248,9 @@ async function interactOnProfile(page) {
   }
   await clickMaybe(page.getByRole('button', { name: 'Copy npub' }).first());
   findings.interactions.push('copy-npub');
-  await clickMaybe(page.getByRole('button', { name: /Follow this user|Following|Unfollow this user/i }).first());
+  await clickMaybe(
+    page.getByRole('button', { name: /Follow this user|Following|Unfollow this user/i }).first()
+  );
   findings.interactions.push('toggle-follow');
   await clickMaybe(page.getByRole('button', { name: /Mute this user|UNMUTE/i }).first());
   findings.interactions.push('toggle-mute');
@@ -379,11 +383,46 @@ async function interactSidebar(page) {
   const requestFailures = uniq(results.requestFailures);
   const response404 = uniq(results.response404);
 
-  if (consoleErrors.length) log('Browser console errors observed during UI interaction', 'medium', 'console', 'No console error output in normal interactions.', consoleErrors.join('\n'));
-  if (pageErrors.length) log('Page runtime errors detected', 'high', 'console', 'No uncaught exceptions on valid interaction flow.', pageErrors.join('\n'));
-  if (requestFailures.length) log('Failed local requests observed during audit', 'high', 'network', 'Local page/API requests should succeed for expected assets and actions.', requestFailures.join('\n'));
-  if (response404.length) log('404 responses observed during audit', 'low', 'network', 'Navigation should not trigger unexpected 404 responses.', response404.join('\n'));
-  if (consoleWarnings.length) log('Browser console warnings observed during UI interaction', 'low', 'console', 'No noisy console warnings on main user flows.', consoleWarnings.join('\n'));
+  if (consoleErrors.length)
+    log(
+      'Browser console errors observed during UI interaction',
+      'medium',
+      'console',
+      'No console error output in normal interactions.',
+      consoleErrors.join('\n')
+    );
+  if (pageErrors.length)
+    log(
+      'Page runtime errors detected',
+      'high',
+      'console',
+      'No uncaught exceptions on valid interaction flow.',
+      pageErrors.join('\n')
+    );
+  if (requestFailures.length)
+    log(
+      'Failed local requests observed during audit',
+      'high',
+      'network',
+      'Local page/API requests should succeed for expected assets and actions.',
+      requestFailures.join('\n')
+    );
+  if (response404.length)
+    log(
+      '404 responses observed during audit',
+      'low',
+      'network',
+      'Navigation should not trigger unexpected 404 responses.',
+      response404.join('\n')
+    );
+  if (consoleWarnings.length)
+    log(
+      'Browser console warnings observed during UI interaction',
+      'low',
+      'console',
+      'No noisy console warnings on main user flows.',
+      consoleWarnings.join('\n')
+    );
 
   console.log(JSON.stringify(payload));
 
