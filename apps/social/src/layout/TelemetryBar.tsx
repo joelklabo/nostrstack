@@ -476,6 +476,21 @@ export function TelemetryBar() {
       return;
     }
 
+    const checkApiHealth = async (url: string): Promise<boolean> => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(`${url}/api/health`, {
+          method: 'HEAD',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response.ok || response.status === 401 || response.status === 403;
+      } catch {
+        return false;
+      }
+    };
+
     let ws: WebSocket | null = null;
     let retryTimeout: ReturnType<typeof setTimeout> | null = null;
     let pollTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -528,11 +543,20 @@ export function TelemetryBar() {
       if (!pollTimeout) schedulePoll();
     };
 
-    const connect = () => {
+    const connect = async () => {
       if (cancelled) return;
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         markOffline('Browser offline');
         return;
+      }
+
+      const apiBase = apiBaseConfig.baseUrl;
+      if (apiBase) {
+        const isHealthy = await checkApiHealth(apiBase);
+        if (!isHealthy) {
+          markOffline('API unavailable');
+          return;
+        }
       }
 
       const previousSocket = wsRef.current;
