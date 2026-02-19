@@ -8,11 +8,13 @@ type Failure = { kind: string; detail: string };
 async function findVisibleCloseButton(
   modal: ReturnType<Page['locator']>
 ): Promise<ReturnType<Page['locator']> | null> {
-  const button = modal.getByRole('button', { name: /CLOSE/i }).first();
-  if (!(await button.isVisible().catch(() => false))) {
-    return null;
+  const buttons = await modal.getByRole('button', { name: /CLOSE/i }).all();
+  for (const button of buttons) {
+    if (await button.isVisible().catch(() => false)) {
+      return button;
+    }
   }
-  return button;
+  return null;
 }
 
 function envFlag(name: string, fallback: boolean) {
