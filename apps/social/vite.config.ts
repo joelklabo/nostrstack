@@ -7,8 +7,9 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ command }) => {
   const useReactSrc = command === 'serve';
   const useHttps = process.env.USE_HTTPS !== 'false';
-  const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001';
   const devServerPort = Number(process.env.DEV_SERVER_PORT || 4173);
+  const apiPort = process.env.PORT || '3001';
+  const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || `http://localhost:${apiPort}`;
 
   return {
     plugins: [
