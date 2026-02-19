@@ -295,36 +295,50 @@ ndev_claim_slot() {
     
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
       local api_has_unknown_owner social_has_unknown_owner
+      api_has_unknown_owner=0
+      social_has_unknown_owner=0
+
       if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
-        if [[ "$slot" == "0" ]]; then
-          echo "WARNING: Default API port $api_port has stale socket with no process owner"
-          echo "  - This may indicate a crashed/killed dev server leaving a zombie listener"
-          echo "  - Try: pnpm dev:stop:all -c  (force-kills stale listeners)"
-          echo "  - Or manually: sudo lsof -i :$api_port | awk 'NR>1 {print \$2}' | xargs -r kill -9"
-          ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive"
-        else
-          echo "Skipping slot $slot: port $api_port has stale socket with no process owner"
+        echo "Attempting auto-cleanup of stale socket on API port $api_port..."
+        ndev_force_kill_port "$api_port" || true
+        sleep 1
+        if ndev_port_in_use "$api_port"; then
+          if [[ "$slot" == "0" ]]; then
+            echo "WARNING: Default API port $api_port has stale socket with no process owner"
+            echo "  - This may indicate a crashed/killed dev server leaving a zombie listener"
+            echo "  - Try: pnpm dev:stop:all -c  (force-kills stale listeners)"
+            echo "  - Or manually: sudo lsof -i :$api_port | awk 'NR>1 {print \$2}' | xargs -r kill -9"
+            ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive"
+          else
+            echo "Skipping slot $slot: port $api_port has stale socket with no process owner"
+          fi
+          api_has_unknown_owner=1
         fi
-        api_has_unknown_owner=1
-      else
-        api_has_unknown_owner=0
       fi
       if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
-        if [[ "$slot" == "0" ]]; then
-          echo "WARNING: Default Social port $social_port has stale socket with no process owner"
-          echo "  - This may indicate a crashed/killed dev server leaving a zombie listener"
-          echo "  - Try: pnpm dev:stop:all -c  (force-kills stale listeners)"
-          echo "  - Or manually: sudo lsof -i :$social_port | awk 'NR>1 {print \$2}' | xargs -r kill -9"
-          ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive"
-        else
-          echo "Skipping slot $slot: port $social_port has stale socket with no process owner"
+        echo "Attempting auto-cleanup of stale socket on Social port $social_port..."
+        ndev_force_kill_port "$social_port" || true
+        sleep 1
+        if ndev_port_in_use "$social_port"; then
+          if [[ "$slot" == "0" ]]; then
+            echo "WARNING: Default Social port $social_port has stale socket with no process owner"
+            echo "  - This may indicate a crashed/killed dev server leaving a zombie listener"
+            echo "  - Try: pnpm dev:stop:all -c  (force-kills stale listeners)"
+            echo "  - Or manually: sudo lsof -i :$social_port | awk 'NR>1 {print \$2}' | xargs -r kill -9"
+            ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive"
+          else
+            echo "Skipping slot $slot: port $social_port has stale socket with no process owner"
+          fi
+          social_has_unknown_owner=1
         fi
-        social_has_unknown_owner=1
-      else
-        social_has_unknown_owner=0
       fi
+
       ndev_unlock_slot "$slot"
       if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
+        if [[ "$slot" == "0" ]]; then
+          echo "⚠️  Stale sockets detected on default ports - attempting to continue anyway..."
+          return 0
+        fi
         return 2
       fi
       return 1
