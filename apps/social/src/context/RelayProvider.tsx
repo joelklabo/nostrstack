@@ -85,8 +85,11 @@ export function RelayProvider({ children }: { children: ReactNode }) {
     const filter: Filter = { kinds: [10002], authors: [pubkey] };
 
     // Use bootstrap relays to find the user's relay list
+    // Filter by health to avoid DNS-unreachable relays causing repeated failures
+    const healthyRelays = bootstrapRelays.filter((url) => relayMonitor.isHealthy(url));
+    const relaysToUse = healthyRelays.length ? healthyRelays : bootstrapRelays;
     pool
-      .get(bootstrapRelays, filter)
+      .get(relaysToUse, filter)
       .then((event) => {
         if (cancelled) return;
         if (event) {
@@ -161,7 +164,10 @@ export function RelayProvider({ children }: { children: ReactNode }) {
       const event = await signEvent(template);
       const pool = new SimplePool();
       // Publish to both the new list and the bootstrap list to ensure propagation
-      const publishRelays = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])];
+      // Filter by health to avoid DNS-unreachable relays
+      const allRelays = [...new Set([...bootstrapRelays, ...userRelays.map((r) => r.url)])];
+      const healthyRelays = allRelays.filter((url) => relayMonitor.isHealthy(url));
+      const publishRelays = healthyRelays.length ? healthyRelays : allRelays;
 
       await Promise.allSettled(pool.publish(publishRelays, event));
       try {
