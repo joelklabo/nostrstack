@@ -208,32 +208,34 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     await expect(modal.locator('.payment-panel')).toBeVisible();
     await expect(modal.locator('.payment-panel-title')).toHaveText('INVOICE');
     await expect(modal.locator('.payment-invoice-box')).toBeVisible();
-    const regtestBtn = modal.locator('button:has-text("PAY_REGTEST")');
-    const regtestAvailable = await regtestBtn
-      .waitFor({ state: 'attached', timeout: 5000 })
-      .then(async () => {
-        const isVisible = await regtestBtn.isVisible().catch(() => false);
-        const isEnabled = await regtestBtn.isEnabled().catch(() => false);
-        return isVisible && isEnabled;
-      })
-      .catch(() => false);
+
+    const regtestBtn = modal.getByRole('button', { name: /PAY_REGTEST/i });
+    let regtestAvailable = false;
+    try {
+      await regtestBtn.waitFor({ state: 'visible', timeout: 3000 });
+      regtestAvailable = await regtestBtn.isEnabled().catch(() => false);
+    } catch {
+      regtestAvailable = false;
+    }
+
     if (!regtestAvailable) {
       try {
-        await page.screenshot({ path: `/tmp/qa-regtest-modal-${Date.now()}.png` });
+        await page.screenshot({ path: `/tmp/qa-regtest-no-button-${Date.now()}.png` });
       } catch {
         // ignore screenshot failures
       }
       console.log(
         '⚠️ PAY_REGTEST button not available - regtest wallet not configured on API, skipping regtest payment test'
       );
-      await modal
-        .locator('.payment-header button')
-        .getByText(/CLOSE/i)
-        .click({ force: true })
-        .catch(() => {});
+      try {
+        await modal.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+      } catch {
+        // ignore close failures
+      }
       continue;
     }
     let paid = false;
+    let modalClosed = false;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         await regtestBtn.scrollIntoViewIfNeeded();
@@ -245,11 +247,12 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
           // ignore screenshot failures
         }
         console.log('⚠️ PAY_REGTEST button not clickable, skipping regtest payment test');
-        await modal
-          .locator('.payment-header button')
-          .getByText(/CLOSE/i)
-          .click({ force: true })
-          .catch(() => {});
+        try {
+          await modal.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+        } catch {
+          // ignore close failures
+        }
+        modalClosed = true;
         break;
       }
       paid = await expect(modal)
@@ -258,16 +261,25 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .catch(() => false);
       if (paid) break;
     }
-    if (!paid) {
-      const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
-      await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
-      await closeBtn.click({ force: true });
-      continue;
+    if (!paid && !modalClosed) {
+      try {
+        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
+        await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
+        await closeBtn.click({ force: true });
+      } catch {
+        // ignore close failures
+      }
     }
-    const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
-    await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
-    await closeBtn.click({ force: true });
-    return true;
+    if (paid && !modalClosed) {
+      try {
+        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i);
+        await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
+        await closeBtn.click({ force: true });
+      } catch {
+        // ignore close failures
+      }
+      return true;
+    }
   }
   return false;
 }
