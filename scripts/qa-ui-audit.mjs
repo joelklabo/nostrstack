@@ -9,6 +9,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..');
 
+function getDevServerPort() {
+  return process.env.DEV_SERVER_PORT || null;
+}
+
 function parseSessionFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const fields = {};
@@ -59,7 +63,10 @@ function resolveManagedGalleryUrl() {
   return null;
 }
 
-const BASE_URL = process.env.GALLERY_URL || resolveManagedGalleryUrl() || DEFAULT_BASE_URL;
+const devServerPort = getDevServerPort();
+const devServerFallback = devServerPort ? `http://localhost:${devServerPort}` : null;
+const BASE_URL =
+  process.env.GALLERY_URL || resolveManagedGalleryUrl() || devServerFallback || DEFAULT_BASE_URL;
 const BASE_ORIGIN = new URL(BASE_URL).origin;
 const TEST_NSEC =
   process.env.TEST_NSEC || 'nsec1v0fhzv8swp7gax4kn8ux6p5wj2ljz32xj0v2ssuxvck5aa0d8xxslue67d';
