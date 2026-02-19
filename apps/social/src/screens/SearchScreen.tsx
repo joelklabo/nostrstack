@@ -237,12 +237,13 @@ export function SearchScreen() {
           setSubmitFeedback(`Found ${results.length} note ${resultWord} for "${q}".`);
         }
       } catch (err) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          setNotesLoading(false);
+          return;
+        }
         applyNotesSearchError(q, err, hasExistingNotes);
       } finally {
-        if (!controller.signal.aborted) {
-          setNotesLoading(false);
-        }
+        setNotesLoading(false);
       }
     },
     [applyNotesSearchError, pool, relayList]
@@ -299,12 +300,13 @@ export function SearchScreen() {
       }
       setHasMore(moreResults.length >= NOTES_PAGE_SIZE);
     } catch (err) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        setIsLoadingMore(false);
+        return;
+      }
       applyNotesSearchError(lastSearchQuery, err, notes.length > 0);
     } finally {
-      if (!controller.signal.aborted) {
-        setIsLoadingMore(false);
-      }
+      setIsLoadingMore(false);
     }
   }, [applyNotesSearchError, isLoadingMore, notes, lastSearchQuery, pool, relayList]);
 
