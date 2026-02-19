@@ -199,6 +199,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       if (!nwcPaid) {
         await modal
           .locator('.payment-header button')
+          .filter({ visible: true })
           .getByText(/CLOSE/i)
           .first()
           .click({ force: true });
@@ -206,7 +207,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         continue;
       }
       await expect(modal.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
+      const closeBtn = modal
+        .locator('.payment-header button')
+        .filter({ visible: true })
+        .getByText(/CLOSE/i)
+        .first();
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
@@ -305,7 +310,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     if (!paid && !modalClosed) {
       try {
-        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
+        const closeBtn = modal
+          .locator('.payment-header button')
+          .filter({ visible: true })
+          .getByText(/CLOSE/i)
+          .first();
         await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
         await closeBtn.click({ force: true });
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
@@ -315,7 +324,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     if (paid && !modalClosed) {
       try {
-        const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
+        const closeBtn = modal
+          .locator('.payment-header button')
+          .filter({ visible: true })
+          .getByText(/CLOSE/i)
+          .first();
         await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
         await closeBtn.click({ force: true });
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
