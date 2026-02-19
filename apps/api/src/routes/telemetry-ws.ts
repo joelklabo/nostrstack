@@ -90,6 +90,7 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   const POLL_BASE_MS = 5000;
   const POLL_MAX_MS = 60000;
   const BACKPRESSURE_LOG_COOLDOWN_MS = 5 * 60 * 1000;
+  const TIMEOUT_LOG_COOLDOWN_MS = 5 * 60 * 1000;
   let pollDelayMs = POLL_BASE_MS;
   let nextPollAt = Date.now();
   let pollInFlight = false;
@@ -253,9 +254,14 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       const errorAt = Date.now();
       const reason = recordPollFailure(msg);
       const isBackpressure = reason === 'backpressure';
+      const isTimeout = reason === 'timeout';
       pollDelayMs = Math.min(POLL_MAX_MS, Math.max(POLL_BASE_MS, pollDelayMs * 2));
       nextPollAt = errorAt + pollDelayMs;
-      const logCooldown = isBackpressure ? BACKPRESSURE_LOG_COOLDOWN_MS : 60000;
+      const logCooldown = isBackpressure
+        ? BACKPRESSURE_LOG_COOLDOWN_MS
+        : isTimeout
+          ? TIMEOUT_LOG_COOLDOWN_MS
+          : 60000;
       if (msg !== lastErrorMsg || errorAt - lastErrorAt > logCooldown) {
         if (isBackpressure) {
           app.log.info({ err, pollDelayMs }, 'telemetry poll backpressure, backing off');
