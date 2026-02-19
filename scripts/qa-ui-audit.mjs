@@ -5,13 +5,37 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const USE_HTTPS = process.env.USE_HTTPS !== 'false';
-const DEFAULT_BASE_URL = USE_HTTPS ? 'https://localhost:4173' : 'http://localhost:4173';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..');
+const DEFAULT_PORT = 4173;
 
 function getDevServerPort() {
   return process.env.DEV_SERVER_PORT || null;
+}
+
+async function probeProtocol(port) {
+  const httpsUrl = `https://localhost:${port}`;
+  const httpUrl = `http://localhost:${port}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(httpsUrl, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok || res.status === 404) return 'https';
+  } catch {
+    // HTTPS failed, try HTTP
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(httpUrl, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok || res.status === 404) return 'http';
+  } catch {
+    // Both failed
+  }
+  return null;
 }
 
 function parseSessionFile(filePath) {
@@ -38,11 +62,10 @@ function pidAlive(pidText) {
   }
 }
 
-function resolveManagedGalleryUrl() {
+async function resolveManagedGalleryUrl() {
   const sessionsDir = path.join(REPO_ROOT, '.logs', 'dev', 'sessions');
   if (!fs.existsSync(sessionsDir)) return null;
   const requestedAgent = (process.env.NOSTRDEV_AGENT || '').trim();
-  const protocol = USE_HTTPS ? 'https' : 'http';
   const files = fs
     .readdirSync(sessionsDir)
     .filter((name) => name.endsWith('.session'))
@@ -56,7 +79,8 @@ function resolveManagedGalleryUrl() {
       if (requestedAgent && fields.NOSTRDEV_SESSION_AGENT !== requestedAgent) continue;
       const port = Number(fields.NOSTRDEV_SESSION_SOCIAL_PORT);
       if (Number.isInteger(port) && port > 0) {
-        return `${protocol}://localhost:${port}`;
+        const protocol = await probeProtocol(port);
+        return `${protocol || 'http'}://localhost:${port}`;
       }
     } catch {
       // Ignore unreadable/stale session files and continue fallback resolution.
@@ -66,12 +90,21 @@ function resolveManagedGalleryUrl() {
 }
 
 const devServerPort = getDevServerPort();
-const devServerFallback = devServerPort
-  ? `${USE_HTTPS ? 'https' : 'http'}://localhost:${devServerPort}`
-  : null;
-const BASE_URL =
-  process.env.GALLERY_URL || resolveManagedGalleryUrl() || devServerFallback || DEFAULT_BASE_URL;
-const BASE_ORIGIN = new URL(BASE_URL).origin;
+
+async function resolveBaseUrl() {
+  if (process.env.GALLERY_URL) return process.env.GALLERY_URL;
+
+  const managedUrl = await resolveManagedGalleryUrl();
+  if (managedUrl) return managedUrl;
+
+  if (devServerPort) {
+    const protocol = await probeProtocol(devServerPort);
+    return `${protocol || 'http'}://localhost:${devServerPort}`;
+  }
+
+  const protocol = await probeProtocol(DEFAULT_PORT);
+  return `${protocol || 'http'}://localhost:${DEFAULT_PORT}`;
+}
 const TEST_NSEC =
   process.env.TEST_NSEC || 'nsec1v0fhzv8swp7gax4kn8ux6p5wj2ljz32xj0v2ssuxvck5aa0d8xxslue67d';
 
@@ -95,9 +128,9 @@ const results = {
   response404: []
 };
 
-function shouldIgnoreRequestFailure(req) {
+function shouldIgnoreRequestFailure(req, baseOrigin) {
   const url = req.url();
-  if (!url.startsWith(BASE_ORIGIN)) return true;
+  if (!url.startsWith(baseOrigin)) return true;
   if (url.includes('/api/logs/stream')) return true;
 
   const err = req.failure()?.errorText || '';
@@ -283,6 +316,9 @@ async function interactSidebar(page) {
 (async () => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = process.env.NODE_TLS_REJECT_UNAUTHORIZED ?? '0';
 
+  const BASE_URL = await resolveBaseUrl();
+  const BASE_ORIGIN = new URL(BASE_URL).origin;
+
   const browser = await chromium.launch({
     headless: true,
     args: ['--ignore-certificate-errors', '--no-sandbox']
@@ -300,7 +336,7 @@ async function interactSidebar(page) {
   });
   page.on('pageerror', (err) => results.pageErrors.push(String(err.message || err)));
   page.on('requestfailed', (req) => {
-    if (shouldIgnoreRequestFailure(req)) return;
+    if (shouldIgnoreRequestFailure(req, BASE_ORIGIN)) return;
     const url = req.url();
     const err = req.failure()?.errorText || 'unknown';
     results.requestFailures.push(`${url} :: ${err}`);
