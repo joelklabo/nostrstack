@@ -175,7 +175,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
   }
   const total = await zapButtons.count();
   for (let i = 0; i < Math.min(total, 5); i += 1) {
-    await zapButtons.nth(i).click({ force: true });
+    const btn = zapButtons.nth(i);
+    const isVisible = await btn.isVisible().catch(() => false);
+    if (!isVisible) continue;
+    await btn.click({ force: true });
     await expect(page.locator('.payment-modal').last()).toBeVisible();
     const modal = page.locator('.payment-modal').last();
     if (mode === 'nwc') {
@@ -190,12 +193,14 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
           .getByText(/CLOSE/i)
           .first()
           .click({ force: true });
+        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
         continue;
       }
       await expect(modal.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
       const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
+      await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       return true;
     }
 
@@ -210,6 +215,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .getByText(/CLOSE/i)
         .first()
         .click({ force: true });
+      await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       continue;
     }
     await expect(modal.locator('.payment-qr')).toBeVisible();
@@ -241,6 +247,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
           .getByText(/CLOSE/i)
           .first()
           .click({ force: true });
+        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       } catch {
         // ignore close failures
       }
@@ -265,6 +272,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
             .getByText(/CLOSE/i)
             .first()
             .click({ force: true });
+          await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
         } catch {
           // ignore close failures
         }
@@ -282,6 +290,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
         await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
         await closeBtn.click({ force: true });
+        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       } catch {
         // ignore close failures
       }
@@ -291,6 +300,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         const closeBtn = modal.locator('.payment-header button').getByText(/CLOSE/i).first();
         await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
         await closeBtn.click({ force: true });
+        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       } catch {
         // ignore close failures
       }
