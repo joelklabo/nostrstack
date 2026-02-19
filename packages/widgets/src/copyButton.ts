@@ -39,7 +39,7 @@ const ERROR_ICON = `
 </svg>
 `;
 
-export async function copyToClipboard(text: string) {
+export async function copyToClipboard(text: string): Promise<void> {
   const trimmed = text.trim();
   if (!trimmed) return;
 
@@ -57,7 +57,55 @@ export async function copyToClipboard(text: string) {
 
   // cspell:ignore notallowederror securityerror
 
-  if (navigator?.clipboard?.writeText) {
+  const copyWithLegacyFallback = () => {
+    const el = document.createElement('textarea');
+    el.value = trimmed;
+    el.setAttribute('readonly', 'true');
+    el.style.position = 'fixed';
+    el.style.left = '0';
+    el.style.top = '0';
+    el.style.width = '2em';
+    el.style.height = '2em';
+    el.style.padding = '0';
+    el.style.border = 'none';
+    el.style.outline = 'none';
+    el.style.boxShadow = 'none';
+    el.style.background = 'transparent';
+    el.style.fontSize = '16px';
+    document.body.appendChild(el);
+    try {
+      el.focus();
+      el.setSelectionRange(0, trimmed.length);
+      const hasExecCommand = typeof document.execCommand === 'function';
+      if (!hasExecCommand || !document.execCommand('copy')) {
+        throw new Error('Copy failed');
+      }
+    } finally {
+      el.remove();
+    }
+  };
+
+  const canUseClipboardApi = () => {
+    return (
+      typeof navigator !== 'undefined' &&
+      typeof navigator.clipboard !== 'undefined' &&
+      typeof navigator.clipboard.writeText === 'function'
+    );
+  };
+
+  if (canUseClipboardApi()) {
+    try {
+      const permissionStatus = await navigator.permissions
+        .query({ name: 'clipboard-write' as PermissionName })
+        .catch(() => null);
+      if (permissionStatus && permissionStatus.state === 'denied') {
+        copyWithLegacyFallback();
+        return;
+      }
+    } catch {
+      // Permissions API not supported or error, try clipboard API directly
+    }
+
     try {
       await navigator.clipboard.writeText(trimmed);
       return;
@@ -68,32 +116,7 @@ export async function copyToClipboard(text: string) {
     }
   }
 
-  // Fallback for older browsers / restricted clipboard APIs.
-  const el = document.createElement('textarea');
-  el.value = trimmed;
-  el.setAttribute('readonly', 'true');
-  el.style.position = 'fixed';
-  el.style.left = '0';
-  el.style.top = '0';
-  el.style.width = '2em';
-  el.style.height = '2em';
-  el.style.padding = '0';
-  el.style.border = 'none';
-  el.style.outline = 'none';
-  el.style.boxShadow = 'none';
-  el.style.background = 'transparent';
-  el.style.fontSize = '16px';
-  document.body.appendChild(el);
-  try {
-    el.focus();
-    el.setSelectionRange(0, trimmed.length);
-    const hasExecCommand = typeof document.execCommand === 'function';
-    if (!hasExecCommand || !document.execCommand('copy')) {
-      throw new Error('Copy failed');
-    }
-  } finally {
-    el.remove();
-  }
+  copyWithLegacyFallback();
 }
 
 export function createCopyButton(opts: CopyButtonOptions) {

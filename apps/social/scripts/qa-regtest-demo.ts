@@ -158,8 +158,8 @@ async function loginWithNsec(page: Page, nsec: string) {
   await expect(page.getByRole('heading', { name: 'NostrStack' })).toBeVisible({ timeout: 30_000 });
   await page.getByText('Enter nsec manually').click();
   await page.getByPlaceholder('nsec1...').fill(nsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Live Feed')).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 20_000 });
 }
 
 async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {

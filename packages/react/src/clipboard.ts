@@ -1,4 +1,4 @@
-export async function copyToClipboard(text: string) {
+export async function copyToClipboard(text: string): Promise<void> {
   const value = String(text ?? '').trim();
   if (!value) throw new Error('Nothing to copy');
 
@@ -51,7 +51,27 @@ export async function copyToClipboard(text: string) {
     if (!ok) throw new Error('Copy failed');
   };
 
-  if (typeof navigator !== 'undefined' && navigator?.clipboard?.writeText) {
+  const canUseClipboardApi = () => {
+    return (
+      typeof navigator !== 'undefined' &&
+      typeof navigator.clipboard !== 'undefined' &&
+      typeof navigator.clipboard.writeText === 'function'
+    );
+  };
+
+  if (canUseClipboardApi()) {
+    try {
+      const permissionStatus = await navigator.permissions
+        .query({ name: 'clipboard-write' as PermissionName })
+        .catch(() => null);
+      if (permissionStatus && permissionStatus.state === 'denied') {
+        copyWithLegacyFallback();
+        return;
+      }
+    } catch {
+      // Permissions API not supported or error, try clipboard API directly
+    }
+
     try {
       await navigator.clipboard.writeText(value);
       return;
