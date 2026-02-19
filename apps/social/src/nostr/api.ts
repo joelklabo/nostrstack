@@ -233,9 +233,6 @@ export async function fetchNostrEventFromApi(
   if (cached?.data && cached.resolvedAtMs && now - cached.resolvedAtMs < EVENT_FETCH_TTL_MS) {
     return cached.data;
   }
-  if (cached?.error && cached.retryAtMs > now) {
-    throw new Error(cached.error);
-  }
   if (cached?.inFlight) {
     return cached.inFlight;
   }
