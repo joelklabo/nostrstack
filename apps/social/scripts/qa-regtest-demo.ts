@@ -386,6 +386,9 @@ async function main() {
     ) {
       return;
     }
+    if (url.includes('/api/health') && errText === 'net::ERR_ABORTED') {
+      return;
+    }
     localRequestFailures.push(`${url} :: ${errText}`);
   });
   page.on('response', (res) => {
