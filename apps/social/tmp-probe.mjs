@@ -7,7 +7,7 @@ async function login(page) {
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
   await page.getByText('Enter nsec manually').click();
   await page.getByPlaceholder('nsec1...').fill(SK);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in with private key' }).click();
   await page.waitForSelector('main[role="main"]', { timeout: 12000 });
 }
 
