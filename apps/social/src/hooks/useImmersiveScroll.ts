@@ -67,7 +67,7 @@ export function useImmersiveScroll(options: UseImmersiveScrollOptions = {}) {
 
     if (containerRef.current) {
       containerRef.current.removeEventListener('scroll', handleScroll);
-      if (animationFrameRef.current !== null) {
+      if (animationFrameRef.current !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
@@ -86,7 +86,7 @@ export function useImmersiveScroll(options: UseImmersiveScrollOptions = {}) {
         containerRef.current.removeEventListener('scroll', handleScroll);
         containerRef.current = null;
       }
-      if (animationFrameRef.current !== null) {
+      if (animationFrameRef.current !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
@@ -113,7 +113,7 @@ export function useImmersiveScroll(options: UseImmersiveScrollOptions = {}) {
         containerRef.current.removeEventListener('scroll', handleScroll);
         containerRef.current = null;
       }
-      if (animationFrameRef.current !== null) {
+      if (animationFrameRef.current !== null && typeof window !== 'undefined') {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
