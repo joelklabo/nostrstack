@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export type View = 'feed' | 'search' | 'profile' | 'settings' | 'offers';
+export type View = 'feed' | 'search' | 'profile' | 'settings' | 'offers' | 'help';
 
 interface KeyboardShortcutsOptions {
   currentView: View;

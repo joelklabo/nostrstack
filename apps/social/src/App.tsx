@@ -405,6 +405,9 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     if (isProfileRoute || profileRoutePubkey) {
       return 'profile';
     }
+    if (isHelpRoute) {
+      return 'help';
+    }
     if (isSettingsRoute) {
       return 'settings';
     }
@@ -418,6 +421,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   }, [
     currentView,
     isProfileRoute,
+    isHelpRoute,
     isSettingsRoute,
     isOffersRoute,
     isSearchRoute,
@@ -863,6 +867,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
                     setBrandPreset={setBrandPreset}
                   />
                 )}
+                {routeBoundView === 'help' && <FeedScreen isImmersive={isImmersive} />}
               </>
             )}
           </Suspense>

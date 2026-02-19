@@ -312,6 +312,11 @@ export const Sidebar = memo(function Sidebar({
             Profile
           </button>
         )}
+        {isGuest && currentView === 'profile' && (
+          <button type="button" className="nav-item active" aria-current="page">
+            Profile
+          </button>
+        )}
         <button
           type="button"
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
@@ -323,8 +328,9 @@ export const Sidebar = memo(function Sidebar({
         {onOpenHelp && (
           <button
             type="button"
-            className="nav-item"
+            className={`nav-item ${currentView === 'help' ? 'active' : ''}`}
             onClick={handleOpenHelp}
+            aria-current={currentView === 'help' ? 'page' : undefined}
             aria-label="Open help and keyboard shortcuts"
           >
             Help
