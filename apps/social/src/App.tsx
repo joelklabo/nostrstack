@@ -167,6 +167,33 @@ const LOCAL_API_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const LOCAL_API_TIMEOUT_MS = 3_000;
 const LOCAL_API_BASE_FALLBACK = '/api';
 const RELAY_DEGRADED_WINDOW_MS = 5 * 60_000;
+
+const HEALTH_CHECK_SUPPRESSION_MS = 5_000;
+
+async function suppressExpectedNetworkErrorsAsync<T>(fn: () => Promise<T>): Promise<T> {
+  const originalError = console.error;
+  const startTime = Date.now();
+  console.error = (...args: unknown[]) => {
+    const message = args[0];
+    if (
+      typeof message === 'string' &&
+      (message.includes('Failed to load resource') ||
+        message.includes('net::ERR_CONNECTION_REFUSED') ||
+        message.includes('net::ERR_CONNECTION_RESET') ||
+        message.includes('net::ERR_NAME_NOT_RESOLVED'))
+    ) {
+      if (Date.now() - startTime < HEALTH_CHECK_SUPPRESSION_MS) {
+        return;
+      }
+    }
+    originalError.apply(console, args);
+  };
+  try {
+    return await fn();
+  } finally {
+    console.error = originalError;
+  }
+}
 const LOCAL_API_UNAVAILABLE: ApiBaseResolution = {
   raw: '',
   baseUrl: '',
@@ -914,7 +941,9 @@ export default function App() {
         timeoutHandle = window.setTimeout(() => resolve(null), LOCAL_API_TIMEOUT_MS);
       });
       try {
-        const response = await Promise.race([fetch(`${url}/api/health`), timeoutPromise]);
+        const response = await suppressExpectedNetworkErrorsAsync(async () => {
+          return Promise.race([fetch(`${url}/api/health`), timeoutPromise]);
+        });
         return !!response && response.ok;
       } catch {
         return false;

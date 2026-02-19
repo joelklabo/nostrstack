@@ -26,7 +26,6 @@ describe('App', () => {
         <App />
       </ToastProvider>
     );
-    // It should transition to login
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Sign in to NostrStack' })).toBeTruthy();
     });
@@ -51,5 +50,25 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: 'Retry route' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Go to feed' })).toBeTruthy();
+  });
+
+  it('renders when fetch fails for health check (suppresses console noise)', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
+
+    render(
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Sign in to NostrStack' })).toBeTruthy();
+    });
+
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 });
