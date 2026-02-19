@@ -145,7 +145,13 @@ function shouldIgnoreRequestFailure(req, baseOrigin) {
 
   // Local dev health probes are short-lived and may be cancelled during route changes.
   // Also ignore wallet WebSocket health check - it returns 503 when wallet is not configured.
-  if (url.includes('/api/health') || url.includes('/debug/ws-wallet')) {
+  // Bitcoin status and bolt12 offers depend on external services that may be slow/unavailable in dev.
+  if (
+    url.includes('/api/health') ||
+    url.includes('/debug/ws-wallet') ||
+    url.includes('/api/bitcoin/status') ||
+    url.includes('/api/bolt12/offers')
+  ) {
     return true;
   }
 
