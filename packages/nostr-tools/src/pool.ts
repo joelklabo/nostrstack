@@ -9,6 +9,7 @@ export type SubscribeManyOptions = {
   oneose?: (relayUrl?: string) => void;
   onclose?: (reasons: string[]) => void;
   onRelayFailure?: (relayUrl: string, reason?: string) => void;
+  onRelaySuccess?: (relayUrl: string) => void;
   maxWait?: number;
 };
 
@@ -91,6 +92,8 @@ type SubscriptionState = {
   eoseRelays: Set<string>;
   options: SubscribeManyOptions;
   timer: ReturnType<typeof setTimeout> | null;
+  connectedFailedRelays: string[];
+  connectedSucceededRelays: string[];
 };
 
 let customWebSocketImpl: typeof WebSocket | null = null;
@@ -309,15 +312,19 @@ export class SimplePool {
     }
     const closeReasons: string[] = [];
     let closed = false;
+    let connectedFailedRelays: string[] = [];
+    let connectedSucceededRelays: string[] = [];
 
     const start = async () => {
-      const { failed, succeeded } = await this.ensureRelays(relays);
-      if (failed.length > 0) {
-        failed.forEach((url) => {
+      const result = await this.ensureRelays(relays);
+      connectedFailedRelays = result.failed;
+      connectedSucceededRelays = result.succeeded;
+      if (connectedFailedRelays.length > 0) {
+        connectedFailedRelays.forEach((url) => {
           opts.onRelayFailure?.(url, 'connection failed');
         });
       }
-      if (succeeded.length === 0) {
+      if (connectedSucceededRelays.length === 0) {
         throw new Error('All relays failed to connect');
       }
       const rustFilter = toRustFilter(filter);
@@ -325,15 +332,21 @@ export class SimplePool {
       if (typeof opts.maxWait === 'number') {
         autoClose.timeout(Duration.fromMillis(BigInt(opts.maxWait)));
       }
-      const output = await this.client.subscribeTo(succeeded, rustFilter, autoClose);
-      const subscribedRelays = output.success.length ? output.success : succeeded;
+      const output = await this.client.subscribeTo(connectedSucceededRelays, rustFilter, autoClose);
+      const subscribedRelays = output.success.length ? output.success : connectedSucceededRelays;
       const state: SubscriptionState = {
         id: output.id,
         relays: subscribedRelays,
         eoseRelays: new Set(),
         options: opts,
-        timer: null
+        timer: null,
+        connectedFailedRelays,
+        connectedSucceededRelays
       };
+
+      connectedSucceededRelays.forEach((relayUrl) => {
+        opts.onRelaySuccess?.(relayUrl);
+      });
 
       if (typeof opts.maxWait === 'number') {
         state.timer = setTimeout(() => {
@@ -352,10 +365,13 @@ export class SimplePool {
       if (closed) return;
       closed = true;
       if (reason) closeReasons.push(reason);
-      if (shouldReportRelayFailure(reason)) {
-        relays.forEach((relayUrl) => {
-          opts.onRelayFailure?.(relayUrl, reason);
-        });
+      if (shouldReportRelayFailure(reason) && subscriptionId) {
+        const sub = this.subscriptions.get(subscriptionId);
+        if (sub) {
+          sub.connectedFailedRelays.forEach((relayUrl) => {
+            opts.onRelayFailure?.(relayUrl, reason);
+          });
+        }
       }
       if (subscriptionId) {
         this.subscriptions.delete(subscriptionId);
@@ -369,16 +385,13 @@ export class SimplePool {
         subscriptionId = id;
       })
       .catch((err) => {
-        if (err instanceof Error && opts.onRelayFailure) {
-          relays.forEach((relayUrl) => {
-            opts.onRelayFailure?.(relayUrl, err.message);
-          });
-        } else if (opts.onRelayFailure) {
-          relays.forEach((relayUrl) => {
-            opts.onRelayFailure?.(relayUrl, 'subscribe failed');
+        const errorMessage = err instanceof Error ? err.message : 'subscribe failed';
+        if (opts.onRelayFailure) {
+          connectedFailedRelays.forEach((relayUrl: string) => {
+            opts.onRelayFailure?.(relayUrl, errorMessage);
           });
         }
-        closeReasons.push(err instanceof Error ? err.message : 'subscribe failed');
+        closeReasons.push(errorMessage);
         close('error');
       });
 
