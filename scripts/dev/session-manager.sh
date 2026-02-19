@@ -344,12 +344,7 @@ ndev_claim_slot() {
       fi
 
       if [[ "$api_has_owner" == "0" || "$social_has_owner" == "0" ]]; then
-        if [[ "$slot" == "0" ]]; then
-          echo "⚠️  Ports with unknown owners detected on default ports - attempting to continue anyway..."
-          ndev_write_session_file "$slot" "$api_port" "$social_port"
-          ndev_unlock_slot "$slot"
-          return 0
-        fi
+        echo "Port with unknown owner detected - cannot safely claim this slot"
         ndev_unlock_slot "$slot"
         return 2
       fi
