@@ -38,6 +38,18 @@ function parseSessionValue(contents: string, key: string) {
   return line.slice(key.length + 1).trim();
 }
 
+function fallbackSessionUrls(): { galleryUrl: string | undefined; apiUrl: string | undefined } {
+  const portEnv = process.env.DEV_SERVER_PORT;
+  const galleryPort = process.env.GALLERY_PORT ?? portEnv ?? '4173';
+  const apiPort = process.env.API_PORT ?? portEnv ?? '3001';
+  const protocol = process.env.QA_USE_HTTPS !== '0' ? 'https' : 'http';
+
+  return {
+    galleryUrl: `${protocol}://localhost:${galleryPort}`,
+    apiUrl: `${protocol}://localhost:${apiPort}`
+  };
+}
+
 async function sessionUrlReachable(url: string, timeoutMs = 1500) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -123,7 +135,8 @@ async function detectManagedSessionUrls(): Promise<ManagedSession> {
     return { galleryUrl, apiUrl };
   }
 
-  return { galleryUrl: undefined, apiUrl: undefined };
+  const fallbackUrls = fallbackSessionUrls();
+  return { galleryUrl: fallbackUrls.galleryUrl, apiUrl: fallbackUrls.apiUrl };
 }
 
 async function ensureGalleryAvailable(baseUrl: string) {
@@ -234,6 +247,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       .then(() => true)
       .catch(() => false);
     if (!invoiceReady) {
+      console.log('⚠️ payment modal opened but no invoice grid found - skipping payment test');
       const closeBtn3 = await findVisibleCloseButton(modal);
       if (closeBtn3) {
         await closeBtn3.click({ force: true });
@@ -246,9 +260,12 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     await expect(modal.locator('.payment-panel-title')).toHaveText('INVOICE');
     await expect(modal.locator('.payment-invoice-box')).toBeVisible();
 
-    const regtestBtn = modal.getByRole('button', { name: /PAY_REGTEST/i });
+    const regtestBtn = modal.getByRole('button', { name: /PAY_REGTEST|Pay.*Regtest/i });
     const regtestBtnCount = await regtestBtn.count();
     if (regtestBtnCount === 0) {
+      console.log(
+        '⚠️ PAY_REGTEST button not found in modal - regtest wallet may not be configured, skipping regtest payment test'
+      );
       const closeBtn4 = await findVisibleCloseButton(modal);
       if (closeBtn4) {
         await closeBtn4.click({ force: true }).catch(() => {});
@@ -590,6 +607,15 @@ async function main() {
     failures.forEach((f) => {
       console.error(`\n[${f.kind}]`);
       console.error(f.detail);
+      if (f.kind === 'qa' && (f.detail.includes('preflight') || f.detail.includes('Timeout'))) {
+        console.error('\n💡 Tip: Could not reach gallery server.');
+        console.error('   - Make sure dev servers are running: pnpm dev:logs');
+        console.error('   - Or set explicit URLs:');
+        console.error(
+          '     GALLERY_URL=https://localhost:4173 API_URL=http://localhost:3001 pnpm qa:regtest-demo'
+        );
+        console.error('   - Or skip preflight check: SKIP_PREFLIGHT=1 pnpm qa:regtest-demo');
+      }
       if (f.kind === 'requestfailed') {
         console.error('\n💡 Tip: Check that API and gallery servers are running.');
         console.error('   - Run: pnpm dev:logs');
@@ -599,9 +625,11 @@ async function main() {
         );
       }
       if (f.kind === 'qa' && f.detail.includes('PAY_REGTEST')) {
-        console.error('\n💡 Tip: PAY_REGTEST requires regtest wallet configured on API.');
-        console.error('   - Ensure ENABLE_REGTEST_PAY=true in API');
-        console.error('   - Or use NWC_URI for wallet-less testing');
+        console.error('\n💡 Tip: PAY_REGTEST button not found or not visible.');
+        console.error('   - This is expected if regtest wallet is not configured on API');
+        console.error('   - Ensure ENABLE_REGTEST_PAY=true in API .env');
+        console.error('   - Or use NWC_URI for wallet-less testing:');
+        console.error('     NWC_URI=<your-nwc-uri> pnpm qa:regtest-demo');
       }
     });
     process.exit(1);
