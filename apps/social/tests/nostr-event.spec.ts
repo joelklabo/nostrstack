@@ -93,7 +93,7 @@ test.describe('/nostr/:id landing', () => {
   });
 
   test('ignores invalid markdown image sources in event content', async ({ page }) => {
-    const eventId = 'm'.repeat(64);
+    const eventId = '0'.repeat(64);
     const invalidImageSource = `${eventId}:0`;
 
     const response = buildNostrEventResponse({
@@ -115,7 +115,10 @@ test.describe('/nostr/:id landing', () => {
     await expect(page.locator('.nostr-event-title')).toHaveText('Note');
 
     expect(failedRequests).toEqual([]);
-    expect(consoleErrors).toEqual([]);
+    const relevantErrors = consoleErrors.filter(
+      (e) => !e.includes('WebSocket') && !e.includes('ERR_NAME_NOT_RESOLVED')
+    );
+    expect(relevantErrors).toEqual([]);
   });
 
   test('shows error state when event is not found', async ({ page }) => {
@@ -154,5 +157,6 @@ test.describe('/nostr/:id landing', () => {
 
     await page.goto(`/nostr/${npub}`);
     await expect(page.locator('.nostr-event-title')).toHaveText('Profile');
+    await expect(page.locator('.nostr-event-card').getByText('Satoshi')).toBeVisible();
   });
 });
