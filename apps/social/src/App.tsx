@@ -581,33 +581,45 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
 
   if (!pubkey && !isGuest) {
     return (
-      <main className="feed-container" id="main-content" role="main">
-        {relayConnectivityDegraded && (
-          <Alert
-            tone="warning"
-            title="Relay connectivity degraded"
-            style={{ marginBottom: '1rem' }}
+      <div className="social-layout">
+        <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+        <Sidebar
+          currentView={routeBoundView}
+          setCurrentView={setCurrentView}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={closeMobileMenu}
+          onOpenHelp={() => setHelpOpen(true)}
+          onLogout={handleLogout}
+          isGuest={isGuest}
+        />
+        <main className="feed-container" id="main-content" role="main">
+          {relayConnectivityDegraded && (
+            <Alert
+              tone="warning"
+              title="Relay connectivity degraded"
+              style={{ marginBottom: '1rem' }}
+            >
+              Some relay/WebSocket connections are failing. Wallet funding and publish actions may
+              be delayed or fail until relays recover. Check your relay settings in the Relays view.
+            </Alert>
+          )}
+          <ErrorBoundary
+            key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
+            resetToken={routeRecoveryKey}
+            fallback={
+              <RouteLoadFallback
+                message="Unable to load the login screen. Please try reloading."
+                onRetry={retryRouteAndHealthCheck}
+                retryLabel="Retry route"
+              />
+            }
           >
-            Some relay/WebSocket connections are failing. Wallet funding and publish actions may be
-            delayed or fail until relays recover. Check your relay settings in the Relays view.
-          </Alert>
-        )}
-        <ErrorBoundary
-          key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
-          resetToken={routeRecoveryKey}
-          fallback={
-            <RouteLoadFallback
-              message="Unable to load the login screen. Please try reloading."
-              onRetry={retryRouteAndHealthCheck}
-              retryLabel="Retry route"
-            />
-          }
-        >
-          <Suspense fallback={<LoadingFallback message="Loading login screen..." />}>
-            <LoginScreen />
-          </Suspense>
-        </ErrorBoundary>
-      </main>
+            <Suspense fallback={<LoadingFallback message="Loading login screen..." />}>
+              <LoginScreen />
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+      </div>
     );
   }
 
