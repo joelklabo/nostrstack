@@ -335,6 +335,7 @@ export function LoginScreen() {
     if (mode !== 'menu') return;
     if (authError?.toLowerCase().includes('extension not found')) {
       setMode('nsec');
+      setNsecError(null);
     }
   }, [authError, mode]);
 
@@ -378,7 +379,10 @@ export function LoginScreen() {
             <button
               type="button"
               className="auth-btn auth-btn--outline"
-              onClick={() => setMode('nsec')}
+              onClick={() => {
+                setMode('nsec');
+                setNsecError(null);
+              }}
               aria-label="Enter private key manually"
             >
               Enter nsec manually
