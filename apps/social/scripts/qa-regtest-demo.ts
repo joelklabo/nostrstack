@@ -223,6 +223,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     let paid = false;
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      await regtestBtn.scrollIntoViewIfNeeded();
       await regtestBtn.click({ force: true });
       paid = await expect(page.locator('.payment-modal'))
         .toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 })
