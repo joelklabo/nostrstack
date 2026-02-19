@@ -213,6 +213,7 @@ export function LoginScreen() {
   }, [lnurlRequest]);
 
   const handleCreateThrowawayKey = useCallback(() => {
+    setNsecError(null);
     const secretKey = generateSecretKey();
     const publicKey = getPublicKey(secretKey);
     const nsec = nip19.nsecEncode(secretKey);
@@ -449,7 +450,10 @@ export function LoginScreen() {
               <button
                 type="button"
                 className="auth-btn auth-btn--secondary"
-                onClick={() => setMode('menu')}
+                onClick={() => {
+                  setMode('menu');
+                  setNsecError(null);
+                }}
                 aria-label="Cancel and go back"
               >
                 Cancel
@@ -505,6 +509,7 @@ export function LoginScreen() {
                     onClick={() => {
                       setThrowawayKey(null);
                       setNsec('');
+                      setNsecError(null);
                     }}
                     style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
                     aria-label="Cancel throwaway key"
