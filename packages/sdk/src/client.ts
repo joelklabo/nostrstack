@@ -44,7 +44,7 @@ export class NostrstackClient {
   private readonly fetcher: Fetcher;
 
   constructor(opts: NostrstackClientOptions = {}) {
-    this.base = opts.baseURL ?? 'http://localhost:3001';
+    this.base = opts.baseURL ?? '';
     this.apiKey = opts.apiKey;
     this.host = opts.host;
     const f = opts.fetch ?? globalThis.fetch;
@@ -78,7 +78,12 @@ export class NostrstackClient {
     return this.request(`/.well-known/lnurlp/${encodeURIComponent(username)}`);
   }
 
-  async getLnurlpInvoice(username: string, amountMsat: number, zapRequest?: string, lnurl?: string): Promise<InvoiceResponse> {
+  async getLnurlpInvoice(
+    username: string,
+    amountMsat: number,
+    zapRequest?: string,
+    lnurl?: string
+  ): Promise<InvoiceResponse> {
     const params = new URLSearchParams({ amount: String(amountMsat) });
     if (zapRequest) params.set('nostr', zapRequest);
     if (lnurl) params.set('lnurl', lnurl);

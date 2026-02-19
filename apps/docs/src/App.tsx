@@ -51,7 +51,9 @@ function WidgetDemos() {
 
         <section className="demo-section demo-section--wide">
           <h2>Support Section (Full Layout)</h2>
-          <p className="demo-description">Complete support widget with tips, comments, and sharing.</p>
+          <p className="demo-description">
+            Complete support widget with tips, comments, and sharing.
+          </p>
           <div className="demo-widget">
             <SupportSection
               itemId={demoItem}
@@ -128,7 +130,7 @@ function WidgetDemos() {
 }
 
 export default function App() {
-  const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+  const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
   return (
     <NostrstackProvider apiBase={apiBase} baseUrl={apiBase}>
