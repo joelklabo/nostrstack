@@ -55,7 +55,7 @@ async function loginWithNsec(page: Page) {
   await page.goto('/');
   await page.getByText('Enter nsec manually').click();
   await page.getByPlaceholder('nsec1...').fill(testNsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in with private key' }).click();
   await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 }
 

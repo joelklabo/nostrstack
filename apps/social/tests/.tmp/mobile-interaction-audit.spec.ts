@@ -196,7 +196,7 @@ test.describe('Mobile interaction audit', () => {
     await page
       .getByPlaceholder('nsec1...')
       .fill('nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in with private key' }).click();
 
     await page.locator('.feed-stream').first().waitFor({ timeout: 20000 });
     await page.waitForTimeout(1800);

@@ -506,7 +506,7 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   await input.waitFor({ state: 'visible', timeout: 5000 });
   await input.fill(nsec);
 
-  const signInBtn = page.getByRole('button', { name: 'Sign in' });
+  const signInBtn = page.getByRole('button', { name: 'Sign in with private key' });
   await signInBtn.click();
 
   await waitForFeedSurface(page, { timeoutMs: 20000 });

@@ -14,7 +14,7 @@ test.describe('regtest fund', () => {
       await page
         .getByPlaceholder('nsec1...')
         .fill('nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5');
-      await page.getByRole('button', { name: 'Sign in' }).click();
+      await page.getByRole('button', { name: 'Sign in with private key' }).click();
     }
 
     await expect(page.getByText('Wallet')).toBeVisible({ timeout: 15000 });

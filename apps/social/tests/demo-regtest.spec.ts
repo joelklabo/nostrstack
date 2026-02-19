@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 const shouldRun = process.env.REGTEST_SMOKE === 'true';
-const testNsec = process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
+const testNsec =
+  process.env.TEST_NSEC || 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
 
 test.describe('regtest demo (zap pay)', () => {
   test.skip(!shouldRun, 'Set REGTEST_SMOKE=true to run real regtest demo smoke');
@@ -10,7 +11,7 @@ test.describe('regtest demo (zap pay)', () => {
     await page.goto('/');
     await page.getByText('Enter nsec manually').click();
     await page.getByPlaceholder('nsec1...').fill(testNsec);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in with private key' }).click();
     await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
 
     const zapButtons = page.locator('.zap-btn');

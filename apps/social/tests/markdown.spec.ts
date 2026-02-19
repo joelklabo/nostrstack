@@ -8,7 +8,7 @@ test.describe('Markdown rendering', () => {
     await page.getByText('Enter nsec manually').click();
     const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
     await page.getByPlaceholder('nsec1...').fill(validNsec);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in with private key' }).click();
     await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
   });
 

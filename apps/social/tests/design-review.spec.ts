@@ -20,7 +20,7 @@ async function loginWithNsec(page: Page) {
   await page.getByText('Enter nsec manually').click();
   const validNsec = 'nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5';
   await page.getByPlaceholder('nsec1...').fill(validNsec);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in with private key' }).click();
   // Wait for main content to load (visible on all viewports)
   await page.waitForSelector('main[role="main"]', { timeout: 10000 });
 }
