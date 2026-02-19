@@ -275,7 +275,7 @@ function ActivityIcon({ type }: { type: ActivityEventType }) {
 
 // ===== Celebration Particles for New Blocks =====
 
-function BlockCelebration({ isVisible }: { isVisible: boolean }) {
+function ActivityBlockCelebration({ isVisible }: { isVisible: boolean }) {
   if (!isVisible) return null;
 
   return (
@@ -332,7 +332,7 @@ function ActivityItem({ event, isUnread, onClick, animationDelay = 0 }: Activity
 
   const content = (
     <>
-      <BlockCelebration isVisible={showCelebration} />
+      <ActivityBlockCelebration isVisible={showCelebration} />
 
       <div className="ns-activity-icon" data-type={event.type}>
         <ActivityIcon type={event.type} />
