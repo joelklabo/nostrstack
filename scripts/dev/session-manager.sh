@@ -358,13 +358,21 @@ ndev_claim_slot() {
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
       local api_unknown=0
       local social_unknown=0
+      local api_claimable=0
+      local social_claimable=0
       if [[ "$api_has_owner" == "0" && "$api_inconclusive" == "0" ]] && ndev_port_in_use "$api_port"; then
         echo "Port $api_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
         api_unknown=1
+      elif [[ "$api_has_owner" == "0" && "$api_inconclusive" == "1" ]] && ndev_port_in_use "$api_port"; then
+        echo "Port $api_port has stale socket (inconclusive owner) - allowing slot $slot to be claimed"
+        api_claimable=1
       fi
       if [[ "$social_has_owner" == "0" && "$social_inconclusive" == "0" ]] && ndev_port_in_use "$social_port"; then
         echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
         social_unknown=1
+      elif [[ "$social_has_owner" == "0" && "$social_inconclusive" == "1" ]] && ndev_port_in_use "$social_port"; then
+        echo "Port $social_port has stale socket (inconclusive owner) - allowing slot $slot to be claimed"
+        social_claimable=1
       fi
 
       if [[ "$api_unknown" == "1" || "$social_unknown" == "1" ]]; then
@@ -372,7 +380,12 @@ ndev_claim_slot() {
         ndev_unlock_slot "$slot"
         return 2
       fi
-      return 1
+
+      if [[ "$api_claimable" == "1" || "$social_claimable" == "1" ]]; then
+        echo "Slot $slot has stale socket(s) but is reclaimable - proceeding"
+      else
+        return 1
+      fi
     fi
   fi
 
