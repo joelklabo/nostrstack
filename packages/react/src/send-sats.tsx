@@ -558,7 +558,7 @@ export function SendSats({
     handleRegtestPay
   ]);
 
-  const hasError = Boolean(errorMessage);
+  const hasError = Boolean(errorMessage) && sendState !== 'error';
   const minSats = limits?.minSats;
   const maxSats = limits?.maxSats;
   const commentAllowed = limits?.commentAllowed;

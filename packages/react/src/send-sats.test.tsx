@@ -146,7 +146,7 @@ describe('SendSats', () => {
     expect(authErrors.length).toBeGreaterThan(0);
   });
 
-  it('shows inline error without modal when user is not logged in', () => {
+  it('shows error in modal when user is not logged in', () => {
     mockUseAuth.mockReturnValue({
       pubkey: null,
       signEvent: vi.fn()
