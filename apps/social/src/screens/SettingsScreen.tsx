@@ -68,12 +68,13 @@ export function SettingsScreen({
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const handleThemeToggle = useCallback(() => {
-    setTheme(nextTheme);
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
     toast({
-      message: `Theme set to ${nextTheme}.`,
+      message: `Theme set to ${newTheme}.`,
       tone: 'success'
     });
-  }, [nextTheme, setTheme, toast]);
+  }, [theme, setTheme, toast]);
 
   const handleBrandPresetSelect = useCallback(
     (nextBrandPreset: NsBrandPreset) => {
