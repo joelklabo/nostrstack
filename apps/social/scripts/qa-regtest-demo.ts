@@ -325,12 +325,9 @@ async function main() {
   }
 
   if (process.env.NOSTRDEV_AGENT && !detected.galleryUrl && !detected.apiUrl && !hasExplicitUrl) {
-    const agent = process.env.NOSTRDEV_AGENT;
-    console.error(`❌ Managed session for agent '${agent}' not found or not reachable.`);
-    console.error(
-      '   Run "pnpm dev:logs" to start a managed session, or set GALLERY_URL/DEV_SERVER_PORT explicitly.'
+    console.log(
+      `ℹ️ No managed session for agent '${process.env.NOSTRDEV_AGENT}'. Using fallback URLs. Set GALLERY_URL/API_URL or run under pnpm dev:logs for managed sessions.`
     );
-    process.exit(1);
   }
 
   const headless = envFlag('HEADLESS', true);
