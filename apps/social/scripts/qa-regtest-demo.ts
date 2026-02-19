@@ -188,8 +188,8 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       console.log('⚠️ payment modal did not open, skipping zap payment test');
       continue;
     }
-    await expect(page.locator('.payment-modal').last()).toBeVisible();
-    const modal = page.locator('.payment-modal').last();
+    await expect(page.locator('.payment-modal').filter({ visible: true }).last()).toBeVisible();
+    const modal = page.locator('.payment-modal').filter({ visible: true }).last();
     if (mode === 'nwc') {
       const nwcPaid = await modal
         .getByText('NWC payment sent.')
