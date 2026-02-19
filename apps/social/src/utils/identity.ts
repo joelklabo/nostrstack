@@ -1,7 +1,7 @@
 import { nip19 } from 'nostr-tools';
 import { bytesToHex } from 'nostr-tools/utils';
 
-import { type ApiBaseResolution,resolveGalleryApiBase } from './api-base';
+import { type ApiBaseResolution, resolveGalleryApiBase } from './api-base';
 
 export type IdentitySource = 'npub' | 'nprofile' | 'hex' | 'nip05';
 
@@ -51,7 +51,7 @@ const ERROR_MESSAGES: Record<IdentityErrorCode, string> = {
   nip05_not_found: 'No NIP-05 identity found for that name.',
   nip05_timeout: 'NIP-05 lookup timed out. Try again.',
   nip05_invalid: 'NIP-05 response was invalid.',
-  nip05_error: 'Unable to resolve NIP-05 identity right now.',
+  nip05_error: 'Unable to reach profile service. Check your connection and try again.',
   lightning_only: 'Lightning address detected, but no Nostr profile was found.'
 };
 
@@ -94,10 +94,13 @@ function parseBech32(input: string): IdentityResolution | null {
     if (decoded.type === 'nprofile') {
       const data = decoded.data as { pubkey?: string | Uint8Array; relays?: string[] };
       const pubkeyRaw = data?.pubkey;
-      const pubkey = pubkeyRaw instanceof Uint8Array ? bytesToHex(pubkeyRaw) : String(pubkeyRaw ?? '');
+      const pubkey =
+        pubkeyRaw instanceof Uint8Array ? bytesToHex(pubkeyRaw) : String(pubkeyRaw ?? '');
       if (!HEX_RE.test(pubkey)) return { ok: false, error: buildError('decode_failed') };
       const relays = Array.isArray(data?.relays)
-        ? data.relays.filter((relay) => typeof relay === 'string' && relay.trim()).map((relay) => relay.trim())
+        ? data.relays
+            .filter((relay) => typeof relay === 'string' && relay.trim())
+            .map((relay) => relay.trim())
         : undefined;
       return {
         ok: true,
@@ -114,7 +117,10 @@ function parseBech32(input: string): IdentityResolution | null {
   }
 }
 
-async function resolveNip05(nip05: string, options: ResolveIdentityOptions): Promise<IdentityResolution> {
+async function resolveNip05(
+  nip05: string,
+  options: ResolveIdentityOptions
+): Promise<IdentityResolution> {
   const { apiBase, apiBaseConfig, timeoutMs = 3000, signal } = options;
   const apiConfig = resolveGalleryApiBase({ apiBase, apiBaseConfig });
   const base = apiConfig.baseUrl || '';
@@ -159,7 +165,10 @@ async function resolveNip05(nip05: string, options: ResolveIdentityOptions): Pro
   }
 }
 
-export async function resolveIdentity(input: string, options: ResolveIdentityOptions = {}): Promise<IdentityResolution> {
+export async function resolveIdentity(
+  input: string,
+  options: ResolveIdentityOptions = {}
+): Promise<IdentityResolution> {
   const normalized = normalizeInput(input);
   if (!normalized) return { ok: false, error: buildError('empty') };
 
@@ -175,7 +184,10 @@ export async function resolveIdentity(input: string, options: ResolveIdentityOpt
     const nip05Result = await resolveNip05(lower, options);
     if (nip05Result.ok) return nip05Result;
     const lightning = normalizeLightningAddress(lower);
-    if (lightning && (nip05Result.error.code === 'nip05_not_found' || nip05Result.error.code === 'nip05_invalid')) {
+    if (
+      lightning &&
+      (nip05Result.error.code === 'nip05_not_found' || nip05Result.error.code === 'nip05_invalid')
+    ) {
       return { ok: false, error: buildError('lightning_only', { lightning }) };
     }
     return nip05Result;
