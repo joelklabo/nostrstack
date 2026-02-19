@@ -275,7 +275,7 @@ async function main() {
 
   const detected = await detectManagedSessionUrls();
   const baseUrl = process.env.GALLERY_URL ?? detected.galleryUrl ?? 'http://localhost:4173';
-  const apiUrl = process.env.API_URL ?? detected.apiUrl ?? 'http://localhost:3001';
+  const _apiUrl = process.env.API_URL ?? detected.apiUrl ?? 'http://localhost:3001';
 
   if (detected.galleryUrl || detected.apiUrl) {
     const parts: string[] = [];

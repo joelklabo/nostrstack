@@ -200,10 +200,6 @@ function shouldProbeProxyForLocalApi(apiBase: ApiBaseResolution): boolean {
   }
 }
 
-function buildApiBaseFallback(): ApiBaseResolution {
-  return resolveGalleryApiBase({ apiBase: LOCAL_API_BASE_FALLBACK });
-}
-
 const FALLBACK_API_BASE = resolveGalleryApiBase({ apiBase: LOCAL_API_BASE_FALLBACK });
 
 function isBrandPreset(value: string | null): value is NsBrandPreset {
@@ -387,11 +383,8 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const routeLocation = usePathname();
   const pathname = routeLocation.split('?')[0] || '/';
   const routeRecoveryIdentity = routeLocation;
-  const SettingsScreen = useMemo(
-    () => lazy(loadSettingsScreen),
-    [routeRecoveryIdentity, routeRecoveryKey]
-  );
-  const OffersView = useMemo(() => lazy(loadOffersView), [routeRecoveryIdentity, routeRecoveryKey]);
+  const SettingsScreen = useMemo(() => lazy(loadSettingsScreen), []);
+  const OffersView = useMemo(() => lazy(loadOffersView), []);
   const isRouteWithOptionalQuery = (path: string) =>
     pathname === path ||
     pathname === `${path}/` ||

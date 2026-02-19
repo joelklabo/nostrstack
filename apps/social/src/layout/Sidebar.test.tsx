@@ -26,7 +26,7 @@ vi.mock('@nostrstack/react', async () => {
 });
 
 vi.mock('@nostrstack/ui', async () => {
-  const actual = await vi.importActual<typeof import('@nostrstack/ui')>('@nostrstack/ui');
+  const actual = await vi.importActual('@nostrstack/ui');
   return {
     ...actual,
     useToast: () => toastSpy

@@ -596,7 +596,8 @@ export function SearchScreen() {
             <div className="search-empty" role="status" aria-live="polite">
               <h3 className="search-empty__title">No results found</h3>
               <p className="search-empty__text">
-                We could not find any profiles or notes matching "{lastSearchQuery || query}".
+                We could not find any profiles or notes matching &quot;{lastSearchQuery || query}
+                &quot;.
               </p>
               <div style={{ marginTop: '0.75rem' }}>
                 <button

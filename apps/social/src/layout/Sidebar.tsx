@@ -1,6 +1,6 @@
 import { useAuth, useBitcoinStatus, useNostrstackConfig, useStats } from '@nostrstack/react';
 import { useToast } from '@nostrstack/ui';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { WalletView } from '../features/wallet/WalletView';
 import { type View } from '../hooks/useKeyboardShortcuts';
@@ -59,13 +59,13 @@ export const Sidebar = memo(function Sidebar({
     }
   };
 
-  const scheduleFundingNoticeClear = (delayMs: number) => {
+  const scheduleFundingNoticeClear = useCallback((delayMs: number) => {
     clearFundingNoticeTimeout();
     fundingNoticeTimeoutRef.current = window.setTimeout(() => {
       setFundingNotice(null);
       fundingNoticeTimeoutRef.current = null;
     }, delayMs);
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -91,7 +91,7 @@ export const Sidebar = memo(function Sidebar({
     }
     prevBalanceRef.current = currentBalance;
     return undefined;
-  }, [wallet?.balance, fundingNotice?.tone]);
+  }, [wallet?.balance, fundingNotice?.tone, scheduleFundingNoticeClear]);
 
   const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;

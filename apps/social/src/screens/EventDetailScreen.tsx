@@ -86,10 +86,6 @@ function uniqRelays(relays: string[]) {
   return Array.from(new Set(relays.filter(Boolean)));
 }
 
-function relaySignature(relays: string[]) {
-  return relays.join('\u0000');
-}
-
 function isMockRelay(relay: string) {
   const trimmed = relay.trim().toLowerCase();
   return trimmed === 'mock' || trimmed === 'ws://mock' || trimmed === 'wss://mock';
@@ -277,10 +273,8 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
   }, [cfg.relays, relayContextRelays, target]);
 
   const apiRelayList = useMemo(() => relayList.filter((relay) => !isMockRelay(relay)), [relayList]);
-  const relayListSig = useMemo(() => relaySignature(relayList), [relayList]);
-  const apiRelayListSig = useMemo(() => relaySignature(apiRelayList), [apiRelayList]);
-  const stableRelayList = useMemo(() => relayList, [relayListSig]);
-  const stableApiRelayList = useMemo(() => apiRelayList, [apiRelayListSig]);
+  const stableRelayList = useMemo(() => relayList, [relayList]);
+  const stableApiRelayList = useMemo(() => apiRelayList, [apiRelayList]);
 
   useEffect(() => {
     if (!target) {
@@ -588,6 +582,8 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
     rawId,
     stableRelayList,
     stableApiRelayList,
+    relayList,
+    apiRelayList,
     target,
     repliesEnabled,
     reloadToken
