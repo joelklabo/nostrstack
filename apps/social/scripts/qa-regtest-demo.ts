@@ -168,7 +168,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
   const total = await zapButtons.count();
   for (let i = 0; i < Math.min(total, 5); i += 1) {
     await zapButtons.nth(i).dispatchEvent('click');
-    await expect(page.locator('.payment-modal')).toBeVisible();
+    await expect(page.locator('.payment-modal:visible')).toBeVisible();
     if (mode === 'nwc') {
       const nwcPaid = await page
         .getByText('NWC payment sent.')
@@ -227,7 +227,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       await regtestBtn.scrollIntoViewIfNeeded();
       await regtestBtn.click({ force: true });
-      paid = await expect(page.locator('.payment-modal'))
+      paid = await expect(page.locator('.payment-modal:visible'))
         .toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 })
         .then(() => true)
         .catch(() => false);
