@@ -311,6 +311,7 @@ export const Sidebar = memo(function Sidebar({
             type="button"
             className="nav-item"
             onClick={() => {
+              navigateTo('/help');
               onOpenHelp();
               onMobileClose?.();
             }}
