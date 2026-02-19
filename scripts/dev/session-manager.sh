@@ -385,13 +385,56 @@ ndev_claim_session() {
     local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
     local social_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_SOCIAL_PORT}"
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+      local api_has_owner social_has_owner
+      api_has_owner=0
+      social_has_owner=0
+      ndev_port_has_owner "$api_port" && api_has_owner=1
+      ndev_port_has_owner "$social_port" && social_has_owner=1
+
       if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
-        echo "FORCE_KILL_PORTS=1: Attempting to free ports $api_port and $social_port"
-        ndev_force_kill_port "$api_port" || true
-        ndev_force_kill_port "$social_port" || true
+        if [[ "$api_has_owner" == "1" ]]; then
+          echo "FORCE_KILL_PORTS=1: Attempting to free port $api_port"
+          ndev_force_kill_port "$api_port" || true
+        elif ndev_port_in_use "$api_port"; then
+          echo "Port $api_port has no owning process (stale socket)"
+        fi
+        if [[ "$social_has_owner" == "1" ]]; then
+          echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
+          ndev_force_kill_port "$social_port" || true
+        elif ndev_port_in_use "$social_port"; then
+          echo "Port $social_port has no owning process (stale socket)"
+        fi
         sleep 1
       fi
       if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+        local api_has_unknown_owner social_has_unknown_owner
+        api_has_unknown_owner=0
+        social_has_unknown_owner=0
+
+        if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
+          echo "WARNING: API port $api_port has stale socket with no process owner"
+          echo "  - This may indicate a crashed/killed dev server leaving a zombie listener"
+          echo "  - Try: pnpm dev:stop:all -c  (force-kills stale listeners)"
+          echo "  - Or manually: sudo lsof -i :$api_port | awk 'NR>1 {print \$2}' | xargs -r kill -9"
+          ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive"
+          api_has_unknown_owner=1
+        fi
+        if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
+          echo "WARNING: Social port $social_port has stale socket with no process owner"
+          echo "  - This may indicate a crashed/killed dev server leaving a zombie listener"
+          echo "  - Try: pnpm dev:stop:all -c  (force-kills stale listeners)"
+          echo "  - Or manually: sudo lsof -i :$social_port | awk 'NR>1 {print \$2}' | xargs -r kill -9"
+          ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive"
+          social_has_unknown_owner=1
+        fi
+
+        if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
+          echo "ERROR: Fixed-port mode cannot proceed with unknown-owner stale sockets" >&2
+          echo "  - Set FORCE_KILL_PORTS=1 to attempt auto-cleanup" >&2
+          echo "  - Or manually cleanup and retry" >&2
+          return 1
+        fi
+
         local pid
         echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
         pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
