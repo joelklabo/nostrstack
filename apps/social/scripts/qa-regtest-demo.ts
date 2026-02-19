@@ -183,7 +183,9 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         continue;
       }
       await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      const closeBtn = page.locator('.payment-modal:visible button:has-text("CLOSE")').first();
+      const closeBtn = page
+        .locator('.payment-modal:visible .payment-header button')
+        .getByText(/CLOSE/i);
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       return true;
@@ -232,12 +234,16 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       if (paid) break;
     }
     if (!paid) {
-      const closeBtn = page.locator('.payment-modal:visible button:has-text("CLOSE")').first();
+      const closeBtn = page
+        .locator('.payment-modal:visible .payment-header button')
+        .getByText(/CLOSE/i);
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       continue;
     }
-    const closeBtn = page.locator('.payment-modal:visible button:has-text("CLOSE")').first();
+    const closeBtn = page
+      .locator('.payment-modal:visible .payment-header button')
+      .getByText(/CLOSE/i);
     await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
     await closeBtn.click({ force: true });
     return true;
