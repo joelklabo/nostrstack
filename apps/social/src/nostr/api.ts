@@ -440,7 +440,7 @@ export async function searchNotes(
       return { merged, failures, successCount };
     };
 
-    const primary = await runQuery(true);
+    const primary = await runQuery(false);
     const primaryFailures = primary.failures;
     const hasSearchUnsupportedFailure = primaryFailures.some(isSearchUnsupportedError);
     const hasAnyTimeoutFailure = primaryFailures.some(isTimeoutError);
@@ -457,16 +457,13 @@ export async function searchNotes(
       throw new Error('Notes search timed out. Retry to try again.');
     }
 
-    if (merged.size === 0 && hasSearchUnsupportedFailure) {
-      const fallback = await runQuery(false);
+    if (merged.size > 0) {
       const filtered = new Map<string, Event>();
-      for (const [id, event] of fallback.merged) {
+      for (const [id, event] of merged) {
         if (!event?.content || !event.content.toLowerCase().includes(quoted)) continue;
         filtered.set(id, event);
       }
       merged = filtered;
-    } else {
-      // keep primary merge as-is
     }
 
     if (

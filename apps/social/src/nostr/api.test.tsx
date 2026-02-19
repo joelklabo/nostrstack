@@ -225,8 +225,7 @@ describe('searchNotes', () => {
     expect(pool.querySync).toHaveBeenCalledTimes(2);
   });
 
-  it('falls back to content filtering when relays reject search filters', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('uses content filtering without server-side search filter', async () => {
     const event = {
       id: 'event-id-c',
       kind: 1,
@@ -237,92 +236,79 @@ describe('searchNotes', () => {
       sig: 'test-sig'
     };
 
-    const querySync = vi
-      .fn()
-      .mockRejectedValueOnce(
-        new Error('NOTICE from wss://relay.nostr.band/: ERROR: bad req: unrecognised filter item')
-      )
-      .mockResolvedValueOnce([event]);
+    const querySync = vi.fn().mockResolvedValueOnce([event]);
 
     const pool = { querySync } as unknown as SimplePool;
 
     const events = await searchNotes(pool, ['wss://relay.nostr.band'], 'nostr', 10);
 
     expect(events).toEqual([event]);
-    expect(querySync).toHaveBeenCalledTimes(2);
+    expect(querySync).toHaveBeenCalledTimes(1);
     expect(querySync).toHaveBeenNthCalledWith(
       1,
-      ['wss://relay.nostr.band'],
-      { kinds: [1], search: 'nostr', limit: 10 },
-      { maxWait: 10_000 }
-    );
-    expect(querySync).toHaveBeenNthCalledWith(
-      2,
       ['wss://relay.nostr.band'],
       { kinds: [1], limit: 20 },
       { maxWait: 10_000 }
     );
-    consoleSpy.mockRestore();
   });
 
-  it('falls back to content filtering when relay rejections are non-Error objects', async () => {
-    const event = {
+  it('uses content filtering and filters results by query', async () => {
+    const matchingEvent = {
       id: 'event-id-e',
       kind: 1,
       pubkey: 'test-pubkey',
       created_at: 3_000,
-      content: 'nostr keyword fallback should still work',
+      content: 'nostr keyword in content',
+      tags: [],
+      sig: 'test-sig'
+    };
+    const nonMatchingEvent = {
+      id: 'event-id-f',
+      kind: 1,
+      pubkey: 'test-pubkey',
+      created_at: 2_000,
+      content: 'something else entirely',
       tags: [],
       sig: 'test-sig'
     };
 
-    const querySync = vi
-      .fn()
-      .mockRejectedValueOnce({
-        message: 'NOTICE from wss://relay.nostr.band/: ERROR: bad req: unrecognised filter item'
-      })
-      .mockResolvedValueOnce([event]);
+    const querySync = vi.fn().mockResolvedValueOnce([matchingEvent, nonMatchingEvent]);
 
     const pool = { querySync } as unknown as SimplePool;
 
     const events = await searchNotes(pool, ['wss://relay.nostr.band'], 'nostr', 10);
 
-    expect(events).toEqual([event]);
-    expect(querySync).toHaveBeenCalledTimes(2);
+    expect(events).toEqual([matchingEvent]);
+    expect(querySync).toHaveBeenCalledTimes(1);
     expect(querySync).toHaveBeenNthCalledWith(
       1,
-      ['wss://relay.nostr.band'],
-      { kinds: [1], search: 'nostr', limit: 10 },
-      { maxWait: 10_000 }
-    );
-    expect(querySync).toHaveBeenNthCalledWith(
-      2,
       ['wss://relay.nostr.band'],
       { kinds: [1], limit: 20 },
       { maxWait: 10_000 }
     );
   });
 
-  it('falls back to content filtering when relay failures are mixed', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const event = {
+  it('queries multiple relays and merges results with content filtering', async () => {
+    const event1 = {
       id: 'event-id-d',
       kind: 1,
       pubkey: 'test-pubkey',
       created_at: 2_000,
-      content: 'Search terms should still work in fallback mode',
+      content: 'search term in first event',
+      tags: [],
+      sig: 'test-sig'
+    };
+    const event2 = {
+      id: 'event-id-g',
+      kind: 1,
+      pubkey: 'test-pubkey',
+      created_at: 1_000,
+      content: 'search term in second event',
       tags: [],
       sig: 'test-sig'
     };
 
-    const querySync = vi
-      .fn()
-      .mockRejectedValueOnce(
-        new Error('NOTICE from wss://relay.nostr.band/: ERROR: bad req: unrecognised filter item')
-      )
-      .mockRejectedValueOnce(new Error('Request timed out after 10000ms'))
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([event]);
+    const querySync = vi.fn().mockResolvedValueOnce([event1]).mockResolvedValueOnce([event2]);
 
     const pool = { querySync } as unknown as SimplePool;
 
@@ -333,32 +319,19 @@ describe('searchNotes', () => {
       10
     );
 
-    expect(events).toEqual([event]);
-    expect(querySync).toHaveBeenCalledTimes(4);
+    expect(events).toEqual([event1, event2]);
+    expect(querySync).toHaveBeenCalledTimes(2);
     expect(querySync).toHaveBeenNthCalledWith(
       1,
       ['wss://relay.nostr.band'],
-      { kinds: [1], search: 'search', limit: 10 },
+      { kinds: [1], limit: 20 },
       { maxWait: 10_000 }
     );
     expect(querySync).toHaveBeenNthCalledWith(
       2,
       ['wss://relay.damus.io'],
-      { kinds: [1], search: 'search', limit: 10 },
-      { maxWait: 10_000 }
-    );
-    expect(querySync).toHaveBeenNthCalledWith(
-      3,
-      ['wss://relay.nostr.band'],
       { kinds: [1], limit: 20 },
       { maxWait: 10_000 }
     );
-    expect(querySync).toHaveBeenNthCalledWith(
-      4,
-      ['wss://relay.damus.io'],
-      { kinds: [1], limit: 20 },
-      { maxWait: 10_000 }
-    );
-    consoleSpy.mockRestore();
   });
 });
