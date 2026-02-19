@@ -26,7 +26,7 @@ const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 90000;
 
 export function LoginScreen() {
-  const { loginWithNip07, loginWithNsec, loginWithLnurl, error: authError } = useAuth();
+  const { loginWithNip07, loginWithNsec, loginWithLnurl, error: authError, clearError } = useAuth();
   const toast = useToast();
   const cfg = useNostrstackConfig();
   const [nsec, setNsec] = useState('');
@@ -215,12 +215,13 @@ export function LoginScreen() {
   const handleCreateThrowawayKey = useCallback(() => {
     setNsecError(null);
     setNsec('');
+    clearError();
     const secretKey = generateSecretKey();
     const publicKey = getPublicKey(secretKey);
     const nsec = nip19.nsecEncode(secretKey);
     const npub = nip19.npubEncode(publicKey);
     setThrowawayKey({ nsec, npub });
-  }, []);
+  }, [clearError]);
 
   const handleUseThrowawayKey = useCallback(async () => {
     if (!throwawayKey) return;
@@ -382,6 +383,7 @@ export function LoginScreen() {
               onClick={() => {
                 setMode('nsec');
                 setNsecError(null);
+                clearError();
               }}
               aria-label="Enter private key manually"
             >
@@ -458,6 +460,7 @@ export function LoginScreen() {
                 onClick={() => {
                   setMode('menu');
                   setNsecError(null);
+                  clearError();
                 }}
                 aria-label="Cancel and go back"
               >
@@ -515,6 +518,7 @@ export function LoginScreen() {
                       setThrowawayKey(null);
                       setNsec('');
                       setNsecError(null);
+                      clearError();
                     }}
                     style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
                     aria-label="Cancel throwaway key"

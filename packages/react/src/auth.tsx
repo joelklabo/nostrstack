@@ -39,6 +39,7 @@ export interface AuthContextType extends AuthState {
   loginWithNsec: (nsec: string) => Promise<void>;
   loginWithLnurl: (linkingKey: string) => Promise<void>;
   logout: () => void;
+  clearError: () => void;
   signEvent: (template: EventTemplate) => Promise<Event>;
   encrypt: (pubkey: string, plaintext: string) => Promise<string>;
   decrypt: (pubkey: string, ciphertext: string) => Promise<string>;
@@ -188,6 +189,10 @@ export function AuthProvider({
     setState({ pubkey: null, mode: 'guest', isLoading: false, error: null });
   }, []);
 
+  const clearError = useCallback(() => {
+    setState((s) => ({ ...s, error: null }));
+  }, []);
+
   const signEvent = useCallback(
     async (template: EventTemplate): Promise<Event> => {
       if (state.mode === 'nip07' && window.nostr) {
@@ -244,6 +249,7 @@ export function AuthProvider({
           loginWithNsec,
           loginWithLnurl,
           logout,
+          clearError,
           signEvent,
           encrypt,
           decrypt
