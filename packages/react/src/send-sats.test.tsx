@@ -145,4 +145,18 @@ describe('SendSats', () => {
     );
     expect(authErrors.length).toBeGreaterThan(0);
   });
+
+  it('shows inline error without modal when user is not logged in', () => {
+    mockUseAuth.mockReturnValue({
+      pubkey: null,
+      signEvent: vi.fn()
+    });
+
+    renderSendSats();
+
+    const sendButton = screen.getByRole('button', { name: /send 500/i });
+    fireEvent.click(sendButton);
+
+    expect(screen.getByText(/must be logged in/i)).toBeInTheDocument();
+  });
 });

@@ -176,7 +176,7 @@ export function SendSats({
   const handleSend = useCallback(async () => {
     if (!senderPubkey) {
       setErrorMessage('Error: You must be logged in to send sats.');
-      setSendState('error');
+      setSendState('idle');
       return;
     }
 
