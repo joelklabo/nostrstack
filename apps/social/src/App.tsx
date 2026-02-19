@@ -26,24 +26,32 @@ import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base';
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
-const MAX_LAZY_RETRIES = 2;
-const LAZY_RETRY_DELAY_MS = 500;
+const MAX_LAZY_RETRIES = 3;
+const LAZY_RETRY_DELAY_MS = 800;
+const LAZY_LOAD_TIMEOUT_MS = 10000;
 
 function robustLazy<T>(
   loader: () => Promise<{ default: T }>,
   screenName: string,
   retryCount = 0
 ): Promise<{ default: T }> {
-  return loader().catch((error) => {
+  const loadPromise = loader();
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(
+      () => reject(new Error(`Timeout loading ${screenName} screen`)),
+      LAZY_LOAD_TIMEOUT_MS
+    );
+  });
+
+  return Promise.race([loadPromise, timeoutPromise]).catch((error) => {
     console.error(`Failed to load ${screenName} route module.`, error);
     if (retryCount < MAX_LAZY_RETRIES) {
       return new Promise<{ default: T }>((resolve) => {
-        setTimeout(
-          () => {
-            resolve(robustLazy(loader, screenName, retryCount + 1));
-          },
-          LAZY_RETRY_DELAY_MS * (retryCount + 1)
-        );
+        const delay = LAZY_RETRY_DELAY_MS * Math.pow(2, retryCount);
+        setTimeout(() => {
+          resolve(robustLazy(loader, screenName, retryCount + 1));
+        }, delay);
       });
     }
     return {
