@@ -14,7 +14,74 @@ export async function copyToClipboard(text: string): Promise<void> {
     );
   };
 
-  // cspell:ignore notallowederror securityerror
+  const copyWithVisibleSelection = (): void => {
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '0';
+    textarea.style.left = '0';
+    textarea.style.width = 'auto';
+    textarea.style.height = 'auto';
+    textarea.style.padding = '1rem';
+    textarea.style.border = '1px solid #ccc';
+    textarea.style.borderRadius = '4px';
+    textarea.style.background = '#fff';
+    textarea.style.color = '#000';
+    textarea.style.fontSize = '14px';
+    textarea.style.fontFamily = 'monospace';
+    textarea.style.zIndex = '999999';
+    textarea.style.maxWidth = '90vw';
+    textarea.style.maxHeight = '50vh';
+    textarea.style.overflow = 'auto';
+    textarea.style.whiteSpace = 'pre-wrap';
+    textarea.style.wordBreak = 'break-all';
+
+    const selection = document.getSelection();
+    const prevRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    const hasExecCommand = typeof document.execCommand === 'function';
+    const execCommandResult = hasExecCommand ? document.execCommand('copy') : false;
+
+    setTimeout(() => {
+      document.body.removeChild(textarea);
+      if (selection && prevRange) {
+        selection.removeAllRanges();
+        selection.addRange(prevRange);
+      }
+    }, 10000);
+
+    if (execCommandResult) return;
+
+    const label = document.createElement('div');
+    label.textContent = 'Press Ctrl+C (or Cmd+C) to copy, then click anywhere to close';
+    label.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #333;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      z-index: 1000000;
+      font-family: system-ui, -apple-system, sans-serif;
+    `;
+    document.body.appendChild(label);
+
+    const cleanup = () => {
+      document.removeEventListener('click', cleanup);
+      setTimeout(() => {
+        if (label.parentNode) label.parentNode.removeChild(label);
+      }, 100);
+    };
+    document.addEventListener('click', cleanup);
+  };
 
   const copyWithLegacyFallback = () => {
     const textarea = document.createElement('textarea');
@@ -83,5 +150,10 @@ export async function copyToClipboard(text: string): Promise<void> {
   }
 
   if (typeof document === 'undefined') throw new Error('Clipboard not available');
-  copyWithLegacyFallback();
+
+  try {
+    copyWithLegacyFallback();
+  } catch {
+    copyWithVisibleSelection();
+  }
 }
