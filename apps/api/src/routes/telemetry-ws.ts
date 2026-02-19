@@ -91,11 +91,13 @@ export async function registerTelemetryWs(app: FastifyInstance) {
   const POLL_MAX_MS = 60000;
   const BACKPRESSURE_LOG_COOLDOWN_MS = 5 * 60 * 1000;
   const TIMEOUT_LOG_COOLDOWN_MS = 5 * 60 * 1000;
+  const MAX_CONSECUTIVE_FAILURES = 5;
   let pollDelayMs = POLL_BASE_MS;
   let nextPollAt = Date.now();
   let pollInFlight = false;
   let lastErrorMsg: string | null = null;
   let lastErrorAt = 0;
+  let consecutiveFailures = 0;
 
   let lastHeight = -1;
   let lastHash: string | null = null;
@@ -249,7 +251,9 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       nextPollAt = Date.now() + pollDelayMs;
       lastErrorMsg = null;
       lastErrorAt = 0;
+      consecutiveFailures = 0;
     } catch (err) {
+      consecutiveFailures++;
       const msg = err instanceof Error ? err.message : String(err);
       const errorAt = Date.now();
       const reason = recordPollFailure(msg);
@@ -257,6 +261,16 @@ export async function registerTelemetryWs(app: FastifyInstance) {
       const isTimeout = reason === 'timeout';
       pollDelayMs = Math.min(POLL_MAX_MS, Math.max(POLL_BASE_MS, pollDelayMs * 2));
       nextPollAt = errorAt + pollDelayMs;
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        app.log.warn(
+          { err, consecutiveFailures },
+          'telemetry polling failed repeatedly, stopping poll'
+        );
+        clearInterval(interval);
+        broadcastError('telemetry unavailable; using last known state');
+        pollInFlight = false;
+        return;
+      }
       const logCooldown = isBackpressure
         ? BACKPRESSURE_LOG_COOLDOWN_MS
         : isTimeout
