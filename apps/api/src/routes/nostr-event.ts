@@ -4,7 +4,12 @@ import { env } from '../env.js';
 import { resolveNostrEvent } from '../nostr/event-resolver.js';
 import { isAllowedRelayUrl } from '../nostr/relay-utils.js';
 
-const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
+const DEFAULT_RELAYS = [
+  'wss://relay.damus.io',
+  'wss://relay.snort.social',
+  'wss://nos.lol',
+  'wss://relay.primal.net'
+];
 
 const parseCsv = (raw?: string) =>
   (raw ?? '')

@@ -95,13 +95,14 @@ export const Sidebar = memo(function Sidebar({
 
   const apiBaseConfig = resolveGalleryApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
-  const regtestFundEnabled =
-    String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' ||
-    import.meta.env.DEV;
   const statusNetwork = status?.configuredNetwork ?? status?.network;
   const configuredNetworkRaw =
     devNetworkOverride ?? statusNetwork ?? String(import.meta.env.VITE_NETWORK ?? 'regtest').trim();
   const configuredNetwork = (configuredNetworkRaw || 'regtest').trim();
+  const regtestFundEnabled =
+    (String(import.meta.env.VITE_ENABLE_REGTEST_FUND ?? '').toLowerCase() === 'true' ||
+      import.meta.env.DEV) &&
+    configuredNetwork === 'regtest';
   const sourceLabel = status?.source ? status.source.toUpperCase() : '—';
   const provider = status?.lightning?.provider;
   const lnbitsStatus = status?.lightning?.lnbits?.status;

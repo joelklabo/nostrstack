@@ -2,7 +2,12 @@ import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
 
-const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://relay.snort.social'];
+const DEFAULT_RELAYS = [
+  'wss://relay.damus.io',
+  'wss://relay.snort.social',
+  'wss://nos.lol',
+  'wss://relay.primal.net'
+];
 
 function parseRelays(raw?: string | null): string[] {
   if (!raw) return DEFAULT_RELAYS;
@@ -13,74 +18,78 @@ function parseRelays(raw?: string | null): string[] {
 }
 
 export async function registerEmbedConfigRoute(app: FastifyInstance) {
-  app.get('/embed-config', {
-    schema: {
-      querystring: {
-        type: 'object',
-        properties: {
-          tenant: { type: 'string' },
-          themeAccent: { type: 'string' },
-          themeText: { type: 'string' },
-          themeSurface: { type: 'string' },
-          themeBorder: { type: 'string' }
-        },
-        required: ['tenant'],
-        additionalProperties: false
-      },
-      response: {
-        200: {
+  app.get(
+    '/embed-config',
+    {
+      schema: {
+        querystring: {
           type: 'object',
           properties: {
             tenant: { type: 'string' },
-            lnAddress: { type: 'string' },
-            relays: { type: 'array', items: { type: 'string' } },
-            embedScript: { type: 'string' },
-            apiBase: { type: 'string' },
-            theme: {
-              type: 'object',
-              properties: {
-                accent: { type: 'string' },
-                text: { type: 'string' },
-                surface: { type: 'string' },
-                border: { type: 'string' }
-              }
-            },
-            mock: { type: 'boolean' }
+            themeAccent: { type: 'string' },
+            themeText: { type: 'string' },
+            themeSurface: { type: 'string' },
+            themeBorder: { type: 'string' }
+          },
+          required: ['tenant'],
+          additionalProperties: false
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              tenant: { type: 'string' },
+              lnAddress: { type: 'string' },
+              relays: { type: 'array', items: { type: 'string' } },
+              embedScript: { type: 'string' },
+              apiBase: { type: 'string' },
+              theme: {
+                type: 'object',
+                properties: {
+                  accent: { type: 'string' },
+                  text: { type: 'string' },
+                  surface: { type: 'string' },
+                  border: { type: 'string' }
+                }
+              },
+              mock: { type: 'boolean' }
+            }
           }
         }
       }
+    },
+    async (request, reply) => {
+      const { tenant, themeAccent, themeText, themeSurface, themeBorder } = request.query as {
+        tenant: string;
+        themeAccent?: string;
+        themeText?: string;
+        themeSurface?: string;
+        themeBorder?: string;
+      };
+
+      const hostHeader = request.headers.host;
+      const domain = hostHeader?.split(':')[0] || new URL(env.PUBLIC_ORIGIN).hostname;
+      const lnAddress = `${tenant}@${domain}`;
+
+      const isMock = env.DEV_MOCKS;
+      const relays = isMock ? ['mock'] : parseRelays(env.NOSTR_RELAYS);
+
+      const theme = {
+        accent: themeAccent ?? env.NOSTR_THEME_ACCENT,
+        text: themeText ?? env.NOSTR_THEME_TEXT,
+        surface: themeSurface ?? env.NOSTR_THEME_SURFACE,
+        border: themeBorder ?? env.NOSTR_THEME_BORDER
+      };
+
+      return reply.send({
+        tenant,
+        lnAddress,
+        relays,
+        embedScript: env.NOSTR_EMBED_CDN,
+        apiBase: isMock ? 'mock' : env.PUBLIC_ORIGIN,
+        theme,
+        mock: isMock
+      });
     }
-  }, async (request, reply) => {
-    const { tenant, themeAccent, themeText, themeSurface, themeBorder } = request.query as {
-      tenant: string;
-      themeAccent?: string;
-      themeText?: string;
-      themeSurface?: string;
-      themeBorder?: string;
-    };
-
-    const hostHeader = request.headers.host;
-    const domain = hostHeader?.split(':')[0] || new URL(env.PUBLIC_ORIGIN).hostname;
-    const lnAddress = `${tenant}@${domain}`;
-
-    const isMock = env.DEV_MOCKS;
-    const relays = isMock ? ['mock'] : parseRelays(env.NOSTR_RELAYS);
-
-    const theme = {
-      accent: themeAccent ?? env.NOSTR_THEME_ACCENT,
-      text: themeText ?? env.NOSTR_THEME_TEXT,
-      surface: themeSurface ?? env.NOSTR_THEME_SURFACE,
-      border: themeBorder ?? env.NOSTR_THEME_BORDER
-    };
-
-    return reply.send({
-      tenant,
-      lnAddress,
-      relays,
-      embedScript: env.NOSTR_EMBED_CDN,
-      apiBase: isMock ? 'mock' : env.PUBLIC_ORIGIN,
-      theme,
-      mock: isMock
-    });
-  });
+  );
 }
