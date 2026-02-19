@@ -52,6 +52,9 @@ jobs:
           - name: Lint (Copy/Paste)
             command: pnpm lint:cpd
             allow_failure: false
+          - name: Lint (QA Audit Single Source)
+            command: pnpm lint:cpd:audit
+            allow_failure: false
           - name: Lint (File Naming)
             command: pnpm lint:ls
             allow_failure: false
