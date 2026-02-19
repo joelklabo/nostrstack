@@ -426,7 +426,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         <PostEditor />
       </div>
 
-      <FindFriendCard onClick={() => navigateTo('/search')} />
+      <FindFriendCard onClick={() => navigateTo('/find-friend')} />
 
       <SupportCard />
 

@@ -230,7 +230,7 @@ export const Sidebar = memo(function Sidebar({
     }
 
     if (view === 'search') {
-      navigateTo('/search');
+      navigateTo('/find-friend');
       setCurrentView('search');
       onMobileClose?.();
       return;
