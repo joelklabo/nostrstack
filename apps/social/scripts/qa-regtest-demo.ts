@@ -5,6 +5,16 @@ import path from 'path';
 
 type Failure = { kind: string; detail: string };
 
+async function findVisibleCloseButton(
+  modal: ReturnType<Page['locator']>
+): Promise<ReturnType<Page['locator']> | null> {
+  const button = modal.getByRole('button', { name: /CLOSE/i }).first();
+  if (!(await button.isVisible().catch(() => false))) {
+    return null;
+  }
+  return button;
+}
+
 function envFlag(name: string, fallback: boolean) {
   const raw = process.env[name];
   if (!raw) return fallback;
@@ -197,21 +207,19 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .then(() => true)
         .catch(() => false);
       if (!nwcPaid) {
-        await modal
-          .locator('.payment-header button')
-          .filter({ visible: true })
-          .getByText(/CLOSE/i)
-          .first()
-          .click({ force: true });
+        const closeBtn = await findVisibleCloseButton(modal);
+        if (closeBtn) {
+          await closeBtn.click({ force: true });
+        }
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
         continue;
       }
       await expect(modal.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
-      const closeBtn = modal
-        .locator('.payment-header button')
-        .filter({ visible: true })
-        .getByText(/CLOSE/i)
-        .first();
+      const closeBtn = await findVisibleCloseButton(modal);
+      if (!closeBtn) {
+        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+        return true;
+      }
       await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
@@ -224,12 +232,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       .then(() => true)
       .catch(() => false);
     if (!invoiceReady) {
-      await modal
-        .locator('.payment-header button')
-        .filter({ visible: true })
-        .getByText(/CLOSE/i)
-        .first()
-        .click({ force: true });
+      const closeBtn3 = await findVisibleCloseButton(modal);
+      if (closeBtn3) {
+        await closeBtn3.click({ force: true });
+      }
       await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       continue;
     }
@@ -256,12 +262,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         '⚠️ PAY_REGTEST button not visible after 8s - regtest wallet may not be configured on API, skipping regtest payment test'
       );
       try {
-        await modal
-          .locator('.payment-header button')
-          .filter({ visible: true })
-          .getByText(/CLOSE/i)
-          .first()
-          .click({ force: true });
+        const closeBtn4 = await findVisibleCloseButton(modal);
+        if (closeBtn4) {
+          await closeBtn4.click({ force: true });
+        }
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {
           // ignore close failures
         });
@@ -286,12 +290,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         }
         console.log('⚠️ PAY_REGTEST button not clickable, skipping regtest payment test');
         try {
-          await modal
-            .locator('.payment-header button')
-            .filter({ visible: true })
-            .getByText(/CLOSE/i)
-            .first()
-            .click({ force: true });
+          const closeBtn5 = await findVisibleCloseButton(modal);
+          if (closeBtn5) {
+            await closeBtn5.click({ force: true });
+          }
           await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
         } catch {
           // ignore close failures
@@ -312,13 +314,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     if (!paid && !modalClosed) {
       try {
-        const closeBtn = modal
-          .locator('.payment-header button')
-          .filter({ visible: true })
-          .getByText(/CLOSE/i)
-          .first();
-        await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
-        await closeBtn.click({ force: true });
+        const closeBtn6 = await findVisibleCloseButton(modal);
+        if (closeBtn6) {
+          await closeBtn6.waitFor({ state: 'visible', timeout: 10_000 });
+          await closeBtn6.click({ force: true });
+        }
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       } catch {
         // ignore close failures
@@ -326,13 +326,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     }
     if (paid && !modalClosed) {
       try {
-        const closeBtn = modal
-          .locator('.payment-header button')
-          .filter({ visible: true })
-          .getByText(/CLOSE/i)
-          .first();
-        await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
-        await closeBtn.click({ force: true });
+        const closeBtn7 = await findVisibleCloseButton(modal);
+        if (closeBtn7) {
+          await closeBtn7.waitFor({ state: 'visible', timeout: 10_000 });
+          await closeBtn7.click({ force: true });
+        }
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       } catch {
         // ignore close failures

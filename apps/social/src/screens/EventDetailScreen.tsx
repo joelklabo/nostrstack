@@ -320,23 +320,36 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       };
 
       try {
-        const replyEvents = await withTimeout(
-          activePool.querySync(relays, { kinds: [1], '#e': [eventId], limit: REPLY_PAGE_LIMIT }),
-          REQUEST_TIMEOUT_MS
+        const relayPromises = relays.map((relay) =>
+          withTimeout(
+            activePool.querySync([relay], { kinds: [1], '#e': [eventId], limit: REPLY_PAGE_LIMIT }),
+            REQUEST_TIMEOUT_MS
+          )
         );
+        const results = await Promise.allSettled(relayPromises);
+        const allEvents: Event[] = [];
+        for (let i = 0; i < results.length; i++) {
+          const result = results[i];
+          const relay = relays[i];
+          if (result.status === 'fulfilled') {
+            relayMonitor.reportSuccess(relay);
+            allEvents.push(...result.value);
+          } else {
+            const errorMsg = result.reason instanceof Error ? result.reason.message : '';
+            if (errorMsg === 'Request timed out') {
+              relayMonitor.reportFailure(relay);
+            }
+          }
+        }
         return {
           status: 'ready',
-          items: normalizeReplies(replyEvents),
+          items: normalizeReplies(allEvents),
           hasMore: false,
           nextCursor: null,
           isLoadingMore: false,
           source: 'relay'
         };
       } catch (err) {
-        const isTimeout = err instanceof Error && err.message === 'Request timed out';
-        if (isTimeout) {
-          relays.forEach((relay) => relayMonitor.reportFailure(relay));
-        }
         return {
           ...EMPTY_REPLIES_STATE,
           status: 'error',
@@ -367,56 +380,43 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
         let repliesState: RepliesState = EMPTY_REPLIES_STATE;
         let fetchTimedOut = false;
 
-        if (target.type === 'event') {
-          try {
-            event = await withTimeout(
-              pool.get(relaysToUse, { ids: [target.id] }),
-              REQUEST_TIMEOUT_MS
-            );
-          } catch (err) {
-            if (err instanceof Error && err.message === 'Request timed out') {
+        const buildFilter = () => {
+          if (target.type === 'event') {
+            return { ids: [target.id] };
+          }
+          if (target.type === 'profile') {
+            return { kinds: [0], authors: [target.pubkey] };
+          }
+          return {
+            kinds: [target.kind],
+            authors: [target.pubkey],
+            '#d': [target.identifier ?? '']
+          };
+        };
+
+        const filter = buildFilter();
+        const relayPromises = relaysToUse.map((relay) =>
+          withTimeout(pool.get([relay], filter), REQUEST_TIMEOUT_MS)
+        );
+        const results = await Promise.allSettled(relayPromises);
+        for (let i = 0; i < results.length; i++) {
+          const result = results[i];
+          const relay = relaysToUse[i];
+          if (result.status === 'fulfilled' && result.value) {
+            relayMonitor.reportSuccess(relay);
+            event = result.value;
+            break;
+          } else if (result.status === 'rejected') {
+            const errorMsg = result.reason instanceof Error ? result.reason.message : '';
+            if (errorMsg === 'Request timed out') {
+              relayMonitor.reportFailure(relay);
               fetchTimedOut = true;
-              relaysToUse.forEach((relay) => relayMonitor.reportFailure(relay));
-            } else {
-              throw err;
             }
           }
-          if (event) {
-            repliesState = await fetchRepliesFromRelays(event.id, relaysToUse, pool);
-          }
-        } else if (target.type === 'profile') {
-          try {
-            event = await withTimeout(
-              pool.get(relaysToUse, { kinds: [0], authors: [target.pubkey] }),
-              REQUEST_TIMEOUT_MS
-            );
-          } catch (err) {
-            if (err instanceof Error && err.message === 'Request timed out') {
-              fetchTimedOut = true;
-              relaysToUse.forEach((relay) => relayMonitor.reportFailure(relay));
-            } else {
-              throw err;
-            }
-          }
-        } else {
-          const identifier = target.identifier ?? '';
-          try {
-            event = await withTimeout(
-              pool.get(relaysToUse, {
-                kinds: [target.kind],
-                authors: [target.pubkey],
-                '#d': [identifier]
-              }),
-              REQUEST_TIMEOUT_MS
-            );
-          } catch (err) {
-            if (err instanceof Error && err.message === 'Request timed out') {
-              fetchTimedOut = true;
-              relaysToUse.forEach((relay) => relayMonitor.reportFailure(relay));
-            } else {
-              throw err;
-            }
-          }
+        }
+
+        if (event) {
+          repliesState = await fetchRepliesFromRelays(event.id, relaysToUse, pool);
         }
 
         if (!event) {
@@ -429,11 +429,25 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
 
         let authorProfile: ProfileMeta | null = null;
         if (event.kind !== 0) {
-          const profileEvent = await withTimeout(
-            pool.get(relaysToUse, { kinds: [0], authors: [event.pubkey] }),
-            REQUEST_TIMEOUT_MS
+          const profileFilter = { kinds: [0], authors: [event.pubkey] };
+          const profilePromises = relaysToUse.map((relay) =>
+            withTimeout(pool.get([relay], profileFilter), REQUEST_TIMEOUT_MS)
           );
-          authorProfile = parseProfileContent(profileEvent?.content);
+          const profileResults = await Promise.allSettled(profilePromises);
+          for (let i = 0; i < profileResults.length; i++) {
+            const result = profileResults[i];
+            const relay = relaysToUse[i];
+            if (result.status === 'fulfilled' && result.value) {
+              relayMonitor.reportSuccess(relay);
+              authorProfile = parseProfileContent(result.value.content);
+              break;
+            } else if (result.status === 'rejected') {
+              const errorMsg = result.reason instanceof Error ? result.reason.message : '';
+              if (errorMsg === 'Request timed out') {
+                relayMonitor.reportFailure(relay);
+              }
+            }
+          }
         } else {
           authorProfile = parseProfileContent(event.content);
         }
