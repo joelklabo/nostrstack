@@ -236,7 +236,9 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     let regtestAvailable = false;
     try {
       await regtestBtn.waitFor({ state: 'visible', timeout: 3000 });
-      regtestAvailable = await regtestBtn.isEnabled().catch(() => false);
+      const isEnabled = await regtestBtn.isEnabled().catch(() => false);
+      const isClickable = (await regtestBtn.isEditable().catch(() => false)) || isEnabled;
+      regtestAvailable = isClickable;
     } catch {
       regtestAvailable = false;
     }
@@ -265,10 +267,12 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     let paid = false;
     let modalClosed = false;
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      let clickFailed = false;
       try {
         await regtestBtn.scrollIntoViewIfNeeded();
-        await regtestBtn.click({ force: true, timeout: 15_000 });
-      } catch {
+        await regtestBtn.click({ force: true, timeout: 10_000 });
+      } catch (err) {
+        clickFailed = true;
         try {
           await page.screenshot({ path: `/tmp/qa-regtest-click-fail-${Date.now()}.png` });
         } catch {
@@ -288,10 +292,15 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         modalClosed = true;
         break;
       }
-      paid = await expect(modal)
-        .toContainText(/Payment (sent|confirmed)\./, { timeout: 20_000 })
-        .then(() => true)
-        .catch(() => false);
+      if (clickFailed) break;
+      try {
+        paid = await expect(modal)
+          .toContainText(/Payment (sent|confirmed)\./, { timeout: 15_000 })
+          .then(() => true)
+          .catch(() => false);
+      } catch {
+        paid = false;
+      }
       if (paid) break;
     }
     if (!paid && !modalClosed) {
