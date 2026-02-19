@@ -605,6 +605,31 @@ export function SearchScreen() {
           error?.code === 'invalid_format' &&
           notes.length === 0 &&
           !notesLoading &&
+          notesError && (
+            <div className="search-empty" role="status" aria-live="polite">
+              <h3 className="search-empty__title">
+                {lastSearchQuery ? `No results for "${lastSearchQuery}"` : 'No results found'}
+              </h3>
+              <p className="search-empty__text">
+                We could not find any profiles matching. {notesError}
+              </p>
+              <div style={{ marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="action-btn"
+                  onClick={() => void handleNotesSearch(lastSearchQuery || query, true)}
+                  aria-label="Retry search"
+                >
+                  Retry search
+                </button>
+              </div>
+            </div>
+          )}
+        {hasSubmittedSearch &&
+          status === 'error' &&
+          error?.code === 'invalid_format' &&
+          notes.length === 0 &&
+          !notesLoading &&
           !notesError && (
             <div className="search-empty" role="status" aria-live="polite">
               <h3 className="search-empty__title">No results found</h3>
