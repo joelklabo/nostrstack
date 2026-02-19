@@ -82,12 +82,17 @@ export function SearchScreen() {
   const [hasMore, setHasMore] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
   const lastProfileLookupKey = useRef<string | null>(null);
+  const notesCountRef = useRef(0);
   const [relayHealthCount, setRelayHealthCount] = useState(0);
 
   useEffect(() => {
     const updateRelayHealth = () => setRelayHealthCount((c) => c + 1);
     return relayMonitor.subscribe(updateRelayHealth);
   }, []);
+
+  useEffect(() => {
+    notesCountRef.current = notes.length;
+  }, [notes]);
 
   const healthyRelayCount = useMemo(() => {
     const searchRelays = getSearchRelays(relayList);
@@ -172,6 +177,7 @@ export function SearchScreen() {
 
   const handleNotesSearch = useCallback(
     async (q: string, isRetry = false) => {
+      const hasExistingNotes = notesCountRef.current > 0;
       setNotesLoading(true);
       setNotesError(null);
       setSubmitFeedback(`Searching notes for "${q}"...`);
@@ -203,12 +209,12 @@ export function SearchScreen() {
           setSubmitFeedback(`Found ${results.length} note ${resultWord} for "${q}".`);
         }
       } catch (err) {
-        applyNotesSearchError(q, err, notes.length > 0);
+        applyNotesSearchError(q, err, hasExistingNotes);
       } finally {
         setNotesLoading(false);
       }
     },
-    [applyNotesSearchError, pool, relayList, notes.length]
+    [applyNotesSearchError, pool, relayList]
   );
 
   const handleSearchFallback = useCallback(() => {
