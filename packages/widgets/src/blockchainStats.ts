@@ -143,6 +143,37 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   let reconnectAttempts = 0;
   let ws: WebSocket | null = null;
   let destroyed = false;
+  let isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+  const handleOnline = () => {
+    if (destroyed) return;
+    isOnline = true;
+    reconnectAttempts = 0;
+    reconnectDelay = 2000;
+    hydrate();
+    if (!wsConnected) connectWebSocket();
+  };
+
+  const handleOffline = () => {
+    if (destroyed) return;
+    isOnline = false;
+    if (ws) {
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
+      ws = null;
+    }
+    wsConnected = false;
+    errorMessage = errorMessage ?? 'Browser offline';
+    renderStatus();
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+  }
 
   const setStatusClass = (tone: 'muted' | 'success' | 'danger') => {
     status.classList.remove('ns-status--muted', 'ns-status--success', 'ns-status--danger');
@@ -215,6 +246,11 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   const scheduleReconnect = () => {
     if (!wsUrl || destroyed) return;
     if (reconnectTimer) return;
+    if (!isOnline) {
+      errorMessage = 'Browser offline';
+      renderStatus();
+      return;
+    }
     if (reconnectAttempts >= MAX_AUTO_RECONNECT_ATTEMPTS) {
       errorMessage = errorMessage ?? 'Live updates paused';
       renderStatus();
@@ -231,6 +267,11 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
   const connectWebSocket = () => {
     if (!wsUrl || destroyed) return;
     if (typeof WebSocket === 'undefined') return;
+    if (!isOnline) {
+      errorMessage = 'Browser offline';
+      renderStatus();
+      return;
+    }
     try {
       ws = new WebSocket(wsUrl);
     } catch {
@@ -292,6 +333,10 @@ export function renderBlockchainStats(container: HTMLElement, opts: BlockchainSt
     destroy: () => {
       destroyed = true;
       retry.removeEventListener('click', handleRetry);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      }
       if (statusTimer) {
         window.clearInterval(statusTimer);
         statusTimer = null;

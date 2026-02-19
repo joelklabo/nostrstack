@@ -43,6 +43,24 @@ export class TipsFeedConnection {
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
   private seenIds = new Set<string>();
+  private isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+  private readonly handleOnline = () => {
+    if (this.destroyed) return;
+    this.isOnline = true;
+    this.reconnectAttempts = 0;
+    if (!this.wsConnected) {
+      this.connectWebSocket();
+    }
+  };
+
+  private readonly handleOffline = () => {
+    if (this.destroyed) return;
+    this.isOnline = false;
+    this.closeWebSocket();
+    this.wsConnected = false;
+    this.onConnectionChange?.(false);
+  };
 
   constructor(opts: TipsFeedConnectionOptions) {
     this.wsUrl = opts.wsUrl;
@@ -51,6 +69,11 @@ export class TipsFeedConnection {
     this.maxItems = opts.maxItems;
     this.onTip = opts.onTip;
     this.onConnectionChange = opts.onConnectionChange;
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.handleOnline);
+      window.addEventListener('offline', this.handleOffline);
+    }
   }
 
   /**
@@ -69,6 +92,10 @@ export class TipsFeedConnection {
    */
   stop(): void {
     this.destroyed = true;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.handleOnline);
+      window.removeEventListener('offline', this.handleOffline);
+    }
     this.closeWebSocket();
     this.stopPolling();
     this.clearReconnect();
@@ -152,6 +179,10 @@ export class TipsFeedConnection {
 
   private connectWebSocket(): void {
     if (!this.wsUrl || typeof window === 'undefined' || this.destroyed) return;
+    if (!this.isOnline) {
+      this.startPolling();
+      return;
+    }
 
     try {
       this.ws = new WebSocket(this.wsUrl);

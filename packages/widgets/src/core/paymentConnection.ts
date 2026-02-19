@@ -45,6 +45,20 @@ export class PaymentConnection {
   private currentInvoice: string | null = null;
   private currentProviderRef: string | null = null;
   private isPaid = false;
+  private isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+  private readonly handleOnline = () => {
+    if (this.isPaid) return;
+    this.isOnline = true;
+    this.reconnectAttempts = 0;
+    this.startWebSocket();
+  };
+
+  private readonly handleOffline = () => {
+    this.isOnline = false;
+    this.closeWebSocket();
+    this.setState('idle');
+  };
 
   constructor(opts: PaymentConnectionOptions) {
     this.wsUrl = opts.wsUrl;
@@ -52,6 +66,11 @@ export class PaymentConnection {
     this.domain = opts.domain;
     this.onStateChange = opts.onStateChange;
     this.onPaid = opts.onPaid;
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.handleOnline);
+      window.addEventListener('offline', this.handleOffline);
+    }
   }
 
   /**
@@ -83,6 +102,10 @@ export class PaymentConnection {
    * Stop all connections and polling
    */
   stop(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.handleOnline);
+      window.removeEventListener('offline', this.handleOffline);
+    }
     this.closeWebSocket();
     this.stopPolling();
     this.clearReconnect();
@@ -126,6 +149,7 @@ export class PaymentConnection {
 
   private startWebSocket(): void {
     if (!this.wsUrl) return;
+    if (!this.isOnline) return;
     if (
       this.ws &&
       (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
