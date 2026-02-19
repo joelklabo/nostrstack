@@ -239,24 +239,21 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     await expect(modal.locator('.payment-invoice-box')).toBeVisible();
 
     const regtestBtn = modal.getByRole('button', { name: /PAY_REGTEST/i });
-    let regtestAvailable = false;
+    let regtestBtnVisible = false;
     try {
-      await regtestBtn.waitFor({ state: 'visible', timeout: 3000 });
-      const isEnabled = await regtestBtn.isEnabled().catch(() => false);
-      const isClickable = (await regtestBtn.isEditable().catch(() => false)) || isEnabled;
-      regtestAvailable = isClickable;
+      await regtestBtn.waitFor({ state: 'visible', timeout: 8000 });
+      regtestBtnVisible = true;
     } catch {
-      regtestAvailable = false;
+      regtestBtnVisible = false;
     }
-
-    if (!regtestAvailable) {
+    if (!regtestBtnVisible) {
       try {
         await page.screenshot({ path: `/tmp/qa-regtest-no-button-${Date.now()}.png` });
       } catch {
         // ignore screenshot failures
       }
       console.log(
-        '⚠️ PAY_REGTEST button not available - regtest wallet not configured on API, skipping regtest payment test'
+        '⚠️ PAY_REGTEST button not visible after 8s - regtest wallet may not be configured on API, skipping regtest payment test'
       );
       try {
         await modal
@@ -265,7 +262,9 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
           .getByText(/CLOSE/i)
           .first()
           .click({ force: true });
-        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+        await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {
+          // ignore close failures
+        });
       } catch {
         // ignore close failures
       }
