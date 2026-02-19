@@ -69,21 +69,21 @@ export function useOnboarding() {
     localStorage.setItem(ONBOARDING_KEY, 'true');
   }, []);
 
-  const next = () => {
+  const next = useCallback(() => {
     if (currentStepIndex < TOUR_STEPS.length - 1) {
       setCurrentStepIndex((i) => i + 1);
     } else {
       finish();
     }
-  };
+  }, [currentStepIndex, finish]);
 
-  const back = () => {
+  const back = useCallback(() => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex((i) => i - 1);
     }
-  };
+  }, [currentStepIndex]);
 
-  const skip = () => finish();
+  const skip = useCallback(() => finish(), [finish]);
 
   const reset = useCallback(() => {
     setInitKey((k) => k + 1);
