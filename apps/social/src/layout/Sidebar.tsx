@@ -163,6 +163,13 @@ export const Sidebar = memo(function Sidebar({
 
   const handleRegtestFund = async () => {
     if (isFunding) return;
+    if (!regtestFundEnabled) {
+      toast({
+        message: 'Regtest funding is only available in regtest mode.',
+        tone: 'danger'
+      });
+      return;
+    }
     if (!apiBaseConfig.isConfigured) {
       toast({
         message: regtestUnavailableReason ?? 'Regtest funding unavailable.',
