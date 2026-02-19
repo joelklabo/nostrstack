@@ -92,9 +92,9 @@ describe('renderBlockchainStats', () => {
 
       constructor(_url: string) {
         MockWebSocket.instances += 1;
-        queueMicrotask(() => {
+        setTimeout(() => {
           this.onclose?.();
-        });
+        }, 0);
       }
 
       close() {
