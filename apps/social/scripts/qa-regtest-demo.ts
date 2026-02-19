@@ -226,6 +226,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     if (!invoiceReady) {
       await modal
         .locator('.payment-header button')
+        .filter({ visible: true })
         .getByText(/CLOSE/i)
         .first()
         .click({ force: true });
@@ -260,6 +261,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       try {
         await modal
           .locator('.payment-header button')
+          .filter({ visible: true })
           .getByText(/CLOSE/i)
           .first()
           .click({ force: true });
@@ -287,6 +289,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         try {
           await modal
             .locator('.payment-header button')
+            .filter({ visible: true })
             .getByText(/CLOSE/i)
             .first()
             .click({ force: true });
