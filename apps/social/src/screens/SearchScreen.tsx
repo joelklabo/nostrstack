@@ -676,11 +676,15 @@ export function SearchScreen() {
         )}
         {notesLoading && notes.length === 0 && (
           <div
-            style={{ padding: '2rem', textAlign: 'center', color: 'var(--ns-color-text-muted)' }}
+            className="search-empty"
+            style={{ borderStyle: 'solid', background: 'var(--ns-color-bg-subtle)' }}
             role="status"
             aria-live="polite"
           >
-            Searching for notes...
+            <div className="ns-spinner" style={{ margin: '0 auto 1rem', width: 24, height: 24 }} />
+            <p style={{ margin: 0, color: 'var(--ns-color-text-default)' }}>
+              Searching for notes...
+            </p>
           </div>
         )}
         {notesError && !notesLoading && (
