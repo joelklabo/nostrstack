@@ -19,7 +19,7 @@ export function PostEditor({
   placeholder,
   autoFocus
 }: PostEditorProps) {
-  const { pubkey, signEvent, mode, error } = useAuth();
+  const { pubkey, signEvent, mode, error, isLoading: authLoading } = useAuth();
   const isGuest = mode === 'guest';
   const cfg = useNostrstackConfig();
   const [content, setContent] = useState('');
@@ -134,6 +134,14 @@ export function PostEditor({
     onSuccess,
     guardAsyncCompletion
   ]);
+
+  if (authLoading) {
+    return (
+      <div className="post-editor-container">
+        <div className="system-msg">Loading...</div>
+      </div>
+    );
+  }
 
   if (!pubkey && !isGuest) {
     return (
