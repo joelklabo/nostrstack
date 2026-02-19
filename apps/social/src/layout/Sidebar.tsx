@@ -262,6 +262,12 @@ export const Sidebar = memo(function Sidebar({
     onMobileClose?.();
   };
 
+  const handleOpenHelp = useCallback(() => {
+    navigateTo('/help');
+    onOpenHelp?.();
+    onMobileClose?.();
+  }, [onOpenHelp, onMobileClose]);
+
   return (
     <nav className={`sidebar-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
       <div className="sidebar-header">
@@ -318,14 +324,11 @@ export const Sidebar = memo(function Sidebar({
           <button
             type="button"
             className="nav-item"
-            onClick={() => {
-              navigateTo('/help');
-              onOpenHelp();
-              onMobileClose?.();
-            }}
+            onClick={handleOpenHelp}
             aria-label="Open help and keyboard shortcuts"
           >
             Help
+            <kbd className="nav-item-kbd">?</kbd>
           </button>
         )}
       </div>
