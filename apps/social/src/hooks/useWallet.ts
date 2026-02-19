@@ -62,13 +62,13 @@ function computeBackoffMs(attempt: number) {
 async function checkWalletEnabled(runtimeApiBase: string): Promise<boolean> {
   const apiBase = runtimeApiBase;
   if (!apiBase) return false;
-  const maxAttempts = 3;
-  const attemptDelay = 1000;
+  const maxAttempts = 5;
+  const attemptDelay = 1500;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
     const timeoutPromise = new Promise<null>((resolve) => {
-      timeoutHandle = globalThis.setTimeout(() => resolve(null), 3000);
+      timeoutHandle = globalThis.setTimeout(() => resolve(null), 5000);
     });
     try {
       const url = `${apiBase}/debug/ws-wallet`;
@@ -78,7 +78,7 @@ async function checkWalletEnabled(runtimeApiBase: string): Promise<boolean> {
           await new Promise((r) => setTimeout(r, attemptDelay));
           continue;
         }
-        return false;
+        return import.meta.env.DEV;
       }
       if (!res.ok) return false;
       const data = (await res.json()) as { enabled?: boolean };
@@ -88,14 +88,14 @@ async function checkWalletEnabled(runtimeApiBase: string): Promise<boolean> {
         await new Promise((r) => setTimeout(r, attemptDelay));
         continue;
       }
-      return false;
+      return import.meta.env.DEV;
     } finally {
       if (timeoutHandle) {
         globalThis.clearTimeout(timeoutHandle);
       }
     }
   }
-  return false;
+  return import.meta.env.DEV;
 }
 
 function safeClose(socket: WebSocket | null) {
