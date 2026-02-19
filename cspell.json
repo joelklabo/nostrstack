@@ -581,7 +581,9 @@
     "ionos",
     "unrecognised",
     "fuser",
-    "onlynotes"
+    "onlynotes",
+    "notallowederror",
+    "securityerror"
   ],
   "ignoreRegExpList": [
     "/nsec1[0-9a-z]{20,}/g",
