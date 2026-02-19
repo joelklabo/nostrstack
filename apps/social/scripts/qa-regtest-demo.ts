@@ -311,11 +311,11 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
 }
 
 async function tryBolt12Flow(page: Page) {
-  await page.getByRole('button', { name: /Offers/i }).click();
+  await page.getByRole('button', { name: 'Offers' }).click();
   await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
 
   await page.getByLabel('Description').fill('Regtest QA offer');
-  await page.getByRole('button', { name: /Create.*BOLT12.*offer/i }).click();
+  await page.getByRole('button', { name: 'Create new BOLT12 offer' }).click();
 
   const offerWidget = page.locator('.offer-widget__title', { hasText: 'Offer' });
   await expect(offerWidget).toBeVisible({ timeout: 20_000 });
@@ -325,7 +325,7 @@ async function tryBolt12Flow(page: Page) {
     throw new Error(`BOLT12 offer error: ${await offerError.textContent()}`);
   }
 
-  await page.getByRole('button', { name: /Request Invoice/i }).click();
+  await page.getByRole('button', { name: 'Request Invoice' }).first().click();
   const invoiceWidget = page.locator('.offer-widget__title', { hasText: 'Invoice' });
   await expect(invoiceWidget).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.offer-widget__value').nth(1)).toBeVisible({ timeout: 20_000 });
