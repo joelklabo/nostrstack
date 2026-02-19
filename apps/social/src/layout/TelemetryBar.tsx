@@ -1,6 +1,42 @@
 // Premium telemetry styles - glowing Bitcoin data visualization
 import '../ui/telemetry-premium.css';
 
+const WS_ERROR_SUPPRESSION_MS = 10_000;
+
+function suppressExpectedWsErrors<T>(fn: () => T): T {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  const startTime = Date.now();
+  const filter = (args: unknown[]) => {
+    const message = args[0];
+    if (
+      typeof message === 'string' &&
+      (message.includes('WebSocket connection to') ||
+        message.includes('net::ERR_CONNECTION_REFUSED') ||
+        message.includes('net::ERR_CONNECTION_RESET') ||
+        message.includes('net::ERR_NAME_NOT_RESOLVED') ||
+        message.includes('net::ERR_INTERNET_DISCONNECTED'))
+    ) {
+      if (Date.now() - startTime < WS_ERROR_SUPPRESSION_MS) {
+        return true;
+      }
+    }
+    return false;
+  };
+  console.error = (...args: unknown[]) => {
+    if (!filter(args)) originalError.apply(console, args);
+  };
+  console.warn = (...args: unknown[]) => {
+    if (!filter(args)) originalWarn.apply(console, args);
+  };
+  try {
+    return fn();
+  } finally {
+    console.error = originalError;
+    console.warn = originalWarn;
+  }
+}
+
 import {
   type BitcoinStatus,
   type PaymentFailureReason,
@@ -563,7 +599,7 @@ export function TelemetryBar() {
       setWsStatus(attempt === 0 ? 'connecting' : 'reconnecting');
       setWsAttempt(attempt);
       const connectionId = ++activeConnectionIdRef.current;
-      ws = new WebSocket(telemetryWsUrl);
+      ws = suppressExpectedWsErrors(() => new WebSocket(telemetryWsUrl));
       wsRef.current = ws;
       if (previousSocket && previousSocket !== ws) {
         safeClose(previousSocket);

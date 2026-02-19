@@ -11,6 +11,41 @@ const WALLET_WS_MAX_ATTEMPTS = 5;
 const WALLET_WS_BASE_DELAY_MS = 1000;
 const WALLET_WS_MAX_DELAY_MS = 30000;
 const WALLET_WS_JITTER = 0.3;
+const WS_ERROR_SUPPRESSION_MS = 10_000;
+
+function suppressExpectedWsErrors<T>(fn: () => T): T {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  const startTime = Date.now();
+  const filter = (args: unknown[]) => {
+    const message = args[0];
+    if (
+      typeof message === 'string' &&
+      (message.includes('WebSocket connection to') ||
+        message.includes('net::ERR_CONNECTION_REFUSED') ||
+        message.includes('net::ERR_CONNECTION_RESET') ||
+        message.includes('net::ERR_NAME_NOT_RESOLVED') ||
+        message.includes('net::ERR_INTERNET_DISCONNECTED'))
+    ) {
+      if (Date.now() - startTime < WS_ERROR_SUPPRESSION_MS) {
+        return true;
+      }
+    }
+    return false;
+  };
+  console.error = (...args: unknown[]) => {
+    if (!filter(args)) originalError.apply(console, args);
+  };
+  console.warn = (...args: unknown[]) => {
+    if (!filter(args)) originalWarn.apply(console, args);
+  };
+  try {
+    return fn();
+  } finally {
+    console.error = originalError;
+    console.warn = originalWarn;
+  }
+}
 
 function applyJitter(baseMs: number, jitter: number) {
   const spread = baseMs * jitter;
@@ -211,7 +246,7 @@ export function useWallet(enabled: boolean = true): WalletState {
 
       const timer = globalThis.setTimeout(() => {
         if (cancelled) return;
-        ws = new WebSocket(wsUrl);
+        ws = suppressExpectedWsErrors(() => new WebSocket(wsUrl));
 
         ws.onopen = () => {
           if (cancelled) return;
