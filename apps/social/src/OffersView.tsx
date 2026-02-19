@@ -200,6 +200,33 @@ export function OffersView() {
     [apiBaseConfig.isConfigured, apiBase]
   );
 
+  useEffect(() => {
+    if (!baseUrl) return;
+
+    let cancelled = false;
+    async function fetchOffers() {
+      try {
+        const res = await fetch(`${baseUrl}/api/bolt12/offers`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { offers?: OfferEntry[] };
+        if (!cancelled && data.offers) {
+          setOffers(
+            data.offers.map((o) => ({
+              ...o,
+              invoiceStatus: 'idle'
+            }))
+          );
+        }
+      } catch {
+        // Silently fail - offers will show as empty
+      }
+    }
+    fetchOffers();
+    return () => {
+      cancelled = true;
+    };
+  }, [baseUrl]);
+
   const updateOffer = (id: string, patch: Partial<OfferEntry>) => {
     setOffers((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
   };
