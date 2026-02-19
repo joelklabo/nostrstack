@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const ONBOARDING_KEY = 'nostrstack.onboarding.v1';
 const ONBOARDING_RESTART_EVENT = 'nostrstack:restart-onboarding-tour';
@@ -52,6 +52,8 @@ export function useOnboarding() {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [initKey, setInitKey] = useState(0);
+  const currentStepIndexRef = useRef(currentStepIndex);
+  currentStepIndexRef.current = currentStepIndex;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -70,18 +72,18 @@ export function useOnboarding() {
   }, []);
 
   const next = useCallback(() => {
-    if (currentStepIndex < TOUR_STEPS.length - 1) {
+    if (currentStepIndexRef.current < TOUR_STEPS.length - 1) {
       setCurrentStepIndex((i) => i + 1);
     } else {
       finish();
     }
-  }, [currentStepIndex, finish]);
+  }, [finish]);
 
   const back = useCallback(() => {
-    if (currentStepIndex > 0) {
+    if (currentStepIndexRef.current > 0) {
       setCurrentStepIndex((i) => i - 1);
     }
-  }, [currentStepIndex]);
+  }, []);
 
   const skip = useCallback(() => finish(), [finish]);
 
