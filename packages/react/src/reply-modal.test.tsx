@@ -51,14 +51,14 @@ describe('ReplyModal', () => {
     cleanup();
   });
 
-  it('renders an auth prompt when in guest mode', () => {
+  it('renders PostEditor for guest users', () => {
     mockUseAuth.mockReturnValue({
       mode: 'guest',
       error: null,
       pubkey: null
     });
     render(<ReplyModal isOpen={true} onClose={vi.fn()} parentEvent={mockEvent} />);
-    expect(screen.getByText(/Sign in to post your reply\./i)).toBeTruthy();
+    expect(screen.getByTestId('post-editor')).toBeTruthy();
   });
 
   it('renders correctly when open', () => {
