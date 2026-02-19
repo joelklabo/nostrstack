@@ -1,12 +1,14 @@
 import '../styles/base/tour.css';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useOnboarding } from '../hooks/useOnboarding';
 
 export function OnboardingTour() {
   const { isActive, step, isLastStep, hasPreviousStep, next, back, skip } = useOnboarding();
+  const stepTarget = useMemo(() => step.target, [step]);
+  const stepPlacement = useMemo(() => step.placement, [step]);
   const [position, setPosition] = useState<React.CSSProperties>({
     top: '50%',
     left: '50%',
@@ -78,20 +80,20 @@ export function OnboardingTour() {
 
   // Scroll into view
   useEffect(() => {
-    if (!isActive || !step.target) return;
-    const el = document.querySelector(step.target);
+    if (!isActive || !stepTarget) return;
+    const el = document.querySelector(stepTarget);
     if (!el) return;
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
-  }, [isActive, step.target]);
+  }, [isActive, stepTarget]);
 
   useEffect(() => {
     if (!isActive) return;
 
-    if (!step.target) {
+    if (!stepTarget) {
       setPosition({
         top: '50%',
         left: '50%',
@@ -102,7 +104,7 @@ export function OnboardingTour() {
     }
 
     const updatePosition = () => {
-      const el = document.querySelector(step.target!);
+      const el = document.querySelector(stepTarget);
       if (el) {
         const rect = el.getBoundingClientRect();
         setSpotlightStyle({
@@ -117,13 +119,13 @@ export function OnboardingTour() {
         let left = rect.left + rect.width / 2 - 160; // Center horizontally (width 320)
         let transform: string | undefined;
 
-        if (step.placement === 'right') {
+        if (stepPlacement === 'right') {
           top = rect.top;
           left = rect.right + 12;
-        } else if (step.placement === 'left') {
+        } else if (stepPlacement === 'left') {
           top = rect.top;
           left = rect.left - 332; // 320 + 12
-        } else if (step.placement === 'top') {
+        } else if (stepPlacement === 'top') {
           top = rect.top - 12;
           // Ideally we subtract height, but let's just shift up a bit and hope
           transform = 'translateY(-100%)';
@@ -157,7 +159,7 @@ export function OnboardingTour() {
       window.removeEventListener('resize', updatePosition);
       cancelAnimationFrame(raf);
     };
-  }, [isActive, step.target, step.placement]);
+  }, [isActive, stepTarget, stepPlacement]);
 
   if (!isActive) return null;
 
