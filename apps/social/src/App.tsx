@@ -474,6 +474,9 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   }, [isHelpRoute, setHelpOpen]);
 
   useEffect(() => {
+    if (isHelpRoute) {
+      return;
+    }
     if (isSettingsRoute) {
       setCurrentView('settings');
       return;
@@ -495,6 +498,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     }
   }, [
     currentView,
+    isHelpRoute,
     isOffersRoute,
     isSearchRoute,
     isFindFriendRoute,
