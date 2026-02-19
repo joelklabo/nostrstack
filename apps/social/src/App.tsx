@@ -880,6 +880,7 @@ export default function App() {
   const initialLocalApiConfig = useRef<ApiBaseResolution | null>(
     isLocalApiBase(apiBaseConfig) ? apiBaseConfig : null
   );
+  const probedBasesRef = useRef<Set<string>>(new Set());
 
   const retryLocalApiHealthCheck = useCallback(() => {
     if (!initialLocalApiConfig.current) {
@@ -898,6 +899,12 @@ export default function App() {
       setIsResolvingLocalApiBase(false);
       return;
     }
+    const baseKey = resolvedApiBaseConfig.baseUrl;
+    if (probedBasesRef.current.has(baseKey)) {
+      setIsResolvingLocalApiBase(false);
+      return;
+    }
+    probedBasesRef.current.add(baseKey);
     let isMounted = true;
 
     const checkApiHealth = async (url: string): Promise<boolean> => {
