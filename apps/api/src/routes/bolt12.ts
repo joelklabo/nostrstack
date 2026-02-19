@@ -18,18 +18,6 @@ import {
 
 type Bolt12ErrorResult = { status: number; error: string; message?: string };
 
-type StoredBolt12Offer = {
-  id: string;
-  description: string;
-  amountMsat?: number;
-  label?: string;
-  issuer?: string;
-  expiresIn?: number;
-  offer: string;
-  offerId?: string;
-  createdAt: string;
-};
-
 function formatBolt12Error(err: unknown): Bolt12ErrorResult {
   if (err instanceof Bolt12ValidationError) {
     return { status: 400, error: err.code, message: err.message };
@@ -66,8 +54,6 @@ function formatBolt12Error(err: unknown): Bolt12ErrorResult {
 
 export async function registerBolt12Routes(app: FastifyInstance) {
   if (!env.ENABLE_BOLT12) return;
-
-  const offerHistory: StoredBolt12Offer[] = [];
 
   const limits: Bolt12Limits = {
     minAmountMsat: env.BOLT12_MIN_AMOUNT_MSAT,
@@ -112,9 +98,13 @@ export async function registerBolt12Routes(app: FastifyInstance) {
     }
   };
 
-  app.get('/api/bolt12/offers', async () => ({
-    offers: offerHistory
-  }));
+  app.get('/api/bolt12/offers', async () => {
+    const offers = await app.prisma.bolt12Offer.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 1000
+    });
+    return { offers };
+  });
 
   app.post(
     '/api/bolt12/offers',
@@ -158,20 +148,18 @@ export async function registerBolt12Routes(app: FastifyInstance) {
           limits
         );
         const offer = await createBolt12Offer(provider, input);
-        offerHistory.unshift({
-          id: randomUUID(),
-          description: input.description,
-          amountMsat: input.amountMsat,
-          label: input.label,
-          issuer: input.issuer,
-          expiresIn: input.expiresIn,
-          offer: offer.offer,
-          offerId: offer.offerId,
-          createdAt: new Date().toISOString()
+        await app.prisma.bolt12Offer.create({
+          data: {
+            id: randomUUID(),
+            description: input.description,
+            amountMsat: input.amountMsat ?? undefined,
+            label: input.label,
+            issuer: input.issuer,
+            expiresIn: input.expiresIn ?? undefined,
+            offer: offer.offer,
+            offerId: offer.offerId
+          }
         });
-        if (offerHistory.length > 1000) {
-          offerHistory.length = 1000;
-        }
         request.log.info(
           {
             reqId: request.id,

@@ -124,3 +124,18 @@ model NostrAddressCache {
   @@index([eventId])
   @@index([expiresAt])
 }
+
+model Bolt12Offer {
+  id          String   @id @default(cuid())
+  description String
+  amountMsat  Int?
+  label       String?
+  issuer      String?
+  expiresIn   Int?
+  offer       String
+  offerId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([createdAt])
+}
