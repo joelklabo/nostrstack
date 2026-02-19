@@ -241,7 +241,7 @@ async function tryBolt12Flow(page: Page) {
   await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
 
   await page.getByLabel('Description').fill('Regtest QA offer');
-  await page.getByRole('button', { name: 'Create new BOLT12 offer' }).click();
+  await page.getByRole('button', { name: /Create.*BOLT12.*offer/i }).click();
 
   const offerWidget = page.locator('.offer-widget__title', { hasText: 'Offer' });
   await expect(offerWidget).toBeVisible({ timeout: 20_000 });
