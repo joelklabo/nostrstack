@@ -23,7 +23,7 @@ const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 
 export const Sidebar = memo(function Sidebar({
   currentView,
-  setCurrentView,
+  setCurrentView: _setCurrentView,
   mobileOpen,
   onMobileClose,
   onOpenHelp,
@@ -232,33 +232,28 @@ export const Sidebar = memo(function Sidebar({
   const handleNavigate = (view: SidebarProps['currentView']) => {
     if (view === 'offers') {
       navigateTo('/offers');
-      setCurrentView('offers');
       onMobileClose?.();
       return;
     }
 
     if (view === 'search') {
       navigateTo('/find-friend');
-      setCurrentView('search');
       onMobileClose?.();
       return;
     }
     if (view === 'settings') {
       navigateTo('/settings');
-      setCurrentView('settings');
       onMobileClose?.();
       return;
     }
     if (view === 'profile') {
       navigateTo('/profile');
-      setCurrentView('profile');
       onMobileClose?.();
       return;
     }
     if (window.location.pathname !== '/') {
       navigateTo('/');
     }
-    setCurrentView('feed');
     onMobileClose?.();
   };
 

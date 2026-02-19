@@ -430,8 +430,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   ]);
   const handleNavigateToSettings = useCallback(() => {
     navigateTo('/settings');
-    setCurrentView('settings');
-  }, [setCurrentView]);
+  }, []);
 
   // Check if the current path is a valid route
   const isValidRoute = useMemo(() => {
