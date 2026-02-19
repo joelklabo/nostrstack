@@ -235,7 +235,6 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
         return true;
       }
-      await closeBtn.waitFor({ state: 'visible', timeout: 10_000 });
       await closeBtn.click({ force: true });
       await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
       return true;
@@ -338,7 +337,6 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       try {
         const closeBtn6 = await findVisibleCloseButton(modal);
         if (closeBtn6) {
-          await closeBtn6.waitFor({ state: 'visible', timeout: 10_000 });
           await closeBtn6.click({ force: true });
         }
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
@@ -350,7 +348,6 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       try {
         const closeBtn7 = await findVisibleCloseButton(modal);
         if (closeBtn7) {
-          await closeBtn7.waitFor({ state: 'visible', timeout: 10_000 });
           await closeBtn7.click({ force: true });
         }
         await modal.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
