@@ -1,23 +1,49 @@
-import fastify from 'fastify';
+import fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { registerTelemetryWs } from './telemetry-ws.js';
+const baseEnv: Record<string, string | undefined> = {
+  NODE_ENV: 'test',
+  VITEST: 'true',
+  LOG_LEVEL: 'error',
+  TELEMETRY_PROVIDER: 'bitcoind'
+};
 
-process.env.NODE_ENV = 'test';
-process.env.VITEST = 'true';
-process.env.LOG_LEVEL = 'error';
+const applyEnv = (overrides: Record<string, string | undefined> = {}) => {
+  const env = { ...baseEnv, ...overrides };
+  const keys = new Set([...Object.keys(baseEnv), ...Object.keys(overrides)]);
+  for (const key of keys) {
+    const value = env[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+};
+
+const ok = (result: unknown) => new Response(JSON.stringify({ result }), { status: 200 });
+
+const buildApp = async (fetchMock: ReturnType<typeof vi.fn>) => {
+  applyEnv({});
+  vi.resetModules();
+  vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
+  const { registerTelemetryWs } = await import('./telemetry-ws.js');
+  const client = (await import('prom-client')).default;
+  client.register.clear();
+  const instance = fastify({ logger: false });
+  return { instance, registerTelemetryWs };
+};
 
 describe('telemetry ws polling', () => {
-  let app: ReturnType<typeof fastify>;
+  let app: FastifyInstance;
   let fetchMock: ReturnType<typeof vi.fn>;
   let getblockcountCalls = 0;
   let logInfo: ReturnType<typeof vi.fn>;
   let logWarn: ReturnType<typeof vi.fn>;
 
-  const ok = (result: unknown) => new Response(JSON.stringify({ result }), { status: 200 });
-
   beforeEach(async () => {
     vi.useFakeTimers();
+    vi.setSystemTime(0);
     getblockcountCalls = 0;
 
     fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
@@ -48,14 +74,13 @@ describe('telemetry ws polling', () => {
       }
     });
 
-    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
-
-    app = fastify({ logger: false });
+    const result = await buildApp(fetchMock);
+    app = result.instance;
     logInfo = vi.fn();
     logWarn = vi.fn();
     Object.assign(app.log, { info: logInfo, warn: logWarn });
 
-    await registerTelemetryWs(app);
+    await result.registerTelemetryWs(app);
   });
 
   afterEach(async () => {
