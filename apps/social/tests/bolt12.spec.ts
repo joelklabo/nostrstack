@@ -109,3 +109,69 @@ test('offer creation failure clears loading state and shows error', async ({ pag
   );
   await expect(page.locator('.offer-pill')).toHaveText('ERROR');
 });
+
+test('offer creation timeout clears loading state and shows error', async ({ page }) => {
+  await page.route('**/api/bolt12/offers', async () => {
+    await new Promise((resolve) => setTimeout(resolve, 60_000));
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Offers/i }).click();
+  await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByLabel('Description').fill('Timeout test');
+  const createButton = page.getByRole('button', { name: 'Create new BOLT12 offer' });
+  await createButton.click();
+
+  await expect(createButton).toBeEnabled({ timeout: 30_000 });
+  await expect(page.locator('.offer-error')).toHaveText(
+    'Offer creation timed out. Please try again.'
+  );
+  await expect(page.locator('.offer-pill')).toHaveText('ERROR');
+});
+
+test('offer creation empty response clears loading state and shows error', async ({ page }) => {
+  await page.route('**/api/bolt12/offers', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: ''
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Offers/i }).click();
+  await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByLabel('Description').fill('Empty response test');
+  const createButton = page.getByRole('button', { name: 'Create new BOLT12 offer' });
+  await createButton.click();
+
+  await expect(createButton).toBeEnabled({ timeout: 10_000 });
+  await expect(page.locator('.offer-error')).toHaveText('Offer creation response was empty.');
+  await expect(page.locator('.offer-pill')).toHaveText('ERROR');
+});
+
+test('offer creation malformed response clears loading state and shows error', async ({ page }) => {
+  await page.route('**/api/bolt12/offers', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: 'not valid json at all'
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /Offers/i }).click();
+  await expect(page.getByText('BOLT12 Offers')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByLabel('Description').fill('Malformed response test');
+  const createButton = page.getByRole('button', { name: 'Create new BOLT12 offer' });
+  await createButton.click();
+
+  await expect(createButton).toBeEnabled({ timeout: 10_000 });
+  await expect(page.locator('.offer-error')).toHaveText(
+    'Offer creation response was not valid JSON.'
+  );
+  await expect(page.locator('.offer-pill')).toHaveText('ERROR');
+});
