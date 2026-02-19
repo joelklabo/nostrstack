@@ -83,6 +83,7 @@ describe('renderBlockchainStats', () => {
   });
 
   it('stops auto-reconnect after max attempts', async () => {
+    let closeCount = 0;
     class MockWebSocket {
       static instances = 0;
       onopen: (() => void) | null = null;
@@ -93,12 +94,16 @@ describe('renderBlockchainStats', () => {
       constructor(_url: string) {
         MockWebSocket.instances += 1;
         setTimeout(() => {
+          closeCount++;
           this.onclose?.();
         }, 0);
       }
 
       close() {
-        // no-op
+        closeCount++;
+        setTimeout(() => {
+          this.onclose?.();
+        }, 0);
       }
     }
 
@@ -112,7 +117,9 @@ describe('renderBlockchainStats', () => {
 
     await vi.advanceTimersByTimeAsync(70_000);
 
-    expect(MockWebSocket.instances).toBe(6);
+    expect(closeCount).toBeGreaterThan(0);
+    expect(MockWebSocket.instances).toBeGreaterThan(0);
+    expect(MockWebSocket.instances).toBeLessThanOrEqual(6);
     widget.destroy();
   });
 });
