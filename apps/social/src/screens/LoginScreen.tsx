@@ -371,7 +371,7 @@ export function LoginScreen() {
                 type="button"
                 className="auth-btn auth-btn--secondary"
                 onClick={openLnurlModal}
-                aria-label="Login using Lightning wallet"
+                aria-label="Login with Lightning"
               >
                 Login with Lightning
               </button>
