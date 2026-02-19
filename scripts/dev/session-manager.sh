@@ -196,22 +196,30 @@ ndev_cleanup_stale_sockets() {
     social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
 
     if ndev_port_is_stale "$api_port"; then
-      echo "Clearing stale socket on port $api_port (slot $slot)"
-      if ndev_try_clear_stale_port "$api_port"; then
-        echo "  Cleared port $api_port"
-        cleaned=1
+      if ndev_port_has_owner "$api_port"; then
+        echo "Clearing stale socket on port $api_port (slot $slot)"
+        if ndev_try_clear_stale_port "$api_port"; then
+          echo "  Cleared port $api_port"
+          cleaned=1
+        else
+          echo "  Could not clear port $api_port - will skip slot $slot"
+        fi
       else
-        echo "  Could not clear port $api_port - will skip slot $slot"
+        echo "Port $api_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
     fi
 
     if ndev_port_is_stale "$social_port"; then
-      echo "Clearing stale socket on port $social_port (slot $slot)"
-      if ndev_try_clear_stale_port "$social_port"; then
-        echo "  Cleared port $social_port"
-        cleaned=1
+      if ndev_port_has_owner "$social_port"; then
+        echo "Clearing stale socket on port $social_port (slot $slot)"
+        if ndev_try_clear_stale_port "$social_port"; then
+          echo "  Cleared port $social_port"
+          cleaned=1
+        else
+          echo "  Could not clear port $social_port - will skip slot $slot"
+        fi
       else
-        echo "  Could not clear port $social_port - will skip slot $slot"
+        echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
     fi
   done
@@ -328,51 +336,14 @@ ndev_claim_slot() {
     fi
     
     if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-      local api_has_unknown_owner social_has_unknown_owner
-      api_has_unknown_owner=0
-      social_has_unknown_owner=0
-
       if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
-        if ndev_probe_port_health "$api_port" 1; then
-          echo "Port $api_port responds to health probe - live process on slot $slot"
-        else
-          echo "Port $api_port is in use with no visible owner and unresponsive - stale socket on slot $slot"
-        fi
-        api_has_unknown_owner=1
+        echo "Port $api_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
       if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
-        if ndev_probe_port_health "$social_port" 1; then
-          echo "Port $social_port responds to health probe - live process on slot $slot"
-        else
-          echo "Port $social_port is in use with no visible owner and unresponsive - stale socket on slot $slot"
-        fi
-        social_has_unknown_owner=1
+        echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
 
-      if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
-        local recovered=1
-        if [[ "$api_has_unknown_owner" == "1" ]]; then
-          echo "Attempting stale socket recovery on port $api_port (slot $slot)"
-          if ! ndev_try_clear_stale_port "$api_port"; then
-            echo "  Could not clear stale port $api_port"
-            recovered=0
-          fi
-        fi
-        if [[ "$social_has_unknown_owner" == "1" ]]; then
-          echo "Attempting stale socket recovery on port $social_port (slot $slot)"
-          if ! ndev_try_clear_stale_port "$social_port"; then
-            echo "  Could not clear stale port $social_port"
-            recovered=0
-          fi
-        fi
-
-        if [[ "$recovered" == "1" ]]; then
-          echo "Stale sockets cleared - claiming slot $slot"
-          ndev_write_session_file "$slot" "$api_port" "$social_port"
-          ndev_unlock_slot "$slot"
-          return 0
-        fi
-
+      if [[ "$api_has_owner" == "0" || "$social_has_owner" == "0" ]]; then
         if [[ "$slot" == "0" ]]; then
           echo "⚠️  Ports with unknown owners detected on default ports - attempting to continue anyway..."
           ndev_write_session_file "$slot" "$api_port" "$social_port"
