@@ -159,6 +159,27 @@ ndev_cleanup_stale_session_file() {
   fi
 }
 
+ndev_try_clear_stale_port() {
+  local port="$1"
+  if command -v ss >/dev/null 2>&1; then
+    ss --kill state listening src :"$port" 2>/dev/null || true
+    sleep 0.3
+  fi
+  if ! ndev_port_in_use "$port"; then
+    return 0
+  fi
+  if command -v fuser >/dev/null 2>&1; then
+    fuser -k -n tcp "$port" 2>/dev/null || true
+    sleep 0.3
+  fi
+  ! ndev_port_in_use "$port"
+}
+
+ndev_port_is_stale() {
+  local port="$1"
+  ndev_port_in_use "$port" && ! ndev_port_has_owner "$port" && ! ndev_probe_port_health "$port" 1
+}
+
 ndev_cleanup_stale_sockets() {
   local max_slot="${NOSTRDEV_MAX_SLOTS:-40}"
   local slot
@@ -169,14 +190,24 @@ ndev_cleanup_stale_sockets() {
     api_port=$((NOSTRDEV_BASE_API_PORT + slot))
     social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
 
-    if ndev_port_in_use "$api_port" && ! ndev_port_has_owner "$api_port"; then
-      echo "Port $api_port has no visible owner - treating as in-use (owner unknown), skipping cleanup"
-      continue
+    if ndev_port_is_stale "$api_port"; then
+      echo "Clearing stale socket on port $api_port (slot $slot)"
+      if ndev_try_clear_stale_port "$api_port"; then
+        echo "  Cleared port $api_port"
+        cleaned=1
+      else
+        echo "  Could not clear port $api_port - will skip slot $slot"
+      fi
     fi
 
-    if ndev_port_in_use "$social_port" && ! ndev_port_has_owner "$social_port"; then
-      echo "Port $social_port has no visible owner - treating as in-use (owner unknown), skipping cleanup"
-      continue
+    if ndev_port_is_stale "$social_port"; then
+      echo "Clearing stale socket on port $social_port (slot $slot)"
+      if ndev_try_clear_stale_port "$social_port"; then
+        echo "  Cleared port $social_port"
+        cleaned=1
+      else
+        echo "  Could not clear port $social_port - will skip slot $slot"
+      fi
     fi
   done
 
@@ -297,15 +328,46 @@ ndev_claim_slot() {
       social_has_unknown_owner=0
 
       if [[ "$api_has_owner" == "0" ]] && ndev_port_in_use "$api_port"; then
-        echo "Port $api_port is in use but owner is not visible - skipping slot $slot (owner unknown)"
+        if ndev_probe_port_health "$api_port" 1; then
+          echo "Port $api_port responds to health probe - live process on slot $slot"
+        else
+          echo "Port $api_port is in use with no visible owner and unresponsive - stale socket on slot $slot"
+        fi
         api_has_unknown_owner=1
       fi
       if [[ "$social_has_owner" == "0" ]] && ndev_port_in_use "$social_port"; then
-        echo "Port $social_port is in use but owner is not visible - skipping slot $slot (owner unknown)"
+        if ndev_probe_port_health "$social_port" 1; then
+          echo "Port $social_port responds to health probe - live process on slot $slot"
+        else
+          echo "Port $social_port is in use with no visible owner and unresponsive - stale socket on slot $slot"
+        fi
         social_has_unknown_owner=1
       fi
 
       if [[ "$api_has_unknown_owner" == "1" || "$social_has_unknown_owner" == "1" ]]; then
+        local recovered=1
+        if [[ "$api_has_unknown_owner" == "1" ]]; then
+          echo "Attempting stale socket recovery on port $api_port (slot $slot)"
+          if ! ndev_try_clear_stale_port "$api_port"; then
+            echo "  Could not clear stale port $api_port"
+            recovered=0
+          fi
+        fi
+        if [[ "$social_has_unknown_owner" == "1" ]]; then
+          echo "Attempting stale socket recovery on port $social_port (slot $slot)"
+          if ! ndev_try_clear_stale_port "$social_port"; then
+            echo "  Could not clear stale port $social_port"
+            recovered=0
+          fi
+        fi
+
+        if [[ "$recovered" == "1" ]]; then
+          echo "Stale sockets cleared - claiming slot $slot"
+          ndev_write_session_file "$slot" "$api_port" "$social_port"
+          ndev_unlock_slot "$slot"
+          return 0
+        fi
+
         if [[ "$slot" == "0" ]]; then
           echo "⚠️  Ports with unknown owners detected on default ports - attempting to continue anyway..."
           ndev_write_session_file "$slot" "$api_port" "$social_port"
