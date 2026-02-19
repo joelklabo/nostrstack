@@ -248,7 +248,7 @@ describe('searchNotes', () => {
       1,
       ['wss://relay.nostr.band'],
       { kinds: [1], limit: 20 },
-      { maxWait: 10_000 }
+      { maxWait: 15_000 }
     );
   });
 
@@ -284,7 +284,7 @@ describe('searchNotes', () => {
       1,
       ['wss://relay.nostr.band'],
       { kinds: [1], limit: 20 },
-      { maxWait: 10_000 }
+      { maxWait: 15_000 }
     );
   });
 
@@ -325,13 +325,13 @@ describe('searchNotes', () => {
       1,
       ['wss://relay.nostr.band'],
       { kinds: [1], limit: 20 },
-      { maxWait: 10_000 }
+      { maxWait: 15_000 }
     );
     expect(querySync).toHaveBeenNthCalledWith(
       2,
       ['wss://relay.damus.io'],
       { kinds: [1], limit: 20 },
-      { maxWait: 10_000 }
+      { maxWait: 15_000 }
     );
   });
 });

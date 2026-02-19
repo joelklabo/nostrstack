@@ -48,8 +48,8 @@ const EVENT_FETCH_TTL_MS = 30_000;
 const EVENT_FETCH_BASE_RETRY_MS = 1_000;
 const EVENT_FETCH_MAX_RETRY_MS = 30_000;
 const MAX_EVENT_FETCH_ENTRIES = 250;
-export const NOTES_SEARCH_TIMEOUT_MS = 30_000;
-const SEARCH_RELAY_TIMEOUT_MS = Math.min(NOTES_SEARCH_TIMEOUT_MS, 10_000);
+export const NOTES_SEARCH_TIMEOUT_MS = 45_000;
+const SEARCH_RELAY_TIMEOUT_MS = Math.min(NOTES_SEARCH_TIMEOUT_MS, 15_000);
 const SEARCH_UNSUPPORTED_RELAY_HOSTS = new Set(['relay.damus.io', 'nos.lol', 'relay.primal.net']);
 
 const isLikelyInvalidRelay = (url: string): boolean => {
