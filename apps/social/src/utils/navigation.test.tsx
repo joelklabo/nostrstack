@@ -24,4 +24,41 @@ describe('resolveProfileRoute', () => {
     expect(result.pubkey).toBeNull();
     expect(result.error).toBe('Invalid profile id.');
   });
+
+  it('accepts hex pubkeys with query string', () => {
+    const pubkey = getPublicKey(new Uint8Array(32).fill(1));
+    const result = resolveProfileRoute(`/p/${pubkey}?tab=about`);
+    expect(result.pubkey).toBe(pubkey.toLowerCase());
+    expect(result.error).toBeUndefined();
+  });
+
+  it('accepts npub with query string', () => {
+    const pubkey = getPublicKey(new Uint8Array(32).fill(2));
+    const npub = nip19.npubEncode(pubkey);
+    const result = resolveProfileRoute(`/p/${npub}?tab=relays`);
+    expect(result.pubkey).toBe(pubkey.toLowerCase());
+    expect(result.error).toBeUndefined();
+  });
+
+  it('handles encoded npub in path', () => {
+    const pubkey = getPublicKey(new Uint8Array(32).fill(3));
+    const npub = nip19.npubEncode(pubkey);
+    const encodedNpub = encodeURIComponent(npub);
+    const result = resolveProfileRoute(`/p/${encodedNpub}`);
+    expect(result.pubkey).toBe(pubkey.toLowerCase());
+    expect(result.error).toBeUndefined();
+  });
+
+  it('handles nostr: prefix', () => {
+    const pubkey = getPublicKey(new Uint8Array(32).fill(5));
+    const npub = nip19.npubEncode(pubkey);
+    const result = resolveProfileRoute(`/p/nostr:${npub}`);
+    expect(result.pubkey).toBe(pubkey.toLowerCase());
+    expect(result.error).toBeUndefined();
+  });
+
+  it('returns null for /profile route without pubkey', () => {
+    const result = resolveProfileRoute('/profile');
+    expect(result.pubkey).toBeNull();
+  });
 });
