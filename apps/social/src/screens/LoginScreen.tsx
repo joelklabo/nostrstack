@@ -214,6 +214,7 @@ export function LoginScreen() {
 
   const handleCreateThrowawayKey = useCallback(() => {
     setNsecError(null);
+    setNsec('');
     const secretKey = generateSecretKey();
     const publicKey = getPublicKey(secretKey);
     const nsec = nip19.nsecEncode(secretKey);
