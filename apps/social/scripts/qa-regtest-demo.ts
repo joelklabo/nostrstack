@@ -176,7 +176,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         .then(() => true)
         .catch(() => false);
       if (!nwcPaid) {
-        await page.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+        await page
+          .locator('.payment-modal:visible .payment-header button')
+          .getByText(/CLOSE/i)
+          .click({ force: true });
         continue;
       }
       await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 10_000 });
@@ -192,7 +195,10 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       .then(() => true)
       .catch(() => false);
     if (!invoiceReady) {
-      await page.locator('.payment-header button').getByText(/CLOSE/i).click({ force: true });
+      await page
+        .locator('.payment-modal:visible .payment-header button')
+        .getByText(/CLOSE/i)
+        .click({ force: true });
       continue;
     }
     await expect(page.locator('.payment-qr')).toBeVisible();
@@ -206,7 +212,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
         '⚠️ PAY_REGTEST button not available - regtest wallet not configured on API, skipping regtest payment test'
       );
       await page
-        .locator('.payment-header button')
+        .locator('.payment-modal:visible .payment-header button')
         .getByText(/CLOSE/i)
         .click({ force: true })
         .catch(() => {});
