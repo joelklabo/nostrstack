@@ -1,5 +1,5 @@
 import { type Event, type EventTemplate, SimplePool } from 'nostr-tools';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from './auth';
 import { useNostrstackConfig } from './context';
@@ -25,6 +25,20 @@ export function PostEditor({
   const [content, setContent] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const guardAsyncCompletion = useCallback(<T,>(setter: (value: T) => void, value: T) => {
+    if (isMountedRef.current) {
+      setter(value);
+    }
+  }, []);
 
   const maxLength = 1000;
   const currentLength = content.length;
@@ -85,7 +99,10 @@ export function PostEditor({
       };
 
       const signedEvent = await signEvent(template);
-      setPublishStatus(`Status: Event signed. ID: ${signedEvent.id.slice(0, 8)}... Publishing...`);
+      guardAsyncCompletion(
+        setPublishStatus,
+        `Status: Event signed. ID: ${signedEvent.id.slice(0, 8)}... Publishing...`
+      );
 
       const relays = cfg.relays?.length
         ? cfg.relays
@@ -95,17 +112,28 @@ export function PostEditor({
       await Promise.any(pool.publish(relays, signedEvent));
       pool.close(relays);
 
-      setPublishStatus(`Success: Event published to relays.`);
-      setContent('');
+      guardAsyncCompletion(setPublishStatus, `Success: Event published to relays.`);
+      guardAsyncCompletion(setContent, '');
       onSuccess?.();
     } catch (err: unknown) {
-      setPublishStatus(
+      guardAsyncCompletion(
+        setPublishStatus,
         `Error: Failed to publish: ${err instanceof Error ? err.message : String(err)}`
       );
     } finally {
-      setIsPublishing(false);
+      guardAsyncCompletion(setIsPublishing, false);
     }
-  }, [pubkey, content, signEvent, cfg.relays, isOverLimit, isGuest, parentEvent, onSuccess]);
+  }, [
+    pubkey,
+    content,
+    signEvent,
+    cfg.relays,
+    isOverLimit,
+    isGuest,
+    parentEvent,
+    onSuccess,
+    guardAsyncCompletion
+  ]);
 
   if (!pubkey && !isGuest) {
     return (
