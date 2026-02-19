@@ -54,7 +54,7 @@
     "@vitest/browser": "2.1.9",
     "@vitest/coverage-v8": "2.1.9",
     "axe-core": "^4.11.0",
-    "baseline-browser-mapping": "^2.9.19",
+    "baseline-browser-mapping": "^2.10.0",
     "eslint": "8.57.0",
     "eslint-plugin-storybook": "^10.1.11",
     "jsdom": "24.1.0",
