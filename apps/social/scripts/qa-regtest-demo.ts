@@ -175,7 +175,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
   }
   const total = await zapButtons.count();
   for (let i = 0; i < Math.min(total, 5); i += 1) {
-    await zapButtons.nth(i).dispatchEvent('click');
+    await zapButtons.nth(i).click({ force: true });
     await expect(page.locator('.payment-modal').last()).toBeVisible();
     const modal = page.locator('.payment-modal').last();
     if (mode === 'nwc') {
