@@ -275,7 +275,7 @@ export class SimplePool {
       return [];
     }
     const rustFilter = toRustFilter(filter);
-    const timeoutMs = opts?.maxWait ?? 8000;
+    const timeoutMs = opts?.maxWait ?? 15000;
     const events = await this.client.fetchEventsFrom(
       succeeded,
       rustFilter,
