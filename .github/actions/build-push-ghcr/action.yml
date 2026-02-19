@@ -59,6 +59,8 @@ runs:
         push: true
         tags: ${{ inputs.registry }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
         build-args: ${{ inputs.build_args }}
+        cache-from: ''
+        cache-to: ''
 
     - name: Set image output
       id: meta
