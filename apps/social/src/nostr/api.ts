@@ -51,6 +51,18 @@ const MAX_EVENT_FETCH_ENTRIES = 250;
 export const NOTES_SEARCH_TIMEOUT_MS = 30_000;
 const SEARCH_RELAY_TIMEOUT_MS = Math.min(NOTES_SEARCH_TIMEOUT_MS, 10_000);
 const SEARCH_UNSUPPORTED_RELAY_HOSTS = new Set(['relay.damus.io', 'nos.lol', 'relay.primal.net']);
+
+const isLikelyInvalidRelay = (url: string): boolean => {
+  try {
+    const { hostname } = new URL(url);
+    const lower = hostname.toLowerCase();
+    if (!lower.includes('.') && lower !== 'localhost') return true;
+    if (lower === 'onlynotes.lol') return true;
+    return false;
+  } catch {
+    return true;
+  }
+};
 const SEARCH_FAILURE_LOG_WINDOW_MS = 30_000;
 let lastSearchFailureLogAt = 0;
 
@@ -125,18 +137,19 @@ function normalizeRelayList(relays: string[]): string[] {
 export function getDefaultRelays(raw?: string | null): string[] {
   const parsed = parseRelays(raw);
   const base = parsed.length ? parsed : DEFAULT_RELAYS;
-  const normalized = normalizeRelayList(base);
+  const normalized = normalizeRelayList(base).filter((url) => !isLikelyInvalidRelay(url));
 
   return normalized.filter((url) => relayMonitor.isHealthy(url));
 }
 
 export function getSearchRelays(rawRelays: string[] = []): string[] {
   const merged = normalizeRelayList([...rawRelays, ...SEARCH_RELAYS]).filter((relay) => {
+    if (isLikelyInvalidRelay(relay)) return false;
     try {
       const { hostname } = new URL(relay);
       return !SEARCH_UNSUPPORTED_RELAY_HOSTS.has(hostname.toLowerCase());
     } catch {
-      return true;
+      return false;
     }
   });
   return merged.filter((relay) => relayMonitor.isHealthy(relay));
