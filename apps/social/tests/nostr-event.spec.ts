@@ -112,7 +112,7 @@ test.describe('/nostr/:id landing', () => {
     await mockNostrEventApi(page, { [eventId]: response });
 
     await page.goto(`/nostr/${eventId}`);
-    await expect(page.locator('.nostr-event-title')).toHaveText('Event');
+    await expect(page.locator('.nostr-event-title')).toHaveText('Note');
 
     expect(failedRequests).toEqual([]);
     expect(consoleErrors).toEqual([]);
