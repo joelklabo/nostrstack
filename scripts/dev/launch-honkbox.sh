@@ -122,8 +122,8 @@ cleanup() {
 
 start_servers() {
   log "Starting API and social app..."
-  log "  API:     http://localhost:$API_PORT"
-  log "  Social: http://localhost:$SOCIAL_PORT"
+  log "  API:     $API_SCHEME://localhost:$API_PORT"
+  log "  Social:  $API_SCHEME://localhost:$SOCIAL_PORT"
   log "  LNbits:  $LNBITS_URL"
   log ""
   log "Press Ctrl+C to stop"
