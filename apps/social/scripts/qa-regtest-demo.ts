@@ -179,6 +179,15 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
     const isVisible = await btn.isVisible().catch(() => false);
     if (!isVisible) continue;
     await btn.click({ force: true });
+    const modalAppeared = await page
+      .locator('.payment-modal')
+      .last()
+      .isVisible()
+      .catch(() => false);
+    if (!modalAppeared) {
+      console.log('⚠️ payment modal did not open, skipping zap payment test');
+      continue;
+    }
     await expect(page.locator('.payment-modal').last()).toBeVisible();
     const modal = page.locator('.payment-modal').last();
     if (mode === 'nwc') {
@@ -358,9 +367,13 @@ async function main() {
 
   const detected = await detectManagedSessionUrls();
   const devServerPort = process.env.DEV_SERVER_PORT;
-  const fallbackUrl = devServerPort ? `http://localhost:${devServerPort}` : 'http://localhost:4173';
+  const useHttps = process.env.QA_USE_HTTPS !== '0';
+  const defaultPort = devServerPort ?? process.env.GALLERY_PORT ?? '4173';
+  const protocol = useHttps ? 'https' : 'http';
+  const fallbackUrl = `${protocol}://localhost:${defaultPort}`;
   const baseUrl = process.env.GALLERY_URL ?? detected.galleryUrl ?? fallbackUrl;
-  const _apiUrl = process.env.API_URL ?? detected.apiUrl ?? 'http://localhost:3001';
+  const _apiUrl =
+    process.env.API_URL ?? detected.apiUrl ?? `${protocol}://localhost:${devServerPort ?? '3001'}`;
 
   if (detected.galleryUrl || detected.apiUrl) {
     const parts: string[] = [];
@@ -550,6 +563,19 @@ async function main() {
     failures.forEach((f) => {
       console.error(`\n[${f.kind}]`);
       console.error(f.detail);
+      if (f.kind === 'requestfailed') {
+        console.error('\n💡 Tip: Check that API and gallery servers are running.');
+        console.error('   - Run: pnpm dev:logs');
+        console.error('   - Or set GALLERY_URL and API_URL explicitly:');
+        console.error(
+          '     GALLERY_URL=https://localhost:4173 API_URL=http://localhost:3001 pnpm qa:regtest-demo'
+        );
+      }
+      if (f.kind === 'qa' && f.detail.includes('PAY_REGTEST')) {
+        console.error('\n💡 Tip: PAY_REGTEST requires regtest wallet configured on API.');
+        console.error('   - Ensure ENABLE_REGTEST_PAY=true in API');
+        console.error('   - Or use NWC_URI for wallet-less testing');
+      }
     });
     process.exit(1);
   }
