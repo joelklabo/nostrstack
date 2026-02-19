@@ -157,7 +157,7 @@ export function OnboardingTour() {
       window.removeEventListener('resize', updatePosition);
       cancelAnimationFrame(raf);
     };
-  }, [isActive, step]);
+  }, [isActive, step.target, step.placement]);
 
   if (!isActive) return null;
 
@@ -209,14 +209,14 @@ export function OnboardingTour() {
             Skip
           </button>
           {hasPreviousStep && (
-          <button
-            type="button"
-            className="onboarding-btn"
-            data-testid="onboarding-back-btn"
-            onClick={back}
-            aria-label="Go to previous step"
-          >
-            Back
+            <button
+              type="button"
+              className="onboarding-btn"
+              data-testid="onboarding-back-btn"
+              onClick={back}
+              aria-label="Go to previous step"
+            >
+              Back
             </button>
           )}
           <button
