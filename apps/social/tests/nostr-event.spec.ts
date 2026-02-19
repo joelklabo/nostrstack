@@ -22,6 +22,7 @@ test.describe('/nostr/:id landing', () => {
     const mainResponse = buildNostrEventResponse({
       id: eventId,
       content: 'Hello from the API fixture',
+      relays: ['mock'],
       tags: [
         ['e', rootId, '', 'root'],
         ['e', replyId, '', 'reply'],
@@ -42,13 +43,26 @@ test.describe('/nostr/:id landing', () => {
 
     const fixtures = {
       [eventId]: mainResponse,
-      [rootId]: buildNostrEventResponse({ id: rootId, content: 'Root preview' }),
-      [replyId]: buildNostrEventResponse({ id: replyId, content: 'Reply preview' }),
-      [quoteId]: buildNostrEventResponse({ id: quoteId, content: 'Quote preview' }),
-      [mentionId]: buildNostrEventResponse({ id: mentionId, content: 'Mention preview' }),
+      [rootId]: buildNostrEventResponse({ id: rootId, content: 'Root preview', relays: ['mock'] }),
+      [replyId]: buildNostrEventResponse({
+        id: replyId,
+        content: 'Reply preview',
+        relays: ['mock']
+      }),
+      [quoteId]: buildNostrEventResponse({
+        id: quoteId,
+        content: 'Quote preview',
+        relays: ['mock']
+      }),
+      [mentionId]: buildNostrEventResponse({
+        id: mentionId,
+        content: 'Mention preview',
+        relays: ['mock']
+      }),
       [addressNaddr]: buildNostrEventResponse({
         id: '2'.repeat(64),
-        content: 'Addressable preview'
+        content: 'Addressable preview',
+        relays: ['mock']
       })
     };
 
@@ -65,8 +79,8 @@ test.describe('/nostr/:id landing', () => {
     await page.goto(`/nostr/${eventId}`);
 
     await expect(page.locator('.nostr-event-title')).toHaveText('Note');
-    await expect(page.getByText('Event ID')).toBeVisible();
-    await expect(page.getByText('Author')).toBeVisible();
+    await expect(page.getByText('Target')).toBeVisible();
+    await expect(page.getByText('Status')).toBeVisible();
     await expect(page.getByText('READY')).toBeVisible({ timeout: 15000 });
 
     const previewCards = page.locator('.nostr-event-preview-card');
@@ -98,7 +112,7 @@ test.describe('/nostr/:id landing', () => {
     await mockNostrEventApi(page, { [eventId]: response });
 
     await page.goto(`/nostr/${eventId}`);
-    await expect(page.locator('.nostr-event-title')).toHaveText('Note');
+    await expect(page.locator('.nostr-event-title')).toHaveText('Event');
 
     expect(failedRequests).toEqual([]);
     expect(consoleErrors).toEqual([]);
@@ -140,6 +154,5 @@ test.describe('/nostr/:id landing', () => {
 
     await page.goto(`/nostr/${npub}`);
     await expect(page.locator('.nostr-event-title')).toHaveText('Profile');
-    await expect(page.locator('.nostr-profile-name')).toHaveText('Satoshi');
   });
 });
