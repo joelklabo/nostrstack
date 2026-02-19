@@ -177,7 +177,12 @@ ndev_try_clear_stale_port() {
 
 ndev_port_is_stale() {
   local port="$1"
-  ndev_port_in_use "$port" && ! ndev_port_has_owner "$port" && ! ndev_probe_port_health "$port" 1
+  ndev_port_in_use "$port" || return 1
+  ndev_port_has_owner "$port" && return 1
+  if ndev_probe_port_health "$port" 1; then
+    return 1
+  fi
+  return 0
 }
 
 ndev_cleanup_stale_sockets() {
