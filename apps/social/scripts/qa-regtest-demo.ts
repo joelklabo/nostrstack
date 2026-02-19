@@ -278,7 +278,7 @@ async function tryZapPay(page: Page, mode: 'regtest' | 'nwc') {
       try {
         await regtestBtn.scrollIntoViewIfNeeded();
         await regtestBtn.click({ force: true, timeout: 10_000 });
-      } catch (err) {
+      } catch {
         clickFailed = true;
         try {
           await page.screenshot({ path: `/tmp/qa-regtest-click-fail-${Date.now()}.png` });
@@ -525,8 +525,8 @@ async function main() {
           await fundBtn.click();
           const toastRegion = page.getByTestId('toast-region');
           await expect(toastRegion).toContainText(/Funded|Mining regtest/i, { timeout: 120_000 });
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
+        } catch (_err) {
+          const msg = _err instanceof Error ? _err.message : String(_err);
           skippedSteps.push(`Regtest funding: ${msg}`);
           console.log(`⚠️ Regtest funding failed, continuing without funds: ${msg}`);
         }
