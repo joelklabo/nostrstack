@@ -1,6 +1,6 @@
 import { ToastProvider } from '@nostrstack/ui';
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import App from './App';
 
@@ -9,6 +9,12 @@ vi.mock('./screens/EventDetailScreen', () => ({
     throw new Error('Critical module load failed');
   }
 }));
+
+afterEach(() => {
+  cleanup();
+  window.history.replaceState({}, '', '/');
+  window.localStorage.clear();
+});
 
 describe('App', () => {
   it('renders login screen by default', async () => {
@@ -31,6 +37,7 @@ describe('App', () => {
       new Response('{}', { status: 200 }) as unknown as Response
     );
     window.history.pushState({}, '', '/nostr/abc123');
+    window.dispatchEvent(new PopStateEvent('popstate'));
 
     render(
       <ToastProvider>
@@ -44,7 +51,5 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: 'Retry route' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Go to feed' })).toBeTruthy();
-
-    window.history.replaceState({}, '', '/');
   });
 });
