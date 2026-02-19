@@ -474,9 +474,7 @@ export async function loginWithNsec(page: Page, nsec: string = TEST_NSEC) {
   const loginFlowReady = page
     .getByRole('button', { name: /(Enter nsec manually|Enter private key manually)/i })
     .first();
-  const appShellReady = page
-    .locator('.sidebar-nav, .sidebar-title, .hamburger-btn, nav, .feed-stream')
-    .first();
+  const appShellReady = page.locator('.feed-stream').first();
 
   const readyState = await Promise.race([
     loginFlowReady
