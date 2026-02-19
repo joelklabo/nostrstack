@@ -50,6 +50,7 @@ describe('Sidebar wallet regression', () => {
 
   it('keeps wallet actions available in guest shell when wallet service is ready', async () => {
     vi.stubEnv('VITE_ENABLE_REGTEST_FUND', 'true');
+    vi.stubEnv('VITE_NETWORK', 'regtest');
 
     useWalletSpy.mockReturnValue({
       wallet: { id: 'wallet-1', name: 'LNbits', balance: 0 },
