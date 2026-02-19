@@ -373,8 +373,8 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const routeLocation = usePathname();
   const pathname = routeLocation.split('?')[0] || '/';
   const routeRecoveryIdentity = routeLocation;
-  const SettingsScreen = useMemo(() => lazy(loadSettingsScreen), []);
-  const OffersView = useMemo(() => lazy(loadOffersView), []);
+  const SettingsScreen = lazy(() => robustLazy(loadSettingsScreen, 'settings'));
+  const OffersView = lazy(() => robustLazy(loadOffersView, 'offers'));
   const isRouteWithOptionalQuery = (path: string) =>
     pathname === path ||
     pathname === `${path}/` ||

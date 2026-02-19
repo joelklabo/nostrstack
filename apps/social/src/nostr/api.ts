@@ -385,7 +385,13 @@ export async function searchNotes(
       );
     };
 
-    const runQuery = async (withSearch: boolean) => {
+    const runQuery = async (
+      withSearch: boolean
+    ): Promise<{
+      merged: Map<string, Event>;
+      failures: unknown[];
+      successCount: number;
+    }> => {
       const filter: { kinds: number[]; search?: string; limit: number; until?: number } = {
         kinds: [1],
         limit: withSearch ? normalizedLimit : fallbackLimit
@@ -396,32 +402,39 @@ export async function searchNotes(
       if (normalizedUntil) {
         filter.until = normalizedUntil;
       }
-      const settled = await Promise.allSettled(
-        relays.map((relay) =>
-          withTimeout(
-            pool.querySync([relay], filter, { maxWait: SEARCH_RELAY_TIMEOUT_MS }),
-            SEARCH_RELAY_TIMEOUT_MS
-          )
-        )
-      );
 
       const merged = new Map<string, Event>();
       const failures: unknown[] = [];
       let successCount = 0;
-      settled.forEach((result, relayIndex) => {
-        if (result.status === 'fulfilled') {
+
+      const relayPromises = relays.map((relay) => {
+        return withTimeout(
+          pool.querySync([relay], filter, { maxWait: SEARCH_RELAY_TIMEOUT_MS }),
+          SEARCH_RELAY_TIMEOUT_MS
+        );
+      });
+
+      for (let i = 0; i < relayPromises.length; i++) {
+        try {
+          const result = await relayPromises[i];
           successCount++;
-          for (const event of result.value) {
+          for (const event of result) {
             merged.set(event.id, event);
           }
-        } else {
-          const relay = relays[relayIndex];
-          failures.push(result.reason);
-          if (!isSearchUnsupportedError(result.reason)) {
+          const hasEnoughResults = merged.size >= normalizedLimit;
+          const hasMultipleSuccesses = successCount >= 2;
+          if (hasEnoughResults && hasMultipleSuccesses) {
+            break;
+          }
+        } catch (error) {
+          const relay = relays[i];
+          failures.push(error);
+          if (!isSearchUnsupportedError(error)) {
             markRelayFailure(relay);
           }
         }
-      });
+      }
+
       return { merged, failures, successCount };
     };
 
