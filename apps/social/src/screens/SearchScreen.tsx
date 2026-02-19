@@ -183,6 +183,14 @@ export function SearchScreen() {
       setLastSearchQuery(q);
       try {
         const searchRelays = getSearchRelays(relayList);
+        if (searchRelays.length === 0) {
+          setNotes([]);
+          setHasMore(false);
+          setNotesError('No relays available for search. Check your connection and try again.');
+          setSubmitFeedback('No relays available for search.');
+          setNotesLoading(false);
+          return;
+        }
         const results = await searchNotes(pool, searchRelays, q, NOTES_PAGE_SIZE);
         setNotes(results);
         setHasMore(results.length >= NOTES_PAGE_SIZE);
@@ -217,6 +225,11 @@ export function SearchScreen() {
     setNotesSearchTimedOut(false);
     try {
       const searchRelays = getSearchRelays(relayList);
+      if (searchRelays.length === 0) {
+        setHasMore(false);
+        setIsLoadingMore(false);
+        return;
+      }
       // Get the oldest note's timestamp for pagination
       const oldestNote = notes.reduce((oldest, note) =>
         note.created_at < oldest.created_at ? note : oldest
