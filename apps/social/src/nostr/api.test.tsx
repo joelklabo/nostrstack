@@ -93,12 +93,12 @@ describe('getSearchRelays', () => {
     expect(relays).not.toContain('wss://nos.lol/');
   });
 
-  it('falls back to all relays when all candidates are marked unhealthy', () => {
+  it('returns empty list when all candidates are marked unhealthy', () => {
     vi.spyOn(relayMonitor, 'isHealthy').mockReturnValue(false);
 
     const relays = getSearchRelays(['wss://relay.custom']);
 
-    expect(relays).toEqual(['wss://relay.custom/', ...normalizedSearchRelays]);
+    expect(relays).toEqual([]);
   });
 });
 

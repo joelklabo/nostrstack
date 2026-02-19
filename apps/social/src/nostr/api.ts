@@ -125,10 +125,7 @@ export function getDefaultRelays(raw?: string | null): string[] {
   const base = parsed.length ? parsed : DEFAULT_RELAYS;
   const normalized = normalizeRelayList(base);
 
-  // Filter out unhealthy relays
-  const filtered = normalized.filter((url) => relayMonitor.isHealthy(url));
-
-  return filtered.length ? filtered : normalized;
+  return normalized.filter((url) => relayMonitor.isHealthy(url));
 }
 
 export function getSearchRelays(rawRelays: string[] = []): string[] {
@@ -140,8 +137,7 @@ export function getSearchRelays(rawRelays: string[] = []): string[] {
       return true;
     }
   });
-  const healthy = merged.filter((relay) => relayMonitor.isHealthy(relay));
-  return healthy.length ? healthy : merged;
+  return merged.filter((relay) => relayMonitor.isHealthy(relay));
 }
 
 export function markRelayFailure(relay: string) {
