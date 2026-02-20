@@ -3286,8 +3286,8 @@ button:disabled {
     /* Remove inset shadows on mobile */
     box-shadow: none;
 
-    /* Ensure scrollable area is visible on mobile */
-    min-height: 50vh;
+    /* Ensure scrollable area uses full viewport on mobile */
+    min-height: 100vh;
   }
 
   .feed-stream {
