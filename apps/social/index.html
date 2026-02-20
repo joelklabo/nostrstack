@@ -23,6 +23,66 @@
     <script>
       window.__nostrstackDisableAutoMount = true;
     </script>
+    <script>
+      window.addEventListener('error', function (e) {
+        if (
+          e.message.includes('Failed to fetch dynamically imported module') ||
+          e.message.includes('Failed to load module script') ||
+          e.message.includes('net::ERR_FAILED') ||
+          e.message.includes('loading failed')
+        ) {
+          var root = document.getElementById('root');
+          if (root && root.childNodes.length === 0) {
+            root.innerHTML =
+              '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Click to reload.</p><button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; background: #0969da; color: white; border: none; border-radius: 4px; margin-top: 1rem;">Reload Page</button></div>';
+          }
+        }
+      });
+
+      window.addEventListener('unhandledrejection', function (e) {
+        if (
+          e.reason?.message?.includes('Failed to fetch') ||
+          e.reason?.message?.includes('loading failed') ||
+          e.reason?.message?.includes('net::ERR_FAILED')
+        ) {
+          var root = document.getElementById('root');
+          if (root && root.childNodes.length === 0) {
+            root.innerHTML =
+              '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Click to reload.</p><button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; background: #0969da; color: white; border: none; border-radius: 4px; margin-top: 1rem;">Reload Page</button></div>';
+          }
+        }
+      });
+
+      // Watch for blank page after initial load (Vite HMR reconnection failure)
+      (function () {
+        var hasLoaded = false;
+        var checkInterval;
+        var originalInnerHTML = '';
+
+        // Mark when app has content
+        var observer = new MutationObserver(function (mutations) {
+          var root = document.getElementById('root');
+          if (root && root.childNodes.length > 0 && !hasLoaded) {
+            hasLoaded = true;
+            originalInnerHTML = root.innerHTML;
+            // Start watching after initial mount
+            setTimeout(function () {
+              checkInterval = setInterval(function () {
+                var root = document.getElementById('root');
+                if (root && root.childNodes.length === 0 && originalInnerHTML !== '') {
+                  // Page went blank after having content - likely Vite restart
+                  root.innerHTML =
+                    '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Reloading...</p><button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; background: #0969da; color: white; border: none; border-radius: 4px; margin-top: 1rem;">Reload Page</button></div>';
+                  clearInterval(checkInterval);
+                }
+              }, 1000);
+            }, 2000);
+          }
+        });
+
+        observer.observe(document.getElementById('root'), { childList: true });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
