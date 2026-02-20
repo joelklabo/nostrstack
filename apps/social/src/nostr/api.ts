@@ -385,7 +385,7 @@ export async function searchNotes(
   rawRelays: string[] = []
 ): Promise<Event[]> {
   if (signal?.aborted) {
-    throw new Error('Search aborted');
+    return [];
   }
 
   const abortPromise = signal
@@ -565,6 +565,10 @@ export async function searchNotes(
   } catch (err) {
     const message = getErrorMessage(err);
     const lower = message.toLowerCase();
+    const isAbort = lower === 'search aborted';
+    if (isAbort) {
+      return [];
+    }
     const isNetworkOrUnsupported =
       lower.includes('failed to fetch') ||
       lower.includes('network error') ||
