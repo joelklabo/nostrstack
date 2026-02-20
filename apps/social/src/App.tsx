@@ -134,6 +134,17 @@ function getNostrRouteId(pathname: string) {
   }
 }
 
+function getEventRouteId(pathname: string) {
+  const match = pathname.match(/^\/e\/([^/?#]+)/i);
+  if (!match) return null;
+  try {
+    const raw = decodeURIComponent(match[1]);
+    return raw.replace(/^nostr:/i, '');
+  } catch {
+    return match[1];
+  }
+}
+
 const THEME_STORAGE_KEY = 'nostrstack.theme';
 const BRAND_PRESET_STORAGE_KEY = 'nostrstack.brandPreset';
 const BRAND_PRESET_DEFAULT: NsBrandPreset = 'default';
@@ -394,6 +405,8 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     pathname.startsWith(`${path}/?`);
   const isDemoRoute = pathname === '/demo' || pathname === '/demo/';
   const nostrRouteId = getNostrRouteId(pathname);
+  const eventRouteId = getEventRouteId(pathname);
+  const publicEventRouteId = nostrRouteId || eventRouteId;
   const isSearchRoute = isRouteWithOptionalQuery('/search');
   const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
   const isRelaysRoute = isRouteWithOptionalQuery('/relays');
@@ -458,6 +471,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     if (isProfileRoute) return true;
     if (isHelpRoute) return true;
     if (nostrRouteId) return true;
+    if (eventRouteId) return true;
     if (profileRoutePubkey) return true;
     // Profile route with error is still "handled" (shows error)
     if (pathname.startsWith('/p/')) return true;
@@ -473,6 +487,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     isProfileRoute,
     isHelpRoute,
     nostrRouteId,
+    eventRouteId,
     profileRoutePubkey
   ]);
 
@@ -579,7 +594,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
 
   const relayConnectivityDegraded = hasRecentRelayFailures();
 
-  if (nostrRouteId) {
+  if (publicEventRouteId) {
     return (
       <ErrorBoundary
         key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
@@ -593,7 +608,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
         }
       >
         <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
-          <EventDetailScreen rawId={nostrRouteId} />
+          <EventDetailScreen rawId={publicEventRouteId} />
         </Suspense>
       </ErrorBoundary>
     );
