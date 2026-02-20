@@ -390,7 +390,7 @@ export async function searchNotes(
 
   const abortPromise = signal
     ? new Promise<never>((_, reject) => {
-        signal.addEventListener('abort', () => reject(new Error('Search aborted')), { once: true });
+        signal.addEventListener('abort', () => reject({ aborted: true }), { once: true });
       })
     : null;
 
@@ -563,6 +563,9 @@ export async function searchNotes(
     }
     return [...merged.values()].sort((a, b) => b.created_at - a.created_at).slice(0, limit);
   } catch (err) {
+    if (err && typeof err === 'object' && 'aborted' in err) {
+      return [];
+    }
     const message = getErrorMessage(err);
     const lower = message.toLowerCase();
     const isAbort = lower === 'search aborted';
