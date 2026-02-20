@@ -208,7 +208,8 @@ export function SearchScreen() {
       setLastSearchQuery(q);
       try {
         const searchRelays = getSearchRelays(relayList);
-        if (searchRelays.length === 0) {
+        const relaysToUse = searchRelays.length > 0 ? searchRelays : relayList;
+        if (relaysToUse.length === 0) {
           setNotes([]);
           setHasMore(false);
           setNotesError('No relays available for search. Check your connection and try again.');
@@ -218,7 +219,7 @@ export function SearchScreen() {
         }
         const results = await searchNotes(
           pool,
-          searchRelays,
+          relaysToUse,
           q,
           NOTES_PAGE_SIZE,
           undefined,
