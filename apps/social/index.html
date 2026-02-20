@@ -24,6 +24,23 @@
       window.__nostrstackDisableAutoMount = true;
     </script>
     <script>
+      // More reliable check for blank content
+      function isRootBlank() {
+        var root = document.getElementById('root');
+        return !root || !root.textContent || root.textContent.trim() === '';
+      }
+
+      function showConnectionLost() {
+        var root = document.getElementById('root');
+        if (root && isRootBlank()) {
+          root.innerHTML =
+            '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Reloading...</p></div>';
+          setTimeout(function () {
+            location.reload();
+          }, 1000);
+        }
+      }
+
       window.addEventListener('error', function (e) {
         if (
           e.message.includes('Failed to fetch dynamically imported module') ||
@@ -31,11 +48,7 @@
           e.message.includes('net::ERR_FAILED') ||
           e.message.includes('loading failed')
         ) {
-          var root = document.getElementById('root');
-          if (root && root.childNodes.length === 0) {
-            root.innerHTML =
-              '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Click to reload.</p><button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; background: #0969da; color: white; border: none; border-radius: 4px; margin-top: 1rem;">Reload Page</button></div>';
-          }
+          showConnectionLost();
         }
       });
 
@@ -45,11 +58,7 @@
           e.reason?.message?.includes('loading failed') ||
           e.reason?.message?.includes('net::ERR_FAILED')
         ) {
-          var root = document.getElementById('root');
-          if (root && root.childNodes.length === 0) {
-            root.innerHTML =
-              '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Click to reload.</p><button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; background: #0969da; color: white; border: none; border-radius: 4px; margin-top: 1rem;">Reload Page</button></div>';
-          }
+          showConnectionLost();
         }
       });
 
@@ -69,18 +78,24 @@
             setTimeout(function () {
               checkInterval = setInterval(function () {
                 var root = document.getElementById('root');
-                if (root && root.childNodes.length === 0 && originalInnerHTML !== '') {
+                // Use textContent check for more reliable blank detection
+                var isBlank = !root || !root.textContent || root.textContent.trim() === '';
+                if (isBlank && originalInnerHTML !== '') {
                   // Page went blank after having content - likely Vite restart
                   root.innerHTML =
-                    '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Reloading...</p><button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; background: #0969da; color: white; border: none; border-radius: 4px; margin-top: 1rem;">Reload Page</button></div>';
+                    '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Reloading...</p></div>';
                   clearInterval(checkInterval);
+                  // Auto-reload after showing message
+                  setTimeout(function () {
+                    location.reload();
+                  }, 1000);
                 }
-              }, 1000);
+              }, 500);
             }, 2000);
           }
         });
 
-        observer.observe(document.getElementById('root'), { childList: true });
+        observer.observe(document.getElementById('root'), { childList: true, subtree: true });
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
