@@ -55,7 +55,6 @@ import { type ActivityEvent, type ActivityEventType, ActivityLog } from '../ui/A
 import { BitcoinNodeCard } from '../ui/BitcoinNodeCard';
 import { type BlockData, BlockNotification } from '../ui/BlockNotification';
 import { type ConnectionState, ConnectionStatus, type NetworkType } from '../ui/ConnectionStatus';
-import { LiveStatsTicker, type NetworkStats } from '../ui/LiveStatsTicker';
 import { resolveGalleryApiBase, resolveRuntimeWsUrl } from '../utils/api-base';
 
 type TelemetryEvent =
@@ -811,14 +810,6 @@ export function TelemetryBar() {
     ? (configuredNetwork.toLowerCase() as NetworkType)
     : 'unknown';
 
-  // Build network stats for LiveStatsTicker
-  const networkStats: NetworkStats | null = nodeInfoWithConfig
-    ? {
-        blockHeight: nodeInfoWithConfig.height ?? 0,
-        lastBlockTime: nodeInfoWithConfig.time
-      }
-    : null;
-
   // Convert logs to ActivityEvents
   const activityEvents = useMemo(
     () => logs.map((log, index) => logToActivityEvent(log, index)),
@@ -872,11 +863,6 @@ export function TelemetryBar() {
         errorMessage={offlineReason}
         onRetry={handleRetry}
       />
-
-      {/* Live Network Stats - animated ticker */}
-      {networkStats && networkStats.blockHeight > 0 && (
-        <LiveStatsTicker stats={networkStats} compact className="telemetry-live-stats" />
-      )}
 
       {/* Bitcoin Node Card with detailed info */}
       {nodeInfoWithConfig && (
