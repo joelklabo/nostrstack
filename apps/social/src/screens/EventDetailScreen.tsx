@@ -4,6 +4,7 @@ import { type Event, nip19 } from 'nostr-tools';
 import { SimplePool } from 'nostr-tools/pool';
 import { useEffect, useMemo, useState } from 'react';
 
+import { getEvent, saveEvent } from '../cache/eventCache';
 import { useRelays } from '../hooks/useRelays';
 import { fetchNostrEventFromApi } from '../nostr/api';
 import {
@@ -534,6 +535,53 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
       const relaysForApi =
         healthyApiRelayList.length > 0 ? healthyApiRelayList : stableApiRelayList;
 
+      // Try to get from cache first
+      let cachedEvent: Event | undefined;
+      const targetEventId = target?.type === 'event' ? target.id : undefined;
+      if (targetEventId) {
+        try {
+          cachedEvent = await getEvent(targetEventId);
+          if (cachedEvent) {
+            setState({
+              status: 'ready',
+              relays: stableRelayList,
+              event: cachedEvent,
+              references: extractEventReferences(cachedEvent),
+              authorProfile: null,
+              authorPubkey: cachedEvent.pubkey,
+              targetLabel: rawId,
+              replies: repliesEnabled
+                ? { ...EMPTY_REPLIES_STATE, status: 'loading' }
+                : EMPTY_REPLIES_STATE,
+              apiError: undefined
+            });
+          }
+        } catch {
+          // Cache read failed, continue to fetch
+        }
+      }
+
+      // Refresh from network in background if we have a cached event
+      const refreshCache = async () => {
+        if (cachedEvent && targetEventId) {
+          try {
+            const freshEvent = await getEvent(targetEventId);
+            if (freshEvent && freshEvent.created_at > cachedEvent.created_at) {
+              setState((prev) => {
+                if (prev.status !== 'ready' || prev.event?.id !== freshEvent.id) return prev;
+                return {
+                  ...prev,
+                  event: freshEvent,
+                  references: extractEventReferences(freshEvent)
+                };
+              });
+            }
+          } catch {
+            // Ignore refresh errors
+          }
+        }
+      };
+
       try {
         if (apiBaseConfig.isConfigured) {
           try {
@@ -554,6 +602,11 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
                 ? relaysForApi
                 : stableRelayList;
 
+            // Save to cache
+            saveEvent(apiResult.event).catch(() => {
+              // Ignore cache write errors
+            });
+
             setState({
               status: 'ready',
               relays,
@@ -571,6 +624,11 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
             if (repliesEnabled) {
               void loadEventReplies(apiResult.event.id, relays);
             }
+
+            // Refresh cache in background if we had cached data
+            if (cachedEvent) {
+              void refreshCache();
+            }
             return;
           } catch (err) {
             apiError = err instanceof Error ? err.message : String(err);
@@ -583,6 +641,12 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
         if (cancelled) return;
         const relayResult = await loadFromRelays();
         if (cancelled) return;
+
+        // Save to cache
+        saveEvent(relayResult.event).catch(() => {
+          // Ignore cache write errors
+        });
+
         setState({
           status: 'ready',
           relays: stableRelayList,
