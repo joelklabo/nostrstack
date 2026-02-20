@@ -857,7 +857,7 @@ export function TelemetryBar() {
         </Alert>
       )}
       {isMainnet && (
-        <Alert tone="danger" title="Mainnet active">
+        <Alert tone="warning" title="Mainnet active">
           Real sats and payments are live.
         </Alert>
       )}
