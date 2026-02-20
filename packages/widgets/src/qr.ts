@@ -175,7 +175,7 @@ async function decodeCanvas(
   }
 
   try {
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d');
     if (!ctx) return { ok: false };
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const decoded = jsQR(imageData.data, imageData.width, imageData.height, {
