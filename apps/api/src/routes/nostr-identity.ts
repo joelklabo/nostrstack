@@ -4,10 +4,10 @@ import type { FastifyInstance } from 'fastify';
 
 import { env } from '../env.js';
 import {
-  getNip05Cache,
+  getNip05CacheDb,
   type Nip05Record,
-  setNip05Cache,
-  setNip05NegativeCache
+  setNip05CacheDb,
+  setNip05NegativeCacheDb
 } from '../services/nip05-cache.js';
 import {
   nip05ProxyCacheCounter,
@@ -242,10 +242,10 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
       }
 
       const cacheKey = `${name}@${domain}`;
-      const cached = getNip05Cache(cacheKey);
+      const cached = await getNip05CacheDb(request.server.prisma, cacheKey);
       if (cached.hit) {
-        nip05ProxyCacheCounter.labels(cached.value ? 'hit' : 'negative').inc();
-        if (!cached.value) {
+        nip05ProxyCacheCounter.labels(cached.isNegative ? 'negative' : 'hit').inc();
+        if (cached.isNegative) {
           nip05ProxyErrorCounter.labels('not_found').inc();
           return reply.status(404).send({ error: 'nip05_not_found' });
         }
@@ -255,8 +255,6 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
 
       const timeoutMs = env.NIP05_PROXY_TIMEOUT_MS;
       const maxBytes = env.NIP05_PROXY_MAX_RESPONSE_BYTES;
-      const ttlMs = env.NIP05_PROXY_CACHE_TTL_SECONDS * 1000;
-      const negativeTtlMs = env.NIP05_PROXY_NEGATIVE_TTL_SECONDS * 1000;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -283,7 +281,11 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
         if (!res.ok) {
           if (res.status === 404) {
             nip05ProxyErrorCounter.labels('not_found').inc();
-            setNip05NegativeCache(cacheKey, negativeTtlMs);
+            await setNip05NegativeCacheDb(
+              request.server.prisma,
+              cacheKey,
+              env.NIP05_PROXY_NEGATIVE_TTL_SECONDS
+            );
             return reply.status(404).send({ error: 'nip05_not_found' });
           }
           nip05ProxyErrorCounter.labels('upstream_error').inc();
@@ -301,7 +303,12 @@ export async function registerNostrIdentityRoute(app: FastifyInstance) {
           ...parsedResponse,
           fetchedAt: Date.now()
         };
-        setNip05Cache(cacheKey, record, ttlMs);
+        await setNip05CacheDb(
+          request.server.prisma,
+          cacheKey,
+          record,
+          env.NIP05_PROXY_CACHE_TTL_SECONDS
+        );
         fetchOutcome = 'success';
         return reply.send(record);
       } catch (err: unknown) {

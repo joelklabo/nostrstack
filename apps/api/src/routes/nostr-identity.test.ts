@@ -16,12 +16,19 @@ process.env.NIP05_PROXY_TIMEOUT_MS = '250';
 process.env.NIP05_PROXY_MAX_RESPONSE_BYTES = '65536';
 
 const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-  stdio: 'inherit',
-  env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-});
+execSync(
+  `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+  {
+    stdio: 'inherit',
+    env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+  }
+);
 
 let server: Awaited<ReturnType<typeof buildServerFn>>;
+
+async function clearNip05DbCache() {
+  await server.prisma.nip05Cache.deleteMany({});
+}
 
 describe('/api/nostr/identity', () => {
   beforeAll(async () => {
@@ -33,8 +40,9 @@ describe('/api/nostr/identity', () => {
     await server.close();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     clearNip05Cache();
+    await clearNip05DbCache();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -47,13 +55,16 @@ describe('/api/nostr/identity', () => {
 
   it('returns 200 for valid nip05 responses', async () => {
     const pubkey = 'a'.repeat(64);
-    const fetchMock = vi.fn(async () => new Response(
-      JSON.stringify({
-        names: { alice: pubkey },
-        relays: { [pubkey]: ['wss://relay.example'] }
-      }),
-      { status: 200 }
-    ));
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            names: { alice: pubkey },
+            relays: { [pubkey]: ['wss://relay.example'] }
+          }),
+          { status: 200 }
+        )
+    );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const res = await server.inject({ url: '/api/nostr/identity?nip05=alice@example.com' });
@@ -75,12 +86,15 @@ describe('/api/nostr/identity', () => {
 
   it('returns cached responses on repeat lookups', async () => {
     const pubkey = 'b'.repeat(64);
-    const fetchMock = vi.fn(async () => new Response(
-      JSON.stringify({
-        names: { alice: pubkey }
-      }),
-      { status: 200 }
-    ));
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            names: { alice: pubkey }
+          }),
+          { status: 200 }
+        )
+    );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const first = await server.inject({ url: '/api/nostr/identity?nip05=alice@example.com' });
@@ -93,9 +107,12 @@ describe('/api/nostr/identity', () => {
 
   it('returns cached 404 responses for negative lookups', async () => {
     const pubkey = 'c'.repeat(64);
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce(new Response('not found', { status: 404 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ names: { alice: pubkey } }), { status: 200 }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ names: { alice: pubkey } }), { status: 200 })
+      );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const first = await server.inject({ url: '/api/nostr/identity?nip05=alice@example.com' });
@@ -126,7 +143,9 @@ describe('/api/nostr/identity', () => {
 
   it('returns 504 for timeout errors', async () => {
     const abortError = Object.assign(new Error('timeout'), { name: 'AbortError' });
-    const fetchMock = vi.fn(async () => { throw abortError; });
+    const fetchMock = vi.fn(async () => {
+      throw abortError;
+    });
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const res = await server.inject({ url: '/api/nostr/identity?nip05=alice@example.com' });

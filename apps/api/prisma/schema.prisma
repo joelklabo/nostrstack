@@ -139,3 +139,19 @@ model Bolt12Offer {
 
   @@index([createdAt])
 }
+
+model Nip05Cache {
+  id         String   @id @default(cuid())
+  cacheKey   String   @unique
+  pubkey     String
+  relays     String?
+  nip05      String
+  name       String
+  domain     String
+  fetchedAt  DateTime
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([expiresAt])
+}
