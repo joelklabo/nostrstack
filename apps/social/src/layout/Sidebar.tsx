@@ -307,8 +307,13 @@ export const Sidebar = memo(function Sidebar({
             Profile
           </button>
         )}
-        {isGuest && currentView === 'profile' && (
-          <button type="button" className="nav-item active" aria-current="page">
+        {isGuest && (
+          <button
+            type="button"
+            className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
+            onClick={() => handleNavigate('profile')}
+            aria-current={currentView === 'profile' ? 'page' : undefined}
+          >
             Profile
           </button>
         )}
