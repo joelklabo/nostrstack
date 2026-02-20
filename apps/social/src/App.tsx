@@ -614,6 +614,79 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     );
   }
 
+  if (isProfileRoute) {
+    return (
+      <div className="social-layout">
+        <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+        <Sidebar
+          currentView={routeBoundView}
+          setCurrentView={setCurrentView}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={closeMobileMenu}
+          onOpenHelp={() => setHelpOpen(true)}
+          onLogout={handleLogout}
+          isGuest={isGuest}
+        />
+        <main className="feed-container" id="main-content" role="main">
+          {relayConnectivityDegraded && (
+            <Alert
+              tone="warning"
+              title="Relay connectivity degraded"
+              style={{ marginBottom: '1rem' }}
+            >
+              Some relay/WebSocket connections are failing. Wallet funding and publish actions may
+              be delayed or fail until relays recover. Check your relay settings in the Relays view.
+            </Alert>
+          )}
+          <ErrorBoundary
+            key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
+            resetToken={routeRecoveryKey}
+            fallback={
+              <RouteLoadFallback
+                message="Unable to load profile screen. Please try reloading."
+                onRetry={retryRouteAndHealthCheck}
+                retryLabel="Retry route"
+              />
+            }
+          >
+            <Suspense fallback={<LoadingFallback message="Loading profile..." />}>
+              <>
+                {profileRouteError && (
+                  <Alert tone="danger" title="Routing Error">
+                    Invalid profile id. Showing your current view instead.
+                  </Alert>
+                )}
+                {profileRoutePubkey ? (
+                  <ProfileScreen
+                    pubkey={profileRoutePubkey}
+                    onNavigateToSettings={handleNavigateToSettings}
+                  />
+                ) : pubkey ? (
+                  <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
+                ) : (
+                  <div className="profile-guest-placeholder">
+                    <p>Sign in to view your profile</p>
+                  </div>
+                )}
+              </>
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+        <aside className="telemetry-sidebar">
+          <ErrorBoundary
+            fallback={
+              <div style={{ padding: '1rem', color: 'var(--ns-color-text-muted)' }}>
+                Telemetry Unavailable
+              </div>
+            }
+          >
+            <TelemetryBar />
+          </ErrorBoundary>
+        </aside>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <main className="feed-container social-loading-main" id="main-content" role="main">
@@ -860,26 +933,6 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
           >
             {isRelaysRoute ? (
               <RelaysView />
-            ) : isProfileRoute ? (
-              <>
-                {profileRouteError && (
-                  <Alert tone="danger" title="Routing Error">
-                    Invalid profile id. Showing your current view instead.
-                  </Alert>
-                )}
-                {profileRoutePubkey ? (
-                  <ProfileScreen
-                    pubkey={profileRoutePubkey}
-                    onNavigateToSettings={handleNavigateToSettings}
-                  />
-                ) : pubkey ? (
-                  <ProfileScreen pubkey={pubkey} onNavigateToSettings={handleNavigateToSettings} />
-                ) : (
-                  <div className="profile-guest-placeholder">
-                    <p>Sign in to view your profile</p>
-                  </div>
-                )}
-              </>
             ) : (
               <>
                 {routeBoundView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
