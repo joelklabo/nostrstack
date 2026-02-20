@@ -84,14 +84,18 @@ const EventDetailScreen = lazy(() =>
   )
 );
 const loadSettingsScreen = () =>
-  import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen }));
+  robustLazy(
+    () => import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen })),
+    'settings'
+  );
 const NotFoundScreen = lazy(() =>
   robustLazy(
     () => import('./screens/NotFoundScreen').then((m) => ({ default: m.NotFoundScreen })),
     'not found'
   )
 );
-const loadOffersView = () => import('./OffersView').then((m) => ({ default: m.OffersView }));
+const loadOffersView = () =>
+  robustLazy(() => import('./OffersView').then((m) => ({ default: m.OffersView })), 'offers');
 const SearchScreen = lazy(() =>
   robustLazy(
     () => import('./screens/SearchScreen').then((m) => ({ default: m.SearchScreen })),
