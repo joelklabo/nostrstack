@@ -136,20 +136,16 @@ export function resolveRuntimeWsUrl(baseURL: string | undefined, path: string): 
   const normalizedPath = ensureLeadingSlash(path);
   const websocketOrigin = convertToWsScheme(window.location.origin);
 
-  if (isLocalhostUrl(raw) && raw.startsWith('http://')) {
-    let wsUrl = convertToWsScheme(raw);
-    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-      wsUrl = wsUrl.replace(/^ws:\/\//i, 'wss://');
-    }
-    return `${wsUrl}${normalizedPath}`;
-  }
-
-  if (!raw || /^ws(s)?:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) {
-    return `${preferSecureWsUrl(raw)}${normalizedPath}`;
+  if (!runtimeApiBase.isConfigured) {
+    return `${websocketOrigin}${normalizedPath}`;
   }
 
   if (runtimeApiBase.isRelative && runtimeApiBase.raw === '/api') {
     return `${websocketOrigin}${normalizedPath}`;
+  }
+
+  if (!raw || /^ws(s)?:\/\//i.test(raw) || /^https?:\/\//i.test(raw)) {
+    return `${preferSecureWsUrl(raw)}${normalizedPath}`;
   }
 
   if (raw.startsWith('/')) {

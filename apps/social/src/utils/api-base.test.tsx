@@ -86,4 +86,9 @@ describe('resolveRuntimeWsUrl', () => {
     const url = resolveRuntimeWsUrl('/api-proxy', '/ws/telemetry');
     expect(url).toBe(`${getWebSocketOrigin()}/api-proxy/ws/telemetry`);
   });
+
+  it('maps undefined runtime base to host root websocket path', () => {
+    const url = resolveRuntimeWsUrl(undefined, '/ws/telemetry');
+    expect(url).toBe(`${getWebSocketOrigin()}/ws/telemetry`);
+  });
 });
