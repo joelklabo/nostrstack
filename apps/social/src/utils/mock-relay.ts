@@ -187,13 +187,6 @@ export function installMockRelayWebSocket() {
           const limit = filters.reduce((min, filter) => Math.min(min, filter.limit || 1000), 1000);
           const limitedMatches = uniqueMatches.slice(0, limit);
 
-          setTimeout(() => {
-            for (const event of limitedMatches) {
-              this.dispatchMessage(['EVENT', subId, event]);
-            }
-            this.dispatchMessage(['EOSE', subId]);
-          }, 50);
-
           const handler = (e: Event) => {
             if (this.readyState !== MockRelayWebSocket.OPEN) {
               window.removeEventListener('nostrstack:mock-event', handler as EventListener);
@@ -215,6 +208,13 @@ export function installMockRelayWebSocket() {
           this.addEventListener('close', () => {
             window.removeEventListener('nostrstack:mock-event', handler as EventListener);
           });
+
+          setTimeout(() => {
+            for (const event of limitedMatches) {
+              this.dispatchMessage(['EVENT', subId, event]);
+            }
+            this.dispatchMessage(['EOSE', subId]);
+          }, 50);
         }
       } catch (e) {
         console.error('MockRelay error', e);

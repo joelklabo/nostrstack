@@ -10,6 +10,11 @@ test.describe('Markdown rendering', () => {
     await page.getByPlaceholder('nsec1...').fill(validNsec);
     await page.getByRole('button', { name: 'Sign in with private key' }).click();
     await expect(page.getByRole('heading', { name: /Live Feed/ })).toBeVisible({ timeout: 15000 });
+
+    // Wait for feed to load initial posts
+    await expect(page.locator('[data-testid="social-event-content"]').first()).toBeVisible({
+      timeout: 10000
+    });
   });
 
   test('renders markdown in posts', async ({ page }) => {
@@ -18,16 +23,27 @@ test.describe('Markdown rendering', () => {
     // Post a note with markdown
     const editor = page.getByPlaceholder('Share something with the network...');
     await editor.fill(markdownText);
-    await page.getByText('Publish').click();
+    await page.getByRole('button', { name: 'Publish note' }).click();
 
     // Wait for success status
     await expect(page.getByText('Success: Event published to relays.')).toBeVisible({
       timeout: 10000
     });
 
-    // Check if it appears in the feed and is rendered
-    const postContent = page.locator('[data-testid="social-event-content"]').first();
-    await expect(postContent).toContainText('Hello bold and italic and link');
+    // Wait for the feed to potentially update
+    await page.waitForTimeout(2000);
+
+    // Look for a post containing the markdown content
+    // Use a locator that searches for posts containing the text
+    const postContent = page
+      .locator('[data-testid="social-event-content"]')
+      .filter({
+        hasText: /Hello bold and italic and link/
+      })
+      .first();
+
+    // Wait for the post to appear
+    await expect(postContent).toBeVisible({ timeout: 10000 });
 
     // Verify HTML tags
     const boldText = postContent.locator('strong');
@@ -46,14 +62,29 @@ test.describe('Markdown rendering', () => {
 
     const editor = page.getByPlaceholder('Share something with the network...');
     await editor.fill(textWithNewlines);
-    await page.getByText('Publish').click();
+    await page.getByRole('button', { name: 'Publish note' }).click();
 
     // Wait for success status
     await expect(page.getByText('Success: Event published to relays.')).toBeVisible({
       timeout: 10000
     });
 
-    const postContent = page.locator('[data-testid="social-event-content"]').first();
+    // Wait for the feed to potentially update
+    await page.waitForTimeout(2000);
+
+    // Look for a post containing the text (use more flexible matching)
+    const postContent = page
+      .locator('[data-testid="social-event-content"]')
+      .filter({
+        hasText: /Line/
+      })
+      .filter({
+        hasText: /google\.com/
+      })
+      .first();
+
+    // Wait for the post to appear
+    await expect(postContent).toBeVisible({ timeout: 10000 });
 
     // Check for <br> or multiple paragraphs
     // markdown-it with breaks:true should use <br> for single newlines or wrap in <p>
