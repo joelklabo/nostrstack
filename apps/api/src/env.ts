@@ -74,7 +74,7 @@ const schema = z
     ENABLE_LIGHTNING_ADDRESS: bool().default(false),
     ENABLE_LNURL_WITHDRAW: bool().default(false),
     ENABLE_NWC: bool().default(false),
-    ENABLE_BOLT12: bool().default(false),
+    ENABLE_BOLT12: bool().default(true),
     DATABASE_URL: z.string().default(defaultDatabaseUrl),
     PUBLIC_ORIGIN: z.string().url().default('http://localhost:3001'),
     CORS_ALLOWED_ORIGINS: z.string().optional(),
@@ -153,14 +153,6 @@ const schema = z
     }
 
     if (!data.ENABLE_BOLT12) return;
-    if (!data.BOLT12_PROVIDER) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['BOLT12_PROVIDER'],
-        message: 'BOLT12_PROVIDER is required when ENABLE_BOLT12=true'
-      });
-      return;
-    }
     if (data.BOLT12_PROVIDER === 'cln-rest') {
       if (!data.BOLT12_REST_URL) {
         ctx.addIssue({
