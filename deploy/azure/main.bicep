@@ -191,7 +191,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               { name: 'OP_NODE_API_KEY', secretRef: 'op-node-api-key' }
               { name: 'OP_NODE_WEBHOOK_SECRET', secretRef: 'op-node-webhook-secret' }
               { name: 'PUBLIC_ORIGIN', value: 'https://api.nostrstack.com' }
-              { name: 'CORS_ALLOWED_ORIGINS', value: 'https://nostrstack.com,https://api.nostrstack.com' }
+              { name: 'CORS_ALLOWED_ORIGINS', value: 'https://nostrstack.com,https://api.nostrstack.com,*.delightfulpond-8c3c9242.westus3.azurecontainerapps.io' }
               { name: 'NODE_ENV', value: 'production' }
               { name: 'LOG_LEVEL', value: 'info' }
               { name: 'OTEL_ENABLED', value: string(otelEnabled) }
