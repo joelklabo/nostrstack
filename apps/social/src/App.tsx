@@ -27,8 +27,8 @@ import { type ApiBaseResolution, resolveGalleryApiBase } from './utils/api-base'
 import { navigateTo, resolveProfileRoute } from './utils/navigation';
 
 const MAX_LAZY_RETRIES = 3;
-const LAZY_RETRY_DELAY_MS = 800;
-const LAZY_LOAD_TIMEOUT_MS = 10000;
+const LAZY_RETRY_DELAY_MS = 1000;
+const LAZY_LOAD_TIMEOUT_MS = 30000;
 
 function robustLazy<T>(
   loader: () => Promise<{ default: T }>,
