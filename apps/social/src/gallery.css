@@ -985,7 +985,7 @@ button:disabled {
 }
 
 .nav-item--danger {
-  color: var(--ns-color-danger-text);
+  color: #7a2e2e !important;
   background: var(--ns-color-danger-subtle);
   border-radius: var(--ns-radius-md);
 }
