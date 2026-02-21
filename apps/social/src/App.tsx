@@ -249,7 +249,7 @@ function hasRecentRelayFailures(now: number = Date.now()) {
   }
 
   return [...inMemoryStats, ...persistedStats].some((entry) => {
-    if (!entry.lastFailureAt || entry.consecutiveFailures < 1) return false;
+    if (!entry.lastFailureAt || entry.consecutiveFailures < 2) return false;
     return now - entry.lastFailureAt < RELAY_DEGRADED_WINDOW_MS;
   });
 }
