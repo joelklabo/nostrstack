@@ -1054,6 +1054,7 @@ button:disabled {
   border-bottom: 1px solid var(--ns-color-border-default);
   flex-wrap: wrap;
   gap: var(--ns-space-3);
+  min-height: 48px;
   transition:
     transform var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut);
@@ -1108,6 +1109,7 @@ button:disabled {
 .feed-editor {
   margin-bottom: var(--ns-space-5);
   overflow: hidden;
+  min-height: 100px;
   transition:
     opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut),
     transform var(--ns-duration-moderate) var(--ns-easing-easeInOut);
@@ -1983,6 +1985,7 @@ button:disabled {
   padding-top: var(--ns-space-3);
   border-top: 1px solid var(--ns-color-border-default);
   flex-wrap: wrap;
+  min-height: 40px;
 }
 
 .ns-action-btn {
@@ -1992,6 +1995,7 @@ button:disabled {
   padding: var(--ns-space-2) var(--ns-space-3);
   font-size: 0.75rem;
   border-radius: var(--ns-radius-md);
+  min-height: 32px;
   transition:
     color var(--ns-duration-normal) var(--ns-easing-easeInOut),
     background-color var(--ns-duration-normal) var(--ns-easing-easeInOut);
