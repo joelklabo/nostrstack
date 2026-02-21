@@ -83,7 +83,7 @@
 body {
   background-color: var(--ns-color-bg-default);
   color: var(--ns-color-text-default);
-  font-family: apple-system, var(--ns-font-family-sans);
+  font-family: var(--ns-font-family-sans);
   margin: 0;
   padding: 0;
   line-height: 1.6;
