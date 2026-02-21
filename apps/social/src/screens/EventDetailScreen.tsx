@@ -13,6 +13,7 @@ import {
   parseProfileContent,
   type ProfileMeta
 } from '../nostr/eventRenderers';
+import { fetchEventFromNostrDB } from '../nostr/nostrdb';
 import { ReferencePreview } from '../nostr/ReferencePreview';
 import { relayMonitor } from '../nostr/relayHealth';
 import { CopyButton } from '../ui/CopyButton';
@@ -558,6 +559,32 @@ export function EventDetailScreen({ rawId }: { rawId: string }) {
           }
         } catch {
           // Cache read failed, continue to fetch
+        }
+      }
+
+      // Try nostrdb (nostr-bucket extension) if no cached event
+      if (!cachedEvent && targetEventId) {
+        try {
+          const nostrdbEvent = await fetchEventFromNostrDB(targetEventId);
+          if (nostrdbEvent) {
+            cachedEvent = nostrdbEvent;
+            saveEvent(nostrdbEvent).catch(() => {});
+            setState({
+              status: 'ready',
+              relays: stableRelayList,
+              event: nostrdbEvent,
+              references: extractEventReferences(nostrdbEvent),
+              authorProfile: null,
+              authorPubkey: nostrdbEvent.pubkey,
+              targetLabel: rawId,
+              replies: repliesEnabled
+                ? { ...EMPTY_REPLIES_STATE, status: 'loading' }
+                : EMPTY_REPLIES_STATE,
+              apiError: undefined
+            });
+          }
+        } catch {
+          // nostrdb not available, continue to API
         }
       }
 
