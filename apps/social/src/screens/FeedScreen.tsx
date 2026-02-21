@@ -3,6 +3,7 @@ import { Alert, PostSkeleton } from '@nostrstack/ui';
 import type { Event } from 'nostr-tools';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { saveEvents } from '../cache/eventCache';
 import { useContactList } from '../hooks/useContactList';
 import { useMuteList } from '../hooks/useMuteList';
 import { usePostNavigation } from '../hooks/usePostNavigation';
@@ -148,6 +149,13 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
     since: trendingSince,
     limit: 20
   });
+
+  // Save events to cache when loaded
+  useEffect(() => {
+    if (posts.length > 0) {
+      saveEvents(posts).catch((e) => console.warn('[Cache] Failed to save feed events:', e));
+    }
+  }, [posts]);
 
   const isLoadingFeed = relaysLoading || (feedLoading && posts.length === 0);
   const hasNoPosts = posts.length === 0 && !feedLoading;
