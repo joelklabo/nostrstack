@@ -1508,7 +1508,7 @@ button:disabled {
 .telemetry-relays-title {
   font-size: 0.65rem;
   font-weight: var(--ns-font-weight-bold);
-  color: var(--ns-color-text-subtle);
+  color: var(--ns-color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: var(--ns-space-2);
