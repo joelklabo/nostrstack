@@ -43,7 +43,10 @@ export function setupRoutes(app: FastifyInstance) {
     app.addHook('onRequest', async (req, reply) => {
       const url = req.raw.url ?? '';
       if (url.startsWith('/api/bolt12') || url.startsWith('/bolt12')) {
-        return reply.status(404).send({ error: 'bolt12_disabled' });
+        return reply.status(503).send({
+          error: 'bolt12_disabled',
+          message: 'BOLT12 is not enabled. Set ENABLE_BOLT12=true to use offers and subscriptions.'
+        });
       }
     });
   }
