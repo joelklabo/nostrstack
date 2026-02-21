@@ -795,7 +795,12 @@ export function SettingsScreen({
             <span className="nwc-last-time">{new Date(nwcLastPayment.ts).toLocaleString()}</span>
           </div>
         )}
-        <div className="nwc-form" role="group" aria-label="NWC connection settings">
+        <form
+          className="nwc-form"
+          role="group"
+          aria-label="NWC connection settings"
+          onSubmit={(e) => e.preventDefault()}
+        >
           <label className="nwc-label" htmlFor="nwc-uri-input">
             Connection String
             <input
@@ -838,7 +843,7 @@ export function SettingsScreen({
               aria-invalid={Boolean(nwcLimitError)}
             />
           </label>
-        </div>
+        </form>
         {(nwcUriError || nwcLimitError) && (
           <div className="nwc-error" role="alert" aria-live="assertive">
             {nwcUriError && <div id="nwc-uri-error">{nwcUriError}</div>}
