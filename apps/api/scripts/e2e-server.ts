@@ -1,8 +1,8 @@
 import { buildServer } from '../src/server.js';
 
-const port = Number(process.env.PORT ?? 3301);
-process.env.PRISMA_SCHEMA_FILE = process.env.PRISMA_SCHEMA_FILE ?? 'prisma/pg/schema.prisma';
-process.env.DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://nostrstack:nostrstack@localhost:5432/nostrstack';
+const port = Number(process.env.PORT ?? 3001);
+process.env.PRISMA_SCHEMA_FILE = process.env.PRISMA_SCHEMA_FILE ?? 'prisma/schema.prisma';
+process.env.DATABASE_URL = process.env.DATABASE_URL ?? 'file:./test.db';
 
 async function main() {
   const server = await buildServer();
