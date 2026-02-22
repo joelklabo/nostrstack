@@ -56,6 +56,10 @@ export function clearNip05Cache() {
   memoryCache.clear();
 }
 
+export async function clearNip05CacheDb(prisma: PrismaClient): Promise<void> {
+  await prisma.nip05Cache.deleteMany({});
+}
+
 function serializeRelays(relays?: string[]) {
   return relays ? JSON.stringify(relays) : null;
 }

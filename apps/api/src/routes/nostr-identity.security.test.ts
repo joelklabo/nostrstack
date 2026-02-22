@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { buildServer as buildServerFn } from '../server.js';
-import { clearNip05Cache } from '../services/nip05-cache.js';
+import { clearNip05Cache, clearNip05CacheDb } from '../services/nip05-cache.js';
 
 process.env.NODE_ENV = 'test';
 process.env.VITEST = 'true';
@@ -17,10 +17,13 @@ process.env.NIP05_PROXY_MAX_RESPONSE_BYTES = '200';
 process.env.NIP05_PROXY_ALLOW_HTTP_LOCALHOST = 'true';
 
 const schema = resolve(process.cwd(), 'prisma/schema.prisma');
-execSync(`./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`, {
-  stdio: 'inherit',
-  env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
-});
+execSync(
+  `./node_modules/.bin/prisma db push --skip-generate --accept-data-loss --schema ${schema}`,
+  {
+    stdio: 'inherit',
+    env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+  }
+);
 
 let server: Awaited<ReturnType<typeof buildServerFn>>;
 
@@ -34,8 +37,9 @@ describe('/api/nostr/identity security', () => {
     await server.close();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     clearNip05Cache();
+    await clearNip05CacheDb(server.prisma);
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -48,10 +52,9 @@ describe('/api/nostr/identity security', () => {
 
   it('allows http for localhost when explicitly enabled', async () => {
     const pubkey = 'd'.repeat(64);
-    const fetchMock = vi.fn(async () => new Response(
-      JSON.stringify({ names: { alice: pubkey } }),
-      { status: 200 }
-    ));
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ names: { alice: pubkey } }), { status: 200 })
+    );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const res = await server.inject({ url: '/api/nostr/identity?nip05=alice@localhost' });
@@ -74,13 +77,13 @@ describe('/api/nostr/identity security', () => {
   });
 
   it('rejects oversized responses', async () => {
-    const fetchMock = vi.fn(async () => new Response(
-      JSON.stringify({ names: { alice: 'e'.repeat(64) } }),
-      {
-        status: 200,
-        headers: { 'content-length': '9999' }
-      }
-    ));
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ names: { alice: 'e'.repeat(64) } }), {
+          status: 200,
+          headers: { 'content-length': '9999' }
+        })
+    );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const res = await server.inject({ url: '/api/nostr/identity?nip05=alice@example.com' });
