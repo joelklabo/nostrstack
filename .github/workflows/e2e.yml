@@ -56,6 +56,7 @@ jobs:
           XDG_CACHE_HOME: /tmp
           PORT: '3001'
           PRISMA_SCHEMA_FILE: prisma/schema.prisma
+          VITEST: 'true'
         run: |
           nohup pnpm e2e:serve > /tmp/api-server.log 2>&1 &
           echo $! > /tmp/api-server.pid
