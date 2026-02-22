@@ -796,6 +796,7 @@ export function SettingsScreen({
           </div>
         )}
         <form
+          id="nwc-connection-form"
           className="nwc-form"
           role="group"
           aria-label="NWC connection settings"
@@ -807,6 +808,7 @@ export function SettingsScreen({
               id="nwc-uri-input"
               className="ns-input"
               type="password"
+              form="nwc-connection-form"
               name="nwc-uri"
               autoComplete="off"
               placeholder="nostr+walletconnect://..."

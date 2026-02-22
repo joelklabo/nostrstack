@@ -405,6 +405,7 @@ export function LoginScreen() {
 
         {mode === 'nsec' && (
           <form
+            id="nsec-login-form"
             className="nsec-form"
             style={{ display: 'grid', gap: '1.25rem' }}
             onSubmit={(e) => {
@@ -430,6 +431,7 @@ export function LoginScreen() {
               </label>
               <input
                 type="password"
+                form="nsec-login-form"
                 className="ns-input"
                 id="nsec-input"
                 name="nsec"
