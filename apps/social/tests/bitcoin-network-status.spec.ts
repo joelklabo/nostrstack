@@ -40,6 +40,7 @@ const mockStatus = async (page: Page, payload: unknown) => {
 const setDevNetwork = async (page: Page, network: string) => {
   await page.addInitScript((value) => {
     window.localStorage.setItem('nostrstack.dev.network', value);
+    window.localStorage.setItem('nostrstack.guest', 'true');
   }, network);
 };
 
@@ -124,6 +125,6 @@ test.describe('Bitcoin network status', () => {
     });
 
     await page.goto('/demo');
-    await expect(page.getByText('Bitcoin status unavailable')).toBeVisible();
+    await expect(page.getByText('Bitcoin status unavailable', { exact: true })).toBeVisible();
   });
 });
