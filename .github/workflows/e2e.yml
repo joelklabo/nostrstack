@@ -28,6 +28,42 @@ jobs:
       - name: Setup Node and PNPM
         uses: ./.github/actions/setup-node-pnpm
 
+      - name: Install dependencies
+        working-directory: apps/api
+        run: pnpm install
+
+      - name: Generate Prisma Client
+        working-directory: apps/api
+        env:
+          DATABASE_URL: file:./test.db
+          PRISMA_SCHEMA_FILE: prisma/schema.prisma
+        run: pnpm prisma:generate
+
+      - name: Start API Server
+        working-directory: apps/api
+        env:
+          DATABASE_URL: file:./test.db
+          ADMIN_API_KEY: test-admin
+          XDG_CACHE_HOME: /tmp
+          PORT: '3001'
+          PRISMA_SCHEMA_FILE: prisma/schema.prisma
+        run: |
+          nohup pnpm e2e:serve > /tmp/api-server.log 2>&1 &
+          echo $! > /tmp/api-server.pid
+
+      - name: Wait for API Server
+        run: |
+          for i in {1..30}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health | grep -q "200"; then
+              echo "API server is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API server failed to start"
+          cat /tmp/api-server.log
+          exit 1
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
