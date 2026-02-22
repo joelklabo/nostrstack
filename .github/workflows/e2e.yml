@@ -39,6 +39,13 @@ jobs:
           PRISMA_SCHEMA_FILE: prisma/schema.prisma
         run: pnpm prisma:generate
 
+      - name: Push Prisma Schema
+        working-directory: apps/api
+        env:
+          DATABASE_URL: file:./test.db
+          PRISMA_SCHEMA_FILE: prisma/schema.prisma
+        run: pnpm exec prisma db push --accept-data-loss --schema prisma/schema.prisma
+
       - name: Start API Server
         working-directory: apps/api
         env:
