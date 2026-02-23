@@ -9,10 +9,11 @@ interface KeyboardShortcutsOptions {
 
 export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
   const [helpOpen, setHelpOpen] = useState(false);
-  const { setCurrentView } = options;
+  const { setCurrentView, currentView } = options;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat) return;
       const isHelpShortcut = event.key === '?' || (event.code === 'Slash' && event.shiftKey);
 
       // Skip if typing in input/textarea
@@ -35,7 +36,9 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
       if (isHelpShortcut) {
         event.preventDefault();
-        setCurrentView('help');
+        if (currentView !== 'help') {
+          setCurrentView('help');
+        }
         setHelpOpen(true);
         return;
       }
@@ -51,7 +54,9 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
           if (event.metaKey || event.ctrlKey) {
             // Cmd+K or Ctrl+K for search
             event.preventDefault();
-            setCurrentView('search');
+            if (currentView !== 'search') {
+              setCurrentView('search');
+            }
           } else {
             event.preventDefault();
           }
@@ -60,7 +65,9 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
         case '/':
           // Focus search
           event.preventDefault();
-          setCurrentView('search');
+          if (currentView !== 'search') {
+            setCurrentView('search');
+          }
           break;
 
         case 'Escape':
@@ -72,14 +79,18 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
         case 'n':
           // Go to feed to focus new post composer
           event.preventDefault();
-          setCurrentView('feed');
+          if (currentView !== 'feed') {
+            setCurrentView('feed');
+          }
           break;
 
         case 'g':
           // g+h: home (feed)
           if (event.shiftKey) {
             event.preventDefault();
-            setCurrentView('feed');
+            if (currentView !== 'feed') {
+              setCurrentView('feed');
+            }
           }
           break;
 
@@ -90,7 +101,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-  }, [setCurrentView]);
+  }, [setCurrentView, currentView]);
 
   return { helpOpen, setHelpOpen };
 }

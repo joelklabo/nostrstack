@@ -1,6 +1,13 @@
 import { nip19 } from 'nostr-tools';
 import { bytesToHex } from 'nostr-tools/utils';
 
+export type RouteLocation = {
+  pathname: string;
+  search: string;
+  hash: string;
+  fullPath: string;
+};
+
 export const APP_VIEW_PATHS = {
   feed: '/',
   search: '/search',
@@ -20,7 +27,6 @@ export const APP_VIEW_PATHS = {
 export type AppRouteKind =
   | 'feed'
   | 'search'
-  | 'find-friend'
   | 'relays'
   | 'settings'
   | 'offers'
@@ -46,13 +52,22 @@ const PROFILE_ROUTE_RE = /^\/p\/([^/?#]+)/i;
 const NOSTR_NOTE_ROUTE_RE = /^\/nostr\/([^/?#]+)/i;
 const EVENT_NOTE_ROUTE_RE = /^\/e\/([^/?#]+)/i;
 
-function normalizePath(path: string): string {
+export function normalizePath(path: string): string {
   const origin = typeof window === 'undefined' ? 'https://example.com' : window.location.origin;
   const url = new URL(path, origin);
   const basePath = normalizeRoutePath(url.pathname);
   const canonicalPath = canonicalizeRoutePath(basePath);
   const withQuery = `${canonicalPath}${url.search}${url.hash}`;
   return withQuery === '' ? '/' : withQuery;
+}
+
+export function normalizeLocation(path: string): RouteLocation {
+  const origin = typeof window === 'undefined' ? 'https://example.com' : window.location.origin;
+  const url = new URL(path, origin);
+  const pathname = canonicalizeRoutePath(normalizeRoutePath(url.pathname));
+  const search = url.search;
+  const hash = url.hash;
+  return { pathname, search, hash, fullPath: `${pathname}${search}${hash}` };
 }
 
 function normalizeRoutePath(pathname: string): string {
@@ -118,7 +133,7 @@ function resolveEventRouteIdFromPath(pathname: string): string | null {
 }
 
 export function parseAppRoute(pathname: string): AppRoute {
-  const normalizedPath = normalizeRoutePath(pathname);
+  const normalizedPath = canonicalizeRoutePath(normalizeRoutePath(pathname));
 
   if (normalizedPath === '/' || normalizedPath === '') {
     return { kind: 'feed', pathname: '/' };
@@ -135,9 +150,6 @@ export function parseAppRoute(pathname: string): AppRoute {
 
   if (normalizedPath === '/search') {
     return { kind: 'search', pathname: normalizedPath };
-  }
-  if (normalizedPath === '/find-friend') {
-    return { kind: 'find-friend', pathname: normalizedPath };
   }
   if (normalizedPath === '/relays') {
     return { kind: 'relays', pathname: normalizedPath };
@@ -183,15 +195,16 @@ export function buildNoteLink(eventId: string): string {
   }
 }
 
-export function navigateTo(path: string): void {
+export function navigateTo(path: string, options: { replace?: boolean; state?: Record<string, unknown> } = {}): void {
   if (typeof window === 'undefined') return;
 
   const normalized = normalizePath(path);
   const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (normalized === current) return;
 
-  window.history.pushState({}, '', normalized);
-  window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  const method = options.replace ? 'replaceState' : 'pushState';
+  window.history[method](options.state ?? {}, '', normalized);
+  window.dispatchEvent(new PopStateEvent('popstate', { state: options.state ?? {} }));
 }
 
 export function navigateToProfile(pubkey: string): string {

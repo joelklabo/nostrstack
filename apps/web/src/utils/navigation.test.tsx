@@ -75,6 +75,11 @@ describe('parseAppRoute', () => {
     expect(route.eventId).toBe('abc123');
   });
 
+  it('canonicalizes /find-friend to search route', () => {
+    const route = parseAppRoute('/find-friend');
+    expect(route.kind).toBe('search');
+  });
+
   it('keeps invalid profile paths in the profile route kind', () => {
     const route = parseAppRoute('/p/not-a-key');
     expect(route.kind).toBe('profile');

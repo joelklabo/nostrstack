@@ -31,7 +31,6 @@ function normalizeSearchQuery(rawQuery: string): string {
 }
 
 function getRouteSearchQuery(rawSearch: string): string {
-  if (typeof window === 'undefined') return '';
   return normalizeSearchQuery(new URLSearchParams(rawSearch).get(SEARCH_QUERY_PARAM) ?? '');
 }
 
@@ -67,7 +66,7 @@ function getProfileLookupErrorMessage(error: unknown) {
   return message;
 }
 
-export function SearchScreen() {
+export function SearchScreen({ searchQuery = '' }: { searchQuery?: string }) {
   const cfg = useNostrstackConfig();
   const apiBaseConfig = resolveWebApiBase(cfg);
   const apiBase = apiBaseConfig.baseUrl;
@@ -77,7 +76,8 @@ export function SearchScreen() {
     return Array.isArray(listFromContext) ? listFromContext : [];
   }, [relayContext?.relays]);
   const pool = useSimplePool();
-  const [query, setQuery] = useState(() => getRouteSearchQuery(window.location.search));
+  const normalizedRouteQuery = useMemo(() => getRouteSearchQuery(searchQuery), [searchQuery]);
+  const [query, setQuery] = useState(() => normalizedRouteQuery);
   const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
   const isDirectSearch = useMemo(() => isDirectIdentitySearch(normalizedQuery), [normalizedQuery]);
   const identityInput = isDirectSearch ? normalizedQuery : '';
@@ -112,14 +112,6 @@ export function SearchScreen() {
     notesCountRef.current = notes.length;
   }, [notes]);
 
-  const syncQueryFromLocation = useCallback(() => {
-    const next = getRouteSearchQuery(window.location.search);
-    setQuery((current) => {
-      const normalizedCurrent = normalizeSearchQuery(current);
-      return normalizedCurrent === next ? current : next;
-    });
-  }, []);
-
   const syncQueryToLocation = useCallback((nextQuery: string) => {
     const params = new URLSearchParams(window.location.search);
     if (!nextQuery) {
@@ -132,6 +124,12 @@ export function SearchScreen() {
   }, []);
 
   useEffect(() => {
+    setQuery((current) =>
+      normalizeSearchQuery(current) === normalizedRouteQuery ? current : normalizedRouteQuery
+    );
+  }, [normalizedRouteQuery]);
+
+  useEffect(() => {
     return () => {
       if (notesSearchControllerRef.current) {
         notesSearchControllerRef.current.abort();
@@ -141,15 +139,6 @@ export function SearchScreen() {
       }
     };
   }, []);
-
-  useEffect(() => {
-    const cleanup = () => {
-      window.removeEventListener('popstate', syncQueryFromLocation);
-    };
-    syncQueryFromLocation();
-    window.addEventListener('popstate', syncQueryFromLocation);
-    return cleanup;
-  }, [syncQueryFromLocation]);
 
   const healthyRelayCount = useMemo(() => {
     const searchRelays = getSearchRelays(relayList);

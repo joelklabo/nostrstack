@@ -24,7 +24,8 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveWebApiBase } from './utils/api-base';
-import { APP_VIEW_PATHS, navigateTo, parseAppRoute, type AppRoute } from './utils/navigation';
+import { useRouteState } from './features/navigation/useRouteState';
+import { APP_VIEW_PATHS, navigateTo, type AppRoute } from './utils/navigation';
 
 const MAX_LAZY_RETRIES = 3;
 const LAZY_RETRY_DELAY_MS = 1000;
@@ -109,20 +110,6 @@ const FeedScreen = lazy(() =>
   robustLazy(() => import('./screens/FeedScreen').then((m) => ({ default: m.FeedScreen })), 'feed')
 );
 
-function usePathname() {
-  const [pathname, setPathname] = useState(() =>
-    typeof window === 'undefined' ? '/' : `${window.location.pathname}${window.location.search}`
-  );
-
-  useEffect(() => {
-    const handle = () => setPathname(`${window.location.pathname}${window.location.search}`);
-    window.addEventListener('popstate', handle);
-    return () => window.removeEventListener('popstate', handle);
-  }, []);
-
-  return pathname;
-}
-
 const THEME_STORAGE_KEY = 'nostrstack.theme';
 const BRAND_PRESET_STORAGE_KEY = 'nostrstack.brandPreset';
 const BRAND_PRESET_DEFAULT: NsBrandPreset = 'default';
@@ -146,7 +133,7 @@ const ROUTE_TITLE_BY_VIEW: Record<View, string> = {
 const PAGE_TITLE_SUFFIX = 'NostrStack';
 
 function getViewFromRoute(route: AppRoute): View {
-  if (route.kind === 'search' || route.kind === 'find-friend') return 'search';
+  if (route.kind === 'search') return 'search';
   if (route.kind === 'help') return 'help';
   if (route.kind === 'settings') return 'settings';
   if (route.kind === 'offers') return 'offers';
@@ -371,12 +358,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [routeTransitioning, setRouteTransitioning] = useState(false);
-  const handleNavigateToView = useCallback((view: View) => {
-    const targetPath = APP_VIEW_PATHS[view as keyof typeof APP_VIEW_PATHS] ?? APP_VIEW_PATHS.feed;
-    navigateTo(targetPath);
-  }, []);
-  const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ setCurrentView: handleNavigateToView });
+  const { route, location, isNavigating, navigate } = useRouteState();
   const { isImmersive } = useImmersiveScroll({
     threshold: 80,
     minDelta: 8,
@@ -395,8 +377,6 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     onRetryLocalApi?.();
     retryCurrentRoute();
   }, [onRetryLocalApi, retryCurrentRoute]);
-  const routeLocation = usePathname();
-  const route = useMemo(() => parseAppRoute(routeLocation), [routeLocation]);
   const pathname = route.pathname;
   const routeRecoveryIdentity = pathname;
   const SettingsScreen = useMemo(() => lazy(() => robustLazy(loadSettingsScreen, 'settings')), []);
@@ -408,6 +388,17 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const isOffersRoute = route.kind === 'offers';
   const isHelpRoute = route.kind === 'help';
   const routeBoundView = useMemo<View>(() => getViewFromRoute(route), [route]);
+  const handleNavigateToView = useCallback((view: View) => {
+    const targetPath = APP_VIEW_PATHS[view as keyof typeof APP_VIEW_PATHS] ?? APP_VIEW_PATHS.feed;
+    if (location.pathname === targetPath) {
+      return;
+    }
+    navigate(targetPath);
+  }, [location.pathname, navigate]);
+  const { helpOpen, setHelpOpen } = useKeyboardShortcuts({
+    setCurrentView: handleNavigateToView,
+    currentView: routeBoundView
+  });
   const retryFailedRoute = useCallback(() => {
     if (isSettingsRoute || isOffersRoute) {
       window.location.reload();
@@ -482,14 +473,6 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     previousPathRef.current = pathname;
   }, [mobileMenuOpen, pathname]);
 
-  useEffect(() => {
-    setRouteTransitioning(true);
-    const timeout = window.setTimeout(() => {
-      setRouteTransitioning(false);
-    }, 140);
-    return () => window.clearTimeout(timeout);
-  }, [routeBoundView]);
-
   const relayConnectivityDegraded = hasRecentRelayFailures();
 
   useEffect(() => {
@@ -498,7 +481,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     document.title = `${viewTitle} - ${PAGE_TITLE_SUFFIX}${extraSegment}`;
   }, [routeBoundView, pathname]);
 
-  const mainContainerClassName = `feed-container${routeTransitioning ? ' is-route-transitioning' : ''}`;
+  const mainContainerClassName = `feed-container${isNavigating ? ' is-route-transitioning' : ''}`;
 
   const handleNavigateToSettings = useCallback(() => {
     navigateTo(APP_VIEW_PATHS.settings);
@@ -846,7 +829,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
             ) : (
               <>
                 {routeBoundView === 'feed' && <FeedScreen isImmersive={isImmersive} />}
-                {routeBoundView === 'search' && <SearchScreen />}
+                {routeBoundView === 'search' && <SearchScreen searchQuery={location.search} />}
                 {routeBoundView === 'offers' && <OffersView />}
                 {routeBoundView === 'settings' && (
                   <SettingsScreen
