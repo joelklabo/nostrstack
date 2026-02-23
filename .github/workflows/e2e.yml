@@ -16,8 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  social-e2e:
-    name: Social App E2E Tests
+  web-e2e:
+    name: Web App E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -85,11 +85,11 @@ jobs:
 
       - name: Install Playwright (if not cached)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        working-directory: apps/social
+        working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E Tests
-        working-directory: apps/social
+        working-directory: apps/web
         timeout-minutes: 40
         env:
           VITE_NOSTRSTACK_HOST: mock

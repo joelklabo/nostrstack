@@ -4,7 +4,7 @@ nostrstack UI is token-driven so it can inherit the host site’s look while sta
 
 - `@nostrstack/widgets` (DOM widgets + global CSS)
 - `@nostrstack/react` (React wrappers around embed)
-- `apps/gallery` (demo + QA harness)
+- `apps/web` (demo + QA harness)
 
 ## Tokens (single source of truth)
 
@@ -57,9 +57,9 @@ Add a wrapper and set variables:
 - Prefer `brandPreset` + `themeMode` for quick adoption, and `nostrstackTheme` for full control.
 - Legacy theme support: `theme={{ accent, text, surface, border }}` maps to the new token set and also provides legacy `--ns-*` aliases.
 
-### Gallery
+### Web app
 
-- Treat as the “canary” UI: if a token is missing or a component style regresses, gallery should reveal it quickly.
+- Treat as the “canary” UI: if a token is missing or a component style regresses, web should reveal it quickly.
 - Prefer using `.nostrstack-*` classes from `@nostrstack/widgets` (buttons, inputs, popovers) so the demo stays representative.
 
 ## Motion presets

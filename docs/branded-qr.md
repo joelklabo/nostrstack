@@ -47,4 +47,4 @@ This gives us a “looks great” default, but automatically falls back when a g
 ## Where to look in code
 
 - `packages/embed/src/qr.ts`: branded QR rendering + verification + fallback.
-- `apps/gallery/src/QrLabCard.tsx`: demo “QR Lab” UI for trying configs.
+- `apps/web/src/QrLabCard.tsx`: demo “QR Lab” UI for trying configs.

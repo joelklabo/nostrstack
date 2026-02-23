@@ -6,7 +6,7 @@ nostrstack uses QR codes for Lightning invoices (BOLT11) and other payloads. Thi
 
 - **Reliability first**: if a fancy style can’t be decoded, automatically fall back to a safe QR.
 - **Customizable**: integrators should be able to theme QR via a serializable config (JSON).
-- **Framework‑friendly**: works in the embed package (vanilla DOM) and can be wrapped by React in the gallery.
+- **Framework‑friendly**: works in the embed package (vanilla DOM) and can be wrapped by React in the web app.
 
 ## Chosen stack
 
@@ -41,7 +41,7 @@ From `@nostrstack/widgets`:
 
 ## QR Lab
 
-The gallery includes a **QR Lab** section (Lightning tab) to iterate on presets and JSON overrides with live verification results and copyable config.
+The web app includes a **QR Lab** section (Lightning tab) to iterate on presets and JSON overrides with live verification results and copyable config.
 
 ## Alternatives considered (notes)
 
@@ -49,4 +49,3 @@ The gallery includes a **QR Lab** section (Lightning tab) to iterate on presets 
 - `qrcode.react` / `react-qr-code`: great for “standard” QR rendering; not enough for “all‑out” styling without building our own renderer.
 - “Art QR” libraries (background images / heavy distortion): high risk for scanner reliability; not recommended for invoices.
 - `qrious` (GPL‑3.0): not a fit for this repo’s distribution needs.
-

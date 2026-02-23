@@ -1,6 +1,6 @@
 # Opt-in CI for real relay comments
 
-Goal: run `apps/gallery/tests/comment-relay.spec.ts` against a real Nostr relay with a pre-authenticated NIP-07 signer.
+Goal: run `apps/web/tests/comment-relay.spec.ts` against a real Nostr relay with a pre-authenticated NIP-07 signer.
 
 ## Secrets required
 - `REAL_RELAY`: WebSocket URL, e.g. `wss://relay.damus.io`
@@ -24,7 +24,7 @@ How to prepare `NIP07_PROFILE_B64`:
 CHROMIUM_USER_DATA_DIR=/path/to/profile \
 REAL_RELAY=wss://relay.damus.io \
 VITE_NOSTRSTACK_RELAYS=$REAL_RELAY \
-pnpm --filter gallery exec playwright test tests/comment-relay.spec.ts --project=chromium
+pnpm --filter web exec playwright test tests/comment-relay.spec.ts --project=chromium
 ```
 
 If secrets are missing, the CI job is skipped and all other jobs still run.

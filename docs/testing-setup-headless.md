@@ -15,7 +15,7 @@ which chromium chromium-browser google-chrome chrome
 chromium --version  # Should show version (e.g., 143.0.7499.109)
 
 # Verify Playwright browsers are installed
-cd apps/gallery
+cd apps/web
 pnpm exec playwright install chromium
 ```
 
@@ -60,10 +60,10 @@ MCP_CHROME_REUSE_EXISTING=0 ./scripts/mcp-chrome.sh
 
 ```bash
 # Start dev servers
-pnpm dev  # Starts both API and Gallery
+pnpm dev  # Starts both API and web app
 
 # Run accessibility tests (fastest)
-cd apps/gallery
+cd apps/web
 NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm exec playwright test accessibility --reporter=line
 
 # Expected output:
@@ -75,7 +75,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm exec playwright test accessibility --reporte
 
 ```bash
 # All Playwright tests
-cd apps/gallery
+cd apps/web
 NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm exec playwright test --reporter=html
 
 # View report
@@ -133,7 +133,7 @@ await browser.close();
 
 Run with:
 ```bash
-cd apps/gallery
+cd apps/web
 NODE_TLS_REJECT_UNAUTHORIZED=0 node test-manual.js
 ```
 
@@ -181,7 +181,7 @@ PLAYWRIGHT_TIMEOUT=60000 pnpm exec playwright test
 ### Certificate Errors
 
 ```bash
-# Gallery uses self-signed certs for HTTPS
+# Web app uses self-signed certs for HTTPS
 NODE_TLS_REJECT_UNAUTHORIZED=0  # Required for tests
 
 # Chrome args (already included in scripts)
@@ -209,12 +209,12 @@ docker compose up postgres -d
 cd apps/api
 pnpm dev
 
-# Terminal 3: Start Gallery
-cd apps/gallery
+# Terminal 3: Start web app
+cd apps/web
 pnpm dev
 
 # Terminal 4: Run tests
-cd apps/gallery
+cd apps/web
 pnpm exec playwright test
 ```
 

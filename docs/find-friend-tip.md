@@ -1,6 +1,6 @@
 # Find Friend + Tip Flow
 
-This guide describes the “Find friend” flow in the gallery app, from searching for a friend to zapping posts and sending a 500-sat tip.
+This guide describes the web app flow in the “Find friend” journey, from searching for a friend to zapping posts and sending a 500-sat tip.
 
 ## Overview
 1. Open **Find friend** from the sidebar (or `/search`).
@@ -49,8 +49,8 @@ NIP05_PROXY_ALLOW_HTTP_LOCALHOST=true
 - **Max response bytes**: prevents large nostr.json payloads.
 - **Allow HTTP localhost**: enables local dev without HTTPS.
 
-### Gallery (search + tips)
-Set in `apps/gallery/.env` or root `.env`:
+### Web app (search + tips)
+Set in `apps/web/.env` or root `.env`:
 
 ```sh
 VITE_API_BASE_URL=http://localhost:3001

@@ -8,7 +8,7 @@ DEV_ORIGIN?=https://localhost:3001
 DEV_DB?=file:./dev.db
 DEV_LNBITS_URL?=http://localhost:15001
 
-.PHONY: commands deps deps-prod build lint test test-ci typecheck check ci dev dev-api dev-social dev-gallery dev-demo e2e help deploy-staging deploy-prod
+.PHONY: commands deps deps-prod build lint test test-ci typecheck check ci dev dev-api dev-web dev-demo e2e help deploy-staging deploy-prod
 
 deps:
 	$(PNPM) install
@@ -41,15 +41,11 @@ check: lint test typecheck
 dev-api:
 	$(PNPM) --filter api dev
 
-dev-social:
-	$(PNPM) --filter social dev -- --host --port 4173
-
-dev-gallery:
-	@echo "dev-gallery is deprecated; use dev-social"
-	$(MAKE) dev-social
+dev-web:
+	$(PNPM) --filter web dev -- --host --port 4173
 
 dev:
-	@echo "Starting API + social with HTTPS via Vite and logging to .logs/dev"
+	@echo "Starting API + web with HTTPS via Vite and logging to .logs/dev"
 	USE_HTTPS=true \
 	HTTPS_CERT=$(DEV_CERT) \
 	HTTPS_KEY=$(DEV_KEY) \
@@ -66,9 +62,9 @@ e2e:
 
 help:
 	@echo "Core workflows:"
-	@echo "  make dev            - Start API + social with HTTPS and shared logs"
+	@echo "  make dev            - Start API + web with HTTPS and shared logs"
 	@echo "  make dev-api        - Start API only"
-	@echo "  make dev-social     - Start social only"
+	@echo "  make dev-web        - Start web only"
 	@echo ""
 	@echo "Quality gates:"
 	@echo "  make lint           - pnpm lint (all workspace lint checks)"

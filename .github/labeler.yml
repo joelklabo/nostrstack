@@ -4,9 +4,9 @@
   - changed-files:
     - any-glob-to-any-file: 'apps/api/**/*'
 
-'area: gallery':
+'area: web':
   - changed-files:
-    - any-glob-to-any-file: 'apps/gallery/**/*'
+    - any-glob-to-any-file: 'apps/web/**/*'
 
 'area: packages':
   - changed-files:

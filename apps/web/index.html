@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Nostr + Lightning network toolkit" />
+    <meta name="theme-color" content="#0969da" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NostrStack" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%2300bcd4'/%3E%3Cstop offset='1' stop-color='%237c4dff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='46' fill='url(%23g)'/%3E%3Cpath d='M58 10 30 58h22l-10 32 32-48H52z' fill='white'/%3E%3C/svg%3E"
+    />
+    <title>NostrStack</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.__nostrstackDisableAutoMount = true;
+    </script>
+    <script>
+      // More reliable check for blank content
+      function isRootBlank() {
+        var root = document.getElementById('root');
+        return !root || !root.textContent || root.textContent.trim() === '';
+      }
+
+      function showConnectionLost() {
+        var root = document.getElementById('root');
+        if (root && isRootBlank()) {
+          root.innerHTML =
+            '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Reloading...</p></div>';
+          setTimeout(function () {
+            location.reload();
+          }, 1000);
+        }
+      }
+
+      window.addEventListener('error', function (e) {
+        if (
+          e.message.includes('Failed to fetch dynamically imported module') ||
+          e.message.includes('Failed to load module script') ||
+          e.message.includes('net::ERR_FAILED') ||
+          e.message.includes('loading failed')
+        ) {
+          showConnectionLost();
+        }
+      });
+
+      window.addEventListener('unhandledrejection', function (e) {
+        if (
+          e.reason?.message?.includes('Failed to fetch') ||
+          e.reason?.message?.includes('loading failed') ||
+          e.reason?.message?.includes('net::ERR_FAILED')
+        ) {
+          showConnectionLost();
+        }
+      });
+
+      // Watch for blank page after initial load (Vite HMR reconnection failure)
+      (function () {
+        var hasLoaded = false;
+        var checkInterval;
+        var originalInnerHTML = '';
+
+        // Mark when app has content
+        var observer = new MutationObserver(function (mutations) {
+          var root = document.getElementById('root');
+          if (root && root.childNodes.length > 0 && !hasLoaded) {
+            hasLoaded = true;
+            originalInnerHTML = root.innerHTML;
+            // Start watching after initial mount
+            setTimeout(function () {
+              checkInterval = setInterval(function () {
+                var root = document.getElementById('root');
+                // Use textContent check for more reliable blank detection
+                var isBlank = !root || !root.textContent || root.textContent.trim() === '';
+                if (isBlank && originalInnerHTML !== '') {
+                  // Page went blank after having content - likely Vite restart
+                  root.innerHTML =
+                    '<div style="padding: 2rem; text-align: center; color: #dc2626; font-family: system-ui, sans-serif;"><h2>Connection Lost</h2><p>Dev server restarted. Reloading...</p></div>';
+                  clearInterval(checkInterval);
+                  // Auto-reload after showing message
+                  setTimeout(function () {
+                    location.reload();
+                  }, 1000);
+                }
+              }, 500);
+            }, 2000);
+          }
+        });
+
+        observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

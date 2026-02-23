@@ -1,4 +1,4 @@
-# Gallery UI/UX Audit Findings - 2026-01-02
+# Web App UI/UX Audit Findings - 2026-01-02
 
 ## High Priority
 - [ ] **Post content rendering:** Currently uses raw `{post.content}`. Needs markdown/linkification/newline handling to look "Social Network" quality.

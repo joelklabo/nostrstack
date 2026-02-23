@@ -21,15 +21,15 @@ fi
 mkdir -p "$LOG_DIR"
 mkdir -p "$NOSTRDEV_SESSION_DIR"
 API_LOG="$LOG_DIR/api.log"
-SOCIAL_LOG="$LOG_DIR/social.log"
+WEB_LOG="$LOG_DIR/web.log"
 : >"$API_LOG"
-: >"$SOCIAL_LOG"
+: >"$WEB_LOG"
 
-echo "🪵 writing logs to $LOG_DIR (api.log, social.log)"
-echo "💡 view live: tail -f $API_LOG $SOCIAL_LOG"
+echo "🪵 writing logs to $LOG_DIR (api.log, web.log)"
+echo "💡 view live: tail -f $API_LOG $WEB_LOG"
 if [[ "${LOG_TAIL:-1}" != "0" ]]; then
   echo "👀 auto-following logs (set LOG_TAIL=0 to disable)"
-  tail -F "$API_LOG" "$SOCIAL_LOG" &
+  tail -F "$API_LOG" "$WEB_LOG" &
   TAIL_PID=$!
 fi
 
@@ -82,7 +82,7 @@ if [[ "$USE_HTTPS" == "true" ]]; then
 fi
 export PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-$API_SCHEME://localhost:$PORT}"
 API_BASE_URL="$API_SCHEME://localhost:$PORT"
-echo "📦 Dev session: agent=$NOSTRDEV_AGENT slot=${NOSTRDEV_SESSION_SLOT:-manual} api=$PORT social=$DEV_SERVER_PORT"
+echo "📦 Dev session: agent=$NOSTRDEV_AGENT slot=${NOSTRDEV_SESSION_SLOT:-manual} api=$PORT web=$DEV_SERVER_PORT"
 cleanup_dev_session() {
   ndev_release_session
   if [[ -n "${TAIL_PID:-}" ]]; then
@@ -132,11 +132,11 @@ else
   echo "🌐 BITCOIN_NETWORK=$BITCOIN_NETWORK; skipping regtest stack startup"
 fi
 
-pnpm concurrently -k -p "[{name} {time}]" -n api,social \
+pnpm concurrently -k -p "[{name} {time}]" -n api,web \
   "pnpm --filter api dev | tee -a $API_LOG" \
   "VITE_API_BASE_URL=$API_BASE_URL \
    VITE_API_PROXY_TARGET=$API_BASE_URL \
    VITE_NOSTRSTACK_HOST=localhost:$PORT \
-   pnpm --filter social exec vite --host --port $DEV_SERVER_PORT | tee -a $SOCIAL_LOG"
+   pnpm --filter web exec vite --host --port $DEV_SERVER_PORT | tee -a $WEB_LOG"
 
 echo "🧭 Reminder: verify UI changes with Chrome DevTools MCP (check console & network) and keep the tails above running while you test."

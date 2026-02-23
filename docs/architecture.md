@@ -4,7 +4,7 @@
 
 - **API (apps/api)**: Fastify + Prisma. Multi-tenant LightningProvider abstraction (LNbits now), Nostr endpoints, LNURLp/NIP-05, payments/webhooks.
 - **Lightning backend**: LNbits (staging/prod) backed by Voltage LND; local regtest LNbits for demo.
-- **Social app (apps/social)**: Vite/React app showcasing widgets; talks to API.
+- **Web app (apps/web)**: Vite/React app showcasing widgets; talks to API.
 - **Embed package (@nostrstack/widgets)**: Tip/pay/comments widgets, relay badge, invoice popover, user card; exports design tokens.
 - **SDK (@nostrstack/sdk)**: Typed client for API.
 - **Injector/CLI**: Static-site injector for adding embed script to static outputs.
@@ -28,13 +28,13 @@ Tenant resolved from host header or `domain` param. User entries store lightning
 
 ## Environments
 
-- **Local**: SQLite dev DB, regtest LNbits/LND via `scripts/regtest-lndbits.sh`; social app on 4173, API 3001.
+- **Local**: SQLite dev DB, regtest LNbits/LND via `scripts/regtest-lndbits.sh`; web app on 4173, API 3001.
 - **Staging**: LNbits container + Voltage mutinynet LND, Postgres, Container Apps.
 - **Prod**: LNbits + Voltage mainnet LND (cutover pending).
 
 ## Key dependencies
 
-- LNbits + LND, Prisma, Fastify, Playwright (e2e), Vite/React (social), pnpm workspace.
+- LNbits + LND, Prisma, Fastify, Playwright (e2e), Vite/React (web), pnpm workspace.
 
 ## Known risks/gaps (current)
 
@@ -46,4 +46,4 @@ Tenant resolved from host header or `domain` param. User entries store lightning
 ## Diagrams (todo)
 
 - Sequence diagram for tip/paywall.
-- Deployment diagram (API, LNbits, Postgres, LND, relays, social app).
+- Deployment diagram (API, LNbits, Postgres, LND, relays, web app).

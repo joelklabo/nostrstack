@@ -11,7 +11,7 @@ Provide a framework-ready set of widgets and APIs so a personal site can accept 
 - **React SDK (@nostrstack/react)**: React wrappers (SupportSection, profile, share, comments, tip feed, blockchain stats).
 - **SDK (@nostrstack/sdk)**: typed client for REST endpoints (telemetry summary, Nostr event/identity).
 - **Injector (packages/injector)**: static-site injection for script tags and widget placeholders.
-- **Gallery (apps/gallery)**: demo and QA surface for the widgets.
+- **Web app (apps/web)**: demo and QA surface for the widgets.
 
 ## Data flow overview
 
@@ -25,21 +25,21 @@ Browser widget -> direct relay subscriptions for thread tag -> NIP-07 signer pos
 
 ### Event landing (/nostr/:id)
 
-Gallery -> /api/nostr/event/:id (resolve target + references + replies page) -> render event + replies -> optional relay fallback for missing replies.
+Web app -> /api/nostr/event/:id (resolve target + references + replies page) -> render event + replies -> optional relay fallback for missing replies.
 
 Mermaid sketch:
 
 ```mermaid
 sequenceDiagram
-  participant Gallery
+  participant Web app
   participant API
   participant Relay
-  Gallery->>API: GET /api/nostr/event/:id
+  Web app->>API: GET /api/nostr/event/:id
   API->>Relay: Fetch event + refs + replies
   Relay-->>API: Events + references
-  API-->>Gallery: Event + replyPage
+  API-->>Web app: Event + replyPage
   alt Missing replies
-    Gallery->>Relay: Optional relay fetch
+    Web app->>Relay: Optional relay fetch
   end
 ```
 

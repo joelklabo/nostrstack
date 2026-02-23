@@ -156,7 +156,7 @@ Notes:
 
 ## Assumptions
 
-- Server-side resolver is the source of truth; gallery falls back to direct relay fetch only if the API fails.
+- Server-side resolver is the source of truth; web app falls back to direct relay fetch only if the API fails.
 - Reference previews are capped and best-effort, not guaranteed.
 
 ## Standing Note

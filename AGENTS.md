@@ -3,8 +3,8 @@
 1. Check GitHub issues for pending tasks
 2. Mark the issue `in_progress`
 3. Work on it
-   - Run `pnpm dev:logs` (or tail `.logs/dev/*.log`) so API + gallery logs are visible while reproducing/fixing.
-   - `pnpm dev:logs` now allocates dedicated API/social ports per agent session to avoid collisions:
+  - Run `pnpm dev:logs` (or tail `.logs/dev/*.log`) so API + web logs are visible while reproducing/fixing.
+   - `pnpm dev:logs` now allocates dedicated API/web ports per agent session to avoid collisions:
      - Set `NOSTRDEV_AGENT` per person (`NOSTRDEV_AGENT=alice`, `NOSTRDEV_AGENT=bob`).
      - `pnpm dev:ps` shows active sessions.
      - `pnpm dev:stop` stops your sessions by default.

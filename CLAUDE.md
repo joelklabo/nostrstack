@@ -15,21 +15,21 @@ pnpm install
 # Development (API only)
 pnpm dev
 
-# Development (API + Social app together)
-pnpm demo                    # API :3001, social :4173
+# Development (API + Web app together)
+pnpm demo                    # API :3001, web :4173
 pnpm dev:logs               # With HTTPS and logging to .logs/dev/
 pnpm dev:docs               # Docs site on :4174
 
 # Run tests
 pnpm test                    # All unit tests
 pnpm --filter api test       # API unit tests only
-pnpm --filter social test    # Social app unit tests only
+pnpm --filter web test    # Web app unit tests only
 pnpm e2e                     # API end-to-end tests (Playwright)
-pnpm --filter social e2e     # Social app e2e tests
+pnpm --filter web e2e     # Web app e2e tests
 
 # Run a single test file
 pnpm --filter api exec vitest run path/to/test.ts
-pnpm --filter social exec vitest run path/to/test.ts
+pnpm --filter web exec vitest run path/to/test.ts
 
 # Linting and type checking
 pnpm lint                    # All linting
@@ -49,8 +49,8 @@ pnpm demo:mainnet            # Mainnet (requires MAINNET_DEMO_OK=true)
 pnpm dev:network -- --network regtest|mutinynet|mainnet
 
 # Storybook
-pnpm --filter social storybook        # Dev server on :6006
-pnpm --filter social build-storybook  # Build static
+pnpm --filter web storybook        # Dev server on :6006
+pnpm --filter web build-storybook  # Build static
 
 # Database
 # Local dev uses SQLite by default, prod uses PostgreSQL
@@ -64,7 +64,7 @@ pnpm --filter api seed                 # Seed demo data
 ### Apps
 
 - **apps/api**: Fastify + Prisma API server. Multi-tenant with LightningProvider abstraction (LNbits). Handles payments, Nostr endpoints, LNURLp/NIP-05, webhooks. Prometheus metrics at `/metrics`, optional OpenTelemetry.
-- **apps/social**: Production Nostr social network with feed, profiles, DMs, notifications, wallet. Uses `@nostrstack/react` and `@nostrstack/widgets`.
+- **apps/web**: Production Nostr web application with feed, profiles, DMs, notifications, wallet. Uses `@nostrstack/react` and `@nostrstack/widgets`.
 - **apps/docs**: Widget documentation and demos. Standalone Vite app showcasing embeddable components.
 
 ### Packages
@@ -78,6 +78,7 @@ pnpm --filter api seed                 # Seed demo data
 - **packages/injector**: Static-site CLI for injecting embed scripts
 - **packages/config**: Shared lint/tsconfig
 - **packages/create-nostrstack-site**: Site scaffolding tool
+- **packages/contracts**: Shared TypeScript contracts for web/API payloads and domain entities.
 
 ### Data Flow (Happy Path Tip)
 
@@ -89,7 +90,7 @@ Tenant resolved from host header or `domain` param. User entries store lightning
 
 ### Environments
 
-- **Local**: SQLite dev DB, regtest LNbits; social :4173, docs :4174, API :3001
+- **Local**: SQLite dev DB, regtest LNbits; web :4173, docs :4174, API :3001
 - **Staging**: LNbits + Voltage mutinynet LND, Postgres, Azure Container Apps
 - **Prod**: LNbits + Voltage mainnet LND
 

@@ -6,7 +6,7 @@ ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 NOSTRDEV_SESSION_DIR="${NOSTRDEV_SESSION_DIR:-$ROOT/.logs/dev/sessions}"
 NOSTRDEV_BASE_API_PORT="${NOSTRDEV_BASE_API_PORT:-3001}"
-NOSTRDEV_BASE_SOCIAL_PORT="${NOSTRDEV_BASE_SOCIAL_PORT:-4173}"
+NOSTRDEV_BASE_WEB_PORT="${NOSTRDEV_BASE_WEB_PORT:-4173}"
 NOSTRDEV_MAX_SLOTS="${NOSTRDEV_MAX_SLOTS:-40}"
 NOSTRDEV_AGENT="${NOSTRDEV_AGENT:-${NOSTR_AGENT:-${USER:-agent}}}"
 NOSTRDEV_SESSION_COMMAND="${NOSTRDEV_SESSION_COMMAND:-}"
@@ -145,13 +145,13 @@ ndev_cleanup_stale_session_file() {
   pid="$(ndev_parse_field "$file" NOSTRDEV_SESSION_PID)"
   if [[ -z "$pid" ]] || ! ndev_pid_alive "$pid"; then
     if [[ "$slot" == manual-* ]]; then
-      local api_port social_port
+      local api_port web_port
       api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
-      social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
+      web_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_WEB_PORT)"
       if [[ -n "$api_port" ]] && ndev_port_in_use "$api_port"; then
         return 0
       fi
-      if [[ -n "$social_port" ]] && ndev_port_in_use "$social_port"; then
+      if [[ -n "$web_port" ]] && ndev_port_in_use "$web_port"; then
         return 0
       fi
     fi
@@ -200,12 +200,12 @@ ndev_port_is_stale() {
 ndev_cleanup_stale_sockets() {
   local max_slot="${NOSTRDEV_MAX_SLOTS:-40}"
   local slot
-  local api_port social_port
+  local api_port web_port
   local cleaned=0
 
   for ((slot = 0; slot <= max_slot; slot++)); do
     api_port=$((NOSTRDEV_BASE_API_PORT + slot))
-    social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
+    web_port=$((NOSTRDEV_BASE_WEB_PORT + slot))
 
     if ndev_port_is_stale "$api_port"; then
       if ndev_port_has_owner "$api_port"; then
@@ -223,19 +223,19 @@ ndev_cleanup_stale_sockets() {
       fi
     fi
 
-    if ndev_port_is_stale "$social_port"; then
-      if ndev_port_has_owner "$social_port"; then
-        echo "Clearing stale socket on port $social_port (slot $slot)"
-        if ndev_try_clear_stale_port "$social_port"; then
-          echo "  Cleared port $social_port"
+    if ndev_port_is_stale "$web_port"; then
+      if ndev_port_has_owner "$web_port"; then
+        echo "Clearing stale socket on port $web_port (slot $slot)"
+        if ndev_try_clear_stale_port "$web_port"; then
+          echo "  Cleared port $web_port"
           cleaned=1
         else
-          echo "  Could not clear port $social_port - will skip slot $slot"
+          echo "  Could not clear port $web_port - will skip slot $slot"
         fi
-      elif ndev_port_owner_inconclusive "$social_port"; then
-        echo "Port $social_port is in use but owner detection is inconclusive - allowing slot $slot to be claimed"
+      elif ndev_port_owner_inconclusive "$web_port"; then
+        echo "Port $web_port is in use but owner detection is inconclusive - allowing slot $slot to be claimed"
       else
-        echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
+        echo "Port $web_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
       fi
     fi
   done
@@ -280,7 +280,7 @@ ndev_unlock_slot() {
 ndev_write_session_file() {
   local slot="$1"
   local api_port="$2"
-  local social_port="$3"
+  local web_port="$3"
   local file
   local started_at
 
@@ -292,7 +292,7 @@ NOSTRDEV_SESSION_PID=$$
 NOSTRDEV_SESSION_AGENT=$NOSTRDEV_AGENT
 NOSTRDEV_SESSION_COMMAND=$NOSTRDEV_SESSION_COMMAND
 NOSTRDEV_SESSION_API_PORT=$api_port
-NOSTRDEV_SESSION_SOCIAL_PORT=$social_port
+NOSTRDEV_SESSION_WEB_PORT=$web_port
 NOSTRDEV_SESSION_HOST=${HOSTNAME:-unknown}
 NOSTRDEV_SESSION_STARTED_AT=$started_at
 EOF
@@ -300,14 +300,14 @@ EOF
   export NOSTRDEV_SESSION_SLOT="$slot"
   export NOSTRDEV_SESSION_FILE="$file"
   export PORT="$api_port"
-  export DEV_SERVER_PORT="$social_port"
+  export DEV_SERVER_PORT="$web_port"
 }
 
 ndev_claim_slot() {
   local slot="$1"
   local file
   local api_port
-  local social_port
+  local web_port
   local owner_pid
 
   if ! ndev_lock_slot "$slot"; then
@@ -326,18 +326,18 @@ ndev_claim_slot() {
   fi
 
   api_port=$((NOSTRDEV_BASE_API_PORT + slot))
-  social_port=$((NOSTRDEV_BASE_SOCIAL_PORT + slot))
+  web_port=$((NOSTRDEV_BASE_WEB_PORT + slot))
   
-  if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
-    local api_has_owner social_has_owner api_inconclusive social_inconclusive
+  if ndev_port_in_use "$api_port" || ndev_port_in_use "$web_port"; then
+    local api_has_owner web_has_owner api_inconclusive web_inconclusive
     api_has_owner=0
-    social_has_owner=0
+    web_has_owner=0
     api_inconclusive=0
-    social_inconclusive=0
+    web_inconclusive=0
     ndev_port_has_owner "$api_port" && api_has_owner=1
-    ndev_port_has_owner "$social_port" && social_has_owner=1
+    ndev_port_has_owner "$web_port" && web_has_owner=1
     ndev_port_owner_inconclusive "$api_port" && api_inconclusive=1
-    ndev_port_owner_inconclusive "$social_port" && social_inconclusive=1
+    ndev_port_owner_inconclusive "$web_port" && web_inconclusive=1
     
     if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
       if [[ "$api_has_owner" == "1" ]]; then
@@ -346,20 +346,20 @@ ndev_claim_slot() {
       elif ndev_port_in_use "$api_port" && [[ "$api_inconclusive" == "0" ]]; then
         echo "Port $api_port has no visible owner (owner unknown) - skipping slot $slot"
       fi
-      if [[ "$social_has_owner" == "1" ]]; then
-        echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
-        ndev_force_kill_port "$social_port" || true
-      elif ndev_port_in_use "$social_port" && [[ "$social_inconclusive" == "0" ]]; then
-        echo "Port $social_port has no visible owner (owner unknown) - skipping slot $slot"
+      if [[ "$web_has_owner" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free port $web_port"
+        ndev_force_kill_port "$web_port" || true
+      elif ndev_port_in_use "$web_port" && [[ "$web_inconclusive" == "0" ]]; then
+        echo "Port $web_port has no visible owner (owner unknown) - skipping slot $slot"
       fi
       sleep 1
     fi
     
-    if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+    if ndev_port_in_use "$api_port" || ndev_port_in_use "$web_port"; then
       local api_unknown=0
-      local social_unknown=0
+      local web_unknown=0
       local api_claimable=0
-      local social_claimable=0
+      local web_claimable=0
       if [[ "$api_has_owner" == "0" && "$api_inconclusive" == "0" ]] && ndev_port_in_use "$api_port"; then
         echo "Port $api_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
         api_unknown=1
@@ -367,21 +367,21 @@ ndev_claim_slot() {
         echo "Port $api_port has stale socket (inconclusive owner) - allowing slot $slot to be claimed"
         api_claimable=1
       fi
-      if [[ "$social_has_owner" == "0" && "$social_inconclusive" == "0" ]] && ndev_port_in_use "$social_port"; then
-        echo "Port $social_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
-        social_unknown=1
-      elif [[ "$social_has_owner" == "0" && "$social_inconclusive" == "1" ]] && ndev_port_in_use "$social_port"; then
-        echo "Port $social_port has stale socket (inconclusive owner) - allowing slot $slot to be claimed"
-        social_claimable=1
+      if [[ "$web_has_owner" == "0" && "$web_inconclusive" == "0" ]] && ndev_port_in_use "$web_port"; then
+        echo "Port $web_port is in use but owner is not visible - treating as occupied (owner unknown), skipping slot $slot"
+        web_unknown=1
+      elif [[ "$web_has_owner" == "0" && "$web_inconclusive" == "1" ]] && ndev_port_in_use "$web_port"; then
+        echo "Port $web_port has stale socket (inconclusive owner) - allowing slot $slot to be claimed"
+        web_claimable=1
       fi
 
-      if [[ "$api_unknown" == "1" || "$social_unknown" == "1" ]]; then
+      if [[ "$api_unknown" == "1" || "$web_unknown" == "1" ]]; then
         echo "Port with unknown owner detected - cannot safely claim this slot"
         ndev_unlock_slot "$slot"
         return 2
       fi
 
-      if [[ "$api_claimable" == "1" || "$social_claimable" == "1" ]]; then
+      if [[ "$api_claimable" == "1" || "$web_claimable" == "1" ]]; then
         echo "Slot $slot has stale socket(s) but is reclaimable - proceeding"
       else
         return 1
@@ -389,27 +389,27 @@ ndev_claim_slot() {
     fi
   fi
 
-  ndev_write_session_file "$slot" "$api_port" "$social_port"
+  ndev_write_session_file "$slot" "$api_port" "$web_port"
   ndev_unlock_slot "$slot"
 }
 
 ndev_find_fallback_ports() {
   local requested_api_port="$1"
-  local requested_social_port="$2"
+  local requested_web_port="$2"
   local max_slot="${NOSTRDEV_MAX_SLOTS:-40}"
   local slot
   local candidate_api
-  local candidate_social
+  local candidate_web
 
   for ((slot = 1; slot <= max_slot; slot++)); do
     candidate_api=$((requested_api_port + slot))
-    candidate_social=$((requested_social_port + slot))
+    candidate_web=$((requested_web_port + slot))
 
-    if ndev_port_in_use "$candidate_api" || ndev_port_in_use "$candidate_social"; then
+    if ndev_port_in_use "$candidate_api" || ndev_port_in_use "$candidate_web"; then
       continue
     fi
 
-    printf '%s %s %s' "$candidate_api" "$candidate_social" "$slot"
+    printf '%s %s %s' "$candidate_api" "$candidate_web" "$slot"
     return 0
   done
 
@@ -418,17 +418,17 @@ ndev_find_fallback_ports() {
 
 ndev_claim_session_unmanaged() {
   local api_port="${PORT:-$NOSTRDEV_BASE_API_PORT}"
-  local social_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_SOCIAL_PORT}"
+  local web_port="${DEV_SERVER_PORT:-$NOSTRDEV_BASE_WEB_PORT}"
 
-  if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+  if ndev_port_in_use "$api_port" || ndev_port_in_use "$web_port"; then
     local api_has_owner=0
-    local social_has_owner=0
+    local web_has_owner=0
     local api_inconclusive=0
-    local social_inconclusive=0
+    local web_inconclusive=0
     ndev_port_has_owner "$api_port" && api_has_owner=1
-    ndev_port_has_owner "$social_port" && social_has_owner=1
+    ndev_port_has_owner "$web_port" && web_has_owner=1
     ndev_port_owner_inconclusive "$api_port" && api_inconclusive=1
-    ndev_port_owner_inconclusive "$social_port" && social_inconclusive=1
+    ndev_port_owner_inconclusive "$web_port" && web_inconclusive=1
 
     if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
       if [[ "$api_has_owner" == "1" ]]; then
@@ -437,32 +437,32 @@ ndev_claim_session_unmanaged() {
       elif ndev_port_in_use "$api_port" && [[ "$api_inconclusive" == "0" ]]; then
         echo "Port $api_port has no visible owner (owner unknown) - skipping"
       fi
-      if [[ "$social_has_owner" == "1" ]]; then
-        echo "FORCE_KILL_PORTS=1: Attempting to free port $social_port"
-        ndev_force_kill_port "$social_port" || true
-      elif ndev_port_in_use "$social_port" && [[ "$social_inconclusive" == "0" ]]; then
-        echo "Port $social_port has no visible owner (owner unknown) - skipping"
+      if [[ "$web_has_owner" == "1" ]]; then
+        echo "FORCE_KILL_PORTS=1: Attempting to free port $web_port"
+        ndev_force_kill_port "$web_port" || true
+      elif ndev_port_in_use "$web_port" && [[ "$web_inconclusive" == "0" ]]; then
+        echo "Port $web_port has no visible owner (owner unknown) - skipping"
       fi
       sleep 1
     fi
 
-    if ndev_port_in_use "$api_port" || ndev_port_in_use "$social_port"; then
+    if ndev_port_in_use "$api_port" || ndev_port_in_use "$web_port"; then
       local api_unknown=0
-      local social_unknown=0
+      local web_unknown=0
       if [[ "$api_has_owner" == "0" && "$api_inconclusive" == "0" ]] && ndev_port_in_use "$api_port"; then
         echo "WARNING: API port $api_port is in use but owner is not visible" >&2
         echo "  - Cannot determine if this is a stale socket or a valid process" >&2
         ndev_probe_port_health "$api_port" 2>/dev/null || echo "  - Health probe confirms: port $api_port is unresponsive" >&2
         api_unknown=1
       fi
-      if [[ "$social_has_owner" == "0" && "$social_inconclusive" == "0" ]] && ndev_port_in_use "$social_port"; then
-        echo "WARNING: Social port $social_port is in use but owner is not visible" >&2
+      if [[ "$web_has_owner" == "0" && "$web_inconclusive" == "0" ]] && ndev_port_in_use "$web_port"; then
+        echo "WARNING: Web port $web_port is in use but owner is not visible" >&2
         echo "  - Cannot determine if this is a stale socket or a valid process" >&2
-        ndev_probe_port_health "$social_port" 2>/dev/null || echo "  - Health probe confirms: port $social_port is unresponsive" >&2
-        social_unknown=1
+        ndev_probe_port_health "$web_port" 2>/dev/null || echo "  - Health probe confirms: port $web_port is unresponsive" >&2
+        web_unknown=1
       fi
 
-      if [[ "$api_unknown" == "1" || "$social_unknown" == "1" ]]; then
+      if [[ "$api_unknown" == "1" || "$web_unknown" == "1" ]]; then
         echo "ERROR: Fixed-port mode cannot proceed with ports that have unknown ownership" >&2
         echo "  - Cannot safely clean ports without visible owners" >&2
         echo "  - Manually stop the process using the port, or use a different port" >&2
@@ -470,7 +470,7 @@ ndev_claim_session_unmanaged() {
       fi
 
       local pid
-      echo "Requested ports are already in use: API=$api_port Social=$social_port" >&2
+      echo "Requested ports are already in use: API=$api_port Web=$web_port" >&2
       pid="$(lsof -iTCP:"$api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
       [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $api_port)" >&2
       echo "Fixed-port mode does not auto-remap ports." >&2
@@ -480,7 +480,7 @@ ndev_claim_session_unmanaged() {
     echo "Successfully freed requested ports"
   fi
 
-  ndev_write_session_file "manual-$$" "$api_port" "$social_port"
+  ndev_write_session_file "manual-$$" "$api_port" "$web_port"
   return 0
 }
 
@@ -504,31 +504,31 @@ ndev_claim_session() {
     fi
 
     local requested_api_port="$((NOSTRDEV_BASE_API_PORT + requested_slot))"
-    local requested_social_port="$((NOSTRDEV_BASE_SOCIAL_PORT + requested_slot))"
+    local requested_web_port="$((NOSTRDEV_BASE_WEB_PORT + requested_slot))"
     local pid
     local fallback_api
-    local fallback_social
+    local fallback_web
     local fallback_slot
     local fallback_slot_abs
 
-    if ndev_port_in_use "$requested_api_port" || ndev_port_in_use "$requested_social_port"; then
+    if ndev_port_in_use "$requested_api_port" || ndev_port_in_use "$requested_web_port"; then
       if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]]; then
-        echo "FORCE_KILL_PORTS=1: Attempting to free ports $requested_api_port and $requested_social_port"
+        echo "FORCE_KILL_PORTS=1: Attempting to free ports $requested_api_port and $requested_web_port"
         ndev_force_kill_port "$requested_api_port" || true
-        ndev_force_kill_port "$requested_social_port" || true
+        ndev_force_kill_port "$requested_web_port" || true
         sleep 1
       fi
 
-      if ndev_port_in_use "$requested_api_port" || ndev_port_in_use "$requested_social_port"; then
-        echo "Requested ports are already in use: API=$requested_api_port Social=$requested_social_port" >&2
+      if ndev_port_in_use "$requested_api_port" || ndev_port_in_use "$requested_web_port"; then
+        echo "Requested ports are already in use: API=$requested_api_port Web=$requested_web_port" >&2
         pid="$(lsof -iTCP:"$requested_api_port" -sTCP:LISTEN -P -n -t 2>/dev/null | head -n 1 || true)"
         [[ -n "$pid" ]] && echo "Hint: owning process PID=$pid (PORT $requested_api_port)" >&2
         for ((fallback_slot = 1; fallback_slot <= max_slot; fallback_slot++)); do
           fallback_api="$((requested_api_port + fallback_slot))"
-          fallback_social="$((requested_social_port + fallback_slot))"
+          fallback_web="$((requested_web_port + fallback_slot))"
           fallback_slot_abs=$((requested_slot + fallback_slot))
           if ndev_claim_slot "$fallback_slot_abs"; then
-            echo "Detected occupied requested slots; remapping deterministically for this session: API=${requested_api_port}->${fallback_api} Social=${requested_social_port}->${fallback_social} (slot offset +${fallback_slot})" >&2
+            echo "Detected occupied requested slots; remapping deterministically for this session: API=${requested_api_port}->${fallback_api} Web=${requested_web_port}->${fallback_web} (slot offset +${fallback_slot})" >&2
             return 0
           fi
         done
@@ -569,7 +569,7 @@ ndev_release_session() {
   local owner_pid=""
   local slot=""
   local api_port=""
-  local social_port=""
+  local web_port=""
 
   if [[ -z "$file" || ! -f "$file" ]]; then
     return 0
@@ -579,11 +579,11 @@ ndev_release_session() {
     slot="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SLOT)"
     if [[ "$slot" == manual-* ]]; then
       api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
-      social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
+      web_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_WEB_PORT)"
       if [[ -n "$api_port" ]] && ndev_port_in_use "$api_port"; then
         return 0
       fi
-      if [[ -n "$social_port" ]] && ndev_port_in_use "$social_port"; then
+      if [[ -n "$web_port" ]] && ndev_port_in_use "$web_port"; then
         return 0
       fi
     fi
@@ -598,11 +598,11 @@ ndev_print_sessions() {
   local agent
   local command
   local api_port
-  local social_port
+  local web_port
   local state
   local found=0
 
-  echo "SLOT AGENT PID API_PORT SOCIAL_PORT STATE CMD"
+  echo "SLOT AGENT PID API_PORT WEB_PORT STATE CMD"
   shopt -s nullglob
   for file in "$NOSTRDEV_SESSION_DIR"/*.session; do
     ndev_cleanup_stale_session_file "$file"
@@ -613,17 +613,17 @@ ndev_print_sessions() {
     agent="$(ndev_parse_field "$file" NOSTRDEV_SESSION_AGENT)"
     command="$(ndev_parse_field "$file" NOSTRDEV_SESSION_COMMAND)"
     api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
-    social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
+    web_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_WEB_PORT)"
     if ndev_pid_alive "$pid"; then
       state="running"
-    elif [[ "$slot" == manual-* ]] && { [[ -n "$api_port" ]] && ndev_port_in_use "$api_port" || [[ -n "$social_port" ]] && ndev_port_in_use "$social_port"; }; then
+    elif [[ "$slot" == manual-* ]] && { [[ -n "$api_port" ]] && ndev_port_in_use "$api_port" || [[ -n "$web_port" ]] && ndev_port_in_use "$web_port"; }; then
       state="orphaned"
     else
       continue
     fi
     found=1
 
-    printf '%s %s %s %s %s %s %s\n' "$slot" "$agent" "$pid" "$api_port" "$social_port" "$state" "$command"
+    printf '%s %s %s %s %s %s %s\n' "$slot" "$agent" "$pid" "$api_port" "$web_port" "$state" "$command"
   done
   shopt -u nullglob
 
@@ -640,7 +640,7 @@ ndev_stop_sessions() {
   local pid
   local agent
   local api_port
-  local social_port
+  local web_port
   local stopped=0
 
   shopt -s nullglob
@@ -652,7 +652,7 @@ ndev_stop_sessions() {
     pid="$(ndev_parse_field "$file" NOSTRDEV_SESSION_PID)"
     agent="$(ndev_parse_field "$file" NOSTRDEV_SESSION_AGENT)"
     api_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_API_PORT)"
-    social_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_SOCIAL_PORT)"
+    web_port="$(ndev_parse_field "$file" NOSTRDEV_SESSION_WEB_PORT)"
 
     case "$mode" in
       all)
@@ -686,7 +686,7 @@ ndev_stop_sessions() {
 
     if [[ "${FORCE_KILL_PORTS:-0}" == "1" ]] || [[ "$slot" == manual-* && "$pid_was_alive" == "0" ]]; then
       [[ -n "$api_port" ]] && ndev_force_kill_port "$api_port" || true
-      [[ -n "$social_port" ]] && ndev_force_kill_port "$social_port" || true
+      [[ -n "$web_port" ]] && ndev_force_kill_port "$web_port" || true
     fi
 
     rm -f "$file"

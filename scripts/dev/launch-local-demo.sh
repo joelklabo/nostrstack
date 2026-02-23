@@ -12,11 +12,11 @@ if [[ -f "apps/api/.env.local" ]]; then
   set +a
 fi
 
-# Load local social env if present (provides VITE_* overrides)
-if [[ -f "apps/social/.env.local" ]]; then
+# Load local web env if present (provides VITE_* overrides)
+if [[ -f "apps/web/.env.local" ]]; then
   set -a
 # shellcheck disable=SC1091
-  source apps/social/.env.local
+  source apps/web/.env.local
   set +a
 fi
 
@@ -78,18 +78,18 @@ EOF
   echo "[demo] Wrote $API_ENV"
 fi
 
-SOCIAL_ENV="apps/social/.env.local"
-if [[ ! -f "$SOCIAL_ENV" ]]; then
-  cat > "$SOCIAL_ENV" <<EOF
+WEB_ENV="apps/web/.env.local"
+if [[ ! -f "$WEB_ENV" ]]; then
+  cat > "$WEB_ENV" <<EOF
 VITE_API_BASE_URL=$VITE_API_BASE_URL
 VITE_NOSTRSTACK_HOST=$VITE_NOSTRSTACK_HOST
 VITE_ENABLE_REAL_PAYMENTS=$VITE_ENABLE_REAL_PAYMENTS
 EOF
-  echo "[demo] Wrote $SOCIAL_ENV"
+  echo "[demo] Wrote $WEB_ENV"
 fi
 
 # Start dev servers
-echo "[demo] Starting API on :$PORT and social on :4173..."
+echo "[demo] Starting API on :$PORT and web on :4173..."
 PORT=$PORT DATABASE_URL=$DATABASE_URL LN_BITS_URL=$LN_BITS_URL LN_BITS_API_KEY=$LN_BITS_API_KEY ADMIN_API_KEY=$ADMIN_API_KEY \
   VITE_API_BASE_URL=$VITE_API_BASE_URL VITE_NOSTRSTACK_HOST=$VITE_NOSTRSTACK_HOST VITE_ENABLE_REAL_PAYMENTS=$VITE_ENABLE_REAL_PAYMENTS \
   LIGHTNING_PROVIDER=${LIGHTNING_PROVIDER:-lnbits} \

@@ -11,10 +11,10 @@ This document is the canonical list of common project commands.
 ### Full stack
 
 - `pnpm dev`  
-  Start API + social (HTTPS + shared logs) for local development.
+  Start API + web (HTTPS + shared logs) for local development.
 
 - `pnpm demo:regtest`  
-  Start local regtest demo flow (`API :3001`, `social :4173`).
+  Start local regtest demo flow (`API :3001`, `web :4173`).
 
 ### Package/target commands
 
@@ -44,11 +44,11 @@ This document is the canonical list of common project commands.
 - `pnpm --filter api dev`  
   Run the API dev server.
 
-- `pnpm --filter social dev`  
-  Run the social app dev server.
+- `pnpm --filter web dev`  
+  Run the web app dev server.
 
-- `pnpm --filter social exec playwright test`  
-  Run social e2e tests.
+- `pnpm --filter web exec playwright test`  
+  Run web e2e tests.
 
 - `pnpm --filter api exec prisma migrate deploy --schema apps/api/prisma/pg/schema.prisma`  
   Apply Prisma migrations in the API package.

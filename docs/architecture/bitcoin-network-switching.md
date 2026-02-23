@@ -10,13 +10,13 @@ See [Bitcoin telemetry provider contract](bitcoin-telemetry-provider.md) for pro
 ## Current hooks
 - Demo scripts exist for regtest/mutinynet/mainnet in `scripts/demo-*.sh`.
 - Telemetry uses bitcoind RPC and includes chain info from `getblockchaininfo`.
-- Regtest pay/fund are gated by `ENABLE_REGTEST_*` (API) and `VITE_ENABLE_REGTEST_*` (gallery).
+- Regtest pay/fund are gated by `ENABLE_REGTEST_*` (API) and `VITE_ENABLE_REGTEST_*` (web app).
 
 ## Plan
 
 ### 1) Network config and presets
 - Add `BITCOIN_NETWORK` to `apps/api` env (regtest | mutinynet | mainnet). Default to `regtest` in dev.
-- Add `VITE_NETWORK` (same enum) to gallery env and expose via config context for UI.
+- Add `VITE_NETWORK` (same enum) to web env and expose via config context for UI.
 - Add `TELEMETRY_PROVIDER` (bitcoind | mempool | mock) and `BITCOIND_RPC_URL` overrides.
 - Create profile files:
   - `.env.network.regtest`
@@ -24,7 +24,7 @@ See [Bitcoin telemetry provider contract](bitcoin-telemetry-provider.md) for pro
   - `.env.network.mainnet`
 - Add a single dev entrypoint (example):
   - `pnpm dev:network -- --network regtest|mutinynet|mainnet`
-  - Loads the profile, starts the regtest stack when needed, and starts API + gallery.
+  - Loads the profile, starts the regtest stack when needed, and starts API + web.
 - Keep the mainnet safety gate (`MAINNET_DEMO_OK=true`).
 - Align regtest flags with `BITCOIN_NETWORK=regtest` so they do not drift.
 

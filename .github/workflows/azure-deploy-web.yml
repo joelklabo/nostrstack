@@ -1,0 +1,87 @@
+name: Deploy Web to Azure
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+concurrency:
+  group: azure-web-deploy
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-web
+  API_URL: https://nostrstack-api.delightfulpond-8c3c9242.westus3.azurecontainerapps.io
+  # Set these in GitHub environment secrets: NOSTRSTACK_TIP_LNADDR or NOSTRSTACK_TIP_PUBKEY
+  # Example: tip@nostrstack.com or npub1... (hex pubkey)
+  NOSTRSTACK_TIP_LNADDR: ${{ secrets.NOSTRSTACK_TIP_LNADDR }}
+  NOSTRSTACK_TIP_PUBKEY: ${{ secrets.NOSTRSTACK_TIP_PUBKEY }}
+
+jobs:
+  detect-changes:
+    if: ${{ github.event_name == 'workflow_run' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_deploy: ${{ steps.changes.outputs.should_deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check changed files
+        id: changes
+        uses: ./.github/actions/deploy-changed-paths
+        with:
+          patterns: |
+            apps/web/**
+            packages/**
+            .github/workflows/azure-deploy-web.yml
+
+  deploy:
+    needs: detect-changes
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && needs.detect-changes.outputs.should_deploy == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build and push image
+        id: image
+        uses: ./.github/actions/build-push-ghcr
+        with:
+          registry: ${{ env.REGISTRY }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ github.sha }}
+          dockerfile: apps/web/Dockerfile
+          build_args: |
+            VITE_API_BASE_URL=${{ env.API_URL }}
+            VITE_NETWORK=mainnet
+            VITE_NOSTRSTACK_TIP_LNADDR=${{ env.NOSTRSTACK_TIP_LNADDR }}
+            VITE_NOSTRSTACK_TIP_PUBKEY=${{ env.NOSTRSTACK_TIP_PUBKEY }}
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Azure login
+        uses: ./.github/actions/azure-login
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Container App
+        # Update existing container app to preserve custom domain config
+        # Note: Azure resource is still named nostrstack-gallery
+        run: |
+          az containerapp update \
+            -n nostrstack-gallery \
+            -g nostrstack-rg \
+            --image ${{ steps.image.outputs.image }}

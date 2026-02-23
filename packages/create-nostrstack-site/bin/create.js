@@ -33,7 +33,7 @@ async function main() {
       message: 'Which template would you like to use?',
       choices: [
         { title: 'Minimal - Basic Nostr feed', value: 'minimal' },
-        { title: 'Full - Complete social app with all features', value: 'full' },
+        { title: 'Full - Complete web app with all features', value: 'full' },
       ],
       initial: 0,
     },

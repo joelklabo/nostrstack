@@ -267,11 +267,11 @@ export function MyModal({ open, onClose }: ModalProps) {
 
 **Run axe-core tests**:
 ```bash
-cd apps/gallery
+  cd apps/web
 pnpm run e2e accessibility.spec.ts
 ```
 
-See `apps/gallery/tests/README.md` for detailed testing documentation.
+See `apps/web/tests/README.md` for detailed testing documentation.
 
 **What axe-core checks**:
 - ARIA attributes validity

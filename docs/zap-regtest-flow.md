@@ -1,11 +1,11 @@
 # Zap Regtest Payment Flow
 
 ## Scope
-This document describes the end-to-end zap flow for the gallery demo and how regtest payment is initiated and confirmed. It also enumerates error states and edge cases so the UI remains stable and actionable.
+This document describes the end-to-end zap flow for the web app and how regtest payment is initiated and confirmed. It also enumerates error states and edge cases so the UI remains stable and actionable.
 
 ## Actors
 - **User**: initiates the zap.
-- **Gallery UI**: builds zap request + renders invoice/QR.
+- **Web UI**: builds zap request + renders invoice/QR.
 - **LNURL-pay Server**: returns pay metadata and invoice (LNURL callback).
 - **Regtest Payer**: local LND node that pays invoices via `/api/regtest/pay`.
 - **API**: issues LNURL invoices and publishes receipts.
@@ -95,4 +95,3 @@ Any state can transition to [ERROR] on failure.
 ## Testing Notes
 - Unit test should validate that regtest endpoint is guarded and returns 403/404 when disabled.
 - E2E test should open zap modal, request invoice, pay via regtest, and assert success state.
-

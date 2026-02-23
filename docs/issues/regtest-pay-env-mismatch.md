@@ -2,7 +2,7 @@
 
 ## Summary
 
-The regtest Pay button appears in the social UI during local dev, but QA fails because the API regtest pay route is disabled by default.
+The regtest Pay button appears in the web UI during local dev, but QA fails because the API regtest pay route is disabled by default.
 
 ## Evidence
 

@@ -36,11 +36,11 @@ The API is a Node.js application.
    - `ENABLE_REGTEST_FUND`: **Dev-only** toggle for `/api/regtest/fund` (default false; keep unset in staging/prod).
    - `MAINNET_DEMO_OK`: Required by local demo scripts when using mainnet (`true` to proceed).
 
-## Deploying the Gallery (Frontend)
+## Deploying the Web App (Frontend)
 
-The Gallery is a static Single Page Application (SPA).
+The web app is a static Single Page Application (SPA).
 
-1. Navigate to `apps/gallery/dist`.
+1. Navigate to `apps/web/dist`.
 2. Deploy these static files to any static host (Cloudflare Pages, Vercel, Netlify, Nginx, etc.).
 3. **Configuration:** The frontend connects to the API. You must configure the build or the runtime environment (if using a specific server) to point to the API.
 
@@ -49,21 +49,21 @@ The Gallery is a static Single Page Application (SPA).
    - To customize for production, rebuild with:
 
      ```bash
-     VITE_API_BASE_URL=https://api.nostrstack.com pnpm --filter gallery build
+     VITE_API_BASE_URL=https://api.nostrstack.com pnpm --filter web build
      ```
 
 ## Docker
 
 You can also use the provided `Dockerfile` in `apps/api` for containerized deployment.
 
-For the Gallery (frontend), a `Dockerfile` is provided in `apps/gallery` which builds the static site and serves it via Nginx.
+For the web frontend, a `Dockerfile` is provided in `apps/web` which builds the static site and serves it via Nginx.
 
 ```bash
-docker build -f apps/gallery/Dockerfile -t nostrstack-gallery .
-docker run -p 8080:80 nostrstack-gallery
+docker build -f apps/web/Dockerfile -t nostrstack-web .
+docker run -p 8080:80 nostrstack-web
 ```
 
 ## Automated Deployment (CI/CD)
 
 The repository includes a GitHub Actions workflow `.github/workflows/azure-deploy.yml` for deploying the API to Azure Container Apps.
-For the frontend (Gallery), we recommend setting up a workflow with Cloudflare Pages or Vercel linked to the `apps/gallery` directory, with the build command `pnpm build`.
+For the frontend (web), we recommend setting up a workflow with Cloudflare Pages or Vercel linked to the `apps/web` directory, with the build command `pnpm build`.

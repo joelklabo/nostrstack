@@ -14,13 +14,13 @@ cd "$ROOT_DIR"
 PG_PORT="${PG_PORT:-65432}"
 PG_URL="postgres://nostrstack:nostrstack@localhost:${PG_PORT}/nostrstack"
 API_PORT="${API_PORT:-3001}"
-SOCIAL_PORT="${SOCIAL_PORT:-4173}"
+WEB_PORT="${WEB_PORT:-4173}"
 USE_HTTPS="${USE_HTTPS:-false}"
 API_SCHEME="http"
 if [[ "$USE_HTTPS" == "true" ]]; then
   API_SCHEME="https"
 fi
-SOCIAL_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
+WEB_RELAYS="${VITE_NOSTRSTACK_RELAYS:-wss://relay.damus.io}"
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }
@@ -45,8 +45,8 @@ require_env_vars() {
 
 show_common_config() {
   echo "  API base:            ${API_SCHEME}://localhost:${API_PORT}"
-  echo "  Social:              http://localhost:${SOCIAL_PORT}"
-  echo "  Relays:              ${SOCIAL_RELAYS}"
+  echo "  Web:                http://localhost:${WEB_PORT}"
+  echo "  Relays:              ${WEB_RELAYS}"
   echo ""
 }
 
@@ -83,11 +83,11 @@ start_stack() {
     VITE_ENABLE_REAL_PAYMENTS=true \
     VITE_LNBITS_URL="${LN_BITS_URL}" \
     VITE_LNBITS_ADMIN_KEY="${LN_BITS_API_KEY}" \
-    VITE_NOSTRSTACK_RELAYS="$SOCIAL_RELAYS" \
+    VITE_NOSTRSTACK_RELAYS="$WEB_RELAYS" \
     "${env_vars[@]}" \
-    pnpm exec concurrently -k -n api,social \
+    pnpm exec concurrently -k -n api,web \
       "pnpm --filter api dev" \
-      "pnpm --filter social dev -- --host --port ${SOCIAL_PORT}"
+      "pnpm --filter web dev -- --host --port ${WEB_PORT}"
 }
 
 case "$MODE" in
@@ -133,7 +133,7 @@ case "$MODE" in
       VITE_ENABLE_BOLT12=true
       VITE_ENABLE_TEST_SIGNER=true
     )
-    log "Launching API and social app (Ctrl+C to stop)..."
+    log "Launching API and web app (Ctrl+C to stop)..."
     start_stack env_vars
     ;;
 
@@ -180,7 +180,7 @@ case "$MODE" in
 
     require_env_vars LN_BITS_URL LN_BITS_API_KEY TELEMETRY_ESPLORA_URL
     [[ -n "${VITE_NOSTRSTACK_RELAYS:-}" ]] || { echo "Missing env VITE_NOSTRSTACK_RELAYS" >&2; exit 1; }
-    SOCIAL_RELAYS="$VITE_NOSTRSTACK_RELAYS"
+    WEB_RELAYS="$VITE_NOSTRSTACK_RELAYS"
 
     TELEMETRY_PROVIDER="${TELEMETRY_PROVIDER:-esplora}"
     ensure_postgres

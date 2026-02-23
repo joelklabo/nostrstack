@@ -24,7 +24,7 @@ report/
 
 !.env.example
 !apps/api/.env.payer.example
-!apps/gallery/.env.example
+!apps/web/.env.example
 .gemini-clipboard/
 
 .gemini/

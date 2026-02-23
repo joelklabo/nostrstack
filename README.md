@@ -5,11 +5,12 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 ## Packages
 
 - `apps/api` – Fastify API server (TypeScript, Prisma, OpenNode provider stub)
-- `apps/social` – Main social app (Vite + React app for user flows)
+- `apps/web` – Main web app (Vite + React app for user flows)
 - `apps/docs` – Documentation app
 - `packages/sdk` – Typed client for the API
 - `packages/widgets` – Browser bundle and widgets
 - `packages/config` – Shared lint/tsconfig
+- `packages/contracts` – Shared TypeScript contracts for app and API data shapes
 - `deploy/azure` – Bicep + GH Actions pipeline for Azure Container Apps
 - `docs/commands.md` – Command reference for local + CI workflows
 - `docs/project-structure.md` – Workspace map and ownership
@@ -24,7 +25,7 @@ Monorepo for a multi-tenant Lightning + Nostr backend with SDK and embeddable wi
 pnpm install
 docker compose up -d postgres
 cp apps/api/.env.example .env
-pnpm dev   # runs API + social app with shared local logs
+pnpm dev   # runs API + web app with shared local logs
 ```
 
 Database migrations (Postgres):
@@ -75,7 +76,7 @@ Find friend + tip flow:
 - Quick regtest start:
 
   ```sh
-  pnpm demo:regtest   # colima+docker required; API :3001, social :4173
+  pnpm demo:regtest   # colima+docker required; API :3001, web :4173
   ```
 
 ### Network switching (dev)

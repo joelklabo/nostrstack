@@ -1,6 +1,6 @@
 # Payments: Profile SendSats + Zaps
 
-This document covers the payment UX in the gallery app: profile tips (“Send sats”) and post zaps.
+This document covers the payment UX in the web app: profile tips (“Send sats”) and post zaps.
 
 ## Overview
 - **Profile payments**: Users can send sats directly from a profile at `/p/<npub|hex>`.
@@ -31,8 +31,8 @@ Notes:
 ## Zaps
 Zap buttons on posts use the same LNURL-pay + NIP-57 flow and follow the same payment fallbacks (NWC → WebLN → QR/manual). Zap requests include `p` + `e` tags for the author and event.
 
-## Configuration (Gallery)
-Set in `apps/gallery/.env` or root `.env`:
+## Configuration (Web app)
+Set in `apps/web/.env` or root `.env`:
 
 ```sh
 VITE_ENABLE_PROFILE_PAY=true
@@ -52,6 +52,6 @@ VITE_NOSTRSTACK_RELAYS=wss://relay.damus.io,wss://relay.snort.social,wss://nos.l
 - **WebLN**: If `window.webln` is available, it is used automatically before showing QR.
 
 ## Dev tips
-- For a local demo, run `pnpm demo:regtest` (API on :3001, gallery on :4173).
+- For a local demo, run `pnpm demo:regtest` (API on :3001, web on :4173).
 - LNURL callbacks require **https** in production; **http** is allowed for localhost.
 - If lightning address fields are missing, SendSats stays disabled until metadata includes `lud16` or `lud06`.

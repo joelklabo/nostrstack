@@ -36,9 +36,9 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
    PUBLIC_ORIGIN=http://localhost:3001 \
    pnpm dev
    ```
-3) **Run the gallery demo**
+3) **Run the web app**
    ```sh
-   cd apps/gallery
+   cd apps/web
    VITE_API_BASE_URL=http://localhost:3001 \
    VITE_NOSTRSTACK_HOST=localhost:3001 \
    VITE_ENABLE_REGTEST_PAY=true \
@@ -63,7 +63,7 @@ Prereqs: Docker running (Colima/Docker Desktop), `jq`, `pnpm install`.
    ```
 
 ### Add spendable sats to LNbits (regtest)
-By default the merchant node has only inbound liquidity. To give LNbits outbound sats for sending/paying invoices, hit the faucet endpoint (or click “Fund regtest wallet” in the gallery):
+By default the merchant node has only inbound liquidity. To give LNbits outbound sats for sending/paying invoices, hit the faucet endpoint (or click “Fund regtest wallet” in the web app):
 ```sh
 curl -X POST http://localhost:3001/regtest/fund
 ```
@@ -93,7 +93,7 @@ Notes:
    PUBLIC_ORIGIN=http://localhost:3001 \
    pnpm dev
    ```
-4) **Run gallery** (same as above, point to API).
+4) **Run web app** (same as above, point to API).
 5) **Stop**
    ```sh
    docker compose -f deploy/lnbits/docker-compose.yml down -v
@@ -106,7 +106,7 @@ If you have Azure Key Vault access, grab the staging admin key:
 ```sh
 ADMIN_KEY=$(az keyvault secret show --vault-name satoshis-kv-west --name lnbits-api-key --query value -o tsv)
 ```
-Then point API/gallery to staging:
+Then point API/web app to staging:
 ```sh
 cd apps/api
 LN_BITS_URL=https://lnbits-stg-west.thankfulwater-904823f2.westus3.azurecontainerapps.io \
@@ -118,9 +118,9 @@ PUBLIC_ORIGIN=http://localhost:3001 \
 DATABASE_URL=file:./dev.db \
 pnpm dev
 ```
-Gallery:
+Web:
 ```sh
-cd apps/gallery
+   cd apps/web
 VITE_API_BASE_URL=http://localhost:3001 \
 VITE_NOSTRSTACK_HOST=localhost:3001 \
 pnpm dev -- --host --port 4173

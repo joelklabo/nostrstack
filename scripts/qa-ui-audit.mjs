@@ -62,7 +62,7 @@ function pidAlive(pidText) {
   }
 }
 
-async function resolveManagedGalleryUrl() {
+async function resolveManagedWebUrl() {
   const sessionsDir = path.join(REPO_ROOT, '.logs', 'dev', 'sessions');
   if (!fs.existsSync(sessionsDir)) return null;
   const requestedAgent = (process.env.NOSTRDEV_AGENT || '').trim();
@@ -77,7 +77,7 @@ async function resolveManagedGalleryUrl() {
       const fields = parseSessionFile(file);
       if (!pidAlive(fields.NOSTRDEV_SESSION_PID)) continue;
       if (requestedAgent && fields.NOSTRDEV_SESSION_AGENT !== requestedAgent) continue;
-      const port = Number(fields.NOSTRDEV_SESSION_SOCIAL_PORT);
+      const port = Number(fields.NOSTRDEV_SESSION_WEB_PORT);
       if (Number.isInteger(port) && port > 0) {
         const protocol = await probeProtocol(port);
         return `${protocol || 'http'}://localhost:${port}`;
@@ -92,9 +92,11 @@ async function resolveManagedGalleryUrl() {
 const devServerPort = getDevServerPort();
 
 async function resolveBaseUrl() {
-  if (process.env.GALLERY_URL) return process.env.GALLERY_URL;
+  if (process.env.WEB_URL) {
+    return process.env.WEB_URL;
+  }
 
-  const managedUrl = await resolveManagedGalleryUrl();
+  const managedUrl = await resolveManagedWebUrl();
   if (managedUrl) return managedUrl;
 
   if (devServerPort) {
@@ -179,7 +181,7 @@ async function interactOnFeed(page) {
   findings.interactions.push('toggled-spam-filter');
   await clickMaybe(page.getByRole('button', { name: /Search posts and profiles/i }));
 
-  const thread = page.getByTestId('social-event-thread').first();
+  const thread = page.getByTestId('web-event-thread').first();
   if ((await thread.count()) > 0) {
     await thread.click().catch(() => {});
     findings.interactions.push('opened-post-thread');
@@ -188,7 +190,7 @@ async function interactOnFeed(page) {
     }
   }
 
-  await clickMaybe(page.getByTestId('social-event-reply').first());
+  await clickMaybe(page.getByTestId('web-event-reply').first());
   findings.interactions.push('opened-reply-modal');
   const replyTextarea = page.getByRole('textbox', { name: 'Reply content' }).first();
   if ((await replyTextarea.count()) > 0) {
@@ -197,11 +199,11 @@ async function interactOnFeed(page) {
     findings.interactions.push('closed-reply-modal');
   }
 
-  await clickMaybe(page.getByTestId('social-event-copy-link').first());
+  await clickMaybe(page.getByTestId('web-event-copy-link').first());
   findings.interactions.push('copied-post-link');
-  await clickMaybe(page.getByTestId('social-event-source-toggle').first());
+  await clickMaybe(page.getByTestId('web-event-source-toggle').first());
   findings.interactions.push('opened-post-source-json');
-  await clickMaybe(page.getByTestId('social-event-source-toggle').first());
+  await clickMaybe(page.getByTestId('web-event-source-toggle').first());
   findings.interactions.push('closed-post-source-json');
 
   await clickMaybe(page.getByRole('button', { name: /Load more posts|Load more/i }).first());

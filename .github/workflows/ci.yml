@@ -222,7 +222,7 @@ jobs:
 
       - name: Install Playwright (if not cached)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        working-directory: apps/social
+        working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Restore NIP-07 profile
@@ -244,7 +244,7 @@ jobs:
           VITE_API_BASE_URL: mock
           VITE_NOSTRSTACK_HOST: mock
           CHROMIUM_USER_DATA_DIR: /tmp/nip07-profile
-        working-directory: apps/social
+        working-directory: apps/web
         run: |
           if [ -z "${REAL_RELAY:-}" ]; then
             echo "Skipping real relay comment test because REAL_RELAY is not set"

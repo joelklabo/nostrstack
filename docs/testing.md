@@ -4,21 +4,21 @@
 
 - Run API unit + Playwright: `NODE_OPTIONS=--no-experimental-strip-types pnpm --filter api test` and `pnpm --filter api test:e2e`.
 - Pay-to-act suite (SQLite): `NODE_OPTIONS=--no-experimental-strip-types DATABASE_URL=file:./test-e2e.db pnpm --filter api test:e2e:pay`.
-- Regtest zap UI: start API with `ENABLE_REGTEST_PAY=true` and gallery with `VITE_ENABLE_REGTEST_PAY=true`, run `pnpm dev:logs`, then run `pnpm qa:regtest-demo` (set `GALLERY_URL` if using a custom host/port).
+- Regtest zap UI: start API with `ENABLE_REGTEST_PAY=true` and web with `VITE_ENABLE_REGTEST_PAY=true`, run `pnpm dev:logs`, then run `pnpm qa:regtest-demo` (set `WEB_URL` if using a custom host/port).
 
-## Gallery UI QA (network switching)
+## Web UI QA (network switching)
 
-- Start logs: `pnpm dev:logs` (or `tail -f .logs/dev/api.log .logs/dev/gallery.log`).
+- Start logs: `pnpm dev:logs` (or `tail -f .logs/dev/api.log .logs/dev/web.log`).
 - DevTools MCP: `./scripts/mcp-devtools-server.sh` + `./scripts/mcp-chrome.sh`, open `/personal-site-kit`, verify console + network clean.
 - MCP logs: `.logs/dev/mcp-devtools.log` (set `MCP_DEVTOOLS_LOG_FILE` to override).
-- Playwright: `pnpm --filter gallery e2e tests/bitcoin-network-status.spec.ts` (or full suite with `pnpm --filter gallery e2e`).
+- Playwright: `pnpm --filter web e2e tests/bitcoin-network-status.spec.ts` (or full suite with `pnpm --filter web e2e`).
 - Fallback if MCP unavailable: `pnpm qa:regtest-demo`.
 
 ### qa:regtest-demo preflight controls
 
-The QA script performs a preflight check to ensure the gallery is reachable.
+The QA script performs a preflight check to ensure the web app is reachable.
 
-- `GALLERY_URL`: Base URL to check (default: `https://localhost:4173`).
+- `WEB_URL`: Base URL to check (default: `https://localhost:4173`).
 - `SKIP_PREFLIGHT=1`: Bypass the reachability check.
 - `PREFLIGHT_RETRIES`: Number of attempts (default: 3).
 - `PREFLIGHT_DELAY_MS`: Delay between retries (default: 2000).
@@ -41,9 +41,9 @@ The QA script performs a preflight check to ensure the gallery is reachable.
 ## CI secrets required
 
 - `LNBITS_STG_ADMIN_KEY` (staging admin key) — enables mutinynet smoke step.
-- Optional: `LNBITS_URL`, `LNBITS_ADMIN_KEY` — enables payer/balance assertions and real-payment gallery flows.
+- Optional: `LNBITS_URL`, `LNBITS_ADMIN_KEY` — enables payer/balance assertions and real-payment web flows.
 
-## Gallery real-payments
+## Web real-payments
 
 - Set `VITE_API_BASE_URL` to the API origin and `VITE_NOSTRSTACK_HOST` to the embed host (e.g., `lnbits-stg-west...`). Real invoices are always enabled.
 - For regtest zap payments, also set `VITE_ENABLE_REGTEST_PAY=true` and ensure the API has `ENABLE_REGTEST_PAY=true`.
@@ -58,7 +58,7 @@ To verify manually during development:
    pnpm dev
    ```
 
-   This starts the API (port 3001) and Gallery (port 4173).
+   This starts the API (port 3001) and web (port 4173).
 
 2. **Login**:
 

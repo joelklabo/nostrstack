@@ -8,7 +8,7 @@ log() { echo "[dev] $*" >&2; }
 err() { echo "[dev] ERROR: $*" >&2; }
 
 API_PORT=3001
-SOCIAL_PORT=4173
+WEB_PORT=4173
 USE_HTTPS="${USE_HTTPS:-false}"
 API_SCHEME="http"
 if [[ "$USE_HTTPS" == "true" ]]; then
@@ -92,7 +92,7 @@ ENABLE_REGTEST_FUND=true
 LOG_LEVEL=info
 EOF
 
-  cat > "$ROOT/apps/social/.env.local" << EOF
+  cat > "$ROOT/apps/web/.env.local" << EOF
 VITE_API_BASE_URL=$API_SCHEME://localhost:$API_PORT
 VITE_NOSTRSTACK_HOST=localhost:$API_PORT
 VITE_NOSTRSTACK_RELAYS=wss://relay.damus.io,wss://relay.snort.social,wss://nos.lol
@@ -113,7 +113,7 @@ run_migrations() {
 cleanup() {
   log "Cleaning up existing processes..."
   local pids
-  pids=$(ss -tlnp 2>/dev/null | grep -E ":$API_PORT|:$SOCIAL_PORT" | grep -oP 'pid=\K[0-9]+' | sort -u || true)
+  pids=$(ss -tlnp 2>/dev/null | grep -E ":$API_PORT|:$WEB_PORT" | grep -oP 'pid=\K[0-9]+' | sort -u || true)
   for pid in $pids; do
     kill "$pid" 2>/dev/null || true
   done
@@ -121,9 +121,9 @@ cleanup() {
 }
 
 start_servers() {
-  log "Starting API and social app..."
+  log "Starting API and web app..."
   log "  API:     $API_SCHEME://localhost:$API_PORT"
-  log "  Social:  $API_SCHEME://localhost:$SOCIAL_PORT"
+  log "  Web:  $API_SCHEME://localhost:$WEB_PORT"
   log "  LNbits:  $LNBITS_URL"
   log ""
   log "Press Ctrl+C to stop"
@@ -132,11 +132,11 @@ start_servers() {
   cd "$ROOT"
   exec pnpm exec concurrently \
     --kill-others \
-    --names "api,social" \
+    --names "api,web" \
     --prefix-colors "blue,magenta" \
     --prefix "[{name}]" \
     "pnpm --filter api exec tsx watch src/server.ts" \
-    "pnpm --filter social dev -- --host --port $SOCIAL_PORT --strictPort"
+    "pnpm --filter web dev -- --host --port $WEB_PORT --strictPort"
 }
 
 main() {

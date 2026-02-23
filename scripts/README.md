@@ -7,7 +7,7 @@ This repository groups automation scripts by functional area to make commands ea
 - `scripts/dev/` — local development helpers
   - `logs.sh` (replace: `dev:logs`)
   - `network-switch.sh` (replace: `dev:network`)
-  - `watch-api.sh`, `watch-site.sh`, `watch-social.sh` (replace: `dev:*:entr`)
+  - `watch-api.sh`, `watch-web.sh` (replace: `dev:*:entr`)
   - `launch-local-demo.sh`
   - `launch-honkbox.sh`
 - `scripts/demo/` — demo mode orchestration
@@ -33,12 +33,12 @@ Top-level scripts in `scripts/*.sh` remain as compatibility wrappers and forward
 - `pnpm dev:network` -> `scripts/dev/network-switch.sh`
 - `pnpm demo:regtest` -> `scripts/demo/run.sh regtest`
 - `pnpm dev:api:entr` -> `scripts/dev/watch-api.sh`
-- `pnpm dev:social:entr` -> `scripts/dev/watch-social.sh`
+- `pnpm dev:web:entr` -> `scripts/dev/watch-web.sh`
 
 ### Session-aware environment variables
 
 - `NOSTRDEV_AGENT` (default: `$USER`) identifies the owner for session metadata and stopping by agent.
 - `NOSTRDEV_AGENT_SLOT` selects a specific session slot (`0` maps to `3001/4173`).
 - `NOSTRDEV_MANAGED_SESSION=0` uses explicit `PORT` and `DEV_SERVER_PORT` without auto-allocating.
-- `NOSTRDEV_BASE_API_PORT`, `NOSTRDEV_BASE_SOCIAL_PORT` set the auto-allocation base values.
+- `NOSTRDEV_BASE_API_PORT`, `NOSTRDEV_BASE_WEB_PORT` set the auto-allocation base values.
 - `NOSTRDEV_MAX_SLOTS` sets the session search range (default `40`).

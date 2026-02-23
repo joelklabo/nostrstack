@@ -5,7 +5,7 @@
 - Provide affordances to act (copy URL, open dashboard, pin/unpin) directly from the card.
 - Keep the layout compact so multiple relays can be scanned side-by-side.
 
-## Current State (gallery `RelayCard`)
+## Current State (web `RelayCard`)
 - Shows host, optional `name` and `software`, recv count, last activity, and a tiny sparkline.
 - Activity and send status are coupled into one color; states like auth-required, paid relay, or unsupported NIPs are invisible.
 - No quick actions (copy/share/open), and no indication of relay quality (uptime/latency/limits).

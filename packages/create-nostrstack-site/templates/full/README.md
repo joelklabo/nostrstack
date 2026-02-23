@@ -1,6 +1,6 @@
 # NostrStack Full Site
 
-A complete Nostr social application with all features:
+A complete Nostr web application with all features:
 
 - Feed with live updates
 - Profile pages

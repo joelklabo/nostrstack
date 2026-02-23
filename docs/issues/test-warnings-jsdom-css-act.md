@@ -6,7 +6,7 @@ Unit tests emit noisy warnings from JSDOM failing to parse CSS variables and Rea
 
 ## Evidence
 
-- `pnpm test` prints "Could not parse CSS stylesheet" during packages/widgets and apps/social tests.
+- `pnpm test` prints "Could not parse CSS stylesheet" during packages/widgets and apps/web tests.
 - `packages/react` tests emit "An update to ShareWidget inside a test was not wrapped in act(...)" warnings.
 
 ## Impact

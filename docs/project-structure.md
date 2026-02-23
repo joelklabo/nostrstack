@@ -7,7 +7,7 @@ This monorepo is split into `apps/*` (deployable applications) and `packages/*` 
 - `apps/api`  
   Fastify/Prisma API that owns tenant-aware storage, LNbits/Nostr routes, and event APIs.
 
-- `apps/social`  
+- `apps/web`  
   Primary React/Vite frontend for user flows (profiles, feeds, zap flows, payments).
 
 - `apps/docs`  
@@ -17,6 +17,9 @@ This monorepo is split into `apps/*` (deployable applications) and `packages/*` 
 
 - `packages/config`  
   Shared config tooling (lint/typecheck conventions).
+
+- `packages/contracts`  
+  Shared contract and domain-shape types for web/API alignment.
 
 - `packages/react`  
   Shared React primitives used by apps and widget surfaces.
@@ -31,7 +34,7 @@ This monorepo is split into `apps/*` (deployable applications) and `packages/*` 
   Token and currency abstractions for wallet/payment helpers.
 
 - `packages/ui`  
-  Design-system-level UI building blocks used by social.
+  Design-system-level UI building blocks used by the web app.
 
 - `packages/widgets`  
   Embeddable widget bundles and script-tag entrypoints.

@@ -23,7 +23,7 @@ Features:
 
 ### Full
 
-A complete social application with all NostrStack features.
+A complete web application with all NostrStack features.
 
 Features:
 - Live feed with real-time updates

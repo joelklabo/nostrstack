@@ -27,12 +27,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Social
-        run: pnpm --filter social build
+      - name: Build Web
+        run: pnpm --filter web build
 
       - name: Start preview server
         run: |
-          cd apps/social
+          cd apps/web
           pnpm preview &
           sleep 5
 
