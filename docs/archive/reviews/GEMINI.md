@@ -5,7 +5,7 @@ This is a monorepo for a multi-tenant Lightning + Nostr backend with an SDK and 
 The main components are:
 
 *   **`apps/api`**: A Fastify API server that provides the backend services. It uses Prisma as its ORM.
-*   **`apps/gallery`**: A demo application built with React and Vite to showcase the SDK and embeddable widgets.
+*   **`apps/web`**: A demo application built with React and Vite to showcase the SDK and embeddable widgets.
 *   **`packages/sdk`**: A typed client for the API.
 *   **`packages/embed`**: A browser bundle and widgets.
 *   **`packages/config`**: Shared linting and tsconfig configurations.
@@ -40,7 +40,7 @@ The main components are:
 
 4.  **Run the development servers:**
 
-    This will start the API server and the gallery app in development mode.
+    This will start the API server and the web app in development mode.
 
     ```bash
     pnpm dev

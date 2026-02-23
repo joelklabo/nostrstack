@@ -74,7 +74,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 **Files to Update:**
 
 - `packages/react/src/ui/*.tsx` (PaymentModal, SendSats, ReactionButton)
-- `apps/gallery/src/*.tsx` (FeedView, SearchView, Sidebar)
+- `apps/web/src/*.tsx` (FeedView, SearchView, Sidebar)
 - `packages/widgets/src/*.ts` (invoicePopover, relayBadge, share)
 
 **Deliverables:**
@@ -140,7 +140,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 **Deliverables:**
 
 - New test files in `packages/widgets/src/`
-- E2E embed test in gallery: `apps/gallery/tests/embed-widgets.spec.ts`
+- E2E embed test in web: `apps/web/tests/embed-widgets.spec.ts`
 - BD Issue: `embed-test-coverage-final`
 
 ---
@@ -200,7 +200,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 **Effort:** 3-4 days  
 **Details:**
 
-- Add Web Vitals tracking (LCP, FID, CLS) to gallery
+- Add Web Vitals tracking (LCP, FID, CLS) to web
 - Lighthouse CI integration in GitHub Actions
 - Bundle size monitoring (track @nostrstack/widgets growth)
 - API performance profiling (Fastify + Prometheus)
@@ -210,7 +210,7 @@ Nostrstack is in excellent health post-Storybook expansion. With 39 issues (35 c
 **Deliverables:**
 
 - `.github/workflows/performance.yml` with Lighthouse CI
-- `apps/gallery/src/analytics/web-vitals.ts`
+- `apps/web/src/analytics/web-vitals.ts`
 - Bundle size budget in `package.json`
 - Docs: `docs/performance.md` with targets + profiling guide
 - BD Issue: `performance-monitoring`
@@ -267,7 +267,7 @@ From `docs/dependencies.md`:
 **Effort:** 0.5 days  
 **Details:**
 
-- Fix Vite CJS/ESM issue in `apps/gallery/vitest.config.ts`
+- Fix Vite CJS/ESM issue in `apps/web/vitest.config.ts`
 - Enable `lint:knip` to catch unused exports
 - Add to CI pipeline
 

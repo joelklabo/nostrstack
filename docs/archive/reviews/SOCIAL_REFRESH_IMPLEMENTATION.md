@@ -5,14 +5,14 @@
 I have implemented the core components for the Social Design Refresh, but the automated tests for `FeedView` are failing due to a pre-existing or environmental crash (likely related to Mock Relay connection).
 
 ### 1. New Component: `NostrEventCard`
-I created `apps/gallery/src/ui/NostrEventCard.tsx`. This component:
+I created `apps/web/src/ui/NostrEventCard.tsx`. This component:
 -   Unifies rendering for Feed and Event Detail views.
 -   Uses the new `nostrstack-*` design tokens.
 -   Supports `variant="hero" | "compact" | "feed"`.
 -   Handles Repost, Zap, Reaction, and Paywalls internally.
 
 ### 2. Styling Upgrade
-I refactored `apps/gallery/src/gallery.css` to:
+I refactored `apps/web/src/web.css` to:
 -   Define `nostrstack-event-card` classes mapped to the new Premium Design tokens.
 -   Maintain legacy classes (`post-editor`, etc.) to prevent regressions while transitioning.
 

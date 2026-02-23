@@ -15,9 +15,9 @@
 
 **Files Changed:**
 
-- `apps/gallery/src/App.tsx:151` - Added role to 404 page main element
-- `apps/gallery/src/App.tsx:194` - Added role to app main element
-- `apps/gallery/src/App.tsx:194` - Added `id="main-content"` for skip link
+- `apps/web/src/App.tsx:151` - Added role to 404 page main element
+- `apps/web/src/App.tsx:194` - Added role to app main element
+- `apps/web/src/App.tsx:194` - Added `id="main-content"` for skip link
 
 **Impact:** Screen readers can now properly identify the main content region
 
@@ -30,9 +30,9 @@
 
 **Files Changed:**
 
-- `apps/gallery/src/Sidebar.tsx:157` - Changed `.sidebar-title` from `<div>` to `<h1>`
-- `apps/gallery/src/gallery.css:69` - Added `margin: 0` to reset h1 default margins
-- `apps/gallery/src/FeedView.tsx:358` - Already had `<h2>` (no change needed)
+- `apps/web/src/Sidebar.tsx:157` - Changed `.sidebar-title` from `<div>` to `<h1>`
+- `apps/web/src/web.css:69` - Added `margin: 0` to reset h1 default margins
+- `apps/web/src/FeedView.tsx:358` - Already had `<h2>` (no change needed)
 
 **Impact:** Proper document outline for SEO and screen reader navigation
 
@@ -45,12 +45,12 @@
 
 **Files Changed:**
 
-- `apps/gallery/src/gallery.css:11-12` - Updated muted text colors:
+- `apps/web/src/web.css:11-12` - Updated muted text colors:
 
   - `--color-fg-muted`: `#57606a` → `#424a53` (improved contrast)
   - `--color-fg-subtle`: `#6e7781` → `#59606a` (improved contrast)
 
-- `apps/gallery/src/gallery.css:515-540` - Updated alert component colors:
+- `apps/web/src/web.css:515-540` - Updated alert component colors:
 
   - `.nostrstack-alert--info`: `#0969da` → `#0550ae` (7.01:1 contrast)
   - `.nostrstack-alert--success`: `#1a7f37` → `#116329` (7.24:1 contrast)
@@ -58,7 +58,7 @@
   - `.nostrstack-alert--danger`: `#cf222e` → `#a0111f` (7.18:1 contrast)
   - Added `.nostrstack-alert__body { color: inherit; }` for consistency
 
-- `apps/gallery/src/gallery.css:171` - Updated network badge color:
+- `apps/web/src/web.css:171` - Updated network badge color:
   - `.sidebar-network-badge.is-regtest`: `#0969da` → `#0550ae` (4.67:1 contrast)
 
 **Impact:** All text now meets WCAG AA accessibility standards
@@ -72,8 +72,8 @@
 
 **Files Changed:**
 
-- `apps/gallery/src/App.tsx:160-162` - Added skip link HTML
-- `apps/gallery/src/gallery.css:38-57` - Added skip link styles:
+- `apps/web/src/App.tsx:160-162` - Added skip link HTML
+- `apps/web/src/web.css:38-57` - Added skip link styles:
   - Hidden by default (positioned off-screen)
   - Visible on keyboard focus
   - Smooth transition animation
@@ -90,7 +90,7 @@
 
 **Files Changed:**
 
-- `apps/gallery/tests/design-review.spec.ts:25` - Changed wait selector:
+- `apps/web/tests/design-review.spec.ts:25` - Changed wait selector:
   - From: `text=NostrStack` (hidden on mobile)
   - To: `main[role="main"]` (visible on all viewports)
 

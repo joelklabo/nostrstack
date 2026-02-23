@@ -79,13 +79,13 @@ Received: false
 **Recommendation:**
 
 ```tsx
-// apps/gallery/src/App.tsx:191
+// apps/web/src/App.tsx:191
 <main className="feed-container" role="main">
 ```
 
 **Files to update:**
 
-- `apps/gallery/src/App.tsx:191`
+- `apps/web/src/App.tsx:191`
 
 ---
 
@@ -115,8 +115,8 @@ Received: false
 
 **Files to update:**
 
-- `apps/gallery/src/Sidebar.tsx` - Add semantic headings
-- `apps/gallery/src/FeedView.tsx` - Add "Live Feed" as an `<h1>`
+- `apps/web/src/Sidebar.tsx` - Add semantic headings
+- `apps/web/src/FeedView.tsx` - Add "Live Feed" as an `<h1>`
 
 ---
 
@@ -145,7 +145,7 @@ Error: accessibilityScanResults.violations filter color-contrast not empty
 
 **Files to update:**
 
-- `apps/gallery/src/gallery.css:11-12` - Update `--color-fg-muted` and `--color-fg-subtle`
+- `apps/web/src/web.css:11-12` - Update `--color-fg-muted` and `--color-fg-subtle`
 
 ---
 
@@ -273,14 +273,14 @@ waiting for locator('text=NostrStack') to be visible
 1. **Add explicit role="main" to main element**
 
    ```tsx
-   // apps/gallery/src/App.tsx:191
+   // apps/web/src/App.tsx:191
    <main className="feed-container" role="main">
    ```
 
 2. **Fix color contrast violations**
 
    ```css
-   /* apps/gallery/src/gallery.css */
+   /* apps/web/src/web.css */
    --color-fg-muted: #424a53; /* Was: #57606a - adjust to meet 4.5:1 contrast */
    --color-fg-subtle: #59606a; /* Was: #6e7781 - adjust to meet 4.5:1 contrast */
    ```
@@ -288,10 +288,10 @@ waiting for locator('text=NostrStack') to be visible
 3. **Add semantic heading structure**
 
    ```tsx
-   // apps/gallery/src/Sidebar.tsx
+   // apps/web/src/Sidebar.tsx
    <h1 className="sidebar-title">NostrStack</h1>
 
-   // apps/gallery/src/FeedView.tsx
+   // apps/web/src/FeedView.tsx
    <h1 className="feed-title">Live Feed</h1>
    ```
 
@@ -300,7 +300,7 @@ waiting for locator('text=NostrStack') to be visible
 4. **Update CSS to maintain visual hierarchy with semantic headings**
 
    ```css
-   /* apps/gallery/src/gallery.css */
+   /* apps/web/src/web.css */
    .sidebar-title,
    .feed-title {
      font-size: 1.1rem;
@@ -311,7 +311,7 @@ waiting for locator('text=NostrStack') to be visible
 
 5. **Add skip navigation link for keyboard users**
    ```tsx
-   // apps/gallery/src/App.tsx
+   // apps/web/src/App.tsx
    <a href="#main-content" className="skip-link">
      Skip to main content
    </a>
@@ -321,7 +321,7 @@ waiting for locator('text=NostrStack') to be visible
 
 ## 📝 Testing Infrastructure Added
 
-Created comprehensive design review test suite: `apps/gallery/tests/design-review.spec.ts`
+Created comprehensive design review test suite: `apps/web/tests/design-review.spec.ts`
 
 **Test Coverage:**
 

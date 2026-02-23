@@ -73,4 +73,4 @@ The "Personal Site Kit" (SupportSection, TipWidget, Comments, etc.) needs a desi
 2.  **Token Refinement:** Update `nostrstackTokensCss` with new "premium" values (softer colors, better shadows).
 3.  **Component Polish:** Go through `TipWidget`, `BlockchainStats`, and `Comments` in `styles.ts` and apply the new visual language.
 4.  **React Updates:** Update `SupportSection.tsx` to use the new class names.
-5.  **Verify:** Run `apps/gallery` to visually verify the "Personal Site Kit" demo.
+5.  **Verify:** Run `apps/web` to visually verify the "Personal Site Kit" demo.
