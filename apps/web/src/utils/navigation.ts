@@ -1,6 +1,22 @@
 import { nip19 } from 'nostr-tools';
 import { bytesToHex } from 'nostr-tools/utils';
 
+export const APP_VIEW_PATHS = {
+  feed: '/',
+  search: '/search',
+  offers: '/offers',
+  profile: '/profile',
+  settings: '/settings',
+  help: '/help',
+  relays: '/relays',
+  demo: '/demo',
+  searchAlias: '/find-friend',
+  eventPrefix: '/nostr',
+  profilePrefix: '/p',
+  settingsPrefix: '/settings',
+  unknown: '/'
+} as const;
+
 export type AppRouteKind =
   | 'feed'
   | 'search'
@@ -30,12 +46,26 @@ const PROFILE_ROUTE_RE = /^\/p\/([^/?#]+)/i;
 const NOSTR_NOTE_ROUTE_RE = /^\/nostr\/([^/?#]+)/i;
 const EVENT_NOTE_ROUTE_RE = /^\/e\/([^/?#]+)/i;
 
+function normalizePath(path: string): string {
+  const origin = typeof window === 'undefined' ? 'https://example.com' : window.location.origin;
+  const url = new URL(path, origin);
+  const basePath = normalizeRoutePath(url.pathname);
+  const canonicalPath = canonicalizeRoutePath(basePath);
+  const withQuery = `${canonicalPath}${url.search}${url.hash}`;
+  return withQuery === '' ? '/' : withQuery;
+}
+
 function normalizeRoutePath(pathname: string): string {
   const basePath = pathname.split('?')[0].split('#')[0];
   if (!basePath) return '/';
   const withLeadingSlash = basePath.startsWith('/') ? basePath : `/${basePath}`;
   const trimmed = withLeadingSlash.replace(/\/+$/, '');
   return trimmed === '' ? '/' : trimmed;
+}
+
+function canonicalizeRoutePath(pathname: string): string {
+  const normalized = normalizeRoutePath(pathname);
+  return normalized === APP_VIEW_PATHS.searchAlias ? APP_VIEW_PATHS.search : normalized;
 }
 
 function safeDecodePathSegment(value: string): string {
@@ -155,7 +185,12 @@ export function buildNoteLink(eventId: string): string {
 
 export function navigateTo(path: string): void {
   if (typeof window === 'undefined') return;
-  window.history.pushState({}, '', path);
+
+  const normalized = normalizePath(path);
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (normalized === current) return;
+
+  window.history.pushState({}, '', normalized);
   window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
 }
 

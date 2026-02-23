@@ -46,6 +46,10 @@
   align-items: center;
 }
 
+.search-clear {
+  white-space: nowrap;
+}
+
 .search-input {
   flex: 1;
 }

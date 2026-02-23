@@ -14,11 +14,26 @@ import { relayMonitor } from '../nostr/relayHealth';
 import { Image } from '../ui/Image';
 import { NostrEventCard } from '../ui/NostrEventCard';
 import { resolveWebApiBase } from '../utils/api-base';
-import { navigateToProfile } from '../utils/navigation';
+import { navigateTo, navigateToProfile } from '../utils/navigation';
 
 const DIRECT_IDENTITY_QUERY = /^\s*(npub1|nprofile1)[0-9a-z]+$/i;
 const HEX_IDENTITY_QUERY = /^\s*[0-9a-f]{64}\s*$/i;
 const LIGHTNING_OR_NIP05_QUERY = /^\s*[^@\s]+@[^@\s]+\s*$/i;
+const SEARCH_QUERY_PARAM = 'q';
+
+function normalizeSearchQuery(rawQuery: string): string {
+  const trimmed = rawQuery.trim();
+  if (!trimmed) return '';
+  if (trimmed.includes('@')) {
+    return trimmed.toLowerCase();
+  }
+  return trimmed.replace(/\s+/g, ' ').trim();
+}
+
+function getRouteSearchQuery(rawSearch: string): string {
+  if (typeof window === 'undefined') return '';
+  return normalizeSearchQuery(new URLSearchParams(rawSearch).get(SEARCH_QUERY_PARAM) ?? '');
+}
 
 function isDirectIdentitySearch(value: string) {
   const trimmed = value.trim().toLowerCase();
@@ -62,9 +77,10 @@ export function SearchScreen() {
     return Array.isArray(listFromContext) ? listFromContext : [];
   }, [relayContext?.relays]);
   const pool = useSimplePool();
-  const [query, setQuery] = useState('');
-  const isDirectSearch = useMemo(() => isDirectIdentitySearch(query), [query]);
-  const identityInput = isDirectSearch ? query : '';
+  const [query, setQuery] = useState(() => getRouteSearchQuery(window.location.search));
+  const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
+  const isDirectSearch = useMemo(() => isDirectIdentitySearch(normalizedQuery), [normalizedQuery]);
+  const identityInput = isDirectSearch ? normalizedQuery : '';
   const { status, result, error, resolveNow } = useIdentityResolver(identityInput, { apiBase });
   const pendingSearchRef = useRef<string | null>(null);
 
@@ -96,6 +112,25 @@ export function SearchScreen() {
     notesCountRef.current = notes.length;
   }, [notes]);
 
+  const syncQueryFromLocation = useCallback(() => {
+    const next = getRouteSearchQuery(window.location.search);
+    setQuery((current) => {
+      const normalizedCurrent = normalizeSearchQuery(current);
+      return normalizedCurrent === next ? current : next;
+    });
+  }, []);
+
+  const syncQueryToLocation = useCallback((nextQuery: string) => {
+    const params = new URLSearchParams(window.location.search);
+    if (!nextQuery) {
+      params.delete(SEARCH_QUERY_PARAM);
+    } else {
+      params.set(SEARCH_QUERY_PARAM, nextQuery);
+    }
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    navigateTo(`/search${suffix}`);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (notesSearchControllerRef.current) {
@@ -106,6 +141,15 @@ export function SearchScreen() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const cleanup = () => {
+      window.removeEventListener('popstate', syncQueryFromLocation);
+    };
+    syncQueryFromLocation();
+    window.addEventListener('popstate', syncQueryFromLocation);
+    return cleanup;
+  }, [syncQueryFromLocation]);
 
   const healthyRelayCount = useMemo(() => {
     const searchRelays = getSearchRelays(relayList);
@@ -143,6 +187,14 @@ export function SearchScreen() {
     }
     return 'Paste an identifier or search keywords.';
   }, [submitFeedback, notesLoading, notesError, status, error, isDirectSearch]);
+  const isSearchBusy =
+    status === 'validating' ||
+    status === 'resolving' ||
+    notesLoading ||
+    isLoadingMore ||
+    isProfileLookupLoading;
+  const searchModeLabel = isDirectSearch ? 'identity' : 'keyword';
+  const directIdentitySnippet = normalizedQuery.slice(0, 16);
 
   const canRetryIdentity = useCallback(() => {
     if (status !== 'error' || !error) return false;
@@ -250,6 +302,29 @@ export function SearchScreen() {
     [applyNotesSearchError, pool, relayList]
   );
 
+  const handleClearQuery = useCallback(() => {
+    if (query === '') return;
+    setQuery('');
+    setSubmitFeedback(null);
+    setNotes([]);
+    setHasSubmittedSearch(false);
+    setNotesError(null);
+    setProfileLookupError(null);
+    setLastSearchQuery('');
+    setNotesSearchTimedOut(false);
+    setIsProfileLookupLoading(false);
+    pendingSearchRef.current = null;
+    if (notesSearchControllerRef.current) {
+      notesSearchControllerRef.current.abort();
+      notesSearchControllerRef.current = null;
+    }
+    if (loadMoreControllerRef.current) {
+      loadMoreControllerRef.current.abort();
+      loadMoreControllerRef.current = null;
+    }
+    syncQueryToLocation('');
+  }, [query, syncQueryToLocation]);
+
   const handleSearchFallback = useCallback(() => {
     const fallbackQuery = query.trim() || lastSearchQuery;
     if (!fallbackQuery) return;
@@ -314,7 +389,11 @@ export function SearchScreen() {
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      const trimmed = query.trim();
+      const trimmed = normalizedQuery;
+      if (isSearchBusy && trimmed === normalizeSearchQuery(lastSearchQuery)) {
+        setSubmitFeedback('Search already running. Please wait.');
+        return;
+      }
       if (!trimmed) {
         setHasSubmittedSearch(false);
         setSubmitFeedback('Enter a search query to search profiles or notes.');
@@ -334,6 +413,7 @@ export function SearchScreen() {
       } else {
         pendingSearchRef.current = null;
       }
+      syncQueryToLocation(trimmed);
       emitTelemetryEvent({ type: 'search', stage: 'start', query: trimmed });
 
       // Also try content search
@@ -341,7 +421,15 @@ export function SearchScreen() {
         void handleNotesSearch(trimmed);
       }
     },
-    [isDirectSearch, query, resolveNow, handleNotesSearch]
+    [
+      isDirectSearch,
+      normalizedQuery,
+      resolveNow,
+      handleNotesSearch,
+      isSearchBusy,
+      lastSearchQuery,
+      syncQueryToLocation
+    ]
   );
 
   const retryProfileLookup = useCallback(() => {
@@ -455,7 +543,7 @@ export function SearchScreen() {
         onSubmit={handleSubmit}
         role="search"
         aria-label="Search Nostr"
-        aria-busy={status === 'validating' || status === 'resolving' || notesLoading}
+        aria-busy={isSearchBusy}
       >
         <label className="search-label" htmlFor="friend-search">
           Search query
@@ -480,12 +568,37 @@ export function SearchScreen() {
             enterKeyHint="search"
             aria-describedby="search-helper"
           />
-          <button className="action-btn" type="submit" aria-label="Execute search">
-            Search
+          {query && (
+            <button
+              type="button"
+              className="action-btn action-btn--ghost search-clear"
+              onClick={handleClearQuery}
+              disabled={isSearchBusy}
+              aria-label="Clear search query"
+            >
+              Clear
+            </button>
+          )}
+          <button
+            className="action-btn"
+            type="submit"
+            aria-label="Execute search"
+            disabled={isSearchBusy}
+          >
+            {isSearchBusy ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span className="ns-spinner" style={{ width: '12px', height: '12px' }} aria-hidden="true" />
+                Searching…
+              </span>
+            ) : (
+              'Search'
+            )}
           </button>
         </div>
         <div id="search-helper" className="search-helper">
-          Try &quot;bitcoin&quot;, &quot;nostr&quot;, or an npub1...
+          Search mode: {searchModeLabel}
+          {isDirectSearch && directIdentitySnippet ? ` (${directIdentitySnippet}...)` : ''}
+          . Try keywords, nostr notes, or an npub1...
         </div>
         <div
           className={`search-status search-status--${status}`}
@@ -493,7 +606,7 @@ export function SearchScreen() {
           role="status"
           aria-live="polite"
         >
-          {(status === 'validating' || status === 'resolving' || notesLoading) && (
+          {isSearchBusy && (
             <span
               className="ns-spinner"
               style={{ width: '14px', height: '14px' }}

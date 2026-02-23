@@ -12,7 +12,7 @@ describe('useKeyboardShortcuts', () => {
   it('opens help on ? even when focused element stops propagation', () => {
     const setCurrentView = vi.fn();
     const { result } = renderHook(() =>
-      useKeyboardShortcuts({ currentView: 'feed', setCurrentView })
+      useKeyboardShortcuts({ setCurrentView })
     );
 
     const blocker = document.createElement('button');

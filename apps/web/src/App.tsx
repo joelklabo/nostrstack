@@ -24,7 +24,7 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveWebApiBase } from './utils/api-base';
-import { navigateTo, parseAppRoute } from './utils/navigation';
+import { APP_VIEW_PATHS, navigateTo, parseAppRoute, type AppRoute } from './utils/navigation';
 
 const MAX_LAZY_RETRIES = 3;
 const LAZY_RETRY_DELAY_MS = 1000;
@@ -133,6 +133,26 @@ const LOCAL_API_BASE_FALLBACK = '/api';
 const RELAY_DEGRADED_WINDOW_MS = 5 * 60_000;
 
 const HEALTH_CHECK_SUPPRESSION_MS = 5_000;
+
+const ROUTE_TITLE_BY_VIEW: Record<View, string> = {
+  feed: 'Feed',
+  search: 'Discovery',
+  offers: 'Offers',
+  profile: 'Profile',
+  settings: 'Settings',
+  help: 'Help'
+};
+
+const PAGE_TITLE_SUFFIX = 'NostrStack';
+
+function getViewFromRoute(route: AppRoute): View {
+  if (route.kind === 'search' || route.kind === 'find-friend') return 'search';
+  if (route.kind === 'help') return 'help';
+  if (route.kind === 'settings') return 'settings';
+  if (route.kind === 'offers') return 'offers';
+  if (route.kind === 'profile') return 'profile';
+  return 'feed';
+}
 
 async function suppressExpectedNetworkErrorsAsync<T>(fn: () => Promise<T>): Promise<T> {
   const originalError = console.error;
@@ -350,9 +370,13 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
-  const [currentView, setCurrentView] = useState<View>('feed');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ currentView, setCurrentView });
+  const [routeTransitioning, setRouteTransitioning] = useState(false);
+  const handleNavigateToView = useCallback((view: View) => {
+    const targetPath = APP_VIEW_PATHS[view as keyof typeof APP_VIEW_PATHS] ?? APP_VIEW_PATHS.feed;
+    navigateTo(targetPath);
+  }, []);
+  const { helpOpen, setHelpOpen } = useKeyboardShortcuts({ setCurrentView: handleNavigateToView });
   const { isImmersive } = useImmersiveScroll({
     threshold: 80,
     minDelta: 8,
@@ -374,16 +398,16 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
   const routeLocation = usePathname();
   const route = useMemo(() => parseAppRoute(routeLocation), [routeLocation]);
   const pathname = route.pathname;
-  const routeRecoveryIdentity = routeLocation;
+  const routeRecoveryIdentity = pathname;
   const SettingsScreen = useMemo(() => lazy(() => robustLazy(loadSettingsScreen, 'settings')), []);
   const OffersView = useMemo(() => lazy(() => robustLazy(loadOffersView, 'offers')), []);
   const isDemoRoute = route.kind === 'demo';
   const publicEventRouteId = route.eventId;
-  const isSearchRoute = route.kind === 'search';
-  const isFindFriendRoute = route.kind === 'find-friend';
   const isRelaysRoute = route.kind === 'relays';
   const isSettingsRoute = route.kind === 'settings';
   const isOffersRoute = route.kind === 'offers';
+  const isHelpRoute = route.kind === 'help';
+  const routeBoundView = useMemo<View>(() => getViewFromRoute(route), [route]);
   const retryFailedRoute = useCallback(() => {
     if (isSettingsRoute || isOffersRoute) {
       window.location.reload();
@@ -391,88 +415,17 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     }
     retryRouteAndHealthCheck();
   }, [isOffersRoute, isSettingsRoute, retryRouteAndHealthCheck]);
-  const isHelpRoute = route.kind === 'help';
   const profileRoutePubkey = route.profile?.pubkey ?? null;
   const profileRouteError = route.profile?.error;
   const isProfileRoute = route.kind === 'profile';
   const previousPathRef = useRef(pathname);
-  const routeBoundView = useMemo<View>(() => {
-    if (isProfileRoute) {
-      return 'profile';
-    }
-    if (isHelpRoute) {
-      return 'help';
-    }
-    if (isSettingsRoute) {
-      return 'settings';
-    }
-    if (isOffersRoute) {
-      return 'offers';
-    }
-    if (isSearchRoute || isFindFriendRoute) {
-      return 'search';
-    }
-    return currentView;
-  }, [
-    currentView,
-    isProfileRoute,
-    isHelpRoute,
-    isSettingsRoute,
-    isOffersRoute,
-    isSearchRoute,
-    isFindFriendRoute
-  ]);
-  const handleNavigateToSettings = useCallback(() => {
-    navigateTo('/settings');
-  }, []);
-
   const isValidRoute = route.kind !== 'unknown';
-
-  useEffect(() => {
-    if (profileRoutePubkey) {
-      setCurrentView('profile');
-    }
-  }, [profileRoutePubkey]);
 
   useEffect(() => {
     if (isHelpRoute) {
       setHelpOpen(true);
     }
   }, [isHelpRoute, setHelpOpen]);
-
-  useEffect(() => {
-    if (isHelpRoute) {
-      return;
-    }
-    if (isSettingsRoute) {
-      setCurrentView('settings');
-      return;
-    }
-    if (isOffersRoute) {
-      setCurrentView('offers');
-      return;
-    }
-    if (isSearchRoute || isFindFriendRoute) {
-      setCurrentView('search');
-      return;
-    }
-    if (isProfileRoute) {
-      setCurrentView('profile');
-      return;
-    }
-    if (currentView !== 'feed') {
-      setCurrentView('feed');
-    }
-  }, [
-    currentView,
-    isHelpRoute,
-    isOffersRoute,
-    isSearchRoute,
-    isFindFriendRoute,
-    isSettingsRoute,
-    profileRoutePubkey,
-    isProfileRoute
-  ]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -529,7 +482,27 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     previousPathRef.current = pathname;
   }, [mobileMenuOpen, pathname]);
 
+  useEffect(() => {
+    setRouteTransitioning(true);
+    const timeout = window.setTimeout(() => {
+      setRouteTransitioning(false);
+    }, 140);
+    return () => window.clearTimeout(timeout);
+  }, [routeBoundView]);
+
   const relayConnectivityDegraded = hasRecentRelayFailures();
+
+  useEffect(() => {
+    const viewTitle = ROUTE_TITLE_BY_VIEW[routeBoundView] ?? ROUTE_TITLE_BY_VIEW.feed;
+    const extraSegment = pathname === '/' ? '' : ` | ${pathname}`;
+    document.title = `${viewTitle} - ${PAGE_TITLE_SUFFIX}${extraSegment}`;
+  }, [routeBoundView, pathname]);
+
+  const mainContainerClassName = `feed-container${routeTransitioning ? ' is-route-transitioning' : ''}`;
+
+  const handleNavigateToSettings = useCallback(() => {
+    navigateTo(APP_VIEW_PATHS.settings);
+  }, []);
 
   if (publicEventRouteId) {
     return (
@@ -557,14 +530,14 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
         <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
         <Sidebar
           currentView={routeBoundView}
-          setCurrentView={setCurrentView}
+          setCurrentView={handleNavigateToView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
           onLogout={handleLogout}
           isGuest={isGuest}
         />
-        <main className="feed-container" id="main-content" role="main">
+        <main className={mainContainerClassName} id="main-content" role="main">
           {relayConnectivityDegraded && (
             <Alert
               tone="warning"
@@ -626,7 +599,7 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
 
   if (isLoading) {
     return (
-      <main className="feed-container web-loading-main" id="main-content" role="main">
+      <main className={`${mainContainerClassName} web-loading-main`} id="main-content" role="main">
         <LoadingFallback message="Loading NostrStack..." />
       </main>
     );
@@ -638,14 +611,14 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
         <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
         <Sidebar
           currentView={routeBoundView}
-          setCurrentView={setCurrentView}
+          setCurrentView={handleNavigateToView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
           onLogout={handleLogout}
           isGuest={isGuest}
         />
-        <main className="feed-container" id="main-content" role="main">
+        <main className={mainContainerClassName} id="main-content" role="main">
           {relayConnectivityDegraded && (
             <Alert
               tone="warning"
@@ -683,14 +656,14 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
         <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
         <Sidebar
           currentView={routeBoundView}
-          setCurrentView={setCurrentView}
+          setCurrentView={handleNavigateToView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
           onLogout={handleLogout}
           isGuest={isGuest}
         />
-        <main className="feed-container" id="main-content" role="main">
+        <main className={mainContainerClassName} id="main-content" role="main">
           <ErrorBoundary
             key={`${routeRecoveryIdentity}-${routeRecoveryKey}`}
             resetToken={routeRecoveryKey}
@@ -754,14 +727,14 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
 
         <Sidebar
           currentView={routeBoundView}
-          setCurrentView={setCurrentView}
+          setCurrentView={handleNavigateToView}
           mobileOpen={mobileMenuOpen}
           onMobileClose={closeMobileMenu}
           onOpenHelp={() => setHelpOpen(true)}
           onLogout={handleLogout}
           isGuest={isGuest}
         />
-        <main className="feed-container" id="main-content" role="main">
+        <main className={mainContainerClassName} id="main-content" role="main">
           <section className="nostr-event-card">
             <div className="nostr-event-section-title" style={{ marginBottom: '1rem' }}>
               Demo mode
@@ -829,14 +802,14 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
 
       <Sidebar
         currentView={routeBoundView}
-        setCurrentView={setCurrentView}
+        setCurrentView={handleNavigateToView}
         mobileOpen={mobileMenuOpen}
         onMobileClose={closeMobileMenu}
         onOpenHelp={() => setHelpOpen(true)}
         onLogout={handleLogout}
         isGuest={isGuest}
       />
-      <main className="feed-container" id="main-content" role="main">
+      <main className={mainContainerClassName} id="main-content" role="main">
         {relayConnectivityDegraded && (
           <Alert
             tone="warning"

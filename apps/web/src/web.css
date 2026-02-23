@@ -1023,6 +1023,16 @@ button:disabled {
   /* CLS FIX: Isolate layout calculations to this container */
   contain: layout style;
   overflow-anchor: none;
+  transition:
+    opacity var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    transform var(--ns-duration-moderate) var(--ns-easing-easeInOut),
+    filter var(--ns-duration-moderate) var(--ns-easing-easeInOut);
+}
+
+.feed-container.is-route-transitioning {
+  opacity: 0.995;
+  transform: translateY(0.5px);
+  filter: saturate(99%);
 }
 
 .feed-stream {

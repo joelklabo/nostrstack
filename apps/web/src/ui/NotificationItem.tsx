@@ -106,6 +106,7 @@ export function NotificationItem({ group }: { group: NotificationGroup }) {
             <ProfileLink
               pubkey={pk}
               label={`${pk.slice(0, 8)}`}
+              preferLabel
               className="notification-author"
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             />

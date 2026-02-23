@@ -265,6 +265,7 @@ const NostrEventCardContent = memo(function NostrEventCard({
             <ProfileLink
               pubkey={event.pubkey}
               label={`${event.pubkey.slice(0, 8)}...`}
+              preferLabel
               title={event.pubkey}
               className="ns-profile-link"
             />

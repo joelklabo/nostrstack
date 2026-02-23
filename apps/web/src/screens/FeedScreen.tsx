@@ -16,7 +16,7 @@ import { SupportCard } from '../ui/SupportCard';
 import { VirtualizedList } from '../ui/VirtualizedList';
 import { resolveRuntimeApiBase, resolveWebApiBase } from '../utils/api-base';
 import { estimatePostRowHeight } from '../utils/feed-layout';
-import { navigateTo } from '../utils/navigation';
+import { APP_VIEW_PATHS, navigateTo } from '../utils/navigation';
 import { buildVirtualizedCacheKey } from '../utils/virtualized-cache';
 
 interface FeedScreenProps {
@@ -395,7 +395,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
           <button
             type="button"
             className="ns-btn ns-btn--sm ns-btn--ghost"
-            onClick={() => navigateTo('/search')}
+            onClick={() => navigateTo(APP_VIEW_PATHS.search)}
             aria-label="Search posts and profiles"
           >
             <span aria-hidden="true">🔍</span> Search
@@ -434,7 +434,7 @@ export function FeedScreen({ isImmersive }: FeedScreenProps) {
         <PostEditor />
       </div>
 
-      <FindFriendCard onClick={() => navigateTo('/find-friend')} />
+      <FindFriendCard onClick={() => navigateTo(APP_VIEW_PATHS.search)} />
 
       <SupportCard />
 

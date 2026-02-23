@@ -30,11 +30,12 @@ type CachedResolution = {
 };
 
 const IDENTITY_CACHE_TTL_MS = 5 * 60 * 1000;
+const identityResolutionCache = new Map<string, CachedResolution>();
+const inFlightResolutionCache = new Map<string, Promise<IdentityResolution>>();
 
 export function useIdentityResolver(input: string, options: UseIdentityResolverOptions = {}) {
   const { debounceMs = 350, ...resolveOptions } = options;
   const [state, setState] = useState<IdentityResolverState>(DEFAULT_STATE);
-  const cacheRef = useRef<Map<string, CachedResolution>>(new Map());
   const abortRef = useRef<AbortController | null>(null);
   const resolveOptionsRef = useRef(resolveOptions);
 
@@ -44,10 +45,10 @@ export function useIdentityResolver(input: string, options: UseIdentityResolverO
 
   const getCachedResolution = useCallback(
     (cacheKey: string): IdentityResolution | null => {
-      const cached = cacheRef.current.get(cacheKey);
+      const cached = identityResolutionCache.get(cacheKey);
       if (!cached) return null;
       if (cached.expiresAt < Date.now()) {
-        cacheRef.current.delete(cacheKey);
+        identityResolutionCache.delete(cacheKey);
         return null;
       }
       return cached.result;
@@ -56,7 +57,7 @@ export function useIdentityResolver(input: string, options: UseIdentityResolverO
   );
 
   const setCachedResolution = useCallback((cacheKey: string, result: IdentityResolution) => {
-    cacheRef.current.set(cacheKey, { result, expiresAt: Date.now() + IDENTITY_CACHE_TTL_MS });
+    identityResolutionCache.set(cacheKey, { result, expiresAt: Date.now() + IDENTITY_CACHE_TTL_MS });
   }, []);
 
   const setStateFromResolution = useCallback((result: IdentityResolution) => {
@@ -91,10 +92,19 @@ export function useIdentityResolver(input: string, options: UseIdentityResolverO
     abortRef.current = controller;
 
     setState((prev) => ({ ...prev, status: 'resolving', error: null }));
-    const result = await resolveIdentity(trimmed, {
-      ...resolveOptionsRef.current,
-      signal: controller.signal
-    });
+    let result: IdentityResolution;
+    if (inFlightResolutionCache.has(cacheKey)) {
+      result = await inFlightResolutionCache.get(cacheKey)!;
+    } else {
+      const request = resolveIdentity(trimmed, {
+        ...resolveOptionsRef.current,
+        signal: controller.signal
+      }).finally(() => {
+        inFlightResolutionCache.delete(cacheKey);
+      });
+      inFlightResolutionCache.set(cacheKey, request);
+      result = await request;
+    }
     if (controller.signal.aborted) return;
     setCachedResolution(cacheKey, result);
     setStateFromResolution(result);

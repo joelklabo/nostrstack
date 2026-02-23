@@ -5,8 +5,7 @@ import {
   type MouseEvent,
   useCallback,
   useEffect,
-  useMemo,
-  useRef
+  useMemo
 } from 'react';
 
 import { buildProfilePath, navigateTo } from '../utils/navigation';
@@ -27,9 +26,12 @@ const AVATAR_SIZES: Record<AvatarSize, number> = {
   lg: 48
 };
 
+const PROFILE_NAME_CACHE = new Map<string, string>();
+
 type ProfileLinkProps = {
   pubkey: string;
   label?: string;
+  preferLabel?: boolean;
   className?: string;
   title?: string;
   style?: CSSProperties;
@@ -45,6 +47,7 @@ type ProfileLinkProps = {
 export const ProfileLink = memo(function ProfileLink({
   pubkey,
   label,
+  preferLabel = false,
   className,
   title,
   style,
@@ -53,7 +56,6 @@ export const ProfileLink = memo(function ProfileLink({
   avatarOnly = false,
   avatarSize = 'sm'
 }: ProfileLinkProps) {
-  const profileNameCacheRef = useRef<Map<string, string>>(new Map());
   const href = useMemo(() => buildProfilePath(pubkey), [pubkey]);
   const { profile: profileEvent } = useProfile(pubkey);
 
@@ -72,11 +74,11 @@ export const ProfileLink = memo(function ProfileLink({
   );
   useEffect(() => {
     if (profileMetaName) {
-      profileNameCacheRef.current.set(pubkey, profileMetaName);
+      PROFILE_NAME_CACHE.set(pubkey, profileMetaName);
     }
   }, [profileMetaName, pubkey]);
 
-  const cachedProfileName = profileNameCacheRef.current.get(pubkey);
+  const cachedProfileName = PROFILE_NAME_CACHE.get(pubkey);
 
   const classNames = useMemo(() => {
     const classes = ['profile-link', className?.trim(), showAvatar || avatarOnly ? 'profile-link--with-avatar' : ''];
@@ -97,7 +99,14 @@ export const ProfileLink = memo(function ProfileLink({
     [href, onClick]
   );
 
-  const displayName = profileMetaName || cachedProfileName || label || `${pubkey.slice(0, 8)}...`;
+  const resolvedProfileName = profileMetaName || cachedProfileName;
+  const preferredLabel = label?.trim();
+  const displayName = preferLabel && preferredLabel
+    ? preferredLabel
+    : resolvedProfileName || preferredLabel || `${pubkey.slice(0, 8)}...`;
+  const resolvedTitle = preferLabel && resolvedProfileName && preferredLabel && resolvedProfileName !== preferredLabel
+    ? `${preferredLabel} (${resolvedProfileName})`
+    : displayName;
   const avatarUrl = profileMeta?.picture;
   const size = AVATAR_SIZES[avatarSize];
 
@@ -106,7 +115,7 @@ export const ProfileLink = memo(function ProfileLink({
       href={href}
       className={classNames}
       onClick={handleClick}
-      title={title ?? displayName}
+      title={title ?? resolvedTitle}
       style={style}
       aria-label={avatarOnly ? `View ${displayName}'s profile` : undefined}
     >

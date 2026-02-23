@@ -7,7 +7,6 @@ import { type View } from '../hooks/useKeyboardShortcuts';
 import { useWallet } from '../hooks/useWallet';
 import { AnimatedSats } from '../ui/AnimatedNumber';
 import { resolveWebApiBase } from '../utils/api-base';
-import { navigateTo } from '../utils/navigation';
 
 interface SidebarProps {
   currentView: View;
@@ -23,7 +22,7 @@ const DEV_NETWORK_KEY = 'nostrstack.dev.network';
 
 export const Sidebar = memo(function Sidebar({
   currentView,
-  setCurrentView: _setCurrentView,
+  setCurrentView,
   mobileOpen,
   onMobileClose,
   onOpenHelp,
@@ -230,38 +229,15 @@ export const Sidebar = memo(function Sidebar({
   };
 
   const handleNavigate = (view: SidebarProps['currentView']) => {
-    if (view === 'offers') {
-      navigateTo('/offers');
-      onMobileClose?.();
-      return;
-    }
-
-    if (view === 'search') {
-      navigateTo('/find-friend');
-      onMobileClose?.();
-      return;
-    }
-    if (view === 'settings') {
-      navigateTo('/settings');
-      onMobileClose?.();
-      return;
-    }
-    if (view === 'profile') {
-      navigateTo('/profile');
-      onMobileClose?.();
-      return;
-    }
-    if (window.location.pathname !== '/') {
-      navigateTo('/');
-    }
+    setCurrentView(view);
     onMobileClose?.();
   };
 
   const handleOpenHelp = useCallback(() => {
-    navigateTo('/help');
+    setCurrentView('help');
     onOpenHelp?.();
     onMobileClose?.();
-  }, [onOpenHelp, onMobileClose]);
+  }, [onOpenHelp, onMobileClose, setCurrentView]);
 
   return (
     <nav className={`sidebar-nav${mobileOpen ? ' is-open' : ''}`} aria-label="Main navigation">
@@ -297,26 +273,14 @@ export const Sidebar = memo(function Sidebar({
         >
           Offers
         </button>
-        {!isGuest && (
-          <button
-            type="button"
-            className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
-            onClick={() => handleNavigate('profile')}
-            aria-current={currentView === 'profile' ? 'page' : undefined}
-          >
-            Profile
-          </button>
-        )}
-        {isGuest && (
-          <button
-            type="button"
-            className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
-            onClick={() => handleNavigate('profile')}
-            aria-current={currentView === 'profile' ? 'page' : undefined}
-          >
-            Profile
-          </button>
-        )}
+        <button
+          type="button"
+          className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
+          onClick={() => handleNavigate('profile')}
+          aria-current={currentView === 'profile' ? 'page' : undefined}
+        >
+          Profile
+        </button>
         <button
           type="button"
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}

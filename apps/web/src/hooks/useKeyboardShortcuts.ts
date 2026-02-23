@@ -3,29 +3,29 @@ import { useEffect, useState } from 'react';
 export type View = 'feed' | 'search' | 'profile' | 'settings' | 'offers' | 'help';
 
 interface KeyboardShortcutsOptions {
-  currentView: View;
+  currentView?: View;
   setCurrentView: (view: View) => void;
 }
 
 export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
   const [helpOpen, setHelpOpen] = useState(false);
-  const { currentView, setCurrentView } = options;
+  const { setCurrentView } = options;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isHelpShortcut = event.key === '?' || (event.code === 'Slash' && event.shiftKey);
 
       // Skip if typing in input/textarea
-      const target = event.target as HTMLElement;
+      const target = event.target as HTMLElement | null;
       const isInputField =
-        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+        target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
 
       if (isInputField && event.key !== 'Escape') {
         // Allow escape to work even in input fields
         return;
       }
 
-      const isInDialog = !!target.closest(
+      const isInDialog = !!target?.closest(
         '[role="dialog"], [aria-modal="true"], .emoji-picker, .shortcuts-overlay, .ns-dialog-overlay'
       );
 
@@ -35,6 +35,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
       if (isHelpShortcut) {
         event.preventDefault();
+        setCurrentView('help');
         setHelpOpen(true);
         return;
       }
@@ -89,7 +90,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions) {
 
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-  }, [setCurrentView, currentView]);
+  }, [setCurrentView]);
 
   return { helpOpen, setHelpOpen };
 }
