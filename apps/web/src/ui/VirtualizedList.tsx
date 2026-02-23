@@ -289,7 +289,11 @@ export function VirtualizedList<T>({
   // Style for the list container
   const listStyle: CSSProperties = {
     width: width ?? '100%',
-    height: containerHeight
+    height: containerHeight,
+    minHeight: MIN_CONTAINER_HEIGHT,
+    contain: 'size layout paint',
+    transform: 'translate3d(0, 0, 0)',
+    willChange: 'transform'
   };
 
   return (

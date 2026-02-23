@@ -1,5 +1,13 @@
 import { useProfile } from '@nostrstack/react';
-import { type CSSProperties, memo, type MouseEvent, useCallback, useMemo } from 'react';
+import {
+  type CSSProperties,
+  memo,
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef
+} from 'react';
 
 import { buildProfilePath, navigateTo } from '../utils/navigation';
 import { Image } from './Image';
@@ -45,6 +53,7 @@ export const ProfileLink = memo(function ProfileLink({
   avatarOnly = false,
   avatarSize = 'sm'
 }: ProfileLinkProps) {
+  const profileNameCacheRef = useRef<Map<string, string>>(new Map());
   const href = useMemo(() => buildProfilePath(pubkey), [pubkey]);
   const { profile: profileEvent } = useProfile(pubkey);
 
@@ -56,6 +65,23 @@ export const ProfileLink = memo(function ProfileLink({
       return null;
     }
   }, [profileEvent]);
+
+  const profileMetaName = useMemo(
+    () => profileMeta?.name?.trim() || profileMeta?.display_name?.trim() || null,
+    [profileMeta]
+  );
+  useEffect(() => {
+    if (profileMetaName) {
+      profileNameCacheRef.current.set(pubkey, profileMetaName);
+    }
+  }, [profileMetaName, pubkey]);
+
+  const cachedProfileName = profileNameCacheRef.current.get(pubkey);
+
+  const classNames = useMemo(() => {
+    const classes = ['profile-link', className?.trim(), showAvatar || avatarOnly ? 'profile-link--with-avatar' : ''];
+    return classes.filter(Boolean).join(' ');
+  }, [avatarOnly, className, showAvatar]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -71,15 +97,14 @@ export const ProfileLink = memo(function ProfileLink({
     [href, onClick]
   );
 
-  const displayName =
-    profileMeta?.name || profileMeta?.display_name || label || `${pubkey.slice(0, 8)}...`;
+  const displayName = profileMetaName || cachedProfileName || label || `${pubkey.slice(0, 8)}...`;
   const avatarUrl = profileMeta?.picture;
   const size = AVATAR_SIZES[avatarSize];
 
   return (
     <a
       href={href}
-      className={`${className || ''} ${showAvatar || avatarOnly ? 'profile-link--with-avatar' : ''}`.trim()}
+      className={classNames}
       onClick={handleClick}
       title={title ?? displayName}
       style={style}

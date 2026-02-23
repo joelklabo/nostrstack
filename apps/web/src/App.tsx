@@ -24,7 +24,7 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { HelpModal } from './ui/HelpModal';
 import { OnboardingTour } from './ui/OnboardingTour';
 import { type ApiBaseResolution, resolveWebApiBase } from './utils/api-base';
-import { navigateTo, resolveProfileRoute } from './utils/navigation';
+import { navigateTo, parseAppRoute } from './utils/navigation';
 
 const MAX_LAZY_RETRIES = 3;
 const LAZY_RETRY_DELAY_MS = 1000;
@@ -121,28 +121,6 @@ function usePathname() {
   }, []);
 
   return pathname;
-}
-
-function getNostrRouteId(pathname: string) {
-  const match = pathname.match(/^\/nostr\/([^/?#]+)/i);
-  if (!match) return null;
-  try {
-    const raw = decodeURIComponent(match[1]);
-    return raw.replace(/^nostr:/i, '');
-  } catch {
-    return match[1];
-  }
-}
-
-function getEventRouteId(pathname: string) {
-  const match = pathname.match(/^\/e\/([^/?#]+)/i);
-  if (!match) return null;
-  try {
-    const raw = decodeURIComponent(match[1]);
-    return raw.replace(/^nostr:/i, '');
-  } catch {
-    return match[1];
-  }
 }
 
 const THEME_STORAGE_KEY = 'nostrstack.theme';
@@ -394,24 +372,18 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     retryCurrentRoute();
   }, [onRetryLocalApi, retryCurrentRoute]);
   const routeLocation = usePathname();
-  const pathname = routeLocation.split('?')[0] || '/';
+  const route = useMemo(() => parseAppRoute(routeLocation), [routeLocation]);
+  const pathname = route.pathname;
   const routeRecoveryIdentity = routeLocation;
   const SettingsScreen = useMemo(() => lazy(() => robustLazy(loadSettingsScreen, 'settings')), []);
   const OffersView = useMemo(() => lazy(() => robustLazy(loadOffersView, 'offers')), []);
-  const isRouteWithOptionalQuery = (path: string) =>
-    pathname === path ||
-    pathname === `${path}/` ||
-    pathname.startsWith(`${path}?`) ||
-    pathname.startsWith(`${path}/?`);
-  const isDemoRoute = pathname === '/demo' || pathname === '/demo/';
-  const nostrRouteId = getNostrRouteId(pathname);
-  const eventRouteId = getEventRouteId(pathname);
-  const publicEventRouteId = nostrRouteId || eventRouteId;
-  const isSearchRoute = isRouteWithOptionalQuery('/search');
-  const isFindFriendRoute = isRouteWithOptionalQuery('/find-friend');
-  const isRelaysRoute = isRouteWithOptionalQuery('/relays');
-  const isSettingsRoute = pathname === '/settings' || pathname === '/settings/';
-  const isOffersRoute = pathname === '/offers' || pathname === '/offers/';
+  const isDemoRoute = route.kind === 'demo';
+  const publicEventRouteId = route.eventId;
+  const isSearchRoute = route.kind === 'search';
+  const isFindFriendRoute = route.kind === 'find-friend';
+  const isRelaysRoute = route.kind === 'relays';
+  const isSettingsRoute = route.kind === 'settings';
+  const isOffersRoute = route.kind === 'offers';
   const retryFailedRoute = useCallback(() => {
     if (isSettingsRoute || isOffersRoute) {
       window.location.reload();
@@ -419,15 +391,13 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     }
     retryRouteAndHealthCheck();
   }, [isOffersRoute, isSettingsRoute, retryRouteAndHealthCheck]);
-  const isGuestProfileRoute = isRouteWithOptionalQuery('/profile');
-  const isHelpRoute = isRouteWithOptionalQuery('/help');
-  const profileRoute = resolveProfileRoute(pathname);
-  const profileRoutePubkey = profileRoute.pubkey;
-  const profileRouteError = profileRoute.error;
-  const isProfileRoute = isGuestProfileRoute || pathname.startsWith('/p/');
+  const isHelpRoute = route.kind === 'help';
+  const profileRoutePubkey = route.profile?.pubkey ?? null;
+  const profileRouteError = route.profile?.error;
+  const isProfileRoute = route.kind === 'profile';
   const previousPathRef = useRef(pathname);
   const routeBoundView = useMemo<View>(() => {
-    if (isProfileRoute || profileRoutePubkey) {
+    if (isProfileRoute) {
       return 'profile';
     }
     if (isHelpRoute) {
@@ -450,46 +420,13 @@ function AppShell({ onRetryLocalApi }: { onRetryLocalApi?: () => void }) {
     isSettingsRoute,
     isOffersRoute,
     isSearchRoute,
-    isFindFriendRoute,
-    profileRoutePubkey
+    isFindFriendRoute
   ]);
   const handleNavigateToSettings = useCallback(() => {
     navigateTo('/settings');
   }, []);
 
-  // Check if the current path is a valid route
-  const isValidRoute = useMemo(() => {
-    // Root is always valid
-    if (pathname === '/' || pathname === '') return true;
-    // Known routes
-    if (isDemoRoute) return true;
-    if (isSearchRoute) return true;
-    if (isFindFriendRoute) return true;
-    if (isRelaysRoute) return true;
-    if (isSettingsRoute) return true;
-    if (isOffersRoute) return true;
-    if (isProfileRoute) return true;
-    if (isHelpRoute) return true;
-    if (nostrRouteId) return true;
-    if (eventRouteId) return true;
-    if (profileRoutePubkey) return true;
-    // Profile route with error is still "handled" (shows error)
-    if (pathname.startsWith('/p/')) return true;
-    return false;
-  }, [
-    pathname,
-    isDemoRoute,
-    isSearchRoute,
-    isFindFriendRoute,
-    isRelaysRoute,
-    isSettingsRoute,
-    isOffersRoute,
-    isProfileRoute,
-    isHelpRoute,
-    nostrRouteId,
-    eventRouteId,
-    profileRoutePubkey
-  ]);
+  const isValidRoute = route.kind !== 'unknown';
 
   useEffect(() => {
     if (profileRoutePubkey) {

@@ -1,12 +1,50 @@
 import { nip19 } from 'nostr-tools';
 import { bytesToHex } from 'nostr-tools/utils';
 
+export type AppRouteKind =
+  | 'feed'
+  | 'search'
+  | 'find-friend'
+  | 'relays'
+  | 'settings'
+  | 'offers'
+  | 'demo'
+  | 'profile'
+  | 'event'
+  | 'help'
+  | 'unknown';
+
+export type AppRoute = {
+  kind: AppRouteKind;
+  pathname: string;
+  profile?: ProfileRouteResult;
+  eventId?: string;
+};
+
 type ProfileRouteResult = {
   pubkey: string | null;
   error?: string;
 };
 
 const PROFILE_ROUTE_RE = /^\/p\/([^/?#]+)/i;
+const NOSTR_NOTE_ROUTE_RE = /^\/nostr\/([^/?#]+)/i;
+const EVENT_NOTE_ROUTE_RE = /^\/e\/([^/?#]+)/i;
+
+function normalizeRoutePath(pathname: string): string {
+  const basePath = pathname.split('?')[0].split('#')[0];
+  if (!basePath) return '/';
+  const withLeadingSlash = basePath.startsWith('/') ? basePath : `/${basePath}`;
+  const trimmed = withLeadingSlash.replace(/\/+$/, '');
+  return trimmed === '' ? '/' : trimmed;
+}
+
+function safeDecodePathSegment(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 
 function normalizeProfileId(raw: string): string | null {
   const trimmed = raw.replace(/^nostr:/i, '').trim();
@@ -29,20 +67,74 @@ function normalizeProfileId(raw: string): string | null {
   return null;
 }
 
-export function resolveProfileRoute(pathname: string): ProfileRouteResult {
+function resolveProfileRoutePath(pathname: string): ProfileRouteResult {
   const match = pathname.match(PROFILE_ROUTE_RE);
   if (!match) return { pubkey: null };
-  let rawId = match[1];
-  try {
-    rawId = decodeURIComponent(rawId);
-  } catch {
-    // ignore decode errors
-  }
+  const rawId = safeDecodePathSegment(match[1]);
   const pubkey = normalizeProfileId(rawId);
   if (!pubkey) {
     return { pubkey: null, error: 'Invalid profile id.' };
   }
   return { pubkey };
+}
+
+function resolveEventRouteIdFromPath(pathname: string): string | null {
+  const nostrMatch = pathname.match(NOSTR_NOTE_ROUTE_RE);
+  if (nostrMatch) return safeDecodePathSegment(nostrMatch[1]).replace(/^nostr:/i, '');
+
+  const legacyMatch = pathname.match(EVENT_NOTE_ROUTE_RE);
+  if (!legacyMatch) return null;
+  return safeDecodePathSegment(legacyMatch[1]).replace(/^nostr:/i, '');
+}
+
+export function parseAppRoute(pathname: string): AppRoute {
+  const normalizedPath = normalizeRoutePath(pathname);
+
+  if (normalizedPath === '/' || normalizedPath === '') {
+    return { kind: 'feed', pathname: '/' };
+  }
+
+  const isProfileRoute = normalizedPath === '/profile' || PROFILE_ROUTE_RE.test(normalizedPath);
+  if (isProfileRoute) {
+    return {
+      kind: 'profile',
+      pathname: normalizedPath,
+      profile: resolveProfileRoutePath(normalizedPath)
+    };
+  }
+
+  if (normalizedPath === '/search') {
+    return { kind: 'search', pathname: normalizedPath };
+  }
+  if (normalizedPath === '/find-friend') {
+    return { kind: 'find-friend', pathname: normalizedPath };
+  }
+  if (normalizedPath === '/relays') {
+    return { kind: 'relays', pathname: normalizedPath };
+  }
+  if (normalizedPath === '/settings') {
+    return { kind: 'settings', pathname: normalizedPath };
+  }
+  if (normalizedPath === '/offers') {
+    return { kind: 'offers', pathname: normalizedPath };
+  }
+  if (normalizedPath === '/demo') {
+    return { kind: 'demo', pathname: normalizedPath };
+  }
+  if (normalizedPath === '/help') {
+    return { kind: 'help', pathname: normalizedPath };
+  }
+
+  const eventId = resolveEventRouteIdFromPath(normalizedPath);
+  if (eventId) {
+    return { kind: 'event', pathname: normalizedPath, eventId };
+  }
+
+  return { kind: 'unknown', pathname: normalizedPath };
+}
+
+export function resolveProfileRoute(pathname: string): ProfileRouteResult {
+  return resolveProfileRoutePath(normalizeRoutePath(pathname));
 }
 
 export function buildProfilePath(pubkey: string): string {
@@ -71,4 +163,14 @@ export function navigateToProfile(pubkey: string): string {
   const path = buildProfilePath(pubkey);
   navigateTo(path);
   return path;
+}
+
+export function getNostrRouteId(pathname: string): string | null {
+  const route = parseAppRoute(pathname);
+  return route.kind === 'event' ? route.eventId ?? null : null;
+}
+
+export function getEventRouteId(pathname: string): string | null {
+  const route = parseAppRoute(pathname);
+  return route.kind === 'event' && pathname.includes('/e/') ? route.eventId ?? null : null;
 }

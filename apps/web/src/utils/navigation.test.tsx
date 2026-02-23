@@ -1,7 +1,7 @@
 import { getPublicKey, nip19 } from 'nostr-tools';
 import { describe, expect, it } from 'vitest';
 
-import { resolveProfileRoute } from './navigation';
+import { parseAppRoute, resolveProfileRoute } from './navigation';
 
 describe('resolveProfileRoute', () => {
   it('accepts hex pubkeys', () => {
@@ -60,5 +60,25 @@ describe('resolveProfileRoute', () => {
   it('returns null for /profile route without pubkey', () => {
     const result = resolveProfileRoute('/profile');
     expect(result.pubkey).toBeNull();
+  });
+});
+
+describe('parseAppRoute', () => {
+  it('normalizes trailing slashes and query strings for known routes', () => {
+    const route = parseAppRoute('/search/?tab=people');
+    expect(route.kind).toBe('search');
+  });
+
+  it('parses event routes and marks them as event kind', () => {
+    const route = parseAppRoute('/nostr/abc123');
+    expect(route.kind).toBe('event');
+    expect(route.eventId).toBe('abc123');
+  });
+
+  it('keeps invalid profile paths in the profile route kind', () => {
+    const route = parseAppRoute('/p/not-a-key');
+    expect(route.kind).toBe('profile');
+    expect(route.profile).toBeDefined();
+    expect(route.profile?.error).toBe('Invalid profile id.');
   });
 });

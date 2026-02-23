@@ -2193,6 +2193,21 @@ button:disabled {
 }
 
 /* Profile link avatar styles */
+.profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ns-space-1);
+}
+
+.profile-link__name {
+  display: inline-flex;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 .profile-link--with-avatar {
   display: inline-flex;
   align-items: center;
